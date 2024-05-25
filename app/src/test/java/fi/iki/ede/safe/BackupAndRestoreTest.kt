@@ -52,7 +52,9 @@ class BackupAndRestoreTest {
             out.trimIndent().trim(),
         )
 
-        DataModel.dump()
+        runBlocking {
+            DataModel.dump()
+        }
     }
 
     @Test

@@ -8,6 +8,7 @@ import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.db.DBID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -295,45 +296,79 @@ object DataModel {
             _passwordsStateFlow.value = _categories.values.flatten()
         }
 
+        // NOTE: This can ONLY succeed if user has logged in - as it sits now, this is the case, we load the data model only after login
+        // Even if descriptions of password entries aren't very sensitive
+        // all external access is kept encrypted, this though slows down UI visuals
+        // In memory copy of the description is plain text, let's just decrypt them
+        suspend fun launchDecryptDescriptions() {
+            coroutineScope {
+                launch(Dispatchers.Default) {
+                    try {
+                        _categories.values.forEach { passwords ->
+                            passwords.forEach { encryptedPassword ->
+                                val noop = encryptedPassword.plainDescription
+                            }
+                        }
+                    } catch (ex: Exception) {
+                        Log.d(TAG, "Cache warmup failed")
+                    }
+                }
+            }
+        }
+
         loadCategoriesFromDB()
         loadPasswordsFromDB()
+        launchDecryptDescriptions()
 
         if (BuildConfig.DEBUG) {
-            // now kinda interesting integrity verification, do we have stray passwords?
-            // ie. belonging to categories nonexistent
-            fun filterAList(
-                aList: List<DecryptablePasswordEntry>,
-                bList: List<DecryptableCategoryEntry>
-            ): List<DecryptablePasswordEntry> {
-                val bIds = bList.map { it.id }.toSet()
-                return aList.filter { it.categoryId !in bIds }
-            }
-
-            val strayPasswords =
-                filterAList(_categories.values.flatten(), _categories.keys.toList())
-
-            strayPasswords.forEach {
-                Log.e(
-                    "DataModel",
-                    "Stray password id=${it.id}, category=${it.categoryId}, description=${it.plainDescription}"
-                )
-            }
+            dumpStrays()
         }
     }
 
+    private suspend fun dumpStrays() {
+        coroutineScope {
+            launch {
+                // now kinda interesting integrity verification, do we have stray passwords?
+                // ie. belonging to categories nonexistent
+                fun filterAList(
+                    aList: List<DecryptablePasswordEntry>,
+                    bList: List<DecryptableCategoryEntry>
+                ): List<DecryptablePasswordEntry> {
+                    val bIds = bList.map { it.id }.toSet()
+                    return aList.filter { it.categoryId !in bIds }
+                }
+
+                val strayPasswords =
+                    filterAList(_categories.values.flatten(), _categories.keys.toList())
+
+                strayPasswords.forEach {
+                    Log.e(
+                        "DataModel",
+                        "Stray password id=${it.id}, category=${it.categoryId}, description=${it.plainDescription}"
+                    )
+                }
+            }
+        }
+    }
 
     fun attachDBHelper(dbHelper: DBHelper) {
         db = dbHelper
     }
 
-    fun dump() {
+    suspend fun dump() {
         if (BuildConfig.DEBUG) {
-            for (category in _categories.keys) {
-                println("Category id=${category.id} plainname=${category.plainName}") // OK: Dump
-                for (password in getCategorysPasswords(category.id!!)) {
-                    println("  Password id=${password.id} plainname=${password.plainDescription}") // OK: Dump
+            coroutineScope {
+                launch {
+                    for (category in _categories.keys) {
+                        println("Category id=${category.id} plainname=${category.plainName}") // OK: Dump
+                        for (password in getCategorysPasswords(category.id!!)) {
+                            println("  Password id=${password.id} plainname=${password.plainDescription}") // OK: Dump
+                        }
+                    }
                 }
             }
         }
     }
+
+    private const val TAG = "DataModel"
 }
