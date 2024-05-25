@@ -38,6 +38,7 @@ class HelpScreen : ComponentActivity() {
     }
 
     companion object {
+        const val TESTTAG_HELP = "help"
         fun startMe(context: Context) {
             context.startActivity(Intent(context, HelpScreen::class.java))
         }

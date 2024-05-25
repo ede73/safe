@@ -41,7 +41,6 @@ class PasswordListScreen : AutoLockingComponentActivity() {
                 ) {
                     Column(
                         modifier = Modifier.fillMaxSize(),
-                        // verticalArrangement = Arrangement.SpaceBetween
                     ) {
                         TopActionBar(onAddRequested = {
                             it.launch(
@@ -51,8 +50,6 @@ class PasswordListScreen : AutoLockingComponentActivity() {
                                 )
                             )
                         }, onAddCompleted = {
-                        }, onRestoreCompleted = {
-                            // TODO:
                         })
                         PasswordList(passwordsState, onRefreshEntries = {
                         })

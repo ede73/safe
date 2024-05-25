@@ -32,7 +32,7 @@ fun askToRestoreDatabase(
 
     fun resetInactivityTimer() {
         // just try to make sure inactivity timer wont go on..even how small timeout it has
-        inactivity.avertInactivity(context, "Restore DB inputstream")
+        inactivity.avertInactivity(context, "Restore DB input stream")
     }
 
     resetInactivityTimer()
@@ -89,8 +89,6 @@ private fun restoreOiSafeDump(
         if (totalPasswords >= 0) {
             // Also re-import(replace) existing key
             LoginHandler.passwordLogin(context, passwordOfBackup)
-            // This should be loaded in activities/RestoreScreen
-            //DataModel.reset()
         }
         totalPasswords
     } catch (ex: Exception) {

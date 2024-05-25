@@ -10,9 +10,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import fi.iki.ede.crypto.DecryptableCategoryEntry
 import fi.iki.ede.crypto.DecryptablePasswordEntry
-import fi.iki.ede.safe.model.DataModel
+import fi.iki.ede.safe.model.DataModel.getCategory
 import fi.iki.ede.safe.ui.activities.PasswordEntryScreen
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -21,7 +20,6 @@ fun SearchPasswordEntryList(
     filteredPasswords: MutableStateFlow<List<DecryptablePasswordEntry>>
 ) {
     val context = LocalContext.current
-    val categories = DataModel.getCategories()
     val passwordState = filteredPasswords.collectAsState()
     val sortedPasswords by remember(passwordState) {
         derivedStateOf {
@@ -33,10 +31,7 @@ fun SearchPasswordEntryList(
         items(items = sortedPasswords, itemContent = { filteredItem ->
             MatchingPasswordEntry(
                 passwordEntry = filteredItem,
-                categoryEntry = getCategoryEntry(
-                    categories,
-                    filteredItem,
-                )
+                categoryEntry = filteredItem.getCategory()
             ) {
                 context.startActivity(
                     PasswordEntryScreen.getEditPassword(context, it.id!!)
@@ -45,9 +40,3 @@ fun SearchPasswordEntryList(
         })
     }
 }
-
-@Composable
-private fun getCategoryEntry(
-    categories: List<DecryptableCategoryEntry>,
-    filteredItem: DecryptablePasswordEntry
-) = categories.first { it.id == filteredItem.categoryId }

@@ -62,7 +62,6 @@ import kotlinx.coroutines.withContext
 fun TopActionBar(
     onAddRequested: (addCompleted: ManagedActivityResultLauncher<Intent, ActivityResult>) -> Unit = {},
     onAddCompleted: () -> Unit = {},
-    onRestoreCompleted: () -> Unit = {}
 ) {
     val tag = "TopActionBar"
     val context = LocalContext.current
@@ -85,7 +84,10 @@ fun TopActionBar(
         onResult = {
             when (it.resultCode) {
                 Activity.RESULT_OK -> {
-                    onRestoreCompleted()
+                    // we don't really care if restoration succeed or not
+                    // if it did, we've new categories and passwords
+                    // if it failed, we've got the old ones
+                    // User has been toasted already as well
                 }
             }
         }
@@ -96,7 +98,6 @@ fun TopActionBar(
         onResult = {
             when (it.resultCode) {
                 Activity.RESULT_OK -> {
-                    Log.e("RESTORE", "selectRestoreDocumentLauncher")
                     restoreCompleted.launch(
                         RestoreScreen.getIntent(context, false, it.data!!.data!!)
                     )
@@ -109,7 +110,6 @@ fun TopActionBar(
         onResult = {
             when (it.resultCode) {
                 Activity.RESULT_OK -> {
-                    Log.e("RESTORE", "selectRestoreDocumentLauncherOld")
                     restoreCompleted.launch(
                         RestoreScreen.getIntent(context, true, it.data!!.data!!)
                     )

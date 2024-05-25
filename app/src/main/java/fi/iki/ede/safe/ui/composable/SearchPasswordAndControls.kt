@@ -185,7 +185,7 @@ fun beginSearch(
             // optimize the search by searching the only what was previously found and unsearched entries
             // E.g. user types "a", search begins, user types "b", we could start new search for "ab"
             // but then again we might have searched already 25% of password entries with "a" in it
-            // or in otherwords excluded lot of entries that don't contain "a", hence they cannot
+            // or in other words excluded lot of entries that don't contain "a", hence they cannot
             // contain "ab" either
             // Also since everything is kept encrypted (and only way to search is descrypt) - search is
             // intensive operation

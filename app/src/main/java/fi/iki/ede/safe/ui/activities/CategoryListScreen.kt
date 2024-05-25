@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.text.TextUtils
-import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -54,13 +53,6 @@ class CategoryListScreen : AutoLockingComponentActivity() {
                             onAddCompleted = {
                                 // TODO: new category added
                                 // Refresh all passwords
-                            },
-                            onRestoreCompleted = {
-                                // TODO: new set of passwords restored
-                                // Refresh all passwords
-                                // TODO: WE SHOULD NOT NEED TO RESET THE MODEL HERE! RESTORATION SHOULD HAVE TAKEN CARE OF THIS ALREADY
-                                //DataModel.loadFromDatabase()
-                                Log.e("CategoryListScreen", "onRestoreCompleted")
                             })
                         if (displayAddCategoryDialog) {
                             val ks = KeyStoreHelperFactory.getKeyStoreHelper()

@@ -30,16 +30,14 @@ fun passwordTextField(
     onValueChange: (String) -> Unit = {},
     singleLine: Boolean = true,
     maxLines: Int = 1,
-    highlite: Boolean = true,
+    highlight: Boolean = true,
     modifier: Modifier = Modifier,
     updated: Boolean = false
 ): Password {
     // Since the PasswordTextField 'owns' its password state, when assigned from another mutable state
     // it cannot be updated by programmatic change, this mutable should be pulled out from PasswordTextField!
-    // ie. change value:String to value:Mutable OR make accossor to actually change the password! on demand
+    // ie. change value:String to value:Mutable OR make accessor to actually change the password! on demand
     var password by remember { mutableStateOf(value) }
-    // TODO: Enabling breaks initial login screen password entry(see above comment)
-    // TODO: Disabling breaks generate password
     if (updated && value != password) {
         password = value
     }
@@ -52,7 +50,7 @@ fun passwordTextField(
         value = password,
         label = { Text(stringResource(id = textTip)) },
         visualTransformation = if (revealPassword) {
-            if (highlite) {
+            if (highlight) {
                 VisualTransformation { HighlightPassword.highlight(password) }
             } else {
                 VisualTransformation.None

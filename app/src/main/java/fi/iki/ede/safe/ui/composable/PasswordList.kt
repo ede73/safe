@@ -40,7 +40,6 @@ fun PasswordList(passwords: List<DecryptablePasswordEntry>, onRefreshEntries: ()
         modifier = Modifier
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
-        //.border(BorderStroke(2.dp, SolidColor(Color.Red))),
     ) {
         passwordItems.forEach { composable ->
             composable()

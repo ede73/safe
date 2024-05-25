@@ -78,7 +78,8 @@ class RestoreScreen : AutoLockingComponentActivity() {
                             )
                             val result =
                                 if (passwords > 0) {
-                                    Biometrics.clearBiometricKeys(context)
+                                    // No point clearing biometrics(passkey not tied to masterkey)
+                                    //Biometrics.clearBiometricKeys(context)
                                     // TODO: MAKE ASYNC
                                     runBlocking {
                                         DataModel.loadFromDatabase()

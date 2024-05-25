@@ -8,6 +8,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.text.HtmlCompat
 import com.google.android.material.textview.MaterialTextView
+import fi.iki.ede.safe.ui.activities.HelpScreen.Companion.TESTTAG_HELP
 
 @Composable
 fun HelpViewer(sourceString: String, modifier: Modifier = Modifier) {
@@ -15,7 +16,7 @@ fun HelpViewer(sourceString: String, modifier: Modifier = Modifier) {
     AndroidView(
         modifier = modifier
             .verticalScroll(rememberScrollState())
-            .testTag("help"),
+            .testTag(TESTTAG_HELP),
         factory = { MaterialTextView(it) },
         update = { it.text = spannedText }
     )

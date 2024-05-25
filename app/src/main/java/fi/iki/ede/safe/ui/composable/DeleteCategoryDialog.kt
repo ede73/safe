@@ -18,7 +18,6 @@ fun DeleteCategoryDialog(
     onDismiss: () -> Unit,
 ) {
     AlertDialog(
-        //icon = R.drawable.passicon,
         onDismissRequest = { },
         confirmButton = {
             TextButton(

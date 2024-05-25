@@ -130,14 +130,14 @@ fun PasswordViewComponent(
                 onValueChange = {
                     viewModel.updateUsername(it.encrypt(ks))
                 },
-                highlite = false,
+                highlight = false,
                 modifier = modifier
                     .padding(horizontal = 8.dp)
                     .fillMaxWidth(),
             )
         }
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
-            Text(text = "Colors: Blue = (108652), Red = lower case(L)")
+            Text(stringResource(id = R.string.password_entry_highlight_hint))
         }
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             Button(onClick = {
@@ -170,7 +170,7 @@ fun PasswordViewComponent(
                                 false -> BreachCheckEnum.NOT_BREACHED
                             }
                         },
-                        { error -> Log.e(PasswordEntryScreen.TAG, "Error:$error") })
+                        { error -> Log.e(PasswordEntryScreen.TAG, "Error: $error") })
                 }) { Text(stringResource(id = R.string.password_entry_breach_check)) }
             }
             when (breachCheckResult) {
@@ -207,7 +207,7 @@ fun PasswordViewComponent(
             },
             singleLine = false,
             maxLines = 22,
-            highlite = false,
+            highlight = false,
             modifier = Modifier.fillMaxWidth(),
         )
 

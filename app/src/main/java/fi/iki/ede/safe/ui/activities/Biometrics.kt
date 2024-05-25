@@ -17,6 +17,11 @@ import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.model.Preferences
 import java.time.ZonedDateTime
 
+// TODO: With latest jetpack biometric lib, authentication failed flow seems to have changed
+// Previously there were couple of tries, not it flat out fails
+// End result is login screen activates, but biometric screen still stays on, so user had to
+// navigate back, then enter password or launch biometric again
+// Not a big deal, but feels buggy
 class Biometrics : AppCompatActivity() {
 
     override fun onResume() {
@@ -58,25 +63,31 @@ class Biometrics : AppCompatActivity() {
 
     private fun showBiometricPrompt(title: String, subtitle: String) {
         val promptInfo: PromptInfo = PromptInfo.Builder()
-            .setTitle("Password Safe Biometric")
+            .setTitle(getString(R.string.biometrics_prompt_title))
             .setSubtitle(title)
             .setDescription(subtitle)
             .setAllowedAuthenticators(BIOMETRIC_WEAK or BiometricManager.Authenticators.BIOMETRIC_STRONG)
-            .setNegativeButtonText("Cancel")
+            .setNegativeButtonText(getString(R.string.biometrics_cancel))
             .setConfirmationRequired(true)
             .build()
         val authCallback: BiometricPrompt.AuthenticationCallback =
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                     super.onAuthenticationError(errorCode, errString)
-                    showMessage("ERROR: onAuthenticationError:$errorCode$errString")
+                    showMessage(
+                        getString(
+                            R.string.biometrics_authentication_error,
+                            errorCode,
+                            errString
+                        )
+                    )
                     setResult(RESULT_CANCELED, Intent().setAction(intent.action))
                     finish()
                 }
 
                 override fun onAuthenticationFailed() {
                     super.onAuthenticationFailed()
-                    showMessage("ERROR: onAuthenticationFailed")
+                    showMessage(getString(R.string.biometrics_authentication_failed))
                     setResult(RESULT_FAILED, Intent().setAction(intent.action))
                     finish()
                 }

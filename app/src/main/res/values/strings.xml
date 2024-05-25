@@ -118,4 +118,9 @@
     <string name="move_password_select_category">Select category to move to</string>
     <string name="move_password_title">Move password to %1$s</string>
     <string name="login_invalid_password">Invalid password</string>
+    <string name="biometrics_prompt_title">PasswordSafe Biometric</string>
+    <string name="biometrics_cancel">Cancel</string>
+    <string name="biometrics_authentication_error">ERROR: onAuthenticationError: %1$d %2$s</string>
+    <string name="biometrics_authentication_failed">ERROR: onAuthenticationFailed</string>
+    <string name="password_entry_highlight_hint">Colors: Blue = (108652), Red = lower case(L)</string>
 </resources>
