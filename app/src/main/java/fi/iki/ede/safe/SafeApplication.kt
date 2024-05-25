@@ -24,9 +24,5 @@ class SafeApplication : Application() {
 
     companion object {
         private var instance: SafeApplication? = null
-
-//        fun getApplicationContext(): Context {
-//            return instance!!
-//        }
     }
 }

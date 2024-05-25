@@ -24,6 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import fi.iki.ede.crypto.DecryptableCategoryEntry
 import fi.iki.ede.crypto.DecryptablePasswordEntry
 import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.safe.R
@@ -33,10 +34,15 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun PasswordRow(passEntry: DecryptablePasswordEntry, onRefreshEntries: () -> Unit) {
+fun PasswordRow(
+    passEntry: DecryptablePasswordEntry, /* TODO: NOt needed*/
+    categoriesState: List<DecryptableCategoryEntry>,
+    onRefreshEntries: () -> Unit
+) {
     val context = LocalContext.current
     var displayMenu by remember { mutableStateOf(false) }
     var displayDeleteDialog by remember { mutableStateOf(false) }
+    var displayMoveDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
     val editCompleted = rememberLauncherForActivityResult(
@@ -44,6 +50,7 @@ fun PasswordRow(passEntry: DecryptablePasswordEntry, onRefreshEntries: () -> Uni
         onResult = {
             when (it.resultCode) {
                 Activity.RESULT_OK -> {
+                    // TODO: should not be needed
                     onRefreshEntries()
                 }
             }
@@ -104,7 +111,7 @@ fun PasswordRow(passEntry: DecryptablePasswordEntry, onRefreshEntries: () -> Uni
                     )
                 }, onClick = {
                     displayMenu = false
-                    // TODO: Not implemented!
+                    displayMoveDialog = true
                 })
             }
             if (displayDeleteDialog) {
@@ -116,6 +123,21 @@ fun PasswordRow(passEntry: DecryptablePasswordEntry, onRefreshEntries: () -> Uni
                     onRefreshEntries()
                 }, onDismiss = {
                     displayDeleteDialog = false
+                })
+            }
+            if (displayMoveDialog) {
+                val currentCategory =
+                    DataModel.getCategories().first { it.id == passEntry.categoryId }
+                val filteredCategories = categoriesState.filter { it != currentCategory }
+
+                MovePasswordEntry(filteredCategories, onConfirm = { newCategory ->
+                    coroutineScope.launch {
+                        DataModel.movePassword(passEntry, newCategory)
+                    }
+                    displayMoveDialog = false
+                    onRefreshEntries()
+                }, onDismiss = {
+                    displayMoveDialog = false
                 })
             }
         }

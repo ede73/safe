@@ -2,6 +2,7 @@ package fi.iki.ede.safe.backupandrestore
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
+import android.util.Log
 import fi.iki.ede.crypto.DecryptableCategoryEntry
 import fi.iki.ede.crypto.DecryptablePasswordEntry
 import fi.iki.ede.crypto.IVCipherText
@@ -12,6 +13,7 @@ import fi.iki.ede.crypto.hexToByteArray
 import fi.iki.ede.crypto.keystore.KeyManagement
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.model.LoginHandler
 import org.xmlpull.v1.XmlPullParser
@@ -22,7 +24,11 @@ import java.time.format.DateTimeParseException
 import javax.crypto.spec.SecretKeySpec
 
 
-class Restore {
+class Restore : ExportConfig(ExportVersion.V1) {
+
+    private fun XmlPullParser.getTrimmedAttributeValue(name: String): String =
+        getAttributeValue("", name)?.trim() ?: ""
+
     data class BackupData(val data: List<String>) {
         fun getSalt(): Salt = Salt(data[0].hexToByteArray())
         fun getEncryptedMasterKey(): IVCipherText =
@@ -71,7 +77,6 @@ class Restore {
             sr.getEncryptedBackup(),
             decryptMasterKey(sr, userPassword)
         )
-        val plainDocument = String(document)
         return ByteArrayInputStream(
             document
         )
@@ -95,19 +100,18 @@ class Restore {
         myParser: XmlPullParser,
     ): Int {
         fun XmlPullParser.getEncryptedAttribute(name: String): IVCipherText {
-            val iv = getAttributeValue(null, "iv_$name")
-            val cipher = getAttributeValue(null, "cipher_$name")
-            if (iv.isNotEmpty() && cipher.isNotEmpty()) {
+            val iv = getTrimmedAttributeValue("iv_$name")
+            val cipher = getTrimmedAttributeValue("cipher_$name")
+            if (iv.isNotBlank() && cipher.isNotBlank()) {
                 return IVCipherText(iv.hexToByteArray(), cipher.hexToByteArray())
             }
             return IVCipherText.getEmpty()
         }
 
         fun XmlPullParser.maybeGetText(gotTextNode: (encryptedText: IVCipherText) -> Unit) {
-            val iv = getAttributeValue(null, "iv")
+            val iv = getTrimmedAttributeValue("iv")
             next()
-            if (eventType == XmlPullParser.TEXT && text != null && iv.isNotEmpty()) {
-                // sweet, got the text!
+            if (eventType == XmlPullParser.TEXT && text != null && iv.isNotBlank()) {
                 gotTextNode.invoke(
                     IVCipherText(
                         iv.hexToByteArray(),
@@ -122,13 +126,26 @@ class Restore {
         var password: DecryptablePasswordEntry? = null
         var passwords = 0
         while (myParser.eventType != XmlPullParser.END_DOCUMENT) {
-            //Log.e("---", "Process name ${myParser.name}")
             when (myParser.eventType) {
                 XmlPullParser.START_TAG -> {
                     path.add(myParser.name)
-                    // Log.e("++", "Process START ${path.joinToString(separator = ".")}")
+
                     when (path.joinToString(separator = ".")) {
                         "PasswordSafe" -> {
+                            val rawVersion = myParser.getTrimmedAttributeValue("version")
+                            val version =
+                                ExportVersion.entries.firstOrNull { it.version == rawVersion }
+                                    ?: throw IllegalArgumentException("Unsupported export version ($rawVersion)")
+                            if (version != currentVersion) {
+                                // Don't remove this template below, right now it is defunct, but
+                                // if we ever need to change the version code, linter will cause error
+                                // here and remind you to handle the situation
+                                when (version) {
+                                    ExportVersion.V1 -> {
+                                        // current version - currently
+                                    }
+                                }
+                            }
                         }
 
                         "PasswordSafe.category" -> {
@@ -147,7 +164,6 @@ class Restore {
 
                         "PasswordSafe.category.item.description" -> {
                             require(password != null) { "Must have password entry" }
-                            // nextText make pull parser SKIP end tag!
                             myParser.maybeGetText {
                                 password!!.description = it
                             }
@@ -169,12 +185,16 @@ class Restore {
 
                         "PasswordSafe.category.item.password" -> {
                             require(password != null) { "Must have password entry" }
-                            val changed = myParser.getAttributeValue(null, "changed")
-                            if (changed != null) {
+                            val changed = myParser.getTrimmedAttributeValue("changed")
+                            if (changed.isNotBlank()) {
                                 try {
                                     password.passwordChangedDate = DateUtils.newParse(changed)
                                 } catch (ex: DateTimeParseException) {
-                                    // silenty fail
+                                    // silently fail, parse failure ain't critical
+                                    // and no corrective measure here, passwords are more important
+                                    if (BuildConfig.DEBUG) {
+                                        Log.e(TAG, "Failed parsing password change data")
+                                    }
                                 }
                             }
                             myParser.maybeGetText {
@@ -203,10 +223,8 @@ class Restore {
             // suggested next()/text() breaks on e.g. <note></note> it skips the end ..unless doing this
             when (myParser.eventType) {
                 XmlPullParser.END_TAG -> {
-                    //Log.e("++", "Process END ${path.joinToString(separator = ".")}")
                     when (path.joinToString(separator = ".")) {
                         "PasswordSafe" -> {
-                            val version = myParser.getAttributeValue(null, "version")
                             // All should be finished now
                             db.setTransactionSuccessful()
                             db.endTransaction()
@@ -229,5 +247,9 @@ class Restore {
             myParser.next()
         }
         return passwords
+    }
+
+    companion object {
+        const val TAG = "Restore"
     }
 }

@@ -42,7 +42,7 @@ object PasswordGenerator {
                     pass.append(charset[pos])
                 }
             }
-            // also ensure there's at least 2 character from each class
+            // also ensure there's at least 2 characters from each class
             // since we randomly generate the password, there's a probability that all are
             // say just numbers
         } while ((passUpper && pass.count { character -> upperCases.contains(character) } < 2) ||

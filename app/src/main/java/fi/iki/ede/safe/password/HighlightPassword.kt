@@ -21,7 +21,7 @@ object HighlightPassword {
      * S, 5
      * Z, 2
      */
-    fun hilite(password: String): TransformedText {
+    fun highlight(password: String): TransformedText {
         if (TextUtils.isEmpty(password)) {
             return TransformedText(
                 buildAnnotatedString { append("") },
@@ -44,14 +44,7 @@ object HighlightPassword {
                                 append(it)
                             }
                         }
-
-                        // No need to highligth as separate already above
-//                    'O', 'B', 'G', 'S', 'Z' -> {
-//                        withStyle(style = SpanStyle(Color.Yellow)) {
-//                            append(it)
-//                        }
-//                    }
-
+                        
                         else -> {
                             append(it)
                         }

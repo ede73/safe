@@ -121,7 +121,6 @@ class AutoLockService : Service() {
                 timeRemaining = 0
             }
         }
-        // TODO: Ugly hack
         lt.start()
         t = lt
         timeRemaining = timeoutUntilStop

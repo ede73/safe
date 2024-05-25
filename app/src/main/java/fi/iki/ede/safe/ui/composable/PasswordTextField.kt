@@ -53,7 +53,7 @@ fun passwordTextField(
         label = { Text(stringResource(id = textTip)) },
         visualTransformation = if (revealPassword) {
             if (highlite) {
-                VisualTransformation { HighlightPassword.hilite(password) }
+                VisualTransformation { HighlightPassword.highlight(password) }
             } else {
                 VisualTransformation.None
             }

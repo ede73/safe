@@ -14,13 +14,7 @@ import java.time.ZonedDateTime
  *
  */
 class DecryptablePasswordEntry(categoryId: Long) {
-    var id: Long? = null
     var categoryId: Long? = categoryId
-    var password: IVCipherText = IVCipherText.getEmpty()
-    var username: IVCipherText = IVCipherText.getEmpty()
-    var website: IVCipherText = IVCipherText.getEmpty()
-    var note: IVCipherText = IVCipherText.getEmpty()
-    var photo: IVCipherText = IVCipherText.getEmpty()
     var description: IVCipherText = IVCipherText.getEmpty()
         set(value) {
             if (field != value) {
@@ -28,9 +22,16 @@ class DecryptablePasswordEntry(categoryId: Long) {
                 decryptedCachedPlainDescription = null
             }
         }
+    var id: Long? = null
+    var note: IVCipherText = IVCipherText.getEmpty()
+    var password: IVCipherText = IVCipherText.getEmpty()
 
     // Password changed date(time) is not privacy critical (hence unencrypted)
     var passwordChangedDate: ZonedDateTime? = null
+    var photo: IVCipherText = IVCipherText.getEmpty()
+    var username: IVCipherText = IVCipherText.getEmpty()
+    var website: IVCipherText = IVCipherText.getEmpty()
+
     private var decryptedCachedPlainDescription: String? = null
 
     val plainPassword: String
@@ -101,4 +102,19 @@ class DecryptablePasswordEntry(categoryId: Long) {
     init {
         this.description = IVCipherText.getEmpty()
     }
+
+    // Flow state is annoying since it requires NEW ENTITIES for changes to register
+    fun copy(): DecryptablePasswordEntry = DecryptablePasswordEntry(categoryId!!).apply {
+        description = this@DecryptablePasswordEntry.description
+        decryptedCachedPlainDescription =
+            this@DecryptablePasswordEntry.decryptedCachedPlainDescription
+        id = this@DecryptablePasswordEntry.id
+        note = this@DecryptablePasswordEntry.note
+        password = this@DecryptablePasswordEntry.password
+        passwordChangedDate = this@DecryptablePasswordEntry.passwordChangedDate
+        photo = this@DecryptablePasswordEntry.photo
+        username = this@DecryptablePasswordEntry.username
+        website = this@DecryptablePasswordEntry.website
+    }
+
 }

@@ -30,8 +30,7 @@ object DBHelperFactory {
     fun getDBHelper(context: Context) = DBHelper(context)
 }
 
-class DBHelper// Alas API 33:OpenParams.Builder().setJournalMode(JOURNAL_MODE_MEMORY).build()// See comment in factory (AndroidTest fix)
-internal constructor(context: Context) : SQLiteOpenHelper(
+class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
     context, DATABASE_NAME, null, DATABASE_VERSION,
     // Alas API 33:OpenParams.Builder().setJournalMode(JOURNAL_MODE_MEMORY).build()
 ) {
@@ -52,7 +51,7 @@ internal constructor(context: Context) : SQLiteOpenHelper(
                 // the version is NOT set(ie.0) (but the tables might exist since previous installation)
                 // we'll swallow the exception
                 if (version != 0) {
-                    // how ever if there ALREADY is a versioning AND
+                    // however if there ALREADY is a versioning AND
                     // table somehow exists, this is an error
                     throw ex
                 }
@@ -85,14 +84,13 @@ internal constructor(context: Context) : SQLiteOpenHelper(
         Log.i(TAG, "Downgrade $oldVersion to $newVersion")
     }
 
-    fun isUninitializedDatabase(): Boolean {
-        return try {
-            val f = fetchSalt()
-            f.isEmpty()
-        } catch (ex: SQLException) {
-            true
-        }
+    fun isUninitializedDatabase(): Boolean = try {
+        val f = fetchSalt()
+        f.isEmpty()
+    } catch (ex: SQLException) {
+        true
     }
+
 
     private fun fetchSalt(): Salt {
         readableDatabase.use { db ->
@@ -159,7 +157,7 @@ internal constructor(context: Context) : SQLiteOpenHelper(
             if (c.count > 0) {
                 c.moveToFirst()
                 c.getDBID("id")
-            } else { // there's not already such a category...
+            } else { // there isn't already such a category...
                 val initialValues = ContentValues()
                 initialValues.put("name", entry.encryptedName)
                 this.writableDatabase.insert(TABLE_CATEGORIES, null, initialValues)
@@ -194,7 +192,7 @@ internal constructor(context: Context) : SQLiteOpenHelper(
     }
 
     private fun Cursor.getZonedDateTimeOfPasswordChange(): ZonedDateTime? {
-        val columnName = COL_PASSWORDS_PASSWORDCHANGEDDATE
+        val columnName = COL_PASSWORDS_PASSWORD_CHANGED_DATE
         val date = getString(getColumnIndexOrThrow(columnName))
         if (!TextUtils.isEmpty(date)) {
             try {
@@ -234,21 +232,6 @@ internal constructor(context: Context) : SQLiteOpenHelper(
         this.writableDatabase.update(TABLE_CATEGORIES, args, "id=$id", null)
     }
 
-//    fun countPasswords(categoryId: DBID? = null): Int {
-//        var selection: String? = null
-//        if (categoryId != null) {
-//            selection = "category=$categoryId"
-//        }
-//        val c = this.readableDatabase.query(
-//            TABLE_PASSWORDS, arrayOf("count(*)"),
-//            selection, null, null, null, null
-//        )
-//        c.moveToFirst()
-//        val count = c.getInt(0)
-//        c.close()
-//        return count
-//    }
-
     fun fetchAllRows(categoryId: DBID? = null): List<DecryptablePasswordEntry> {
         val ret = ArrayList<DecryptablePasswordEntry>()
         val rows = arrayOf(
@@ -259,7 +242,7 @@ internal constructor(context: Context) : SQLiteOpenHelper(
             COL_PASSWORDS_WEBSITE,
             COL_PASSWORDS_NOTE,
             COL_PASSWORDS_CATEGORY,
-            COL_PASSWORDS_PASSWORDCHANGEDDATE,
+            COL_PASSWORDS_PASSWORD_CHANGED_DATE,
             COL_PASSWORDS_PHOTO
         )
         val c: Cursor = this.readableDatabase.query(
@@ -271,7 +254,6 @@ internal constructor(context: Context) : SQLiteOpenHelper(
         c.moveToFirst()
         for (i in 0 until numRows) {
             val passwordRow = DecryptablePasswordEntry(c.getDBID(COL_PASSWORDS_CATEGORY))
-            //row.categoryId = categoryId
             passwordRow.id = c.getDBID(COL_PASSWORDS_ID)
             passwordRow.password = c.getIVCipher(COL_PASSWORDS_PASSWORD)
             passwordRow.description = c.getIVCipher(COL_PASSWORDS_DESCRIPTION)
@@ -303,7 +285,7 @@ internal constructor(context: Context) : SQLiteOpenHelper(
         args.put(COL_PASSWORDS_PHOTO, entry.photo)
         if (entry.passwordChangedDate != null) {
             args.put(
-                COL_PASSWORDS_PASSWORDCHANGEDDATE,
+                COL_PASSWORDS_PASSWORD_CHANGED_DATE,
                 entry.passwordChangedDate!!
             )
         }
@@ -317,11 +299,11 @@ internal constructor(context: Context) : SQLiteOpenHelper(
         return entry.id as DBID
     }
 
-//    fun updatePasswordCategory(id: DBID, newCategoryId: DBID) {
-//        val args = ContentValues()
-//        args.put("category", newCategoryId)
-//        this.writableDatabase.update(TABLE_PASSWORDS, args, "id=$id", null)
-//    }
+    fun updatePasswordCategory(id: DBID, newCategoryId: DBID) {
+        val args = ContentValues()
+        args.put("category", newCategoryId)
+        this.writableDatabase.update(TABLE_PASSWORDS, args, "id=$id", null)
+    }
 
     private fun ContentValues.put(key: String, value: IVCipherText) {
         put(key, value.combineIVAndCipherText())
@@ -346,7 +328,7 @@ internal constructor(context: Context) : SQLiteOpenHelper(
         initialValues.put(COL_PASSWORDS_PHOTO, entry.photo)
         if (entry.passwordChangedDate != null) {
             initialValues.put(
-                COL_PASSWORDS_PASSWORDCHANGEDDATE,
+                COL_PASSWORDS_PASSWORD_CHANGED_DATE,
                 entry.passwordChangedDate!!
             )
         }
@@ -395,7 +377,7 @@ internal constructor(context: Context) : SQLiteOpenHelper(
         private const val COL_PASSWORDS_NOTE = "note"
         private const val COL_PASSWORDS_PHOTO = "photo"
 
-        private const val COL_PASSWORDS_PASSWORDCHANGEDDATE = "passwordchangeddate"
+        private const val COL_PASSWORDS_PASSWORD_CHANGED_DATE = "passwordchangeddate"
         private const val PASSWORDS_CREATE = """CREATE TABLE $TABLE_PASSWORDS (
                 $COL_PASSWORDS_ID INTEGER PRIMARY KEY AUTOINCREMENT,
                 $COL_PASSWORDS_CATEGORY INTEGER NOT NULL,
@@ -405,7 +387,7 @@ internal constructor(context: Context) : SQLiteOpenHelper(
                 $COL_PASSWORDS_WEBSITE TEXT,
                 $COL_PASSWORDS_NOTE TEXT,
                 $COL_PASSWORDS_PHOTO TEXT,
-                $COL_PASSWORDS_PASSWORDCHANGEDDATE TEXT);"""
+                $COL_PASSWORDS_PASSWORD_CHANGED_DATE TEXT);"""
         private const val PASSWORDS_DROP = "DROP TABLE $TABLE_PASSWORDS;"
         private const val CATEGORIES_CREATE = """CREATE TABLE $TABLE_CATEGORIES (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -417,14 +399,3 @@ internal constructor(context: Context) : SQLiteOpenHelper(
         private const val SALT_CREATE = "CREATE TABLE $TABLE_SALT (salt TEXT NOT NULL);"
     }
 }
-
-//fun ContentValues.put(key: String, salt: Salt) {
-//    put(key, salt.toHex())
-//}
-
-//fun ContentValues.put(
-//    key: String,
-//    encryptedPassword: EncryptedPassword
-//) {
-//    put(key, encryptedPassword.toHex())
-//}

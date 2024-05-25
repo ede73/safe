@@ -96,7 +96,6 @@ open class LoginScreen : ComponentActivity() {
         )
         val firstTimeUse = DBHelperFactory.getDBHelper(context).isUninitializedDatabase()
 
-        //KeyStoreHelperFactory.getKeyStoreHelper()
         setContent {
             SafeTheme {
                 Surface(

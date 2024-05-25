@@ -1,9 +1,11 @@
 package fi.iki.ede.safe.model
 
 import android.content.Context
+import android.widget.Toast
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.SaltedPassword
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
+import fi.iki.ede.safe.R
 import fi.iki.ede.safe.db.DBHelperFactory
 
 object LoginHandler {
@@ -27,7 +29,15 @@ object LoginHandler {
             loggedIn = true
             true
         } catch (ex: Exception) {
-            // TODO: Toast..
+            try {
+                Toast.makeText(
+                    context, context.getString(R.string.login_invalid_password),
+                    Toast.LENGTH_SHORT
+                ).show()
+            } catch (ex: Exception) {
+                // TODO: unit test context dies on resource fetch
+
+            }
             false
         }
     }

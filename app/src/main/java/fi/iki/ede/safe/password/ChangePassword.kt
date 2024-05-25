@@ -23,21 +23,20 @@ object ChangePassword {
         val (salt, ivCipher) = dbHelper.fetchSaltAndEncryptedMasterKey()
         val existingPBKDF2Key = generatePBKDF2(salt, oldPass)
         val newPBKDF2Key = generatePBKDF2(salt, newPass)
-        //val dispatcher = Executors.newFixedThreadPool(2).asCoroutineDispatcher()
         val myScope = CoroutineScope(Dispatchers.Main)
 
         try {
             val decryptedMasterKey = decryptMasterKey(existingPBKDF2Key, ivCipher)
             val newEncryptedMasterKey = encryptMasterKey(newPBKDF2Key, decryptedMasterKey.encoded)
+            dbHelper.beginRestoration()
             dbHelper.storeSaltAndEncryptedMasterKey(salt, newEncryptedMasterKey)
             myScope.launch {
-                // TODO: IO TO loadFromDatabase!?
                 withContext(Dispatchers.IO) {
                     DataModel.loadFromDatabase()
                 }
             }
             // TODO: Actually why should we clear the bio..it is not tied directly to the
-            // key generation in anyway (at the momement!) - it COULD THOUGH!
+            // key generation in anyway (at the moment!) - it COULD THOUGH!
             // Also reset biometric password and android keystore
             Biometrics.clearBiometricKeys(context)
             return true

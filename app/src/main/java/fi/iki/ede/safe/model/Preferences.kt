@@ -55,10 +55,6 @@ object Preferences {
         PREFERENCE_LOCK_TIMEOUT_DEFAULT_VALUE
     )?.toIntOrNull() ?: PREFERENCE_LOCK_TIMEOUT_DEFAULT_VALUE.toInt()
 
-//    fun getNotificationPermissionRequired(context: Context, value: Boolean) =
-//        PreferenceManager.getDefaultSharedPreferences(context)
-//            .getBoolean(NOTIFICATION_PERMISSION_REQUIRED, value)
-
     fun setNotificationPermissionRequired(context: Context, value: Boolean) =
         PreferenceManager.getDefaultSharedPreferences(context).edit()
             .putBoolean(NOTIFICATION_PERMISSION_REQUIRED, value).apply()

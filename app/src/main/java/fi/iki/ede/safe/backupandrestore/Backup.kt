@@ -13,34 +13,13 @@ import org.xmlpull.v1.XmlPullParserFactory
 import org.xmlpull.v1.XmlSerializer
 import java.io.StringWriter
 
-
 /**
- * Create a backup document. Format as follows:
- * - HEXADECIMAL SALT
- * - Master key encrypted with PBKDF2 user generated key
- * - IV + Document XML encrypted
- *
- * Decryption can be done as follows:
- * 1) Extract SALT from the file
- * 2) Generate PBKDF2 key: DEC_KEY=$(openssl enc -aes-256-cbc -P -md sha256 -S $SALT -iter 20000 -pbkdf2|grep key|cut -d= -f2)
- * 3) Extract encrypted master key from the file (with IV)
- * 4) Extract IV from the encrypted master key (256/16 first bytes): IV=$(echo "$ENCRYPTED_IVD_MASTERKEY" | cut -c1-32)
- * 5) Remove IV from the encrypted master key: ENCRYPTED_MASTERKEY=$(echo "$ENCRYPTED_IVD_MASTERKEY" | cut -c33-)
- * 6) Decrypt master key: MASTER_KEY=$(echo -n $ENCRYPTED_MASTERKEY|xxd -r -p -|base64 | openssl enc -aes-256-cbc -d -a -iv $IV -K $DEC_KEY -nosalt|xxd -c222 -p
- * 7) Extract the document from the file
- * 8) Extract IV from the document: DOCUMENT_IV=$(echo $DOCUMENT|cut -c1-32)
- * 9) Extract cipher text (the document): DOCUMENT=$(echo $DOCUMENT|cut -c33-)
- * 10) Decrypt the document: echo -n $DOCUMENT|xxd -r -p -|base64| openssl enc -aes-256-cbc -d -a -iv $DOCUMENT_IV -K $MASTER_KEY -nosalt
- *
- * Done!
- *
- * TODO: TO AVOID processing (decrypting/re-encrypting data) actually let it be encrypted (it's double encryption)
- *
- * ie. encrypted_with_master_key{..<description>encrypted_with_master_key{description}</description>..}
- * it is ugly, to avoid ever processing unencrypted data (even if we're streaming) and preventing memory dumps
  * TODO: Add HMAC
+ *
+ * If you EVER introduce a breaking change (namespace, remove elements, rename attributes)
+ * Make sure to increase the version code. Linter will highlight places to fix
  */
-class Backup {
+class Backup : ExportConfig(ExportVersion.V1) {
     val ks = KeyStoreHelperFactory.getKeyStoreHelper()
 
     private fun XmlSerializer.addTagAndCData(
@@ -57,7 +36,7 @@ class Backup {
             }
             .let {
                 it.attribute(null, "iv", encryptedValue.iv.toHexString())
-                if (encryptedValue != null) it.text(encryptedValue.cipherText.toHexString())
+                it.text(encryptedValue.cipherText.toHexString())
                 this
             }
             .endTag(null, name)
@@ -93,7 +72,7 @@ class Backup {
         serializer.setOutput(xmlStringWriter)
 
         serializer.startTag(null, "PasswordSafe")
-            .attribute(null, "version", "1")
+            .attribute(null, "version", currentVersion.version)
 
         for (category in DataModel.getCategories()) {
             serializer.startTagWithAttribute(
@@ -110,11 +89,6 @@ class Backup {
         serializer.endDocument()
         val makeThisStreaming = xmlStringWriter.toString()
         assert(!TextUtils.isEmpty(makeThisStreaming)) { "Something is broken, XML serialization produced empty file" }
-        // TODO: Instead KS, use..
-        // {salt}
-        // {PKCS#12 PBE AES}
-        // encryption
-
         val encryptedBackup = ks.encryptByteArray(makeThisStreaming.toByteArray())
 
         val backup = StringWriter()

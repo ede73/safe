@@ -147,7 +147,7 @@ class BackupAndRestoreTest {
 
         mockDb(
             salt,
-            cipheredMasterKey // ivcipher
+            cipheredMasterKey // iv+cipher
         )
     }
 
@@ -171,7 +171,3 @@ a140e6578ca43fa20e6e9fa74e4a5079b695f1c65d77f362d0880ce36e170203dacf3278664e25ea
 """
     }
 }
-
-//private infix fun <T, B> MockKStubScope<T, B>.returns(function: () -> B) {
-//
-//}

@@ -112,4 +112,10 @@
     <string name="restore_screen_begin_restore">Begin restoration, please wait</string>
     <string name="restore_screen_restore_failed">Restoration failed</string>
     <string name="restore_screen_restored">Restoration complete: %1$d</string>
+    <string name="clipboard_cleared">Clipboard cleared!</string>
+    <string name="move_password_cancel">Don\'t move</string>
+    <string name="move_password_confirm">Move!</string>
+    <string name="move_password_select_category">Select category to move to</string>
+    <string name="move_password_title">Move password to %1$s</string>
+    <string name="login_invalid_password">Invalid password</string>
 </resources>

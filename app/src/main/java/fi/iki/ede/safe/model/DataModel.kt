@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+// hot events not actually used...
 sealed class PasswordSafeEvent {
     sealed class CategoryEvent : PasswordSafeEvent() {
         data class Added(val category: DecryptableCategoryEntry) : CategoryEvent()
@@ -61,13 +62,13 @@ object DataModel {
     // Test only now...
     val passwordsSharedFlow: SharedFlow<PasswordSafeEvent.PasswordEvent> get() = _passwordsSharedFlow
 
-
     private var db: DBHelper? = null
 
-    // for testing(test mocking) (actually do I....any more!?)
-//    private fun getModel(): LinkedHashMap<DecryptableCategoryEntry, MutableList<DecryptablePasswordEntry>> {
-//        return _categoriesAndPasswordsHash
-//    }
+    fun DecryptablePasswordEntry.getCategory(): DecryptableCategoryEntry =
+        _categories.keys.first { it.id == categoryId }
+
+    fun DecryptableCategoryEntry.getCategory(): DecryptableCategoryEntry =
+        _categories.keys.first { it.id == id }
 
     // no cost using (gets (encrypted) categories from memory)
     fun getCategories(): List<DecryptableCategoryEntry> = _categories.keys.toList()
@@ -79,8 +80,6 @@ object DataModel {
     fun getCategorysPasswords(categoryId: DBID): List<DecryptablePasswordEntry> =
         _categories.filter { it.key.id == categoryId }.values.flatten()
 
-    private fun _returnCategoryById(categoryId: DBID): DecryptableCategoryEntry =
-        _categories.keys.first { it.id == categoryId }
 
     // TODO: RENAME
     suspend fun addOrEditCategory(category: DecryptableCategoryEntry) {
@@ -91,27 +90,33 @@ object DataModel {
                 _categories[category] = mutableListOf()
                 _categoriesSharedFlow.emit(PasswordSafeEvent.CategoryEvent.Added(category))
             } else {
-                // No need to change anything in the list!? Lists category object isn't OUR object
-                // SO I think we'd need to actualy COPY PARAMETERS
                 db!!.updateCategory(category.id!!, category)
 
-                val existingCategory = _categories.keys.first { it.id == category.id }
+                // Update model
+                val existingCategory = category.getCategory()
                 val oldPasswords = _categories[existingCategory]
-                category.containedPasswordCount = existingCategory.containedPasswordCount
+                val newUpdatedCategory = category.copy()
+                newUpdatedCategory.containedPasswordCount = category.containedPasswordCount
                 _categories.remove(existingCategory)
-                _categories[category] = oldPasswords!!
-                _categoriesSharedFlow.emit(PasswordSafeEvent.CategoryEvent.Updated(category))
+                _categories[newUpdatedCategory] = oldPasswords!!
+                _categoriesSharedFlow.emit(
+                    PasswordSafeEvent.CategoryEvent.Updated(
+                        newUpdatedCategory
+                    )
+                )
             }
             _categoriesStateFlow.value = _categories.keys.toList()
         }
     }
 
     suspend fun deleteCategory(category: DecryptableCategoryEntry) {
-        require(_returnCategoryById(category.id as DBID) == category) {
+        require(category.getCategory() == category) {
             "Alas category OBJECTS THEMSELVES are different, and SEARCH is needed"
         }
         CoroutineScope(Dispatchers.IO).launch {
             db!!.deleteCategory(category.id!!)
+
+            // Update model
             _categories.remove(category)
             _categoriesStateFlow.value = _categories.keys.toList()
             _categoriesSharedFlow.emit(PasswordSafeEvent.CategoryEvent.Deleted(category))
@@ -128,6 +133,8 @@ object DataModel {
             if (password.id == null) {
                 // we're adding a new PWD
                 password.id = db!!.addPassword(password)
+
+                // Update model
                 _categories[category]!!.add(password)
                 val newCategory =
                     updateCategoriesPasswordCount(
@@ -142,6 +149,8 @@ object DataModel {
                 )
             } else {
                 db!!.updatePassword(password)
+
+                // Update model
                 val passwords = _categories[category]
                 val index = passwords!!.indexOfFirst { it.id == password.id }
                 passwords[index] = password
@@ -156,6 +165,50 @@ object DataModel {
         }
     }
 
+    suspend fun movePassword(
+        password: DecryptablePasswordEntry,
+        targetCategory: DecryptableCategoryEntry
+    ) {
+        require(password.categoryId != null) { "Password's category must be known" }
+        CoroutineScope(Dispatchers.IO).launch {
+            db!!.updatePasswordCategory(password.id!!, targetCategory.id!!)
+
+            // Update model
+            val oldCategory = password.getCategory()
+            val updatedOldCategory = updateCategoriesPasswordCount(
+                oldCategory,
+                oldCategory.containedPasswordCount - 1,
+            )
+
+            _categories[updatedOldCategory]!!.remove(password)
+
+            val copyOfPassword = password.copy().apply {
+                categoryId = targetCategory.id
+            }
+
+            val updatedTargetCategory = updateCategoriesPasswordCount(
+                targetCategory,
+                targetCategory.containedPasswordCount + 1,
+            )
+
+            _categories[updatedTargetCategory]!!.add(copyOfPassword)
+            _categoriesStateFlow.value = _categories.keys.toList()
+            _passwordsStateFlow.value = _categories.values.flatten()
+            _passwordsSharedFlow.emit(
+                PasswordSafeEvent.PasswordEvent.Removed(
+                    updatedTargetCategory,
+                    copyOfPassword
+                )
+            )
+            _passwordsSharedFlow.emit(
+                PasswordSafeEvent.PasswordEvent.Added(
+                    updatedTargetCategory,
+                    copyOfPassword
+                )
+            )
+        }
+    }
+
     suspend fun deletePassword(password: DecryptablePasswordEntry) {
         require(password.categoryId != null) { "Password's category must be known" }
         require(getPassword(password.id as DBID) == password) {
@@ -163,17 +216,19 @@ object DataModel {
         }
         CoroutineScope(Dispatchers.IO).launch {
             db!!.deletePassword(password.id!!)
-            val category = _returnCategoryById(password.categoryId as DBID)
-            val newCategory =
+
+            // Update model
+            val category = password.getCategory()
+            val updatedCategory =
                 updateCategoriesPasswordCount(
                     category,
                     category.containedPasswordCount - 1,
                 )
-            _categories[newCategory]!!.remove(password)
+            _categories[updatedCategory]!!.remove(password)
             _passwordsStateFlow.value = _categories.values.flatten()
             _passwordsSharedFlow.emit(
                 PasswordSafeEvent.PasswordEvent.Removed(
-                    newCategory,
+                    updatedCategory,
                     password
                 )
             )
@@ -186,26 +241,24 @@ object DataModel {
         category: DecryptableCategoryEntry,
         newPasswordCount: Int,
     ): DecryptableCategoryEntry {
-        val newCat = DecryptableCategoryEntry().apply {
-            id = category.id
-            encryptedName = category.encryptedName
+        val copyOfCategory = category.copy().apply {
             containedPasswordCount = newPasswordCount
         }
+
         val oldPasswords = _categories[category]
         _categories.remove(category)
-        _categories[newCat] = oldPasswords!!
+        _categories[copyOfCategory] = oldPasswords!!
 
         // THis provides CALMER updates than .value= rump'em all
         _categoriesStateFlow.update {
             it.map { cat ->
                 if (cat.id == category.id) {
-                    newCat
+                    copyOfCategory
                 } else cat
             }
         }
-        //_categoriesStateFlow.value = _categories.keys.toList()
-        _categoriesSharedFlow.emit(PasswordSafeEvent.CategoryEvent.Updated(newCat))
-        return newCat
+        _categoriesSharedFlow.emit(PasswordSafeEvent.CategoryEvent.Updated(copyOfCategory))
+        return copyOfCategory
     }
 
     suspend fun loadFromDatabase() {
@@ -215,6 +268,8 @@ object DataModel {
 
         fun loadCategoriesFromDB() {
             val categories = db!!.fetchAllCategoryRows()
+
+            // Update model
             // Quickly update all categories first and then the slow one..all the passwords of all the categories...
             categories.forEach { category ->
                 _categories[category] = mutableListOf()
@@ -229,6 +284,8 @@ object DataModel {
             val catKeys = _categories.keys.toList()
             catKeys.forEach { category ->
                 val categoriesPasswords = db!!.fetchAllRows(categoryId = category.id as DBID)
+
+                // Update model
                 _categories[category]!!.addAll(categoriesPasswords)
                 val newCategory = updateCategoriesPasswordCount(
                     category,
