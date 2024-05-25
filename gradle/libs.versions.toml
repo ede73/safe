@@ -1,0 +1,54 @@
+[versions]
+activityCompose = "1.9.0"
+agp = "8.4.1"
+appcompat = "1.6.1"
+bcprovJdk16 = "1.46"
+biometricKtx = "1.2.0-alpha05"
+coreKtx = "1.13.1"
+espressoCore = "3.5.1"
+junit = "4.13.2"
+junitVersionKtx = "1.1.5"
+kotlin = "1.9.0"
+kxml2 = "2.3.0"
+material = "1.12.0"
+material3Android = "1.2.1"
+materialIconsExtendedAndroid = "1.6.7"
+mockk = "1.13.11"
+mockkAgent = "1.13.11"
+mockkAndroid = "1.13.11"
+preferenceKtx = "1.2.1"
+rules = "1.5.0"
+runner = "1.5.0"
+uiTestJunit4Android = "1.6.7"
+uiToolingPreviewAndroid = "1.6.7"
+uiautomator = "2.3.0"
+volley = "1.2.1"
+
+[libraries]
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+androidx-biometric-ktx = { group = "androidx.biometric", name = "biometric-ktx", version.ref = "biometricKtx" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-junit-ktx = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "junitVersionKtx" }
+androidx-material-icons-extended-android = { group = "androidx.compose.material", name = "material-icons-extended-android", version.ref = "materialIconsExtendedAndroid" }
+androidx-material3-android = { group = "androidx.compose.material3", name = "material3-android", version.ref = "material3Android" }
+androidx-preference-ktx = { group = "androidx.preference", name = "preference-ktx", version.ref = "preferenceKtx" }
+androidx-rules = { group = "androidx.test", name = "rules", version.ref = "rules" }
+androidx-runner = { module = "androidx.test:runner", version.ref = "runner" }
+androidx-ui-test-junit4-android = { group = "androidx.compose.ui", name = "ui-test-junit4-android", version.ref = "uiTestJunit4Android" }
+androidx-ui-tooling-preview-android = { group = "androidx.compose.ui", name = "ui-tooling-preview-android", version.ref = "uiToolingPreviewAndroid" }
+androidx-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "uiautomator" }
+bcprov-jdk16 = { module = "org.bouncycastle:bcprov-jdk16", version.ref = "bcprovJdk16" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+kxml2 = { group = "net.sf.kxml", name = "kxml2", version.ref = "kxml2" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+mockk-agent = { group = "io.mockk", name = "mockk-agent", version.ref = "mockkAgent" }
+mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockkAndroid" }
+volley = { module = "com.android.volley:volley", version.ref = "volley" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+

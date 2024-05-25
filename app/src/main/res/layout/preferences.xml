@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/prefsFragment"
+        android:name="fi.iki.ede.safe.ui.activities.PreferenceActivity$PreferenceFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:tag="fi.iki.ede.safe.PreferenceActivity$PreferenceFragment" />
+</androidx.constraintlayout.widget.ConstraintLayout>

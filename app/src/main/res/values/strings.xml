@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <!-- action bar -->
+    <string name="action_bar_backup">Backup</string>
+    <string name="action_bar_change_master_password">Change master password</string>
+    <string name="action_bar_change_password_ok">Change the password!</string>
+    <string name="action_bar_generate_password">Generate password</string>
+    <string name="action_bar_help">Help</string>
+    <string name="action_bar_lock">Lock app</string>
+    <string name="action_bar_old_password">Enter current password</string>
+    <string name="action_bar_old_restore">(OISafe compatible) Restore</string>
+    <string name="action_bar_password_change_failed">Failed changing password!</string>
+    <string name="action_bar_password_changed">Master password changed!</string>
+    <string name="action_bar_restore">Restore</string>
+    <string name="action_bar_search">Search</string>
+    <string name="action_bar_settings">Settings</string>
+
+    <string name="application_name">Password Safe</string>
+
+    <!-- biometrics -->
+    <string name="biometrics_authenticate_subtitle">Please authenticate yourself, or click cancel and enter the password. If you cancel, biometrics will be forgotten. You can easily re-enroll.</string>
+    <string name="biometrics_authenticate_title">Authentication required</string>
+    <string name="biometrics_register">Register biometrics after successful login</string>
+    <string name="biometrics_register_subtitle">In order to bypass the password, biometrics need to be recorded. You can always cancel and fall back to password option. You can also turn off biometrics from settings later. You may be required to re-enroll biometrics periodically.</string>
+    <string name="biometrics_register_title">Registering new biometrics</string>
+
+    <!-- category list -->
+    <string name="category_list_delete">Delete %s?</string>
+    <string name="category_list_delete_confirm">Are you sure you want to delete %s?</string>
+    <string name="category_list_edit">Edit category %s</string>
+    <string name="category_list_edit_category">Edit category name</string>
+
+    <!-- generic reusables list -->
+    <string name="generic_add">Add</string>
+    <string name="generic_dont_delete">Don\'t delete!</string>
+    <string name="generic_ok">OK!</string>
+    <string name="generic_yes_delete">Do delete!</string>
+
+    <!-- login -->
+    <string name="login_button">Login</string>
+    <string name="login_password_tip">Enter your password</string>
+    <string name="login_tip">Open with your password - or optionally with biometrics if you registered</string>
+    <string name="login_verify_password_tip">Enter the same password again</string>
+    <string name="login_with_biometrics">Login with biometrics</string>
+
+    <!-- notifications -->
+    <string name="notification_lock_description">Notification when when password Safe is unlocked</string>
+    <string name="notification_lock_title">Automatic locking</string>
+    <string name="notification_lock_logged_in">Logged in</string>
+
+    <!-- password entry -->
+    <string name="password_entry_changed_date">Password last changed %s</string>
+    <string name="password_entry_description_required">Description cannot be empty. You have to specify it (or discard changes).</string>
+    <string name="password_entry_description_tip">Enter description of the entry</string>
+    <string name="password_entry_discard">Discard</string>
+    <string name="password_entry_note_tip">Notes about the entry</string>
+    <string name="password_entry_breach_check">Breach check</string>
+    <string name="password_entry_breached">This password has been breached</string>
+    <string name="password_entry_not_breached">This password has NOT been breached</string>
+    <string name="password_entry_password_label">Copy</string>
+    <string name="password_entry_password_tip">Enter password</string>
+    <string name="password_entry_save">Save?</string>
+    <string name="password_entry_save_info">You have unsaved changes.\nWould you like to save or discard them?</string>
+    <string name="password_entry_username_label">Copy</string>
+    <string name="password_entry_username_tip">Enter username</string>
+    <string name="password_entry_visit">Visit</string>
+    <string name="password_entry_website_tip">Enter website, like https://…</string>
+    <string name="password_list_delete">Are you sure to delete the password %s?</string>
+    <string name="password_list_delete_password">Delete password %s</string>
+    <string name="password_list_move_password">Move password %s</string>
+    <plurals name="password_list_password_age">
+        <item quantity="zero">(brand new)</item>
+        <item quantity="one">(%d day old)</item>
+        <item quantity="other">(%d days old)</item>
+    </plurals>
+
+    <!-- titles / manifest -->
+    <string name="title_activity_category_screen">Categories</string>
+    <string name="title_activity_help_screen">HelpScreen</string>
+    <string name="title_activity_password_entry_screen">PasswordEntryScreen</string>
+    <string name="title_activity_password_screen">PasswordScreen</string>
+    <string name="title_activity_password_search_screen">Password search</string>
+    <string name="title_activity_restore_screen">Restore passwords</string>
+    <string name="restore_screen_backup_help">You need the password of the backup in order to restore it.\nBackup file %s</string>
+    <string name="restore_screen_backups_password">Enter backup\'s password</string>
+
+
+    <!-- preferences -->
+    <plurals name="preference_locktime">
+        <item quantity="one">%d minute</item>
+        <item quantity="two">%d minutes</item>
+        <item quantity="many">%d minutes</item>
+        <item quantity="few">%d minutes</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
+    <string name="preferences_automatic_locking_selection_title">Choose automatic locking timeout</string>
+    <string name="preferences_summary_enable_biometrics">Instead of password you can login with biometrics. Password fallback always available. Android will take care of actual biometric authenticatin. Password safe only receives information whether it succeeded or not. Even when enabled you may have to occasionally re-enroll for added security.</string>
+    <string name="preferences_summary_lock_when_screen_locks">When android screen lock turns on, password safe will automatically lock</string>
+    <string name="preferences_summary_automatic_locking_timeout">After chosen amount of minutes, password safe will lock and require logging in again</string>
+    <string name="preferences_title_default_backup_path">Default backup path</string>
+    <string name="preferences_title_enable_biometrics">Enable biometric identification</string>
+    <string name="preferences_title_lock_when_screen_locks">Lock when screen locks</string>
+    <string name="preferences_title_automatic_locking_timeout">Automatic locking timeout</string>
+    <string name="preferences_title">Settings</string>
+    <string name="password_entry_capture_photo">Take a photo</string>
+    <string name="password_entry_delete_photo">Delete photo</string>
+    <string name="password_search_websites">+Websites</string>
+    <string name="password_search_usernames">+Usernames</string>
+    <string name="password_search_passwords">+Passwords</string>
+    <string name="password_search_notes">+Notes</string>
+    <string name="password_search_search_hint">Find from descriptions</string>
+    <string name="restore_screen_begin_restore">Begin restoration, please wait</string>
+    <string name="restore_screen_restore_failed">Restoration failed</string>
+    <string name="restore_screen_restored">Restoration complete: %1$d</string>
+</resources>

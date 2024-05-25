@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:installLocation="auto">
+
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        tools:ignore="ScopedStorage" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="true" />
+
+    <application
+        android:name=".SafeApplication"
+        android:allowBackup="true"
+        android:allowClearUserData="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:enableOnBackInvokedCallback="true"
+        android:fullBackupContent="false"
+        android:icon="@drawable/ic_launcher_safe"
+        android:label="@string/application_name"
+        android:theme="@style/Theme.AppCompat"
+        tools:targetApi="s">
+        <activity
+            android:name=".ui.activities.HelpScreen"
+            android:exported="false"
+            android:label="@string/title_activity_help_screen"
+            android:theme="@style/Theme.AppCompat" />
+        <activity
+            android:name=".ui.activities.PasswordEntryScreen"
+            android:exported="false"
+            android:label="@string/title_activity_password_entry_screen"
+            android:theme="@style/Theme.AppCompat" />
+        <activity
+            android:name=".ui.activities.PasswordListScreen"
+            android:exported="false"
+            android:label="@string/title_activity_password_screen"
+            android:theme="@style/Theme.AppCompat" />
+        <activity
+            android:name=".ui.activities.CategoryListScreen"
+            android:exported="false"
+            android:label="@string/title_activity_category_screen"
+            android:theme="@style/Theme.AppCompat" />
+        <activity
+            android:name=".ui.activities.PasswordSearchScreen"
+            android:exported="false"
+            android:label="@string/title_activity_password_search_screen"
+            android:theme="@style/Theme.AppCompat"
+            android:windowSoftInputMode="stateVisible" />
+        <activity
+            android:name=".ui.activities.RestoreScreen"
+            android:exported="false"
+            android:label="@string/title_activity_restore_screen"
+            android:theme="@style/Theme.AppCompat" />
+        <activity
+            android:name=".ui.activities.LoginScreen"
+            android:exported="true"
+            android:theme="@style/Theme.AppCompat">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <!--        <activity android:name=".password.ChangePassword" />-->
+        <activity android:name=".ui.activities.PreferenceActivity" />
+        <activity android:name=".ui.activities.Biometrics" />
+
+        <service
+            android:name=".service.AutoLockService"
+            android:enabled="true" />
+    </application>
+
+</manifest>

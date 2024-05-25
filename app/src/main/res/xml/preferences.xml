@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="@string/preferences_title">
+
+        <ListPreference
+            android:id="@+id/lock_time"
+            android:defaultValue="2"
+            android:dialogTitle="@string/preferences_automatic_locking_selection_title"
+            android:key="lock_timeout"
+            android:summary="@string/preferences_summary_automatic_locking_timeout"
+            android:title="@string/preferences_title_automatic_locking_timeout" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="biometrics"
+            android:summary="@string/preferences_summary_enable_biometrics"
+            android:title="@string/preferences_title_enable_biometrics" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="lock_on_screen_lock"
+            android:summary="@string/preferences_summary_lock_when_screen_locks"
+            android:title="@string/preferences_title_lock_when_screen_locks" />
+        <Preference
+            android:key="backup_path"
+            android:title="@string/preferences_title_default_backup_path" />
+    </PreferenceCategory>
+</PreferenceScreen>

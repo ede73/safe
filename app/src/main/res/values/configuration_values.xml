@@ -1,0 +1,4 @@
+<resources>
+    <integer name="password_default_length">18</integer>
+    <integer name="password_minimum_length">8</integer>
+</resources>

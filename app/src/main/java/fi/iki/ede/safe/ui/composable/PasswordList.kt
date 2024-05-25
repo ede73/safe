@@ -1,0 +1,44 @@
+package fi.iki.ede.safe.ui.composable
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import fi.iki.ede.crypto.DecryptablePasswordEntry
+
+@Composable
+fun PasswordList(passwords: List<DecryptablePasswordEntry>, onRefreshEntries: () -> Unit) {
+
+    val passwordItems = remember { mutableStateListOf<@Composable () -> Unit>() }
+    val passwordListHash = remember(passwords) { passwords.hashCode() }
+
+    LaunchedEffect(passwordListHash) {
+        var previousValue = ""
+        passwordItems.clear()
+        passwords.sortedBy { it.plainDescription.trim().lowercase() }.forEach { password ->
+            val beginning = password.plainDescription.substring(0, 1).uppercase()
+            if (previousValue != beginning) {
+                previousValue = beginning
+                passwordItems.add { PasswordRowHeader(headerString = beginning) }
+            }
+            passwordItems.add { PasswordRow(password, onRefreshEntries) }
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
+        //.border(BorderStroke(2.dp, SolidColor(Color.Red))),
+    ) {
+        passwordItems.forEach { composable ->
+            composable()
+        }
+    }
+}

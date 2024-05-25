@@ -1,0 +1,100 @@
+<HTML lang="en">
+<BODY>
+<H1>Introduction</H1>
+
+<P>Welcome to PasswordSafe! This little utility allows you to keep your various account details
+    safe.</P>
+
+<P>Everything is encrypted with AES-256-CBC. For safety, You cannot export plaintext data out of the
+    program. All the secret keys are held in Android Keystore , see
+    <A HREF="https://developer.android.com/reference/java/security/KeyStore">Android KeyStore</A>,
+    those cannot be exported either,
+    not any external utility cannot extract them.</P>
+
+<P>Account details are stored in local MySQL database - encrypted. Unlike other password utilities,
+    in memory copy of account details is also encrypted. Decrypted one by one briefly when searching
+    or editing.</P>
+
+<P>Encryption algorithm is OpenSSL compliant, so exported XML can be decrypted on a laptop. Unlinke
+    some password programs, export is completely encrypted. There's absolutely no hint about what
+    the file contains (there is no
+    &lt;email&gt;kdshksfdhfl
+    &lt;/email&gt; hints for example making hacker guess what content "kdshksfdhfl" could be).</P>
+
+<P>If copying usernames or passwords to clipboard, copied text is overwritten by empty text after 30
+    seconds, just to ensure they don't linger in clipboard.</P>
+
+<P>Program records when password has been changed, helping you to view password age.</P>
+
+<P>Biometric verification is supported, program automatically locks after a timeout or after screen
+    lock is turned on.</P>
+
+<P>Best of all, it never transfer anything to server, everything is held locally on your phone, with
+    2 exceptions:</P>
+<UL>
+    <LI>if you choose to export the data, you can save it on your phone or on a Google drive for
+        instance
+    </LI>
+    <LI>Automatic Google backup is utilized <A
+            HREF="https://support.google.com/android/answer/2819582">User documentation about
+        backups</A>,
+        <A HREF="https://developer.android.com/guide/topics/data/autobackup">developer
+            documentation</A>, also fully encrypted (doubly
+        encrypted, once by password safe, once by Google), this will store the backup on Your linked
+        Google drive - should you have one
+    </LI>
+</UL>
+
+<H1>Usage</H1>
+
+<P>When You first launched the program, you were asked a password. This password is master password,
+    a PBKDF2WithHmacSHA256 master key is derived of it, this is stored in secure Android Keystore.
+    This is used to encrypt and decrypt all the entries stored in MySQL database.</P>
+
+<P>Main screen comprises of Categories that you create to store the passwords, for example: School,
+    Work, Bank, WWW.</P>
+
+<P>Each category then can contain account details, comprising of description, optional website, user
+    name/id, password and notes.</P>
+
+<P>And that's it!</P>
+
+<H1>Backup</H1>
+
+<P>Backup is designed to be laptop openable, and very secure. Backup format is as follows:</P>
+<OL>
+    <LI>HEXADECIMAL SALT</LI>
+    <LI>Master key encrypted with PBKDF2 user generated key</LI>
+    <LI>IV + Document XML - encrypted</LI>
+</OL>
+
+<P>Decryption can be done as follows (Linux example, similar approach should work for any computer
+    with minor commang line changes):</P>
+<OL>
+    <LI>Extract SALT from the file</LI>
+    <LI>Generate PBKDF2 key: DEC_KEY=$(openssl enc -aes-256-cbc -P -md sha256 -S $SALT -iter 20000
+        -pbkdf2 | grep key | cut -d= -f2)
+    </LI>
+    <LI>Extract encrypted master key from the file (with IV)</LI>
+    <LI>Extract IV from the encrypted master key (256/16 first bytes): IV=$(echo
+        "$ENCRYPTED_IVD_MASTERKEY" | cut -c1-32)
+    </LI>
+    <LI>Remove IV from the encrypted master key: ENCRYPTED_MASTERKEY=$(echo
+        "$ENCRYPTED_IVD_MASTERKEY" | cut -c33-)
+    </LI>
+    <LI>Decrypt master key: MASTER_KEY=$(echo -n $ENCRYPTED_MASTERKEY | xxd -r -p - | base64 |
+        openssl enc -aes-256-cbc -d -a -iv $IV -K $DEC_KEY -nosalt | xxd -c222 -p
+    </LI>
+    <LI>Extract the document from the file</LI>
+    <LI>Extract IV from the document: DOCUMENT_IV=$(echo $DOCUMENT | cut -c1-32)</LI>
+    <LI>Extract cipher text (the document): DOCUMENT=$(echo $DOCUMENT | cut -c33-)</LI>
+    <LI>Decrypt the document: echo -n $DOCUMENT | xxd -r -p - | base64 | openssl enc -aes-256-cbc -d
+        -a -iv $DOCUMENT_IV -K $MASTER_KEY -nosalt
+    </LI>
+</OL>
+
+<H1>Credits:</H1>
+<P>Loosely based on old unmaintained (and very unsecure) OISafe, fixing all the design failures (and
+    avoiding making new ones)</P>
+</BODY>
+</HTML>
