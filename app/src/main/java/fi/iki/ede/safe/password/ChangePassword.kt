@@ -32,6 +32,8 @@ object ChangePassword {
             myScope.launch {
                 withContext(Dispatchers.IO) {
                     DataModel.loadFromDatabase()
+                    // TODO: REALLY issue info to the caller that we're finished..
+                    // else there's few seconds data is actually flaky..
                 }
             }
             // Actually why should we clear the bio..it is not tied directly to the
