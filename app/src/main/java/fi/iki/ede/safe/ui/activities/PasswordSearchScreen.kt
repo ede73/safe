@@ -34,7 +34,6 @@ class PasswordSearchScreen : AutoLockingComponentActivity() {
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
                     val searchText = remember { mutableStateOf(TextFieldValue("")) }
-                    val progresses = remember { searchProgresses }
                     val filteredPasswords =
                         remember { MutableStateFlow<List<DecryptablePasswordEntry>>(emptyList()) }
                     Column {
@@ -43,11 +42,11 @@ class PasswordSearchScreen : AutoLockingComponentActivity() {
                             searchText
                         )
 
-                        // if password list is < min threshold, we'll have 1 search thread
-                        // but ..close enough...
-                        for (i in 0 until Runtime.getRuntime().availableProcessors()) {
+                        searchProgressPerThread.indices.forEach { index ->
                             LinearProgressIndicator(
-                                progress = { progresses[i] },
+                                progress = {
+                                    searchProgressPerThread[index]
+                                },
                                 modifier = Modifier
                                     .height(4.dp)
                                     .clip(RoundedCornerShape(8.dp)),
@@ -67,22 +66,9 @@ class PasswordSearchScreen : AutoLockingComponentActivity() {
 
         // minimum threshold for threaded search, else it's just single thread/linear
         const val MIN_PASSWORDS_FOR_THREADED_SEARCH = 20
-        val searchProgresses: MutableList<Float> by lazy {
-            val numberOfEntries = Runtime.getRuntime().availableProcessors()
-            val list = mutableStateListOf<Float>()
-            for (i in 0 until numberOfEntries) {
-                list.add(0.0f) // You can initialize the entries with any value you want
-            }
-            list
-        }
-
+        var searchProgressPerThread = mutableStateListOf<Float>()
         fun startMe(context: Context) {
             context.startActivity(Intent(context, PasswordSearchScreen::class.java))
         }
     }
-}
-
-// if we have less than threshold passwords, extra search threads won't activate
-fun getSearchThreadCount(): Int {
-    return Runtime.getRuntime().availableProcessors()
 }

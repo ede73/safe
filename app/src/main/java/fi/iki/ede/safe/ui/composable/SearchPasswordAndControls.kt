@@ -34,20 +34,19 @@ import fi.iki.ede.crypto.DecryptablePasswordEntry
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.ui.activities.PasswordSearchScreen
-import fi.iki.ede.safe.ui.activities.getSearchThreadCount
+import fi.iki.ede.safe.ui.activities.PasswordSearchScreen.Companion.searchProgressPerThread
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.abs
 
 /**
  * Search view at the top of the PasswordSearchScreen, intrinsic search controls
@@ -55,25 +54,26 @@ import kotlinx.coroutines.withContext
 @Composable
 fun SearchPasswordAndControls(
     filteredPasswords: MutableStateFlow<List<DecryptablePasswordEntry>>,
-    searchText: MutableState<TextFieldValue>,
+    searchTextField: MutableState<TextFieldValue>,
 ) {
     val focusRequester = remember { FocusRequester() }
     val passwordEntries = DataModel.getPasswords()
-    var searchNotes by remember { mutableStateOf(false) }
-    var searchPasswords by remember { mutableStateOf(false) }
-    var searchUsernames by remember { mutableStateOf(false) }
-    var searchWebsites by remember { mutableStateOf(false) }
+    val searchNotes = remember { mutableStateOf(false) }
+    val searchPasswords = remember { mutableStateOf(false) }
+    val searchUsernames = remember { mutableStateOf(false) }
+    val searchWebsites = remember { mutableStateOf(false) }
 
+    // just small gather up for use in UI code below
     fun findNow() {
         filteredPasswords.value = emptyList()
         beginSearch(
             passwordEntries,
             filteredPasswords,
-            searchText.value,
-            searchWebsites,
-            searchUsernames,
-            searchPasswords,
-            searchNotes
+            searchTextField.value,
+            searchWebsites.value,
+            searchUsernames.value,
+            searchPasswords.value,
+            searchNotes.value
         )
     }
 
@@ -86,9 +86,9 @@ fun SearchPasswordAndControls(
             .padding(15.dp)
             .size(24.dp)
         TextField(
-            value = searchText.value,
+            value = searchTextField.value,
             onValueChange = { value ->
-                searchText.value = value
+                searchTextField.value = value
                 if (value.text != hackToInvokeSearchOnlyIfTextValueChanges.text) {
                     hackToInvokeSearchOnlyIfTextValueChanges = value
                     findNow()
@@ -107,8 +107,8 @@ fun SearchPasswordAndControls(
             },
             placeholder = { Text(stringResource(id = R.string.password_search_search_hint)) },
             trailingIcon = {
-                if (searchText.value != TextFieldValue("")) {
-                    IconButton(onClick = { searchText.value = TextFieldValue("") }) {
+                if (searchTextField.value != TextFieldValue("")) {
+                    IconButton(onClick = { searchTextField.value = TextFieldValue("") }) {
                         Icon(
                             Icons.Default.Close,
                             contentDescription = "",
@@ -121,44 +121,12 @@ fun SearchPasswordAndControls(
             shape = RectangleShape
         )
         Row {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Checkbox(checked = searchWebsites, onCheckedChange = {
-                    searchWebsites = it
-                    findNow()
-                })
-                Text(text = stringResource(id = R.string.password_search_websites))
-            }
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Checkbox(checked = searchUsernames, onCheckedChange = {
-                    searchUsernames = it
-                    findNow()
-                })
-                Text(text = stringResource(id = R.string.password_search_usernames))
-            }
+            TextualCheckbox(searchWebsites, R.string.password_search_websites, ::findNow)
+            TextualCheckbox(searchUsernames, R.string.password_search_usernames, ::findNow)
         }
         Row {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Checkbox(checked = searchPasswords, onCheckedChange = {
-                    searchPasswords = it
-                    findNow()
-                })
-                Text(text = stringResource(id = R.string.password_search_passwords))
-            }
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Checkbox(checked = searchNotes, onCheckedChange = {
-                    searchNotes = it
-                    findNow()
-                })
-                Text(text = stringResource(id = R.string.password_search_notes))
-            }
+            TextualCheckbox(searchPasswords, R.string.password_search_passwords, ::findNow)
+            TextualCheckbox(searchNotes, R.string.password_search_notes, ::findNow)
         }
     }
 
@@ -167,22 +135,38 @@ fun SearchPasswordAndControls(
     }
 }
 
+@Composable
+private fun TextualCheckbox(
+    initiallyChecked: MutableState<Boolean>,
+    textResourceId: Int,
+    startSearch: () -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Checkbox(checked = initiallyChecked.value, onCheckedChange = {
+            initiallyChecked.value = it
+            startSearch()
+        })
+        Text(text = stringResource(id = textResourceId))
+    }
+}
 
 private var delayedSearchJob: Job? = null
-
+private const val TAG = "SearchPasswordAndControls"
 
 @OptIn(DelicateCoroutinesApi::class)
 fun beginSearch(
-    passwordEntries: List<DecryptablePasswordEntry>,
-    filteredPasswords: MutableStateFlow<List<DecryptablePasswordEntry>>,
-    searchText: TextFieldValue,
+    allPasswordEntries: List<DecryptablePasswordEntry>,
+    matchingPasswordEntries: MutableStateFlow<List<DecryptablePasswordEntry>>,
+    searchTextField: TextFieldValue,
     searchWebsites: Boolean,
     searchUsernames: Boolean,
     searchPasswords: Boolean,
     searchNotes: Boolean
 ) {
     try {
-        synchronized(passwordEntries) {
+        synchronized(allPasswordEntries) {
             // IF (and only if) new search term starts with old search term, we could
             // optimize the search by searching the only what was previously found and unsearched entries
             // E.g. user types "a", search begins, user types "b", we could start new search for "ab"
@@ -191,81 +175,107 @@ fun beginSearch(
             // contain "ab" either
             // Also since everything is kept encrypted (and only way to search is descrypt) - search is
             // intensive operation
-            delayedSearchJob?.cancel()
-            for (i in 0 until getSearchThreadCount()) {
-                PasswordSearchScreen.searchProgresses[i] = 0.0f
+            if (delayedSearchJob?.isActive == true) {
+                delayedSearchJob?.cancel()
             }
+            searchProgressPerThread.indices.forEach { index ->
+                searchProgressPerThread[index] = 100.0f
+            }
+
+            // no point searching for something we will never find
+            if (searchTextField.text.isEmpty() || allPasswordEntries.isEmpty()) {
+                matchingPasswordEntries.value = emptyList()
+                return
+            }
+
+            // Recreate search progresses to the size of the CPUs
+            val cpus =
+                if (allPasswordEntries.size < PasswordSearchScreen.MIN_PASSWORDS_FOR_THREADED_SEARCH) {
+                    1
+                } else Runtime.getRuntime().availableProcessors()
+            searchProgressPerThread.clear()
+            searchProgressPerThread.addAll(List(cpus) { 0f })
+
             delayedSearchJob = GlobalScope.launch {
+                val ourJob = delayedSearchJob!!
                 // Also due to the fact searching encrypted data is intensive operation, add a delay
                 // so we don't ACTUALLY start the search until user has stopped typing
                 // half a second sounds good enough
                 delay(500L)
+
                 // HACKY! I'm guessing there's a completion handler or something like that
                 // this is just to pass the CoroutineScope to filter function (also maybe some other way doing this)
-                fun localIsActive() = isActive
-                if (searchText.text.isEmpty() || passwordEntries.isEmpty()) {
-                    for (i in 0 until getSearchThreadCount()) {
-                        PasswordSearchScreen.searchProgresses[i] = 100.0f
-                    }
-                    // updates must be done in main thread
-                    withContext(Dispatchers.Main) {
-                        filteredPasswords.value = passwordEntries
-                    }
-                } else {
-                    val cpus =
-                        if (passwordEntries.size < PasswordSearchScreen.MIN_PASSWORDS_FOR_THREADED_SEARCH) {
-                            1
-                        } else Runtime.getRuntime().availableProcessors()
+                fun localIsActive(): Boolean {
+                    return ourJob.isActive && !ourJob.isCancelled
+                }
+
+                // user might have already typed new search terms, and we might have been cancelled
+                // so no point going doing any heavy lifting
+                if (!ourJob.isCancelled) {
+                    // TODO: PULL UP. no point chunking on every key stroke!!
                     // make sure password entry list is split to chunks of number of CPUs
                     // make sure the nor matter how non-even the CPU count is, all passwords are included
-                    val passwordEntryChunks =
-                        passwordEntries.chunked((passwordEntries.size + cpus) / cpus)
+                    val chunkedPasswordEntries =
+                        allPasswordEntries.chunked((allPasswordEntries.size + cpus) / cpus)
+                    require(chunkedPasswordEntries.size <= cpus) { "Logic error too many chunks" }
+
                     val routines = mutableListOf<Deferred<Unit>>()
-                    for ((chunkIndex, passwordEntryChunk) in passwordEntryChunks.withIndex()) {
+                    for ((chunkIndex, passwordEntryChunk) in chunkedPasswordEntries.withIndex()) {
                         routines.add(
                             async {
-                                withContext(Dispatchers.Main) {
-                                    filterPasswords(
+                                withContext(Dispatchers.Default) {
+                                    asyncFilterChunkOfPasswords(
                                         chunkIndex,
                                         ::localIsActive,
-                                        searchText.text,
+                                        searchTextField.text,
                                         passwordEntryChunk,
                                         searchWebsites,
                                         searchUsernames,
                                         searchPasswords,
                                         searchNotes,
-                                        filteredPasswords
+                                        matchingPasswordEntries
                                     )
                                 }
                             })
                     }
-                    routines.awaitAll()
                 }
             }
         }
     } catch (ex: Exception) {
-        Log.e("PasswordSearchScreen", "Something went wrong on search:", ex)
+        Log.e(TAG, "Something went wrong on search:", ex)
     }
 }
 
-private fun filterPasswords(
+private fun skippingProgressUpdate(threadIndex: Int, progress: Float) {
+    if (threadIndex < searchProgressPerThread.size) {
+        val changed =
+            (searchProgressPerThread[threadIndex] * 100).toInt() - (progress * 100).toInt()
+        // Save UI, only update if there's a big change
+        if (abs(changed) > 2) {
+            searchProgressPerThread[threadIndex] = progress
+        }
+    }
+}
+
+private fun asyncFilterChunkOfPasswords(
     chunk: Int,
     isActive: () -> Boolean,
     searchText: String,
-    passwordEntries: List<DecryptablePasswordEntry>,
+    chunkOfPasswordEntries: List<DecryptablePasswordEntry>,
     searchWebsites: Boolean,
     searchUsernames: Boolean,
     searchPasswords: Boolean,
     searchNotes: Boolean,
-    filteredPasswords: MutableStateFlow<List<DecryptablePasswordEntry>>,
+    matchingPasswordEntries: MutableStateFlow<List<DecryptablePasswordEntry>>,
 ) {
     var searchedPasswordCount = 0.0f
-    val amountOfPasswords = passwordEntries.size * 1.0f
+    val amountOfPasswords = chunkOfPasswordEntries.size * 1.0f
 
-    passwordEntries.forEach {
+    chunkOfPasswordEntries.forEach {
         if (isActive()) {
             searchedPasswordCount++
-            PasswordSearchScreen.searchProgresses[chunk] = searchedPasswordCount / amountOfPasswords
+            skippingProgressUpdate(chunk, searchedPasswordCount / amountOfPasswords)
+
             if (it.contains(
                     searchText,
                     searchWebsites,
@@ -274,7 +284,7 @@ private fun filterPasswords(
                     searchNotes
                 )
             ) {
-                filteredPasswords.update { currentList -> currentList + it }
+                matchingPasswordEntries.update { currentList -> currentList + it }
             }
         }
     }
