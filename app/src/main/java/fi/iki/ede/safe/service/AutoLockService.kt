@@ -13,11 +13,12 @@ import androidx.annotation.RequiresApi
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.ui.activities.AutoLockingComponentActivity.Companion.lockTheApplication
+import java.time.Duration
 
 
 // TODO: BUG: (minor) If you change the lockout time in prefs, it updates only after app restart
 class AutoLockService : Service() {
-    private var t: CountDownTimer? = null
+    private var autoLockCountdownNotifier: CountDownTimer? = null
     private lateinit var mIntentReceiver: BroadcastReceiver
     private lateinit var serviceNotification: ServiceNotification
 
@@ -67,7 +68,7 @@ class AutoLockService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        startTimer()
+        initializeAutolockCountdownTimer()
         // We want this service to continue running until it is explicitly
         // stopped, so return sticky.
         return START_STICKY
@@ -79,7 +80,7 @@ class AutoLockService : Service() {
             lockOut()
         }
         serviceNotification.clearNotification()
-        t?.cancel()
+        autoLockCountdownNotifier?.cancel()
     }
 
     override fun onBind(intent: Intent): IBinder? {
@@ -88,42 +89,47 @@ class AutoLockService : Service() {
 
     private fun lockOut() {
         serviceNotification.clearNotification()
-        t?.cancel()
+        autoLockCountdownNotifier?.cancel()
         sendRestartTimer(this)
         lockTheApplication(this)
-        launchLoginScreen()
+        launchLoginScreen(this)
     }
 
-    private fun startTimer() {
+    private fun initializeAutolockCountdownTimer() {
         if (!LoginHandler.isLoggedIn()) {
             serviceNotification.clearNotification()
-            t?.cancel()
+            autoLockCountdownNotifier?.cancel()
             return
         }
+        autoLockCountdownNotifier?.cancel()
+        autoLockCountdownNotifier = null
         serviceNotification.setNotification(this@AutoLockService)
+
         val timeoutMinutes = Preferences.getLockTimeoutMinutes(this)
 
-        val timeoutUntilStop = timeoutMinutes * 60000L
-        val lt = object : CountDownTimer(timeoutUntilStop, 1000) {
-            override fun onTick(millisUntilFinished: Long) {
-                // doing nothing.
-                timeRemaining = millisUntilFinished
-                if (LoginHandler.isLoggedIn()) {
-                    serviceNotification.updateProgress(
-                        timeoutUntilStop.toInt(),
-                        timeRemaining.toInt()
-                    )
-                }
-            }
+        val timeoutUntilStop = Duration.ofMinutes(timeoutMinutes.toLong()).toMillis()
 
-            override fun onFinish() {
-                lockOut()
-                timeRemaining = 0
+        autoLockCountdownNotifier =
+            object : CountDownTimer(timeoutUntilStop, Duration.ofSeconds(10L).toMillis()) {
+                override fun onTick(millisUntilFinished: Long) {
+                    // doing nothing.
+                    millisecondsTillAutoLock = millisUntilFinished
+                    if (LoginHandler.isLoggedIn()) {
+                        serviceNotification.updateProgress(
+                            timeoutUntilStop.toInt(),
+                            millisecondsTillAutoLock.toInt()
+                        )
+                    }
+                }
+
+                override fun onFinish() {
+                    lockOut()
+                    millisecondsTillAutoLock = 0
+                }
+            }.apply {
+                start()
             }
-        }
-        lt.start()
-        t = lt
-        timeRemaining = timeoutUntilStop
+        millisecondsTillAutoLock = timeoutUntilStop
     }
 
     /**
@@ -131,17 +137,21 @@ class AutoLockService : Service() {
      */
     private fun restartTimer() {
         // must be started with startTimer first.
-        t?.cancel()
-        t?.start()
+        autoLockCountdownNotifier?.cancel()
+        initializeAutolockCountdownTimer()
     }
 
-    private fun launchLoginScreen() {
-        this.sendBroadcast(Intent(ACTION_LAUNCH_LOGIN_SCREEN))
+    private fun launchLoginScreen(context: Context) {
+        this.sendBroadcast(Intent(ACTION_LAUNCH_LOGIN_SCREEN).apply {
+            setPackage(context.packageName)
+        })
     }
 
     companion object {
         fun sendRestartTimer(context: Context) {
-            context.sendBroadcast(Intent(ACTION_RESTART_TIMER))
+            context.sendBroadcast(Intent(ACTION_RESTART_TIMER).apply {
+                setPackage(context.packageName)
+            })
         }
 
         private const val ACTION_RESTART_TIMER = "fi.iki.ede.action.RESTART_TIMER"
@@ -154,7 +164,7 @@ class AutoLockService : Service() {
         /**
          * @return time remaining in milliseconds before auto lock
          */
-        var timeRemaining: Long = 0
+        var millisecondsTillAutoLock: Long = 0
             private set
     }
 }

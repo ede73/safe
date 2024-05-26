@@ -169,11 +169,6 @@ open class LoginScreen : ComponentActivity() {
                     LoginScreen::class.java
                 ).putExtra(DONT_OPEN_CATEGORY_SCREEN_AFTER_LOGIN, dontOpenCategoryScreenAfterLogin)
             )
-//            context.startActivity(Intent(context, LoginScreen::class.java)
-//                .setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT).let { it ->
-//                    if (action != null) it.action = action
-//                    it
-//                })
         }
     }
 }

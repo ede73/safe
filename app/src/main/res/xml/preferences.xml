@@ -9,7 +9,9 @@
             android:dialogTitle="@string/preferences_automatic_locking_selection_title"
             android:key="lock_timeout"
             android:summary="@string/preferences_summary_automatic_locking_timeout"
-            android:title="@string/preferences_title_automatic_locking_timeout" />
+            android:title="@string/preferences_title_automatic_locking_timeout"
+            android:entries="@array/lock_time_list_texts"
+            android:entryValues="@array/lock_time_list_values"/>
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="biometrics"
@@ -21,7 +23,7 @@
             android:summary="@string/preferences_summary_lock_when_screen_locks"
             android:title="@string/preferences_title_lock_when_screen_locks" />
         <Preference
-            android:key="backup_path"
+            android:key="backup_document"
             android:title="@string/preferences_title_default_backup_path" />
     </PreferenceCategory>
 </PreferenceScreen>

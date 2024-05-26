@@ -8,12 +8,12 @@ import android.os.Bundle
 import android.view.MenuItem
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.backupandrestore.Backup
+import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.model.Preferences
+import fi.iki.ede.safe.service.AutoLockService
 
 class PreferenceActivity : AutoLockingAppCompatActivity() {
 
@@ -36,36 +36,46 @@ class PreferenceActivity : AutoLockingAppCompatActivity() {
             ActivityResultContracts.StartActivityForResult()
         ) { result: ActivityResult ->
             if (result.resultCode == RESULT_OK) {
-                Preferences.setBackupDocumentAndMethod(requireContext(), result.data!!.data!!.path)
+                Preferences.setBackupDocument(requireContext(), result.data!!.data!!.path)
             }
         }
 
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             addPreferencesFromResource(R.xml.preferences)
-            val l: ListPreference =
-                findPreference<Preference>(Preferences.PREFERENCE_LOCK_TIMEOUT) as ListPreference
-            val res = requireActivity().resources
-            val maxNoLockMins = 5
-            val entries = Array(maxNoLockMins) { "" }
-            val entryValues = Array(maxNoLockMins) { 0 }
-            for (i in 0 until maxNoLockMins) {
-                entryValues[i] = i
-                entries[i] = res.getQuantityString(R.plurals.preference_locktime, i + 1, i + 1)
+
+            val backupPathClicker =
+                findPreference<Preference>(Preferences.PREFERENCE_BACKUP_DOCUMENT)
+            if (Preferences.SUPPORT_EXPORT_LOCATION_MEMORY) {
+                backupPathClicker?.onPreferenceClickListener =
+                    Preference.OnPreferenceClickListener { _: Preference? ->
+                        backupDocumentSelected.launch(
+                            ExportConfig.getCreateDocumentIntent(
+                                requireContext()
+                            )
+                        )
+                        false
+                    }
+            } else {
+                backupPathClicker?.isEnabled = false
             }
-            l.entries = entries
-            l.entryValues = entries
-            val backupPathPref = findPreference<Preference>(Preferences.PREFERENCE_BACKUP_PATH)
-            backupPathPref?.onPreferenceClickListener =
-                Preference.OnPreferenceClickListener { _: Preference? ->
-                    val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
-                        .addCategory(Intent.CATEGORY_OPENABLE)
-                        .setType(Backup.MIME_TYPE_BACKUP)
-                        .putExtra(Intent.EXTRA_TITLE, Preferences.PASSWORDSAFE_EXPORT_FILE)
-                    backupDocumentSelected.launch(intent)
-                    false
+
+            findPreference<Preference>(Preferences.PREFERENCE_LOCK_TIMEOUT)?.onPreferenceChangeListener =
+                Preference.OnPreferenceChangeListener { _: Preference?, _: Any ->
+                    activity?.startService(Intent(requireContext(), AutoLockService::class.java))
+                    true
                 }
+
+            findPreference<Preference>(Preferences.PREFERENCE_BIOMETRICS_ENABLED)?.onPreferenceChangeListener =
+                Preference.OnPreferenceChangeListener { _: Preference?, enabledOrDisabled: Any ->
+                    if (!(enabledOrDisabled as Boolean)) {
+                        Biometrics.clearBiometricKeys(requireContext())
+                    }
+                    true
+                }
+
             preferenceScreen.sharedPreferences?.registerOnSharedPreferenceChangeListener(this)
-            backupPathPref?.summary = Preferences.getBackupPath(requireActivity())
+
+            backupPathClicker?.summary = Preferences.getBackupDocument(requireActivity())
         }
 
         override fun onSharedPreferenceChanged(
@@ -73,14 +83,9 @@ class PreferenceActivity : AutoLockingAppCompatActivity() {
             key: String?
         ) {
             when (key) {
-                Preferences.PREFERENCE_BACKUP_PATH ->
-                    findPreference<Preference?>(Preferences.PREFERENCE_BACKUP_PATH)?.summary =
-                        Preferences.getBackupPath(activity?.applicationContext!!)
-
-                Preferences.PREFERENCE_BIOMETRICS_ENABLED -> {
-                    if (!Biometrics.isBiometricEnabled(activity?.applicationContext!!)) {
-                        Biometrics.clearBiometricKeys(requireContext())
-                    }
+                Preferences.PREFERENCE_BACKUP_DOCUMENT -> {
+                    findPreference<Preference?>(Preferences.PREFERENCE_BACKUP_DOCUMENT)?.summary =
+                        Preferences.getBackupDocument(activity?.applicationContext!!)
                 }
             }
         }

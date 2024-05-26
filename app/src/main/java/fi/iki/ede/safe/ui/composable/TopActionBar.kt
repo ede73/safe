@@ -41,8 +41,8 @@ import androidx.compose.ui.window.Dialog
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.Backup
+import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.db.DBHelperFactory
-import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.password.ChangePassword.changeMasterPassword
 import fi.iki.ede.safe.ui.activities.AutoLockingComponentActivity
 import fi.iki.ede.safe.ui.activities.HelpScreen
@@ -193,10 +193,7 @@ fun TopActionBar(
                     onClick = {
                         displayMenu = false
                         backupDocumentSelectedResult.launch(
-                            Intent(Intent.ACTION_CREATE_DOCUMENT)
-                                .addCategory(Intent.CATEGORY_OPENABLE)
-                                .setType(Backup.MIME_TYPE_BACKUP)
-                                .putExtra(Intent.EXTRA_TITLE, Preferences.PASSWORDSAFE_EXPORT_FILE)
+                            ExportConfig.getCreateDocumentIntent(context)
                         )
                     })
                 DropdownMenuItem(
@@ -204,19 +201,8 @@ fun TopActionBar(
                     onClick = {
                         try {
                             displayMenu = false
-                            // android.content.ActivityNotFoundException: No Activity found to handle Intent { act=android.intent.action.OPEN_DOCUMENT cat=[android.intent.category.OPENABLE] dat=content://com.google.android.apps.docs.storage/... }
                             selectRestoreDocumentLauncher.launch(
-                                Intent(Intent.ACTION_OPEN_DOCUMENT)
-                                    .setType(Backup.MIME_TYPE_BACKUP)
-                                // setting the name used to work (and still does in emulator)
-                                // but no longer in S24 Ultra
-//                                    .let {
-//                                        Preferences.getBackupDocument(context)
-//                                            ?.let { backupDocument ->
-//                                                it.data = Uri.parse(backupDocument)
-//                                            }
-//                                        it
-//                                    }
+                                ExportConfig.getOpenDocumentIntent(context)
                             )
                         } catch (ex: ActivityNotFoundException) {
                             Log.e(tag, "Cannot launch ACTION_OPEN_DOCUMENT")
@@ -228,8 +214,7 @@ fun TopActionBar(
                         displayMenu = false
                         try {
                             selectRestoreDocumentLauncherOld.launch(
-                                Intent(Intent.ACTION_OPEN_DOCUMENT)
-                                    .setType(Backup.MIME_TYPE_BACKUP)
+                                ExportConfig.getOpenDocumentIntent(context)
                             )
                         } catch (ex: ActivityNotFoundException) {
                             Log.e(tag, "Cannot launch ACTION_OPEN_DOCUMENT")

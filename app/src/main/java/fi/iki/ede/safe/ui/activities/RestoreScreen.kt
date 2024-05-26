@@ -32,8 +32,7 @@ class RestoreScreen : AutoLockingComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val context = this
-        //val stream = InputStreamData(intent.data!!, this)
-        Preferences.setBackupDocumentAndMethod(this, intent.dataString)
+        Preferences.setBackupDocument(this, intent.dataString)
         val compatibility = intent.getBooleanExtra(OISAFE_COMPATIBILITY, false)
 
         setContent {

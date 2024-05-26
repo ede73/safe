@@ -9,33 +9,39 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.toHexString
 
 object Preferences {
-
-    const val PASSWORDSAFE_EXPORT_FILE = "passwordsafe.xml"
-
     // only used as accessors in SharedPrerefencesChange
-    const val PREFERENCE_BACKUP_PATH = "backup_path"
+    private const val PASSWORDSAFE_EXPORT_FILE = "passwordsafe.xml"
 
-    // only used as accessors in SharedPrerefencesChange
-    const val PREFERENCE_BIOMETRICS_ENABLED = "biometrics"
+    // See ExportConfig for woes
+    const val SUPPORT_EXPORT_LOCATION_MEMORY = false
 
-    private const val NOTIFICATION_PERMISSION_REQUIRED = "notification_permission_required"
-    private const val PREFERENCE_BACKUP_DOCUMENT = "backup_document"
-    private const val PREFERENCE_LOCK_ON_SCREEN_LOCK = "lock_on_screen_lock"
-    const val PREFERENCE_LOCK_TIMEOUT = "lock_timeout"
-    private const val PREFERENCE_LOCK_TIMEOUT_DEFAULT_VALUE = "5"
-    private const val PREFERENCE_BIO_CIPHER = "bio_cipher"
-    private val PREFERENCE_BACKUP_PATH_DEFAULT_VALUE =
+    @Deprecated(
+        "Mustn't be used, no point for now, see ExportConfig/SUPPORT_EXPORT_LOCATION_MEMORY",
+        level = DeprecationLevel.WARNING
+    )
+    const val PREFERENCE_BACKUP_DOCUMENT = "backup_document"
+    val PREFERENCE_BACKUP_PATH_DEFAULT_VALUE =
         Environment.getExternalStorageDirectory().absolutePath + "/" + PASSWORDSAFE_EXPORT_FILE
+    const val PREFERENCE_BIOMETRICS_ENABLED = "biometrics"
+    const val PREFERENCE_LOCK_TIMEOUT = "lock_timeout"
+    private const val NOTIFICATION_PERMISSION_REQUIRED = "notification_permission_required"
+    private const val PREFERENCE_BIO_CIPHER = "bio_cipher"
+    private const val PREFERENCE_LOCK_ON_SCREEN_LOCK = "lock_on_screen_lock"
+    private const val PREFERENCE_LOCK_TIMEOUT_DEFAULT_VALUE = "5"
 
-    fun getBackupPath(context: Context): String? {
-        return PreferenceManager.getDefaultSharedPreferences(context)
-            .getString(
-                PREFERENCE_BACKUP_PATH,
-                PREFERENCE_BACKUP_PATH_DEFAULT_VALUE
-            )
+    fun getBackupDocument(context: Context): String {
+        if (SUPPORT_EXPORT_LOCATION_MEMORY) {
+            return PreferenceManager.getDefaultSharedPreferences(context)
+                .getString(
+                    PREFERENCE_BACKUP_DOCUMENT,
+                    PREFERENCE_BACKUP_PATH_DEFAULT_VALUE
+                ) ?: PREFERENCE_BACKUP_PATH_DEFAULT_VALUE
+        } else {
+            return PREFERENCE_BACKUP_PATH_DEFAULT_VALUE
+        }
     }
 
-    fun setBackupDocumentAndMethod(context: Context, uriString: String?) {
+    fun setBackupDocument(context: Context, uriString: String?) {
         val settings = PreferenceManager.getDefaultSharedPreferences(context)
         val editor = settings.edit()
         editor.putString(PREFERENCE_BACKUP_DOCUMENT, uriString)
@@ -55,6 +61,9 @@ object Preferences {
         PREFERENCE_LOCK_TIMEOUT_DEFAULT_VALUE
     )?.toIntOrNull() ?: PREFERENCE_LOCK_TIMEOUT_DEFAULT_VALUE.toInt()
 
+    // We're checking notification permission in service (countdown timer)
+    // if missing, we'll flag here to request the permission when user is
+    // at screen (ie. from activity)
     fun setNotificationPermissionRequired(context: Context, value: Boolean) =
         PreferenceManager.getDefaultSharedPreferences(context).edit()
             .putBoolean(NOTIFICATION_PERMISSION_REQUIRED, value).apply()

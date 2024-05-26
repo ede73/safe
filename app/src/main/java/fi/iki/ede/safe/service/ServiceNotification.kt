@@ -55,7 +55,7 @@ class ServiceNotification(val context: Context) {
                 Manifest.permission.POST_NOTIFICATIONS
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            requestNotificationPermission()
+            flagToRequestNotificationPermission()
             return
         }
         Preferences.setNotificationPermissionRequired(context, false)
@@ -65,7 +65,7 @@ class ServiceNotification(val context: Context) {
     // Alas permissions can ONLY be requested from Activity
     // And this is running as services, so we need to route the request
     // And pop up the question once activity is opened (let's say CategoryList)
-    private fun requestNotificationPermission() {
+    private fun flagToRequestNotificationPermission() {
         Preferences.setNotificationPermissionRequired(this.context, true)
     }
 
@@ -85,7 +85,7 @@ class ServiceNotification(val context: Context) {
                 Manifest.permission.POST_NOTIFICATIONS
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            requestNotificationPermission()
+            flagToRequestNotificationPermission()
             return
         }
         Preferences.setNotificationPermissionRequired(this.context, false)

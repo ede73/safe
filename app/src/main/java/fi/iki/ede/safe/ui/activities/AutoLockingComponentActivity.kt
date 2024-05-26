@@ -162,6 +162,8 @@ open class AutoLockingComponentActivity : ComponentActivity(), ScreenOffLocker {
             ClipboardUtils.clearClipboard(context)
             // Basically sign out
             LoginHandler.logout()
+            context.stopService(Intent(context, AutoLockService::class.java))
+            // TODO:
             //context.stopService(Intent(context, AutoLockService::class.java))
             // Can't start from service,
             //LoginScreen.startMe(context)
