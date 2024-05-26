@@ -35,7 +35,6 @@ fun TopActionBarForPasswordView(
 
     TopAppBar(
         title = { Text(stringResource(id = R.string.application_name), color = Color.White) },
-        //backgroundColor = Color(0xff0f9d58),
         actions = {
             IconButton(onClick = {
                 AutoLockingComponentActivity.lockTheApplication(context)
