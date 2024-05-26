@@ -13,9 +13,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -27,10 +30,6 @@ import java.time.YearMonth
 import java.time.ZonedDateTime
 import java.util.Locale
 
-// TODO: with no date, select year,month, day pops to 01 (but not 'selected' by user so no event)
-// on ui it looks like date is set, say 2024-12-01 but callback is not called..only after USER selects date
-// FIX: in this case initialize date to "--" rather forcing the act of the user
-//
 // TODO: One can select a future date, limit it
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -81,15 +80,31 @@ fun DatePicker(zonedDateTime: ZonedDateTime?, onValueChange: (ZonedDateTime?) ->
     )
 
     val dayPagerState =
-        rememberPagerState(pageCount = { days.value.size }, initialPage = {
-            val result = days.value.indexOf(selectedDay.value)
-            if (result == -1) {
-                days.value.size
-            } else {
-                result
-            }
-        }())
+        rememberPagerState(
+            pageCount = { days.value.size },
+            initialPage = {
+                val result = days.value.indexOf(selectedDay.value)
+                val q = selectedDay.value
+                if (result == -1) {
+                    days.value.size
+                } else {
+                    result
+                }
+            }()
+        )
 
+    // Tiny issue here on null dates
+    // When month (and year) is selected, days populate
+    // But our picker was sitting at 0 (--), not updating initialPage
+    // doesn't change the selector anymore, we need to scroll into the position
+    if (!selectedYear.value.contains("-") &&
+        !selectedMonth.value.contains("-") &&
+        selectedDay.value == "--"
+    ) {
+        LaunchedEffect(Unit) {
+            dayPagerState.scrollToPage(days.value.size)
+        }
+    }
     Column {
         Text(text = stringResource(id = R.string.password_entry_changed_date))
         Row(
@@ -168,8 +183,10 @@ fun NumberPicker(
     selectedNumber: MutableState<String>,
     pagerState: PagerState
 ) {
-    LaunchedEffect(pagerState.currentPage) {
-        selectedNumber.value = numbers[pagerState.currentPage]
+    val currentPage by snapshotFlow { pagerState.currentPage }.collectAsState(initial = pagerState.currentPage)
+
+    LaunchedEffect(currentPage) {
+        selectedNumber.value = numbers[currentPage]
     }
 
     VerticalPager(
