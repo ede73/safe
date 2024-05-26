@@ -43,7 +43,7 @@ class PasswordSearchScreen : AutoLockingComponentActivity() {
                             searchText
                         )
 
-                        // if password list is < min threadhold, we'll have 1 search thread
+                        // if password list is < min threshold, we'll have 1 search thread
                         // but ..close enough...
                         for (i in 0 until Runtime.getRuntime().availableProcessors()) {
                             LinearProgressIndicator(
