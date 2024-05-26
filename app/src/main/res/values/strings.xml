@@ -49,7 +49,7 @@
     <string name="notification_lock_logged_in">Logged in</string>
 
     <!-- password entry -->
-    <string name="password_entry_changed_date">Password last changed %s</string>
+    <string name="password_entry_changed_date">Password last changed:</string>
     <string name="password_entry_description_required">Description cannot be empty. You have to specify it (or discard changes).</string>
     <string name="password_entry_description_tip">Enter description of the entry</string>
     <string name="password_entry_discard">Discard</string>

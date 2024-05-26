@@ -40,6 +40,7 @@ import fi.iki.ede.safe.password.PasswordGenerator
 import fi.iki.ede.safe.ui.activities.AvertInactivityDuringLongTask
 import fi.iki.ede.safe.ui.activities.EditingPasswordViewModel
 import fi.iki.ede.safe.ui.activities.PasswordEntryScreen
+import java.time.ZonedDateTime
 
 @Composable
 fun PasswordViewComponent(
@@ -182,22 +183,11 @@ fun PasswordViewComponent(
             }
         }
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
-//            val datePickerState = rememberDatePickerState(initialSelectedDateMillis = 1578096000000)
-//            DatePicker(
-//                state = datePickerState,
-//                title = { Text("Password changed data") },
-//                modifier = Modifier.padding(16.dp),
-//                showModeToggle = true,
-//            )
-
-            if (passEntry.passwordChangedDate != null) {
-                Text(
-                    text = stringResource(
-                        id = R.string.password_entry_changed_date,
-                        passEntry.passwordChangedDate.toString()
-                    ), modifier = modifier
-                )
-            }
+            DatePicker(
+                zonedDateTime = passEntry.passwordChangedDate,
+                onValueChange = { date: ZonedDateTime? ->
+                    viewModel.updatePasswordChangedDate(date)
+                })
         }
         passwordTextField(
             textTip = R.string.password_entry_note_tip,

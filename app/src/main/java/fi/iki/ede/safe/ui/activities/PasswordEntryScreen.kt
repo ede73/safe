@@ -115,6 +115,12 @@ open class EditingPasswordViewModel : ViewModel() {
         _uiState.value = updatedState
     }
 
+    fun updatePasswordChangedDate(value: ZonedDateTime?) {
+        // TODO: Changed
+        val updatedState = _uiState.value.copy(passwordChangedDate = value)
+        _uiState.value = updatedState
+    }
+
     fun updatePhoto(value: Bitmap?) {
         // TODO: Changed
         val updatedState = _uiState.value.copy(plainPhoto = value)
@@ -289,6 +295,7 @@ class PasswordEntryScreen : AutoLockingComponentActivity() {
             website = edits.website.encrypt(ks)
             username = edits.username
             password = edits.password
+            passwordChangedDate = edits.passwordChangedDate
             note = edits.note
             photo =
                 if (edits.plainPhoto == null) IVCipherText.getEmpty()
@@ -331,6 +338,7 @@ class PasswordEntryScreen : AutoLockingComponentActivity() {
             edits.website,
             edits.username,
             edits.password,
+            edits.passwordChangedDate,
             edits.note,
             edits.plainPhoto
         )

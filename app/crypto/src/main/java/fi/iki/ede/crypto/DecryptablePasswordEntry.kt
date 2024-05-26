@@ -88,12 +88,14 @@ class DecryptablePasswordEntry(categoryId: Long) {
         website: String,
         username: IVCipherText,
         password: IVCipherText,
+        passwordChangedDate: ZonedDateTime?,
         note: IVCipherText,
         photo: Bitmap?
     ) = !(plainDescription != description ||
             plainWebsite != website ||
             plainUsername != decrypt(username) ||
             !isSamePassword(password) ||
+            this.passwordChangedDate != passwordChangedDate ||
             plainNote != decrypt(note) ||
             !(photo?.sameAs(plainPhoto) ?: (plainPhoto == null)))
 
