@@ -63,9 +63,6 @@ fun SearchPasswordAndControls(
     var searchUsernames by remember { mutableStateOf(false) }
     var searchPasswords by remember { mutableStateOf(false) }
     var searchNotes by remember { mutableStateOf(false) }
-    val pad = Modifier
-        .padding(15.dp)
-        .size(24.dp)
 
     fun findNow() {
         filteredPasswords.value = emptyList()
@@ -85,6 +82,9 @@ fun SearchPasswordAndControls(
     // We ONLY want to do something if actual search term, so alas need this
     var hackToInvokeSearchOnlyIfTextValueChanges by remember { mutableStateOf(TextFieldValue("")) }
     Column {
+        val iconPadding = Modifier
+            .padding(15.dp)
+            .size(24.dp)
         TextField(
             value = searchText.value,
             onValueChange = { value ->
@@ -102,7 +102,7 @@ fun SearchPasswordAndControls(
                 Icon(
                     Icons.Default.Search,
                     contentDescription = "",
-                    modifier = pad
+                    modifier = iconPadding
                 )
             },
             placeholder = { Text(stringResource(id = R.string.password_search_search_hint)) },
@@ -112,7 +112,7 @@ fun SearchPasswordAndControls(
                         Icon(
                             Icons.Default.Close,
                             contentDescription = "",
-                            modifier = pad
+                            modifier = iconPadding
                         )
                     }
                 }
