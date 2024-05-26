@@ -133,7 +133,9 @@ private fun hasValueChanged(
         } catch (ex: Exception) {
             zonedDateTime
         }
-        if (selectedZonedTime != zonedDateTime) {
+        if (selectedZonedTime != zonedDateTime &&
+            (selectedZonedTime?.toLocalDate() != zonedDateTime?.toLocalDate())
+        ) {
             onValueChange(selectedZonedTime)
         }
     }
