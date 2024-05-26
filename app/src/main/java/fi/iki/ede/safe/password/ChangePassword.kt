@@ -1,13 +1,13 @@
 package fi.iki.ede.safe.password
 
 import android.content.Context
+import android.util.Log
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.keystore.KeyManagement.decryptMasterKey
 import fi.iki.ede.crypto.keystore.KeyManagement.encryptMasterKey
 import fi.iki.ede.crypto.keystore.KeyStoreHelper.Companion.generatePBKDF2
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.DataModel
-import fi.iki.ede.safe.ui.activities.Biometrics
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -28,21 +28,20 @@ object ChangePassword {
         try {
             val decryptedMasterKey = decryptMasterKey(existingPBKDF2Key, ivCipher)
             val newEncryptedMasterKey = encryptMasterKey(newPBKDF2Key, decryptedMasterKey.encoded)
-            dbHelper.beginRestoration()
             dbHelper.storeSaltAndEncryptedMasterKey(salt, newEncryptedMasterKey)
             myScope.launch {
                 withContext(Dispatchers.IO) {
                     DataModel.loadFromDatabase()
                 }
             }
-            // TODO: Actually why should we clear the bio..it is not tied directly to the
+            // Actually why should we clear the bio..it is not tied directly to the
             // key generation in anyway (at the moment!) - it COULD THOUGH!
-            // Also reset biometric password and android keystore
-            Biometrics.clearBiometricKeys(context)
+            //Biometrics.clearBiometricKeys(context)
             return true
         } catch (e: Exception) {
             // TODO: Figure out, basically theres not much to do here, its not like we can
             // setup a transaction to protect stuff, also user always has backup, right? :)
+            Log.e("ChangePassword", "Failed modifying master password $e")
         } finally {
             dbHelper.close()
         }
