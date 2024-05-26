@@ -37,6 +37,7 @@ import fi.iki.ede.safe.ui.activities.PasswordSearchScreen
 import fi.iki.ede.safe.ui.activities.getSearchThreadCount
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -46,6 +47,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Search view at the top of the PasswordSearchScreen, intrinsic search controls
@@ -205,7 +207,10 @@ fun beginSearch(
                     for (i in 0 until getSearchThreadCount()) {
                         PasswordSearchScreen.searchProgresses[i] = 100.0f
                     }
-                    filteredPasswords.value = passwordEntries
+                    // updates must be done in main thread
+                    withContext(Dispatchers.Main) {
+                        filteredPasswords.value = passwordEntries
+                    }
                 } else {
                     val cpus =
                         if (passwordEntries.size < PasswordSearchScreen.MIN_PASSWORDS_FOR_THREADED_SEARCH) {
@@ -219,17 +224,19 @@ fun beginSearch(
                     for ((chunkIndex, passwordEntryChunk) in passwordEntryChunks.withIndex()) {
                         routines.add(
                             async {
-                                filterPasswords(
-                                    chunkIndex,
-                                    ::localIsActive,
-                                    searchText.text,
-                                    passwordEntryChunk,
-                                    searchWebsites,
-                                    searchUsernames,
-                                    searchPasswords,
-                                    searchNotes,
-                                    filteredPasswords
-                                )
+                                withContext(Dispatchers.Main) {
+                                    filterPasswords(
+                                        chunkIndex,
+                                        ::localIsActive,
+                                        searchText.text,
+                                        passwordEntryChunk,
+                                        searchWebsites,
+                                        searchUsernames,
+                                        searchPasswords,
+                                        searchNotes,
+                                        filteredPasswords
+                                    )
+                                }
                             })
                     }
                     routines.awaitAll()
