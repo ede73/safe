@@ -43,7 +43,7 @@ import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.Backup
 import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.db.DBHelperFactory
-import fi.iki.ede.safe.password.ChangePassword.changeMasterPassword
+import fi.iki.ede.safe.password.ChangePassword
 import fi.iki.ede.safe.ui.activities.AutoLockingComponentActivity
 import fi.iki.ede.safe.ui.activities.HelpScreen
 import fi.iki.ede.safe.ui.activities.LoginScreen
@@ -232,29 +232,38 @@ fun TopActionBar(
                 val passwordChangeFailed =
                     stringResource(id = R.string.action_bar_password_change_failed)
 
-                EnterNewPassword(onNewPassword = {
+                EnterNewPassword {
                     val (oldPassword, newPassword) = it
                     if (oldPassword != newPassword &&
                         !oldPassword.isEmpty() &&
                         !newPassword.isEmpty()
                     ) {
-                        if (changeMasterPassword(context, oldPassword, newPassword)) {
-                            // master password successfully changed
-                            Toast.makeText(
-                                context,
-                                passwordChanged,
-                                Toast.LENGTH_LONG
-                            ).show()
-                        } else {
-                            Toast.makeText(
-                                context,
-                                passwordChangeFailed,
-                                Toast.LENGTH_LONG
-                            ).show()
+                        ChangePassword.changeMasterPassword(
+                            context,
+                            oldPassword,
+                            newPassword
+                        ) { success ->
+                            // NOTICE! This isn't a UI thread!
+                            coroutineScope.launch(Dispatchers.Main) {
+                                if (success) {
+                                    // master password successfully changed
+                                    Toast.makeText(
+                                        context,
+                                        passwordChanged,
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        passwordChangeFailed,
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                            }
+                            showChangePasswordDialog = false
                         }
                     }
-                    showChangePasswordDialog = false
-                })
+                }
             }
         }
     )

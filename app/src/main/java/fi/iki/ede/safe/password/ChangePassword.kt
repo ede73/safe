@@ -18,7 +18,12 @@ object ChangePassword {
 
     // Change the user password derived (PBKDF2) key that is used to encrypt the actual master key
     // the master key remains unchanged, so no need to 'convert' the database
-    fun changeMasterPassword(context: Context, oldPass: Password, newPass: Password): Boolean {
+    fun changeMasterPassword(
+        context: Context,
+        oldPass: Password,
+        newPass: Password,
+        finished: (Boolean) -> Unit
+    ): Boolean {
         val dbHelper = DBHelperFactory.getDBHelper(context)
         val (salt, ivCipher) = dbHelper.fetchSaltAndEncryptedMasterKey()
         val existingPBKDF2Key = generatePBKDF2(salt, oldPass)
@@ -34,6 +39,7 @@ object ChangePassword {
                     DataModel.loadFromDatabase()
                     // TODO: REALLY issue info to the caller that we're finished..
                     // else there's few seconds data is actually flaky..
+                    finished(true)
                 }
             }
             // Actually why should we clear the bio..it is not tied directly to the
@@ -47,6 +53,7 @@ object ChangePassword {
         } finally {
             dbHelper.close()
         }
+        finished(false)
         return false
     }
 }
