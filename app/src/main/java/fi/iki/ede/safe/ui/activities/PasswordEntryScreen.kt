@@ -32,6 +32,7 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.db.DBID
 import fi.iki.ede.safe.model.DataModel
+import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.password.PasswordGenerator
 import fi.iki.ede.safe.ui.composable.PasswordViewComponent
 import fi.iki.ede.safe.ui.theme.SafeTheme
@@ -52,7 +53,7 @@ data class EditablePasswordEntry(
     val username: IVCipherText = IVCipherText.getEmpty(),
     val password: IVCipherText = IVCipherText.getEmpty(),
     val note: IVCipherText = IVCipherText.getEmpty(),
-    // Since we're actually dislaying the photo in UI unconditionally
+    // Since we're actually displaying the photo in UI unconditionally
     // it doesn't lessen security having it as bitmap here
     val plainPhoto: Bitmap? = null,
     val passwordChangedDate: ZonedDateTime? = null
@@ -80,11 +81,12 @@ open class EditingPasswordViewModel : ViewModel() {
         )
     }
 
-    fun addPassword(newPassword: IVCipherText, categoryId: DBID) {
+    fun addPassword(newPassword: IVCipherText, categoryId: DBID, defaultUsername: IVCipherText) {
         _uiState.value = EditablePasswordEntry(
             categoryId,
-            password = newPassword
+            password = newPassword,
         )
+        updateUsername(defaultUsername)
     }
 
     fun updateDescription(value: String) {
@@ -134,7 +136,7 @@ class PasswordEntryScreen : AutoLockingComponentActivity() {
             if (intent.hasExtra(PASSWORD_ID)) {
                 // Edit a password
                 val passwordId = intent.getLongExtra(PASSWORD_ID, -1L)
-                require(passwordId != -1L) { "Password must be valud and exist" }
+                require(passwordId != -1L) { "Password must be value and exist" }
                 val password = DataModel.getPassword(passwordId)
                 viewModel.editPassword(password)
             } else if (intent.hasExtra(CATEGORY_ID)) {
@@ -152,7 +154,11 @@ class PasswordEntryScreen : AutoLockingComponentActivity() {
                     length = passwordLength
                 )
 
-                viewModel.addPassword(newPassword.encrypt(ks), categoryId)
+                viewModel.addPassword(
+                    newPassword.encrypt(ks),
+                    categoryId,
+                    Preferences.getDefaultUserName(this).encrypt(ks)
+                )
             } else {
                 require(true) { "Must have password or category ID" }
             }

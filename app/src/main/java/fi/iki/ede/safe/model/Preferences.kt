@@ -24,6 +24,7 @@ object Preferences {
         Environment.getExternalStorageDirectory().absolutePath + "/" + PASSWORDSAFE_EXPORT_FILE
     const val PREFERENCE_BIOMETRICS_ENABLED = "biometrics"
     const val PREFERENCE_LOCK_TIMEOUT = "lock_timeout"
+    private const val PREFERENCE_DEFAULT_USER_NAME = "default_user_name"
     private const val NOTIFICATION_PERMISSION_REQUIRED = "notification_permission_required"
     private const val PREFERENCE_BIO_CIPHER = "bio_cipher"
     private const val PREFERENCE_LOCK_ON_SCREEN_LOCK = "lock_on_screen_lock"
@@ -47,6 +48,12 @@ object Preferences {
         editor.putString(PREFERENCE_BACKUP_DOCUMENT, uriString)
         editor.apply()
     }
+
+    fun getDefaultUserName(context: Context) =
+        PreferenceManager.getDefaultSharedPreferences(context)
+            .getString(
+                PREFERENCE_DEFAULT_USER_NAME, ""
+            ) ?: ""
 
     fun getLockOnScreenLock(context: Context, default: Boolean) =
         PreferenceManager.getDefaultSharedPreferences(context)

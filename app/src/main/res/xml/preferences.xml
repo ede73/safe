@@ -22,6 +22,10 @@
             android:key="lock_on_screen_lock"
             android:summary="@string/preferences_summary_lock_when_screen_locks"
             android:title="@string/preferences_title_lock_when_screen_locks" />
+        <EditTextPreference
+            android:key="default_user_name"
+            android:summary="@string/preferences_summary_default_user_name"
+            android:title="@string/preferences_title_default_user_name"/>
         <Preference
             android:key="backup_document"
             android:title="@string/preferences_title_default_backup_path" />
