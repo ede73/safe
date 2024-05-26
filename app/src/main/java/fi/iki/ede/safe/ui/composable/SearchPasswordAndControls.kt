@@ -201,7 +201,7 @@ fun beginSearch(
                 // HACKY! I'm guessing there's a completion handler or something like that
                 // this is just to pass the CoroutineScope to filter function (also maybe some other way doing this)
                 fun localIsActive() = isActive
-                if (searchText.text.isEmpty()) {
+                if (searchText.text.isEmpty() || passwordEntries.isEmpty()) {
                     for (i in 0 until getSearchThreadCount()) {
                         PasswordSearchScreen.searchProgresses[i] = 100.0f
                     }
@@ -216,14 +216,14 @@ fun beginSearch(
                     val passwordEntryChunks =
                         passwordEntries.chunked((passwordEntries.size + cpus) / cpus)
                     val routines = mutableListOf<Deferred<Unit>>()
-                    for (chunk in (0 until cpus)) {
+                    for ((chunkIndex, passwordEntryChunk) in passwordEntryChunks.withIndex()) {
                         routines.add(
                             async {
                                 filterPasswords(
-                                    chunk,
+                                    chunkIndex,
                                     ::localIsActive,
                                     searchText.text,
-                                    passwordEntryChunks[chunk],
+                                    passwordEntryChunk,
                                     searchWebsites,
                                     searchUsernames,
                                     searchPasswords,
