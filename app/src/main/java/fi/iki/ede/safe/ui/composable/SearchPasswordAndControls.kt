@@ -59,10 +59,10 @@ fun SearchPasswordAndControls(
 ) {
     val focusRequester = remember { FocusRequester() }
     val passwordEntries = DataModel.getPasswords()
-    var searchWebsites by remember { mutableStateOf(false) }
-    var searchUsernames by remember { mutableStateOf(false) }
-    var searchPasswords by remember { mutableStateOf(false) }
     var searchNotes by remember { mutableStateOf(false) }
+    var searchPasswords by remember { mutableStateOf(false) }
+    var searchUsernames by remember { mutableStateOf(false) }
+    var searchWebsites by remember { mutableStateOf(false) }
 
     fun findNow() {
         filteredPasswords.value = emptyList()
