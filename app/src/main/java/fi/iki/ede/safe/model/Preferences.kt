@@ -10,7 +10,7 @@ import fi.iki.ede.crypto.toHexString
 
 object Preferences {
     // only used as accessors in SharedPrerefencesChange
-    private const val PASSWORDSAFE_EXPORT_FILE = "passwordsafe.xml"
+    const val PASSWORDSAFE_EXPORT_FILE = "passwordsafe.xml"
 
     // See ExportConfig for woes
     const val SUPPORT_EXPORT_LOCATION_MEMORY = false
