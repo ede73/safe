@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.jetbrains.kotlin.android)
+    alias(libs.plugins.compose.compiler)
 }
 
 android {
@@ -36,21 +36,17 @@ android {
             applicationIdSuffix = ".debug"
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
+
     buildFeatures {
         compose = true
         buildConfig = true
     }
-    composeOptions {
-        // Must match Kotlin version https://developer.android.com/jetpack/androidx/releases/compose-compiler#1.4.0
-        kotlinCompilerExtensionVersion = "1.5.0" // for Kotlin 1.9.0 in libs.versions.toml
-    }
+
     testOptions {
         unitTests.isReturnDefaultValues = true
         packaging {
@@ -63,6 +59,10 @@ android {
             }
         }
     }
+}
+
+composeCompiler {
+    enableStrongSkippingMode = true
 }
 
 dependencies {
