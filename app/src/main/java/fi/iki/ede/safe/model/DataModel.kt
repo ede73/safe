@@ -181,9 +181,12 @@ object DataModel {
                 oldCategory.containedPasswordCount - 1,
             )
 
-            _categories[updatedOldCategory]!!.remove(password)
+            // We might be called from different context with different copy
+            // Lets find correct instance
+            val pwdToRemove = _categories[updatedOldCategory]!!.first { it.id == password.id }
+            _categories[updatedOldCategory]!!.remove(pwdToRemove)
 
-            val copyOfPassword = password.copy().apply {
+            val copyOfPassword = pwdToRemove.copy().apply {
                 categoryId = targetCategory.id
             }
 
@@ -250,7 +253,7 @@ object DataModel {
         _categories.remove(category)
         _categories[copyOfCategory] = oldPasswords!!
 
-        // THis provides CALMER updates than .value= rump'em all
+        // TODO: Remove! Use THE stateflow? This is in search,THis provides CALMER updates than .value= rump'em all
         _categoriesStateFlow.update {
             it.map { cat ->
                 if (cat.id == category.id) {

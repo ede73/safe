@@ -53,11 +53,10 @@ import kotlin.math.abs
  */
 @Composable
 fun SearchPasswordAndControls(
-    filteredPasswords: MutableStateFlow<List<DecryptablePasswordEntry>>,
+    matchingPasswordEntries: MutableStateFlow<List<DecryptablePasswordEntry>>,
     searchTextField: MutableState<TextFieldValue>,
 ) {
     val focusRequester = remember { FocusRequester() }
-    val passwordEntries = DataModel.getPasswords()
     val searchNotes = remember { mutableStateOf(false) }
     val searchPasswords = remember { mutableStateOf(false) }
     val searchUsernames = remember { mutableStateOf(false) }
@@ -65,10 +64,10 @@ fun SearchPasswordAndControls(
 
     // just small gather up for use in UI code below
     fun findNow() {
-        filteredPasswords.value = emptyList()
+        matchingPasswordEntries.value = emptyList()
         beginSearch(
-            passwordEntries,
-            filteredPasswords,
+            DataModel.getPasswords(), // ugly but too many recomposes
+            matchingPasswordEntries,
             searchTextField.value,
             searchWebsites.value,
             searchUsernames.value,

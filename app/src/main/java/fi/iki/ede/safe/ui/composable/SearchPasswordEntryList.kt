@@ -1,5 +1,8 @@
 package fi.iki.ede.safe.ui.composable
 
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -11,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import fi.iki.ede.crypto.DecryptablePasswordEntry
+import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DataModel.getCategory
 import fi.iki.ede.safe.ui.activities.PasswordEntryScreen
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,16 +31,43 @@ fun SearchPasswordEntryList(
         }
     }
 
+    fun updateEntry(entryToUpdate: DecryptablePasswordEntry) {
+        val updatedList = filteredPasswords.value.map { entry ->
+            if (entry.id == entryToUpdate.id)
+                entryToUpdate.copy()
+            else
+                entry
+        }
+        filteredPasswords.value = updatedList
+    }
+
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                // Handle the result here
+                val resultIntent = result.data
+                if (resultIntent != null) {
+                    val passwordId = resultIntent.getLongExtra(PasswordEntryScreen.PASSWORD_ID, -1L)
+                    updateEntry(DataModel.getPassword(passwordId))
+                }
+            }
+        }
+
     LazyColumn(modifier = Modifier.fillMaxWidth()) {
         items(items = sortedPasswords, itemContent = { filteredItem ->
             MatchingPasswordEntry(
                 passwordEntry = filteredItem,
-                categoryEntry = filteredItem.getCategory()
-            ) {
-                context.startActivity(
-                    PasswordEntryScreen.getEditPassword(context, it.id!!)
-                )
-            }
+                categoryEntry = filteredItem.getCategory(), onEntryClick = {
+                    launcher.launch(
+                        PasswordEntryScreen.getEditPassword(context, it.id!!)
+                    )
+                }, onDelete = { deletedEntry ->
+                    // it is gone already
+                    val newList = filteredPasswords.value.filter { it != deletedEntry }
+                    filteredPasswords.value = newList
+                }, onUpdate = { entryToUpdate ->
+                    updateEntry(entryToUpdate)
+                })
         })
     }
 }

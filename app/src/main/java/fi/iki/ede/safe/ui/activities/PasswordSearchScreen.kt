@@ -34,11 +34,11 @@ class PasswordSearchScreen : AutoLockingComponentActivity() {
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
                     val searchText = remember { mutableStateOf(TextFieldValue("")) }
-                    val filteredPasswords =
+                    val matchingPasswordEntries =
                         remember { MutableStateFlow<List<DecryptablePasswordEntry>>(emptyList()) }
                     Column {
                         SearchPasswordAndControls(
-                            filteredPasswords,
+                            matchingPasswordEntries,
                             searchText
                         )
 
@@ -53,7 +53,7 @@ class PasswordSearchScreen : AutoLockingComponentActivity() {
                             )
                         }
 
-                        SearchPasswordEntryList(filteredPasswords)
+                        SearchPasswordEntryList(matchingPasswordEntries)
                     }
                 }
             }

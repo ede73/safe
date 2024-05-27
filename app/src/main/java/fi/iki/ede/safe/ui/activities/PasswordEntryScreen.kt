@@ -225,7 +225,9 @@ class PasswordEntryScreen : AutoLockingComponentActivity() {
                             },
                             onSaved = {
                                 // TODO: what if failed?
-                                setResult(RESULT_OK)
+                                val resultIntent = Intent()
+                                resultIntent.putExtra(PASSWORD_ID, edits.id)
+                                setResult(RESULT_OK, resultIntent)
                                 saveEntryRequested = false
                                 finnishTheActivity = true
                             }
