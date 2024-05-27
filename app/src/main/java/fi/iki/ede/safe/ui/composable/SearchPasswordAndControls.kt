@@ -197,7 +197,7 @@ fun beginSearch(
             searchProgressPerThread.addAll(List(cpus) { 0f })
 
             delayedSearchJob = GlobalScope.launch {
-                val ourJob = delayedSearchJob!!
+                val ourJob = coroutineContext[Job]!!
                 // Also due to the fact searching encrypted data is intensive operation, add a delay
                 // so we don't ACTUALLY start the search until user has stopped typing
                 // half a second sounds good enough
