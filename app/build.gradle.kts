@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.org.jetbrains.kotlin.android)
 }
 
 android {
@@ -58,6 +59,10 @@ android {
                 excludes += "META-INF/LICENSE-notice.md"
             }
         }
+    }
+    // this should have been deprecated in Kotlin 2.0 but some why AndroidStudio wants it
+    kotlinOptions {
+        jvmTarget = "1.8"
     }
 }
 
