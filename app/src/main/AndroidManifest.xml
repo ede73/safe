@@ -70,7 +70,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <!--        <activity android:name=".password.ChangePassword" />-->
         <activity android:name=".ui.activities.PreferenceActivity" />
         <activity android:name=".ui.activities.Biometrics" />
 
