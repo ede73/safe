@@ -48,5 +48,20 @@ abstract class ExportConfig(currentCodedVersion: ExportVersion) {
 
         fun getOpenDocumentIntent(context: Context) = Intent(Intent.ACTION_OPEN_DOCUMENT)
             .setType(Backup.MIME_TYPE_BACKUP)
+
+        // XML Elements and attribute names
+        const val ELEMENT_ROOT_PASSWORD_SAFE = "PasswordSafe"
+        const val ATTRIBUTE_ROOT_PASSWORD_SAFE_VERSION = "version"
+
+        const val ELEMENT_CATEGORY = "category"
+        const val ATTRIBUTE_CATEGORY_NAME = "name"
+        const val ELEMENT_CATEGORY_ITEM = "item"
+        const val ELEMENT_CATEGORY_ITEM_DESCRIPTION = "description"
+        const val ELEMENT_CATEGORY_ITEM_WEBSITE = "website"
+        const val ELEMENT_CATEGORY_ITEM_USERNAME = "username"
+        const val ELEMENT_CATEGORY_ITEM_PASSWORD = "password"
+        const val ATTRIBUTE_CATEGORY_ITEM_PASSWORD_CHANGED = "changed"
+        const val ELEMENT_CATEGORY_ITEM_NOTE = "note"
+        const val ELEMENT_CATEGORY_ITEM_PHOTO = "photo"
     }
 }

@@ -28,9 +28,15 @@ class Restore : ExportConfig(ExportVersion.V1) {
 
     // After some recent update while restoring, date parsing fails due to non breakable space
     // Wasn't able to track IN THE EMULATOR where it comes from
-    private fun XmlPullParser.getTrimmedAttributeValue(name: String): String =
-        getAttributeValue("", name)?.trim()?.replace(" ", " ")
+    private fun XmlPullParser.getTrimmedAttributeValue(name: String): String {
+        val result = getAttributeValue("", name)?.trim()?.replace(" ", " ")
             ?: ""
+        if (result.contains(" ")) {
+            Log.e(TAG, "Oh, no during restoration, getting non breakable space in attribute $name")
+            return result.replace(" ", " ")
+        }
+        return result
+    }
 
     data class BackupData(val data: List<String>) {
         fun getSalt(): Salt = Salt(data[0].hexToByteArray())
@@ -134,8 +140,10 @@ class Restore : ExportConfig(ExportVersion.V1) {
                     path.add(myParser.name)
 
                     when (path.joinToString(separator = ".")) {
-                        "PasswordSafe" -> {
-                            val rawVersion = myParser.getTrimmedAttributeValue("version")
+                        ELEMENT_ROOT_PASSWORD_SAFE -> {
+                            val rawVersion = myParser.getTrimmedAttributeValue(
+                                ATTRIBUTE_ROOT_PASSWORD_SAFE_VERSION
+                            )
                             val version =
                                 ExportVersion.entries.firstOrNull { it.version == rawVersion }
                                     ?: throw IllegalArgumentException("Unsupported export version ($rawVersion)")
@@ -151,45 +159,50 @@ class Restore : ExportConfig(ExportVersion.V1) {
                             }
                         }
 
-                        "PasswordSafe.category" -> {
+                        "$ELEMENT_ROOT_PASSWORD_SAFE.$ELEMENT_CATEGORY" -> {
                             require(category == null) { "Must have no pending objects" }
                             category = DecryptableCategoryEntry()
-                            category.encryptedName = myParser.getEncryptedAttribute("name")
+                            category.encryptedName =
+                                myParser.getEncryptedAttribute("$ATTRIBUTE_CATEGORY_NAME")
                             category.id = dbHelper.addCategory(category)
                         }
 
-                        "PasswordSafe.category.item" -> {
+                        "$ELEMENT_ROOT_PASSWORD_SAFE.$ELEMENT_CATEGORY.$ELEMENT_CATEGORY_ITEM" -> {
                             require(category != null) { "Must have category" }
                             require(password == null) { "Must not have password" }
                             password = DecryptablePasswordEntry(category.id!!)
                             passwords++
                         }
 
-                        "PasswordSafe.category.item.description" -> {
+                        "$ELEMENT_ROOT_PASSWORD_SAFE.$ELEMENT_CATEGORY.$ELEMENT_CATEGORY_ITEM.$ELEMENT_CATEGORY_ITEM_DESCRIPTION" -> {
                             require(password != null) { "Must have password entry" }
                             myParser.maybeGetText {
                                 password!!.description = it
                             }
                         }
 
-                        "PasswordSafe.category.item.website" -> {
+                        "$ELEMENT_ROOT_PASSWORD_SAFE.$ELEMENT_CATEGORY.$ELEMENT_CATEGORY_ITEM.$ELEMENT_CATEGORY_ITEM_WEBSITE" -> {
                             require(password != null) { "Must have password entry" }
                             myParser.maybeGetText {
                                 password!!.website = it
                             }
                         }
 
-                        "PasswordSafe.category.item.username" -> {
+                        "$ELEMENT_ROOT_PASSWORD_SAFE.$ELEMENT_CATEGORY.$ELEMENT_CATEGORY_ITEM.$ELEMENT_CATEGORY_ITEM_USERNAME" -> {
                             require(password != null) { "Must have password entry" }
                             myParser.maybeGetText {
                                 password!!.username = it
                             }
                         }
 
-                        "PasswordSafe.category.item.password" -> {
+                        "$ELEMENT_ROOT_PASSWORD_SAFE.$ELEMENT_CATEGORY.$ELEMENT_CATEGORY_ITEM.$ELEMENT_CATEGORY_ITEM_PASSWORD" -> {
                             require(password != null) { "Must have password entry" }
-                            val changed = myParser.getTrimmedAttributeValue("changed")
-                            if (changed != null && changed.isNotBlank()) {
+                            val changed =
+                                myParser.getTrimmedAttributeValue(
+                                    ATTRIBUTE_CATEGORY_ITEM_PASSWORD_CHANGED
+                                )
+
+                            if (changed.isNotBlank()) {
                                 try {
                                     password.passwordChangedDate = DateUtils.newParse(changed)
                                 } catch (ex: DateTimeParseException) {
@@ -205,14 +218,14 @@ class Restore : ExportConfig(ExportVersion.V1) {
                             }
                         }
 
-                        "PasswordSafe.category.item.note" -> {
+                        "$ELEMENT_ROOT_PASSWORD_SAFE.$ELEMENT_CATEGORY.$ELEMENT_CATEGORY_ITEM.$ELEMENT_CATEGORY_ITEM_NOTE" -> {
                             require(password != null) { "Must have password entry" }
                             myParser.maybeGetText {
                                 password!!.note = it
                             }
                         }
 
-                        "PasswordSafe.category.item.photo" -> {
+                        "$ELEMENT_ROOT_PASSWORD_SAFE.$ELEMENT_CATEGORY.$ELEMENT_CATEGORY_ITEM.$ELEMENT_CATEGORY_ITEM_PHOTO" -> {
                             require(password != null) { "Must have password entry" }
                             myParser.maybeGetText {
                                 password!!.photo = it
@@ -227,18 +240,18 @@ class Restore : ExportConfig(ExportVersion.V1) {
             when (myParser.eventType) {
                 XmlPullParser.END_TAG -> {
                     when (path.joinToString(separator = ".")) {
-                        "PasswordSafe" -> {
+                        ELEMENT_ROOT_PASSWORD_SAFE -> {
                             // All should be finished now
                             db.setTransactionSuccessful()
                             db.endTransaction()
                         }
 
-                        "PasswordSafe.category" -> {
+                        "$ELEMENT_ROOT_PASSWORD_SAFE.$ELEMENT_CATEGORY" -> {
                             require(category != null) { "Must have category entry" }
                             category = null
                         }
 
-                        "PasswordSafe.category.item" -> {
+                        "$ELEMENT_ROOT_PASSWORD_SAFE.$ELEMENT_CATEGORY.$ELEMENT_CATEGORY_ITEM" -> {
                             require(password != null) { "Must have password entry" }
                             dbHelper.addPassword(password)
                             password = null

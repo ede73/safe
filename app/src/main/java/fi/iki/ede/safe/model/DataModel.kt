@@ -366,7 +366,7 @@ object DataModel {
                     for (category in _categories.keys) {
                         println("Category id=${category.id} plainname=${category.plainName}") // OK: Dump
                         for (password in getCategorysPasswords(category.id!!)) {
-                            println("  Password id=${password.id} plainname=${password.plainDescription}") // OK: Dump
+                            println("  Password id=${password.id}, description=${password.plainDescription},changed=${password.passwordChangedDate}") // OK: Dump
                         }
                     }
                 }

@@ -1,6 +1,7 @@
 package fi.iki.ede.safe.backupandrestore
 
 import android.text.TextUtils
+import android.util.Log
 import fi.iki.ede.crypto.DecryptablePasswordEntry
 import fi.iki.ede.crypto.HexString
 import fi.iki.ede.crypto.IVCipherText
@@ -71,23 +72,27 @@ class Backup : ExportConfig(ExportVersion.V1) {
         val xmlStringWriter = StringWriter()
         serializer.setOutput(xmlStringWriter)
 
-        serializer.startTag(null, "PasswordSafe")
-            .attribute(null, "version", currentVersion.version)
+        serializer.startTag(null, ELEMENT_ROOT_PASSWORD_SAFE)
+            .attribute(null, ATTRIBUTE_ROOT_PASSWORD_SAFE_VERSION, currentVersion.version)
 
         for (category in DataModel.getCategories()) {
             serializer.startTagWithAttribute(
-                CATEGORY_TAG,
-                makePair("name", category.encryptedName)
+                ELEMENT_CATEGORY,
+                makePair(ATTRIBUTE_CATEGORY_NAME, category.encryptedName)
             )
             for (encryptedPassword in DataModel.getCategorysPasswords(category.id!!)) {
                 serializer.writePasswordEntry(encryptedPassword)
             }
-            serializer.endTag(null, CATEGORY_TAG)
+            serializer.endTag(null, ELEMENT_CATEGORY)
         }
 
-        serializer.endTag(null, "PasswordSafe")
+        serializer.endTag(null, ELEMENT_ROOT_PASSWORD_SAFE)
         serializer.endDocument()
         val makeThisStreaming = xmlStringWriter.toString()
+
+        if (makeThisStreaming.contains(" ")) {
+            Log.e(TAG, "Oh no, XML export has non breakable spaces")
+        }
         assert(!TextUtils.isEmpty(makeThisStreaming)) { "Something is broken, XML serialization produced empty file" }
         val encryptedBackup = ks.encryptByteArray(makeThisStreaming.toByteArray())
 
@@ -103,30 +108,30 @@ class Backup : ExportConfig(ExportVersion.V1) {
     private fun XmlSerializer.writePasswordEntry(
         decryptablePassword: DecryptablePasswordEntry,
     ) {
-        startTag(null, "item")
-        addTagAndCData("description", decryptablePassword.description)
-        addTagAndCData("website", decryptablePassword.website)
-        addTagAndCData("username", decryptablePassword.username)
-        val plaintextPasswordChangedDate = decryptablePassword.passwordChangedDate?.let {
-            val formattedDate = DateUtils.newFormat(it)
-            Pair("changed", formattedDate)
-        }
+        startTag(null, ELEMENT_CATEGORY_ITEM)
+        addTagAndCData(ELEMENT_CATEGORY_ITEM_DESCRIPTION, decryptablePassword.description)
+        addTagAndCData(ELEMENT_CATEGORY_ITEM_WEBSITE, decryptablePassword.website)
+        addTagAndCData(ELEMENT_CATEGORY_ITEM_USERNAME, decryptablePassword.username)
 
         addTagAndCData(
-            "password", decryptablePassword.password,
-            plaintextPasswordChangedDate
+            ELEMENT_CATEGORY_ITEM_PASSWORD, decryptablePassword.password,
+            decryptablePassword.passwordChangedDate?.let {
+                val formattedDate = DateUtils.newFormat(it)
+                println("date of ${decryptablePassword.passwordChangedDate} is $formattedDate")
+                Pair(ATTRIBUTE_CATEGORY_ITEM_PASSWORD_CHANGED, formattedDate)
+            }
         )
 
-        addTagAndCData("note", decryptablePassword.note)
+        addTagAndCData(ELEMENT_CATEGORY_ITEM_NOTE, decryptablePassword.note)
 
         if (decryptablePassword.photo != IVCipherText.getEmpty()) {
-            addTagAndCData("photo", decryptablePassword.photo)
+            addTagAndCData(ELEMENT_CATEGORY_ITEM_PHOTO, decryptablePassword.photo)
         }
-        endTag(null, "item")
+        endTag(null, ELEMENT_CATEGORY_ITEM)
     }
 
     companion object {
-        private const val CATEGORY_TAG = "category"
+        const val TAG = "Backup"
         const val MIME_TYPE_BACKUP = "text/xml"
     }
 }

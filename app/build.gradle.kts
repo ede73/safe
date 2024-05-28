@@ -13,7 +13,7 @@ android {
         minSdk = 28
         targetSdk = 34
 
-        val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(3, 0, 26, 0)
+        val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(3, 0, 28, 0)
         versionCode =
             versionMajor * 10000 + versionMinor * 1000 + versionPatch * 100 + versionBuild
         versionName = "${versionMajor}.${versionMinor}.${versionPatch}"
