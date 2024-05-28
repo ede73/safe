@@ -12,6 +12,9 @@ class DateTest {
         val formattedDate = DateUtils.newFormat(date)
         Assert.assertEquals(NEW_DATE_FORMAT, formattedDate)
 
+//        val d = DateUtils.newParse(FAILED_DATE)
+//        Assert.assertNotNull(d)
+
         val zonedDateTime = DateUtils.newParse(NEW_DATE_FORMAT)
         Assert.assertEquals(UNIX_STAMP_MILLIS, zonedDateTime.toEpochSecond() * 1000L)
 
@@ -22,6 +25,9 @@ class DateTest {
     companion object {
         // Exactly Wed May 31 2023 22:21:47 GMT+0000
         private const val UNIX_STAMP_MILLIS = 1685571707000L
+
+        // Not sure where the non breakable space popped from !?
+        private const val FAILED_DATE = "Feb 20, 2019, 12:00:00 AM Pacific Standard Time"
         private const val NEW_DATE_FORMAT = "May 31, 2023, 10:21:47 PM Coordinated Universal Time"
         private const val NEW_DATE_FORMAT_PST = "May 31, 2023, 03:21:47 PM Pacific Daylight Time"
     }

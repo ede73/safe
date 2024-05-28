@@ -29,27 +29,21 @@ object DateUtils {
     fun newFormat(date: Date): String {
         val pattern = defaultDateFormat()
         val fmt = DateTimeFormatter.ofPattern(pattern, Locale.ENGLISH)
-        return fmt.format(
+        val result = fmt.format(
             ZonedDateTime.ofInstant(
                 date.toInstant(),
                 ZoneId.of("UTC")
             )
         )
+        return result.replace(" ", " ")
     }
 
     fun newFormat(date: ZonedDateTime): String {
         val pattern = defaultDateFormat()
         val fmt = DateTimeFormatter.ofPattern(pattern, Locale.ENGLISH)
-        return fmt.format(date)
+        val result = fmt.format(date)
+        return result.replace(" ", " ")
     }
-
-//    fun durationBetweenDateAndNow(date: Date): Duration {
-//        return Duration.between(
-//            LocalDateTime.ofInstant(
-//                date.toInstant(), ZoneId.systemDefault()
-//            ), LocalDateTime.now()
-//        )
-//    }
 
     fun durationBetweenDateAndNow(date: ZonedDateTime): Duration {
         return Duration.between(
