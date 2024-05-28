@@ -26,8 +26,11 @@ import javax.crypto.spec.SecretKeySpec
 
 class Restore : ExportConfig(ExportVersion.V1) {
 
+    // After some recent update while restoring, date parsing fails due to non breakable space
+    // Wasn't able to track IN THE EMULATOR where it comes from
     private fun XmlPullParser.getTrimmedAttributeValue(name: String): String =
-        getAttributeValue("", name)?.trim() ?: ""
+        getAttributeValue("", name)?.trim()?.replace(" ", " ")
+            ?: ""
 
     data class BackupData(val data: List<String>) {
         fun getSalt(): Salt = Salt(data[0].hexToByteArray())
@@ -186,14 +189,14 @@ class Restore : ExportConfig(ExportVersion.V1) {
                         "PasswordSafe.category.item.password" -> {
                             require(password != null) { "Must have password entry" }
                             val changed = myParser.getTrimmedAttributeValue("changed")
-                            if (changed.isNotBlank()) {
+                            if (changed != null && changed.isNotBlank()) {
                                 try {
                                     password.passwordChangedDate = DateUtils.newParse(changed)
                                 } catch (ex: DateTimeParseException) {
                                     // silently fail, parse failure ain't critical
                                     // and no corrective measure here, passwords are more important
                                     if (BuildConfig.DEBUG) {
-                                        Log.e(TAG, "Failed parsing password change data")
+                                        Log.e(TAG, "Failed parsing password change data ($changed)")
                                     }
                                 }
                             }

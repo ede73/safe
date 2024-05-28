@@ -107,9 +107,11 @@ class Backup : ExportConfig(ExportVersion.V1) {
         addTagAndCData("description", decryptablePassword.description)
         addTagAndCData("website", decryptablePassword.website)
         addTagAndCData("username", decryptablePassword.username)
-        val plaintextPasswordChangedDate =
-            if (decryptablePassword.passwordChangedDate == null) null else
-                Pair("changed", DateUtils.newFormat(decryptablePassword.passwordChangedDate!!))
+        val plaintextPasswordChangedDate = decryptablePassword.passwordChangedDate?.let {
+            val formattedDate = DateUtils.newFormat(it)
+            Pair("changed", formattedDate)
+        }
+
         addTagAndCData(
             "password", decryptablePassword.password,
             plaintextPasswordChangedDate
