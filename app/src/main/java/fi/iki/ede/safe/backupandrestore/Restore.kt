@@ -14,6 +14,8 @@ import fi.iki.ede.crypto.keystore.KeyManagement
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.BuildConfig
+import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Attributes
+import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Elements
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.model.LoginHandler
 import org.xmlpull.v1.XmlPullParser
@@ -23,16 +25,27 @@ import java.io.StringReader
 import java.time.format.DateTimeParseException
 import javax.crypto.spec.SecretKeySpec
 
-
 class Restore : ExportConfig(ExportVersion.V1) {
+    private fun XmlPullParser.getAttributeValue(
+        attribute: Attributes,
+        prefix: String? = null
+    ): String {
+        val attrName = if (prefix == null) attribute.value else "$prefix${attribute.value}"
+        return getAttributeValue(null, attrName) ?: ""
+    }
 
     // After some recent update while restoring, date parsing fails due to non breakable space
     // Wasn't able to track IN THE EMULATOR where it comes from
-    private fun XmlPullParser.getTrimmedAttributeValue(name: String): String {
-        val result = getAttributeValue("", name)?.trim()?.replace(" ", " ")
-            ?: ""
+    private fun XmlPullParser.getTrimmedAttributeValue(
+        attribute: Attributes,
+        prefix: String? = null
+    ): String {
+        val result = getAttributeValue(attribute, prefix).trim().replace(" ", " ")
         if (result.contains(" ")) {
-            Log.e(TAG, "Oh, no during restoration, getting non breakable space in attribute $name")
+            Log.e(
+                TAG,
+                "Oh, no during restoration, getting non breakable space in attribute $attribute"
+            )
             return result.replace(" ", " ")
         }
         return result
@@ -103,14 +116,18 @@ class Restore : ExportConfig(ExportVersion.V1) {
         )
     }
 
+    inline fun <reified T : Enum<T>, V> valueOrNull(value: V, valueSelector: (T) -> V): T? {
+        return enumValues<T>().find { valueSelector(it) == value }
+    }
+
     private fun parseXML(
         dbHelper: DBHelper,
         db: SQLiteDatabase,
         myParser: XmlPullParser,
     ): Int {
-        fun XmlPullParser.getEncryptedAttribute(name: String): IVCipherText {
-            val iv = getTrimmedAttributeValue("iv_$name")
-            val cipher = getTrimmedAttributeValue("cipher_$name")
+        fun XmlPullParser.getEncryptedAttribute(name: Attributes): IVCipherText {
+            val iv = getTrimmedAttributeValue(name, ATTRIBUTE_PREFIX_IV)
+            val cipher = getTrimmedAttributeValue(name, ATTRIBUTE_PREFIX_CIPHER)
             if (iv.isNotBlank() && cipher.isNotBlank()) {
                 return IVCipherText(iv.hexToByteArray(), cipher.hexToByteArray())
             }
@@ -118,7 +135,7 @@ class Restore : ExportConfig(ExportVersion.V1) {
         }
 
         fun XmlPullParser.maybeGetText(gotTextNode: (encryptedText: IVCipherText) -> Unit) {
-            val iv = getTrimmedAttributeValue("iv")
+            val iv = getTrimmedAttributeValue(ExportConfig.Companion.Attributes.IV)
             next()
             if (eventType == XmlPullParser.TEXT && text != null && iv.isNotBlank()) {
                 gotTextNode.invoke(
@@ -130,19 +147,19 @@ class Restore : ExportConfig(ExportVersion.V1) {
             }
         }
 
-        val path = mutableListOf<String>()
+        val path = mutableListOf<Elements?>()
         var category: DecryptableCategoryEntry? = null
         var password: DecryptablePasswordEntry? = null
         var passwords = 0
         while (myParser.eventType != XmlPullParser.END_DOCUMENT) {
             when (myParser.eventType) {
                 XmlPullParser.START_TAG -> {
-                    path.add(myParser.name)
+                    path.add(valueOrNull<Elements, String>(myParser.name) { it.value })
 
-                    when (path.joinToString(separator = ".")) {
-                        ELEMENT_ROOT_PASSWORD_SAFE -> {
+                    when (path) {
+                        listOf(Elements.ROOT_PASSWORD_SAFE) -> {
                             val rawVersion = myParser.getTrimmedAttributeValue(
-                                ATTRIBUTE_ROOT_PASSWORD_SAFE_VERSION
+                                Attributes.ROOT_PASSWORD_SAFE_VERSION
                             )
                             val version =
                                 ExportVersion.entries.firstOrNull { it.version == rawVersion }
@@ -159,47 +176,71 @@ class Restore : ExportConfig(ExportVersion.V1) {
                             }
                         }
 
-                        "$ELEMENT_ROOT_PASSWORD_SAFE.$ELEMENT_CATEGORY" -> {
+                        listOf(Elements.ROOT_PASSWORD_SAFE, Elements.CATEGORY) -> {
                             require(category == null) { "Must have no pending objects" }
                             category = DecryptableCategoryEntry()
                             category.encryptedName =
-                                myParser.getEncryptedAttribute("$ATTRIBUTE_CATEGORY_NAME")
+                                myParser.getEncryptedAttribute(Attributes.CATEGORY_NAME)
                             category.id = dbHelper.addCategory(category)
                         }
 
-                        "$ELEMENT_ROOT_PASSWORD_SAFE.$ELEMENT_CATEGORY.$ELEMENT_CATEGORY_ITEM" -> {
+                        listOf(
+                            Elements.ROOT_PASSWORD_SAFE,
+                            Elements.CATEGORY,
+                            Elements.CATEGORY_ITEM
+                        ) -> {
                             require(category != null) { "Must have category" }
                             require(password == null) { "Must not have password" }
                             password = DecryptablePasswordEntry(category.id!!)
                             passwords++
                         }
 
-                        "$ELEMENT_ROOT_PASSWORD_SAFE.$ELEMENT_CATEGORY.$ELEMENT_CATEGORY_ITEM.$ELEMENT_CATEGORY_ITEM_DESCRIPTION" -> {
+                        listOf(
+                            Elements.ROOT_PASSWORD_SAFE,
+                            Elements.CATEGORY,
+                            Elements.CATEGORY_ITEM,
+                            Elements.CATEGORY_ITEM_DESCRIPTION
+                        ) -> {
                             require(password != null) { "Must have password entry" }
                             myParser.maybeGetText {
                                 password!!.description = it
                             }
                         }
 
-                        "$ELEMENT_ROOT_PASSWORD_SAFE.$ELEMENT_CATEGORY.$ELEMENT_CATEGORY_ITEM.$ELEMENT_CATEGORY_ITEM_WEBSITE" -> {
+                        listOf(
+                            Elements.ROOT_PASSWORD_SAFE,
+                            Elements.CATEGORY,
+                            Elements.CATEGORY_ITEM,
+                            Elements.CATEGORY_ITEM_WEBSITE
+                        ) -> {
                             require(password != null) { "Must have password entry" }
                             myParser.maybeGetText {
                                 password!!.website = it
                             }
                         }
 
-                        "$ELEMENT_ROOT_PASSWORD_SAFE.$ELEMENT_CATEGORY.$ELEMENT_CATEGORY_ITEM.$ELEMENT_CATEGORY_ITEM_USERNAME" -> {
+                        listOf(
+                            Elements.ROOT_PASSWORD_SAFE,
+                            Elements.CATEGORY,
+                            Elements.CATEGORY_ITEM,
+                            Elements.CATEGORY_ITEM_USERNAME
+                        ) -> {
                             require(password != null) { "Must have password entry" }
                             myParser.maybeGetText {
                                 password!!.username = it
                             }
                         }
 
-                        "$ELEMENT_ROOT_PASSWORD_SAFE.$ELEMENT_CATEGORY.$ELEMENT_CATEGORY_ITEM.$ELEMENT_CATEGORY_ITEM_PASSWORD" -> {
+                        listOf(
+                            Elements.ROOT_PASSWORD_SAFE,
+                            Elements.CATEGORY,
+                            Elements.CATEGORY_ITEM,
+                            Elements.CATEGORY_ITEM_PASSWORD
+                        ) -> {
                             require(password != null) { "Must have password entry" }
                             val changed =
                                 myParser.getTrimmedAttributeValue(
-                                    ATTRIBUTE_CATEGORY_ITEM_PASSWORD_CHANGED
+                                    Attributes.CATEGORY_ITEM_PASSWORD_CHANGED
                                 )
 
                             if (changed.isNotBlank()) {
@@ -218,14 +259,24 @@ class Restore : ExportConfig(ExportVersion.V1) {
                             }
                         }
 
-                        "$ELEMENT_ROOT_PASSWORD_SAFE.$ELEMENT_CATEGORY.$ELEMENT_CATEGORY_ITEM.$ELEMENT_CATEGORY_ITEM_NOTE" -> {
+                        listOf(
+                            Elements.ROOT_PASSWORD_SAFE,
+                            Elements.CATEGORY,
+                            Elements.CATEGORY_ITEM,
+                            Elements.CATEGORY_ITEM_NOTE
+                        ) -> {
                             require(password != null) { "Must have password entry" }
                             myParser.maybeGetText {
                                 password!!.note = it
                             }
                         }
 
-                        "$ELEMENT_ROOT_PASSWORD_SAFE.$ELEMENT_CATEGORY.$ELEMENT_CATEGORY_ITEM.$ELEMENT_CATEGORY_ITEM_PHOTO" -> {
+                        listOf(
+                            Elements.ROOT_PASSWORD_SAFE,
+                            Elements.CATEGORY,
+                            Elements.CATEGORY_ITEM,
+                            Elements.CATEGORY_ITEM_PHOTO
+                        ) -> {
                             require(password != null) { "Must have password entry" }
                             myParser.maybeGetText {
                                 password!!.photo = it
@@ -239,25 +290,29 @@ class Restore : ExportConfig(ExportVersion.V1) {
             // suggested next()/text() breaks on e.g. <note></note> it skips the end ..unless doing this
             when (myParser.eventType) {
                 XmlPullParser.END_TAG -> {
-                    when (path.joinToString(separator = ".")) {
-                        ELEMENT_ROOT_PASSWORD_SAFE -> {
+                    when (path) {
+                        listOf(Elements.ROOT_PASSWORD_SAFE) -> {
                             // All should be finished now
                             db.setTransactionSuccessful()
                             db.endTransaction()
                         }
 
-                        "$ELEMENT_ROOT_PASSWORD_SAFE.$ELEMENT_CATEGORY" -> {
+                        listOf(Elements.ROOT_PASSWORD_SAFE, Elements.CATEGORY) -> {
                             require(category != null) { "Must have category entry" }
                             category = null
                         }
 
-                        "$ELEMENT_ROOT_PASSWORD_SAFE.$ELEMENT_CATEGORY.$ELEMENT_CATEGORY_ITEM" -> {
+                        listOf(
+                            Elements.ROOT_PASSWORD_SAFE,
+                            Elements.CATEGORY,
+                            Elements.CATEGORY_ITEM
+                        ) -> {
                             require(password != null) { "Must have password entry" }
                             dbHelper.addPassword(password)
                             password = null
                         }
                     }
-                    path.remove(myParser.name)
+                    path.remove(valueOrNull<Elements, String>(myParser.name) { it.value })
                 }
             }
             myParser.next()
