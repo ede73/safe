@@ -28,7 +28,7 @@ object ChangePassword {
         val (salt, ivCipher) = dbHelper.fetchSaltAndEncryptedMasterKey()
         val existingPBKDF2Key = generatePBKDF2(salt, oldPass)
         val newPBKDF2Key = generatePBKDF2(salt, newPass)
-        val myScope = CoroutineScope(Dispatchers.Main)
+        val myScope = CoroutineScope(Dispatchers.Default)
 
         try {
             val decryptedMasterKey = decryptMasterKey(existingPBKDF2Key, ivCipher)

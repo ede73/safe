@@ -76,7 +76,7 @@ open class LoginScreen : ComponentActivity() {
     private fun passwordValidatedStartAutolockServiceAndFinish() {
         setResult(RESULT_OK, Intent())
         startService(Intent(applicationContext, AutoLockService::class.java))
-        val myScope = CoroutineScope(Dispatchers.Main)
+        val myScope = CoroutineScope(Dispatchers.Default)
         myScope.launch {
             withContext(Dispatchers.IO) {
                 DataModel.loadFromDatabase()
