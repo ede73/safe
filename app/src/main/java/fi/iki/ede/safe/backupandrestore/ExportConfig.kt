@@ -3,9 +3,6 @@ package fi.iki.ede.safe.backupandrestore
 import android.content.Context
 import android.content.Intent
 import fi.iki.ede.safe.model.Preferences
-import java.time.Instant
-import java.time.ZoneId
-import java.time.ZonedDateTime
 
 abstract class ExportConfig(currentCodedVersion: ExportVersion) {
     // IMPORTANT: If you ever introduce a breaking change, make sure to advance the version code
@@ -14,7 +11,7 @@ abstract class ExportConfig(currentCodedVersion: ExportVersion) {
     enum class ExportVersion(val version: String) {
         V1("1")
     }
-    
+
     companion object {
         fun getCreateDocumentIntent(context: Context): Intent {
             // https://developer.android.com/reference/kotlin/android/content/Intent#action_create_document

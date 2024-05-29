@@ -44,7 +44,7 @@ object HighlightPassword {
                                 append(it)
                             }
                         }
-                        
+
                         else -> {
                             append(it)
                         }

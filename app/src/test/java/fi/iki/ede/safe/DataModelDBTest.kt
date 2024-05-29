@@ -28,7 +28,7 @@ class DataModelDBTest {
         runBlocking {
             DataModel.dump()
         }
-        
+
         TestCase.assertEquals(1, DataModel.getCategories().size)
         runBlocking {
             // ADD a password..this goes to FLOW
