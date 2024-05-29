@@ -34,15 +34,13 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
 ) {
 
     override fun onCreate(db: SQLiteDatabase?) {
-        val tables =
-            listOf(CATEGORIES_CREATE, PASSWORDS_CREATE, MASTER_KEY_CREATE, SALT_CREATE)
         // pragma user_version
         // this will be 0 on first run (even if OLD database DOES exist)
         val version = db?.version
 
-        for (table in tables) {
+        listOf(CATEGORIES_CREATE, PASSWORDS_CREATE, MASTER_KEY_CREATE, SALT_CREATE).forEach {
             try {
-                db?.execSQL(table)
+                db?.execSQL(it)
             } catch (ex: SQLiteException) {
                 Log.e(TAG, "error", ex)
                 // if upgrading from OLD DB BEFORE sqlite open helper
@@ -121,7 +119,6 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
                 TABLE_SALT,
                 null,
                 ContentValues().apply { put("salt", salt.salt) })
-
         }
 
     private fun fetchMasterKey() =
@@ -131,9 +128,10 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         ).use {
             if (it.count > 0) {
                 it.moveToFirst()
-                val key = it.getBlob(it.getColumnIndexOrThrow("encryptedkey"))
-                it.close()
-                IVCipherText(KeyStoreHelper.IV_LENGTH, key)
+                IVCipherText(
+                    KeyStoreHelper.IV_LENGTH,
+                    it.getBlob(it.getColumnIndexOrThrow("encryptedkey"))
+                )
             } else {
                 throw Exception("No master key")
             }
@@ -179,9 +177,8 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
             null, null, null, null, null
         ).use {
             ArrayList<DecryptableCategoryEntry>().apply {
-                val numRows = it.count
                 it.moveToFirst()
-                for (i in 0 until numRows) {
+                (0 until it.count).forEach { _ ->
                     add(DecryptableCategoryEntry().apply {
                         id = it.getDBID("id")
                         encryptedName = it.getIVCipher("name")
@@ -242,21 +239,20 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
                 "$COL_PASSWORDS_CATEGORY=$categoryId"
             } else null, null, null, null, null
         ).use {
-            val numRows = it.count
             it.moveToFirst()
             ArrayList<DecryptablePasswordEntry>().apply {
-                for (i in 0 until numRows) {
-                    val passwordRow = DecryptablePasswordEntry(it.getDBID(COL_PASSWORDS_CATEGORY))
-                    passwordRow.id = it.getDBID(COL_PASSWORDS_ID)
-                    passwordRow.password = it.getIVCipher(COL_PASSWORDS_PASSWORD)
-                    passwordRow.description = it.getIVCipher(COL_PASSWORDS_DESCRIPTION)
-                    passwordRow.username = it.getIVCipher(COL_PASSWORDS_USERNAME)
-                    passwordRow.website = it.getIVCipher(COL_PASSWORDS_WEBSITE)
-                    passwordRow.note = it.getIVCipher(COL_PASSWORDS_NOTE)
-                    passwordRow.photo = it.getIVCipher(COL_PASSWORDS_PHOTO)
-                    it.getZonedDateTimeOfPasswordChange()
-                        ?.let { passwordRow.passwordChangedDate = it }
-                    add(passwordRow)
+                (0 until it.count).forEach { _ ->
+                    add(DecryptablePasswordEntry(it.getDBID(COL_PASSWORDS_CATEGORY)).apply {
+                        id = it.getDBID(COL_PASSWORDS_ID)
+                        password = it.getIVCipher(COL_PASSWORDS_PASSWORD)
+                        description = it.getIVCipher(COL_PASSWORDS_DESCRIPTION)
+                        username = it.getIVCipher(COL_PASSWORDS_USERNAME)
+                        website = it.getIVCipher(COL_PASSWORDS_WEBSITE)
+                        note = it.getIVCipher(COL_PASSWORDS_NOTE)
+                        photo = it.getIVCipher(COL_PASSWORDS_PHOTO)
+                        it.getZonedDateTimeOfPasswordChange()
+                            ?.let { passwordChangedDate = it }
+                    })
                     it.moveToNext()
                 }
             }
@@ -297,7 +293,6 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
                 put("category", newCategoryId)
             }, "id=$id", null
         )
-
 
     private fun ContentValues.put(key: String, value: IVCipherText) =
         put(key, value.combineIVAndCipherText())
