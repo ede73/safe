@@ -103,9 +103,10 @@ object DataModelMocks {
         val maybeCatId = slot<DBID>()
         every { db.fetchAllRows(capture(maybeCatId)) } answers {
             if (maybeCatId.isNull) {
-                passwordTable.values.toList()
+                ArrayList(passwordTable.values.toList())
             } else {
-                passwordTable.values.filter { it.categoryId == maybeCatId.captured }.toList()
+                ArrayList(passwordTable.values.filter { it.categoryId == maybeCatId.captured }
+                    .toList())
             }
         }
 
