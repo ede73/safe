@@ -15,12 +15,14 @@ import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.crypto.DecryptableCategoryEntry
 import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.IVCipherText
+import fi.iki.ede.crypto.keystore.CipherUtilities
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.model.Preferences
+import fi.iki.ede.safe.ui.activities.BiometricsActivity
 import fi.iki.ede.safe.ui.activities.CategoryListScreen
 import fi.iki.ede.safe.ui.activities.CategoryListScreen.Companion.TESTTAG_CATEGORY_BUTTON
 import fi.iki.ede.safe.ui.activities.CategoryListScreen.Companion.TESTTAG_CATEGORY_ROW
@@ -148,7 +150,7 @@ class CategoryListScreenTest {
         @JvmStatic
         fun setup() {
             mockkObject(Preferences)
-            every { Preferences.getBiometricsEnabled(any(), any()) } returns false
+            every { BiometricsActivity.isBiometricEnabled() } returns false
 
             // "disable" login screen by faking we're logged in
             mockKeyStoreHelper()
@@ -192,7 +194,7 @@ class CategoryListScreenTest {
             every { KeyStoreHelperFactory.getKeyStoreHelper() } returns p
             val encryptionInput = slot<ByteArray>()
             every { p.encryptByteArray(capture(encryptionInput)) } answers {
-                IVCipherText(ByteArray(KeyStoreHelper.IV_LENGTH), encryptionInput.captured)
+                IVCipherText(ByteArray(CipherUtilities.IV_LENGTH), encryptionInput.captured)
             }
             val decryptionInput = slot<IVCipherText>()
             every { p.decryptByteArray(capture(decryptionInput)) } answers {

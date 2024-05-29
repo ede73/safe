@@ -15,8 +15,10 @@ import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.hexToByteArray
+import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.IV_LENGTH
+import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_ITERATION_COUNT
 import fi.iki.ede.crypto.keystore.KeyManagement
-import fi.iki.ede.crypto.keystore.KeyStoreHelper
+import fi.iki.ede.crypto.keystore.KeyManagement.generatePBKDF2AESKey
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.AutoMockingUtilities.Companion.getBiometricsEnabled
 import fi.iki.ede.safe.LoginScreenFirstInstallTest.Companion.mockKeyStoreHelper
@@ -44,7 +46,12 @@ class LoginScreenTest : AutoMockingUtilities, LoginScreenHelper {
             "00112233445566778899AABBCCDDEEFF99887766554433221100123456789ABC".hexToByteArray()
         private val FAKE_ENCRYPTED_MASTERKEY =
             KeyManagement.encryptMasterKey(
-                KeyStoreHelper.generatePBKDF2(FAKE_SALT, FAKE_PASSWORD),
+                generatePBKDF2AESKey(
+                    FAKE_SALT,
+                    KEY_ITERATION_COUNT,
+                    FAKE_PASSWORD,
+                    IV_LENGTH
+                ),
                 FAKE_MASTERKEY_AES
             )
 

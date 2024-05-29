@@ -8,6 +8,7 @@ import fi.iki.ede.crypto.Salt
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.Preferences
+import fi.iki.ede.safe.ui.activities.BiometricsActivity
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
@@ -17,7 +18,7 @@ interface AutoMockingUtilities {
     companion object {
         fun getBiometricsEnabled(biometrics: () -> Boolean) {
             mockkObject(Preferences)
-            every { Preferences.getBiometricsEnabled(any(), any()) } returns biometrics()
+            every { BiometricsActivity.isBiometricEnabled() } returns biometrics()
         }
 
         fun fetchDBKeys(
@@ -57,7 +58,7 @@ interface AutoMockingUtilities {
             every { db.fetchAllRows(any()) } returns fetchPasswordsOfCategory()
             every { db.fetchAllCategoryRows() } returns fetchCategories()
             every { db.getCategoryCount(any()) } returns 1
-            every { db.isUninitializedDatabase() } returns isUninitializedDatabase()
+            //every { db.isUninitializedDatabase() } returns isUninitializedDatabase()
             val context =
                 InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
             val dbinst = DBHelperFactory.getDBHelper(context)

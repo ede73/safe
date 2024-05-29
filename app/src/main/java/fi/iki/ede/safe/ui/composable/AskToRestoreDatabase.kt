@@ -7,8 +7,10 @@ import androidx.compose.runtime.Composable
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
+import fi.iki.ede.crypto.keystore.CipherUtilities
+import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.IV_LENGTH
+import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_ITERATION_COUNT
 import fi.iki.ede.crypto.keystore.KeyManagement
-import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.backupandrestore.RestoreDatabase
 import fi.iki.ede.safe.db.DBHelper
@@ -68,9 +70,10 @@ private fun restoreOiSafeDump(
     passwordOfBackup: Password,
     selectedDocStream: InputStream
 ): Int {
-    val salt = Salt(KeyManagement.generateRandomBytes(8 * 8))
-    val newPBKDF2Key = KeyStoreHelper.generatePBKDF2(salt, passwordOfBackup)
-    val newRawMasterkey = KeyManagement.generateAESKey(KeyStoreHelper.KEY_LENGTH_BITS)
+    val salt = Salt(CipherUtilities.generateRandomBytes(8 * 8))
+    val newPBKDF2Key =
+        KeyManagement.generatePBKDF2AESKey(salt, KEY_ITERATION_COUNT, passwordOfBackup, IV_LENGTH)
+    val newRawMasterkey = KeyManagement.generateAESKey(CipherUtilities.KEY_LENGTH_BITS)
     val newMasterkey = SecretKeySpec(newRawMasterkey, "AES")
     val (iv, ciphertext) = KeyManagement.encryptMasterKey(newPBKDF2Key, newRawMasterkey)
     val encryptedRenewedMasterKey = IVCipherText(iv, ciphertext)

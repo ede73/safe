@@ -9,6 +9,7 @@ import androidx.test.filters.LargeTest
 import fi.iki.ede.crypto.DecryptableCategoryEntry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
+import fi.iki.ede.crypto.keystore.CipherUtilities
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.AutoMockingUtilities.Companion.fetchDBKeys
@@ -72,7 +73,7 @@ class LoginScreenFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
             every { KeyStoreHelperFactory.getKeyStoreHelper() } returns p
             val encryptionInput = slot<ByteArray>()
             every { p.encryptByteArray(capture(encryptionInput)) } answers {
-                IVCipherText(ByteArray(KeyStoreHelper.IV_LENGTH), encryptionInput.captured)
+                IVCipherText(ByteArray(CipherUtilities.IV_LENGTH), encryptionInput.captured)
             }
             val decryptionInput = slot<IVCipherText>()
             every { p.decryptByteArray(capture(decryptionInput)) } answers {

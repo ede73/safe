@@ -13,7 +13,7 @@ import androidx.core.content.ContextCompat
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.crypto.hexToByteArray
-import fi.iki.ede.crypto.keystore.KeyStoreHelper
+import fi.iki.ede.crypto.keystore.CipherUtilities
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.toHexString
 import fi.iki.ede.safe.R
@@ -175,7 +175,7 @@ class BiometricsActivity : AppCompatActivity() {
         fun getBioCipher(): IVCipherText {
             val pm = sharedPreferences
                 .getString(PREFERENCE_BIO_CIPHER, null) ?: return IVCipherText.getEmpty()
-            return IVCipherText(pm.hexToByteArray(), KeyStoreHelper.IV_LENGTH)
+            return IVCipherText(pm.hexToByteArray(), CipherUtilities.IV_LENGTH)
         }
 
         fun storeBioCipher(cipher: IVCipherText) = sharedPreferences.edit()

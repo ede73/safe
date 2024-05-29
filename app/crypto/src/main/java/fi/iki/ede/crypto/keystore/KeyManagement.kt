@@ -5,7 +5,6 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
 import org.jetbrains.annotations.TestOnly
-import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKeyFactory
@@ -19,15 +18,6 @@ object KeyManagement {
         val keygen = KeyGenerator.getInstance("AES")
         keygen.init(bits)
         return keygen.generateKey().encoded
-    }
-
-
-    fun generateRandomBytes(bits: Int): ByteArray {
-        require(bits % 8 == 0) { "Salt bits NEED to be divisible by 8" }
-        val randomBytes = ByteArray(bits / 8)
-        val sr = SecureRandom()
-        sr.nextBytes(randomBytes)
-        return randomBytes
     }
 
     /**
@@ -85,7 +75,7 @@ object KeyManagement {
         unencryptedSecretKey: ByteArray,
     ): IVCipherText {
         val cipher = getAESCipher()
-        val ivParams = IvParameterSpec(generateRandomBytes(cipher.blockSize * 8))
+        val ivParams = IvParameterSpec(CipherUtilities.generateRandomBytes(cipher.blockSize * 8))
         cipher.init(Cipher.ENCRYPT_MODE, pbkdf2key, ivParams)
         val ciphertext = cipher.doFinal(unencryptedSecretKey)
         return IVCipherText(cipher.iv, ciphertext)
@@ -95,7 +85,7 @@ object KeyManagement {
         pbkdf2key: SecretKeySpec,
         secretKey: IVCipherText,
     ): SecretKeySpec {
-        require(secretKey.iv.size == KeyStoreHelper.IV_LENGTH) { "IV must be exactly keysize/16  ie. ${KeyStoreHelper.IV_LENGTH}, not ${secretKey.iv.size}" }
+        require(secretKey.iv.size == CipherUtilities.IV_LENGTH) { "IV must be exactly keysize/16  ie. ${CipherUtilities.IV_LENGTH}, not ${secretKey.iv.size}" }
         val cipher = getAESCipher()
         cipher.init(Cipher.DECRYPT_MODE, pbkdf2key, IvParameterSpec(secretKey.iv))
         return SecretKeySpec(cipher.doFinal(secretKey.cipherText), "AES")

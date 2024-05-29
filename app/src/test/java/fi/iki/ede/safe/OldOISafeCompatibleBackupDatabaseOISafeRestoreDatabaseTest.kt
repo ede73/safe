@@ -8,8 +8,9 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.hexToByteArray
+import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.IV_LENGTH
+import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_ITERATION_COUNT
 import fi.iki.ede.crypto.keystore.KeyManagement
-import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.safe.CryptoMocks.mockKeyStoreHelper
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.oisafecompatibility.OISafeRestore
@@ -116,7 +117,9 @@ class OldOISafeCompatibleBackupDatabaseOISafeRestoreDatabaseTest {
         assertEquals("cat2", categories[1].plainName)
 
         // Final test would be the renewed master key actually can be decrypted!
-        val pbkdf2key = KeyStoreHelper.generatePBKDF2(newsalt.captured, passwordOfBackup)
+        val pbkdf2key = KeyManagement.generatePBKDF2AESKey(
+            newsalt.captured, KEY_ITERATION_COUNT, passwordOfBackup, IV_LENGTH
+        )
         assertArrayEquals(
             fakeAESMasterKey,
             KeyManagement.decryptMasterKey(pbkdf2key, newEncryptedMasterKey.captured).encoded

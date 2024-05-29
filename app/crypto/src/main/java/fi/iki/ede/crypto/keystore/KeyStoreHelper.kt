@@ -10,7 +10,6 @@ import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.SaltedPassword
 import fi.iki.ede.crypto.keystore.KeyManagement.decryptMasterKey
 import fi.iki.ede.crypto.keystore.KeyManagement.generatePBKDF2AESKey
-import fi.iki.ede.crypto.keystore.KeyManagement.generateRandomBytes
 import fi.iki.ede.crypto.keystore.KeyManagement.makeFreshNewKey
 import java.security.Key
 import java.security.KeyStore
@@ -36,7 +35,7 @@ object KeyStoreHelperFactory {
  *    new phone, broken KeyStore implementation, accidental data clear, complete uninstall etc.
  *    In this case we will restore provided master key!
  */
-class KeyStoreHelper {
+class KeyStoreHelper : CipherUtilities() {
     // https://developer.android.com/reference/java/security/KeyStore
     private val keyStore: KeyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
 
@@ -94,8 +93,6 @@ class KeyStoreHelper {
         return c.doFinal(encrypted.cipherText)
     }
 
-    private fun getAESCipher(): Cipher = Cipher.getInstance(AES_MODE)
-
     fun rotateKeys() {
         // I'm guessing rotation is re-initialization (unless there's a convenience method)
         // If reinit, then all keys need to be re-stored (we have one, so we can just
@@ -145,11 +142,6 @@ class KeyStoreHelper {
         private const val KEY_BIOKEY = "biometrics"
 //        private const val MAX_BIO_KEY_AGE_DAYS = 31
 
-        private const val AES_MODE =
-            "${KeyProperties.KEY_ALGORITHM_AES}/${KeyProperties.BLOCK_MODE_CBC}/${KeyProperties.ENCRYPTION_PADDING_PKCS7}"
-        const val KEY_LENGTH_BITS = 256
-        const val IV_LENGTH = KEY_LENGTH_BITS / 8 / 2
-        private const val KEY_ITERATION_COUNT = 20000
 
         // Called when user logs in
         // TODO: Refactor, no point re-importing same key over and over
@@ -157,7 +149,12 @@ class KeyStoreHelper {
             saltedPassword: SaltedPassword,
             ivSecretKey: IVCipherText
         ) {
-            val pbkdf2key = generatePBKDF2(saltedPassword.salt, saltedPassword.password)
+            val pbkdf2key = generatePBKDF2AESKey(
+                saltedPassword.salt,
+                KEY_ITERATION_COUNT,
+                saltedPassword.password,
+                KEY_LENGTH_BITS
+            )
 
             val unencryptedKey = decryptMasterKey(pbkdf2key, ivSecretKey)
 
@@ -167,35 +164,30 @@ class KeyStoreHelper {
 
         fun createNewKey(password: Password): Pair<Salt, IVCipherText> {
             val salt = Salt(generateRandomBytes(64))
-            val pbkdf2key = generatePBKDF2(salt, password)
+            val pbkdf2key = generatePBKDF2AESKey(
+                salt,
+                KEY_ITERATION_COUNT,
+                password,
+                KEY_LENGTH_BITS
+            )
 
             val (unencryptedKey, cipheredKey) = makeFreshNewKey(KEY_LENGTH_BITS, pbkdf2key)
             importANewMasterKey(unencryptedKey)
             return Pair(salt, cipheredKey)
         }
 
-        fun generatePBKDF2(
-            salt: Salt,
-            password: Password
-        ) = generatePBKDF2AESKey(
-            salt,
-            KEY_ITERATION_COUNT,
-            password,
-            KEY_LENGTH_BITS
-        )
-
         private fun importANewMasterKey(aesKey: SecretKeySpec) {
-            val keyAlias = KEY_SECRET_MASTERKEY
-            val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
-            keyStore.load(null)
-            keyStore.setEntry(
-                keyAlias,
-                KeyStore.SecretKeyEntry(aesKey),
-                getGenericKeyProt()
-            )
+            KeyStore.getInstance(ANDROID_KEYSTORE).apply {
+                load(null)
+                setEntry(
+                    KEY_SECRET_MASTERKEY,
+                    KeyStore.SecretKeyEntry(aesKey),
+                    getGenericKeyProtection()
+                )
+            }
         }
 
-        private fun getGenericKeyProt(): KeyProtection {
+        private fun getGenericKeyProtection(): KeyProtection {
             return KeyProtection.Builder(
                 KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
             )
@@ -215,14 +207,14 @@ fun KeyStoreHelper.decryptByteArray(encryptedPassword: EncryptedPassword): Passw
     return Password(
         decryptByteArray(
             IVCipherText(
-                KeyStoreHelper.IV_LENGTH,
+                CipherUtilities.IV_LENGTH,
                 encryptedPassword.encryptedPassword
             )
         )
     )
 }
 
-fun KeyStoreHelper.encryptByteArray(plainPassword: Password): EncryptedPassword {
-    assert(!plainPassword.isEmpty())
-    return EncryptedPassword(encryptByteArray(plainPassword.password).combineIVAndCipherText())
-}
+//fun KeyStoreHelper.encryptByteArray(plainPassword: Password): EncryptedPassword {
+//    assert(!plainPassword.isEmpty())
+//    return EncryptedPassword(encryptByteArray(plainPassword.password).combineIVAndCipherText())
+//}

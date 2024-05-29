@@ -13,7 +13,7 @@ import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.date.DateUtils
-import fi.iki.ede.crypto.keystore.KeyStoreHelper
+import fi.iki.ede.crypto.keystore.CipherUtilities
 import fi.iki.ede.safe.model.Preferences
 import java.time.ZonedDateTime
 
@@ -131,7 +131,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
                 if (it.count > 0) {
                     it.moveToFirst()
                     IVCipherText(
-                        KeyStoreHelper.IV_LENGTH,
+                        CipherUtilities.IV_LENGTH,
                         it.getBlob(it.getColumnIndexOrThrow("encryptedkey"))
                     )
                 } else {
@@ -189,7 +189,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
                         })
                         it.moveToNext()
                     }
-                }
+                }.toList()
             }
         }
 
@@ -206,7 +206,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
     private fun Cursor.getIVCipher(columnName: String) =
         IVCipherText(
             getBlob(getColumnIndexOrThrow(columnName)) ?: byteArrayOf(),
-            KeyStoreHelper.IV_LENGTH
+            CipherUtilities.IV_LENGTH
         )
 
     private fun Cursor.getDBID(columnName: String) =
@@ -265,7 +265,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
                         })
                         it.moveToNext()
                     }
-                }
+                }.toList()
             }
         }
 

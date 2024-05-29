@@ -15,10 +15,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import fi.iki.ede.crypto.DecryptableCategoryEntry
 import fi.iki.ede.crypto.Password
-import fi.iki.ede.safe.db.DBHelperFactory
+import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.LoginHandler
+import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.service.AutolockingService
 import fi.iki.ede.safe.ui.composable.BiometricsComponent
 import fi.iki.ede.safe.ui.composable.PasswordPrompt
@@ -36,12 +38,11 @@ open class LoginScreen : ComponentActivity() {
             when (result.resultCode) {
                 RESULT_OK -> {
                     BiometricsActivity.registerBiometric(this)
-                    passwordValidatedStartAutolockServiceAndFinish()
+                    finishLoginProcess()
                 }
 
                 RESULT_CANCELED -> {
                     // We should fall back asking password but NOT disable biometrics
-                    //mSkipBiometrics = true
                 }
                 // may be called many times..eventually gets cancelled
                 BiometricsActivity.RESULT_FAILED -> {}
@@ -56,13 +57,12 @@ open class LoginScreen : ComponentActivity() {
                         // should never happen
                         Log.e("---", "Biometric verification NOT accepted - perhaps a new backup?")
                     } else {
-                        passwordValidatedStartAutolockServiceAndFinish()
+                        finishLoginProcess()
                     }
                 }
 
                 RESULT_CANCELED -> {
                     // We should fall back asking password but NOT disable biometrics
-                    //mSkipBiometrics = true
                 }
 
                 BiometricsActivity.RESULT_FAILED -> {
@@ -73,15 +73,9 @@ open class LoginScreen : ComponentActivity() {
             }
         }
 
-    private fun passwordValidatedStartAutolockServiceAndFinish() {
+    private fun finishLoginProcess() {
         setResult(RESULT_OK, Intent())
         startService(Intent(applicationContext, AutolockingService::class.java))
-        val myScope = CoroutineScope(Dispatchers.Main)
-        myScope.launch {
-            withContext(Dispatchers.IO) {
-                DataModel.loadFromDatabase()
-            }
-        }
         if (!dontOpenCategoryListScreen) {
             CategoryListScreen.startMe(this)
         }
@@ -94,8 +88,7 @@ open class LoginScreen : ComponentActivity() {
         dontOpenCategoryListScreen = intent.getBooleanExtra(
             DONT_OPEN_CATEGORY_SCREEN_AFTER_LOGIN, false
         )
-        // TODO: Make async and redraw screen accordingly
-        val firstTimeUse = DBHelperFactory.getDBHelper(context).isUninitializedDatabase()
+        val firstTimeUse = Preferences.isFirstTimeLogin()
 
         setContent {
             SafeTheme {
@@ -126,31 +119,43 @@ open class LoginScreen : ComponentActivity() {
         context: LoginScreen,
         it: Password,
     ) {
-        val passwordValidated =
-            if (firstTimeUse) {
-                LoginHandler.firstTimeLogin(context, it)
-                true
-            } else {
-                LoginHandler.passwordLogin(context, it)
-            }
+        val passwordIsAccepted = if (firstTimeUse) {
+            LoginHandler.firstTimeLogin(context, it)
+            true
+        } else {
+            LoginHandler.passwordLogin(context, it)
+        }
 
-        if (passwordValidated) {
-            passwordValidated(firstTimeUse, context)
+        if (passwordIsAccepted) {
+            val registerBiometricsActivity =
+                (firstTimeUse && BiometricsActivity.isBiometricEnabled())
+                        || (BiometricsActivity.isBiometricEnabled() &&
+                        !BiometricsActivity.haveRecordedBiometric())
+            beginToLoadDB(firstTimeUse)
+            if (registerBiometricsActivity) {
+                biometricsActivityInitialize.launch(BiometricsActivity.getRegistrationIntent(context))
+            } else {
+                finishLoginProcess()
+            }
         }
     }
 
-    private fun passwordValidated(
-        firstTimeUse: Boolean,
-        context: LoginScreen,
-    ) {
-        val registerBiometricsActivity =
-            (firstTimeUse && BiometricsActivity.isBiometricEnabled())
-                    || (BiometricsActivity.isBiometricEnabled() &&
-                    !BiometricsActivity.haveRecordedBiometric())
-        if (registerBiometricsActivity) {
-            biometricsActivityInitialize.launch(BiometricsActivity.getRegistrationIntent(context))
-        } else {
-            passwordValidatedStartAutolockServiceAndFinish()
+    private fun beginToLoadDB(firstTimeUse: Boolean) {
+        val myScope = CoroutineScope(Dispatchers.Main)
+        myScope.launch {
+            withContext(Dispatchers.IO) {
+                DataModel.loadFromDatabase()
+
+                if (firstTimeUse) {
+                    val entry = DecryptableCategoryEntry().apply {
+                        encryptedName = KeyStoreHelperFactory.getKeyStoreHelper()
+                            .encryptByteArray("Category - Long press to edit".toByteArray())
+                    }
+                    DataModel.addOrEditCategory(entry)
+
+                    // TODO: well, do add some passwords as well
+                }
+            }
         }
     }
 
@@ -161,10 +166,6 @@ open class LoginScreen : ComponentActivity() {
         const val TESTTAG_BIOMETRICS_CHECKBOX = "biometrics_enable"
         const val DONT_OPEN_CATEGORY_SCREEN_AFTER_LOGIN = "dont_open_category_screen"
         fun startMe(context: Context, dontOpenCategoryScreenAfterLogin: Boolean = false) {
-            if (DBHelperFactory.getDBHelper(context).isUninitializedDatabase()) {
-                return
-            }
-
             context.startActivity(
                 Intent(
                     context,

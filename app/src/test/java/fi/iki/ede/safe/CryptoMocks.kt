@@ -1,6 +1,7 @@
 package fi.iki.ede.safe
 
 import fi.iki.ede.crypto.IVCipherText
+import fi.iki.ede.crypto.keystore.CipherUtilities
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import io.mockk.every
@@ -17,7 +18,7 @@ object CryptoMocks {
         val encryptionInput = slot<ByteArray>()
         val fakeIV: ByteArray =
             generateSequence<Byte>(1) { (it + 1).toByte() }
-                .take(KeyStoreHelper.IV_LENGTH).toList().toByteArray()
+                .take(CipherUtilities.IV_LENGTH).toList().toByteArray()
 
         fun fakeDecrypt(input: IVCipherText): ByteArray {
             // get rid of IV
