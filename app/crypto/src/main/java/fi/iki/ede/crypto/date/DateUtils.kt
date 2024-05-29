@@ -5,6 +5,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.Period
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatterBuilder
@@ -43,6 +44,16 @@ object DateUtils {
         )
     }
 
+    fun getPeriodBetweenDates(
+        startDateTime: ZonedDateTime = ZonedDateTime.now(),
+        endDateTime: ZonedDateTime = ZonedDateTime.now()
+    ): Period =
+        Period.between(startDateTime.toLocalDate(), endDateTime.toLocalDate())
+
+    @Deprecated(
+        "This is just in day accuracy",
+        ReplaceWith("getMonthsBetweenDates")
+    )
     fun durationBetweenDateAndNow(date: ZonedDateTime): Duration {
         return Duration.between(
             LocalDateTime.ofInstant(

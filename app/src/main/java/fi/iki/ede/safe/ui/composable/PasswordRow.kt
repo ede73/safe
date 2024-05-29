@@ -26,6 +26,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import fi.iki.ede.crypto.DecryptableCategoryEntry
 import fi.iki.ede.crypto.DecryptablePasswordEntry
 import fi.iki.ede.crypto.date.DateUtils
@@ -33,6 +34,7 @@ import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.ui.activities.PasswordEntryScreen
 import kotlinx.coroutines.launch
+import java.time.Period
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -88,13 +90,11 @@ fun PasswordRow(
 
             if (passEntry.passwordChangedDate != null) {
                 Spacer(modifier = Modifier.weight(1f)) // This will push the Text to the end
-                val duration = DateUtils.durationBetweenDateAndNow(passEntry.passwordChangedDate!!)
+
                 Text(
-                    text = pluralStringResource(
-                        id = R.plurals.password_list_password_age_days,
-                        count = duration.toDays().toInt(),
-                        duration.toDays().toInt()
-                    ), Modifier.padding(12.dp)
+                    text = getPasswordAgePlurality(DateUtils.getPeriodBetweenDates(passEntry.passwordChangedDate!!)),
+                    modifier = Modifier.padding(12.dp),
+                    fontSize = 10.sp,
                 )
             }
             DropdownMenu(expanded = displayMenu, onDismissRequest = { displayMenu = false }) {
@@ -151,3 +151,38 @@ fun PasswordRow(
         }
     }
 }
+
+@Composable
+fun getPasswordAgePlurality(duration: Period): String {
+    val z = buildList<String> {
+        if (duration.years > 0) {
+            add(
+                pluralStringResource(
+                    id = R.plurals.password_list_password_age_years,
+                    count = duration.years,
+                    duration.years
+                )
+            )
+        }
+        if (duration.months > 0) {
+            add(
+                pluralStringResource(
+                    id = R.plurals.password_list_password_age_months,
+                    count = duration.months,
+                    duration.months
+                )
+            )
+        }
+        if (duration.days > 1 || (duration.months == 0 && duration.years == 0)) {
+            add(
+                pluralStringResource(
+                    id = R.plurals.password_list_password_age_days,
+                    count = duration.days,
+                    duration.days
+                )
+            )
+        }
+    }.joinToString(" ")
+    return z
+}
+

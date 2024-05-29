@@ -20,7 +20,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -83,14 +82,14 @@ fun MatchingPasswordEntry(
                 )
                 if (passwordEntry.passwordChangedDate != null) {
                     Spacer(modifier = Modifier.weight(1f)) // This will push the Text to the end
-                    val duration =
-                        DateUtils.durationBetweenDateAndNow(passwordEntry.passwordChangedDate!!)
                     Text(
-                        text = pluralStringResource(
-                            id = R.plurals.password_list_password_age_days,
-                            count = duration.toDays().toInt(),
-                            duration.toDays().toInt()
-                        ), Modifier.padding(8.dp)
+                        text = getPasswordAgePlurality(
+                            duration = DateUtils.getPeriodBetweenDates(
+                                passwordEntry.passwordChangedDate!!
+                            )
+                        ),
+                        fontSize = 10.sp,
+                        modifier = Modifier.padding(8.dp)
                     )
                 }
             }

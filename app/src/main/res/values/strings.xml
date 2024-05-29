@@ -70,8 +70,16 @@
     <string name="password_list_move_password">Move password %s</string>
     <plurals name="password_list_password_age_days">
         <item quantity="zero">(brand new)</item>
-        <item quantity="one">(%d day old)</item>
-        <item quantity="other">(%d days old)</item>
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
+    <plurals name="password_list_password_age_months">
+        <item quantity="one">%d month</item>
+        <item quantity="other">%d months</item>
+    </plurals>
+    <plurals name="password_list_password_age_years">
+        <item quantity="one">%d year</item>
+        <item quantity="other">%d years</item>
     </plurals>
 
     <!-- titles / manifest -->
