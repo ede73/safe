@@ -50,10 +50,8 @@ class PasswordListScreen : AutoLockingComponentActivity() {
                                     categoryId = categoryId
                                 )
                             )
-                        }, onAddCompleted = {
                         })
-                        PasswordList(passwordsState, onRefreshEntries = {
-                        })
+                        PasswordList(passwordsState)
                         // last row
                     }
                 }

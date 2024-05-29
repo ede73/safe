@@ -16,7 +16,7 @@ import fi.iki.ede.crypto.DecryptablePasswordEntry
 import fi.iki.ede.safe.model.DataModel
 
 @Composable
-fun PasswordList(passwords: List<DecryptablePasswordEntry>, onRefreshEntries: () -> Unit) {
+fun PasswordList(passwords: List<DecryptablePasswordEntry>) {
 
     val passwordItems = remember { mutableStateListOf<@Composable () -> Unit>() }
     val passwordListHash = remember(passwords) { passwords.hashCode() }
@@ -32,7 +32,7 @@ fun PasswordList(passwords: List<DecryptablePasswordEntry>, onRefreshEntries: ()
                 previousValue = beginning
                 passwordItems.add { PasswordRowHeader(headerString = beginning) }
             }
-            passwordItems.add { PasswordRow(password, categoriesState, onRefreshEntries) }
+            passwordItems.add { PasswordRow(password, categoriesState) }
         }
     }
 

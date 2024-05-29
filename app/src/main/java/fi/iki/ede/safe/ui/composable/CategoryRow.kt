@@ -34,7 +34,7 @@ import kotlinx.coroutines.runBlocking
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun CategoryRow(category: DecryptableCategoryEntry, onRefreshCategories: () -> Unit) {
+fun CategoryRow(category: DecryptableCategoryEntry) {
     val context = LocalContext.current
     var displayMenu by remember { mutableStateOf(false) }
     var displayDeleteCategory by remember { mutableStateOf(false) }
@@ -117,7 +117,6 @@ fun CategoryRow(category: DecryptableCategoryEntry, onRefreshCategories: () -> U
                         coroutineScope.launch {
                             DataModel.addOrEditCategory(entry)
                         }
-                        onRefreshCategories()
                     }
                     displayEditDialog = false
                 })
@@ -128,7 +127,6 @@ fun CategoryRow(category: DecryptableCategoryEntry, onRefreshCategories: () -> U
                     DataModel.deleteCategory(category)
                 }
                 displayDeleteCategory = false
-                onRefreshCategories()
             }, onDismiss = {
                 displayDeleteCategory = false
             })

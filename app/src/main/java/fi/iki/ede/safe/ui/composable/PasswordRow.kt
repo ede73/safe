@@ -39,9 +39,9 @@ import java.time.Period
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PasswordRow(
-    passEntry: DecryptablePasswordEntry, /* TODO: NOt needed*/
+    passEntry: DecryptablePasswordEntry,
+    /* TODO: NOt needed*/
     categoriesState: List<DecryptableCategoryEntry>,
-    onRefreshEntries: () -> Unit
 ) {
     val context = LocalContext.current
     var displayMenu by remember { mutableStateOf(false) }
@@ -55,7 +55,6 @@ fun PasswordRow(
             when (it.resultCode) {
                 Activity.RESULT_OK -> {
                     // TODO: should not be needed
-                    onRefreshEntries()
                 }
             }
         }
@@ -127,7 +126,6 @@ fun PasswordRow(
                         DataModel.deletePassword(passEntry)
                     }
                     displayDeleteDialog = false
-                    onRefreshEntries()
                 }, onDismiss = {
                     displayDeleteDialog = false
                 })
@@ -143,7 +141,6 @@ fun PasswordRow(
                         DataModel.movePassword(passEntry, newCategory)
                     }
                     displayMoveDialog = false
-                    onRefreshEntries()
                 }, onDismiss = {
                     displayMoveDialog = false
                 })

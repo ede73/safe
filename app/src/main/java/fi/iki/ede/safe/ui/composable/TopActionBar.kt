@@ -61,7 +61,6 @@ import kotlinx.coroutines.withContext
 @Composable
 fun TopActionBar(
     onAddRequested: (addCompleted: ManagedActivityResultLauncher<Intent, ActivityResult>) -> Unit = {},
-    onAddCompleted: () -> Unit = {},
 ) {
     val tag = "TopActionBar"
     val context = LocalContext.current
@@ -74,7 +73,7 @@ fun TopActionBar(
         onResult = {
             when (it.resultCode) {
                 Activity.RESULT_OK -> {
-                    onAddCompleted()
+                    //  nothing to do anymore (thanks flow!)
                 }
             }
         }
@@ -320,5 +319,5 @@ private fun EnterNewPassword(
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
-    TopActionBar({}, {})
+    TopActionBar({})
 }

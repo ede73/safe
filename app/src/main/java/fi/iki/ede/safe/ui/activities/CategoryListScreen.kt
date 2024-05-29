@@ -51,10 +51,6 @@ class CategoryListScreen : AutoLockingComponentActivity() {
                         TopActionBar(
                             onAddRequested = {
                                 displayAddCategoryDialog = true
-                            },
-                            onAddCompleted = {
-                                // TODO: new category added
-                                // Refresh all passwords
                             })
                         if (displayAddCategoryDialog) {
                             val ks = KeyStoreHelperFactory.getKeyStoreHelper()
@@ -72,8 +68,7 @@ class CategoryListScreen : AutoLockingComponentActivity() {
                                     displayAddCategoryDialog = false
                                 })
                         }
-                        CategoryList(categoriesState, onRefreshCategories = {
-                        })
+                        CategoryList(categoriesState)
                     }
                 }
             }

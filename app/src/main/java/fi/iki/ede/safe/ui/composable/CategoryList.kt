@@ -8,13 +8,13 @@ import androidx.compose.ui.Modifier
 import fi.iki.ede.crypto.DecryptableCategoryEntry
 
 @Composable
-fun CategoryList(categories: List<DecryptableCategoryEntry>, onRefreshCategories: () -> Unit = {}) {
+fun CategoryList(categories: List<DecryptableCategoryEntry>) {
     Column(
         modifier = Modifier
             .verticalScroll(rememberScrollState())
     ) {
         categories.forEach { category ->
-            CategoryRow(category, onRefreshCategories)
+            CategoryRow(category)
         }
     }
 }
