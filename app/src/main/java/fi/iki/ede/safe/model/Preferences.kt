@@ -7,6 +7,10 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.hexToByteArray
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.toHexString
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 object Preferences {
     // only used as accessors in SharedPrerefencesChange
@@ -72,8 +76,12 @@ object Preferences {
     // if missing, we'll flag here to request the permission when user is
     // at screen (ie. from activity)
     fun setNotificationPermissionRequired(context: Context, value: Boolean) =
-        PreferenceManager.getDefaultSharedPreferences(context).edit()
-            .putBoolean(NOTIFICATION_PERMISSION_REQUIRED, value).apply()
+        CoroutineScope(Dispatchers.IO).launch {
+            withContext(Dispatchers.IO) {
+                PreferenceManager.getDefaultSharedPreferences(context).edit()
+                    .putBoolean(NOTIFICATION_PERMISSION_REQUIRED, value).apply()
+            }
+        }
 
     fun getBiometricsEnabled(context: Context, default: Boolean): Boolean =
         PreferenceManager.getDefaultSharedPreferences(context)
