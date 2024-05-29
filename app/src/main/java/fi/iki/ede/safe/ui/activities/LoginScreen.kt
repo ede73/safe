@@ -94,6 +94,7 @@ open class LoginScreen : ComponentActivity() {
         dontOpenCategoryListScreen = intent.getBooleanExtra(
             DONT_OPEN_CATEGORY_SCREEN_AFTER_LOGIN, false
         )
+        // TODO: Make async and redraw screen accordingly
         val firstTimeUse = DBHelperFactory.getDBHelper(context).isUninitializedDatabase()
 
         setContent {
