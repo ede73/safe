@@ -28,12 +28,12 @@ object ChangeMasterKeyAndPassword {
         val (salt, ivCipher) = dbHelper.fetchSaltAndEncryptedMasterKey()
         val existingPBKDF2Key = generatePBKDF2(salt, oldPass)
         val newPBKDF2Key = generatePBKDF2(salt, newPass)
-        val myScope = CoroutineScope(Dispatchers.Default)
 
         try {
             val decryptedMasterKey = decryptMasterKey(existingPBKDF2Key, ivCipher)
             val newEncryptedMasterKey = encryptMasterKey(newPBKDF2Key, decryptedMasterKey.encoded)
             dbHelper.storeSaltAndEncryptedMasterKey(salt, newEncryptedMasterKey)
+            val myScope = CoroutineScope(Dispatchers.Main)
             myScope.launch {
                 withContext(Dispatchers.IO) {
                     DataModel.loadFromDatabase()
