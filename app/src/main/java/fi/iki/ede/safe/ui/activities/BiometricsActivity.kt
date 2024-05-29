@@ -113,6 +113,8 @@ class BiometricsActivity : AppCompatActivity() {
     }
 
     companion object {
+        const val TAG = "BiometricsActivity"
+        
         fun isBiometricEnabled() =
             sharedPreferences.getBoolean(PREFERENCE_BIOMETRICS_ENABLED, false)
 
@@ -154,6 +156,7 @@ class BiometricsActivity : AppCompatActivity() {
                     return true
                 }
                 // TODO: Biometrics is too old..force re-registration, be nice, tell user too!
+                Log.e(TAG, "Biometrics too old, re-registering")
             } catch (ex: Exception) {
                 Log.i("Biometrics", "Error $ex")
             }
