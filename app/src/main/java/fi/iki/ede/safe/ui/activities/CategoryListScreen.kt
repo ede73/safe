@@ -24,6 +24,7 @@ import fi.iki.ede.safe.ui.composable.AddOrEditCategory
 import fi.iki.ede.safe.ui.composable.CategoryList
 import fi.iki.ede.safe.ui.composable.TopActionBar
 import fi.iki.ede.safe.ui.theme.SafeTheme
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 
@@ -34,6 +35,7 @@ class CategoryListScreen : AutoLockingComponentActivity() {
         setContent {
             val coroutineScope = rememberCoroutineScope()
             val categoriesState by DataModel.categoriesStateFlow
+                .map { categories -> categories.sortedBy { it.plainName.lowercase() } }
                 .collectAsState(initial = emptyList())
             var displayAddCategoryDialog by remember { mutableStateOf(false) }
 
