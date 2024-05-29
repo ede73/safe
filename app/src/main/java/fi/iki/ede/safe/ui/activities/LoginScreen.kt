@@ -32,13 +32,13 @@ import kotlinx.coroutines.withContext
 
 open class LoginScreen : ComponentActivity() {
     private var dontOpenCategoryListScreen: Boolean = false
-    private val biometricsActivityInitialize =
+    private val biometricsFirstTimeRegister =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
             // This is FIRST TIME call..we're just about to be set up...
             when (result.resultCode) {
                 RESULT_OK -> {
                     BiometricsActivity.registerBiometric(this)
-                    finishLoginProcess()
+                    finishLoginProcess(true)
                 }
 
                 RESULT_CANCELED -> {
@@ -49,7 +49,7 @@ open class LoginScreen : ComponentActivity() {
             }
         }
 
-    private val biometricsActivityVerify =
+    private val biometricsVerify =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
             when (result.resultCode) {
                 RESULT_OK -> {
@@ -57,7 +57,7 @@ open class LoginScreen : ComponentActivity() {
                         // should never happen
                         Log.e("---", "Biometric verification NOT accepted - perhaps a new backup?")
                     } else {
-                        finishLoginProcess()
+                        finishLoginProcess(false)
                     }
                 }
 
@@ -73,7 +73,9 @@ open class LoginScreen : ComponentActivity() {
             }
         }
 
-    private fun finishLoginProcess() {
+    private fun finishLoginProcess(firstTimeUse: Boolean) {
+        beginToLoadDB(firstTimeUse)
+
         setResult(RESULT_OK, Intent())
         startService(Intent(applicationContext, AutolockingService::class.java))
         if (!dontOpenCategoryListScreen) {
@@ -106,7 +108,7 @@ open class LoginScreen : ComponentActivity() {
                         }
                         // TODO: if we're fresh from backup - biometrics don't work
                         BiometricsComponent(
-                            biometricsActivityVerify,
+                            biometricsVerify,
                         )
                     }
                 }
@@ -131,11 +133,12 @@ open class LoginScreen : ComponentActivity() {
                 (firstTimeUse && BiometricsActivity.isBiometricEnabled())
                         || (BiometricsActivity.isBiometricEnabled() &&
                         !BiometricsActivity.haveRecordedBiometric())
-            beginToLoadDB(firstTimeUse)
             if (registerBiometricsActivity) {
-                biometricsActivityInitialize.launch(BiometricsActivity.getRegistrationIntent(context))
+                biometricsFirstTimeRegister.launch(
+                    BiometricsActivity.getRegistrationIntent(context)
+                )
             } else {
-                finishLoginProcess()
+                finishLoginProcess(firstTimeUse)
             }
         }
     }

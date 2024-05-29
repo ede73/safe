@@ -114,7 +114,7 @@ class BiometricsActivity : AppCompatActivity() {
 
     companion object {
         const val TAG = "BiometricsActivity"
-        
+
         fun isBiometricEnabled() =
             sharedPreferences.getBoolean(PREFERENCE_BIOMETRICS_ENABLED, false)
 
