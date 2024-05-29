@@ -34,14 +34,14 @@ fun BiometricsComponent(
         val ks = KeyStoreHelperFactory.getKeyStoreHelper()
         false
     } catch (ex: Exception) {
-        BiometricsActivity.clearBiometricKeys(context)
+        BiometricsActivity.clearBiometricKeys()
         true
     }
 
-    val biometricsActivityEnabled = BiometricsActivity.isBiometricEnabled(context)
+    val biometricsActivityEnabled = BiometricsActivity.isBiometricEnabled()
     var registerBiometrics by remember { mutableStateOf(biometricsActivityEnabled) }
 
-    if (biometricsActivityEnabled && BiometricsActivity.haveRecordedBiometric(context) && !keystoreMissingMasterkeyAfterBackupRestore) {
+    if (biometricsActivityEnabled && BiometricsActivity.haveRecordedBiometric() && !keystoreMissingMasterkeyAfterBackupRestore) {
         // Actually during login, we could JUST launch the bio verification immediately
         // since biometrics is enabled AND we have previously recorded entry
         bioVerify?.launch(BiometricsActivity.getVerificationIntent(context))
@@ -55,7 +55,7 @@ fun BiometricsComponent(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Checkbox(
                 checked = registerBiometrics, onCheckedChange = {
-                    BiometricsActivity.setBiometricEnabled(context, it)
+                    BiometricsActivity.setBiometricEnabled(it)
                     registerBiometrics = it
                 },
                 modifier = Modifier.testTag(TESTTAG_BIOMETRICS_CHECKBOX)

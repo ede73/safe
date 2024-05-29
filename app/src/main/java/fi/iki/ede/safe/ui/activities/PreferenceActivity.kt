@@ -36,7 +36,7 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
             ActivityResultContracts.StartActivityForResult()
         ) { result: ActivityResult ->
             if (result.resultCode == RESULT_OK) {
-                Preferences.setBackupDocument(requireContext(), result.data!!.data!!.path)
+                Preferences.setBackupDocument(result.data!!.data!!.path)
             }
         }
 
@@ -68,14 +68,14 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
             findPreference<Preference>(Preferences.PREFERENCE_BIOMETRICS_ENABLED)?.onPreferenceChangeListener =
                 Preference.OnPreferenceChangeListener { _: Preference?, enabledOrDisabled: Any ->
                     if (!(enabledOrDisabled as Boolean)) {
-                        BiometricsActivity.clearBiometricKeys(requireContext())
+                        BiometricsActivity.clearBiometricKeys()
                     }
                     true
                 }
 
             preferenceScreen.sharedPreferences?.registerOnSharedPreferenceChangeListener(this)
 
-            backupPathClicker?.summary = Preferences.getBackupDocument(requireActivity())
+            backupPathClicker?.summary = Preferences.getBackupDocument()
         }
 
         override fun onSharedPreferenceChanged(
@@ -85,7 +85,7 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
             when (key) {
                 Preferences.PREFERENCE_BACKUP_DOCUMENT -> {
                     findPreference<Preference?>(Preferences.PREFERENCE_BACKUP_DOCUMENT)?.summary =
-                        Preferences.getBackupDocument(activity?.applicationContext!!)
+                        Preferences.getBackupDocument()
                 }
             }
         }

@@ -10,11 +10,17 @@ import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK
 import androidx.biometric.BiometricPrompt
 import androidx.biometric.BiometricPrompt.PromptInfo
 import androidx.core.content.ContextCompat
+import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.date.DateUtils
+import fi.iki.ede.crypto.hexToByteArray
+import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.toHexString
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.LoginHandler
-import fi.iki.ede.safe.model.Preferences
+import fi.iki.ede.safe.model.Preferences.PREFERENCE_BIOMETRICS_ENABLED
+import fi.iki.ede.safe.model.Preferences.PREFERENCE_BIO_CIPHER
+import fi.iki.ede.safe.model.Preferences.sharedPreferences
 import java.time.ZonedDateTime
 
 // TODO: With latest jetpack biometric lib, authentication failed flow seems to have changed
@@ -107,11 +113,13 @@ class BiometricsActivity : AppCompatActivity() {
     }
 
     companion object {
-        fun isBiometricEnabled(context: Context) = Preferences.getBiometricsEnabled(context, false)
-        fun setBiometricEnabled(context: Context, value: Boolean) =
-            Preferences.setBiometricsEnabled(context, value)
+        fun isBiometricEnabled() =
+            sharedPreferences.getBoolean(PREFERENCE_BIOMETRICS_ENABLED, false)
 
-        fun haveRecordedBiometric(context: Context) = Preferences.getBioCipher(context).isNotEmpty()
+        fun setBiometricEnabled(value: Boolean) =
+            sharedPreferences.edit().putBoolean(PREFERENCE_BIOMETRICS_ENABLED, value).apply()
+
+        fun haveRecordedBiometric() = getBioCipher().isNotEmpty()
 
         /**
          * Call after biometrics initialize if RESULT_OK (ie. user's biometrics was recognized)
@@ -124,7 +132,7 @@ class BiometricsActivity : AppCompatActivity() {
             val biokey = ks.getOrCreateBiokey()
             val now = ZonedDateTime.now().toEpochSecond().toString()
             val stamp = ks.encryptByteArray(now.toByteArray(), biokey)
-            Preferences.storeBioCipher(context, stamp)
+            storeBioCipher(stamp)
             LoginHandler.biometricLogin()
         }
 
@@ -134,7 +142,7 @@ class BiometricsActivity : AppCompatActivity() {
          * TODO: Implement some check - keystore has separate biokey in android keystore
          */
         fun verificationAccepted(context: Context): Boolean {
-            val stampCipher = Preferences.getBioCipher(context)
+            val stampCipher = getBioCipher()
             val ks = KeyStoreHelperFactory.getKeyStoreHelper()
             val biokey = ks.getOrCreateBiokey()
             try {
@@ -149,7 +157,7 @@ class BiometricsActivity : AppCompatActivity() {
             } catch (ex: Exception) {
                 Log.i("Biometrics", "Error $ex")
             }
-            Preferences.clearBioCipher(context)
+            clearBiometricKeys()
             return false
         }
 
@@ -159,8 +167,20 @@ class BiometricsActivity : AppCompatActivity() {
         fun getRegistrationIntent(context: Context) =
             Intent(context, BiometricsActivity::class.java).setAction(BIO_INITIALIZE)
 
-        fun clearBiometricKeys(context: Context) = Preferences.clearBioCipher(context)
+        fun clearBiometricKeys() = sharedPreferences.edit()
+            .remove(PREFERENCE_BIO_CIPHER)
+            .apply()
 
+
+        fun getBioCipher(): IVCipherText {
+            val pm = sharedPreferences
+                .getString(PREFERENCE_BIO_CIPHER, null) ?: return IVCipherText.getEmpty()
+            return IVCipherText(pm.hexToByteArray(), KeyStoreHelper.IV_LENGTH)
+        }
+
+        fun storeBioCipher(cipher: IVCipherText) = sharedPreferences.edit()
+            .putString(PREFERENCE_BIO_CIPHER, cipher.combineIVAndCipherText().toHexString())
+            .apply()
 
         const val RESULT_FAILED = 1
         private const val BIO_INITIALIZE = "bioinitialize"

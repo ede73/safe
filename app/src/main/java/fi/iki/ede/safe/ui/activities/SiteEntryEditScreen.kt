@@ -163,7 +163,7 @@ class SiteEntryEditScreen : AutolockingBaseComponentActivity() {
                 viewModel.addPassword(
                     newPassword.encrypt(ks),
                     categoryId,
-                    Preferences.getDefaultUserName(this).encrypt(ks)
+                    Preferences.getDefaultUserName().encrypt(ks)
                 )
             } else {
                 require(true) { "Must have password or category ID" }

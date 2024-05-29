@@ -32,7 +32,7 @@ class RestoreDatabaseScreen : AutolockingBaseComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val context = this
-        Preferences.setBackupDocument(this, intent.dataString)
+        Preferences.setBackupDocument(intent.dataString)
         val compatibility = intent.getBooleanExtra(OISAFE_COMPATIBILITY, false)
 
         setContent {

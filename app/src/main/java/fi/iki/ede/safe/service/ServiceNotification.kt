@@ -58,7 +58,7 @@ class ServiceNotification(val context: Context) {
             flagToRequestNotificationPermission()
             return
         }
-        Preferences.setNotificationPermissionRequired(context, false)
+        Preferences.setNotificationPermissionRequired(false)
         mNotifyManager.notify(NOTIFICATION_ID, notificationBuilder.build())
     }
 
@@ -66,7 +66,7 @@ class ServiceNotification(val context: Context) {
     // And this is running as services, so we need to route the request
     // And pop up the question once activity is opened (let's say CategoryList)
     private fun flagToRequestNotificationPermission() {
-        Preferences.setNotificationPermissionRequired(this.context, true)
+        Preferences.setNotificationPermissionRequired(true)
     }
 
     fun clearNotification() {
@@ -88,7 +88,7 @@ class ServiceNotification(val context: Context) {
             flagToRequestNotificationPermission()
             return
         }
-        Preferences.setNotificationPermissionRequired(this.context, false)
+        Preferences.setNotificationPermissionRequired(false)
         mNotifyManager.notify(NOTIFICATION_ID, notificationBuilder.build())
     }
 

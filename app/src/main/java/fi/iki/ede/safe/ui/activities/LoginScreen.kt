@@ -143,9 +143,9 @@ open class LoginScreen : ComponentActivity() {
         context: LoginScreen,
     ) {
         val registerBiometricsActivity =
-            (firstTimeUse && BiometricsActivity.isBiometricEnabled(context))
-                    || (BiometricsActivity.isBiometricEnabled(context) &&
-                    !BiometricsActivity.haveRecordedBiometric(context))
+            (firstTimeUse && BiometricsActivity.isBiometricEnabled())
+                    || (BiometricsActivity.isBiometricEnabled() &&
+                    !BiometricsActivity.haveRecordedBiometric())
         if (registerBiometricsActivity) {
             biometricsActivityInitialize.launch(BiometricsActivity.getRegistrationIntent(context))
         } else {

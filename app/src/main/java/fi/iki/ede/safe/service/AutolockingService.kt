@@ -27,7 +27,7 @@ class AutolockingService : Service() {
             override fun onReceive(context: Context, intent: Intent) {
                 when (intent.action) {
                     Intent.ACTION_SCREEN_OFF -> {
-                        if (Preferences.getLockOnScreenLock(context, true)) {
+                        if (Preferences.getLockOnScreenLock(true)) {
                             lockOut()
                         }
                     }
@@ -105,7 +105,7 @@ class AutolockingService : Service() {
         autoLockCountdownNotifier = null
         serviceNotification.setNotification(this@AutolockingService)
 
-        val timeoutMinutes = Preferences.getLockTimeoutMinutes(this)
+        val timeoutMinutes = Preferences.getLockTimeoutMinutes()
 
         val timeoutUntilStop = Duration.ofMinutes(timeoutMinutes.toLong()).toMillis()
 

@@ -45,7 +45,7 @@ interface ScreenOffLocker : AvertInactivityDuringLongTask {
     private fun checkScreenOff(context: Context, intent: Intent) {
         when (intent.action) {
             Intent.ACTION_SCREEN_OFF -> {
-                if (Preferences.getLockOnScreenLock(context, true)) {
+                if (Preferences.getLockOnScreenLock(true)) {
                     AutolockingBaseComponentActivity.lockTheApplication(context)
                 }
             }
