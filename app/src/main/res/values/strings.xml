@@ -68,7 +68,7 @@
     <string name="password_list_delete">Are you sure to delete the password %s?</string>
     <string name="password_list_delete_password">Delete password %s</string>
     <string name="password_list_move_password">Move password %s</string>
-    <plurals name="password_list_password_age">
+    <plurals name="password_list_password_age_days">
         <item quantity="zero">(brand new)</item>
         <item quantity="one">(%d day old)</item>
         <item quantity="other">(%d days old)</item>

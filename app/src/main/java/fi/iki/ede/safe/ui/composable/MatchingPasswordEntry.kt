@@ -87,7 +87,7 @@ fun MatchingPasswordEntry(
                         DateUtils.durationBetweenDateAndNow(passwordEntry.passwordChangedDate!!)
                     Text(
                         text = pluralStringResource(
-                            id = R.plurals.password_list_password_age,
+                            id = R.plurals.password_list_password_age_days,
                             count = duration.toDays().toInt(),
                             duration.toDays().toInt()
                         ), Modifier.padding(8.dp)

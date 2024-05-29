@@ -91,7 +91,7 @@ fun PasswordRow(
                 val duration = DateUtils.durationBetweenDateAndNow(passEntry.passwordChangedDate!!)
                 Text(
                     text = pluralStringResource(
-                        id = R.plurals.password_list_password_age,
+                        id = R.plurals.password_list_password_age_days,
                         count = duration.toDays().toInt(),
                         duration.toDays().toInt()
                     ), Modifier.padding(12.dp)
