@@ -59,8 +59,9 @@ class CategoryListScreen : AutolockingBaseComponentActivity() {
                                 categoryName = "",
                                 onSubmit = {
                                     if (!TextUtils.isEmpty(it)) {
-                                        val entry = DecryptableCategoryEntry()
-                                        entry.encryptedName = ks.encryptByteArray(it.toByteArray())
+                                        val entry = DecryptableCategoryEntry().apply {
+                                            encryptedName = ks.encryptByteArray(it.toByteArray())
+                                        }
                                         coroutineScope.launch {
                                             DataModel.addOrEditCategory(entry)
                                         }
