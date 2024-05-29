@@ -25,7 +25,7 @@ object KeyStoreHelperFactory {
 }
 
 // TODO: Missing key rotation
-// Some apps claim android keystore doesnt work with passwords but then
+// Some apps claim android keystore doesn't work with passwords but then
 // some PBE support seems to exist according to https://developer.android.com/reference/java/security/KeyStore
 // See AES issue
 // https://github.com/realm/realm-java/issues/1306
