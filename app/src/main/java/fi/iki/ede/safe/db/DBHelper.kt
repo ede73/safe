@@ -7,7 +7,6 @@ import android.database.SQLException
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import android.database.sqlite.SQLiteOpenHelper
-import android.text.TextUtils
 import android.util.Log
 import fi.iki.ede.crypto.DecryptableCategoryEntry
 import fi.iki.ede.crypto.DecryptablePasswordEntry
@@ -15,7 +14,6 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
-import java.text.ParseException
 import java.time.ZonedDateTime
 
 typealias DBID = Long
@@ -191,18 +189,15 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         return ret
     }
 
-    private fun Cursor.getZonedDateTimeOfPasswordChange(): ZonedDateTime? {
-        val columnName = COL_PASSWORDS_PASSWORD_CHANGED_DATE
-        val date = getString(getColumnIndexOrThrow(columnName))
-        if (!TextUtils.isEmpty(date)) {
-            try {
-                return DateUtils.newParse(date)
-            } catch (ex: ParseException) {
-                Log.e(TAG, "Date parsing error")
+    private fun Cursor.getZonedDateTimeOfPasswordChange(): ZonedDateTime? =
+        getString(getColumnIndexOrThrow(COL_PASSWORDS_PASSWORD_CHANGED_DATE))?.let { date ->
+            date.toLongOrNull()?.let {
+                DateUtils.unixEpochSecondsToLocalZonedDateTime(it)
+            } ?: run {
+                //ok, we have something that isn't numerical
+                DateUtils.newParse(date)
             }
         }
-        return null
-    }
 
     private fun Cursor.getIVCipher(columnName: String): IVCipherText {
         val blob = getBlob(getColumnIndexOrThrow(columnName)) ?: byteArrayOf()
@@ -261,11 +256,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
             passwordRow.website = c.getIVCipher(COL_PASSWORDS_WEBSITE)
             passwordRow.note = c.getIVCipher(COL_PASSWORDS_NOTE)
             passwordRow.photo = c.getIVCipher(COL_PASSWORDS_PHOTO)
-            val passwordChangedDate =
-                c.getZonedDateTimeOfPasswordChange()
-            if (passwordChangedDate != null) {
-                passwordRow.passwordChangedDate = passwordChangedDate
-            }
+            c.getZonedDateTimeOfPasswordChange()?.let { passwordRow.passwordChangedDate = it }
             ret.add(passwordRow)
             c.moveToNext()
         }
@@ -309,9 +300,8 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         put(key, value.combineIVAndCipherText())
     }
 
-    @Suppress("SameParameterValue")
     private fun ContentValues.put(key: String, date: ZonedDateTime) {
-        put(key, DateUtils.newFormat(date))
+        put(key, DateUtils.toUnixSeconds(date))
     }
 
     fun addPassword(entry: DecryptablePasswordEntry): DBID {
@@ -326,11 +316,8 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         initialValues.put(COL_PASSWORDS_WEBSITE, entry.website)
         initialValues.put(COL_PASSWORDS_NOTE, entry.note)
         initialValues.put(COL_PASSWORDS_PHOTO, entry.photo)
-        if (entry.passwordChangedDate != null) {
-            initialValues.put(
-                COL_PASSWORDS_PASSWORD_CHANGED_DATE,
-                entry.passwordChangedDate!!
-            )
+        entry.passwordChangedDate?.let {
+            initialValues.put(COL_PASSWORDS_PASSWORD_CHANGED_DATE, it)
         }
         return this.writableDatabase.insertOrThrow(TABLE_PASSWORDS, null, initialValues)
     }
@@ -387,7 +374,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
                 $COL_PASSWORDS_WEBSITE TEXT,
                 $COL_PASSWORDS_NOTE TEXT,
                 $COL_PASSWORDS_PHOTO TEXT,
-                $COL_PASSWORDS_PASSWORD_CHANGED_DATE TEXT);"""
+                $COL_PASSWORDS_PASSWORD_CHANGED_DATE TEXT);""" // TODO: Could turn changed date to INTEGER?
         private const val PASSWORDS_DROP = "DROP TABLE $TABLE_PASSWORDS;"
         private const val CATEGORIES_CREATE = """CREATE TABLE $TABLE_CATEGORIES (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,

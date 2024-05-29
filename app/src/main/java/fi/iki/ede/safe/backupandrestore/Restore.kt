@@ -39,17 +39,8 @@ class Restore : ExportConfig(ExportVersion.V1) {
     private fun XmlPullParser.getTrimmedAttributeValue(
         attribute: Attributes,
         prefix: String? = null
-    ): String {
-        val result = getAttributeValue(attribute, prefix).trim().replace(" ", " ")
-        if (result.contains(" ")) {
-            Log.e(
-                TAG,
-                "Oh, no during restoration, getting non breakable space in attribute $attribute"
-            )
-            return result.replace(" ", " ")
-        }
-        return result
-    }
+    ): String =
+        getAttributeValue(attribute, prefix).trim()
 
     data class BackupData(val data: List<String>) {
         fun getSalt(): Salt = Salt(data[0].hexToByteArray())
@@ -238,14 +229,17 @@ class Restore : ExportConfig(ExportVersion.V1) {
                             Elements.CATEGORY_ITEM_PASSWORD
                         ) -> {
                             require(password != null) { "Must have password entry" }
+
                             val changed =
                                 myParser.getTrimmedAttributeValue(
                                     Attributes.CATEGORY_ITEM_PASSWORD_CHANGED
                                 )
-
                             if (changed.isNotBlank()) {
                                 try {
-                                    password.passwordChangedDate = DateUtils.newParse(changed)
+                                    password.passwordChangedDate =
+                                        changed.toLongOrNull()?.let {
+                                            DateUtils.unixEpochSecondsToLocalZonedDateTime(it)
+                                        } ?: DateUtils.newParse(changed)
                                 } catch (ex: DateTimeParseException) {
                                     // silently fail, parse failure ain't critical
                                     // and no corrective measure here, passwords are more important

@@ -27,6 +27,7 @@ class DecryptablePasswordEntry(categoryId: Long) {
     var password: IVCipherText = IVCipherText.getEmpty()
 
     // Password changed date(time) is not privacy critical (hence unencrypted)
+    // TODO: LocalDateTime will suffice...
     var passwordChangedDate: ZonedDateTime? = null
     var photo: IVCipherText = IVCipherText.getEmpty()
     var username: IVCipherText = IVCipherText.getEmpty()

@@ -6,7 +6,6 @@ import fi.iki.ede.crypto.DecryptablePasswordEntry
 import fi.iki.ede.crypto.HexString
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
-import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.toHexString
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Attributes
@@ -15,6 +14,7 @@ import fi.iki.ede.safe.model.DataModel
 import org.xmlpull.v1.XmlPullParserFactory
 import org.xmlpull.v1.XmlSerializer
 import java.io.StringWriter
+import java.time.ZoneOffset
 
 /**
  * TODO: Add HMAC
@@ -107,7 +107,7 @@ class Backup : ExportConfig(ExportVersion.V1) {
         serializer.endTag(Elements.ROOT_PASSWORD_SAFE)
         serializer.endDocument()
         val makeThisStreaming = xmlStringWriter.toString()
-        
+
         if (makeThisStreaming.contains(" ")) {
             Log.e(TAG, "Oh no, XML export has non breakable spaces")
         }
@@ -134,8 +134,10 @@ class Backup : ExportConfig(ExportVersion.V1) {
         addTagAndCData(
             Elements.CATEGORY_ITEM_PASSWORD, decryptablePassword.password,
             decryptablePassword.passwordChangedDate?.let {
-                val formattedDate = DateUtils.newFormat(it)
-                Pair(Attributes.CATEGORY_ITEM_PASSWORD_CHANGED, formattedDate)
+                Pair(
+                    Attributes.CATEGORY_ITEM_PASSWORD_CHANGED,
+                    it.withZoneSameInstant(ZoneOffset.UTC).toEpochSecond().toString()
+                )
             }
         )
 

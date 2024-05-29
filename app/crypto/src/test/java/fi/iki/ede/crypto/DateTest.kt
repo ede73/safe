@@ -3,23 +3,31 @@ package fi.iki.ede.crypto
 import fi.iki.ede.crypto.date.DateUtils
 import org.junit.Assert
 import org.junit.Test
-import java.util.Date
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZonedDateTime
+
 
 class DateTest {
+
+    private fun unixTimestampToZonedDateTime(unixTimestamp: Long, zoneId: ZoneId): ZonedDateTime {
+        val startOfDay = Instant.ofEpochMilli(unixTimestamp)
+            .atZone(zoneId)
+            .toLocalDate()
+            .atStartOfDay(zoneId)
+        return startOfDay
+    }
+
     @Test
     fun assertNewProgramCanConvertNonZonedDates() {
-        val date = Date(UNIX_STAMP_MILLIS)
-        val formattedDate = DateUtils.newFormat(date)
-        Assert.assertEquals(NEW_DATE_FORMAT, formattedDate)
-
-//        val d = DateUtils.newParse(FAILED_DATE)
-//        Assert.assertNotNull(d)
-
-        val zonedDateTime = DateUtils.newParse(NEW_DATE_FORMAT)
-        Assert.assertEquals(UNIX_STAMP_MILLIS, zonedDateTime.toEpochSecond() * 1000L)
-
-        val zonedDateTime2 = DateUtils.newParse(NEW_DATE_FORMAT_PST)
-        Assert.assertEquals(UNIX_STAMP_MILLIS, zonedDateTime2.toEpochSecond() * 1000L)
+        val unixDate = unixTimestampToZonedDateTime(UNIX_STAMP_MILLIS, ZoneId.of("UTC"))
+        formats.forEach {
+            println(it)
+            Assert.assertEquals(
+                unixDate.toLocalDate(),
+                DateUtils.newParse(it).toLocalDate()
+            )
+        }
     }
 
     companion object {
@@ -27,8 +35,22 @@ class DateTest {
         private const val UNIX_STAMP_MILLIS = 1685571707000L
 
         // Not sure where the non breakable space popped from !?
-        private const val FAILED_DATE = "Feb 20, 2019, 12:00:00 AM Pacific Standard Time"
         private const val NEW_DATE_FORMAT = "May 31, 2023, 10:21:47 PM Coordinated Universal Time"
-        private const val NEW_DATE_FORMAT_PST = "May 31, 2023, 03:21:47 PM Pacific Daylight Time"
+        private val formats = listOf(
+            "May 31, 2023, 03:22:11 AM",
+            "May 31, 2023, 13:22:11",
+            "May 31, 2023, 13:21:10",
+            "May 31, 2023, 13:21:11 PM",
+            "May 31, 2023, 3:21:12 AM Pacific Daylight Time",
+            "May 31, 2023, 03:21:13 AM Pacific Daylight Time",
+            "May 31, 2023 15:21:14 PM Pacific Daylight Time",
+            "May 31, 2023, 15:31:15PM Pacific Daylight Time",
+            "May 31, 2023 15:31:16PM Pacific Daylight Time",
+            "May 31, 2023, 15:31:17",
+            "May 31, 2023, 15:31:18 Pacific Daylight Time",
+            "May 31, 2023 15:31:19 Pacific Daylight Time",
+            "May 31, 2023, 15:21:20 PM Pacific Standard Time",
+            "May 31, 2023 15:21:21 PM Pacific Standard Time"
+        )
     }
 }

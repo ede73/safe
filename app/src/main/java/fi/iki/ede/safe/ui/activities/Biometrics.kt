@@ -122,7 +122,7 @@ class Biometrics : AppCompatActivity() {
             // encrypt something funny with biokey
             val ks = KeyStoreHelperFactory.getKeyStoreHelper()
             val biokey = ks.getOrCreateBiokey()
-            val now = DateUtils.newFormat(ZonedDateTime.now())
+            val now = ZonedDateTime.now().toEpochSecond().toString()
             val stamp = ks.encryptByteArray(now.toByteArray(), biokey)
             Preferences.storeBioCipher(context, stamp)
             LoginHandler.biometricLogin()
