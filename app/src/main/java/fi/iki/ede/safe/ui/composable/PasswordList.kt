@@ -26,7 +26,7 @@ fun PasswordList(passwords: List<DecryptablePasswordEntry>, onRefreshEntries: ()
     LaunchedEffect(passwordListHash) {
         var previousValue = ""
         passwordItems.clear()
-        passwords.sortedBy { it.plainDescription.trim().lowercase() }.forEach { password ->
+        passwords.forEach { password ->
             val beginning = password.plainDescription.substring(0, 1).uppercase()
             if (previousValue != beginning) {
                 previousValue = beginning
