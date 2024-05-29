@@ -10,10 +10,10 @@ android {
 
     defaultConfig {
         applicationId = "fi.iki.ede.safe"
-        minSdk = 28
+        minSdk = 26
         targetSdk = 34
 
-        val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(3, 0, 28, 2)
+        val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(3, 0, 30, 0)
         versionCode =
             versionMajor * 10000 + versionMinor * 1000 + versionPatch * 100 + versionBuild
         versionName = "${versionMajor}.${versionMinor}.${versionPatch}"
