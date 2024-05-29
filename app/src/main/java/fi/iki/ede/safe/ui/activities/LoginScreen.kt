@@ -53,7 +53,7 @@ open class LoginScreen : ComponentActivity() {
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
             when (result.resultCode) {
                 RESULT_OK -> {
-                    if (!BiometricsActivity.verificationAccepted(this)) {
+                    if (!BiometricsActivity.verificationAccepted()) {
                         // should never happen
                         Log.e("---", "Biometric verification NOT accepted - perhaps a new backup?")
                     } else {

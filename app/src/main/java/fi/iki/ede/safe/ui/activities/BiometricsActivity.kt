@@ -141,19 +141,19 @@ class BiometricsActivity : AppCompatActivity() {
          *
          * TODO: Implement some check - keystore has separate biokey in android keystore
          */
-        fun verificationAccepted(context: Context): Boolean {
+        fun verificationAccepted(): Boolean {
             val stampCipher = getBioCipher()
             val ks = KeyStoreHelperFactory.getKeyStoreHelper()
-            val biokey = ks.getOrCreateBiokey()
+            val biometricKey = ks.getOrCreateBiokey()
             try {
-                val decrypted = ks.decryptByteArray(stampCipher, biokey)
+                val decrypted = ks.decryptByteArray(stampCipher, biometricKey)
                 val then = DateUtils.newParse(String(decrypted))
                 val age = DateUtils.getPeriodBetweenDates(then)
                 if (age.days < 128) {
                     LoginHandler.biometricLogin()
                     return true
                 }
-                // Biometrics is too old..force re-registration
+                // TODO: Biometrics is too old..force re-registration, be nice, tell user too!
             } catch (ex: Exception) {
                 Log.i("Biometrics", "Error $ex")
             }
