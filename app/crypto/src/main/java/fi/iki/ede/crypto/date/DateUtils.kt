@@ -36,6 +36,10 @@ object DateUtils {
                 Log.d(TAG, "..Failed $date with ${formatter}", ex)
             }
         }
+        // Biometrics calls us too..
+        flakyStringDate.toLongOrNull()?.let {
+            return unixEpochSecondsToLocalZonedDateTime(it)
+        }
         // nothing worked!
         throw DateTimeParseException(
             "Couldn't figure out date ($date) at all ",
