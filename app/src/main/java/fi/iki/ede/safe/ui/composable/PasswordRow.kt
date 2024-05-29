@@ -72,7 +72,6 @@ fun PasswordRow(
                     editCompleted.launch(
                         PasswordEntryScreen.getEditPassword(context, passEntry.id!!)
                     )
-                    // TODO: Wait for result..(until roomdb ready), so we can refresh the list...
                 }, onLongClick = {
                     displayMenu = true
                 })
@@ -96,55 +95,55 @@ fun PasswordRow(
                     fontSize = 10.sp,
                 )
             }
-            DropdownMenu(expanded = displayMenu, onDismissRequest = { displayMenu = false }) {
-                DropdownMenuItem(text = {
-                    Text(
-                        text = stringResource(
-                            id = R.string.password_list_delete_password,
-                            passEntry.plainDescription
-                        )
+        }
+        DropdownMenu(expanded = displayMenu, onDismissRequest = { displayMenu = false }) {
+            DropdownMenuItem(text = {
+                Text(
+                    text = stringResource(
+                        id = R.string.password_list_delete_password,
+                        passEntry.plainDescription
                     )
-                }, onClick = {
-                    displayMenu = false
-                    displayDeleteDialog = true
-                })
-                DropdownMenuItem(text = {
-                    Text(
-                        text = stringResource(
-                            id = R.string.password_list_move_password,
-                            passEntry.plainDescription
-                        )
+                )
+            }, onClick = {
+                displayMenu = false
+                displayDeleteDialog = true
+            })
+            DropdownMenuItem(text = {
+                Text(
+                    text = stringResource(
+                        id = R.string.password_list_move_password,
+                        passEntry.plainDescription
                     )
-                }, onClick = {
-                    displayMenu = false
-                    displayMoveDialog = true
-                })
-            }
-            if (displayDeleteDialog) {
-                DeletePasswordEntry(passEntry, onConfirm = {
-                    coroutineScope.launch {
-                        DataModel.deletePassword(passEntry)
-                    }
-                    displayDeleteDialog = false
-                }, onDismiss = {
-                    displayDeleteDialog = false
-                })
-            }
-            if (displayMoveDialog) {
-                val currentCategory =
-                    DataModel.getCategories().first { it.id == passEntry.categoryId }
-                val filteredCategories = categoriesState.filter { it != currentCategory }
-                    .sortedBy { it.plainName.lowercase() }
+                )
+            }, onClick = {
+                displayMenu = false
+                displayMoveDialog = true
+            })
+        }
+        if (displayDeleteDialog) {
+            DeletePasswordEntry(passEntry, onConfirm = {
+                coroutineScope.launch {
+                    DataModel.deletePassword(passEntry)
+                }
+                displayDeleteDialog = false
+            }, onDismiss = {
+                displayDeleteDialog = false
+            })
+        }
+        if (displayMoveDialog) {
+            val currentCategory =
+                DataModel.getCategories().first { it.id == passEntry.categoryId }
+            val filteredCategories = categoriesState.filter { it != currentCategory }
+                .sortedBy { it.plainName.lowercase() }
 
-                MovePasswordEntry(filteredCategories, onConfirm = { newCategory ->
-                    coroutineScope.launch {
-                        DataModel.movePassword(passEntry, newCategory)
-                    }
-                    displayMoveDialog = false
-                }, onDismiss = {
-                    displayMoveDialog = false
-                })
-            }
+            MovePasswordEntry(filteredCategories, onConfirm = { newCategory ->
+                coroutineScope.launch {
+                    DataModel.movePassword(passEntry, newCategory)
+                }
+                displayMoveDialog = false
+            }, onDismiss = {
+                displayMoveDialog = false
+            })
         }
     }
 }

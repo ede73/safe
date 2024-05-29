@@ -42,20 +42,23 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
     val coroutineScope = rememberCoroutineScope()
 
     Card(modifier = Modifier.padding(6.dp), shape = RoundedCornerShape(20.dp)) {
-        Row {
-            Text(text = "${category.plainName}",
+        Row(
+            modifier = Modifier
+                .combinedClickable(
+                    onClick = {
+                        PasswordListScreen.startMe(context, category.id!!)
+                    },
+                    onLongClick = {
+                        // Creating a dropdown menu
+                        displayMenu = true
+                    }
+                )
+        ) {
+            Text(
+                text = "${category.plainName}",
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
-                    .combinedClickable(
-                        onClick = {
-                            PasswordListScreen.startMe(context, category.id!!)
-                        },
-                        onLongClick = {
-                            // Creating a dropdown menu
-                            displayMenu = true
-                        }
-                    )
                     .fillMaxWidth()
                     .padding(12.dp)
                     .weight(1f)
