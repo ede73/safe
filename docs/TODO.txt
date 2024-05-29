@@ -2,10 +2,10 @@ Password safe
 - Backup codes - messes up notes
 - phone numbers - handy when changing numbers
 - username and password..often same, in some places separate ( banks!)
-- long name/desc + date overflows
-- dynamic folder for old passwords 
+    - make a expandable box, where u can enter one detail (shared) or separately the both..
+- dynamic folder for old passwords
 - notify of old passwords
-- not a password check
+- not a password checkmark
 - bonus card etc.number
 - allow locking app ,but showing one field..if you want to hand the phone for someone else
 - payment profile associated (just name,no card details)
@@ -14,11 +14,11 @@ Password safe
 - if passkey??
 - login via fb / google
 - 2fa? Authenticator app?
-- separare entity for security questions (treated like passwords)
+- separate entity for security questions (treated like passwords)
 - separate field for credit card details?
 - generic expiration field(+notification x days before)
 - add delete photo confirmation 
-- or could security questions (which shouldnt exist!) Be more generic..anything..routing number,checking acct.with copy btn
+- or could security questions (which shouldn't exist!) Be more generic..anything..routing number,checking acct.with copy btn
 - Family Passwords / shared passwords
 
 - AutoFill - some support
@@ -26,3 +26,6 @@ Password safe
 - Keyboard integration v1 Pre Android 11
 - Keyboard integration v2 Post Android 11
 - Credentials Manager Api (14+ devices - no one supports)
+
+DONE:
+- long name/desc + date overflows
