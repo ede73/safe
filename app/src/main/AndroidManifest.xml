@@ -27,51 +27,48 @@
         android:fullBackupContent="false"
         android:icon="@drawable/ic_launcher_safe"
         android:label="@string/application_name"
-        android:theme="@style/Theme.AppCompat"
+        android:theme="@style/Theme.Safe"
         tools:targetApi="s">
         <activity
-            android:name=".ui.activities.HelpScreen"
-            android:exported="false"
-            android:label="@string/title_activity_help_screen"
-            android:theme="@style/Theme.AppCompat" />
-        <activity
-            android:name=".ui.activities.SiteEntryEditScreen"
-            android:exported="false"
-            android:label="@string/title_activity_password_entry_screen"
-            android:theme="@style/Theme.AppCompat" />
-        <activity
-            android:name=".ui.activities.SiteEntryListScreen"
-            android:exported="false"
-            android:label="@string/title_activity_password_screen"
-            android:theme="@style/Theme.AppCompat" />
+            android:name=".ui.activities.BiometricsActivity"
+            android:exported="false" />
         <activity
             android:name=".ui.activities.CategoryListScreen"
             android:exported="false"
-            android:label="@string/title_activity_category_screen"
-            android:theme="@style/Theme.AppCompat" />
+            android:label="@string/title_activity_category_screen" />
         <activity
-            android:name=".ui.activities.SiteEntrySearchScreen"
+            android:name=".ui.activities.HelpScreen"
             android:exported="false"
-            android:label="@string/title_activity_password_search_screen"
-            android:theme="@style/Theme.AppCompat"
-            android:windowSoftInputMode="stateVisible" />
-        <activity
-            android:name=".ui.activities.RestoreDatabaseScreen"
-            android:exported="false"
-            android:label="@string/title_activity_restore_screen"
-            android:theme="@style/Theme.AppCompat" />
+            android:label="@string/title_activity_help_screen" />
         <activity
             android:name=".ui.activities.LoginScreen"
-            android:exported="true"
-            android:theme="@style/Theme.AppCompat">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ui.activities.PreferenceActivity" />
-        <activity android:name=".ui.activities.BiometricsActivity" />
+        <activity
+            android:name=".ui.activities.PreferenceActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.activities.SiteEntryEditScreen"
+            android:exported="false"
+            android:label="@string/title_activity_password_entry_screen" />
+        <activity
+            android:name=".ui.activities.SiteEntryListScreen"
+            android:exported="false"
+            android:label="@string/title_activity_password_screen" />
+        <activity
+            android:name=".ui.activities.SiteEntrySearchScreen"
+            android:exported="false"
+            android:label="@string/title_activity_password_search_screen"
+            android:windowSoftInputMode="stateVisible" />
+        <activity
+            android:name=".ui.activities.RestoreDatabaseScreen"
+            android:exported="false"
+            android:label="@string/title_activity_restore_screen" />
 
         <service
             android:name=".service.AutolockingService"
