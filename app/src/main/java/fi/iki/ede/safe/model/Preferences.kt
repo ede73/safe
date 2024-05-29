@@ -33,6 +33,7 @@ object Preferences {
     const val PREFERENCE_BIO_CIPHER = "bio_cipher"
     private const val PREFERENCE_LOCK_ON_SCREEN_LOCK = "lock_on_screen_lock"
     private const val PREFERENCE_LOCK_TIMEOUT_DEFAULT_VALUE = "5"
+    private const val PREFERENCE_MASTERKEY_INITIALIZED = "masterkey_initialized"
 
     fun getBackupDocument() = if (SUPPORT_EXPORT_LOCATION_MEMORY) {
         sharedPreferences
@@ -66,4 +67,10 @@ object Preferences {
     // at screen (ie. from activity)
     fun setNotificationPermissionRequired(value: Boolean) =
         sharedPreferences.edit().putBoolean(NOTIFICATION_PERMISSION_REQUIRED, value).apply()
+
+    fun isFirstTimeLogin() =
+        !sharedPreferences.getBoolean(PREFERENCE_MASTERKEY_INITIALIZED, false)
+
+    fun setMasterkeyInitialized() =
+        sharedPreferences.edit().putBoolean(PREFERENCE_MASTERKEY_INITIALIZED, true).apply()
 }
