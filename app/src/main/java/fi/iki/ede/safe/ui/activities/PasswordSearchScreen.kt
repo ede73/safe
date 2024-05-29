@@ -53,6 +53,7 @@ class PasswordSearchScreen : AutoLockingComponentActivity() {
                             )
                         }
 
+                        // TODO: Merge with password list
                         SearchPasswordEntryList(matchingPasswordEntries)
                     }
                 }

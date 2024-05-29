@@ -215,9 +215,6 @@ object DataModel {
 
     suspend fun deletePassword(password: DecryptablePasswordEntry) {
         require(password.categoryId != null) { "Password's category must be known" }
-        require(getPassword(password.id as DBID) == password) {
-            "Alas password OBJECTS THEMSELVES are different, and SEARCH is needed"
-        }
         CoroutineScope(Dispatchers.IO).launch {
             db!!.deletePassword(password.id!!)
 
@@ -228,12 +225,13 @@ object DataModel {
                     category,
                     category.containedPasswordCount - 1,
                 )
-            _categories[updatedCategory]!!.remove(password)
+            val pwdToDelete = _categories[updatedCategory]!!.first { it.id == password.id }
+            _categories[updatedCategory]!!.remove(pwdToDelete)
             _passwordsStateFlow.value = _categories.values.flatten()
             _passwordsSharedFlow.emit(
                 PasswordSafeEvent.PasswordEvent.Removed(
                     updatedCategory,
-                    password
+                    pwdToDelete
                 )
             )
         }

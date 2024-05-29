@@ -221,7 +221,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
     fun updateCategory(id: DBID, entry: DecryptableCategoryEntry) =
         this.writableDatabase.update(TABLE_CATEGORIES, ContentValues().apply {
             put("name", entry.encryptedName)
-        }, "id=$id", null) as DBID
+        }, "id=$id", null).toLong()
 
     fun fetchAllRows(categoryId: DBID? = null) =
         this.readableDatabase.query(

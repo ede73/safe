@@ -55,6 +55,7 @@ fun SearchPasswordEntryList(
 
     LazyColumn(modifier = Modifier.fillMaxWidth()) {
         items(items = sortedPasswords, itemContent = { filteredItem ->
+            // Merge with PasswordRow
             MatchingPasswordEntry(
                 passwordEntry = filteredItem,
                 categoryEntry = filteredItem.getCategory(), onEntryClick = {

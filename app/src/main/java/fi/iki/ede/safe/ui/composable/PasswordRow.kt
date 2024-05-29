@@ -6,6 +6,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.DecryptableCategoryEntry
 import fi.iki.ede.crypto.DecryptablePasswordEntry
@@ -76,11 +78,16 @@ fun PasswordRow(
         ) {
             Text(
                 text = passEntry.plainDescription,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 // Move to bounding box (up)
-                Modifier.padding(12.dp)
+                modifier = Modifier
+                    .padding(12.dp)
+                    .weight(1f)
             )
 
             if (passEntry.passwordChangedDate != null) {
+                Spacer(modifier = Modifier.weight(1f)) // This will push the Text to the end
                 val duration = DateUtils.durationBetweenDateAndNow(passEntry.passwordChangedDate!!)
                 Text(
                     text = pluralStringResource(
@@ -129,6 +136,7 @@ fun PasswordRow(
                 val currentCategory =
                     DataModel.getCategories().first { it.id == passEntry.categoryId }
                 val filteredCategories = categoriesState.filter { it != currentCategory }
+                    .sortedBy { it.plainName.lowercase() }
 
                 MovePasswordEntry(filteredCategories, onConfirm = { newCategory ->
                     coroutineScope.launch {

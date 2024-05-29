@@ -2,6 +2,8 @@ package fi.iki.ede.safe.ui.composable
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.DecryptableCategoryEntry
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
@@ -39,21 +42,31 @@ fun CategoryRow(category: DecryptableCategoryEntry, onRefreshCategories: () -> U
     val coroutineScope = rememberCoroutineScope()
 
     Card(modifier = Modifier.padding(6.dp), shape = RoundedCornerShape(20.dp)) {
-        Text(text = "${category.plainName} (${category.containedPasswordCount})",
-            Modifier
-                .combinedClickable(
-                    onClick = {
-                        PasswordListScreen.startMe(context, category.id!!)
-                    },
-                    onLongClick = {
-                        // Creating a dropdown menu
-                        displayMenu = true
-                    }
-                )
-                .fillMaxWidth()
-                .padding(12.dp)
-                .testTag(CategoryListScreen.TESTTAG_CATEGORY_ROW)
-        )
+        Row {
+            Text(text = "${category.plainName}",
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .combinedClickable(
+                        onClick = {
+                            PasswordListScreen.startMe(context, category.id!!)
+                        },
+                        onLongClick = {
+                            // Creating a dropdown menu
+                            displayMenu = true
+                        }
+                    )
+                    .fillMaxWidth()
+                    .padding(12.dp)
+                    .weight(1f)
+                    .testTag(CategoryListScreen.TESTTAG_CATEGORY_ROW)
+            )
+            Spacer(modifier = Modifier.weight(1f)) // This will push the Text to the end
+            Text(
+                text = "(${category.containedPasswordCount})",
+                modifier = Modifier.padding(12.dp)
+            )
+        }
         DropdownMenu(
             expanded = displayMenu,
             onDismissRequest = { displayMenu = false }
