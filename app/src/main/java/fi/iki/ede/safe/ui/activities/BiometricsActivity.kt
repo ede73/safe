@@ -2,13 +2,19 @@ package fi.iki.ede.safe.ui.activities
 
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK
 import androidx.biometric.BiometricPrompt
 import androidx.biometric.BiometricPrompt.PromptInfo
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.date.DateUtils
@@ -21,6 +27,7 @@ import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.model.Preferences.PREFERENCE_BIOMETRICS_ENABLED
 import fi.iki.ede.safe.model.Preferences.PREFERENCE_BIO_CIPHER
 import fi.iki.ede.safe.model.Preferences.sharedPreferences
+import fi.iki.ede.safe.ui.theme.SafeTheme
 import java.time.ZonedDateTime
 
 // TODO: With latest jetpack biometric lib, authentication failed flow seems to have changed
@@ -29,6 +36,20 @@ import java.time.ZonedDateTime
 // navigate back, then enter password or launch biometric again
 // Not a big deal, but feels buggy
 class BiometricsActivity : AppCompatActivity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // This is needed to keep background ..light or dark when biometric prompt pops up
+        // (title of this activity still seems to be white, but what can you do)
+        setContent {
+            SafeTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
+                ) {
+                }
+            }
+        }
+    }
 
     override fun onResume() {
         super.onResume()
