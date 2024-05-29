@@ -20,12 +20,12 @@ Password safe
 - add delete photo confirmation 
 - or could security questions (which shouldn't exist!) Be more generic..anything..routing number,checking acct.with copy btn
 - Family Passwords / shared passwords
+- ellipsis cuts text too eagerly (password list left hand side)
 
 - AutoFill - some support
 - Accessibility - everything supports - but it is my responsibility to parse
 - Keyboard integration v1 Pre Android 11
 - Keyboard integration v2 Post Android 11
 - Credentials Manager Api (14+ devices - no one supports)
-
 DONE:
 - long name/desc + date overflows

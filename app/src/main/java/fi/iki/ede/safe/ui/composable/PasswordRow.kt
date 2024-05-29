@@ -40,7 +40,6 @@ import java.time.Period
 @Composable
 fun PasswordRow(
     passEntry: DecryptablePasswordEntry,
-    /* TODO: NOt needed*/
     categoriesState: List<DecryptableCategoryEntry>,
 ) {
     val context = LocalContext.current
@@ -79,7 +78,7 @@ fun PasswordRow(
             Text(
                 text = passEntry.plainDescription,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+                overflow = TextOverflow.Clip,
                 // Move to bounding box (up)
                 modifier = Modifier
                     .padding(12.dp)
@@ -169,7 +168,8 @@ fun getPasswordAgePlurality(duration: Period): String {
                 )
             )
         }
-        if (duration.days > 1 || (duration.months == 0 && duration.years == 0)) {
+        // if we're at scale of years and months...just skip days, wont make a big difference
+        if (!(duration.years > 0 && duration.months > 0) && duration.days > 1 || (duration.months == 0 && duration.years == 0)) {
             add(
                 pluralStringResource(
                     id = R.plurals.password_list_password_age_days,
