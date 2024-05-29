@@ -14,11 +14,13 @@ object LoginHandler {
     fun firstTimeLogin(context: Context, password: Password) {
         // this instance has no password (no exported master key!)
         val (salt, cipheredKey) = KeyStoreHelper.createNewKey(password)
+        // TODO: async
         DBHelperFactory.getDBHelper(context).storeSaltAndEncryptedMasterKey(salt, cipheredKey)
         loggedIn = true
     }
 
     fun passwordLogin(context: Context, password: Password): Boolean {
+        // TODO: async
         val (salt, cipheredMasterKey) =
             DBHelperFactory.getDBHelper(context).fetchSaltAndEncryptedMasterKey()
         return try {
@@ -36,7 +38,6 @@ object LoginHandler {
                 ).show()
             } catch (ex: Exception) {
                 // TODO: unit test context dies on resource fetch
-
             }
             false
         }
