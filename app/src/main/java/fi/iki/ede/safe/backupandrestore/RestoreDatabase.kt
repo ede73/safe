@@ -4,7 +4,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
 import fi.iki.ede.crypto.DecryptableCategoryEntry
-import fi.iki.ede.crypto.DecryptablePasswordEntry
+import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
@@ -25,7 +25,7 @@ import java.io.StringReader
 import java.time.format.DateTimeParseException
 import javax.crypto.spec.SecretKeySpec
 
-class Restore : ExportConfig(ExportVersion.V1) {
+class RestoreDatabase : ExportConfig(ExportVersion.V1) {
     private fun XmlPullParser.getAttributeValue(
         attribute: Attributes,
         prefix: String? = null
@@ -140,7 +140,7 @@ class Restore : ExportConfig(ExportVersion.V1) {
 
         val path = mutableListOf<Elements?>()
         var category: DecryptableCategoryEntry? = null
-        var password: DecryptablePasswordEntry? = null
+        var password: DecryptableSiteEntry? = null
         var passwords = 0
         while (myParser.eventType != XmlPullParser.END_DOCUMENT) {
             when (myParser.eventType) {
@@ -182,7 +182,7 @@ class Restore : ExportConfig(ExportVersion.V1) {
                         ) -> {
                             require(category != null) { "Must have category" }
                             require(password == null) { "Must not have password" }
-                            password = DecryptablePasswordEntry(category.id!!)
+                            password = DecryptableSiteEntry(category.id!!)
                             passwords++
                         }
 

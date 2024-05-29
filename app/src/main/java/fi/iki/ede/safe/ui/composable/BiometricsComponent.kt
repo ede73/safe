@@ -18,7 +18,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.ui.activities.Biometrics
+import fi.iki.ede.safe.ui.activities.BiometricsActivity
 import fi.iki.ede.safe.ui.activities.LoginScreen.Companion.TESTTAG_BIOMETRICS_BUTTON
 import fi.iki.ede.safe.ui.activities.LoginScreen.Companion.TESTTAG_BIOMETRICS_CHECKBOX
 
@@ -34,20 +34,20 @@ fun BiometricsComponent(
         val ks = KeyStoreHelperFactory.getKeyStoreHelper()
         false
     } catch (ex: Exception) {
-        Biometrics.clearBiometricKeys(context)
+        BiometricsActivity.clearBiometricKeys(context)
         true
     }
 
-    val biometricsEnabled = Biometrics.isBiometricEnabled(context)
-    var registerBiometrics by remember { mutableStateOf(biometricsEnabled) }
+    val biometricsActivityEnabled = BiometricsActivity.isBiometricEnabled(context)
+    var registerBiometrics by remember { mutableStateOf(biometricsActivityEnabled) }
 
-    if (biometricsEnabled && Biometrics.haveRecordedBiometric(context) && !keystoreMissingMasterkeyAfterBackupRestore) {
+    if (biometricsActivityEnabled && BiometricsActivity.haveRecordedBiometric(context) && !keystoreMissingMasterkeyAfterBackupRestore) {
         // Actually during login, we could JUST launch the bio verification immediately
         // since biometrics is enabled AND we have previously recorded entry
-        bioVerify?.launch(Biometrics.getVerificationIntent(context))
+        bioVerify?.launch(BiometricsActivity.getVerificationIntent(context))
         Button(
             onClick = {
-                bioVerify?.launch(Biometrics.getVerificationIntent(context))
+                bioVerify?.launch(BiometricsActivity.getVerificationIntent(context))
             },
             modifier = Modifier.testTag(TESTTAG_BIOMETRICS_BUTTON)
         ) { Text(stringResource(id = R.string.login_with_biometrics)) }
@@ -55,7 +55,7 @@ fun BiometricsComponent(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Checkbox(
                 checked = registerBiometrics, onCheckedChange = {
-                    Biometrics.setBiometricEnabled(context, it)
+                    BiometricsActivity.setBiometricEnabled(context, it)
                     registerBiometrics = it
                 },
                 modifier = Modifier.testTag(TESTTAG_BIOMETRICS_CHECKBOX)

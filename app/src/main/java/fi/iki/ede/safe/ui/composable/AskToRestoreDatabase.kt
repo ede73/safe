@@ -10,20 +10,20 @@ import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.KeyManagement
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
-import fi.iki.ede.safe.backupandrestore.Restore
+import fi.iki.ede.safe.backupandrestore.RestoreDatabase
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.oisafecompatibility.OISafeRestore
 import fi.iki.ede.safe.ui.activities.AvertInactivityDuringLongTask
-import fi.iki.ede.safe.ui.activities.RestoreScreen
+import fi.iki.ede.safe.ui.activities.RestoreDatabaseScreen
 import java.io.InputStream
 import javax.crypto.spec.SecretKeySpec
 
 @Composable
-fun askToRestoreDatabase(
+fun AskToRestoreDatabase(
     inactivity: AvertInactivityDuringLongTask,
-    context: RestoreScreen,
+    context: RestoreDatabaseScreen,
     compatibility: Boolean,
     backupPassword: Password,
     selectedDoc: Uri
@@ -46,7 +46,7 @@ fun askToRestoreDatabase(
         }
     } else {
         return try {
-            Restore().doRestore(
+            RestoreDatabase().doRestore(
                 context,
                 String(stream.readBytes()),
                 backupPassword,

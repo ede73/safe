@@ -19,7 +19,7 @@ import fi.iki.ede.crypto.Password
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.LoginHandler
-import fi.iki.ede.safe.service.AutoLockService
+import fi.iki.ede.safe.service.AutolockingService
 import fi.iki.ede.safe.ui.composable.BiometricsComponent
 import fi.iki.ede.safe.ui.composable.PasswordPrompt
 import fi.iki.ede.safe.ui.theme.SafeTheme
@@ -30,12 +30,12 @@ import kotlinx.coroutines.withContext
 
 open class LoginScreen : ComponentActivity() {
     private var dontOpenCategoryListScreen: Boolean = false
-    private val biometricsInitialize =
+    private val biometricsActivityInitialize =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
             // This is FIRST TIME call..we're just about to be set up...
             when (result.resultCode) {
                 RESULT_OK -> {
-                    Biometrics.registerBiometric(this)
+                    BiometricsActivity.registerBiometric(this)
                     passwordValidatedStartAutolockServiceAndFinish()
                 }
 
@@ -44,15 +44,15 @@ open class LoginScreen : ComponentActivity() {
                     //mSkipBiometrics = true
                 }
                 // may be called many times..eventually gets cancelled
-                Biometrics.RESULT_FAILED -> {}
+                BiometricsActivity.RESULT_FAILED -> {}
             }
         }
 
-    private val biometricsVerify =
+    private val biometricsActivityVerify =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
             when (result.resultCode) {
                 RESULT_OK -> {
-                    if (!Biometrics.verificationAccepted(this)) {
+                    if (!BiometricsActivity.verificationAccepted(this)) {
                         // should never happen
                         Log.e("---", "Biometric verification NOT accepted - perhaps a new backup?")
                     } else {
@@ -65,7 +65,7 @@ open class LoginScreen : ComponentActivity() {
                     //mSkipBiometrics = true
                 }
 
-                Biometrics.RESULT_FAILED -> {
+                BiometricsActivity.RESULT_FAILED -> {
                     // Sometimes fingerprint reading just doesn't work
                     // This will be called for N subsequent misreads
                     // Then biometrics will be cancelled
@@ -75,7 +75,7 @@ open class LoginScreen : ComponentActivity() {
 
     private fun passwordValidatedStartAutolockServiceAndFinish() {
         setResult(RESULT_OK, Intent())
-        startService(Intent(applicationContext, AutoLockService::class.java))
+        startService(Intent(applicationContext, AutolockingService::class.java))
         val myScope = CoroutineScope(Dispatchers.Default)
         myScope.launch {
             withContext(Dispatchers.IO) {
@@ -112,7 +112,7 @@ open class LoginScreen : ComponentActivity() {
                         }
                         // TODO: if we're fresh from backup - biometrics don't work
                         BiometricsComponent(
-                            biometricsVerify,
+                            biometricsActivityVerify,
                         )
                     }
                 }
@@ -142,11 +142,12 @@ open class LoginScreen : ComponentActivity() {
         firstTimeUse: Boolean,
         context: LoginScreen,
     ) {
-        val registerBiometrics = (firstTimeUse && Biometrics.isBiometricEnabled(context))
-                || (Biometrics.isBiometricEnabled(context) &&
-                !Biometrics.haveRecordedBiometric(context))
-        if (registerBiometrics) {
-            biometricsInitialize.launch(Biometrics.getRegistrationIntent(context))
+        val registerBiometricsActivity =
+            (firstTimeUse && BiometricsActivity.isBiometricEnabled(context))
+                    || (BiometricsActivity.isBiometricEnabled(context) &&
+                    !BiometricsActivity.haveRecordedBiometric(context))
+        if (registerBiometricsActivity) {
+            biometricsActivityInitialize.launch(BiometricsActivity.getRegistrationIntent(context))
         } else {
             passwordValidatedStartAutolockServiceAndFinish()
         }

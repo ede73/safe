@@ -28,7 +28,7 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.ui.activities.CategoryListScreen
-import fi.iki.ede.safe.ui.activities.PasswordListScreen
+import fi.iki.ede.safe.ui.activities.SiteEntryListScreen
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -46,7 +46,7 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
             modifier = Modifier
                 .combinedClickable(
                     onClick = {
-                        PasswordListScreen.startMe(context, category.id!!)
+                        SiteEntryListScreen.startMe(context, category.id!!)
                     },
                     onLongClick = {
                         // Creating a dropdown menu

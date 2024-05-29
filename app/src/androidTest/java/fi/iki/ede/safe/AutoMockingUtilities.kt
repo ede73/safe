@@ -2,7 +2,7 @@ package fi.iki.ede.safe
 
 import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.crypto.DecryptableCategoryEntry
-import fi.iki.ede.crypto.DecryptablePasswordEntry
+import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.safe.db.DBHelper
@@ -23,7 +23,7 @@ interface AutoMockingUtilities {
         fun fetchDBKeys(
             masterKey: () -> IVCipherText,//TODO: Should ne SaltedEncryptedPassword these two
             salt: () -> Salt,
-            fetchPasswordsOfCategory: () -> List<DecryptablePasswordEntry>,
+            fetchPasswordsOfCategory: () -> List<DecryptableSiteEntry>,
             fetchCategories: () -> List<DecryptableCategoryEntry>,
             isUninitializedDatabase: () -> Boolean = { false }
         ) {

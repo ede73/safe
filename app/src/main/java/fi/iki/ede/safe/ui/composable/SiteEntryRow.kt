@@ -28,18 +28,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fi.iki.ede.crypto.DecryptableCategoryEntry
-import fi.iki.ede.crypto.DecryptablePasswordEntry
+import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
-import fi.iki.ede.safe.ui.activities.PasswordEntryScreen
+import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
 import kotlinx.coroutines.launch
 import java.time.Period
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun PasswordRow(
-    passEntry: DecryptablePasswordEntry,
+fun SiteEntryRow(
+    passEntry: DecryptableSiteEntry,
     categoriesState: List<DecryptableCategoryEntry>,
 ) {
     val context = LocalContext.current
@@ -69,7 +69,7 @@ fun PasswordRow(
                 .fillMaxWidth()
                 .combinedClickable(onClick = {
                     editCompleted.launch(
-                        PasswordEntryScreen.getEditPassword(context, passEntry.id!!)
+                        SiteEntryEditScreen.getEditPassword(context, passEntry.id!!)
                     )
                 }, onLongClick = {
                     displayMenu = true
@@ -120,7 +120,7 @@ fun PasswordRow(
             })
         }
         if (displayDeleteDialog) {
-            DeletePasswordEntry(passEntry, onConfirm = {
+            DeleteSiteEntryDialog(passEntry, onConfirm = {
                 coroutineScope.launch {
                     DataModel.deletePassword(passEntry)
                 }
@@ -135,7 +135,7 @@ fun PasswordRow(
             val filteredCategories = categoriesState.filter { it != currentCategory }
                 .sortedBy { it.plainName.lowercase() }
 
-            MovePasswordEntry(filteredCategories, onConfirm = { newCategory ->
+            MoveSiteEntry(filteredCategories, onConfirm = { newCategory ->
                 coroutineScope.launch {
                     DataModel.movePassword(passEntry, newCategory)
                 }

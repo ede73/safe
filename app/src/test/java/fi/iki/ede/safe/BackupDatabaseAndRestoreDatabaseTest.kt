@@ -9,8 +9,8 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.CryptoMocks.mockKeyStoreHelper
 import fi.iki.ede.safe.DBMocks.mockDb
 import fi.iki.ede.safe.DataModelMocks.mockDataModel
-import fi.iki.ede.safe.backupandrestore.Backup
-import fi.iki.ede.safe.backupandrestore.Restore
+import fi.iki.ede.safe.backupandrestore.BackupDatabase
+import fi.iki.ede.safe.backupandrestore.RestoreDatabase
 import fi.iki.ede.safe.model.DataModel
 import io.mockk.mockkClass
 import io.mockk.unmockkObject
@@ -24,7 +24,7 @@ import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 // TODO: Missing actual encryption/decryption (due to use of bouncy castle, will be gotten rid of and fixed eventually)
-class BackupAndRestoreTest {
+class BackupDatabaseAndRestoreDatabaseTest {
 
     private val fakeChangedDateTime: ZonedDateTime =
         ZonedDateTime.of(1999, 12, 31, 1, 2, 3, 0, ZoneId.of(ZoneId.SHORT_IDS["PST"]))
@@ -32,7 +32,7 @@ class BackupAndRestoreTest {
     @Test
     fun backupTest() {
         mockKeyStoreHelper()
-        val backup = Backup()
+        val backupDatabase = BackupDatabase()
 
         mockPasswordObjectForBackup()
 
@@ -41,7 +41,7 @@ class BackupAndRestoreTest {
 //            SaltedPassword(salt, secret),
 //            cipheredMasterKey
 //        )
-        val out = backup.generate(
+        val out = backupDatabase.generate(
             salt,
             cipheredMasterKey
         )
@@ -59,13 +59,13 @@ class BackupAndRestoreTest {
     @Test
     fun backupTestOnlyACategory() {
         mockKeyStoreHelper()
-        val backup = Backup()
+        val backupDatabase = BackupDatabase()
         mockPasswordObjectForBackup()
 
         val ks = KeyStoreHelperFactory.getKeyStoreHelper()
         mockDataModel(linkedMapOf(Pair(DataModelMocks.makeCat(1, ks), listOf())))
 
-        val out = backup.generate(
+        val out = backupDatabase.generate(
             salt,
             cipheredMasterKey
         )
@@ -77,7 +77,7 @@ class BackupAndRestoreTest {
     fun restore() {
         mockKeyStoreHelper()
         val dbHelper = mockDataModel(linkedMapOf())
-        val r = Restore()
+        val r = RestoreDatabase()
         val context = mockkClass(Context::class)
         r.doRestore(context, PASSWORD_ENCRYPTED_BACKUP, backupPassword, dbHelper)
         runBlocking {

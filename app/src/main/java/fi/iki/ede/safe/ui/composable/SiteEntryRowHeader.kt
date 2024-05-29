@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.sp
  * Display nice big start letter of the given header string
  */
 @Composable
-fun PasswordRowHeader(headerString: String) {
+fun SiteEntryRowHeader(headerString: String) {
     val headerStart = headerString.substring(0, 1).uppercase()
     Card(
         modifier = Modifier.padding(6.dp),

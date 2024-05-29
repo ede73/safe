@@ -21,13 +21,13 @@ import androidx.compose.ui.res.stringResource
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.Preferences
-import fi.iki.ede.safe.ui.composable.askToRestoreDatabase
+import fi.iki.ede.safe.ui.composable.AskToRestoreDatabase
 import fi.iki.ede.safe.ui.composable.passwordTextField
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.runBlocking
 
 
-class RestoreScreen : AutoLockingComponentActivity() {
+class RestoreDatabaseScreen : AutolockingBaseComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,7 +68,7 @@ class RestoreScreen : AutoLockingComponentActivity() {
                                 Toast.LENGTH_LONG
                             )
                                 .show()
-                            val passwords = askToRestoreDatabase(
+                            val passwords = AskToRestoreDatabase(
                                 context as AvertInactivityDuringLongTask,
                                 context,
                                 compatibility,
@@ -123,7 +123,7 @@ class RestoreScreen : AutoLockingComponentActivity() {
             uri: Uri
         ) = Intent(
             context,
-            RestoreScreen::class.java
+            RestoreDatabaseScreen::class.java
         ).putExtra(OISAFE_COMPATIBILITY, oisafeCompatibility)
             .let {
                 it.data = uri

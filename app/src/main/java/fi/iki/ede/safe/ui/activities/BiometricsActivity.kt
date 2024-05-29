@@ -22,7 +22,7 @@ import java.time.ZonedDateTime
 // End result is login screen activates, but biometric screen still stays on, so user had to
 // navigate back, then enter password or launch biometric again
 // Not a big deal, but feels buggy
-class Biometrics : AppCompatActivity() {
+class BiometricsActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
@@ -140,8 +140,8 @@ class Biometrics : AppCompatActivity() {
             try {
                 val decrypted = ks.decryptByteArray(stampCipher, biokey)
                 val then = DateUtils.newParse(String(decrypted))
-                val age = DateUtils.durationBetweenDateAndNow(then)
-                if (age.toDays() < 128) {
+                val age = DateUtils.getPeriodBetweenDates(then)
+                if (age.days < 128) {
                     LoginHandler.biometricLogin()
                     return true
                 }
@@ -154,10 +154,10 @@ class Biometrics : AppCompatActivity() {
         }
 
         fun getVerificationIntent(context: Context) =
-            Intent(context, Biometrics::class.java).setAction(BIO_VERIFY)
+            Intent(context, BiometricsActivity::class.java).setAction(BIO_VERIFY)
 
         fun getRegistrationIntent(context: Context) =
-            Intent(context, Biometrics::class.java).setAction(BIO_INITIALIZE)
+            Intent(context, BiometricsActivity::class.java).setAction(BIO_INITIALIZE)
 
         fun clearBiometricKeys(context: Context) = Preferences.clearBioCipher(context)
 

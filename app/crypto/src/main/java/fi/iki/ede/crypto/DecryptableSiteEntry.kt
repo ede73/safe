@@ -13,7 +13,7 @@ import java.time.ZonedDateTime
  * NEVER PERSIST THIS CLASS, get rid of it as soon as possible.
  *
  */
-class DecryptablePasswordEntry(categoryId: Long) {
+class DecryptableSiteEntry(categoryId: Long) {
     var categoryId: Long? = categoryId
     var description: IVCipherText = IVCipherText.getEmpty()
         set(value) {
@@ -107,17 +107,17 @@ class DecryptablePasswordEntry(categoryId: Long) {
     }
 
     // Flow state is annoying since it requires NEW ENTITIES for changes to register
-    fun copy(): DecryptablePasswordEntry = DecryptablePasswordEntry(categoryId!!).apply {
-        description = this@DecryptablePasswordEntry.description
+    fun copy(): DecryptableSiteEntry = DecryptableSiteEntry(categoryId!!).apply {
+        description = this@DecryptableSiteEntry.description
         decryptedCachedPlainDescription =
-            this@DecryptablePasswordEntry.decryptedCachedPlainDescription
-        id = this@DecryptablePasswordEntry.id
-        note = this@DecryptablePasswordEntry.note
-        password = this@DecryptablePasswordEntry.password
-        passwordChangedDate = this@DecryptablePasswordEntry.passwordChangedDate
-        photo = this@DecryptablePasswordEntry.photo
-        username = this@DecryptablePasswordEntry.username
-        website = this@DecryptablePasswordEntry.website
+            this@DecryptableSiteEntry.decryptedCachedPlainDescription
+        id = this@DecryptableSiteEntry.id
+        note = this@DecryptableSiteEntry.note
+        password = this@DecryptableSiteEntry.password
+        passwordChangedDate = this@DecryptableSiteEntry.passwordChangedDate
+        photo = this@DecryptableSiteEntry.photo
+        username = this@DecryptableSiteEntry.username
+        website = this@DecryptableSiteEntry.website
     }
 
 }

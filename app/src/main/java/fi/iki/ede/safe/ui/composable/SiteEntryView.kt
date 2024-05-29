@@ -38,13 +38,13 @@ import fi.iki.ede.safe.R
 import fi.iki.ede.safe.clipboard.ClipboardUtils
 import fi.iki.ede.safe.password.PasswordGenerator
 import fi.iki.ede.safe.ui.activities.AvertInactivityDuringLongTask
-import fi.iki.ede.safe.ui.activities.EditingPasswordViewModel
-import fi.iki.ede.safe.ui.activities.PasswordEntryScreen
+import fi.iki.ede.safe.ui.activities.EditingSiteEntryViewModel
+import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
 import java.time.ZonedDateTime
 
 @Composable
-fun PasswordViewComponent(
-    viewModel: EditingPasswordViewModel,
+fun SiteEntryView(
+    viewModel: EditingSiteEntryViewModel,
     modifier: Modifier = Modifier
 ) {
     val passwordLength = integerResource(id = R.integer.password_default_length)
@@ -64,7 +64,7 @@ fun PasswordViewComponent(
     Column(
         modifier = Modifier.verticalScroll(rememberScrollState())
     ) {
-        TopActionBarForPasswordView {
+        TopActionBarForSiteEntryView {
             passwordWasUpdated = true
             viewModel.updatePassword(
                 PasswordGenerator.genPassword(
@@ -171,7 +171,7 @@ fun PasswordViewComponent(
                                 false -> BreachCheckEnum.NOT_BREACHED
                             }
                         },
-                        { error -> Log.e(PasswordEntryScreen.TAG, "Error: $error") })
+                        { error -> Log.e(SiteEntryEditScreen.TAG, "Error: $error") })
                 }) { Text(stringResource(id = R.string.password_entry_breach_check)) }
             }
             when (breachCheckResult) {

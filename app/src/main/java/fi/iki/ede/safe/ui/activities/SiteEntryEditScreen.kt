@@ -25,7 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.ViewModel
-import fi.iki.ede.crypto.DecryptablePasswordEntry
+import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
@@ -34,7 +34,7 @@ import fi.iki.ede.safe.db.DBID
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.password.PasswordGenerator
-import fi.iki.ede.safe.ui.composable.PasswordViewComponent
+import fi.iki.ede.safe.ui.composable.SiteEntryView
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,7 +43,7 @@ import kotlinx.coroutines.runBlocking
 import java.io.ByteArrayOutputStream
 import java.time.ZonedDateTime
 
-data class EditablePasswordEntry(
+data class EditableSiteEntry(
     val categoryId: DBID,
     val id: DBID? = null,
     // For purposes of editing fields, description and website probably aren't super sensitie
@@ -63,12 +63,12 @@ data class EditablePasswordEntry(
 // Once finished, changes are persisted
 // If device is rotated or paused/restarted, killed/restarted
 // We want to KEEP EDITING what ever we were editing until discarded or saved
-open class EditingPasswordViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow(EditablePasswordEntry(-1))
-    val uiState: StateFlow<EditablePasswordEntry> = _uiState.asStateFlow()
+open class EditingSiteEntryViewModel : ViewModel() {
+    private val _uiState = MutableStateFlow(EditableSiteEntry(-1))
+    val uiState: StateFlow<EditableSiteEntry> = _uiState.asStateFlow()
 
-    fun editPassword(password: DecryptablePasswordEntry) {
-        _uiState.value = EditablePasswordEntry(
+    fun editPassword(password: DecryptableSiteEntry) {
+        _uiState.value = EditableSiteEntry(
             password.categoryId as DBID,
             password.id as DBID,
             password.plainDescription,
@@ -82,7 +82,7 @@ open class EditingPasswordViewModel : ViewModel() {
     }
 
     fun addPassword(newPassword: IVCipherText, categoryId: DBID, defaultUsername: IVCipherText) {
-        _uiState.value = EditablePasswordEntry(
+        _uiState.value = EditableSiteEntry(
             categoryId,
             password = newPassword,
         )
@@ -128,7 +128,7 @@ open class EditingPasswordViewModel : ViewModel() {
     }
 }
 
-class PasswordEntryScreen : AutoLockingComponentActivity() {
+class SiteEntryEditScreen : AutolockingBaseComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -136,7 +136,7 @@ class PasswordEntryScreen : AutoLockingComponentActivity() {
         // we have description, check for edits(changes!)
         val ks = KeyStoreHelperFactory.getKeyStoreHelper()
 
-        val viewModel: EditingPasswordViewModel by viewModels()
+        val viewModel: EditingSiteEntryViewModel by viewModels()
 
         if (savedInstanceState == null) {
             if (intent.hasExtra(PASSWORD_ID)) {
@@ -236,7 +236,7 @@ class PasswordEntryScreen : AutoLockingComponentActivity() {
                     if (finnishTheActivity) {
                         finish()
                     } else {
-                        PasswordViewComponent(viewModel)
+                        SiteEntryView(viewModel)
                     }
                 }
             }
@@ -245,7 +245,7 @@ class PasswordEntryScreen : AutoLockingComponentActivity() {
 
     @Composable
     private fun TryPersistPasswordEntryChanges(
-        edits: EditablePasswordEntry,
+        edits: EditableSiteEntry,
         ks: KeyStoreHelper,
         passwordChanged: Boolean,
         onDismiss: () -> Unit,
@@ -283,14 +283,14 @@ class PasswordEntryScreen : AutoLockingComponentActivity() {
 
     @Composable
     private fun PersistPasswordEntryChanges(
-        edits: EditablePasswordEntry,
+        edits: EditableSiteEntry,
         ks: KeyStoreHelper,
         passwordChanged: Boolean,
         onSaved: (Boolean) -> Unit
     ) {
         require(!TextUtils.isEmpty(edits.description)) { "Description must be set" }
 
-        val passwordEntry = DecryptablePasswordEntry(edits.categoryId)
+        val passwordEntry = DecryptableSiteEntry(edits.categoryId)
         passwordEntry.apply {
             id = edits.id
             description = edits.description.encrypt(ks)
@@ -319,7 +319,7 @@ class PasswordEntryScreen : AutoLockingComponentActivity() {
 
     private fun resolveEditsAndChangedPassword(
         editingPasswordId: DBID?,
-        edits: EditablePasswordEntry,
+        edits: EditableSiteEntry,
     ) = if (editingPasswordId != null) {
         val originalPassword = DataModel.getPassword(editingPasswordId)
         wasPasswordEntryChanged(
@@ -332,8 +332,8 @@ class PasswordEntryScreen : AutoLockingComponentActivity() {
     }
 
     private fun wasPasswordEntryChanged(
-        edits: EditablePasswordEntry,
-        originalPassword: DecryptablePasswordEntry
+        edits: EditableSiteEntry,
+        originalPassword: DecryptableSiteEntry
     ) =
         !originalPassword.isSame(
             edits.description,
@@ -356,7 +356,7 @@ class PasswordEntryScreen : AutoLockingComponentActivity() {
         fun getAddPassword(context: Context, categoryId: DBID) =
             getIntent(context).putExtra(CATEGORY_ID, categoryId)
 
-        private fun getIntent(context: Context) = Intent(context, PasswordEntryScreen::class.java)
+        private fun getIntent(context: Context) = Intent(context, SiteEntryEditScreen::class.java)
         // TODO: (NavigationFlow) Not sure why this FLAG_ACTIVITY_REORDER_TO_FRONT was added (or used), but this makes
         // Search behave oddly. Repro:
         // Search for smthg, open password entry (call it A), lock the screen
@@ -391,7 +391,7 @@ private fun Bitmap.encrypt(ks: KeyStoreHelper) = makeBase64(this).encrypt(ks)
 @Preview(showBackground = true)
 @Composable
 fun PasswordEntryScreenPreview() {
-    val entry = DecryptablePasswordEntry(1)
+    val entry = DecryptableSiteEntry(1)
     entry.id = 1
     entry.categoryId = 1
     entry.note = IVCipherText(byteArrayOf(), "note\nmay have\nmultiple lines".toByteArray())
@@ -401,7 +401,7 @@ fun PasswordEntryScreenPreview() {
     entry.username = IVCipherText(byteArrayOf(), "username".toByteArray())
     entry.website = IVCipherText(byteArrayOf(), "website".toByteArray())
     //entry.photo=
-    class FakeEditingPasswordViewModel : EditingPasswordViewModel()
+    class FakeEditingPasswordViewModel : EditingSiteEntryViewModel()
 
     val fakeViewModel = FakeEditingPasswordViewModel().apply {
         // Set up the ViewModel with test data as needed
@@ -409,6 +409,6 @@ fun PasswordEntryScreenPreview() {
     }
     SafeTheme {
         //TODO:
-        PasswordViewComponent(fakeViewModel)
+        SiteEntryView(fakeViewModel)
     }
 }

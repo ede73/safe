@@ -2,7 +2,7 @@ package fi.iki.ede.safe
 
 import android.database.sqlite.SQLiteDatabase
 import fi.iki.ede.crypto.DecryptableCategoryEntry
-import fi.iki.ede.crypto.DecryptablePasswordEntry
+import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.EncryptedPassword
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
@@ -27,7 +27,7 @@ import java.io.ByteArrayInputStream
 import java.security.Security
 
 // TODO: Missing actual encryption/decryption (due to use of bouncy castle, will be gotten rid of and fixed eventually)
-class OldOISafeCompatibleBackupOISafeRestoreTest {
+class OldOISafeCompatibleBackupDatabaseOISafeRestoreDatabaseTest {
     private val passwordOfBackup = Password("abc123".toByteArray())
 
     @Before
@@ -68,8 +68,8 @@ class OldOISafeCompatibleBackupOISafeRestoreTest {
             categories.add(cat.captured)
             (categories.size + 1).toLong()
         }
-        val pwd = slot<DecryptablePasswordEntry>()
-        val passwords = mutableListOf<DecryptablePasswordEntry>()
+        val pwd = slot<DecryptableSiteEntry>()
+        val passwords = mutableListOf<DecryptableSiteEntry>()
         every { dbHelper.addPassword(capture(pwd)) } answers {
             passwords.add(pwd.captured)
             (passwords.size + 1).toLong()

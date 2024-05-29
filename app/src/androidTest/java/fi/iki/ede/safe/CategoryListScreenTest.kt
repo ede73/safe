@@ -13,7 +13,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.crypto.DecryptableCategoryEntry
-import fi.iki.ede.crypto.DecryptablePasswordEntry
+import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
@@ -28,7 +28,7 @@ import fi.iki.ede.safe.ui.activities.CategoryListScreen.Companion.TESTTAG_CATEGO
 import fi.iki.ede.safe.ui.activities.CategoryListScreen.Companion.TESTTAG_CATEGORY_ROW_DELETE_CANCEL
 import fi.iki.ede.safe.ui.activities.CategoryListScreen.Companion.TESTTAG_CATEGORY_ROW_DELETE_CONFIRM
 import fi.iki.ede.safe.ui.activities.CategoryListScreen.Companion.TESTTAG_CATEGORY_TEXTFIELD
-import fi.iki.ede.safe.ui.activities.PasswordSearchScreen.Companion.TESTTAG_SEARCH_TEXTFIELD
+import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen.Companion.TESTTAG_SEARCH_TEXTFIELD
 import fi.iki.ede.safe.ui.composable.TESTTAG_TOPACTIONBAR_ADD
 import fi.iki.ede.safe.ui.composable.TESTTAG_TOPACTIONBAR_SEARCH
 import io.mockk.every
@@ -131,8 +131,8 @@ class CategoryListScreenTest {
             ks: KeyStoreHelper,
             categoryId: Long,
             id: Long
-        ): DecryptablePasswordEntry {
-            val passwordEntry = DecryptablePasswordEntry(categoryId)
+        ): DecryptableSiteEntry {
+            val passwordEntry = DecryptableSiteEntry(categoryId)
             passwordEntry.id = id
             passwordEntry.description = ks.encryptByteArray("enc_pwd${id}".toByteArray())
             passwordEntry.username = ks.encryptByteArray("enc_user${id}".toByteArray())

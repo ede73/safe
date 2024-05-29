@@ -2,7 +2,7 @@ package fi.iki.ede.safe.model
 
 import android.util.Log
 import fi.iki.ede.crypto.DecryptableCategoryEntry
-import fi.iki.ede.crypto.DecryptablePasswordEntry
+import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.db.DBID
@@ -27,17 +27,17 @@ sealed class PasswordSafeEvent {
     sealed class PasswordEvent : PasswordSafeEvent() {
         data class Added(
             val category: DecryptableCategoryEntry,
-            val password: DecryptablePasswordEntry
+            val password: DecryptableSiteEntry
         ) : PasswordEvent()
 
         data class Updated(
             val category: DecryptableCategoryEntry,
-            val password: DecryptablePasswordEntry
+            val password: DecryptableSiteEntry
         ) : PasswordEvent()
 
         data class Removed(
             val category: DecryptableCategoryEntry,
-            val password: DecryptablePasswordEntry
+            val password: DecryptableSiteEntry
         ) : PasswordEvent()
     }
 }
@@ -45,7 +45,7 @@ sealed class PasswordSafeEvent {
 object DataModel {
     // Categories state and events
     private val _categories =
-        LinkedHashMap<DecryptableCategoryEntry, MutableList<DecryptablePasswordEntry>>()
+        LinkedHashMap<DecryptableCategoryEntry, MutableList<DecryptableSiteEntry>>()
     private val _categoriesStateFlow = MutableStateFlow(_categories.keys.toList())
     val categoriesStateFlow: StateFlow<List<DecryptableCategoryEntry>> get() = _categoriesStateFlow
 
@@ -54,8 +54,8 @@ object DataModel {
     val categoriesSharedFlow: SharedFlow<PasswordSafeEvent.CategoryEvent> get() = _categoriesSharedFlow
 
     // Passwords state and events
-    private val _passwordsStateFlow = MutableStateFlow<List<DecryptablePasswordEntry>>(emptyList())
-    val passwordsStateFlow: StateFlow<List<DecryptablePasswordEntry>> get() = _passwordsStateFlow
+    private val _passwordsStateFlow = MutableStateFlow<List<DecryptableSiteEntry>>(emptyList())
+    val passwordsStateFlow: StateFlow<List<DecryptableSiteEntry>> get() = _passwordsStateFlow
 
     private val _passwordsSharedFlow =
         MutableSharedFlow<PasswordSafeEvent.PasswordEvent>(extraBufferCapacity = 10, replay = 10)
@@ -65,7 +65,7 @@ object DataModel {
 
     private var db: DBHelper? = null
 
-    fun DecryptablePasswordEntry.getCategory(): DecryptableCategoryEntry =
+    fun DecryptableSiteEntry.getCategory(): DecryptableCategoryEntry =
         _categories.keys.first { it.id == categoryId }
 
     fun DecryptableCategoryEntry.getCategory(): DecryptableCategoryEntry =
@@ -75,10 +75,10 @@ object DataModel {
     fun getCategories(): List<DecryptableCategoryEntry> = _categories.keys.toList()
 
     // no cost using (gets (encrypted) passwords from memory)
-    fun getPasswords(): List<DecryptablePasswordEntry> = _categories.values.flatten()
+    fun getPasswords(): List<DecryptableSiteEntry> = _categories.values.flatten()
 
     // (almost) no cost using (gets (encrypted) categories' passwords from memory)
-    fun getCategorysPasswords(categoryId: DBID): List<DecryptablePasswordEntry> =
+    fun getCategorysPasswords(categoryId: DBID): List<DecryptableSiteEntry> =
         _categories.filter { it.key.id == categoryId }.values.flatten()
 
 
@@ -124,10 +124,10 @@ object DataModel {
         }
     }
 
-    fun getPassword(passwordId: DBID): DecryptablePasswordEntry =
+    fun getPassword(passwordId: DBID): DecryptableSiteEntry =
         getPasswords().first { it.id == passwordId }
 
-    suspend fun addOrUpdatePassword(password: DecryptablePasswordEntry) {
+    suspend fun addOrUpdatePassword(password: DecryptableSiteEntry) {
         require(password.categoryId != null) { "Password's category must be known" }
         CoroutineScope(Dispatchers.IO).launch {
             val category = getCategories().first { it.id == password.categoryId }
@@ -167,7 +167,7 @@ object DataModel {
     }
 
     suspend fun movePassword(
-        password: DecryptablePasswordEntry,
+        password: DecryptableSiteEntry,
         targetCategory: DecryptableCategoryEntry
     ) {
         require(password.categoryId != null) { "Password's category must be known" }
@@ -213,7 +213,7 @@ object DataModel {
         }
     }
 
-    suspend fun deletePassword(password: DecryptablePasswordEntry) {
+    suspend fun deletePassword(password: DecryptableSiteEntry) {
         require(password.categoryId != null) { "Password's category must be known" }
         CoroutineScope(Dispatchers.IO).launch {
             db!!.deletePassword(password.id!!)
@@ -333,9 +333,9 @@ object DataModel {
                 // now kinda interesting integrity verification, do we have stray passwords?
                 // ie. belonging to categories nonexistent
                 fun filterAList(
-                    aList: List<DecryptablePasswordEntry>,
+                    aList: List<DecryptableSiteEntry>,
                     bList: List<DecryptableCategoryEntry>
-                ): List<DecryptablePasswordEntry> {
+                ): List<DecryptableSiteEntry> {
                     val bIds = bList.map { it.id }.toSet()
                     return aList.filter { it.categoryId !in bIds }
                 }

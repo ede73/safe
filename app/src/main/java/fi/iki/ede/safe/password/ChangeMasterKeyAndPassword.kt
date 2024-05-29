@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 
-object ChangePassword {
+object ChangeMasterKeyAndPassword {
 
     // Change the user password derived (PBKDF2) key that is used to encrypt the actual master key
     // the master key remains unchanged, so no need to 'convert' the database

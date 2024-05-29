@@ -2,7 +2,7 @@ package fi.iki.ede.safe
 
 import android.database.sqlite.SQLiteDatabase
 import fi.iki.ede.crypto.DecryptableCategoryEntry
-import fi.iki.ede.crypto.DecryptablePasswordEntry
+import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
@@ -37,8 +37,8 @@ object DataModelMocks {
         password: String = "enc_pwd${id}",
         note: String = "enc_note${id}",
         changedDate: ZonedDateTime? = null
-    ): DecryptablePasswordEntry {
-        val passwordEntry = DecryptablePasswordEntry(categoryId)
+    ): DecryptableSiteEntry {
+        val passwordEntry = DecryptableSiteEntry(categoryId)
         passwordEntry.id = id
         passwordEntry.description = ks.encryptByteArray(description.toByteArray())
         passwordEntry.username = ks.encryptByteArray(username.toByteArray())
@@ -56,10 +56,10 @@ object DataModelMocks {
      * This actually MOCKS the DB instead (as that is the source input of the datamodel
      */
     fun mockDataModel(
-        fakeModel: LinkedHashMap<DecryptableCategoryEntry, List<DecryptablePasswordEntry>>
+        fakeModel: LinkedHashMap<DecryptableCategoryEntry, List<DecryptableSiteEntry>>
     ): DBHelper {
 
-        val passwordTable = linkedMapOf<DBID, DecryptablePasswordEntry>()
+        val passwordTable = linkedMapOf<DBID, DecryptableSiteEntry>()
         val categoryTable = linkedMapOf<DBID, DecryptableCategoryEntry>()
         for (categoryAndPasswords in fakeModel.entries) {
             require(categoryAndPasswords.key.id != null) { "When initializing, category ID must be preset" }
@@ -75,7 +75,7 @@ object DataModelMocks {
         // FULL DB mock
         DataModel.attachDBHelper(db)
         //every { DBHelperFactory.getDBHelper(any()) } returns db
-        val password = slot<DecryptablePasswordEntry>()
+        val password = slot<DecryptableSiteEntry>()
         every { db.addPassword(capture(password)) } answers {
             val id: DBID = if (passwordTable.keys.isEmpty()) 1 else passwordTable.keys.max() + 1
             passwordTable[id] = password.captured
@@ -121,7 +121,7 @@ object DataModelMocks {
         }
 
         // transaction support
-        val passwordTableBackup = linkedMapOf<DBID, DecryptablePasswordEntry>()
+        val passwordTableBackup = linkedMapOf<DBID, DecryptableSiteEntry>()
         val categoryTableBackup = linkedMapOf<DBID, DecryptableCategoryEntry>()
         var masterKeyStoreBackup: Pair<Salt, IVCipherText>? = null
         val sql = mockkClass(SQLiteDatabase::class)

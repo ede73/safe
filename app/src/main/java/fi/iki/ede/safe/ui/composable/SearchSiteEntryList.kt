@@ -13,15 +13,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import fi.iki.ede.crypto.DecryptablePasswordEntry
+import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DataModel.getCategory
-import fi.iki.ede.safe.ui.activities.PasswordEntryScreen
+import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
 import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
-fun SearchPasswordEntryList(
-    filteredPasswords: MutableStateFlow<List<DecryptablePasswordEntry>>
+fun SearchSiteEntryList(
+    filteredPasswords: MutableStateFlow<List<DecryptableSiteEntry>>
 ) {
     val context = LocalContext.current
     val passwordState = filteredPasswords.collectAsState()
@@ -31,7 +31,7 @@ fun SearchPasswordEntryList(
         }
     }
 
-    fun updateEntry(entryToUpdate: DecryptablePasswordEntry) {
+    fun updateEntry(entryToUpdate: DecryptableSiteEntry) {
         val updatedList = filteredPasswords.value.map { entry ->
             if (entry.id == entryToUpdate.id)
                 entryToUpdate.copy()
@@ -47,7 +47,7 @@ fun SearchPasswordEntryList(
                 // Handle the result here
                 val resultIntent = result.data
                 if (resultIntent != null) {
-                    val passwordId = resultIntent.getLongExtra(PasswordEntryScreen.PASSWORD_ID, -1L)
+                    val passwordId = resultIntent.getLongExtra(SiteEntryEditScreen.PASSWORD_ID, -1L)
                     updateEntry(DataModel.getPassword(passwordId))
                 }
             }
@@ -56,11 +56,11 @@ fun SearchPasswordEntryList(
     LazyColumn(modifier = Modifier.fillMaxWidth()) {
         items(items = sortedPasswords, itemContent = { filteredItem ->
             // Merge with PasswordRow
-            MatchingPasswordEntry(
+            MatchingSiteEntry(
                 passwordEntry = filteredItem,
                 categoryEntry = filteredItem.getCategory(), onEntryClick = {
                     launcher.launch(
-                        PasswordEntryScreen.getEditPassword(context, it.id!!)
+                        SiteEntryEditScreen.getEditPassword(context, it.id!!)
                     )
                 }, onDelete = { deletedEntry ->
                     // it is gone already

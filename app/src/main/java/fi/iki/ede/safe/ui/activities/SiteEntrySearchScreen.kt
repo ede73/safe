@@ -18,13 +18,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.crypto.DecryptablePasswordEntry
-import fi.iki.ede.safe.ui.composable.SearchPasswordAndControls
-import fi.iki.ede.safe.ui.composable.SearchPasswordEntryList
+import fi.iki.ede.crypto.DecryptableSiteEntry
+import fi.iki.ede.safe.ui.composable.SearchSiteEntryControls
+import fi.iki.ede.safe.ui.composable.SearchSiteEntryList
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 
-class PasswordSearchScreen : AutoLockingComponentActivity() {
+class SiteEntrySearchScreen : AutolockingBaseComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,9 +35,9 @@ class PasswordSearchScreen : AutoLockingComponentActivity() {
                 ) {
                     val searchText = remember { mutableStateOf(TextFieldValue("")) }
                     val matchingPasswordEntries =
-                        remember { MutableStateFlow<List<DecryptablePasswordEntry>>(emptyList()) }
+                        remember { MutableStateFlow<List<DecryptableSiteEntry>>(emptyList()) }
                     Column {
-                        SearchPasswordAndControls(
+                        SearchSiteEntryControls(
                             matchingPasswordEntries,
                             searchText
                         )
@@ -54,7 +54,7 @@ class PasswordSearchScreen : AutoLockingComponentActivity() {
                         }
 
                         // TODO: Merge with password list
-                        SearchPasswordEntryList(matchingPasswordEntries)
+                        SearchSiteEntryList(matchingPasswordEntries)
                     }
                 }
             }
@@ -69,7 +69,7 @@ class PasswordSearchScreen : AutoLockingComponentActivity() {
         const val MIN_PASSWORDS_FOR_THREADED_SEARCH = 20
         var searchProgressPerThread = mutableStateListOf<Float>()
         fun startMe(context: Context) {
-            context.startActivity(Intent(context, PasswordSearchScreen::class.java))
+            context.startActivity(Intent(context, SiteEntrySearchScreen::class.java))
         }
     }
 }

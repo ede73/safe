@@ -24,7 +24,7 @@ import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.activities.CategoryListScreen
 
 @Composable
-fun MovePasswordEntry(
+fun MoveSiteEntry(
     targetCategories: List<DecryptableCategoryEntry>,
     onConfirm: (newCategory: DecryptableCategoryEntry) -> Unit,
     onDismiss: () -> Unit,

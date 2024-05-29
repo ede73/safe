@@ -25,23 +25,23 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fi.iki.ede.crypto.DecryptableCategoryEntry
-import fi.iki.ede.crypto.DecryptablePasswordEntry
+import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DataModel.getCategory
-import fi.iki.ede.safe.ui.activities.PasswordSearchScreen
+import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
 import kotlinx.coroutines.launch
 
 // TODO: THIS! Should have MUCH more common with PasswordRow!
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun MatchingPasswordEntry(
-    passwordEntry: DecryptablePasswordEntry,
+fun MatchingSiteEntry(
+    passwordEntry: DecryptableSiteEntry,
     categoryEntry: DecryptableCategoryEntry,
-    onEntryClick: (DecryptablePasswordEntry) -> Unit,
-    onDelete: (DecryptablePasswordEntry) -> Unit,
-    onUpdate: (DecryptablePasswordEntry) -> Unit
+    onEntryClick: (DecryptableSiteEntry) -> Unit,
+    onDelete: (DecryptableSiteEntry) -> Unit,
+    onUpdate: (DecryptableSiteEntry) -> Unit
 ) {
     var displayMenu by remember { mutableStateOf(false) }
     var displayDeleteDialog by remember { mutableStateOf(false) }
@@ -77,7 +77,7 @@ fun MatchingPasswordEntry(
                         .padding(8.dp)
                         .weight(1f)
                         .testTag(
-                            PasswordSearchScreen.TESTTAG_SEARCH_MATCH
+                            SiteEntrySearchScreen.TESTTAG_SEARCH_MATCH
                         )
                 )
                 if (passwordEntry.passwordChangedDate != null) {
@@ -118,7 +118,7 @@ fun MatchingPasswordEntry(
                 })
             }
             if (displayDeleteDialog) {
-                DeletePasswordEntry(passwordEntry, onConfirm = {
+                DeleteSiteEntryDialog(passwordEntry, onConfirm = {
                     coroutineScope.launch {
                         DataModel.deletePassword(passwordEntry)
                         onDelete(passwordEntry)
@@ -132,7 +132,7 @@ fun MatchingPasswordEntry(
                 val currentCategory = passwordEntry.getCategory()
                 val filteredCategories = DataModel.getCategories().filter { it != currentCategory }
 
-                MovePasswordEntry(filteredCategories, onConfirm = { newCategory ->
+                MoveSiteEntry(filteredCategories, onConfirm = { newCategory ->
                     coroutineScope.launch {
                         DataModel.movePassword(passwordEntry, newCategory)
                     }

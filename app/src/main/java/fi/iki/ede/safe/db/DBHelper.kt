@@ -9,7 +9,7 @@ import android.database.sqlite.SQLiteException
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
 import fi.iki.ede.crypto.DecryptableCategoryEntry
-import fi.iki.ede.crypto.DecryptablePasswordEntry
+import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.date.DateUtils
@@ -240,9 +240,9 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
             } else null, null, null, null, null
         ).use {
             it.moveToFirst()
-            ArrayList<DecryptablePasswordEntry>().apply {
+            ArrayList<DecryptableSiteEntry>().apply {
                 (0 until it.count).forEach { _ ->
-                    add(DecryptablePasswordEntry(it.getDBID(COL_PASSWORDS_CATEGORY)).apply {
+                    add(DecryptableSiteEntry(it.getDBID(COL_PASSWORDS_CATEGORY)).apply {
                         id = it.getDBID(COL_PASSWORDS_ID)
                         password = it.getIVCipher(COL_PASSWORDS_PASSWORD)
                         description = it.getIVCipher(COL_PASSWORDS_DESCRIPTION)
@@ -259,7 +259,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         }
 
 
-    fun updatePassword(entry: DecryptablePasswordEntry): DBID {
+    fun updatePassword(entry: DecryptableSiteEntry): DBID {
         require(entry.id != null) { "Cannot update password without ID" }
         require(entry.categoryId != null) { "Cannot update password without Category ID" }
         val args = ContentValues().apply {
@@ -302,7 +302,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         put(key, DateUtils.toUnixSeconds(date))
 
 
-    fun addPassword(entry: DecryptablePasswordEntry) =
+    fun addPassword(entry: DecryptableSiteEntry) =
         this.writableDatabase.insertOrThrow(TABLE_PASSWORDS, null, ContentValues().apply {
             if (entry.id != null) {
                 put(COL_PASSWORDS_ID, entry.id)

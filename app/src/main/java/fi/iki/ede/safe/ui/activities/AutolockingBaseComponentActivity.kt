@@ -15,7 +15,7 @@ import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.clipboard.ClipboardUtils
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.model.Preferences
-import fi.iki.ede.safe.service.AutoLockService
+import fi.iki.ede.safe.service.AutolockingService
 
 // Dedicated interface for averting inactivity a bit
 // during long tasks (that are possibly outside out app scode)
@@ -46,11 +46,11 @@ interface ScreenOffLocker : AvertInactivityDuringLongTask {
         when (intent.action) {
             Intent.ACTION_SCREEN_OFF -> {
                 if (Preferences.getLockOnScreenLock(context, true)) {
-                    AutoLockingComponentActivity.lockTheApplication(context)
+                    AutolockingBaseComponentActivity.lockTheApplication(context)
                 }
             }
 
-            AutoLockService.ACTION_LAUNCH_LOGIN_SCREEN -> {
+            AutolockingService.ACTION_LAUNCH_LOGIN_SCREEN -> {
                 LoginScreen.startMe(context, dontOpenCategoryScreenAfterLogin = true)
             }
         }
@@ -60,7 +60,7 @@ interface ScreenOffLocker : AvertInactivityDuringLongTask {
         if (BuildConfig.DEBUG) {
             Log.w(TAG, "Restart inactivity timer because $why")
         }
-        AutoLockService.sendRestartTimer(context)
+        AutolockingService.sendRestartTimer(context)
     }
 
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
@@ -69,7 +69,7 @@ interface ScreenOffLocker : AvertInactivityDuringLongTask {
             context.registerReceiver(
                 intentReceiver, IntentFilter().let {
                     it.addAction(Intent.ACTION_SCREEN_OFF)
-                    it.addAction(AutoLockService.ACTION_LAUNCH_LOGIN_SCREEN)
+                    it.addAction(AutolockingService.ACTION_LAUNCH_LOGIN_SCREEN)
                     it
                 }, Context.RECEIVER_NOT_EXPORTED
             )
@@ -77,7 +77,7 @@ interface ScreenOffLocker : AvertInactivityDuringLongTask {
             context.registerReceiver(
                 intentReceiver, IntentFilter().let {
                     it.addAction(Intent.ACTION_SCREEN_OFF)
-                    it.addAction(AutoLockService.ACTION_LAUNCH_LOGIN_SCREEN)
+                    it.addAction(AutolockingService.ACTION_LAUNCH_LOGIN_SCREEN)
                     it
                 }
             )
@@ -133,7 +133,7 @@ interface ScreenOffLocker : AvertInactivityDuringLongTask {
 }
 
 @Suppress("LeakingThis")
-open class AutoLockingComponentActivity : ComponentActivity(), ScreenOffLocker {
+open class AutolockingBaseComponentActivity : ComponentActivity(), ScreenOffLocker {
 
     override val mIntentReceiver = screenOffIntentReceiver
 
@@ -162,7 +162,7 @@ open class AutoLockingComponentActivity : ComponentActivity(), ScreenOffLocker {
             ClipboardUtils.clearClipboard(context)
             // Basically sign out
             LoginHandler.logout()
-            context.stopService(Intent(context, AutoLockService::class.java))
+            context.stopService(Intent(context, AutolockingService::class.java))
             // TODO:
             //context.stopService(Intent(context, AutoLockService::class.java))
             // Can't start from service,

@@ -40,16 +40,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.window.Dialog
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.backupandrestore.Backup
+import fi.iki.ede.safe.backupandrestore.BackupDatabase
 import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.db.DBHelperFactory
-import fi.iki.ede.safe.password.ChangePassword
-import fi.iki.ede.safe.ui.activities.AutoLockingComponentActivity
+import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
+import fi.iki.ede.safe.ui.activities.AutolockingBaseComponentActivity
 import fi.iki.ede.safe.ui.activities.HelpScreen
 import fi.iki.ede.safe.ui.activities.LoginScreen
-import fi.iki.ede.safe.ui.activities.PasswordSearchScreen
 import fi.iki.ede.safe.ui.activities.PreferenceActivity
-import fi.iki.ede.safe.ui.activities.RestoreScreen
+import fi.iki.ede.safe.ui.activities.RestoreDatabaseScreen
+import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -98,7 +98,7 @@ fun TopActionBar(
             when (it.resultCode) {
                 Activity.RESULT_OK -> {
                     restoreCompleted.launch(
-                        RestoreScreen.getIntent(context, false, it.data!!.data!!)
+                        RestoreDatabaseScreen.getIntent(context, false, it.data!!.data!!)
                     )
                 }
             }
@@ -110,7 +110,7 @@ fun TopActionBar(
             when (it.resultCode) {
                 Activity.RESULT_OK -> {
                     restoreCompleted.launch(
-                        RestoreScreen.getIntent(context, true, it.data!!.data!!)
+                        RestoreDatabaseScreen.getIntent(context, true, it.data!!.data!!)
                     )
                 }
             }
@@ -149,14 +149,14 @@ fun TopActionBar(
             }
 
             IconButton(onClick = {
-                AutoLockingComponentActivity.lockTheApplication(context)
+                AutolockingBaseComponentActivity.lockTheApplication(context)
                 LoginScreen.startMe(context, dontOpenCategoryScreenAfterLogin = true)
             }) {
                 Icon(Icons.Default.Lock, stringResource(id = R.string.action_bar_lock))
             }
 
             IconButton(
-                onClick = { PasswordSearchScreen.startMe(context) },
+                onClick = { SiteEntrySearchScreen.startMe(context) },
                 modifier = Modifier.testTag(TESTTAG_TOPACTIONBAR_SEARCH)
             ) {
                 Icon(Icons.Default.Search, stringResource(id = R.string.action_bar_search))
@@ -237,7 +237,7 @@ fun TopActionBar(
                         !oldPassword.isEmpty() &&
                         !newPassword.isEmpty()
                     ) {
-                        ChangePassword.changeMasterPassword(
+                        ChangeMasterKeyAndPassword.changeMasterPassword(
                             context,
                             oldPassword,
                             newPassword
@@ -272,7 +272,7 @@ private fun backup(
     context: Context,
     it: ActivityResult,
 ) {
-    val n = Backup()
+    val n = BackupDatabase()
     val (salt, currentEncryptedMasterKey) = DBHelperFactory.getDBHelper(context)
         .fetchSaltAndEncryptedMasterKey()
     val document = n.generate(salt, currentEncryptedMasterKey)

@@ -19,7 +19,7 @@ abstract class ExportConfig(currentCodedVersion: ExportVersion) {
 
             val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
                 .addCategory(Intent.CATEGORY_OPENABLE)
-                .setType(Backup.MIME_TYPE_BACKUP)
+                .setType(BackupDatabase.MIME_TYPE_BACKUP)
                 .putExtra(
                     Intent.EXTRA_TITLE,
                     backupDocument
@@ -47,7 +47,7 @@ abstract class ExportConfig(currentCodedVersion: ExportVersion) {
         }
 
         fun getOpenDocumentIntent(context: Context) = Intent(Intent.ACTION_OPEN_DOCUMENT)
-            .setType(Backup.MIME_TYPE_BACKUP)
+            .setType(BackupDatabase.MIME_TYPE_BACKUP)
 
         const val ATTRIBUTE_PREFIX_IV = "iv_"
         const val ATTRIBUTE_PREFIX_CIPHER = "cipher_"

@@ -6,7 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 
 
 @Suppress("LeakingThis")
-open class AutoLockingAppCompatActivity : AppCompatActivity(), ScreenOffLocker {
+open class AutolockingBaseAppCompatActivity : AppCompatActivity(), ScreenOffLocker {
 
     override val mIntentReceiver = screenOffIntentReceiver
 

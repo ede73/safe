@@ -35,12 +35,12 @@
             android:label="@string/title_activity_help_screen"
             android:theme="@style/Theme.AppCompat" />
         <activity
-            android:name=".ui.activities.PasswordEntryScreen"
+            android:name=".ui.activities.SiteEntryEditScreen"
             android:exported="false"
             android:label="@string/title_activity_password_entry_screen"
             android:theme="@style/Theme.AppCompat" />
         <activity
-            android:name=".ui.activities.PasswordListScreen"
+            android:name=".ui.activities.SiteEntryListScreen"
             android:exported="false"
             android:label="@string/title_activity_password_screen"
             android:theme="@style/Theme.AppCompat" />
@@ -50,13 +50,13 @@
             android:label="@string/title_activity_category_screen"
             android:theme="@style/Theme.AppCompat" />
         <activity
-            android:name=".ui.activities.PasswordSearchScreen"
+            android:name=".ui.activities.SiteEntrySearchScreen"
             android:exported="false"
             android:label="@string/title_activity_password_search_screen"
             android:theme="@style/Theme.AppCompat"
             android:windowSoftInputMode="stateVisible" />
         <activity
-            android:name=".ui.activities.RestoreScreen"
+            android:name=".ui.activities.RestoreDatabaseScreen"
             android:exported="false"
             android:label="@string/title_activity_restore_screen"
             android:theme="@style/Theme.AppCompat" />
@@ -71,10 +71,10 @@
             </intent-filter>
         </activity>
         <activity android:name=".ui.activities.PreferenceActivity" />
-        <activity android:name=".ui.activities.Biometrics" />
+        <activity android:name=".ui.activities.BiometricsActivity" />
 
         <service
-            android:name=".service.AutoLockService"
+            android:name=".service.AutolockingService"
             android:enabled="true" />
     </application>
 

@@ -12,11 +12,11 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.crypto.DecryptablePasswordEntry
+import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.safe.model.DataModel
 
 @Composable
-fun PasswordList(passwords: List<DecryptablePasswordEntry>) {
+fun SiteEntryList(passwords: List<DecryptableSiteEntry>) {
 
     val passwordItems = remember { mutableStateListOf<@Composable () -> Unit>() }
     val passwordListHash = remember(passwords) { passwords.hashCode() }
@@ -30,9 +30,9 @@ fun PasswordList(passwords: List<DecryptablePasswordEntry>) {
             val beginning = password.plainDescription.substring(0, 1).uppercase()
             if (previousValue != beginning) {
                 previousValue = beginning
-                passwordItems.add { PasswordRowHeader(headerString = beginning) }
+                passwordItems.add { SiteEntryRowHeader(headerString = beginning) }
             }
-            passwordItems.add { PasswordRow(password, categoriesState) }
+            passwordItems.add { SiteEntryRow(password, categoriesState) }
         }
     }
 

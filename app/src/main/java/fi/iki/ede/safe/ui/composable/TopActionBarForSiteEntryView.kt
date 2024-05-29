@@ -20,14 +20,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.ui.activities.AutoLockingComponentActivity
+import fi.iki.ede.safe.ui.activities.AutolockingBaseComponentActivity
 
 /**
  * Used in password views
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopActionBarForPasswordView(
+fun TopActionBarForSiteEntryView(
     onGeneratePassword: () -> Unit = {},
 ) {
     val context = LocalContext.current
@@ -37,7 +37,7 @@ fun TopActionBarForPasswordView(
         title = { Text(stringResource(id = R.string.application_name), color = Color.White) },
         actions = {
             IconButton(onClick = {
-                AutoLockingComponentActivity.lockTheApplication(context)
+                AutolockingBaseComponentActivity.lockTheApplication(context)
             }) {
                 Icon(Icons.Default.Lock, stringResource(id = R.string.action_bar_lock))
             }
@@ -65,6 +65,6 @@ fun TopActionBarForPasswordView(
 
 @Preview(showBackground = true)
 @Composable
-fun TopActionBarForPasswordViewPreview() {
-    TopActionBarForPasswordView {}
+fun TopActionBarForSiteEntryViewPreview() {
+    TopActionBarForSiteEntryView {}
 }

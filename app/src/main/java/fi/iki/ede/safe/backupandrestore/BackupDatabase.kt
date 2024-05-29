@@ -2,7 +2,7 @@ package fi.iki.ede.safe.backupandrestore
 
 import android.text.TextUtils
 import android.util.Log
-import fi.iki.ede.crypto.DecryptablePasswordEntry
+import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.HexString
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
@@ -22,7 +22,7 @@ import java.time.ZoneOffset
  * If you EVER introduce a breaking change (namespace, remove elements, rename attributes)
  * Make sure to increase the version code. Linter will highlight places to fix
  */
-class Backup : ExportConfig(ExportVersion.V1) {
+class BackupDatabase : ExportConfig(ExportVersion.V1) {
     val ks = KeyStoreHelperFactory.getKeyStoreHelper()
 
     private fun XmlSerializer.addTagAndCData(
@@ -124,7 +124,7 @@ class Backup : ExportConfig(ExportVersion.V1) {
     }
 
     private fun XmlSerializer.writePasswordEntry(
-        decryptablePassword: DecryptablePasswordEntry,
+        decryptablePassword: DecryptableSiteEntry,
     ) {
         startTag(Elements.CATEGORY_ITEM)
         addTagAndCData(Elements.CATEGORY_ITEM_DESCRIPTION, decryptablePassword.description)

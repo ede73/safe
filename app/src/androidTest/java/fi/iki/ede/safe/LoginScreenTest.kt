@@ -11,7 +11,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
 import fi.iki.ede.crypto.DecryptableCategoryEntry
-import fi.iki.ede.crypto.DecryptablePasswordEntry
+import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.hexToByteArray
@@ -58,7 +58,7 @@ class LoginScreenTest : AutoMockingUtilities, LoginScreenHelper {
             AutoMockingUtilities.fetchDBKeys(
                 masterKey = { FAKE_ENCRYPTED_MASTERKEY },
                 salt = { FAKE_SALT }, fetchPasswordsOfCategory = {
-                    listOf(DecryptablePasswordEntry(1).let {
+                    listOf(DecryptableSiteEntry(1).let {
                         it.id = 1
                         it
                     })

@@ -12,12 +12,12 @@ import android.os.IBinder
 import androidx.annotation.RequiresApi
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.model.Preferences
-import fi.iki.ede.safe.ui.activities.AutoLockingComponentActivity.Companion.lockTheApplication
+import fi.iki.ede.safe.ui.activities.AutolockingBaseComponentActivity.Companion.lockTheApplication
 import java.time.Duration
 
 
 // TODO: BUG: (minor) If you change the lockout time in prefs, it updates only after app restart
-class AutoLockService : Service() {
+class AutolockingService : Service() {
     private var autoLockCountdownNotifier: CountDownTimer? = null
     private lateinit var mIntentReceiver: BroadcastReceiver
     private lateinit var serviceNotification: ServiceNotification
@@ -103,7 +103,7 @@ class AutoLockService : Service() {
         }
         autoLockCountdownNotifier?.cancel()
         autoLockCountdownNotifier = null
-        serviceNotification.setNotification(this@AutoLockService)
+        serviceNotification.setNotification(this@AutolockingService)
 
         val timeoutMinutes = Preferences.getLockTimeoutMinutes(this)
 

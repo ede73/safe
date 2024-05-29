@@ -14,13 +14,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import fi.iki.ede.safe.db.DBID
 import fi.iki.ede.safe.model.DataModel.passwordsStateFlow
-import fi.iki.ede.safe.ui.composable.PasswordList
+import fi.iki.ede.safe.ui.composable.SiteEntryList
 import fi.iki.ede.safe.ui.composable.TopActionBar
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 
-class PasswordListScreen : AutoLockingComponentActivity() {
+class SiteEntryListScreen : AutolockingBaseComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,13 +45,13 @@ class PasswordListScreen : AutoLockingComponentActivity() {
                     ) {
                         TopActionBar(onAddRequested = {
                             it.launch(
-                                PasswordEntryScreen.getAddPassword(
+                                SiteEntryEditScreen.getAddPassword(
                                     context,
                                     categoryId = categoryId
                                 )
                             )
                         })
-                        PasswordList(passwordsState)
+                        SiteEntryList(passwordsState)
                         // last row
                     }
                 }
@@ -64,7 +64,7 @@ class PasswordListScreen : AutoLockingComponentActivity() {
         fun startMe(context: Context, id: DBID) {
             context.startActivity(
                 Intent(
-                    context, PasswordListScreen::class.java
+                    context, SiteEntryListScreen::class.java
                 ).putExtra(CATEGORY_ID, id).setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
             )
         }

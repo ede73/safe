@@ -3,7 +3,7 @@ package fi.iki.ede.oisafecompatibility
 import android.text.TextUtils
 import android.util.Log
 import fi.iki.ede.crypto.DecryptableCategoryEntry
-import fi.iki.ede.crypto.DecryptablePasswordEntry
+import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.SaltedEncryptedPassword
@@ -23,10 +23,10 @@ class RestoreDataSet(
         SaltedEncryptedPassword.getEmpty()
     private var totalEntries = 0
     val categories = ArrayList<DecryptableCategoryEntry>()
-    val pass = ArrayList<DecryptablePasswordEntry>()
+    val pass = ArrayList<DecryptableSiteEntry>()
     private var currentCategoryId = 0L
     private var currentCategory: DecryptableCategoryEntry? = null
-    private var currentEntry: DecryptablePasswordEntry? = null
+    private var currentEntry: DecryptableSiteEntry? = null
 
     fun newCategory(extractedCategoryName: String) {
         currentCategory = DecryptableCategoryEntry()
@@ -43,7 +43,7 @@ class RestoreDataSet(
     }
 
     fun newEntry() {
-        currentEntry = DecryptablePasswordEntry(currentCategoryId)
+        currentEntry = DecryptableSiteEntry(currentCategoryId)
     }
 
     fun storeEntry() {

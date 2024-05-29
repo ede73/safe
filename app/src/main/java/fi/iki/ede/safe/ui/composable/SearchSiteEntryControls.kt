@@ -30,11 +30,11 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.crypto.DecryptablePasswordEntry
+import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
-import fi.iki.ede.safe.ui.activities.PasswordSearchScreen
-import fi.iki.ede.safe.ui.activities.PasswordSearchScreen.Companion.searchProgressPerThread
+import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
+import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen.Companion.searchProgressPerThread
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -52,8 +52,8 @@ import kotlin.math.abs
  * Search view at the top of the PasswordSearchScreen, intrinsic search controls
  */
 @Composable
-fun SearchPasswordAndControls(
-    matchingPasswordEntries: MutableStateFlow<List<DecryptablePasswordEntry>>,
+fun SearchSiteEntryControls(
+    matchingPasswordEntries: MutableStateFlow<List<DecryptableSiteEntry>>,
     searchTextField: MutableState<TextFieldValue>,
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -95,7 +95,7 @@ fun SearchPasswordAndControls(
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag(PasswordSearchScreen.TESTTAG_SEARCH_TEXTFIELD)
+                .testTag(SiteEntrySearchScreen.TESTTAG_SEARCH_TEXTFIELD)
                 .focusRequester(focusRequester),
             leadingIcon = {
                 Icon(
@@ -156,8 +156,8 @@ private const val TAG = "SearchPasswordAndControls"
 
 @OptIn(DelicateCoroutinesApi::class)
 fun beginSearch(
-    allPasswordEntries: List<DecryptablePasswordEntry>,
-    matchingPasswordEntries: MutableStateFlow<List<DecryptablePasswordEntry>>,
+    allPasswordEntries: List<DecryptableSiteEntry>,
+    matchingPasswordEntries: MutableStateFlow<List<DecryptableSiteEntry>>,
     searchTextField: TextFieldValue,
     searchWebsites: Boolean,
     searchUsernames: Boolean,
@@ -189,7 +189,7 @@ fun beginSearch(
 
             // Recreate search progresses to the size of the CPUs
             val cpus =
-                if (allPasswordEntries.size < PasswordSearchScreen.MIN_PASSWORDS_FOR_THREADED_SEARCH) {
+                if (allPasswordEntries.size < SiteEntrySearchScreen.MIN_PASSWORDS_FOR_THREADED_SEARCH) {
                     1
                 } else Runtime.getRuntime().availableProcessors()
             searchProgressPerThread.clear()
@@ -260,12 +260,12 @@ private fun asyncFilterChunkOfPasswords(
     chunk: Int,
     isActive: () -> Boolean,
     searchText: String,
-    chunkOfPasswordEntries: List<DecryptablePasswordEntry>,
+    chunkOfPasswordEntries: List<DecryptableSiteEntry>,
     searchWebsites: Boolean,
     searchUsernames: Boolean,
     searchPasswords: Boolean,
     searchNotes: Boolean,
-    matchingPasswordEntries: MutableStateFlow<List<DecryptablePasswordEntry>>,
+    matchingPasswordEntries: MutableStateFlow<List<DecryptableSiteEntry>>,
 ) {
     var searchedPasswordCount = 0.0f
     val amountOfPasswords = chunkOfPasswordEntries.size * 1.0f

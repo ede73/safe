@@ -13,9 +13,9 @@ import androidx.preference.PreferenceFragmentCompat
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.model.Preferences
-import fi.iki.ede.safe.service.AutoLockService
+import fi.iki.ede.safe.service.AutolockingService
 
-class PreferenceActivity : AutoLockingAppCompatActivity() {
+class PreferenceActivity : AutolockingBaseAppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,14 +61,14 @@ class PreferenceActivity : AutoLockingAppCompatActivity() {
 
             findPreference<Preference>(Preferences.PREFERENCE_LOCK_TIMEOUT)?.onPreferenceChangeListener =
                 Preference.OnPreferenceChangeListener { _: Preference?, _: Any ->
-                    activity?.startService(Intent(requireContext(), AutoLockService::class.java))
+                    activity?.startService(Intent(requireContext(), AutolockingService::class.java))
                     true
                 }
 
             findPreference<Preference>(Preferences.PREFERENCE_BIOMETRICS_ENABLED)?.onPreferenceChangeListener =
                 Preference.OnPreferenceChangeListener { _: Preference?, enabledOrDisabled: Any ->
                     if (!(enabledOrDisabled as Boolean)) {
-                        Biometrics.clearBiometricKeys(requireContext())
+                        BiometricsActivity.clearBiometricKeys(requireContext())
                     }
                     true
                 }
