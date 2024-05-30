@@ -29,21 +29,20 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
         name: Elements,
         encryptedValue: IVCipherText,
         attr: Pair<Attributes, String>? = null
-    ): XmlSerializer {
-        return startTag(name)
-            .let {
-                if (attr?.first != null) {
-                    it.attribute(attr.first, attr.second)
-                }
-                this
+    ) = startTag(name)
+        .let {
+            if (attr?.first != null) {
+                it.attribute(attr.first, attr.second)
             }
-            .let {
-                it.attribute(Attributes.IV, encryptedValue.iv.toHexString())
-                it.text(encryptedValue.cipherText.toHexString())
-                this
-            }
-            .endTag(name)
-    }
+            this
+        }
+        .let {
+            it.attribute(Attributes.IV, encryptedValue.iv.toHexString())
+            it.text(encryptedValue.cipherText.toHexString())
+            this
+        }
+        .endTag(name)
+
 
     private fun XmlSerializer.endTag(name: Elements) = endTag(null, name.value)
     private fun XmlSerializer.startTag(name: Elements) = startTag(null, name.value)
@@ -58,32 +57,30 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
     private fun XmlSerializer.startTagWithAttribute(
         name: Elements,
         attr: Pair<Attributes, IVCipherText>? = null
-    ): XmlSerializer {
-        return startTag(name)
-            .let {
-                if (attr?.first != null) {
-                    it.attribute(attr.first, ATTRIBUTE_PREFIX_IV, attr.second.iv.toHexString())
-                    it.attribute(
-                        attr.first,
-                        ATTRIBUTE_PREFIX_CIPHER,
-                        attr.second.cipherText.toHexString()
-                    )
-                }
-                this
+    ) = startTag(name)
+        .let {
+            if (attr?.first != null) {
+                it.attribute(attr.first, ATTRIBUTE_PREFIX_IV, attr.second.iv.toHexString())
+                it.attribute(
+                    attr.first,
+                    ATTRIBUTE_PREFIX_CIPHER,
+                    attr.second.cipherText.toHexString()
+                )
             }
-    }
+            this
+        }
+
 
     @Suppress("SameParameterValue")
     private fun makePair(
         name: Attributes,
         encryptedValue: IVCipherText?
-    ): Pair<Attributes, IVCipherText>? {
-        return if (encryptedValue == null || encryptedValue.isEmpty()) {
-            null
-        } else {
-            Pair(name, encryptedValue)
-        }
+    ) = if (encryptedValue == null || encryptedValue.isEmpty()) {
+        null
+    } else {
+        Pair(name, encryptedValue)
     }
+
 
     fun generate(salt: Salt, currentEncryptedMasterKey: IVCipherText): HexString {
         val serializer = XmlPullParserFactory.newInstance().newSerializer()

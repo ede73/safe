@@ -25,7 +25,6 @@ import org.xmlpull.v1.XmlPullParserFactory
 import java.io.ByteArrayInputStream
 import java.io.StringReader
 import java.time.format.DateTimeParseException
-import javax.crypto.spec.SecretKeySpec
 
 class RestoreDatabase : ExportConfig(ExportVersion.V1) {
     private fun XmlPullParser.getAttributeValue(
@@ -59,19 +58,20 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         userPassword: Password,
         dbHelper: DBHelper
     ): Int {
-        val xmlFactoryObject = XmlPullParserFactory.newInstance()
-        val myParser = xmlFactoryObject.newPullParser()
+        val myParser = XmlPullParserFactory.newInstance().newPullParser()
 
-        val sr = BackupData(StringReader(backup.trimIndent().trim()).readLines())
-        val encryptedKey = sr.getEncryptedMasterKey()
+        val backupData = BackupData(StringReader(backup.trimIndent().trim()).readLines())
 
         val db = dbHelper.beginRestoration()
 
         try {
-            dbHelper.storeSaltAndEncryptedMasterKey(sr.getSalt(), encryptedKey)
+            dbHelper.storeSaltAndEncryptedMasterKey(
+                backupData.getSalt(),
+                backupData.getEncryptedMasterKey()
+            )
             // body
             myParser.setInput(
-                getDocumentStream(sr, userPassword),
+                getDocumentStream(backupData, userPassword),
                 null
             )
 
@@ -85,35 +85,32 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
     }
 
     private fun getDocumentStream(
-        sr: BackupData,
+        backupData: BackupData,
         userPassword: Password
-    ): ByteArrayInputStream {
-        val document = KeyStoreHelperFactory.getKeyStoreHelper().decryptByteArray(
-            sr.getEncryptedBackup(),
-            decryptMasterKey(sr, userPassword)
+    ) = ByteArrayInputStream(
+        KeyStoreHelperFactory.getKeyStoreHelper().decryptByteArray(
+            backupData.getEncryptedBackup(),
+            decryptMasterKey(backupData, userPassword)
         )
-        return ByteArrayInputStream(
-            document
-        )
-    }
+    )
+
 
     private fun decryptMasterKey(
-        sr: BackupData,
+        backupData: BackupData,
         userPassword: Password,
-    ): SecretKeySpec {
-        return KeyManagement.decryptMasterKey(
-            generatePBKDF2AESKey(
-                sr.getSalt(),
-                KEY_ITERATION_COUNT,
-                userPassword,
-                KEY_LENGTH_BITS
-            ), sr.getEncryptedMasterKey()
-        )
-    }
+    ) = KeyManagement.decryptMasterKey(
+        generatePBKDF2AESKey(
+            backupData.getSalt(),
+            KEY_ITERATION_COUNT,
+            userPassword,
+            KEY_LENGTH_BITS
+        ), backupData.getEncryptedMasterKey()
+    )
 
-    inline fun <reified T : Enum<T>, V> valueOrNull(value: V, valueSelector: (T) -> V): T? {
-        return enumValues<T>().find { valueSelector(it) == value }
-    }
+
+    inline fun <reified T : Enum<T>, V> valueOrNull(value: V, valueSelector: (T) -> V): T? =
+        enumValues<T>().find { valueSelector(it) == value }
+
 
     private fun parseXML(
         dbHelper: DBHelper,
@@ -315,6 +312,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
             }
             myParser.next()
         }
+        // sorry linter, you are mistaken, ain't 0 all the time
         return passwords
     }
 
