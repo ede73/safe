@@ -17,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -32,7 +33,8 @@ fun passwordTextField(
     maxLines: Int = 1,
     highlight: Boolean = true,
     modifier: Modifier = Modifier,
-    updated: Boolean = false
+    updated: Boolean = false,
+    textStyle: TextStyle? = null
 ): Password {
     // Since the PasswordTextField 'owns' its password state, when assigned from another mutable state
     // it cannot be updated by programmatic change, this mutable should be pulled out from PasswordTextField!
@@ -74,7 +76,8 @@ fun passwordTextField(
         singleLine = singleLine,
         maxLines = maxLines,
         colors = hideFocusLine,
-        modifier = modifier
+        modifier = modifier,
+        textStyle = textStyle ?: TextStyle.Default,
     )
     return Password(password.toByteArray())
 }

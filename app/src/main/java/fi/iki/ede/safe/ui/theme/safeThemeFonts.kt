@@ -58,4 +58,9 @@ fun getFonts() = Typography(
         fontWeight = FontWeight.Bold,
         fontSize = 30.sp
     ),
+    // Used(misused?) for Password fields
+    displayMedium = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontSize = 30.sp
+    ),
 )

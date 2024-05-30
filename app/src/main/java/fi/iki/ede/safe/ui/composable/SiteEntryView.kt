@@ -13,6 +13,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -101,7 +102,7 @@ fun SiteEntryView(
             Button(enabled = !TextUtils.isEmpty(website) && Uri.parse(website) != null, onClick = {
                 val uri = tryParseUri(website)
                 // Without scheme, ACTION_VIEW will fail
-                if (uri != null && uri.scheme != null) {
+                if (uri.scheme != null) {
                     context.startActivity(Intent(Intent.ACTION_VIEW, uri))
                 }
             }) { Text(stringResource(id = R.string.password_entry_visit)) }
@@ -163,6 +164,7 @@ fun SiteEntryView(
                 modifier = modifier
                     .padding(horizontal = 8.dp)
                     .fillMaxWidth(),
+                textStyle = MaterialTheme.typography.displayMedium
             )
             passwordWasUpdated = false
         }
