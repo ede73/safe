@@ -94,13 +94,7 @@ fun SiteEntryView(
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             val website = passEntry.website
             Button(enabled = !TextUtils.isEmpty(website) && Uri.parse(website) != null, onClick = {
-                val uri = if (website.lowercase().startsWith("http://") || website.lowercase()
-                        .startsWith("https://")
-                ) {
-                    Uri.parse(website)
-                } else {
-                    Uri.parse("https://$website")
-                }
+                val uri = tryParseUri(website)
                 // Without scheme, ACTION_VIEW will fail
                 if (uri != null && uri.scheme != null) {
                     context.startActivity(Intent(Intent.ACTION_VIEW, uri))
@@ -109,9 +103,7 @@ fun SiteEntryView(
             Spacer(Modifier.weight(1f))
             TextField(
                 value = passEntry.website,
-                onValueChange = {
-                    viewModel.updateWebSite(it)
-                },
+                onValueChange = { viewModel.updateWebSite(it) },
                 label = { Text(stringResource(id = R.string.password_entry_website_tip)) },
                 modifier = modifier
                     .padding(horizontal = 8.dp)
@@ -212,6 +204,15 @@ fun SiteEntryView(
             })
     }
 }
+
+private fun tryParseUri(website: String): Uri =
+    if (website.lowercase().startsWith("http://") ||
+        website.lowercase().startsWith("https://")
+    ) {
+        Uri.parse(website)
+    } else {
+        Uri.parse("https://$website")
+    }
 
 private fun String.encrypt(ks: KeyStoreHelper) = ks.encryptByteArray(this.trim().toByteArray())
 private fun IVCipherText.decrypt(ks: KeyStoreHelper) =

@@ -5,12 +5,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 /**
  * Display nice big start letter of the given header string
@@ -31,8 +30,7 @@ fun SiteEntryRowHeader(headerString: String) {
             Text(
                 text = headerStart,
                 modifier = Modifier.padding(16.dp),
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 20.sp,
+                style = MaterialTheme.typography.headlineMedium
             )
         }
     }

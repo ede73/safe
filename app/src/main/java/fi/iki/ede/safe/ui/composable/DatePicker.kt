@@ -9,8 +9,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
@@ -23,7 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import fi.iki.ede.safe.R
 import java.time.Year
 import java.time.YearMonth
@@ -84,7 +86,6 @@ fun DatePicker(zonedDateTime: ZonedDateTime?, onValueChange: (ZonedDateTime?) ->
             pageCount = { days.value.size },
             initialPage = {
                 val result = days.value.indexOf(selectedDay.value)
-                val q = selectedDay.value
                 if (result == -1) {
                     days.value.size
                 } else {
@@ -111,11 +112,13 @@ fun DatePicker(zonedDateTime: ZonedDateTime?, onValueChange: (ZonedDateTime?) ->
             modifier = Modifier.padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            NumberPicker(years, selectedYear, yearPagerState)
-            Text(text = "-")
-            NumberPicker(months, selectedMonth, monthPagerState)
-            Text(text = "-")
-            NumberPicker(days.value, selectedDay, dayPagerState)
+            CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.displayLarge) {
+                NumberPicker(years, selectedYear, yearPagerState)
+                Text(text = "-")
+                NumberPicker(months, selectedMonth, monthPagerState)
+                Text(text = "-")
+                NumberPicker(days.value, selectedDay, dayPagerState)
+            }
         }
     }
 }
@@ -196,7 +199,6 @@ fun NumberPicker(
         Text(
             text = numbers[page],
             color = if (numbers[page].contains("-")) Color.Red else Color.Unspecified,
-            fontSize = 30.sp
         )
     }
 }

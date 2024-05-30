@@ -4,4 +4,13 @@
     <style name="Theme.Safe" parent="Theme.Material3.Light">
         <!-- Customize your theme here with Material 3 attributes -->
     </style>
+
+    <!--
+    Only used for AppCompat's ie. biometrics and preferences
+    Biometrics ACTIVITY actually isnt appcompat but then biometrics prompt
+    started without this theme window title turns white (on dark mode)
+     -->
+    <style name="Theme.Safe.AppCompat" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Customize your theme here with Material 3 attributes -->
+    </style>
 </resources>

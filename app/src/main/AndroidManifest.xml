@@ -29,9 +29,11 @@
         android:label="@string/application_name"
         android:theme="@style/Theme.Safe"
         tools:targetApi="s">
+        <!-- Keep this AppCompat theme, helps with buggy window title coloring -->
         <activity
             android:name=".ui.activities.BiometricsActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Theme.Safe.AppCompat" />
         <activity
             android:name=".ui.activities.CategoryListScreen"
             android:exported="false"
@@ -51,7 +53,8 @@
         </activity>
         <activity
             android:name=".ui.activities.PreferenceActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:theme="@style/Theme.Safe.AppCompat" />
         <activity
             android:name=".ui.activities.SiteEntryEditScreen"
             android:exported="false"
