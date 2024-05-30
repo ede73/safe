@@ -20,7 +20,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -28,8 +27,9 @@ import fi.iki.ede.crypto.DecryptableCategoryEntry
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
-import fi.iki.ede.safe.ui.activities.CategoryListScreen
+import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.SiteEntryListScreen
+import fi.iki.ede.safe.ui.testTag
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -63,7 +63,7 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
                     .fillMaxWidth()
                     .padding(12.dp)
                     .weight(1f)
-                    .testTag(CategoryListScreen.TESTTAG_CATEGORY_ROW)
+                    .testTag(TestTag.TEST_TAG_CATEGORY_ROW)
             )
             Spacer(modifier = Modifier.weight(1f)) // This will push the Text to the end
             Text(
@@ -90,7 +90,7 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
                         displayMenu = false
                         displayDeleteCategory = true
                     },
-                    modifier = Modifier.testTag(CategoryListScreen.TESTTAG_CATEGORY_ROW_DELETE)
+                    modifier = Modifier.testTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE)
                 )
             }
             DropdownMenuItem(
@@ -106,7 +106,7 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
                     displayMenu = false
                     displayEditDialog = true
                 },
-                modifier = Modifier.testTag(CategoryListScreen.TESTTAG_CATEGORY_ROW_EDIT)
+                modifier = Modifier.testTag(TestTag.TEST_TAG_CATEGORY_ROW_EDIT)
             )
         }
         if (displayEditDialog) {

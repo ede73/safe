@@ -33,7 +33,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.integerResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -44,12 +43,14 @@ import fi.iki.ede.safe.backupandrestore.BackupDatabase
 import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
+import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.AutolockingBaseComponentActivity
 import fi.iki.ede.safe.ui.activities.HelpScreen
 import fi.iki.ede.safe.ui.activities.LoginScreen
 import fi.iki.ede.safe.ui.activities.PreferenceActivity
 import fi.iki.ede.safe.ui.activities.RestoreDatabaseScreen
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
+import fi.iki.ede.safe.ui.testTag
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -144,7 +145,7 @@ fun TopActionBar(
         actions = {
             IconButton(onClick = {
                 onAddRequested(addCompleted)
-            }, modifier = Modifier.testTag(TESTTAG_TOPACTIONBAR_ADD)) {
+            }, modifier = Modifier.testTag(TestTag.TEST_TAG_TOP_ACTION_BAR_ADD)) {
                 Icon(Icons.Default.Add, stringResource(id = R.string.generic_add))
             }
 
@@ -157,7 +158,7 @@ fun TopActionBar(
 
             IconButton(
                 onClick = { SiteEntrySearchScreen.startMe(context) },
-                modifier = Modifier.testTag(TESTTAG_TOPACTIONBAR_SEARCH)
+                modifier = Modifier.testTag(TestTag.TEST_TAG_TOP_ACTION_BAR_SEARCH)
             ) {
                 Icon(Icons.Default.Search, stringResource(id = R.string.action_bar_search))
             }
@@ -282,9 +283,6 @@ private fun backup(
         outputStream.close()
     }
 }
-
-const val TESTTAG_TOPACTIONBAR_ADD = "topactionbar_add"
-const val TESTTAG_TOPACTIONBAR_SEARCH = "topactionbar_search"
 
 @Composable
 private fun EnterNewPassword(

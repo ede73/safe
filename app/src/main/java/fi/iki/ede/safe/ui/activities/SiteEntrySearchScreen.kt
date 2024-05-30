@@ -62,9 +62,6 @@ class SiteEntrySearchScreen : AutolockingBaseComponentActivity() {
     }
 
     companion object {
-        const val TESTTAG_SEARCH_TEXTFIELD = "password_search_input"
-        const val TESTTAG_SEARCH_MATCH = "password_search_match"
-
         // minimum threshold for threaded search, else it's just single thread/linear
         const val MIN_PASSWORDS_FOR_THREADED_SEARCH = 20
         var searchProgressPerThread = mutableStateListOf<Float>()

@@ -15,11 +15,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusTarget
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.ui.activities.CategoryListScreen
+import fi.iki.ede.safe.ui.TestTag
+import fi.iki.ede.safe.ui.testTag
 import kotlinx.coroutines.android.awaitFrame
 import kotlinx.coroutines.job
 
@@ -53,13 +53,13 @@ fun AddOrEditCategory(
                     onValueChange = { newCategory = it },
                     modifier = Modifier
                         .focusRequester(focusRequester)
-                        .testTag(CategoryListScreen.TESTTAG_CATEGORY_TEXTFIELD)
+                        .testTag(TestTag.TEST_TAG_CATEGORY_TEXT_FIELD)
                         .focusable()
                         .focusTarget()
                 )
                 Button(
                     onClick = { onSubmit(newCategory) },
-                    modifier = Modifier.testTag(CategoryListScreen.TESTTAG_CATEGORY_BUTTON)
+                    modifier = Modifier.testTag(TestTag.TEST_TAG_CATEGORY_BUTTON)
                 ) {
                     Text(text = stringResource(id = R.string.generic_ok))
                 }

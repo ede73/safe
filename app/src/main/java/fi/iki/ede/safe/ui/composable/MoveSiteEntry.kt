@@ -16,12 +16,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.DecryptableCategoryEntry
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.ui.activities.CategoryListScreen
+import fi.iki.ede.safe.ui.TestTag
+import fi.iki.ede.safe.ui.testTag
 
 @Composable
 fun MoveSiteEntry(
@@ -81,7 +81,7 @@ fun MoveSiteEntry(
                                     }
                                     .fillMaxWidth()
                                     .padding(12.dp)
-                                    .testTag(CategoryListScreen.TESTTAG_CATEGORY_MOVE_ROW)
+                                    .testTag(TestTag.TEST_TAG_CATEGORY_MOVE_ROW)
                             )
                         }
                     }

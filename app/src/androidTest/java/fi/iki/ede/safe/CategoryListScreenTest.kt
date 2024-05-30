@@ -4,8 +4,6 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.longClick
-import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
@@ -22,17 +20,11 @@ import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.model.Preferences
+import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.BiometricsActivity
 import fi.iki.ede.safe.ui.activities.CategoryListScreen
-import fi.iki.ede.safe.ui.activities.CategoryListScreen.Companion.TESTTAG_CATEGORY_BUTTON
-import fi.iki.ede.safe.ui.activities.CategoryListScreen.Companion.TESTTAG_CATEGORY_ROW
-import fi.iki.ede.safe.ui.activities.CategoryListScreen.Companion.TESTTAG_CATEGORY_ROW_DELETE
-import fi.iki.ede.safe.ui.activities.CategoryListScreen.Companion.TESTTAG_CATEGORY_ROW_DELETE_CANCEL
-import fi.iki.ede.safe.ui.activities.CategoryListScreen.Companion.TESTTAG_CATEGORY_ROW_DELETE_CONFIRM
-import fi.iki.ede.safe.ui.activities.CategoryListScreen.Companion.TESTTAG_CATEGORY_TEXTFIELD
-import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen.Companion.TESTTAG_SEARCH_TEXTFIELD
-import fi.iki.ede.safe.ui.composable.TESTTAG_TOPACTIONBAR_ADD
-import fi.iki.ede.safe.ui.composable.TESTTAG_TOPACTIONBAR_SEARCH
+import fi.iki.ede.safe.ui.onAllNodesWithTag
+import fi.iki.ede.safe.ui.onNodeWithTag
 import io.mockk.every
 import io.mockk.mockkClass
 import io.mockk.mockkObject
@@ -62,20 +54,26 @@ class CategoryListScreenTest {
 
     @Test
     fun verifyBothCategoriesShow() {
-        categoryActivityTestRule.onAllNodesWithTag(TESTTAG_CATEGORY_ROW)[0].assertIsDisplayed()
-        categoryActivityTestRule.onAllNodesWithTag(TESTTAG_CATEGORY_ROW)[1].assertIsDisplayed()
+        categoryActivityTestRule.onAllNodesWithTag(TestTag.TEST_TAG_CATEGORY_ROW)[0].assertIsDisplayed()
+        categoryActivityTestRule.onAllNodesWithTag(TestTag.TEST_TAG_CATEGORY_ROW)[1].assertIsDisplayed()
     }
 
     @Test
     fun addCategory() {
-        categoryActivityTestRule.onNodeWithTag(TESTTAG_TOPACTIONBAR_ADD).performClick()
-        categoryActivityTestRule.onNodeWithTag(TESTTAG_CATEGORY_BUTTON).assertIsDisplayed()
-        categoryActivityTestRule.onNodeWithTag(TESTTAG_CATEGORY_TEXTFIELD).assertIsDisplayed()
-        categoryActivityTestRule.onNodeWithTag(TESTTAG_CATEGORY_TEXTFIELD).assertIsFocused()
-        categoryActivityTestRule.onNodeWithTag(TESTTAG_CATEGORY_TEXTFIELD).performClick()
-        categoryActivityTestRule.onNodeWithTag(TESTTAG_CATEGORY_TEXTFIELD)
+        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_TOP_ACTION_BAR_ADD)
+            .performClick()
+        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_BUTTON)
+            .assertIsDisplayed()
+        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_TEXT_FIELD)
+            .assertIsDisplayed()
+        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_TEXT_FIELD)
+            .assertIsFocused()
+        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_TEXT_FIELD)
+            .performClick()
+        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_TEXT_FIELD)
             .performTextInput("newCategory")
-        categoryActivityTestRule.onNodeWithTag(TESTTAG_CATEGORY_BUTTON).performClick()
+        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_BUTTON)
+            .performClick()
         categoryActivityTestRule.waitForIdle()
         // Don't have a full mock..just verify the putCategoryEntry is called!
         verify(exactly = 0) { runBlocking { DataModel.deleteCategory(any()) } }
@@ -84,9 +82,12 @@ class CategoryListScreenTest {
 
     @Test
     fun trySearch() {
-        categoryActivityTestRule.onNodeWithTag(TESTTAG_TOPACTIONBAR_SEARCH).performClick()
-        categoryActivityTestRule.onNodeWithTag(TESTTAG_SEARCH_TEXTFIELD).assertIsDisplayed()
-        categoryActivityTestRule.onNodeWithTag(TESTTAG_SEARCH_TEXTFIELD).performTextInput("3")
+        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_TOP_ACTION_BAR_SEARCH)
+            .performClick()
+        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_SEARCH_TEXT_FIELD)
+            .assertIsDisplayed()
+        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_SEARCH_TEXT_FIELD)
+            .performTextInput("3")
         categoryActivityTestRule.waitForIdle()
         // eh.. these are in PasswordSearchScreen into which categoryActivityTestRule has no access
         //categoryActivityTestRule.onAllNodesWithTag(TESTTAG_SEARCH_MATCH).assertCountEquals(1)
@@ -96,14 +97,16 @@ class CategoryListScreenTest {
     fun deleteCategoryCancel() {
         TestCase.assertEquals(2, DataModel.getCategories().size)
         TestCase.assertEquals(2, DataModel.getCategories().size)
-        categoryActivityTestRule.onAllNodesWithTag(TESTTAG_CATEGORY_ROW)[0].performTouchInput {
+        categoryActivityTestRule.onAllNodesWithTag(TestTag.TEST_TAG_CATEGORY_ROW)[0].performTouchInput {
             longClick()
         }
-        categoryActivityTestRule.onNodeWithTag(TESTTAG_CATEGORY_ROW_DELETE).assertIsDisplayed()
-        categoryActivityTestRule.onNodeWithTag(TESTTAG_CATEGORY_ROW_DELETE).performClick()
-        categoryActivityTestRule.onNodeWithTag(TESTTAG_CATEGORY_ROW_DELETE_CANCEL)
+        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE)
             .assertIsDisplayed()
-        categoryActivityTestRule.onNodeWithTag(TESTTAG_CATEGORY_ROW_DELETE_CANCEL)
+        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE)
+            .performClick()
+        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE_CANCEL)
+            .assertIsDisplayed()
+        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE_CANCEL)
             .performClick()
         categoryActivityTestRule.waitForIdle()
         verify(exactly = 0) { runBlocking { DataModel.deleteCategory(any()) } }
@@ -112,14 +115,16 @@ class CategoryListScreenTest {
 
     @Test
     fun deleteCategory() {
-        categoryActivityTestRule.onAllNodesWithTag(TESTTAG_CATEGORY_ROW)[0].performTouchInput {
+        categoryActivityTestRule.onAllNodesWithTag(TestTag.TEST_TAG_CATEGORY_ROW)[0].performTouchInput {
             longClick()
         }
-        categoryActivityTestRule.onNodeWithTag(TESTTAG_CATEGORY_ROW_DELETE).assertIsDisplayed()
-        categoryActivityTestRule.onNodeWithTag(TESTTAG_CATEGORY_ROW_DELETE).performClick()
-        categoryActivityTestRule.onNodeWithTag(TESTTAG_CATEGORY_ROW_DELETE_CONFIRM)
+        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE)
             .assertIsDisplayed()
-        categoryActivityTestRule.onNodeWithTag(TESTTAG_CATEGORY_ROW_DELETE_CONFIRM)
+        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE)
+            .performClick()
+        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE_CONFIRM)
+            .assertIsDisplayed()
+        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE_CONFIRM)
             .performClick()
         categoryActivityTestRule.waitForIdle()
         verify(exactly = 1) { runBlocking { DataModel.deleteCategory(any()) } }

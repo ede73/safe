@@ -77,15 +77,6 @@ class CategoryListScreen : AutolockingBaseComponentActivity() {
     }
 
     companion object {
-        // TODO: RELOCATE this to respective places in composables themselves...
-        const val TESTTAG_CATEGORY_ROW = "categoryrow"
-        const val TESTTAG_CATEGORY_MOVE_ROW = "category_move_row"
-        const val TESTTAG_CATEGORY_BUTTON = "addcategory_button"
-        const val TESTTAG_CATEGORY_TEXTFIELD = "addcategory_textfield"
-        const val TESTTAG_CATEGORY_ROW_DELETE = "categorylist_row_delete"
-        const val TESTTAG_CATEGORY_ROW_EDIT = "categorylist_row_edit"
-        const val TESTTAG_CATEGORY_ROW_DELETE_CONFIRM = "categorylist_row_delete_confirm"
-        const val TESTTAG_CATEGORY_ROW_DELETE_CANCEL = "categorylist_row_delete_cancel"
         fun startMe(context: Context) {
             context.startActivity(
                 Intent(

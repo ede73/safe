@@ -14,13 +14,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.R
+import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.BiometricsActivity
-import fi.iki.ede.safe.ui.activities.LoginScreen.Companion.TESTTAG_BIOMETRICS_BUTTON
-import fi.iki.ede.safe.ui.activities.LoginScreen.Companion.TESTTAG_BIOMETRICS_CHECKBOX
+import fi.iki.ede.safe.ui.testTag
 
 @Composable
 fun BiometricsComponent(
@@ -49,7 +48,7 @@ fun BiometricsComponent(
             onClick = {
                 bioVerify?.launch(BiometricsActivity.getVerificationIntent(context))
             },
-            modifier = Modifier.testTag(TESTTAG_BIOMETRICS_BUTTON)
+            modifier = Modifier.testTag(TestTag.TEST_TAG_BIOMETRICS_BUTTON)
         ) { Text(stringResource(id = R.string.login_with_biometrics)) }
     } else {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -58,7 +57,7 @@ fun BiometricsComponent(
                     BiometricsActivity.setBiometricEnabled(it)
                     registerBiometrics = it
                 },
-                modifier = Modifier.testTag(TESTTAG_BIOMETRICS_CHECKBOX)
+                modifier = Modifier.testTag(TestTag.TEST_TAG_BIOMETRICS_CHECKBOX)
             )
             Text(stringResource(id = R.string.biometrics_register))
         }

@@ -10,12 +10,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.integerResource
 import androidx.compose.ui.res.stringResource
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.ui.activities.LoginScreen
+import fi.iki.ede.safe.ui.TestTag
+import fi.iki.ede.safe.ui.testTag
 
 @Composable
 fun PasswordPrompt(
@@ -36,7 +36,7 @@ fun PasswordPrompt(
             firstTimeInitialize,
             R.string.login_password_tip,
             R.string.login_verify_password_tip,
-            modifier.testTag(LoginScreen.TESTTAG_PASSWORD_PROMPT)
+            modifier.testTag(TestTag.TEST_TAG_PASSWORD_PROMPT)
         )
 
         Button(
@@ -44,7 +44,7 @@ fun PasswordPrompt(
             onClick = {
                 goodPasswordEntered(password!!)
             },
-            modifier = Modifier.testTag(LoginScreen.TESTTAG_LOGIN_BUTTON)
+            modifier = Modifier.testTag(TestTag.TEST_TAG_LOGIN_BUTTON)
         ) { Text(stringResource(id = R.string.login_button)) }
     }
 }

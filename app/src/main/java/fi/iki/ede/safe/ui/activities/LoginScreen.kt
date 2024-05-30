@@ -163,10 +163,6 @@ open class LoginScreen : ComponentActivity() {
     }
 
     companion object {
-        const val TESTTAG_PASSWORD_PROMPT = "password"
-        const val TESTTAG_LOGIN_BUTTON = "login"
-        const val TESTTAG_BIOMETRICS_BUTTON = "login_with_biometrics"
-        const val TESTTAG_BIOMETRICS_CHECKBOX = "biometrics_enable"
         const val DONT_OPEN_CATEGORY_SCREEN_AFTER_LOGIN = "dont_open_category_screen"
         fun startMe(context: Context, dontOpenCategoryScreenAfterLogin: Boolean = false) {
             context.startActivity(

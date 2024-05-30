@@ -26,15 +26,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
+import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen.Companion.searchProgressPerThread
+import fi.iki.ede.safe.ui.testTag
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -95,7 +96,7 @@ fun SearchSiteEntryControls(
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag(SiteEntrySearchScreen.TESTTAG_SEARCH_TEXTFIELD)
+                .testTag(TestTag.TEST_TAG_SEARCH_TEXT_FIELD)
                 .focusRequester(focusRequester),
             leadingIcon = {
                 Icon(
