@@ -1,13 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- TODO:for what ever reason this totally fucks up all activities (maybe not jetpack composables -->
-    <!-- Error:
-     Caused by: java.lang.IllegalStateException: You need to use a Theme.AppCompat theme (or descendant) with this activity.
-     And we DO have Theme.AppCompat (pr descendant here) actually added by mat.design v2/jetpack ie.
-     THeme.Material.Light.NoActionBar and it is THeme.AppCompat is set as application AS well as LoginScreen
-     Themes..go figure..
 
-     -->
-    <!--    <style name="Theme.AppCompat" parent="android:Theme.Material.Light.NoActionBar" />-->
-
+    <style name="Theme.Safe" parent="Theme.Material3.Light">
+        <!-- Customize your theme here with Material 3 attributes -->
+    </style>
 </resources>

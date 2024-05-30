@@ -65,6 +65,7 @@ fun SafeTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
+        //shapes = Shapes,
         content = content
     )
 }
