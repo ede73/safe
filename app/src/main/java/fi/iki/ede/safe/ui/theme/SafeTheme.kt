@@ -53,12 +53,16 @@ fun SafeTheme(
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
-    val view = LocalView.current
-    if (!view.isInEditMode) {
-        SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.primary.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = darkTheme
+
+    // try hard to keep top status bar correct color
+    LocalView.current.apply {
+        if (!isInEditMode) {
+            SideEffect {
+                val window = (context as Activity).window
+                window.statusBarColor = colorScheme.primary.toArgb()
+                WindowCompat.getInsetsController(window, this).isAppearanceLightStatusBars =
+                    !darkTheme
+            }
         }
     }
 
