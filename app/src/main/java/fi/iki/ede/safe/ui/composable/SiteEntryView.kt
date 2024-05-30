@@ -28,6 +28,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.integerResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
@@ -40,6 +43,8 @@ import fi.iki.ede.safe.password.PasswordGenerator
 import fi.iki.ede.safe.ui.activities.AvertInactivityDuringLongTask
 import fi.iki.ede.safe.ui.activities.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
+import fi.iki.ede.safe.ui.theme.lettersL
+import fi.iki.ede.safe.ui.theme.numbers108652
 import java.time.ZonedDateTime
 
 @Composable
@@ -130,7 +135,17 @@ fun SiteEntryView(
             )
         }
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(id = R.string.password_entry_highlight_hint))
+            val text = buildAnnotatedString {
+                append(stringResource(id = R.string.password_entry_highlight_hint))
+                withStyle(style = SpanStyle(background = numbers108652)) {
+                    append("108652")
+                }
+                append(stringResource(id = R.string.password_entry_highlight_hint_l))
+                withStyle(style = SpanStyle(background = lettersL)) {
+                    append("L(l)")
+                }
+            }
+            Text(text = text)
         }
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             Button(onClick = {

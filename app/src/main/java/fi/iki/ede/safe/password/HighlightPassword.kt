@@ -1,12 +1,13 @@
 package fi.iki.ede.safe.password
 
 import android.text.TextUtils
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.withStyle
+import fi.iki.ede.safe.ui.theme.lettersL
+import fi.iki.ede.safe.ui.theme.numbers108652
 
 object HighlightPassword {
     /**
@@ -34,13 +35,13 @@ object HighlightPassword {
                 password.forEach {
                     when (it) {
                         '1', '0', '8', '6', '5', '2' -> {
-                            withStyle(style = SpanStyle(background = Color.Blue)) {
+                            withStyle(style = SpanStyle(background = numbers108652)) {
                                 append(it)
                             }
                         }
 
                         'l' -> {
-                            withStyle(style = SpanStyle(background = Color.Red)) {
+                            withStyle(style = SpanStyle(background = lettersL)) {
                                 append(it)
                             }
                         }

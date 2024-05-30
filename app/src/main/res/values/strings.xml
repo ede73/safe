@@ -130,7 +130,8 @@
     <string name="biometrics_cancel">Cancel</string>
     <string name="biometrics_authentication_error">ERROR: onAuthenticationError: %1$d %2$s</string>
     <string name="biometrics_authentication_failed">ERROR: onAuthenticationFailed</string>
-    <string name="password_entry_highlight_hint">Colors: Blue = (108652), Red = lower case(L)</string>
+    <string name="password_entry_highlight_hint">Numbers </string>
+    <string name="password_entry_highlight_hint_l"> lower case </string>
     <string name="preferences_summary_default_user_name">Default username when adding a new password. Completely optional, typically your email address.</string>
     <string name="preferences_title_default_user_name">Default username</string>
     <string name="preferences_clipboard_clear_delay_title">Clipboard clearing timeout</string>
