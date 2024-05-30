@@ -4,14 +4,23 @@
     <PreferenceCategory android:title="@string/preferences_title">
 
         <ListPreference
-            android:id="@+id/lock_time"
+            android:id="@+id/autolock_time"
             android:defaultValue="2"
             android:dialogTitle="@string/preferences_automatic_locking_selection_title"
-            android:entries="@array/lock_time_list_texts"
-            android:entryValues="@array/lock_time_list_values"
+            android:entries="@array/autolock_time_list_texts"
+            android:entryValues="@array/autolock_time_list_values"
             android:key="lock_timeout"
             android:summary="@string/preferences_summary_automatic_locking_timeout"
             android:title="@string/preferences_title_automatic_locking_timeout" />
+        <ListPreference
+            android:id="@+id/clipboard_clear_delay"
+            android:defaultValue="30"
+            android:dialogTitle="@string/preferences_clipboard_clear_delay_title"
+            android:entries="@array/clipboard_clear_delay_texts"
+            android:entryValues="@array/clipboard_clear_delay_values"
+            android:key="clipboard_clear_delay"
+            android:summary="@string/preferences_summary_clipboard_clear_delay"
+            android:title="@string/preferences_title_clipboard_clear_delay" />
         <CheckBoxPreference
             android:defaultValue="false"
             android:key="biometrics"

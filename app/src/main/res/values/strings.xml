@@ -133,4 +133,7 @@
     <string name="password_entry_highlight_hint">Colors: Blue = (108652), Red = lower case(L)</string>
     <string name="preferences_summary_default_user_name">Default username when adding a new password. Completely optional, typically your email address.</string>
     <string name="preferences_title_default_user_name">Default username</string>
+    <string name="preferences_clipboard_clear_delay_title">Clipboard clearing timeout</string>
+    <string name="preferences_title_clipboard_clear_delay">Clipboard clearing delay</string>
+    <string name="preferences_summary_clipboard_clear_delay">Delay in seconds after which clipboard is cleared</string>
 </resources>

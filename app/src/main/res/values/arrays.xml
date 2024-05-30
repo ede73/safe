@@ -1,17 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string-array name="lock_time_list_texts">
+    <string-array name="autolock_time_list_texts">
         <item>1 minute</item>
         <item>2 minutes</item>
         <item>3 minutes</item>
         <item>4 minutes</item>
         <item>5 minutes</item>
     </string-array>
-    <string-array name="lock_time_list_values">
+    <string-array name="autolock_time_list_values">
         <item>1</item>
         <item>2</item>
         <item>3</item>
         <item>4</item>
         <item>5</item>
+    </string-array>
+
+    <string-array name="clipboard_clear_delay_texts">
+        <item>15 seconds</item>
+        <item>30 seconds</item>
+        <item>45 seconds</item>
+        <item>1 minutes</item>
+        <item>2 minutes</item>
+    </string-array>
+    <string-array name="clipboard_clear_delay_values">
+        <item>15</item>
+        <item>30</item>
+        <item>45</item>
+        <item>60</item>
+        <item>120</item>
     </string-array>
 </resources>

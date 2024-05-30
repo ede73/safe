@@ -10,6 +10,7 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.PreferenceManager
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.model.Preferences
@@ -21,6 +22,7 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.preferences)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

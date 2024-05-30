@@ -28,11 +28,13 @@ object Preferences {
         Environment.getExternalStorageDirectory().absolutePath + "/" + PASSWORDSAFE_EXPORT_FILE
     const val PREFERENCE_BIOMETRICS_ENABLED = "biometrics"
     const val PREFERENCE_LOCK_TIMEOUT = "lock_timeout"
+    private const val PREFERENCE_CLIPBOARD_CLEAR_DELAY = "clipboard_clear_delay"
     private const val PREFERENCE_DEFAULT_USER_NAME = "default_user_name"
     private const val NOTIFICATION_PERMISSION_REQUIRED = "notification_permission_required"
     const val PREFERENCE_BIO_CIPHER = "bio_cipher"
     private const val PREFERENCE_LOCK_ON_SCREEN_LOCK = "lock_on_screen_lock"
     private const val PREFERENCE_LOCK_TIMEOUT_DEFAULT_VALUE = "5"
+    private const val PREFERENCE_CLIPBOARD_CLEAR_DELAY_DEFAULT_VALUE = "45"
     private const val PREFERENCE_MASTERKEY_INITIALIZED = "masterkey_initialized"
 
     fun getBackupDocument() = if (SUPPORT_EXPORT_LOCATION_MEMORY) {
@@ -56,6 +58,11 @@ object Preferences {
 
     fun getLockOnScreenLock(default: Boolean) =
         sharedPreferences.getBoolean(PREFERENCE_LOCK_ON_SCREEN_LOCK, default)
+
+    fun getClipboardClearDelaySecs() = sharedPreferences.getString(
+        PREFERENCE_CLIPBOARD_CLEAR_DELAY,
+        PREFERENCE_CLIPBOARD_CLEAR_DELAY_DEFAULT_VALUE
+    )?.toIntOrNull() ?: PREFERENCE_CLIPBOARD_CLEAR_DELAY_DEFAULT_VALUE.toInt()
 
     fun getLockTimeoutMinutes() = sharedPreferences.getString(
         PREFERENCE_LOCK_TIMEOUT,
