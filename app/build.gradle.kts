@@ -95,7 +95,6 @@ dependencies {
     androidTestImplementation(libs.androidx.junit.ktx)
     androidTestImplementation(libs.androidx.rules)
     androidTestImplementation(libs.androidx.runner)
-
     androidTestImplementation(libs.androidx.uiautomator)
     androidTestImplementation(libs.mockk.agent)
     androidTestImplementation(libs.mockk.android)
