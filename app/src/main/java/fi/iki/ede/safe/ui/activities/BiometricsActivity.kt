@@ -195,7 +195,6 @@ class BiometricsActivity : AppCompatActivity() {
             .remove(PREFERENCE_BIO_CIPHER)
             .apply()
 
-
         fun getBioCipher(): IVCipherText {
             val pm = sharedPreferences
                 .getString(PREFERENCE_BIO_CIPHER, null) ?: return IVCipherText.getEmpty()

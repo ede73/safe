@@ -1,6 +1,12 @@
 package fi.iki.ede.safe
 
+import android.app.Activity.RESULT_CANCELED
 import android.content.Intent
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContract
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
@@ -10,8 +16,10 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.core.app.ActivityOptionsCompat
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
+import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.crypto.DecryptableCategoryEntry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
@@ -24,10 +32,12 @@ import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.ui.activities.BiometricsActivity
 import fi.iki.ede.safe.ui.activities.CategoryListScreen
 import fi.iki.ede.safe.ui.activities.LoginScreen
+import fi.iki.ede.safe.ui.activities.registerActivityForResults
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockkClass
 import io.mockk.mockkObject
+import io.mockk.mockkStatic
 import io.mockk.runs
 import io.mockk.slot
 import io.mockk.verify
@@ -44,6 +54,27 @@ import org.junit.runner.RunWith
 @LargeTest
 @RunWith(AndroidJUnit4::class)
 class LoginScreenFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
+
+    class MyResultLauncher(private val callback: ActivityResultCallback<ActivityResult>) :
+        ActivityResultLauncher<Intent>() {
+        override fun launch(i: Intent, options: ActivityOptionsCompat?) {
+            if (!launchedIntents.containsKey(callback)) {
+                launchedIntents[callback] = mutableListOf()
+            }
+            (launchedIntents[callback] as MutableList<Intent>).add(i)
+
+            val result = ActivityResult(RESULT_CANCELED, null)
+            callback.onActivityResult(result)
+        }
+
+        override fun launch(i: Intent) = launch(i, null)
+
+        override val contract: ActivityResultContract<Intent, *>
+            get() = ActivityResultContracts.StartActivityForResult()
+
+        override fun unregister() {}
+    }
+
     @get:Rule
     val loginActivityTestRule = createAndroidComposeRule<LoginScreen>()
 
@@ -101,67 +132,32 @@ class LoginScreenFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
         verify(exactly = 1) { CategoryListScreen.startMe(any()) }
     }
 
-    // works but havent figured how to capture the intent start without touching loginscreen
-//    @Test
-//    fun newLoginAndBioLaunchedWhenChecked() {
-//        // Make sure biometrics activity returns "mock intent"
-//        mockIsBiometricsEnabled { true }
-//        val expectedIntent = Intent(
-//            InstrumentationRegistry.getInstrumentation().targetContext,
-//            BiometricsActivity::class.java
-//        )
-//        every { BiometricsActivity.getRegistrationIntent(any()) } returns expectedIntent
-//
-//
-//        // Create a ContextWrapper to capture the intent
-//        val contextWrapper = object : ContextWrapper(loginActivityTestRule.activity) {
-//            override fun startActivity(intent: Intent) {
-//                // Capture the intent here
-//                assert(intent == expectedIntent)
-//            }
-//        }
-//
-//        //every { LoginScreen.getContext() } returns contextWrapper
-//
-////        // Replace the context of the LoginActivity with our ContextWrapper
-////        val field = LoginScreen::class.java.getDeclaredField("mBase")
-////        field.isAccessible = true
-////        field.set(loginActivityTestRule.activity, contextWrapper)
-//
-//////        // capture what ever launcher is launching
-//////        //val mockLauncher = mockk<ActivityResultLauncher<Intent>>()
-//////        val mockLauncher = mockkObject(ActivityResultLauncher)
-////        val mockLauncher = mockk<ActivityResultLauncher<Intent>>(relaxed = true)
-////        val intentSlot = slot<Intent>()
-////        every { mockLauncher.launch(capture(intentSlot)) } answers { nothing }
-////
-////        val biometricsFirstTimeRegisterField =
-////            LoginScreen::class.java.getDeclaredField("biometricsFirstTimeRegister")
-////        biometricsFirstTimeRegisterField.isAccessible = true
-////        biometricsFirstTimeRegisterField.set(loginActivityTestRule.activity, mockLauncher)
-//
-////        val loginActivitySpy = spyk(loginActivityTestRule.activity, recordPrivateCalls = true)
-////        val intentSlot = slot<Intent>()
-////        every { loginActivitySpy["biometricsFirstTimeRegister"].launch(capture(intentSlot)) } answers { nothing }
-//
-//        // login and pop biometric prompt (the mock intent)
-//        properPasswordLogin(true)
-//
-//        loginActivityTestRule.activityRule.verify(exactly = 0) {
-//            LoginHandler.passwordLogin(
-//                any(),
-//                any()
-//            )
-//        }
-//        verify(exactly = 1) { BiometricsActivity.getRegistrationIntent(any()) }
-//
-//////        verify { mockLauncher.launch(capture(intentSlot)) }
-//////        // ensure the launched intent indeed was what we expected
-////        assert(intentSlot.captured == expectedIntent)
-//
-////        verify { loginActivitySpy["biometricsFirstTimeRegister"].launch(expectedIntent) }
-////        assert(intentSlot.captured == expectedIntent)
-//    }
+    @Test
+    fun newLoginAndBioLaunchedWhenChecked() {
+        mockIsBiometricsEnabled { true }
+        val expectedIntent = Intent(
+            InstrumentationRegistry.getInstrumentation().targetContext,
+            BiometricsActivity::class.java
+        )
+        every { BiometricsActivity.getRegistrationIntent(any()) } returns expectedIntent
+
+        // login and pop biometric prompt (the mock intent)
+        properPasswordLogin(true)
+
+        verify(exactly = 0) { LoginHandler.passwordLogin(any(), any()) }
+        verify(exactly = 1) { BiometricsActivity.getRegistrationIntent(any()) }
+
+        verify { registerActivityForResults(any(), any(), any()) }
+
+        val intents = launchedIntents.values.flatten()
+        assert(intents.size == 1) {
+            "Only one intent expected, got ${intents.size}"
+        }
+        // Verify biometrics indeed was launched
+        assert(intents[0].component?.className == BiometricsActivity::class.qualifiedName) {
+            "${intents[0].component?.className} != ${BiometricsActivity::class.qualifiedName}"
+        }
+    }
 
     private fun properPasswordLogin(biometricsRegister: Boolean) {
         mockkObject(LoginHandler)
@@ -195,10 +191,28 @@ class LoginScreenFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
     }
 
     companion object {
+        val launchedIntents: MutableMap<ActivityResultCallback<ActivityResult>, List<Intent>> =
+            mutableMapOf()
+
         // Such a pain, mock needs to be done before @rule (coz we use prefs at LoginScreen)
         @BeforeClass
         @JvmStatic
         fun setup() {
+            mockkStatic(::registerActivityForResults)
+
+            // Only place to mock these is here, when @Test starts, it is too late, activity already initialized
+            every {
+//            registerActivityForResults<Intent, ActivityResult>(
+                registerActivityForResults(any(), any(), any())
+            } answers {
+                val instance = it.invocation
+                val contract = firstArg<ActivityResultContract<Intent, ActivityResult>>()
+                val callback = secondArg<ActivityResultCallback<ActivityResult>>()
+                val register =
+                    thirdArg<(ActivityResultContract<Intent, ActivityResult>, ActivityResultCallback<ActivityResult>) -> ActivityResultLauncher<Intent>>()
+                MyResultLauncher(callback)
+            }
+
             // TODO: MOCK THIS TOO!
             BiometricsActivity.clearBiometricKeys()
             mockIsBiometricsEnabled(biometrics = { false })

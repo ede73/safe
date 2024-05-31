@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.ActivityResult
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -31,46 +30,44 @@ import kotlinx.coroutines.withContext
 
 open class LoginScreen : ComponentActivity() {
     private var dontOpenCategoryListScreen: Boolean = false
-    private val biometricsFirstTimeRegister =
-        startActivityForResults { result ->
-            // This is FIRST TIME call..we're just about to be set up...
-            when (result.resultCode) {
-                RESULT_OK -> {
-                    BiometricsActivity.registerBiometric(this)
-                    finishLoginProcess(true)
-                }
-
-                RESULT_CANCELED -> {
-                    // We should fall back asking password but NOT disable biometrics
-                }
-                // may be called many times..eventually gets cancelled
-                BiometricsActivity.RESULT_FAILED -> {}
+    private val biometricsFirstTimeRegister = startActivityForResults { result ->
+        // This is FIRST TIME call..we're just about to be set up...
+        when (result.resultCode) {
+            RESULT_OK -> {
+                BiometricsActivity.registerBiometric(this)
+                finishLoginProcess(true)
             }
+
+            RESULT_CANCELED -> {
+                // We should fall back asking password but NOT disable biometrics
+            }
+            // may be called many times..eventually gets cancelled
+            BiometricsActivity.RESULT_FAILED -> {}
         }
+    }
 
-    private val biometricsVerify =
-        startActivityForResults { result: ActivityResult ->
-            when (result.resultCode) {
-                RESULT_OK -> {
-                    if (!BiometricsActivity.verificationAccepted()) {
-                        // should never happen
-                        Log.e("---", "Biometric verification NOT accepted - perhaps a new backup?")
-                    } else {
-                        finishLoginProcess(false)
-                    }
-                }
-
-                RESULT_CANCELED -> {
-                    // We should fall back asking password but NOT disable biometrics
-                }
-
-                BiometricsActivity.RESULT_FAILED -> {
-                    // Sometimes fingerprint reading just doesn't work
-                    // This will be called for N subsequent misreads
-                    // Then biometrics will be cancelled
+    private val biometricsVerify = startActivityForResults { result ->
+        when (result.resultCode) {
+            RESULT_OK -> {
+                if (!BiometricsActivity.verificationAccepted()) {
+                    // should never happen
+                    Log.e("---", "Biometric verification NOT accepted - perhaps a new backup?")
+                } else {
+                    finishLoginProcess(false)
                 }
             }
+
+            RESULT_CANCELED -> {
+                // We should fall back asking password but NOT disable biometrics
+            }
+
+            BiometricsActivity.RESULT_FAILED -> {
+                // Sometimes fingerprint reading just doesn't work
+                // This will be called for N subsequent misreads
+                // Then biometrics will be cancelled
+            }
         }
+    }
 
     private fun finishLoginProcess(firstTimeUse: Boolean) {
         beginToLoadDB(firstTimeUse)
@@ -106,9 +103,7 @@ open class LoginScreen : ComponentActivity() {
                             )
                         }
                         // TODO: if we're fresh from backup - biometrics don't work
-                        BiometricsComponent(
-                            biometricsVerify,
-                        )
+                        BiometricsComponent(biometricsVerify)
                     }
                 }
             }
@@ -133,9 +128,7 @@ open class LoginScreen : ComponentActivity() {
                         || (BiometricsActivity.isBiometricEnabled() &&
                         !BiometricsActivity.haveRecordedBiometric())
             if (registerBiometricsActivity) {
-                biometricsFirstTimeRegister.launch(
-                    BiometricsActivity.getRegistrationIntent(context)
-                )
+                biometricsFirstTimeRegister.launch(BiometricsActivity.getRegistrationIntent(context))
             } else {
                 finishLoginProcess(firstTimeUse)
             }
