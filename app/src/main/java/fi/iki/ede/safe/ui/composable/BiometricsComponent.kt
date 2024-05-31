@@ -37,10 +37,12 @@ fun BiometricsComponent(
         true
     }
 
+    // TODO: Should be remembered and based on preferences (and test case should invoke...)
     val biometricsActivityEnabled = BiometricsActivity.isBiometricEnabled()
+    val biometricsRecorded = BiometricsActivity.haveRecordedBiometric()
     var registerBiometrics by remember { mutableStateOf(biometricsActivityEnabled) }
 
-    if (biometricsActivityEnabled && BiometricsActivity.haveRecordedBiometric() && !keystoreMissingMasterkeyAfterBackupRestore) {
+    if (biometricsActivityEnabled && biometricsRecorded && !keystoreMissingMasterkeyAfterBackupRestore) {
         // Actually during login, we could JUST launch the bio verification immediately
         // since biometrics is enabled AND we have previously recorded entry
         bioVerify?.launch(BiometricsActivity.getVerificationIntent(context))

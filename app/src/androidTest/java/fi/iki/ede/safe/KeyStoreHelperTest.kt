@@ -2,7 +2,6 @@ package fi.iki.ede.safe
 
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.filters.LargeTest
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import org.junit.Assert
 import org.junit.Ignore
@@ -10,7 +9,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-@LargeTest
+//@LargeTest
 class KeyStoreHelperTest {
 
     @Test

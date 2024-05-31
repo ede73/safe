@@ -13,19 +13,19 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="LoginScreenFirstInstallTest">
+      <SelectionState runConfigName="CategoryListScreenTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="newLoginAndBioLaunchedWhenUnchecked()">
+      <SelectionState runConfigName="Tests in 'fi.iki.ede.safe'">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="verifyPasswordPromptPresentTest()">
+      <SelectionState runConfigName="ensurePasswordIsHiddenTest()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="verifyPasswordLengthRequirementTest()">
+      <SelectionState runConfigName="ensureShownPasswordIsShownTest()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="verifyMismatchingPasswordNotAcceptedTest()">
+      <SelectionState runConfigName="VerifiedPasswordTextFieldTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

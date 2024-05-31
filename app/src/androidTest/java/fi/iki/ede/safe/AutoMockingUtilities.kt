@@ -21,6 +21,11 @@ interface AutoMockingUtilities {
             every { BiometricsActivity.isBiometricEnabled() } returns biometrics()
         }
 
+        fun mockIsBiometricsInitialized(biometrics: () -> Boolean) {
+            mockkObject(BiometricsActivity)
+            every { BiometricsActivity.haveRecordedBiometric() } returns biometrics()
+        }
+
         fun mockIsFirstTimeLogin(isFirstTimeLogin: () -> Boolean) {
             mockkObject(Preferences)
             every { Preferences.isFirstTimeLogin() } returns isFirstTimeLogin()

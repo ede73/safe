@@ -8,7 +8,6 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.filters.LargeTest
 import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.crypto.DecryptableCategoryEntry
 import fi.iki.ede.crypto.DecryptableSiteEntry
@@ -39,7 +38,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 // https://developer.android.com/jetpack/compose/testing
-@LargeTest
+//@LargeTest
 @RunWith(AndroidJUnit4::class)
 class CategoryListScreenTest {
 
