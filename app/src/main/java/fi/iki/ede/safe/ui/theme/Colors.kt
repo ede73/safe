@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.Color
 // R.string.password_entry_highlight_hint
 val numbers108652 = Color.Blue.copy(alpha = 0.7f)
 val lettersL = Color.Red.copy(alpha = 0.7f)
+val whiteSpaceL = Color.Yellow.copy(alpha = 0.7f)
 
 val Purple80 = Color(0xFFD0BCFF)
 val PurpleGrey80 = Color(0xFFCCC2DC)

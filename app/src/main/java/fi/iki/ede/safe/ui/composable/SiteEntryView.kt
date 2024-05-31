@@ -47,6 +47,7 @@ import fi.iki.ede.safe.ui.activities.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
 import fi.iki.ede.safe.ui.theme.lettersL
 import fi.iki.ede.safe.ui.theme.numbers108652
+import fi.iki.ede.safe.ui.theme.whiteSpaceL
 import java.time.ZonedDateTime
 
 @Composable
@@ -140,14 +141,21 @@ fun SiteEntryView(
             val text = buildAnnotatedString {
                 append(stringResource(id = R.string.password_entry_highlight_hint))
                 withStyle(style = SpanStyle(background = numbers108652)) {
-                    append("108652")
+                    append("108652, ")
                 }
                 append(stringResource(id = R.string.password_entry_highlight_hint_l))
                 withStyle(style = SpanStyle(background = lettersL)) {
-                    append("L(l)")
+                    append("L(l), ")
+                }
+                append(stringResource(id = R.string.password_entry_highlight_space))
+                withStyle(style = SpanStyle(background = whiteSpaceL)) {
+                    append(" ")
                 }
             }
-            Text(text = text)
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodySmall,
+            )
         }
         if (BuildConfig.ENABLE_HIBP) {
             Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {

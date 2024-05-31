@@ -61,6 +61,7 @@ fun getFonts() = Typography(
     // Used(misused?) for Password fields
     displayMedium = TextStyle(
         fontFamily = FontFamily.Default,
-        fontSize = 30.sp
+        letterSpacing = 1.sp,
+        fontSize = 23.sp
     ),
 )
