@@ -37,6 +37,7 @@ object KeyManagement {
     ): SecretKeySpec {
         // TODO: Salt should actually be keyLength/8 (ie same size as the key) 32 for 256 AES
         require(salt.salt.size == 64 / 8) { "Wrong amount of salt, expecting 8 bytes, got ${salt.salt.size}" }
+        require(keyLength == 256) { "Only 256 bit keys supported" }
 
         val keySpec = PBEKeySpec(
             password.toCharArray(),
@@ -48,6 +49,8 @@ object KeyManagement {
         val keyBytes =
             SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(keySpec).encoded
 
+        // 16,24 or 32
+        require(keyBytes.size.let { it == 16 || it == 24 || it == 32 }) { "AES only supports 16,24 or 32 byte keys" }
         OpenSSLExamples.debugPBKDFAESKey(password, salt, iterationCount, keyBytes)
 
         return SecretKeySpec(keyBytes, "AES")
@@ -95,6 +98,7 @@ object KeyManagement {
         return try {
             Cipher.getInstance(AES_MODE)
         } catch (ex: Exception) {
+            // NOt used in instrumentation tests at least, TODO: check unint tests use...
             Cipher.getInstance(AES_MODE_UNITTESTS)
         }
     }
