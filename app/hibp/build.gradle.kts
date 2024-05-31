@@ -3,6 +3,8 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+val ENABLE_HIBP: Boolean = project(":app").ext.get("ENABLE_HIBP") as Boolean
+
 android {
     namespace = "fi.iki.ede.hibp"
     compileSdk = 34
@@ -21,6 +23,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("Boolean", "ENABLE_HIBP", ENABLE_HIBP.toString())
+        }
+        debug {
+            buildConfigField("Boolean", "ENABLE_HIBP", ENABLE_HIBP.toString())
         }
     }
     compileOptions {

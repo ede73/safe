@@ -3,6 +3,8 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+val ENABLE_OIIMPORT = project(":app").ext.get("ENABLE_OIIMPORT") as Boolean
+
 android {
     namespace = "fi.iki.ede.oisafecompatibility"
     compileSdk = 34
@@ -21,6 +23,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("Boolean", "ENABLE_OIIMPORT", ENABLE_OIIMPORT.toString())
+        }
+        debug {
+            buildConfigField("Boolean", "ENABLE_OIIMPORT", ENABLE_OIIMPORT.toString())
         }
     }
     compileOptions {

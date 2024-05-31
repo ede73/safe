@@ -38,6 +38,7 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.hibp.BreachCheck
 import fi.iki.ede.hibp.KAnonymity
+import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.clipboard.ClipboardUtils
 import fi.iki.ede.safe.password.PasswordGenerator
@@ -148,47 +149,49 @@ fun SiteEntryView(
             }
             Text(text = text)
         }
-        Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
-            Button(onClick = {
-                ClipboardUtils.addToClipboard(context, passEntry.password.decrypt(ks))
-            }) { Text(stringResource(id = R.string.password_entry_password_label)) }
-            Spacer(Modifier.weight(1f))
-            passwordTextField(
-                textTip = R.string.password_entry_password_tip,
-                value = passEntry.password.decrypt(ks),
-                updated = passwordWasUpdated,
-                onValueChange = {
-                    viewModel.updatePassword(it.encrypt(ks))
-                    breachCheckResult = BreachCheckEnum.NOT_CHECKED
-                },
-                modifier = modifier
-                    .padding(horizontal = 8.dp)
-                    .fillMaxWidth(),
-                textStyle = MaterialTheme.typography.displayMedium
-            )
-            passwordWasUpdated = false
-        }
-        Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
-            if (breachCheckResult == BreachCheckEnum.NOT_CHECKED) {
+        if (BuildConfig.ENABLE_HIBP) {
+            Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
                 Button(onClick = {
-                    BreachCheck.doBreachCheck(
-                        KAnonymity(passEntry.password.decrypt(ks)),
-                        context,
-                        { breached ->
-                            breachCheckResult = when (breached) {
-                                true -> BreachCheckEnum.BREACHED
-                                false -> BreachCheckEnum.NOT_BREACHED
-                            }
-                        },
-                        { error -> Log.e(SiteEntryEditScreen.TAG, "Error: $error") })
-                }) { Text(stringResource(id = R.string.password_entry_breach_check)) }
+                    ClipboardUtils.addToClipboard(context, passEntry.password.decrypt(ks))
+                }) { Text(stringResource(id = R.string.password_entry_password_label)) }
+                Spacer(Modifier.weight(1f))
+                passwordTextField(
+                    textTip = R.string.password_entry_password_tip,
+                    value = passEntry.password.decrypt(ks),
+                    updated = passwordWasUpdated,
+                    onValueChange = {
+                        viewModel.updatePassword(it.encrypt(ks))
+                        breachCheckResult = BreachCheckEnum.NOT_CHECKED
+                    },
+                    modifier = modifier
+                        .padding(horizontal = 8.dp)
+                        .fillMaxWidth(),
+                    textStyle = MaterialTheme.typography.displayMedium
+                )
+                passwordWasUpdated = false
             }
-            when (breachCheckResult) {
-                BreachCheckEnum.BREACHED -> Text(stringResource(id = R.string.password_entry_breached))
+            Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
+                if (breachCheckResult == BreachCheckEnum.NOT_CHECKED) {
+                    Button(onClick = {
+                        BreachCheck.doBreachCheck(
+                            KAnonymity(passEntry.password.decrypt(ks)),
+                            context,
+                            { breached ->
+                                breachCheckResult = when (breached) {
+                                    true -> BreachCheckEnum.BREACHED
+                                    false -> BreachCheckEnum.NOT_BREACHED
+                                }
+                            },
+                            { error -> Log.e(SiteEntryEditScreen.TAG, "Error: $error") })
+                    }) { Text(stringResource(id = R.string.password_entry_breach_check)) }
+                }
+                when (breachCheckResult) {
+                    BreachCheckEnum.BREACHED -> Text(stringResource(id = R.string.password_entry_breached))
 
-                BreachCheckEnum.NOT_BREACHED -> Text(stringResource(id = R.string.password_entry_not_breached))
+                    BreachCheckEnum.NOT_BREACHED -> Text(stringResource(id = R.string.password_entry_not_breached))
 
-                else -> {}
+                    else -> {}
+                }
             }
         }
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {

@@ -12,28 +12,10 @@ import org.xml.sax.helpers.DefaultHandler
 import java.io.InputStream
 import javax.xml.parsers.SAXParserFactory
 
-//interface IRestoreDataSet {
-//    var ch: OISafeCryptoHelper
-//    var version: Int
-//    var date: String?
-//    var saltedEncryptedPassword: SaltedEncryptedPassword
-//    var totalEntries: Int
-//    fun newCategory(extractedCategoryName: String)
-//    fun storyCategory()
-//    fun newEntry()
-//    fun storeEntry()
-//    fun encryptDecrypted(value: String): IVCipherText
-//    fun setDescription(extractedDescription: String)
-//    fun setWebsite(extractedWebsite: String)
-//    fun setUsername(extractedUsername: String)
-//    fun setPassword(extractedPassword: String)
-//    fun setNote(extractedNote: String)
-//    fun setPasswordChangedDate(passwordChangedDate: String)
-//    fun gotSalt(
-//        saltedEncryptedMasterkeyOfBackup: SaltedEncryptedPassword,
-//        passwordOfBackup: Password
-//    ): SaltedEncryptedPassword
-//}
+// TODO: make shared
+fun throwIfFeatureNotEnabled(feature: Boolean) {
+    throw Exception("Feature not enabled")
+}
 
 @Deprecated("Just for backwards compatibility")
 class OISafeRestoreHandler(
@@ -53,6 +35,7 @@ class OISafeRestoreHandler(
             // <OISafe version="1" date="Apr 19, 2023 2:02:03 PM Pacific Daylight Time">
             "OISafe" -> { // TODO:
                 parsedData.version = atts.getValue("version").toInt()
+                // TODO: pass and merge to other side
                 parsedData.date = atts.getValue("date")
             }
 
@@ -106,6 +89,7 @@ class OISafeRestoreHandler(
     }
 
     fun parse(streamData: InputStream): RestoreDataSet {
+        throwIfFeatureNotEnabled(BuildConfig.ENABLE_OIIMPORT)
         val xr = SAXParserFactory.newInstance().newSAXParser().xmlReader
         xr.contentHandler = this
         xr.parse(InputSource(streamData))

@@ -12,6 +12,7 @@ import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.IV_LENGTH
 import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_ITERATION_COUNT
 import fi.iki.ede.crypto.keystore.KeyManagement
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.backupandrestore.RestoreDatabase
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.db.DBHelperFactory
@@ -19,6 +20,7 @@ import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.oisafecompatibility.OISafeRestore
 import fi.iki.ede.safe.ui.activities.AvertInactivityDuringLongTask
 import fi.iki.ede.safe.ui.activities.RestoreDatabaseScreen
+import fi.iki.ede.safe.ui.activities.throwIfFeatureNotEnabled
 import java.io.InputStream
 import javax.crypto.spec.SecretKeySpec
 
@@ -70,6 +72,7 @@ private fun restoreOiSafeDump(
     passwordOfBackup: Password,
     selectedDocStream: InputStream
 ): Int {
+    throwIfFeatureNotEnabled(BuildConfig.ENABLE_OIIMPORT)
     val salt = Salt(CipherUtilities.generateRandomBytes(8 * 8))
     val newPBKDF2Key =
         KeyManagement.generatePBKDF2AESKey(salt, KEY_ITERATION_COUNT, passwordOfBackup, IV_LENGTH)

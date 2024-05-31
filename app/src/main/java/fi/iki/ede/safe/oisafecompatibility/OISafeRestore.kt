@@ -7,8 +7,10 @@ import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.oisafecompatibility.OISafeRestoreHandler
 import fi.iki.ede.oisafecompatibility.RestoreDataSet
+import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.model.LoginHandler
+import fi.iki.ede.safe.ui.activities.throwIfFeatureNotEnabled
 import java.io.InputStream
 
 @Deprecated("Just for backwards compatibility")
@@ -22,6 +24,7 @@ object OISafeRestore {
         encryptedRenewedSaltedMasterKey: Pair<Salt, IVCipherText>,
         dbHelper: DBHelper,
     ): Int {
+        throwIfFeatureNotEnabled(BuildConfig.ENABLE_OIIMPORT)
         require(!encryptedRenewedSaltedMasterKey.first.isEmpty()) { "Empty salt passed to readAndRestore" }
         require(!encryptedRenewedSaltedMasterKey.second.isEmpty()) { "Empty master cipher passed to readAndRestore" }
         require(!passwordOfBackup.isEmpty()) { "Empty backup password passed to readAndRestore" }

@@ -5,6 +5,11 @@ import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
 
+// TODO: make shared
+fun throwIfFeatureNotEnabled(feature: Boolean) {
+    throw Exception("Feature not enabled")
+}
+
 class BreachCheck {
     companion object {
         private const val HIBP_URL = "https://api.pwnedpasswords.com/range/"
@@ -15,6 +20,7 @@ class BreachCheck {
             breachedResult: (breached: Boolean) -> Unit,
             error: (error: String) -> Unit
         ) {
+            throwIfFeatureNotEnabled(BuildConfig.ENABLE_HIBP)
             val prefixLength = 5
             val requestUrl = HIBP_URL + kanonymity.getPrefix(prefixLength)
 

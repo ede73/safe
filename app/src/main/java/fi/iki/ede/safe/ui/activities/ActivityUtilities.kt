@@ -45,3 +45,7 @@ fun registerActivityForResults(
     callback: ActivityResultCallback<ActivityResult>,
     registerFunction: (ActivityResultContract<Intent, ActivityResult>, ActivityResultCallback<ActivityResult>) -> ActivityResultLauncher<Intent>
 ) = registerFunction(contract, callback)
+
+fun throwIfFeatureNotEnabled(feature: Boolean) {
+    throw Exception("Feature not enabled")
+}

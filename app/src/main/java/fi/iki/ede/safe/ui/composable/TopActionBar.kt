@@ -38,6 +38,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.window.Dialog
 import fi.iki.ede.crypto.Password
+import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.BackupDatabase
 import fi.iki.ede.safe.backupandrestore.ExportConfig
@@ -50,6 +51,7 @@ import fi.iki.ede.safe.ui.activities.LoginScreen
 import fi.iki.ede.safe.ui.activities.PreferenceActivity
 import fi.iki.ede.safe.ui.activities.RestoreDatabaseScreen
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
+import fi.iki.ede.safe.ui.activities.throwIfFeatureNotEnabled
 import fi.iki.ede.safe.ui.testTag
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -110,6 +112,7 @@ fun TopActionBar(
         onResult = {
             when (it.resultCode) {
                 Activity.RESULT_OK -> {
+                    throwIfFeatureNotEnabled(BuildConfig.ENABLE_OIIMPORT)
                     restoreCompleted.launch(
                         RestoreDatabaseScreen.getIntent(context, true, it.data!!.data!!)
                     )
@@ -208,18 +211,20 @@ fun TopActionBar(
                             Log.e(tag, "Cannot launch ACTION_OPEN_DOCUMENT")
                         }
                     })
-                DropdownMenuItem(
-                    text = { Text(text = stringResource(id = R.string.action_bar_old_restore)) },
-                    onClick = {
-                        displayMenu = false
-                        try {
-                            selectRestoreDocumentLauncherOld.launch(
-                                ExportConfig.getOpenDocumentIntent(context)
-                            )
-                        } catch (ex: ActivityNotFoundException) {
-                            Log.e(tag, "Cannot launch ACTION_OPEN_DOCUMENT")
-                        }
-                    })
+                if (BuildConfig.ENABLE_OIIMPORT) {
+                    DropdownMenuItem(
+                        text = { Text(text = stringResource(id = R.string.action_bar_old_restore)) },
+                        onClick = {
+                            displayMenu = false
+                            try {
+                                selectRestoreDocumentLauncherOld.launch(
+                                    ExportConfig.getOpenDocumentIntent(context)
+                                )
+                            } catch (ex: ActivityNotFoundException) {
+                                Log.e(tag, "Cannot launch ACTION_OPEN_DOCUMENT")
+                            }
+                        })
+                }
                 DropdownMenuItem(
                     text = { Text(text = stringResource(id = R.string.action_bar_change_master_password)) },
                     onClick = {

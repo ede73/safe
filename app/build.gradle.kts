@@ -4,9 +4,10 @@ plugins {
     alias(libs.plugins.org.jetbrains.kotlin.android)
 }
 
-// SEPARATE_TEST_TYPE: Tried to enable separate test type
-// all efforts fail, instrumentation tests disappear
-// and application suffix isn't applied (to unit tests)
+project.ext.set("ENABLE_HIBP", true)
+project.ext.set("ENABLE_OIIMPORT", true)
+val ENABLE_HIBP: Boolean = project(":app").ext.get("ENABLE_HIBP") as Boolean
+val ENABLE_OIIMPORT = project(":app").ext.get("ENABLE_OIIMPORT") as Boolean
 
 android {
     namespace = "fi.iki.ede.safe"
@@ -48,10 +49,13 @@ android {
                     )
                 }
             }
-            //buildConfigField("", "", "")
+            buildConfigField("Boolean", "ENABLE_HIBP", ENABLE_HIBP.toString())
+            buildConfigField("Boolean", "ENABLE_OIIMPORT", ENABLE_OIIMPORT.toString())
         }
         debug {
             applicationIdSuffix = ".debug"
+            buildConfigField("Boolean", "ENABLE_HIBP", ENABLE_HIBP.toString())
+            buildConfigField("Boolean", "ENABLE_OIIMPORT", ENABLE_OIIMPORT.toString())
         }
         // SEPARATE_TEST_TYPE:
 //        create("safetest") {
@@ -95,6 +99,7 @@ composeCompiler {
 
 dependencies {
     implementation(project(":app:crypto"))
+    // cant dynamically filter these out as imports would fail and making stub is too much work..
     implementation(project(":app:hibp"))
     implementation(project(":app:oisafecompatibility"))
 
