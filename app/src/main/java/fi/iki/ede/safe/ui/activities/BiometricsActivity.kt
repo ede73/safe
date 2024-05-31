@@ -195,13 +195,13 @@ class BiometricsActivity : AppCompatActivity() {
             .remove(PREFERENCE_BIO_CIPHER)
             .apply()
 
-        fun getBioCipher(): IVCipherText {
+        private fun getBioCipher(): IVCipherText {
             val pm = sharedPreferences
                 .getString(PREFERENCE_BIO_CIPHER, null) ?: return IVCipherText.getEmpty()
             return IVCipherText(pm.hexToByteArray(), CipherUtilities.IV_LENGTH)
         }
 
-        fun storeBioCipher(cipher: IVCipherText) = sharedPreferences.edit()
+        private fun storeBioCipher(cipher: IVCipherText) = sharedPreferences.edit()
             .putString(PREFERENCE_BIO_CIPHER, cipher.combineIVAndCipherText().toHexString())
             .apply()
 

@@ -159,6 +159,9 @@ class LoginScreenFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
         }
     }
 
+    // TODO: add also test case for failed biometrics
+    // TODO: cancelled biometrics
+
     private fun properPasswordLogin(biometricsRegister: Boolean) {
         mockkObject(LoginHandler)
         mockkObject(CategoryListScreen)
