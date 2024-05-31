@@ -6,8 +6,6 @@ import android.content.SharedPreferences
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.os.Bundle
 import android.view.MenuItem
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
@@ -15,6 +13,7 @@ import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.service.AutolockingService
+
 
 class PreferenceActivity : AutolockingBaseAppCompatActivity() {
 
@@ -34,9 +33,7 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
     }
 
     class PreferenceFragment : PreferenceFragmentCompat(), OnSharedPreferenceChangeListener {
-        private val backupDocumentSelected = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { result: ActivityResult ->
+        private val backupDocumentSelected = startActivityForResults { result ->
             if (result.resultCode == RESULT_OK) {
                 Preferences.setBackupDocument(result.data!!.data!!.path)
             }

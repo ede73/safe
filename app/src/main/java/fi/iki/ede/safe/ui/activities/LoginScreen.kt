@@ -7,7 +7,6 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -33,7 +32,7 @@ import kotlinx.coroutines.withContext
 open class LoginScreen : ComponentActivity() {
     private var dontOpenCategoryListScreen: Boolean = false
     private val biometricsFirstTimeRegister =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+        startActivityForResults { result ->
             // This is FIRST TIME call..we're just about to be set up...
             when (result.resultCode) {
                 RESULT_OK -> {
@@ -50,7 +49,7 @@ open class LoginScreen : ComponentActivity() {
         }
 
     private val biometricsVerify =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+        startActivityForResults { result: ActivityResult ->
             when (result.resultCode) {
                 RESULT_OK -> {
                     if (!BiometricsActivity.verificationAccepted()) {
