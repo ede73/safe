@@ -13,19 +13,13 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="CategoryListScreenTest">
-        <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
       <SelectionState runConfigName="Tests in 'fi.iki.ede.safe'">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="ensurePasswordIsHiddenTest()">
+      <SelectionState runConfigName="ApplicationSuffixTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="ensureShownPasswordIsShownTest()">
-        <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
-      <SelectionState runConfigName="VerifiedPasswordTextFieldTest">
+      <SelectionState runConfigName="verifyApplicationIdSuffix()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

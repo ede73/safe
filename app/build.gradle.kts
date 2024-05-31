@@ -4,6 +4,10 @@ plugins {
     alias(libs.plugins.org.jetbrains.kotlin.android)
 }
 
+// SEPARATE_TEST_TYPE: Tried to enable separate test type
+// all efforts fail, instrumentation tests disappear
+// and application suffix isn't applied (to unit tests)
+
 android {
     namespace = "fi.iki.ede.safe"
     compileSdk = 34
@@ -23,6 +27,7 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        // SEPARATE_TEST_TYPE: testApplicationId = "$applicationId.safetest"
     }
 
     // See https://developer.android.com/build/build-variants
@@ -34,11 +39,22 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            packaging {
+                resources {
+                    // AndroidStudio Koala adds all sort of this to release builds
+                    excludes += setOf("**/DebugProbesKt.bin", "**/base/junit/**")
+                }
+            }
             //buildConfigField("", "", "")
         }
         debug {
             applicationIdSuffix = ".debug"
         }
+        // SEPARATE_TEST_TYPE:
+//        create("safetest") {
+//            initWith(buildTypes.getByName("debug"))
+//            applicationIdSuffix = ".safetest"
+//        }
     }
 
     compileOptions {
@@ -51,6 +67,7 @@ android {
         buildConfig = true
     }
 
+    // SEPARATE_TEST_TYPE: DOES NOT WORK testBuildType = "release"
     testOptions {
         unitTests.isReturnDefaultValues = true
         packaging {
