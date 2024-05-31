@@ -1,4 +1,7 @@
 Password safe 
+
+Looks great ! https://developer.android.com/studio/test/other-testing-tools/app-crawler
+
 - Backup codes - messes up notes
 - phone numbers - handy when changing numbers
 - username and password..often same, in some places separate ( banks!)
