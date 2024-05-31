@@ -13,19 +13,19 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="verifyWeCanInitializeWithProperPasswordWithBio()">
-        <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
-      <SelectionState runConfigName="verifyBiometricsPromptIsLaunched()">
-        <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
       <SelectionState runConfigName="LoginScreenFirstInstallTest">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="newLoginAndBioLaunchedWhenChecked()">
+      <SelectionState runConfigName="newLoginAndBioLaunchedWhenUnchecked()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="newLoginAndBioLaunchedWhenUnchecked()">
+      <SelectionState runConfigName="verifyPasswordPromptPresentTest()">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="verifyPasswordLengthRequirementTest()">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="verifyMismatchingPasswordNotAcceptedTest()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

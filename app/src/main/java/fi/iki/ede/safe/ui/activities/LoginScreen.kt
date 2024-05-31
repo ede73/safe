@@ -20,6 +20,7 @@ import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.service.AutolockingService
+import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.composable.BiometricsComponent
 import fi.iki.ede.safe.ui.composable.PasswordPrompt
 import fi.iki.ede.safe.ui.theme.SafeTheme
@@ -30,44 +31,46 @@ import kotlinx.coroutines.withContext
 
 open class LoginScreen : ComponentActivity() {
     private var dontOpenCategoryListScreen: Boolean = false
-    private val biometricsFirstTimeRegister = startActivityForResults { result ->
-        // This is FIRST TIME call..we're just about to be set up...
-        when (result.resultCode) {
-            RESULT_OK -> {
-                BiometricsActivity.registerBiometric(this)
-                finishLoginProcess(true)
-            }
+    private val biometricsFirstTimeRegister =
+        startActivityForResults(TestTag.TEST_TAG_LOGIN_BIOMETRICS_REGISTER) { result ->
+            // This is FIRST TIME call..we're just about to be set up...
+            when (result.resultCode) {
+                RESULT_OK -> {
+                    BiometricsActivity.registerBiometric(this)
+                    finishLoginProcess(true)
+                }
 
-            RESULT_CANCELED -> {
-                // We should fall back asking password but NOT disable biometrics
+                RESULT_CANCELED -> {
+                    // We should fall back asking password but NOT disable biometrics
+                }
+                // may be called many times..eventually gets cancelled
+                BiometricsActivity.RESULT_FAILED -> {}
             }
-            // may be called many times..eventually gets cancelled
-            BiometricsActivity.RESULT_FAILED -> {}
         }
-    }
 
-    private val biometricsVerify = startActivityForResults { result ->
-        when (result.resultCode) {
-            RESULT_OK -> {
-                if (!BiometricsActivity.verificationAccepted()) {
-                    // should never happen
-                    Log.e("---", "Biometric verification NOT accepted - perhaps a new backup?")
-                } else {
-                    finishLoginProcess(false)
+    private val biometricsVerify =
+        startActivityForResults(TestTag.TEST_TAG_LOGIN_BIOMETRICS_VERIFY) { result ->
+            when (result.resultCode) {
+                RESULT_OK -> {
+                    if (!BiometricsActivity.verificationAccepted()) {
+                        // should never happen
+                        Log.e("---", "Biometric verification NOT accepted - perhaps a new backup?")
+                    } else {
+                        finishLoginProcess(false)
+                    }
+                }
+
+                RESULT_CANCELED -> {
+                    // We should fall back asking password but NOT disable biometrics
+                }
+
+                BiometricsActivity.RESULT_FAILED -> {
+                    // Sometimes fingerprint reading just doesn't work
+                    // This will be called for N subsequent misreads
+                    // Then biometrics will be cancelled
                 }
             }
-
-            RESULT_CANCELED -> {
-                // We should fall back asking password but NOT disable biometrics
-            }
-
-            BiometricsActivity.RESULT_FAILED -> {
-                // Sometimes fingerprint reading just doesn't work
-                // This will be called for N subsequent misreads
-                // Then biometrics will be cancelled
-            }
         }
-    }
 
     private fun finishLoginProcess(firstTimeUse: Boolean) {
         beginToLoadDB(firstTimeUse)

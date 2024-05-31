@@ -13,6 +13,7 @@ import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.service.AutolockingService
+import fi.iki.ede.safe.ui.TestTag
 
 
 class PreferenceActivity : AutolockingBaseAppCompatActivity() {
@@ -33,11 +34,12 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
     }
 
     class PreferenceFragment : PreferenceFragmentCompat(), OnSharedPreferenceChangeListener {
-        private val backupDocumentSelected = startActivityForResults { result ->
-            if (result.resultCode == RESULT_OK) {
-                Preferences.setBackupDocument(result.data!!.data!!.path)
+        private val backupDocumentSelected =
+            startActivityForResults(TestTag.TEST_TAG_PREFERENCES_SAVE_LOCATION) { result ->
+                if (result.resultCode == RESULT_OK) {
+                    Preferences.setBackupDocument(result.data!!.data!!.path)
+                }
             }
-        }
 
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             addPreferencesFromResource(R.xml.preferences)

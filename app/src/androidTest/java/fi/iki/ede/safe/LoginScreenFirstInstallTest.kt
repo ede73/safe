@@ -29,6 +29,7 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.AutoMockingUtilities.Companion.fetchDBKeys
 import fi.iki.ede.safe.AutoMockingUtilities.Companion.mockIsBiometricsEnabled
 import fi.iki.ede.safe.model.LoginHandler
+import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.BiometricsActivity
 import fi.iki.ede.safe.ui.activities.CategoryListScreen
 import fi.iki.ede.safe.ui.activities.LoginScreen
@@ -41,6 +42,7 @@ import io.mockk.mockkStatic
 import io.mockk.runs
 import io.mockk.slot
 import io.mockk.verify
+import org.junit.After
 import org.junit.BeforeClass
 import org.junit.Rule
 import org.junit.Test
@@ -55,14 +57,26 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class LoginScreenFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
 
-    class MyResultLauncher(private val callback: ActivityResultCallback<ActivityResult>) :
-        ActivityResultLauncher<Intent>() {
-        override fun launch(i: Intent, options: ActivityOptionsCompat?) {
-            if (!launchedIntents.containsKey(callback)) {
-                launchedIntents[callback] = mutableListOf()
-            }
-            (launchedIntents[callback] as MutableList<Intent>).add(i)
+    @After
+    fun clearAll() {
+        launchedIntents.clear()
+    }
 
+    class MyResultLauncher(
+        private val testTag: TestTag,
+        private val callback: ActivityResultCallback<ActivityResult>
+    ) : ActivityResultLauncher<Intent>() {
+
+        init {
+            require(launchedIntents.keys.none { it -> it.first == testTag }) {
+                "Each and TestTag must be unique, else we can't identify who's launching and what"
+            }
+
+            launchedIntents[Pair(testTag, callback)] = mutableListOf()
+        }
+
+        override fun launch(i: Intent, options: ActivityOptionsCompat?) {
+            (launchedIntents[Pair(testTag, callback)] as MutableList<Intent>).add(i)
             val result = ActivityResult(RESULT_CANCELED, null)
             callback.onActivityResult(result)
         }
@@ -73,6 +87,16 @@ class LoginScreenFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
             get() = ActivityResultContracts.StartActivityForResult()
 
         override fun unregister() {}
+
+        companion object {
+            fun getLaunchedIntentsAndCallback(testTag: TestTag) =
+                launchedIntents.keys.first { it -> it.first == testTag }.let {
+                    Pair(it.second, launchedIntents[it]!!)
+                }
+
+            fun clearLaunchedIntents(testTag: TestTag) =
+                launchedIntents.remove(launchedIntents.keys.first { it -> it.first == testTag })
+        }
     }
 
     @get:Rule
@@ -147,15 +171,16 @@ class LoginScreenFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
         verify(exactly = 0) { LoginHandler.passwordLogin(any(), any()) }
         verify(exactly = 1) { BiometricsActivity.getRegistrationIntent(any()) }
 
-        verify { registerActivityForResults(any(), any(), any()) }
+        verify { registerActivityForResults(any(), any(), any(), any()) }
 
-        val intents = launchedIntents.values.flatten()
-        assert(intents.size == 1) {
-            "Only one intent expected, got ${intents.size}"
+        val la =
+            MyResultLauncher.getLaunchedIntentsAndCallback(TestTag.TEST_TAG_LOGIN_BIOMETRICS_REGISTER)
+        assert(la.second.size == 1) {
+            "Only one intent expected, got ${la.second.size}"
         }
         // Verify biometrics indeed was launched
-        assert(intents[0].component?.className == BiometricsActivity::class.qualifiedName) {
-            "${intents[0].component?.className} != ${BiometricsActivity::class.qualifiedName}"
+        assert(la.second[0].component?.className == BiometricsActivity::class.qualifiedName) {
+            "${la.second[0].component?.className} != ${BiometricsActivity::class.qualifiedName}"
         }
     }
 
@@ -178,12 +203,12 @@ class LoginScreenFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
         if (biometricsRegister) {
             if (biometricsChecked == androidx.compose.ui.state.ToggleableState.Off) {
                 getBiometricsCheckbox(loginActivityTestRule).performClick()
-                //getBiometricsCheckbox(loginActivityTestRule).assertIsChecked()
+                getBiometricsCheckbox(loginActivityTestRule).assertIsChecked()
             }
         } else {
             if (biometricsChecked == androidx.compose.ui.state.ToggleableState.On) {
                 getBiometricsCheckbox(loginActivityTestRule).performClick()
-                //getBiometricsCheckbox(loginActivityTestRule).assertIsNotChecked()
+                getBiometricsCheckbox(loginActivityTestRule).assertIsNotChecked()
             }
         }
         getPasswordFields(loginActivityTestRule)[0].performTextInput("quite_a_password")
@@ -194,7 +219,7 @@ class LoginScreenFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
     }
 
     companion object {
-        val launchedIntents: MutableMap<ActivityResultCallback<ActivityResult>, List<Intent>> =
+        val launchedIntents: MutableMap<Pair<TestTag, ActivityResultCallback<ActivityResult>>, List<Intent>> =
             mutableMapOf()
 
         // Such a pain, mock needs to be done before @rule (coz we use prefs at LoginScreen)
@@ -202,18 +227,18 @@ class LoginScreenFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
         @JvmStatic
         fun setup() {
             mockkStatic(::registerActivityForResults)
-
             // Only place to mock these is here, when @Test starts, it is too late, activity already initialized
             every {
 //            registerActivityForResults<Intent, ActivityResult>(
-                registerActivityForResults(any(), any(), any())
+                registerActivityForResults(any(), any(), any(), any())
             } answers {
                 val instance = it.invocation
-                val contract = firstArg<ActivityResultContract<Intent, ActivityResult>>()
-                val callback = secondArg<ActivityResultCallback<ActivityResult>>()
+                val testTag = firstArg<TestTag>()
+                val contract = secondArg<ActivityResultContract<Intent, ActivityResult>>()
+                val callback = thirdArg<ActivityResultCallback<ActivityResult>>()
                 val register =
-                    thirdArg<(ActivityResultContract<Intent, ActivityResult>, ActivityResultCallback<ActivityResult>) -> ActivityResultLauncher<Intent>>()
-                MyResultLauncher(callback)
+                    lastArg<(ActivityResultContract<Intent, ActivityResult>, ActivityResultCallback<ActivityResult>) -> ActivityResultLauncher<Intent>>()
+                MyResultLauncher(testTag, callback)
             }
 
             // TODO: MOCK THIS TOO!
