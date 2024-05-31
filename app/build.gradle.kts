@@ -42,7 +42,10 @@ android {
             packaging {
                 resources {
                     // AndroidStudio Koala adds all sort of this to release builds
-                    excludes += setOf("**/DebugProbesKt.bin", "**/base/junit/**")
+                    excludes += setOf(
+                        "**/DebugProbesKt.bin",
+                        "**/base/junit/**",
+                    )
                 }
             }
             //buildConfigField("", "", "")
