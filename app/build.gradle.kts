@@ -5,7 +5,7 @@ plugins {
 }
 
 project.ext.set("ENABLE_HIBP", true)
-project.ext.set("ENABLE_OIIMPORT", true)
+project.ext.set("ENABLE_OIIMPORT", false)
 val ENABLE_HIBP: Boolean = project(":app").ext.get("ENABLE_HIBP") as Boolean
 val ENABLE_OIIMPORT = project(":app").ext.get("ENABLE_OIIMPORT") as Boolean
 
