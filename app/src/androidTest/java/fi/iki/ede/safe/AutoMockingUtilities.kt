@@ -16,9 +16,14 @@ import org.junit.Assert.assertArrayEquals
 
 interface AutoMockingUtilities {
     companion object {
-        fun getBiometricsEnabled(biometrics: () -> Boolean) {
-            mockkObject(Preferences)
+        fun mockIsBiometricsEnabled(biometrics: () -> Boolean) {
+            mockkObject(BiometricsActivity)
             every { BiometricsActivity.isBiometricEnabled() } returns biometrics()
+        }
+
+        fun mockIsFirstTimeLogin(isFirstTimeLogin: () -> Boolean) {
+            mockkObject(Preferences)
+            every { Preferences.isFirstTimeLogin() } returns isFirstTimeLogin()
         }
 
         fun fetchDBKeys(
@@ -26,7 +31,7 @@ interface AutoMockingUtilities {
             salt: () -> Salt,
             fetchPasswordsOfCategory: () -> List<DecryptableSiteEntry>,
             fetchCategories: () -> List<DecryptableCategoryEntry>,
-            isUninitializedDatabase: () -> Boolean = { false }
+            isFirstTimeLogin: () -> Boolean = { false }
         ) {
             // Any mock I tried results in android verifier exception - indicating
             // class modification failed, there's also mock error
@@ -58,7 +63,9 @@ interface AutoMockingUtilities {
             every { db.fetchAllRows(any()) } returns fetchPasswordsOfCategory()
             every { db.fetchAllCategoryRows() } returns fetchCategories()
             every { db.getCategoryCount(any()) } returns 1
-            //every { db.isUninitializedDatabase() } returns isUninitializedDatabase()
+            every { DBHelperFactory.getDBHelper(any()) } returns db
+
+            mockIsFirstTimeLogin(isFirstTimeLogin)
             val context =
                 InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
             val dbinst = DBHelperFactory.getDBHelper(context)

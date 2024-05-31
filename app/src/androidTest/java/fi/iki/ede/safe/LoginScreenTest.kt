@@ -15,14 +15,19 @@ import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.hexToByteArray
-import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.IV_LENGTH
 import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_ITERATION_COUNT
+import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_LENGTH_BITS
 import fi.iki.ede.crypto.keystore.KeyManagement
 import fi.iki.ede.crypto.keystore.KeyManagement.generatePBKDF2AESKey
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
-import fi.iki.ede.safe.AutoMockingUtilities.Companion.getBiometricsEnabled
+import fi.iki.ede.safe.AutoMockingUtilities.Companion.fetchDBKeys
+import fi.iki.ede.safe.AutoMockingUtilities.Companion.mockIsBiometricsEnabled
 import fi.iki.ede.safe.LoginScreenFirstInstallTest.Companion.mockKeyStoreHelper
+import fi.iki.ede.safe.model.LoginHandler
+import fi.iki.ede.safe.ui.activities.CategoryListScreen
 import fi.iki.ede.safe.ui.activities.LoginScreen
+import io.mockk.mockkObject
+import io.mockk.verify
 import org.junit.BeforeClass
 import org.junit.Rule
 import org.junit.Test
@@ -37,55 +42,6 @@ class LoginScreenTest : AutoMockingUtilities, LoginScreenHelper {
 
     @get:Rule
     val loginActivityTestRule = createAndroidComposeRule<LoginScreen>()
-
-    companion object {
-        private val FAKE_SALT = Salt("abcdabcd01234567".hexToByteArray())
-        private const val FAKE_PASSWORD_TEXT = "abcdefgh"
-        private val FAKE_PASSWORD = Password(FAKE_PASSWORD_TEXT.toByteArray())
-        private val FAKE_MASTERKEY_AES =
-            "00112233445566778899AABBCCDDEEFF99887766554433221100123456789ABC".hexToByteArray()
-        private val FAKE_ENCRYPTED_MASTERKEY =
-            KeyManagement.encryptMasterKey(
-                generatePBKDF2AESKey(
-                    FAKE_SALT,
-                    KEY_ITERATION_COUNT,
-                    FAKE_PASSWORD,
-                    IV_LENGTH
-                ),
-                FAKE_MASTERKEY_AES
-            )
-
-        // Such a pain, mock needs to be done before @rule (coz we use prefs at LoginScreen)
-        @BeforeClass
-        @JvmStatic
-        fun setup() {
-            getBiometricsEnabled(biometrics = { false })
-            mockKeyStoreHelper()
-            val ks = KeyStoreHelperFactory.getKeyStoreHelper()
-            AutoMockingUtilities.fetchDBKeys(
-                masterKey = { FAKE_ENCRYPTED_MASTERKEY },
-                salt = { FAKE_SALT }, fetchPasswordsOfCategory = {
-                    listOf(DecryptableSiteEntry(1).let {
-                        it.id = 1
-                        it
-                    })
-                }, fetchCategories = {
-                    listOf(DecryptableCategoryEntry().let {
-                        it.id = 1
-                        it.encryptedName = ks.encryptByteArray("one".toByteArray())
-                        it
-                    })
-                })
-
-            //            mockkConstructor(LoginScreen::class)
-//            every {
-//                constructedWith<LoginScreen>().passwordValidated(
-//                    any(),
-//                    any()
-//                )
-//            } returns mockk()
-        }
-    }
 
     @Test
     fun verifyLoginScreenAfterInitialSetupTest() {
@@ -104,19 +60,64 @@ class LoginScreenTest : AutoMockingUtilities, LoginScreenHelper {
         getLoginButton(loginActivityTestRule).assertIsNotEnabled()
         getPasswordFields(loginActivityTestRule)[0].performTextInput("a")
         getLoginButton(loginActivityTestRule).assertIsEnabled()
+        // we won't log in, just test that in UI all is peachy
     }
 
     @Test
-    fun verifyLoginSucceeds() {
+    fun testLoggingInWorks() {
+        mockkObject(LoginHandler)
+        mockkObject(CategoryListScreen)
         getPasswordFields(loginActivityTestRule)[0].performTextInput(FAKE_PASSWORD_TEXT)
         getLoginButton(loginActivityTestRule).assertIsEnabled()
         getLoginButton(loginActivityTestRule).performClick()
-        // Ensure passwordValidated gets called - again CTOR mocking fails
-        // multiDexEnabled false lessens errors, but still wont work
-        //verify(atLeast = 3) { q.passwordValidated(any(), any()) }
-        // It takes time to get here...
-        // verify { anyConstructed<LoginScreen>().passwordValidated(any(), any()) }
+        verify(exactly = 1) { LoginHandler.passwordLogin(any(), any()) }
+        verify(exactly = 1) { CategoryListScreen.startMe(any()) }
+        verify(exactly = 0) { LoginHandler.firstTimeLogin(any(), any()) }
+    }
 
-        // Will call fi.iki.ede.safe.db.DBHelper.fetchAllRows on success
+    // TODO: same tests with biometrics
+
+    companion object {
+        private val FAKE_SALT = Salt("abcdabcd01234567".hexToByteArray())
+        private const val FAKE_PASSWORD_TEXT = "abcdefgh"
+        private val FAKE_PASSWORD = Password(FAKE_PASSWORD_TEXT.toByteArray())
+        private val FAKE_MASTERKEY_AES =
+            "00112233445566778899AABBCCDDEEFF99887766554433221100123456789ABC".hexToByteArray()
+        private val FAKE_ENCRYPTED_MASTERKEY =
+            KeyManagement.encryptMasterKey(
+                generatePBKDF2AESKey(
+                    FAKE_SALT,
+                    KEY_ITERATION_COUNT,
+                    FAKE_PASSWORD,
+                    KEY_LENGTH_BITS
+                ),
+                FAKE_MASTERKEY_AES
+            )
+
+        // Such a pain, mock needs to be done before @rule (coz we use prefs at LoginScreen)
+        @BeforeClass
+        @JvmStatic
+        fun setup() {
+            mockIsBiometricsEnabled(biometrics = { false })
+            mockKeyStoreHelper()
+
+            val ks = KeyStoreHelperFactory.getKeyStoreHelper()
+
+            fetchDBKeys(
+                masterKey = { FAKE_ENCRYPTED_MASTERKEY },
+                salt = { FAKE_SALT }, fetchPasswordsOfCategory = {
+                    listOf(DecryptableSiteEntry(1).let {
+                        it.id = 1
+                        it
+                    })
+                }, fetchCategories = {
+                    listOf(DecryptableCategoryEntry().let {
+                        it.id = 1
+                        it.encryptedName = ks.encryptByteArray("one".toByteArray())
+                        it
+                    })
+                },
+                isFirstTimeLogin = { false })
+        }
     }
 }

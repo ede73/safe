@@ -13,13 +13,19 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="Tests in 'fi.iki.ede.safe'">
+      <SelectionState runConfigName="verifyWeCanInitializeWithProperPasswordWithBio()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="deleteCategory()">
+      <SelectionState runConfigName="verifyBiometricsPromptIsLaunched()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="CategoryListScreenTest">
+      <SelectionState runConfigName="LoginScreenFirstInstallTest">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="newLoginAndBioLaunchedWhenChecked()">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="newLoginAndBioLaunchedWhenUnchecked()">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>
