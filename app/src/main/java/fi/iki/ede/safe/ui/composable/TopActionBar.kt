@@ -16,7 +16,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -53,6 +52,7 @@ import fi.iki.ede.safe.ui.activities.RestoreDatabaseScreen
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
 import fi.iki.ede.safe.ui.activities.throwIfFeatureNotEnabled
 import fi.iki.ede.safe.ui.testTag
+import fi.iki.ede.safe.ui.theme.SafeButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -64,6 +64,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun TopActionBar(
     onAddRequested: (addCompleted: ManagedActivityResultLauncher<Intent, ActivityResult>) -> Unit = {},
+    loginScreen: Boolean = false,
 ) {
     val tag = "TopActionBar"
     val context = LocalContext.current
@@ -146,26 +147,27 @@ fun TopActionBar(
         title = { Text(stringResource(id = R.string.application_name), color = Color.White) },
         //backgroundColor = Color(0xff0f9d58),
         actions = {
-            IconButton(onClick = {
-                onAddRequested(addCompleted)
-            }, modifier = Modifier.testTag(TestTag.TEST_TAG_TOP_ACTION_BAR_ADD)) {
-                Icon(Icons.Default.Add, stringResource(id = R.string.generic_add))
-            }
+            if (!loginScreen) {
+                IconButton(onClick = {
+                    onAddRequested(addCompleted)
+                }, modifier = Modifier.testTag(TestTag.TEST_TAG_TOP_ACTION_BAR_ADD)) {
+                    Icon(Icons.Default.Add, stringResource(id = R.string.generic_add))
+                }
 
-            IconButton(onClick = {
-                AutolockingBaseComponentActivity.lockTheApplication(context)
-                LoginScreen.startMe(context, dontOpenCategoryScreenAfterLogin = true)
-            }) {
-                Icon(Icons.Default.Lock, stringResource(id = R.string.action_bar_lock))
-            }
+                IconButton(onClick = {
+                    AutolockingBaseComponentActivity.lockTheApplication(context)
+                    LoginScreen.startMe(context, dontOpenCategoryScreenAfterLogin = true)
+                }) {
+                    Icon(Icons.Default.Lock, stringResource(id = R.string.action_bar_lock))
+                }
 
-            IconButton(
-                onClick = { SiteEntrySearchScreen.startMe(context) },
-                modifier = Modifier.testTag(TestTag.TEST_TAG_TOP_ACTION_BAR_SEARCH)
-            ) {
-                Icon(Icons.Default.Search, stringResource(id = R.string.action_bar_search))
+                IconButton(
+                    onClick = { SiteEntrySearchScreen.startMe(context) },
+                    modifier = Modifier.testTag(TestTag.TEST_TAG_TOP_ACTION_BAR_SEARCH)
+                ) {
+                    Icon(Icons.Default.Search, stringResource(id = R.string.action_bar_search))
+                }
             }
-
             // Creating Icon button for dropdown menu
             IconButton(onClick = { displayMenu = !displayMenu }) {
                 Icon(Icons.Default.MoreVert, "")
@@ -176,42 +178,49 @@ fun TopActionBar(
                 expanded = displayMenu,
                 onDismissRequest = { displayMenu = false }
             ) {
-
-                // Creating dropdown menu item, on click
-                // would create a Toast message
-                DropdownMenuItem(
-                    text = { Text(text = stringResource(id = R.string.action_bar_settings)) },
-                    onClick = {
-                        displayMenu = false
-                        PreferenceActivity.startMe(context)
-                    })
+                if (!loginScreen) {
+                    // Creating dropdown menu item, on click
+                    // would create a Toast message
+                    DropdownMenuItem(
+                        text = { Text(text = stringResource(id = R.string.action_bar_settings)) },
+                        onClick = {
+                            displayMenu = false
+                            PreferenceActivity.startMe(context)
+                        })
+                }
                 DropdownMenuItem(
                     text = { Text(text = stringResource(id = R.string.action_bar_help)) },
                     onClick = {
                         displayMenu = false
                         HelpScreen.startMe(context)
                     })
-                DropdownMenuItem(
-                    text = { Text(text = stringResource(id = R.string.action_bar_backup)) },
-                    onClick = {
-                        displayMenu = false
-                        backupDocumentSelectedResult.launch(
-                            ExportConfig.getCreateDocumentIntent(context)
-                        )
-                    })
-                DropdownMenuItem(
-                    text = { Text(text = stringResource(id = R.string.action_bar_restore)) },
-                    onClick = {
-                        try {
+                if (!loginScreen) {
+                    DropdownMenuItem(
+                        text = { Text(text = stringResource(id = R.string.action_bar_backup)) },
+                        onClick = {
                             displayMenu = false
-                            selectRestoreDocumentLauncher.launch(
-                                ExportConfig.getOpenDocumentIntent(context)
+                            backupDocumentSelectedResult.launch(
+                                ExportConfig.getCreateDocumentIntent(context)
                             )
-                        } catch (ex: ActivityNotFoundException) {
-                            Log.e(tag, "Cannot launch ACTION_OPEN_DOCUMENT")
-                        }
-                    })
-                if (BuildConfig.ENABLE_OIIMPORT) {
+                        })
+                }
+                if (!loginScreen) {
+                    // Currently does not work from login screen
+                    // TODO: Make work from login screen?
+                    DropdownMenuItem(
+                        text = { Text(text = stringResource(id = R.string.action_bar_restore)) },
+                        onClick = {
+                            try {
+                                displayMenu = false
+                                selectRestoreDocumentLauncher.launch(
+                                    ExportConfig.getOpenDocumentIntent(context)
+                                )
+                            } catch (ex: ActivityNotFoundException) {
+                                Log.e(tag, "Cannot launch ACTION_OPEN_DOCUMENT")
+                            }
+                        })
+                }
+                if (BuildConfig.ENABLE_OIIMPORT && !loginScreen) {
                     DropdownMenuItem(
                         text = { Text(text = stringResource(id = R.string.action_bar_old_restore)) },
                         onClick = {
@@ -225,12 +234,14 @@ fun TopActionBar(
                             }
                         })
                 }
-                DropdownMenuItem(
-                    text = { Text(text = stringResource(id = R.string.action_bar_change_master_password)) },
-                    onClick = {
-                        displayMenu = false
-                        showChangePasswordDialog = true
-                    })
+                if (!loginScreen) {
+                    DropdownMenuItem(
+                        text = { Text(text = stringResource(id = R.string.action_bar_change_master_password)) },
+                        onClick = {
+                            displayMenu = false
+                            showChangePasswordDialog = true
+                        })
+                }
             }
             if (showChangePasswordDialog) {
                 val passwordChanged = stringResource(id = R.string.action_bar_password_changed)
@@ -313,7 +324,7 @@ private fun EnterNewPassword(
                         oldPassword = it
                     },
                 )
-                Button(
+                SafeButton(
                     enabled = !newPassword.isEmpty() &&
                             newPassword != oldPassword &&
                             newPassword.length >= passwordMinimumLength,
@@ -328,5 +339,5 @@ private fun EnterNewPassword(
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
-    TopActionBar({})
+    TopActionBar({}, true)
 }

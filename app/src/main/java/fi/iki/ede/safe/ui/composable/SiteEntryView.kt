@@ -10,9 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -46,6 +44,7 @@ import fi.iki.ede.safe.ui.activities.AvertInactivityDuringLongTask
 import fi.iki.ede.safe.ui.activities.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
+import fi.iki.ede.safe.ui.theme.SafeButton
 import java.time.ZonedDateTime
 
 @Composable
@@ -92,19 +91,20 @@ fun SiteEntryView(
                 modifier = modifier
                     .padding(horizontal = 8.dp)
                     .fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
                 colors = hideFocusLine,
             )
         }
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             val website = passEntry.website
-            Button(enabled = !TextUtils.isEmpty(website) && Uri.parse(website) != null, onClick = {
-                val uri = tryParseUri(website)
-                // Without scheme, ACTION_VIEW will fail
-                if (uri.scheme != null) {
-                    context.startActivity(Intent(Intent.ACTION_VIEW, uri))
-                }
-            }) { Text(stringResource(id = R.string.password_entry_visit)) }
+            SafeButton(
+                enabled = !TextUtils.isEmpty(website) && Uri.parse(website) != null,
+                onClick = {
+                    val uri = tryParseUri(website)
+                    // Without scheme, ACTION_VIEW will fail
+                    if (uri.scheme != null) {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                    }
+                }) { Text(stringResource(id = R.string.password_entry_visit)) }
             Spacer(Modifier.weight(1f))
             TextField(
                 value = passEntry.website,
@@ -113,12 +113,11 @@ fun SiteEntryView(
                 modifier = modifier
                     .padding(horizontal = 8.dp)
                     .fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
                 colors = hideFocusLine,
             )
         }
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
-            Button(onClick = {
+            SafeButton(onClick = {
                 ClipboardUtils.addToClipboard(context, passEntry.username.decrypt(ks))
             }) { Text(stringResource(id = R.string.password_entry_username_label)) }
             Spacer(Modifier.weight(1f))
@@ -155,7 +154,7 @@ fun SiteEntryView(
             )
         }
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
-            Button(onClick = {
+            SafeButton(onClick = {
                 ClipboardUtils.addToClipboard(context, passEntry.password.decrypt(ks))
             }) { Text(stringResource(id = R.string.password_entry_password_label)) }
             Spacer(Modifier.weight(1f))
@@ -178,7 +177,7 @@ fun SiteEntryView(
         if (BuildConfig.ENABLE_HIBP) {
             Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
                 if (breachCheckResult == BreachCheckEnum.NOT_CHECKED) {
-                    Button(onClick = {
+                    SafeButton(onClick = {
                         BreachCheck.doBreachCheck(
                             KAnonymity(passEntry.password.decrypt(ks)),
                             context,

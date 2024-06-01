@@ -1,6 +1,5 @@
 package fi.iki.ede.safe.ui.composable
 
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
@@ -28,7 +27,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.safe.password.highlightPassword
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
@@ -89,7 +87,6 @@ fun passwordTextField(
             password,
             isPasswordZoomed.value
         ),
-        shape = RoundedCornerShape(20.dp),
         leadingIcon = {
             if (enableZoom)
                 IconButton(onClick = {

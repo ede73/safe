@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
@@ -33,6 +31,7 @@ import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
+import fi.iki.ede.safe.ui.theme.SafeListItem
 import kotlinx.coroutines.launch
 import java.time.Period
 
@@ -60,9 +59,10 @@ fun SiteEntryRow(
         }
     )
 
-    Card(
+    // bit more padding on the start to emphasize difference between header and entry
+    // TODO: themable?
+    SafeListItem(
         modifier = Modifier.padding(start = 32.dp, 6.dp),
-        shape = RoundedCornerShape(20.dp)
     ) {
         Row(
             modifier = Modifier

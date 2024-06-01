@@ -51,7 +51,9 @@ class CategoryListScreen : AutolockingBaseComponentActivity() {
                         TopActionBar(
                             onAddRequested = {
                                 displayAddCategoryDialog = true
-                            })
+                            },
+                            loginScreen = true
+                        )
                         if (displayAddCategoryDialog) {
                             val ks = KeyStoreHelperFactory.getKeyStoreHelper()
                             AddOrEditCategory(

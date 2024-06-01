@@ -50,7 +50,7 @@ class SiteEntryListScreen : AutolockingBaseComponentActivity() {
                                     categoryId = categoryId
                                 )
                             )
-                        })
+                        }, loginScreen = true)
                         SiteEntryList(passwordsState)
                         // last row
                     }

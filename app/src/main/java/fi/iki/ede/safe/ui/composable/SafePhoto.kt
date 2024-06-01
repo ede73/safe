@@ -7,7 +7,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -19,6 +18,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.activities.AvertInactivityDuringLongTask
+import fi.iki.ede.safe.ui.theme.SafeTextButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @Composable
@@ -51,11 +51,11 @@ fun SafePhoto(
 
     Column {
         Row {
-            TextButton(onClick = {
+            SafeTextButton(onClick = {
                 capturePhoto = true
             }) { Text(text = stringResource(id = R.string.password_entry_capture_photo)) }
 
-            TextButton(onClick = {
+            SafeTextButton(onClick = {
                 onBitmapCaptured(null)
             }) { Text(text = stringResource(id = R.string.password_entry_delete_photo)) }
         }

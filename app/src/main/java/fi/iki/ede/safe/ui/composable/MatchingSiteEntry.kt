@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
@@ -31,6 +29,7 @@ import fi.iki.ede.safe.model.DataModel.getCategory
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
+import fi.iki.ede.safe.ui.theme.SafeListItem
 import kotlinx.coroutines.launch
 
 // TODO: THIS! Should have MUCH more common with PasswordRow!
@@ -57,11 +56,7 @@ fun MatchingSiteEntry(
             .fillMaxWidth()
             .padding(4.dp)
     ) {
-        Card(
-            shape = RoundedCornerShape(20.dp), modifier = Modifier
-                .fillMaxWidth()
-                .padding(6.dp)
-        ) {
+        SafeListItem {
             Text(
                 text = categoryEntry.plainName,
                 style = safeTheme.customFonts.listEntries,

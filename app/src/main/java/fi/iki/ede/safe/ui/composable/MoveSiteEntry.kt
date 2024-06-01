@@ -5,10 +5,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -22,6 +19,8 @@ import fi.iki.ede.crypto.DecryptableCategoryEntry
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
+import fi.iki.ede.safe.ui.theme.SafeButton
+import fi.iki.ede.safe.ui.theme.SafeListItem
 
 @Composable
 fun MoveSiteEntry(
@@ -44,7 +43,7 @@ fun MoveSiteEntry(
                 )
             },
             confirmButton = {
-                Button(
+                SafeButton(
                     onClick = {
                         selectedEntry?.let { onConfirm(it) }
                         showDialog = false
@@ -59,7 +58,7 @@ fun MoveSiteEntry(
                 }
             },
             dismissButton = {
-                Button(onClick = { showDialog = false }) {
+                SafeButton(onClick = { showDialog = false }) {
                     Text(stringResource(id = R.string.move_password_cancel))
                 }
             }
@@ -71,7 +70,7 @@ fun MoveSiteEntry(
             text = {
                 LazyColumn {
                     items(targetCategories.sortedBy { it.plainName }) { entry ->
-                        Card(modifier = Modifier.padding(6.dp), shape = RoundedCornerShape(20.dp)) {
+                        SafeListItem {
                             Text(
                                 text = entry.plainName,
                                 modifier = Modifier
@@ -89,7 +88,7 @@ fun MoveSiteEntry(
             },
             confirmButton = {},
             dismissButton = {
-                Button(onClick = { onDismiss() }) {
+                SafeButton(onClick = { onDismiss() }) {
                     Text(stringResource(id = R.string.move_password_cancel))
                 }
             }

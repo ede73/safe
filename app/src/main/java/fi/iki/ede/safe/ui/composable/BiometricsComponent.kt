@@ -3,7 +3,6 @@ package fi.iki.ede.safe.ui.composable
 import android.content.Intent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.foundation.layout.Row
-import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,6 +19,7 @@ import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.BiometricsActivity
 import fi.iki.ede.safe.ui.testTag
+import fi.iki.ede.safe.ui.theme.SafeButton
 
 @Composable
 fun BiometricsComponent(
@@ -46,7 +46,7 @@ fun BiometricsComponent(
         // Actually during login, we could JUST launch the bio verification immediately
         // since biometrics is enabled AND we have previously recorded entry
         bioVerify?.launch(BiometricsActivity.getVerificationIntent(context))
-        Button(
+        SafeButton(
             onClick = {
                 bioVerify?.launch(BiometricsActivity.getVerificationIntent(context))
             },

@@ -2,7 +2,6 @@ package fi.iki.ede.safe.ui.composable
 
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -20,6 +19,7 @@ import androidx.compose.ui.window.Dialog
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
+import fi.iki.ede.safe.ui.theme.SafeButton
 import kotlinx.coroutines.android.awaitFrame
 import kotlinx.coroutines.job
 
@@ -57,7 +57,7 @@ fun AddOrEditCategory(
                         .focusable()
                         .focusTarget()
                 )
-                Button(
+                SafeButton(
                     onClick = { onSubmit(newCategory) },
                     modifier = Modifier.testTag(TestTag.TEST_TAG_CATEGORY_BUTTON)
                 ) {

@@ -23,6 +23,7 @@ import fi.iki.ede.safe.service.AutolockingService
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.composable.BiometricsComponent
 import fi.iki.ede.safe.ui.composable.PasswordPrompt
+import fi.iki.ede.safe.ui.composable.TopActionBar
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -98,6 +99,7 @@ open class LoginScreen : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     Column {
+                        TopActionBar(loginScreen = true)
                         PasswordPrompt(firstTimeUse) { it: Password ->
                             goodPasswordEntered(
                                 firstTimeUse,

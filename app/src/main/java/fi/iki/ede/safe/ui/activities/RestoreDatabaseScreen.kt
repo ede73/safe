@@ -8,7 +8,6 @@ import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -24,6 +23,7 @@ import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.ui.composable.AskToRestoreDatabase
 import fi.iki.ede.safe.ui.composable.passwordTextField
+import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.runBlocking
 
@@ -57,7 +57,7 @@ class RestoreDatabaseScreen : AutolockingBaseComponentActivity() {
                             onValueChange = {
                                 backupPassword = it
                             })
-                        Button(onClick = {
+                        SafeButton(onClick = {
                             doRestore = true
                             // Disable the button? Progress?
                             // Toasts are bit bad..

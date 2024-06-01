@@ -40,8 +40,6 @@ private val LightColorScheme = lightColorScheme(
     onSurface = Color(0xFF1C1B1F),
     */
 )
-//internal val LocalColorScheme = staticCompositionLocalOf { lightColorScheme() }
-//internal val LocalShapes = staticCompositionLocalOf { Shapes() }
 
 object SafeTheme {
     var colorScheme = darkColorScheme()
@@ -49,11 +47,18 @@ object SafeTheme {
 
 data class SafeThemeData(
     val customFonts: SafeFonts,
-    val customColors: SafeColors
+    val customColors: SafeColors,
+    val customShapes: SafeShapes
 )
 
 val LocalSafeTheme =
-    staticCompositionLocalOf { SafeThemeData(SafeTheme.customFonts(), SafeTheme.customColors()) }
+    staticCompositionLocalOf {
+        SafeThemeData(
+            SafeTheme.customFonts(),
+            SafeTheme.customColors(),
+            SafeTheme.customShapes()
+        )
+    }
 
 @Composable
 fun SafeTheme(
@@ -62,6 +67,7 @@ fun SafeTheme(
     val darkTheme = isSystemInDarkTheme()
     val customFonts by remember { mutableStateOf(SafeTheme.customFonts()) }
     val customColors by remember { mutableStateOf(SafeTheme.customColors()) }
+    val customShapes by remember { mutableStateOf(SafeTheme.customShapes()) }
 
     // Dynamic color is available on Android 12+
     val dynamicColor = true
@@ -89,11 +95,12 @@ fun SafeTheme(
 
     MaterialTheme(
         colorScheme = SafeTheme.colorScheme,
-        typography = SafeTheme.typography()
+        typography = SafeTheme.typography(),
+        shapes = SafeTheme.shapes()
     ) {
         CompositionLocalProvider(
             LocalSafeTheme provides SafeThemeData(
-                customFonts, customColors
+                customFonts, customColors, customShapes
             )
         ) {
             content()

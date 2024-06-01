@@ -2,7 +2,6 @@ package fi.iki.ede.safe.ui.composable
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -10,6 +9,7 @@ import fi.iki.ede.crypto.DecryptableCategoryEntry
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
+import fi.iki.ede.safe.ui.theme.SafeButton
 
 @Composable
 fun DeleteCategoryDialog(
@@ -20,7 +20,7 @@ fun DeleteCategoryDialog(
     AlertDialog(
         onDismissRequest = { },
         confirmButton = {
-            TextButton(
+            SafeButton(
                 onClick = {
                     onConfirm()
                 },
@@ -30,7 +30,7 @@ fun DeleteCategoryDialog(
             }
         },
         dismissButton = {
-            TextButton(
+            SafeButton(
                 onClick = {
                     onDismiss()
                 },

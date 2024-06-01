@@ -14,7 +14,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -35,6 +34,7 @@ import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.password.PasswordGenerator
 import fi.iki.ede.safe.ui.composable.SiteEntryView
+import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -202,12 +202,12 @@ class SiteEntryEditScreen : AutolockingBaseComponentActivity() {
                         AlertDialog(onDismissRequest = {
                             showSaveOrDiscardDialog = false
                         }, confirmButton = {
-                            TextButton(onClick = {
+                            SafeButton(onClick = {
                                 showSaveOrDiscardDialog = false
                                 saveEntryRequested = true
                             }) { Text(text = stringResource(id = R.string.password_entry_save)) }
                         }, dismissButton = {
-                            TextButton(onClick = {
+                            SafeButton(onClick = {
                                 setResult(RESULT_CANCELED)
                                 showSaveOrDiscardDialog = false
                                 finnishTheActivity = true
@@ -262,7 +262,7 @@ class SiteEntryEditScreen : AutolockingBaseComponentActivity() {
                 emptyDescription = false
             },
                 confirmButton = {
-                    TextButton(onClick = {
+                    SafeButton(onClick = {
                         onDismiss()
                         emptyDescription = false
                     }) {
