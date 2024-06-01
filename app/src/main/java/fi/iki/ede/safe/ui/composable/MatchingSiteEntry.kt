@@ -11,7 +11,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,6 +30,7 @@ import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DataModel.getCategory
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
+import fi.iki.ede.safe.ui.theme.LocalSafeFonts
 import kotlinx.coroutines.launch
 
 // TODO: THIS! Should have MUCH more common with PasswordRow!
@@ -43,6 +43,7 @@ fun MatchingSiteEntry(
     onDelete: (DecryptableSiteEntry) -> Unit,
     onUpdate: (DecryptableSiteEntry) -> Unit
 ) {
+    val safeFonts = LocalSafeFonts.current
     var displayMenu by remember { mutableStateOf(false) }
     var displayDeleteDialog by remember { mutableStateOf(false) }
     var displayMoveDialog by remember { mutableStateOf(false) }
@@ -62,7 +63,7 @@ fun MatchingSiteEntry(
         ) {
             Text(
                 text = categoryEntry.plainName,
-                style = MaterialTheme.typography.bodyMedium,
+                style = safeFonts.listEntries,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
@@ -86,7 +87,7 @@ fun MatchingSiteEntry(
                                 passwordEntry.passwordChangedDate!!
                             )
                         ),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = safeFonts.smallNote,
                         modifier = Modifier.padding(8.dp)
                     )
                 }

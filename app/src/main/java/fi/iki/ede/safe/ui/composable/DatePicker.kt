@@ -10,7 +10,6 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -27,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.safe.R
+import fi.iki.ede.safe.ui.theme.LocalSafeFonts
 import java.time.Year
 import java.time.YearMonth
 import java.time.ZonedDateTime
@@ -36,6 +36,7 @@ import java.util.Locale
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DatePicker(zonedDateTime: ZonedDateTime?, onValueChange: (ZonedDateTime?) -> Unit) {
+    val safeFonts = LocalSafeFonts.current
     // Uh, there's a lot of chained events and other selective logic going on here
     // Basically simple, just select year,month,day
     // But we carry few states:
@@ -112,7 +113,7 @@ fun DatePicker(zonedDateTime: ZonedDateTime?, onValueChange: (ZonedDateTime?) ->
             modifier = Modifier.padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.displayLarge) {
+            CompositionLocalProvider(LocalTextStyle provides safeFonts.datePicker) {
                 NumberPicker(years, selectedYear, yearPagerState)
                 Text(text = "-")
                 NumberPicker(months, selectedMonth, monthPagerState)

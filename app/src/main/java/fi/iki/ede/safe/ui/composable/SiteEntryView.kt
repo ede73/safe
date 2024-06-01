@@ -13,7 +13,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -45,9 +44,8 @@ import fi.iki.ede.safe.password.PasswordGenerator
 import fi.iki.ede.safe.ui.activities.AvertInactivityDuringLongTask
 import fi.iki.ede.safe.ui.activities.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
-import fi.iki.ede.safe.ui.theme.lettersL
-import fi.iki.ede.safe.ui.theme.numbers108652
-import fi.iki.ede.safe.ui.theme.whiteSpaceL
+import fi.iki.ede.safe.ui.theme.LocalSafeColors
+import fi.iki.ede.safe.ui.theme.LocalSafeFonts
 import java.time.ZonedDateTime
 
 @Composable
@@ -59,7 +57,9 @@ fun SiteEntryView(
     val ks = KeyStoreHelperFactory.getKeyStoreHelper()
     val passEntry by viewModel.uiState.collectAsState()
 
+    val safeFonts = LocalSafeFonts.current
     val context = LocalContext.current
+    val safeColors = LocalSafeColors.current
 
     var breachCheckResult by remember { mutableStateOf(BreachCheckEnum.NOT_CHECKED) }
 
@@ -140,21 +140,21 @@ fun SiteEntryView(
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             val text = buildAnnotatedString {
                 append(stringResource(id = R.string.password_entry_highlight_hint))
-                withStyle(style = SpanStyle(background = numbers108652)) {
+                withStyle(style = SpanStyle(background = safeColors.numbers108652)) {
                     append("108652, ")
                 }
                 append(stringResource(id = R.string.password_entry_highlight_hint_l))
-                withStyle(style = SpanStyle(background = lettersL)) {
+                withStyle(style = SpanStyle(background = safeColors.lettersL)) {
                     append("L(l), ")
                 }
                 append(stringResource(id = R.string.password_entry_highlight_space))
-                withStyle(style = SpanStyle(background = whiteSpaceL)) {
+                withStyle(style = SpanStyle(background = safeColors.whiteSpaceL)) {
                     append(" ")
                 }
             }
             Text(
                 text = text,
-                style = MaterialTheme.typography.bodySmall,
+                style = safeFonts.smallNote,
             )
         }
         if (BuildConfig.ENABLE_HIBP) {
@@ -174,7 +174,7 @@ fun SiteEntryView(
                     modifier = modifier
                         .padding(horizontal = 8.dp)
                         .fillMaxWidth(),
-                    textStyle = MaterialTheme.typography.displayMedium
+                    textStyle = safeFonts.regularPassword
                 )
                 passwordWasUpdated = false
             }

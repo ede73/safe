@@ -5,40 +5,38 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.withStyle
-import fi.iki.ede.safe.ui.theme.lettersL
-import fi.iki.ede.safe.ui.theme.numbers108652
-import fi.iki.ede.safe.ui.theme.whiteSpaceL
+import fi.iki.ede.safe.ui.theme.SafeColors
 
-object HighlightPassword {
-    /**
-     * Some letters remind each other and may be difficult to recognize on a totally random string
-     *
-     * Numbers in Blue, lower cases in l (all rest are capitals)
-     *
-     * l, I, 1
-     * O, 0
-     * B, 8
-     * G, 6
-     * S, 5
-     * Z, 2
-     */
-    fun highlight(password: String): TransformedText = if (password.isBlank())
+/**
+ * Some letters remind each other and may be difficult to recognize on a totally random string
+ *
+ * Numbers in Blue, lower cases in l (all rest are capitals)
+ *
+ * l, I, 1
+ * O, 0
+ * B, 8
+ * G, 6
+ * S, 5
+ * Z, 2
+ */
+fun highlightPassword(password: String, colors: SafeColors): TransformedText =
+    if (password.isBlank())
         TransformedText(buildAnnotatedString { append("") }, OffsetMapping.Identity)
     else TransformedText(
         buildAnnotatedString {
             password.forEach {
                 when (it) {
-                    '1', '0', '8', '6', '5', '2' -> withStyle(style = SpanStyle(background = numbers108652)) {
+                    '1', '0', '8', '6', '5', '2' -> withStyle(style = SpanStyle(background = colors.numbers108652)) {
                         append(it)
                     }
 
-                    'l' -> withStyle(style = SpanStyle(background = lettersL)) {
+                    'l' -> withStyle(style = SpanStyle(background = colors.lettersL)) {
                         append(it)
                     }
 
                     else ->
                         if (it.isWhitespace())
-                            withStyle(style = SpanStyle(background = whiteSpaceL)) {
+                            withStyle(style = SpanStyle(background = colors.whiteSpaceL)) {
                                 append(it)
                             }
                         else append(it)
@@ -47,4 +45,3 @@ object HighlightPassword {
         },
         OffsetMapping.Identity
     )
-}

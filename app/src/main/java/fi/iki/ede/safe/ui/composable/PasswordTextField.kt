@@ -8,7 +8,6 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -29,7 +28,9 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.Password
-import fi.iki.ede.safe.password.HighlightPassword
+import fi.iki.ede.safe.password.highlightPassword
+import fi.iki.ede.safe.ui.theme.LocalSafeColors
+import fi.iki.ede.safe.ui.theme.LocalSafeFonts
 
 @Composable
 fun passwordTextField(
@@ -43,6 +44,8 @@ fun passwordTextField(
     updated: Boolean = false,
     textStyle: TextStyle? = null
 ): Password {
+    val safeFonts = LocalSafeFonts.current
+
     // Since the PasswordTextField 'owns' its password state, when assigned from another mutable state
     // it cannot be updated by programmatic change, this mutable should be pulled out from PasswordTextField!
     // ie. change value:String to value:Mutable OR make accessor to actually change the password! on demand
@@ -77,11 +80,8 @@ fun passwordTextField(
         singleLine = if (isExpanded.value) false else singleLine,
         maxLines = if (isExpanded.value) 10 else maxLines,
         colors = hideFocusLine,
-        textStyle = if (isExpanded.value) MaterialTheme.typography.displayMedium.copy(
-            fontSize = (MaterialTheme.typography.displayMedium.fontSize * 1.5f),
-            letterSpacing = (MaterialTheme.typography.displayMedium.letterSpacing * 1.5f),
-        ) else textStyle
-            ?: TextStyle.Default,
+        textStyle = if (isExpanded.value) safeFonts.zoomedPassword
+        else textStyle ?: safeFonts.regularPassword,
         modifier = modifier
     )
     return Password(password.toByteArray())
@@ -114,8 +114,9 @@ private fun showOrObfuscatePassword(
     isExpanded: Boolean
 ) = if (revealPassword.value || isExpanded) {
     val visualizeString = if (isExpanded) password.chunked(6).joinToString("\n") else password
+    val safeColors = LocalSafeColors.current
     VisualTransformation {
-        if (highlight) HighlightPassword.highlight(visualizeString)
+        if (highlight) highlightPassword(visualizeString, safeColors)
         else TransformedText(
             buildAnnotatedString { password },
             OffsetMapping.Identity

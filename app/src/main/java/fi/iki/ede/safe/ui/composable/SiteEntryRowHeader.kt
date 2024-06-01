@@ -5,17 +5,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import fi.iki.ede.safe.ui.theme.LocalSafeFonts
 
 /**
  * Display nice big start letter of the given header string
  */
 @Composable
 fun SiteEntryRowHeader(headerString: String) {
+    val safeFonts = LocalSafeFonts.current
     val headerStart = headerString.substring(0, 1).uppercase()
     Card(
         modifier = Modifier.padding(6.dp),
@@ -30,7 +31,7 @@ fun SiteEntryRowHeader(headerString: String) {
             Text(
                 text = headerStart,
                 modifier = Modifier.padding(16.dp),
-                style = MaterialTheme.typography.headlineMedium
+                style = safeFonts.listHeaders
             )
         }
     }

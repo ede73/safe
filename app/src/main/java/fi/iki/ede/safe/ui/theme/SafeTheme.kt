@@ -9,10 +9,12 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -38,17 +40,27 @@ private val LightColorScheme = lightColorScheme(
     onSurface = Color(0xFF1C1B1F),
     */
 )
+//internal val LocalColorScheme = staticCompositionLocalOf { lightColorScheme() }
+//internal val LocalShapes = staticCompositionLocalOf { Shapes() }
+
+object SafeTheme {
+    var colorScheme = darkColorScheme()
+}
+
+val LocalSafeFonts = staticCompositionLocalOf { SafeTheme.customFonts() }
+val LocalSafeColors = staticCompositionLocalOf { SafeTheme.customColors() }
 
 @Composable
 fun SafeTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val fonts by remember { mutableStateOf(getFonts()) }
+    val darkTheme = isSystemInDarkTheme()
+    val customFonts by remember { mutableStateOf(SafeTheme.customFonts()) }
+    val customColors by remember { mutableStateOf(SafeTheme.customColors()) }
 
-    val colorScheme = when {
+    // Dynamic color is available on Android 12+
+    val dynamicColor = true
+    SafeTheme.colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
@@ -63,7 +75,7 @@ fun SafeTheme(
         if (!isInEditMode) {
             SideEffect {
                 val window = (context as Activity).window
-                window.statusBarColor = colorScheme.primary.toArgb()
+                window.statusBarColor = SafeTheme.colorScheme.primary.toArgb()
                 WindowCompat.getInsetsController(window, this).isAppearanceLightStatusBars =
                     !darkTheme
             }
@@ -71,11 +83,13 @@ fun SafeTheme(
     }
 
     MaterialTheme(
-        colorScheme = colorScheme,
-        typography = fonts
-        //shapes = Shapes,
-//        content = content
+        colorScheme = SafeTheme.colorScheme,
+        typography = SafeTheme.typography()
     ) {
-        content()
+        CompositionLocalProvider(LocalSafeFonts provides customFonts) {
+            CompositionLocalProvider(LocalSafeColors provides customColors) {
+                content()
+            }
+        }
     }
 }

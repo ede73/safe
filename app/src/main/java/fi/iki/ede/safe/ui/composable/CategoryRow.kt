@@ -10,7 +10,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -30,6 +29,7 @@ import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.SiteEntryListScreen
 import fi.iki.ede.safe.ui.testTag
+import fi.iki.ede.safe.ui.theme.LocalSafeFonts
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -41,6 +41,7 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
     var displayDeleteCategory by remember { mutableStateOf(false) }
     var displayEditDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    val safeFonts = LocalSafeFonts.current
 
     Card(modifier = Modifier.padding(6.dp), shape = RoundedCornerShape(20.dp)) {
         Row(
@@ -63,13 +64,14 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
                     .fillMaxWidth()
                     .padding(12.dp)
                     .weight(1f)
-                    .testTag(TestTag.TEST_TAG_CATEGORY_ROW)
+                    .testTag(TestTag.TEST_TAG_CATEGORY_ROW),
+                style = safeFonts.listEntries
             )
             Spacer(modifier = Modifier.weight(1f)) // This will push the Text to the end
             Text(
                 text = "(${category.containedPasswordCount})",
                 modifier = Modifier.padding(12.dp),
-                style = MaterialTheme.typography.bodyMedium
+                style = safeFonts.smallNote
             )
         }
         DropdownMenu(

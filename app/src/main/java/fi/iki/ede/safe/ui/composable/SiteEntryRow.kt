@@ -13,7 +13,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -33,6 +32,7 @@ import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
+import fi.iki.ede.safe.ui.theme.LocalSafeFonts
 import kotlinx.coroutines.launch
 import java.time.Period
 
@@ -42,6 +42,7 @@ fun SiteEntryRow(
     passEntry: DecryptableSiteEntry,
     categoriesState: List<DecryptableCategoryEntry>,
 ) {
+    val safeFonts = LocalSafeFonts.current
     val context = LocalContext.current
     var displayMenu by remember { mutableStateOf(false) }
     var displayDeleteDialog by remember { mutableStateOf(false) }
@@ -91,7 +92,7 @@ fun SiteEntryRow(
                 Text(
                     text = getPasswordAgePlurality(DateUtils.getPeriodBetweenDates(passEntry.passwordChangedDate!!)),
                     modifier = Modifier.padding(12.dp),
-                    style = MaterialTheme.typography.bodyMedium
+                    style = safeFonts.smallNote
                 )
             }
         }
