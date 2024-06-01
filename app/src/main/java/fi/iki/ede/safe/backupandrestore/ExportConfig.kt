@@ -66,6 +66,7 @@ abstract class ExportConfig(currentCodedVersion: ExportVersion) {
 
         enum class Attributes(val value: String) {
             ROOT_PASSWORD_SAFE_VERSION("version"),
+            ROOT_PASSWORD_SAFE_CREATION_TIME("created"),
             CATEGORY_NAME("name"),
             CATEGORY_ITEM_PASSWORD_CHANGED("changed"),
             IV("iv")

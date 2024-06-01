@@ -6,6 +6,7 @@ import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.HexString
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
+import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.toHexString
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Attributes
@@ -15,6 +16,7 @@ import org.xmlpull.v1.XmlPullParserFactory
 import org.xmlpull.v1.XmlSerializer
 import java.io.StringWriter
 import java.time.ZoneOffset
+import java.time.ZonedDateTime
 
 /**
  * TODO: Add HMAC
@@ -89,6 +91,11 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
 
         serializer.startTag(Elements.ROOT_PASSWORD_SAFE)
             .attribute(Attributes.ROOT_PASSWORD_SAFE_VERSION, currentVersion.version)
+            .attribute(
+                Attributes.ROOT_PASSWORD_SAFE_CREATION_TIME, DateUtils.toUnixSeconds(
+                    ZonedDateTime.now()
+                ).toString()
+            )
 
         for (category in DataModel.getCategories()) {
             serializer.startTagWithAttribute(
