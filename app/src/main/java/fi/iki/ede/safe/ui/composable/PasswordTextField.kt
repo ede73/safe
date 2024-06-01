@@ -2,14 +2,18 @@ package fi.iki.ede.safe.ui.composable
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -18,7 +22,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.Password
@@ -43,41 +50,77 @@ fun passwordTextField(
     if (updated && value != password) {
         password = value
     }
-    var revealPassword by remember { mutableStateOf(false) }
     val hideFocusLine = TextFieldDefaults.colors(
         focusedIndicatorColor = Color.Transparent,
         unfocusedIndicatorColor = Color.Transparent,
     )
+
+    var revealPassword = remember { mutableStateOf(false) }
+    var isExpanded = remember { mutableStateOf(false) }
+
     TextField(
         value = password,
-        label = { Text(stringResource(id = textTip)) },
-        visualTransformation = if (revealPassword) {
-            if (highlight) {
-                VisualTransformation { HighlightPassword.highlight(password) }
-            } else {
-                VisualTransformation.None
-            }
-        } else {
-            PasswordVisualTransformation()
-        },
-        shape = RoundedCornerShape(20.dp),
-        trailingIcon = {
-            IconButton(onClick = { revealPassword = !revealPassword }) {
-                Icon(
-                    imageVector = if (revealPassword) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                    contentDescription = null
-                )
-            }
-        },
         onValueChange = {
             password = it
             onValueChange(it)
         },
-        singleLine = singleLine,
-        maxLines = maxLines,
+        label = { Text(stringResource(id = textTip)) },
+        visualTransformation = showOrObfuscatePassword(
+            revealPassword,
+            highlight,
+            password,
+            isExpanded.value
+        ),
+        shape = RoundedCornerShape(20.dp),
+        leadingIcon = { regularOrZoomedIcon(isExpanded) },
+        trailingIcon = { showOrHidePassword(revealPassword) },
+        singleLine = if (isExpanded.value) false else singleLine,
+        maxLines = if (isExpanded.value) 10 else maxLines,
         colors = hideFocusLine,
-        modifier = modifier,
-        textStyle = textStyle ?: TextStyle.Default,
+        textStyle = if (isExpanded.value) MaterialTheme.typography.displayMedium.copy(
+            fontSize = (MaterialTheme.typography.displayMedium.fontSize * 1.5f),
+            letterSpacing = (MaterialTheme.typography.displayMedium.letterSpacing * 1.5f),
+        ) else textStyle
+            ?: TextStyle.Default,
+        modifier = modifier
     )
     return Password(password.toByteArray())
+}
+
+@Composable
+private fun showOrHidePassword(revealPassword: MutableState<Boolean>) =
+    IconButton(onClick = { revealPassword.value = !revealPassword.value }) {
+        Icon(
+            imageVector = if (revealPassword.value) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+            contentDescription = null
+        )
+    }
+
+
+@Composable
+private fun regularOrZoomedIcon(isExpanded: MutableState<Boolean>) =
+    IconButton(onClick = { isExpanded.value = !isExpanded.value }) {
+        Icon(
+            imageVector = if (isExpanded.value) Icons.Filled.Search else Icons.Filled.SearchOff,
+            contentDescription = null
+        )
+    }
+
+@Composable
+private fun showOrObfuscatePassword(
+    revealPassword: MutableState<Boolean>,
+    highlight: Boolean,
+    password: String,
+    isExpanded: Boolean
+) = if (revealPassword.value || isExpanded) {
+    val visualizeString = if (isExpanded) password.chunked(6).joinToString("\n") else password
+    VisualTransformation {
+        if (highlight) HighlightPassword.highlight(visualizeString)
+        else TransformedText(
+            buildAnnotatedString { password },
+            OffsetMapping.Identity
+        )
+    }
+} else {
+    PasswordVisualTransformation()
 }

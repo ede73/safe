@@ -1,6 +1,5 @@
 package fi.iki.ede.safe.password
 
-import android.text.TextUtils
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.OffsetMapping
@@ -23,30 +22,29 @@ object HighlightPassword {
      * S, 5
      * Z, 2
      */
-    fun highlight(password: String): TransformedText =
-        if (TextUtils.isEmpty(password))
-            TransformedText(buildAnnotatedString { append("") }, OffsetMapping.Identity)
-        else TransformedText(
-            buildAnnotatedString {
-                password.forEach {
-                    when (it) {
-                        '1', '0', '8', '6', '5', '2' -> withStyle(style = SpanStyle(background = numbers108652)) {
-                            append(it)
-                        }
-
-                        'l' -> withStyle(style = SpanStyle(background = lettersL)) {
-                            append(it)
-                        }
-
-                        else ->
-                            if (it.isWhitespace())
-                                withStyle(style = SpanStyle(background = whiteSpaceL)) {
-                                    append(it)
-                                }
-                            else append(it)
+    fun highlight(password: String): TransformedText = if (password.isBlank())
+        TransformedText(buildAnnotatedString { append("") }, OffsetMapping.Identity)
+    else TransformedText(
+        buildAnnotatedString {
+            password.forEach {
+                when (it) {
+                    '1', '0', '8', '6', '5', '2' -> withStyle(style = SpanStyle(background = numbers108652)) {
+                        append(it)
                     }
+
+                    'l' -> withStyle(style = SpanStyle(background = lettersL)) {
+                        append(it)
+                    }
+
+                    else ->
+                        if (it.isWhitespace())
+                            withStyle(style = SpanStyle(background = whiteSpaceL)) {
+                                append(it)
+                            }
+                        else append(it)
                 }
-            },
-            OffsetMapping.Identity
-        )
+            }
+        },
+        OffsetMapping.Identity
+    )
 }
