@@ -76,6 +76,10 @@ open class LoginScreen : ComponentActivity() {
     private fun finishLoginProcess(firstTimeUse: Boolean) {
         beginToLoadDB(firstTimeUse)
 
+        // We've LOGGED IN, so we must have master key ready and done
+        // Mitigate coming from old client where first time login preference
+        // wasn't used
+        Preferences.setMasterkeyInitialized()
         setResult(RESULT_OK, Intent())
         startService(Intent(applicationContext, AutolockingService::class.java))
         if (!dontOpenCategoryListScreen) {
@@ -90,8 +94,12 @@ open class LoginScreen : ComponentActivity() {
         dontOpenCategoryListScreen = intent.getBooleanExtra(
             DONT_OPEN_CATEGORY_SCREEN_AFTER_LOGIN, false
         )
-        val firstTimeUse = Preferences.isFirstTimeLogin()
+        // "upgrade" from old versions where first time login was solely
+        // determined by existence of passwords in the database
+        // we don't really know if this is first time login or not
+        // (unless we literally DO go snooping in the database)
 
+        val firstTimeUse = Preferences.isFirstTimeLogin()
         setContent {
             SafeTheme {
                 Surface(
