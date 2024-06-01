@@ -66,6 +66,7 @@ class RestoreDatabaseScreen : AutolockingBaseComponentActivity() {
                         }
                         if (doRestore) {
                             doRestore = false
+                            // TODO: proper progress bar would be nice
                             Toast.makeText(
                                 context,
                                 stringResource(id = R.string.restore_screen_begin_restore),
