@@ -20,6 +20,10 @@
     <!-- biometrics -->
     <string name="biometrics_authenticate_subtitle">Please authenticate yourself, or click cancel and enter the password. If you cancel, biometrics will be forgotten. You can easily re-enroll.</string>
     <string name="biometrics_authenticate_title">Authentication required</string>
+    <string name="biometrics_authentication_error">ERROR: onAuthenticationError: %1$d %2$s</string>
+    <string name="biometrics_authentication_failed">ERROR: onAuthenticationFailed</string>
+    <string name="biometrics_cancel">Cancel</string>
+    <string name="biometrics_prompt_title">PasswordSafe Biometric</string>
     <string name="biometrics_register">Register biometrics after successful login</string>
     <string name="biometrics_register_subtitle">In order to bypass the password, biometrics need to be recorded. You can always cancel and fall back to password option. You can also turn off biometrics from settings later. You may be required to re-enroll biometrics periodically.</string>
     <string name="biometrics_register_title">Registering new biometrics</string>
@@ -30,6 +34,9 @@
     <string name="category_list_edit">Edit category %s</string>
     <string name="category_list_edit_category">Edit category name</string>
 
+    <!-- clipboard -->
+    <string name="clipboard_cleared">Clipboard cleared!</string>
+
     <!-- generic reusables list -->
     <string name="generic_add">Add</string>
     <string name="generic_dont_delete">Don\'t delete!</string>
@@ -38,6 +45,7 @@
 
     <!-- login -->
     <string name="login_button">Login</string>
+    <string name="login_invalid_password">Invalid password</string>
     <string name="login_password_tip">Enter your password</string>
     <string name="login_tip">Open with your password - or optionally with biometrics if you registered</string>
     <string name="login_verify_password_tip">Enter the same password again</string>
@@ -45,18 +53,29 @@
 
     <!-- notifications -->
     <string name="notification_lock_description">Notification when when password Safe is unlocked</string>
-    <string name="notification_lock_title">Automatic locking</string>
     <string name="notification_lock_logged_in">Logged in</string>
+    <string name="notification_lock_title">Automatic locking</string>
 
-    <!-- password entry -->
+    <!-- move password to new catgegory -->
+    <string name="move_password_cancel">Don\'t move</string>
+    <string name="move_password_confirm">Move!</string>
+    <string name="move_password_select_category">Select category to move to</string>
+    <string name="move_password_title">Move password to %1$s</string>
+
+    <!-- password edit(add)/view screen -->
+    <string name="password_entry_breach_check">Breach check</string>
+    <string name="password_entry_breached">This password has been breached</string>
+    <string name="password_entry_capture_photo">Take a photo</string>
     <string name="password_entry_changed_date">Password last changed:</string>
+    <string name="password_entry_delete_photo">Delete photo</string>
     <string name="password_entry_description_required">Description cannot be empty. You have to specify it (or discard changes).</string>
     <string name="password_entry_description_tip">Enter description of the entry</string>
     <string name="password_entry_discard">Discard</string>
-    <string name="password_entry_note_tip">Notes about the entry</string>
-    <string name="password_entry_breach_check">Breach check</string>
-    <string name="password_entry_breached">This password has been breached</string>
+    <string name="password_entry_highlight_hint">Special coloring for numbers </string>
+    <string name="password_entry_highlight_hint_l"> lower case </string>
+    <string name="password_entry_highlight_space">space</string>
     <string name="password_entry_not_breached">This password has NOT been breached</string>
+    <string name="password_entry_note_tip">Notes about the entry</string>
     <string name="password_entry_password_label">Copy</string>
     <string name="password_entry_password_tip">Enter password</string>
     <string name="password_entry_save">Save?</string>
@@ -65,6 +84,8 @@
     <string name="password_entry_username_tip">Enter username</string>
     <string name="password_entry_visit">Visit</string>
     <string name="password_entry_website_tip">Enter website, like https://…</string>
+
+    <!-- password list screen -->
     <string name="password_list_delete">Are you sure to delete the password %s?</string>
     <string name="password_list_delete_password">Delete password %s</string>
     <string name="password_list_move_password">Move password %s</string>
@@ -89,9 +110,20 @@
     <string name="title_activity_password_screen">PasswordScreen</string>
     <string name="title_activity_password_search_screen">Password search</string>
     <string name="title_activity_restore_screen">Restore passwords</string>
+
+    <!-- restore screen -->
     <string name="restore_screen_backup_help">You need the password of the backup in order to restore it.\nBackup file %s</string>
     <string name="restore_screen_backups_password">Enter backup\'s password</string>
+    <string name="restore_screen_begin_restore">Begin restoration, please wait</string>
+    <string name="restore_screen_restore_failed">Restoration failed</string>
+    <string name="restore_screen_restored">Restoration complete: %1$d</string>
 
+    <!-- search screen -->
+    <string name="password_search_notes">+Notes</string>
+    <string name="password_search_passwords">+Passwords</string>
+    <string name="password_search_search_hint">Find from descriptions</string>
+    <string name="password_search_usernames">+Usernames</string>
+    <string name="password_search_websites">+Websites</string>
 
     <!-- preferences -->
     <plurals name="preference_locktime">
@@ -101,41 +133,19 @@
         <item quantity="few">%d minutes</item>
         <item quantity="other">%d minutes</item>
     </plurals>
+
     <string name="preferences_automatic_locking_selection_title">Choose automatic locking timeout</string>
+    <string name="preferences_clipboard_clear_delay_title">Clipboard clearing timeout</string>
+    <string name="preferences_summary_automatic_locking_timeout">After chosen amount of minutes, password safe will lock and require logging in again</string>
+    <string name="preferences_summary_clipboard_clear_delay">Delay in seconds after which clipboard is cleared</string>
+    <string name="preferences_summary_default_user_name">Default username when adding a new password. Completely optional, typically your email address.</string>
     <string name="preferences_summary_enable_biometrics">Instead of password you can login with biometrics. Password fallback always available. Android will take care of actual biometric authenticatin. Password safe only receives information whether it succeeded or not. Even when enabled you may have to occasionally re-enroll for added security.</string>
     <string name="preferences_summary_lock_when_screen_locks">When android screen lock turns on, password safe will automatically lock</string>
-    <string name="preferences_summary_automatic_locking_timeout">After chosen amount of minutes, password safe will lock and require logging in again</string>
+    <string name="preferences_title">Settings</string>
+    <string name="preferences_title_automatic_locking_timeout">Automatic locking timeout</string>
+    <string name="preferences_title_clipboard_clear_delay">Clipboard clearing delay</string>
     <string name="preferences_title_default_backup_path">Default backup path</string>
+    <string name="preferences_title_default_user_name">Default username</string>
     <string name="preferences_title_enable_biometrics">Enable biometric identification</string>
     <string name="preferences_title_lock_when_screen_locks">Lock when screen locks</string>
-    <string name="preferences_title_automatic_locking_timeout">Automatic locking timeout</string>
-    <string name="preferences_title">Settings</string>
-    <string name="password_entry_capture_photo">Take a photo</string>
-    <string name="password_entry_delete_photo">Delete photo</string>
-    <string name="password_search_websites">+Websites</string>
-    <string name="password_search_usernames">+Usernames</string>
-    <string name="password_search_passwords">+Passwords</string>
-    <string name="password_search_notes">+Notes</string>
-    <string name="password_search_search_hint">Find from descriptions</string>
-    <string name="restore_screen_begin_restore">Begin restoration, please wait</string>
-    <string name="restore_screen_restore_failed">Restoration failed</string>
-    <string name="restore_screen_restored">Restoration complete: %1$d</string>
-    <string name="clipboard_cleared">Clipboard cleared!</string>
-    <string name="move_password_cancel">Don\'t move</string>
-    <string name="move_password_confirm">Move!</string>
-    <string name="move_password_select_category">Select category to move to</string>
-    <string name="move_password_title">Move password to %1$s</string>
-    <string name="login_invalid_password">Invalid password</string>
-    <string name="biometrics_prompt_title">PasswordSafe Biometric</string>
-    <string name="biometrics_cancel">Cancel</string>
-    <string name="biometrics_authentication_error">ERROR: onAuthenticationError: %1$d %2$s</string>
-    <string name="biometrics_authentication_failed">ERROR: onAuthenticationFailed</string>
-    <string name="password_entry_highlight_hint">Special coloring for numbers </string>
-    <string name="password_entry_highlight_hint_l"> lower case </string>
-    <string name="preferences_summary_default_user_name">Default username when adding a new password. Completely optional, typically your email address.</string>
-    <string name="preferences_title_default_user_name">Default username</string>
-    <string name="preferences_clipboard_clear_delay_title">Clipboard clearing timeout</string>
-    <string name="preferences_title_clipboard_clear_delay">Clipboard clearing delay</string>
-    <string name="preferences_summary_clipboard_clear_delay">Delay in seconds after which clipboard is cleared</string>
-    <string name="password_entry_highlight_space">space</string>
 </resources>
