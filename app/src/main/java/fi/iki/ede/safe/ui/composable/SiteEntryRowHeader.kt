@@ -9,15 +9,16 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.safe.ui.theme.LocalSafeFonts
+import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 
 /**
  * Display nice big start letter of the given header string
  */
 @Composable
 fun SiteEntryRowHeader(headerString: String) {
-    val safeFonts = LocalSafeFonts.current
     val headerStart = headerString.substring(0, 1).uppercase()
+    val safeTheme = LocalSafeTheme.current
+
     Card(
         modifier = Modifier.padding(6.dp),
         shape = RoundedCornerShape(20.dp)
@@ -31,7 +32,7 @@ fun SiteEntryRowHeader(headerString: String) {
             Text(
                 text = headerStart,
                 modifier = Modifier.padding(16.dp),
-                style = safeFonts.listHeaders
+                style = safeTheme.customFonts.listHeaders
             )
         }
     }

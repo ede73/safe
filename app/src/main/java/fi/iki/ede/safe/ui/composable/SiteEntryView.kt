@@ -45,8 +45,7 @@ import fi.iki.ede.safe.password.PasswordGenerator
 import fi.iki.ede.safe.ui.activities.AvertInactivityDuringLongTask
 import fi.iki.ede.safe.ui.activities.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
-import fi.iki.ede.safe.ui.theme.LocalSafeColors
-import fi.iki.ede.safe.ui.theme.LocalSafeFonts
+import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import java.time.ZonedDateTime
 
 @Composable
@@ -54,22 +53,19 @@ fun SiteEntryView(
     viewModel: EditingSiteEntryViewModel,
     modifier: Modifier = Modifier
 ) {
-    val passwordLength = integerResource(id = R.integer.password_default_length)
-    val ks = KeyStoreHelperFactory.getKeyStoreHelper()
-    val passEntry by viewModel.uiState.collectAsState()
-
-    val safeFonts = LocalSafeFonts.current
     val context = LocalContext.current
-    val safeColors = LocalSafeColors.current
-
-    var breachCheckResult by remember { mutableStateOf(BreachCheckEnum.NOT_CHECKED) }
-
-    val padding = Modifier.padding(6.dp)
     val hideFocusLine = TextFieldDefaults.colors(
         focusedIndicatorColor = Color.Transparent,
         unfocusedIndicatorColor = Color.Transparent,
     )
+    val ks = KeyStoreHelperFactory.getKeyStoreHelper()
+    val padding = Modifier.padding(6.dp)
+    val passEntry by viewModel.uiState.collectAsState()
+    val passwordLength = integerResource(id = R.integer.password_default_length)
+    val safeTheme = LocalSafeTheme.current
+    var breachCheckResult by remember { mutableStateOf(BreachCheckEnum.NOT_CHECKED) }
     var passwordWasUpdated by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier.verticalScroll(rememberScrollState())
     ) {
@@ -141,21 +137,21 @@ fun SiteEntryView(
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             val text = buildAnnotatedString {
                 append(stringResource(id = R.string.password_entry_highlight_hint))
-                withStyle(style = SpanStyle(background = safeColors.numbers108652)) {
+                withStyle(style = SpanStyle(background = safeTheme.customColors.numbers108652)) {
                     append("108652, ")
                 }
                 append(stringResource(id = R.string.password_entry_highlight_hint_l))
-                withStyle(style = SpanStyle(background = safeColors.lettersL)) {
+                withStyle(style = SpanStyle(background = safeTheme.customColors.lettersL)) {
                     append("L(l), ")
                 }
                 append(stringResource(id = R.string.password_entry_highlight_space))
-                withStyle(style = SpanStyle(background = safeColors.whiteSpaceL)) {
+                withStyle(style = SpanStyle(background = safeTheme.customColors.whiteSpaceL)) {
                     append(" ")
                 }
             }
             Text(
                 text = text,
-                style = safeFonts.smallNote,
+                style = safeTheme.customFonts.smallNote,
             )
         }
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
@@ -175,7 +171,7 @@ fun SiteEntryView(
                 modifier = modifier
                     .padding(horizontal = 8.dp)
                     .fillMaxWidth(),
-                textStyle = safeFonts.regularPassword
+                textStyle = safeTheme.customFonts.regularPassword
             )
             passwordWasUpdated = false
         }
@@ -238,16 +234,13 @@ fun SiteEntryView(
 private fun tryParseUri(website: String): Uri =
     if (website.lowercase().startsWith("http://") ||
         website.lowercase().startsWith("https://")
-    ) {
-        Uri.parse(website)
-    } else {
-        Uri.parse("https://$website")
-    }
+    ) Uri.parse(website)
+    else Uri.parse("https://$website")
+
 
 private fun Password.encrypt(ks: KeyStoreHelper) = ks.encryptByteArray(this.password)
 private fun String.encrypt(ks: KeyStoreHelper) = ks.encryptByteArray(this.trim().toByteArray())
-private fun IVCipherText.decrypt(ks: KeyStoreHelper) =
-    String(ks.decryptByteArray(this))
+private fun IVCipherText.decrypt(ks: KeyStoreHelper) = String(ks.decryptByteArray(this))
 
 enum class BreachCheckEnum {
     NOT_CHECKED, BREACHED, NOT_BREACHED

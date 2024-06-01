@@ -47,8 +47,13 @@ object SafeTheme {
     var colorScheme = darkColorScheme()
 }
 
-val LocalSafeFonts = staticCompositionLocalOf { SafeTheme.customFonts() }
-val LocalSafeColors = staticCompositionLocalOf { SafeTheme.customColors() }
+data class SafeThemeData(
+    val customFonts: SafeFonts,
+    val customColors: SafeColors
+)
+
+val LocalSafeTheme =
+    staticCompositionLocalOf { SafeThemeData(SafeTheme.customFonts(), SafeTheme.customColors()) }
 
 @Composable
 fun SafeTheme(
@@ -86,10 +91,12 @@ fun SafeTheme(
         colorScheme = SafeTheme.colorScheme,
         typography = SafeTheme.typography()
     ) {
-        CompositionLocalProvider(LocalSafeFonts provides customFonts) {
-            CompositionLocalProvider(LocalSafeColors provides customColors) {
-                content()
-            }
+        CompositionLocalProvider(
+            LocalSafeTheme provides SafeThemeData(
+                customFonts, customColors
+            )
+        ) {
+            content()
         }
     }
 }

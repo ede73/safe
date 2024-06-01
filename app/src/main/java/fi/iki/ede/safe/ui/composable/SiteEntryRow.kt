@@ -32,7 +32,7 @@ import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
-import fi.iki.ede.safe.ui.theme.LocalSafeFonts
+import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import kotlinx.coroutines.launch
 import java.time.Period
 
@@ -42,12 +42,12 @@ fun SiteEntryRow(
     passEntry: DecryptableSiteEntry,
     categoriesState: List<DecryptableCategoryEntry>,
 ) {
-    val safeFonts = LocalSafeFonts.current
     val context = LocalContext.current
-    var displayMenu by remember { mutableStateOf(false) }
-    var displayDeleteDialog by remember { mutableStateOf(false) }
-    var displayMoveDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    val safeTheme = LocalSafeTheme.current
+    var displayDeleteDialog by remember { mutableStateOf(false) }
+    var displayMenu by remember { mutableStateOf(false) }
+    var displayMoveDialog by remember { mutableStateOf(false) }
 
     val editCompleted = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult(),
@@ -92,7 +92,7 @@ fun SiteEntryRow(
                 Text(
                     text = getPasswordAgePlurality(DateUtils.getPeriodBetweenDates(passEntry.passwordChangedDate!!)),
                     modifier = Modifier.padding(12.dp),
-                    style = safeFonts.smallNote
+                    style = safeTheme.customFonts.smallNote
                 )
             }
         }

@@ -30,7 +30,7 @@ import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DataModel.getCategory
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
-import fi.iki.ede.safe.ui.theme.LocalSafeFonts
+import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import kotlinx.coroutines.launch
 
 // TODO: THIS! Should have MUCH more common with PasswordRow!
@@ -43,11 +43,12 @@ fun MatchingSiteEntry(
     onDelete: (DecryptableSiteEntry) -> Unit,
     onUpdate: (DecryptableSiteEntry) -> Unit
 ) {
-    val safeFonts = LocalSafeFonts.current
-    var displayMenu by remember { mutableStateOf(false) }
-    var displayDeleteDialog by remember { mutableStateOf(false) }
-    var displayMoveDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    val safeTheme = LocalSafeTheme.current
+    var displayDeleteDialog by remember { mutableStateOf(false) }
+    var displayMenu by remember { mutableStateOf(false) }
+    var displayMoveDialog by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .combinedClickable(onClick = { onEntryClick(passwordEntry) }, onLongClick = {
@@ -63,7 +64,7 @@ fun MatchingSiteEntry(
         ) {
             Text(
                 text = categoryEntry.plainName,
-                style = safeFonts.listEntries,
+                style = safeTheme.customFonts.listEntries,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
@@ -87,7 +88,7 @@ fun MatchingSiteEntry(
                                 passwordEntry.passwordChangedDate!!
                             )
                         ),
-                        style = safeFonts.smallNote,
+                        style = safeTheme.customFonts.smallNote,
                         modifier = Modifier.padding(8.dp)
                     )
                 }

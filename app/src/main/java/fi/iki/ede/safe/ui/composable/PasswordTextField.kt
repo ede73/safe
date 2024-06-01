@@ -31,8 +31,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.safe.password.highlightPassword
-import fi.iki.ede.safe.ui.theme.LocalSafeColors
-import fi.iki.ede.safe.ui.theme.LocalSafeFonts
+import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 
 @Composable
 fun passwordTextField(
@@ -46,16 +45,15 @@ fun passwordTextField(
     textStyle: TextStyle? = null,
     enableZoom: Boolean = false
 ) {
-    val safeFonts = LocalSafeFonts.current
-    val splitAt = 6
-    var password by remember { mutableStateOf(TextFieldValue(text = inputValue)) }
     val hideFocusLine = TextFieldDefaults.colors(
         focusedIndicatorColor = Color.Transparent,
         unfocusedIndicatorColor = Color.Transparent,
     )
-
-    var revealPassword = remember { mutableStateOf(false) }
     var isPasswordZoomed = remember { mutableStateOf(false) }
+    val safeTheme = LocalSafeTheme.current
+    val splitAt = 6
+    var password by remember { mutableStateOf(TextFieldValue(text = inputValue)) }
+    var revealPassword = remember { mutableStateOf(false) }
 
     TextField(
         value = password,
@@ -110,8 +108,8 @@ fun passwordTextField(
         singleLine = if (isPasswordZoomed.value) false else singleLine,
         maxLines = if (isPasswordZoomed.value) 10 else maxLines,
         colors = hideFocusLine,
-        textStyle = if (isPasswordZoomed.value) safeFonts.zoomedPassword
-        else textStyle ?: safeFonts.regularPassword,
+        textStyle = if (isPasswordZoomed.value) safeTheme.customFonts.zoomedPassword
+        else textStyle ?: safeTheme.customFonts.regularPassword,
         modifier = modifier
 //        modifier = modifier.let {
 //            if (isExpanded.value) modifier
@@ -151,10 +149,10 @@ private fun showOrObfuscatePassword(
     password: TextFieldValue,
     isExpanded: Boolean
 ) = if (revealPassword.value || isExpanded) {
-    val safeColors = LocalSafeColors.current
+    val safeTheme = LocalSafeTheme.current
     VisualTransformation {
         if (highlight)
-            highlightPassword(password.text, safeColors)
+            highlightPassword(password.text, safeTheme.customColors)
         else TransformedText(
             buildAnnotatedString { append(password.text) },
             OffsetMapping.Identity

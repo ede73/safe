@@ -29,7 +29,7 @@ import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.SiteEntryListScreen
 import fi.iki.ede.safe.ui.testTag
-import fi.iki.ede.safe.ui.theme.LocalSafeFonts
+import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -37,11 +37,11 @@ import kotlinx.coroutines.runBlocking
 @Composable
 fun CategoryRow(category: DecryptableCategoryEntry) {
     val context = LocalContext.current
-    var displayMenu by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+    val safeTheme = LocalSafeTheme.current
     var displayDeleteCategory by remember { mutableStateOf(false) }
     var displayEditDialog by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
-    val safeFonts = LocalSafeFonts.current
+    var displayMenu by remember { mutableStateOf(false) }
 
     Card(modifier = Modifier.padding(6.dp), shape = RoundedCornerShape(20.dp)) {
         Row(
@@ -64,13 +64,13 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
                     .padding(12.dp)
                     .weight(2f)
                     .testTag(TestTag.TEST_TAG_CATEGORY_ROW),
-                style = safeFonts.listEntries
+                style = safeTheme.customFonts.listEntries
             )
             Spacer(modifier = Modifier.weight(1f)) // This will push the Text to the end
             Text(
                 text = "(${category.containedPasswordCount})",
                 modifier = Modifier.padding(12.dp),
-                style = safeFonts.smallNote,
+                style = safeTheme.customFonts.smallNote,
             )
         }
         DropdownMenu(

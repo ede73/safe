@@ -62,7 +62,7 @@ internal fun SafeTheme.typography() = Typography(
     // Dialog texts
     bodyLarge = TextStyle(
         fontFamily = FontFamily.Default,
-        fontSize = 16.sp,
+        fontSize = 16.sp
     ),
     // Use at site entry list headers
     headlineMedium = customFonts().listHeaders,
