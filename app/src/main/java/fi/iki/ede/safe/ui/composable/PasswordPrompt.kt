@@ -8,6 +8,10 @@ import androidx.compose.material.icons.filled.Password
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.integerResource
@@ -32,17 +36,21 @@ fun PasswordPrompt(
             Text(text = stringResource(id = R.string.application_name))
         }
         Text(text = stringResource(id = R.string.login_tip))
-        val password = verifiedPasswordTextField(
+        var verifiedPassword: Password by remember { mutableStateOf(Password.getEmpty()) }
+        verifiedPasswordTextField(
             firstTimeInitialize,
             R.string.login_password_tip,
             R.string.login_verify_password_tip,
+            onMatchingPasswords = {
+                verifiedPassword = it
+            },
             modifier.testTag(TestTag.TEST_TAG_PASSWORD_PROMPT)
         )
 
         Button(
-            enabled = if (firstTimeInitialize) password != null && password.length >= passwordMinimumLength else !(password == null || password.isEmpty()),
+            enabled = if (firstTimeInitialize) verifiedPassword != null && verifiedPassword.length >= passwordMinimumLength else !(verifiedPassword == null || verifiedPassword.isEmpty()),
             onClick = {
-                goodPasswordEntered(password!!)
+                goodPasswordEntered(verifiedPassword)
             },
             modifier = Modifier.testTag(TestTag.TEST_TAG_LOGIN_BUTTON)
         ) { Text(stringResource(id = R.string.login_button)) }

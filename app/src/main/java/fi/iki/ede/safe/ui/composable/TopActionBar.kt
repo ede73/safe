@@ -301,12 +301,18 @@ private fun EnterNewPassword(
         onDismissRequest = { onNewPassword(Pair(Password.getEmpty(), Password.getEmpty())) },
         content = {
             Column {
-                oldPassword = passwordTextField(textTip = R.string.action_bar_old_password)
-                newPassword = verifiedPasswordTextField(
+                var oldPassword by remember { mutableStateOf(Password.getEmpty()) }
+                var newPassword by remember { mutableStateOf(Password.getEmpty()) }
+                passwordTextField(textTip = R.string.action_bar_old_password,
+                    onValueChange = { oldPassword = it })
+                verifiedPasswordTextField(
                     true,
                     R.string.login_password_tip,
-                    R.string.login_verify_password_tip
-                ) ?: Password.getEmpty()
+                    R.string.login_verify_password_tip,
+                    onMatchingPasswords = {
+                        oldPassword = it
+                    },
+                )
                 Button(
                     enabled = !newPassword.isEmpty() &&
                             newPassword != oldPassword &&

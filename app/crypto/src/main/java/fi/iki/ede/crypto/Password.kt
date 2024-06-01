@@ -8,7 +8,7 @@ open class Password(open val password: ByteArray) : DisallowedFunctions() {
         }
 
     // In java at least it's impossible to 'delete' a string from heap reliably
-    // And for char/byte array, end result is unpredicable even after GC
+    // And for char/byte array, end result is unpredictable even after GC
     // Since kotlin is just java, I assume the same, so
     // as soon as we don't need the password anymore, make sure it's can't be memory dumped
     fun finalize() {

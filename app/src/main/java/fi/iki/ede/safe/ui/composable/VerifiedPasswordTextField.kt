@@ -2,7 +2,10 @@ package fi.iki.ede.safe.ui.composable
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -17,8 +20,9 @@ fun verifiedPasswordTextField(
     showVerification: Boolean,
     textTip: Int,
     verifyPassword: Int,
+    onMatchingPasswords: (Password) -> Unit = {},
     modifier: Modifier = Modifier
-): Password? {
+) {
     // Initial focus on first pwd field..
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
@@ -27,15 +31,23 @@ fun verifiedPasswordTextField(
         }
     }
 
-    val firstPassword = passwordTextField(
+    var firstPassword by remember { mutableStateOf(Password.getEmpty()) }
+    passwordTextField(
         textTip = textTip,
+        onValueChange = { firstPassword = it },
         modifier = modifier.focusRequester(focusRequester)
     )
+    var secondPassword by remember { mutableStateOf(Password.getEmpty()) }
     if (showVerification) {
-        val secondPassword = passwordTextField(textTip = verifyPassword, modifier = modifier)
-        if (firstPassword != secondPassword) {
-            return null
+        passwordTextField(
+            textTip = verifyPassword,
+            onValueChange = { secondPassword = it },
+            modifier = modifier
+        )
+        if (firstPassword == secondPassword) {
+            onMatchingPasswords(firstPassword)
         }
+    } else {
+        onMatchingPasswords(firstPassword)
     }
-    return firstPassword
 }

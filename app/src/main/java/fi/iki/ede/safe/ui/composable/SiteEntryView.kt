@@ -33,6 +33,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.IVCipherText
+import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.hibp.BreachCheck
@@ -127,7 +128,7 @@ fun SiteEntryView(
             Spacer(Modifier.weight(1f))
             passwordTextField(
                 textTip = R.string.password_entry_username_tip,
-                value = passEntry.username.decrypt(ks),
+                inputValue = passEntry.username.decrypt(ks),
                 onValueChange = {
                     viewModel.updateUsername(it.encrypt(ks))
                 },
@@ -157,27 +158,28 @@ fun SiteEntryView(
                 style = safeFonts.smallNote,
             )
         }
+        Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
+            Button(onClick = {
+                ClipboardUtils.addToClipboard(context, passEntry.password.decrypt(ks))
+            }) { Text(stringResource(id = R.string.password_entry_password_label)) }
+            Spacer(Modifier.weight(1f))
+            passwordTextField(
+                textTip = R.string.password_entry_password_tip,
+                inputValue = passEntry.password.decrypt(ks),
+                //updated = passwordWasUpdated,
+                onValueChange = {
+                    viewModel.updatePassword(it.encrypt(ks))
+                    breachCheckResult = BreachCheckEnum.NOT_CHECKED
+                },
+                enableZoom = true,
+                modifier = modifier
+                    .padding(horizontal = 8.dp)
+                    .fillMaxWidth(),
+                textStyle = safeFonts.regularPassword
+            )
+            passwordWasUpdated = false
+        }
         if (BuildConfig.ENABLE_HIBP) {
-            Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
-                Button(onClick = {
-                    ClipboardUtils.addToClipboard(context, passEntry.password.decrypt(ks))
-                }) { Text(stringResource(id = R.string.password_entry_password_label)) }
-                Spacer(Modifier.weight(1f))
-                passwordTextField(
-                    textTip = R.string.password_entry_password_tip,
-                    value = passEntry.password.decrypt(ks),
-                    updated = passwordWasUpdated,
-                    onValueChange = {
-                        viewModel.updatePassword(it.encrypt(ks))
-                        breachCheckResult = BreachCheckEnum.NOT_CHECKED
-                    },
-                    modifier = modifier
-                        .padding(horizontal = 8.dp)
-                        .fillMaxWidth(),
-                    textStyle = safeFonts.regularPassword
-                )
-                passwordWasUpdated = false
-            }
             Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
                 if (breachCheckResult == BreachCheckEnum.NOT_CHECKED) {
                     Button(onClick = {
@@ -211,7 +213,7 @@ fun SiteEntryView(
         }
         passwordTextField(
             textTip = R.string.password_entry_note_tip,
-            value = passEntry.note.decrypt(ks),
+            inputValue = passEntry.note.decrypt(ks),
             onValueChange = {
                 viewModel.updateNote(it.encrypt(ks))
             },
@@ -242,6 +244,7 @@ private fun tryParseUri(website: String): Uri =
         Uri.parse("https://$website")
     }
 
+private fun Password.encrypt(ks: KeyStoreHelper) = ks.encryptByteArray(this.password)
 private fun String.encrypt(ks: KeyStoreHelper) = ks.encryptByteArray(this.trim().toByteArray())
 private fun IVCipherText.decrypt(ks: KeyStoreHelper) =
     String(ks.decryptByteArray(this))

@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import fi.iki.ede.crypto.Password
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.Preferences
@@ -51,8 +52,11 @@ class RestoreDatabaseScreen : AutolockingBaseComponentActivity() {
                                 selectedDoc.toString()
                             )
                         )
-                        val backupPassword =
-                            passwordTextField(textTip = R.string.restore_screen_backups_password)
+                        var backupPassword by remember { mutableStateOf(Password.getEmpty()) }
+                        passwordTextField(textTip = R.string.restore_screen_backups_password,
+                            onValueChange = {
+                                backupPassword = it
+                            })
                         Button(onClick = {
                             doRestore = true
                             // Disable the button? Progress?
