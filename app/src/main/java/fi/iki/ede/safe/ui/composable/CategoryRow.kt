@@ -45,16 +45,15 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
 
     Card(modifier = Modifier.padding(6.dp), shape = RoundedCornerShape(20.dp)) {
         Row(
-            modifier = Modifier
-                .combinedClickable(
-                    onClick = {
-                        SiteEntryListScreen.startMe(context, category.id!!)
-                    },
-                    onLongClick = {
-                        // Creating a dropdown menu
-                        displayMenu = true
-                    }
-                )
+            modifier = Modifier.combinedClickable(
+                onClick = {
+                    SiteEntryListScreen.startMe(context, category.id!!)
+                },
+                onLongClick = {
+                    // Creating a dropdown menu
+                    displayMenu = true
+                }
+            )
         ) {
             Text(
                 text = "${category.plainName}",
@@ -63,7 +62,7 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(12.dp)
-                    .weight(1f)
+                    .weight(2f)
                     .testTag(TestTag.TEST_TAG_CATEGORY_ROW),
                 style = safeFonts.listEntries
             )
@@ -71,7 +70,7 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
             Text(
                 text = "(${category.containedPasswordCount})",
                 modifier = Modifier.padding(12.dp),
-                style = safeFonts.smallNote
+                style = safeFonts.smallNote,
             )
         }
         DropdownMenu(
@@ -83,8 +82,7 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
                     text = {
                         Text(
                             text = stringResource(
-                                id = R.string.category_list_delete,
-                                category.plainName
+                                id = R.string.category_list_delete, category.plainName
                             )
                         )
                     },
@@ -98,10 +96,7 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
             DropdownMenuItem(
                 text = {
                     Text(
-                        text = stringResource(
-                            id = R.string.category_list_edit,
-                            category.plainName
-                        )
+                        text = stringResource(id = R.string.category_list_edit, category.plainName)
                     )
                 },
                 onClick = {

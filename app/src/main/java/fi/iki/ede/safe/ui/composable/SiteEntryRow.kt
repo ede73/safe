@@ -83,7 +83,7 @@ fun SiteEntryRow(
                 // Move to bounding box (up)
                 modifier = Modifier
                     .padding(12.dp)
-                    .weight(1f)
+                    .weight(2f)
             )
 
             if (passEntry.passwordChangedDate != null) {

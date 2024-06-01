@@ -76,7 +76,7 @@ fun MatchingSiteEntry(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
                         .padding(8.dp)
-                        .weight(1f)
+                        .weight(2f)
                         .testTag(TestTag.TEST_TAG_SEARCH_MATCH)
                 )
                 if (passwordEntry.passwordChangedDate != null) {
