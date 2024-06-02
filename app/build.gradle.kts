@@ -127,20 +127,25 @@ dependencies {
 }
 
 tasks.configureEach {
-    if (name == "bundleRelease") {
-        dependsOn("testReleaseUnitTest")
-        // There are no instrumented release tests
-    }
-    if (name == "assembleDebug") {
-        // UNIT TESTS
-        dependsOn("testDebugUnitTest")
-        // INSTRUMENTED TESTS, takes long time
-        //task.dependsOn("connectedAndroidTest")
-    }
-    if (name == "assembleRelease") {
-        // UNIT TESTS
-        dependsOn("testReleaseUnitTest")
-        // TODO:
+    // When ever doing release(Generate Signed App Bundle), run also all the tests...
+    when (name) {
+        "bundleRelease" -> {
+            dependsOn("testReleaseUnitTest")
+            //dependsOn("connectedAndroidTest")
+        }
+
+        "assembleDebug" -> {
+            // UNIT TESTS
+            dependsOn("testDebugUnitTest")
+            // INSTRUMENTED TESTS, takes long time
+            //task.dependsOn("connectedAndroidTest")
+        }
+
+//        "assembleRelease" -> {
+//            // UNIT TESTS
+//            dependsOn("testReleaseUnitTest")
+//            dependsOn("connectedAndroidTest")
+//        }
     }
 }
 
