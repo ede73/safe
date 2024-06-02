@@ -7,7 +7,8 @@ import com.android.volley.toolbox.Volley
 
 // TODO: make shared
 fun throwIfFeatureNotEnabled(feature: Boolean) {
-    throw Exception("Feature not enabled")
+    if (!feature)
+        throw Exception("Feature not enabled")
 }
 
 class BreachCheck {
