@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Environment
 import androidx.preference.PreferenceManager
+import fi.iki.ede.crypto.date.DateUtils
+import java.time.ZonedDateTime
 
 object Preferences {
     lateinit var sharedPreferences: SharedPreferences
@@ -13,7 +15,7 @@ object Preferences {
             PreferenceManager.getDefaultSharedPreferences(context.applicationContext)
     }
 
-    // only used as accessors in SharedPrerefencesChange
+    // only used as accessors in SharedPreferencesChange
     const val PASSWORDSAFE_EXPORT_FILE = "passwordsafe.xml"
 
     // See ExportConfig for woes
@@ -36,6 +38,7 @@ object Preferences {
     private const val PREFERENCE_LOCK_TIMEOUT_DEFAULT_VALUE = "5"
     private const val PREFERENCE_CLIPBOARD_CLEAR_DELAY_DEFAULT_VALUE = "45"
     private const val PREFERENCE_MASTERKEY_INITIALIZED = "masterkey_initialized"
+    const val PREFERENCE_LAST_BACKUP_TIME = "time_of_last_backup"
 
     fun getBackupDocument() = if (SUPPORT_EXPORT_LOCATION_MEMORY) {
         sharedPreferences
@@ -80,4 +83,14 @@ object Preferences {
 
     fun setMasterkeyInitialized() =
         sharedPreferences.edit().putBoolean(PREFERENCE_MASTERKEY_INITIALIZED, true).apply()
+
+    fun getLastBackupTime() = sharedPreferences.getLong(PREFERENCE_LAST_BACKUP_TIME, 0)
+        .takeIf { it != 0L }
+        ?.let { DateUtils.unixEpochSecondsToLocalZonedDateTime(it) }
+
+    fun setLastBackupTime() = sharedPreferences.edit().putLong(
+        PREFERENCE_LAST_BACKUP_TIME, DateUtils.toUnixSeconds(
+            ZonedDateTime.now()
+        )
+    ).apply()
 }

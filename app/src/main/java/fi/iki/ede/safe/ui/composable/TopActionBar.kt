@@ -42,13 +42,14 @@ import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.BackupDatabase
 import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.db.DBHelperFactory
+import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.AutolockingBaseComponentActivity
 import fi.iki.ede.safe.ui.activities.HelpScreen
 import fi.iki.ede.safe.ui.activities.LoginScreen
 import fi.iki.ede.safe.ui.activities.PreferenceActivity
-import fi.iki.ede.safe.ui.activities.RestoreDatabaseScreen
+import fi.iki.ede.safe.ui.activities.PrepareDataBaseRestorationScreen
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
 import fi.iki.ede.safe.ui.activities.throwIfFeatureNotEnabled
 import fi.iki.ede.safe.ui.testTag
@@ -102,7 +103,7 @@ fun TopActionBar(
             when (it.resultCode) {
                 Activity.RESULT_OK -> {
                     restoreCompleted.launch(
-                        RestoreDatabaseScreen.getIntent(context, false, it.data!!.data!!)
+                        PrepareDataBaseRestorationScreen.getIntent(context, false, it.data!!.data!!)
                     )
                 }
             }
@@ -115,7 +116,7 @@ fun TopActionBar(
                 Activity.RESULT_OK -> {
                     throwIfFeatureNotEnabled(BuildConfig.ENABLE_OIIMPORT)
                     restoreCompleted.launch(
-                        RestoreDatabaseScreen.getIntent(context, true, it.data!!.data!!)
+                        PrepareDataBaseRestorationScreen.getIntent(context, true, it.data!!.data!!)
                     )
                 }
             }
@@ -131,7 +132,10 @@ fun TopActionBar(
                 Activity.RESULT_OK -> {
                     if (it.data?.data != null) {
                         coroutineScope.launch {
-                            withContext(Dispatchers.IO) { backup(context, it) }
+                            withContext(Dispatchers.IO) {
+                                backup(context, it)
+                                Preferences.setLastBackupTime()
+                            }
                         }
                     }
                 }

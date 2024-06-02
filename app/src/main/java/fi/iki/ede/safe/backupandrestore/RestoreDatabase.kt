@@ -20,10 +20,13 @@ import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Attributes
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Elements
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.model.LoginHandler
+import fi.iki.ede.safe.model.Preferences
+import kotlinx.coroutines.CancellationException
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 import java.io.ByteArrayInputStream
 import java.io.StringReader
+import java.time.ZonedDateTime
 import java.time.format.DateTimeParseException
 
 class RestoreDatabase : ExportConfig(ExportVersion.V1) {
@@ -56,7 +59,8 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         context: Context,
         backup: String,
         userPassword: Password,
-        dbHelper: DBHelper
+        dbHelper: DBHelper,
+        verifyOldBackupRestoration: (backupCreated: ZonedDateTime, lastBackupDone: ZonedDateTime) -> Boolean
     ): Int {
         val myParser = XmlPullParserFactory.newInstance().newPullParser()
 
@@ -75,7 +79,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                 null
             )
 
-            val passwords = parseXML(dbHelper, db, myParser)
+            val passwords = parseXML(dbHelper, db, myParser, verifyOldBackupRestoration)
             LoginHandler.passwordLogin(context, userPassword)
             return passwords
         } catch (ex: Exception) {
@@ -116,6 +120,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         dbHelper: DBHelper,
         db: SQLiteDatabase,
         myParser: XmlPullParser,
+        verifyOldBackupRestoration: (backupCreated: ZonedDateTime, lastBackupDone: ZonedDateTime) -> Boolean,
     ): Int {
         fun XmlPullParser.getEncryptedAttribute(name: Attributes): IVCipherText {
             val iv = getTrimmedAttributeValue(name, ATTRIBUTE_PREFIX_IV)
@@ -164,6 +169,25 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                     ExportVersion.V1 -> {
                                         // current version - currently
                                     }
+                                }
+                            }
+                            val creationTime = myParser.getTrimmedAttributeValue(
+                                Attributes.ROOT_PASSWORD_SAFE_CREATION_TIME
+                            ).toLongOrNull()?.let {
+                                DateUtils.unixEpochSecondsToLocalZonedDateTime(it)
+                            }
+                            val lastBackupDone = Preferences.getLastBackupTime()
+                            // TODO: until above can be mocked..feeling lazy
+                            //val creationTime: ZonedDateTime? = null
+                            // if we know the backup creation time AND we known when a backup
+                            // was LAST done, we can warn used not to restore older copy
+                            if (creationTime?.let { backupCreatedTime ->
+                                    lastBackupDone
+                                        ?.let { lastBackupTime -> backupCreatedTime < lastBackupTime }
+                                } == true) {
+                                if (!verifyOldBackupRestoration(creationTime, lastBackupDone!!)) {
+                                    // user wants to cancel
+                                    throw CancellationException()
                                 }
                             }
                         }

@@ -21,20 +21,23 @@ import fi.iki.ede.crypto.Password
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.Preferences
-import fi.iki.ede.safe.ui.composable.AskToRestoreDatabase
+import fi.iki.ede.safe.ui.composable.RestoreDatabaseComponent
 import fi.iki.ede.safe.ui.composable.passwordTextField
 import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.runBlocking
 
 
-class RestoreDatabaseScreen : AutolockingBaseComponentActivity() {
+class PrepareDataBaseRestorationScreen : AutolockingBaseComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         val context = this
-        Preferences.setBackupDocument(intent.dataString)
         val compatibility = intent.getBooleanExtra(OISAFE_COMPATIBILITY, false)
+
+        Preferences.setBackupDocument(intent.dataString)
+        val selectedDoc = intent.data!!
 
         setContent {
             SafeTheme {
@@ -44,7 +47,7 @@ class RestoreDatabaseScreen : AutolockingBaseComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     var doRestore by remember { mutableStateOf(false) }
-                    val selectedDoc = intent.data!!
+                    var backupPassword by remember { mutableStateOf(Password.getEmpty()) }
                     Column {
                         Text(
                             text = stringResource(
@@ -52,61 +55,65 @@ class RestoreDatabaseScreen : AutolockingBaseComponentActivity() {
                                 selectedDoc.toString()
                             )
                         )
-                        var backupPassword by remember { mutableStateOf(Password.getEmpty()) }
                         passwordTextField(textTip = R.string.restore_screen_backups_password,
                             onValueChange = {
                                 backupPassword = it
                             })
-                        SafeButton(onClick = {
-                            doRestore = true
-                            // Disable the button? Progress?
-                            // Toasts are bit bad..
-                        }) {
+                        SafeButton(enabled = !doRestore,
+                            onClick = {
+                                doRestore = true
+                                // Disable the button? Progress?
+                                // Toasts are bit bad..
+                            }) {
                             Text(text = "Restore")
                         }
                         if (doRestore) {
-                            doRestore = false
                             // TODO: proper progress bar would be nice
                             Toast.makeText(
                                 context,
                                 stringResource(id = R.string.restore_screen_begin_restore),
                                 Toast.LENGTH_LONG
-                            )
-                                .show()
-                            val passwords = AskToRestoreDatabase(
-                                context as AvertInactivityDuringLongTask,
+                            ).show()
+
+                            avertInactivity(context, "Begin database restoration")
+                            RestoreDatabaseComponent(
                                 context,
                                 compatibility,
                                 backupPassword,
-                                selectedDoc
-                            )
-                            val result =
-                                if (passwords > 0) {
-                                    // No point clearing biometrics(passkey not tied to masterkey)
-                                    //Biometrics.clearBiometricKeys(context)
-                                    // TODO: MAKE ASYNC
-                                    runBlocking {
-                                        DataModel.loadFromDatabase()
+                                selectedDoc,
+                                onFinished = { restoredPasswords, ex ->
+                                    // YES, we could have 0 passwords, but 1 category
+                                    if (ex == null) {
+                                        // No point clearing biometrics(passkey not tied to masterkey)
+                                        //Biometrics.clearBiometricKeys(context)
+                                        // TODO: MAKE ASYNC
+                                        runBlocking {
+                                            DataModel.loadFromDatabase()
+                                        }
+//                                        Toast.makeText(
+//                                            context,
+//                                            getString(
+//                                                R.string.restore_screen_restored,
+//                                                restoredPasswords
+//                                            ),
+//                                            Toast.LENGTH_LONG
+//                                        ).show()
+                                        CategoryListScreen.startMe(context)
+                                        context.setResult(RESULT_OK)
+                                        context.finish()
+                                    } else {
+                                        // java.lang.NullPointerException: Can't toast on a thread that has not called Looper.prepare()
+//                                        Toast.makeText(
+//                                            context,
+//                                            getString(R.string.restore_screen_restore_failed),
+//                                            Toast.LENGTH_LONG
+//                                        ).show()
+                                        CategoryListScreen.startMe(context)
+                                        context.setResult(RESULT_CANCELED)
+                                        context.finish()
                                     }
-                                    Toast.makeText(
-                                        context,
-                                        getString(R.string.restore_screen_restored, passwords),
-                                        Toast.LENGTH_LONG
-                                    )
-                                        .show()
-                                    RESULT_OK
-                                } else {
-                                    Toast.makeText(
-                                        context,
-                                        stringResource(id = R.string.restore_screen_restore_failed),
-                                        Toast.LENGTH_LONG
-                                    )
-                                        .show()
-                                    RESULT_CANCELED
                                 }
-                            CategoryListScreen.startMe(context)
-                            context.setResult(result)
-                            context.finish()
+                            )
                         }
                     }
                 }
@@ -128,7 +135,7 @@ class RestoreDatabaseScreen : AutolockingBaseComponentActivity() {
             uri: Uri
         ) = Intent(
             context,
-            RestoreDatabaseScreen::class.java
+            PrepareDataBaseRestorationScreen::class.java
         ).putExtra(OISAFE_COMPATIBILITY, oisafeCompatibility)
             .let {
                 it.data = uri

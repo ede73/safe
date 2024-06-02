@@ -117,6 +117,10 @@
     <string name="restore_screen_begin_restore">Begin restoration, please wait</string>
     <string name="restore_screen_restore_failed">Restoration failed</string>
     <string name="restore_screen_restored">Restoration complete: %1$d</string>
+    <string name="restore_screen_not_most_recent_backup">Not most recent backup file</string>
+    <string name="restore_screen_not_most_recent_backup_age">Backup is %1$d days older than most recent (backup %2$s vs latest %3$s)</string>
+    <string name="restore_screen_not_most_recent_backup_restore">Restore anyway!</string>
+    <string name="restore_screen_not_most_recent_backup_cancel">Cancel!</string>
 
     <!-- search screen -->
     <string name="password_search_notes">+Notes</string>
@@ -148,4 +152,6 @@
     <string name="preferences_title_default_user_name">Default username</string>
     <string name="preferences_title_enable_biometrics">Enable biometric identification</string>
     <string name="preferences_title_lock_when_screen_locks">Lock when screen locks</string>
+    <string name="preferences_title_time_of_last_backup">Time of last backup</string>
+    <string name="preferences_summary_lastback_never_done">never backedup</string>
 </resources>

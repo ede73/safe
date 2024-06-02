@@ -18,7 +18,7 @@ android {
         minSdk = 26
         targetSdk = 34
 
-        val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(3, 0, 37, 0)
+        val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(3, 0, 37, 1)
         versionCode =
             versionMajor * 10000 + versionMinor * 1000 + versionPatch * 100 + versionBuild
         versionName = "${versionMajor}.${versionMinor}.${versionPatch}"
@@ -147,4 +147,11 @@ tasks.configureEach {
         // UNIT TESTS
         dependsOn("testReleaseUnitTest")
     }
+}
+
+// enable mocking ZonedDateTime (et.all)
+// https://mockk.io/doc/md/jdk16-access-exceptions.html
+tasks.withType<Test> {
+//    useJUnitPlatform()
+    jvmArgs("--add-opens", "java.base/java.time=ALL-UNNAMED")
 }
