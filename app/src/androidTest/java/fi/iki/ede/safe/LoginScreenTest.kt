@@ -11,6 +11,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.crypto.DecryptableCategoryEntry
 import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.Password
@@ -238,6 +239,8 @@ class LoginScreenTest : AutoMockingUtilities, LoginScreenHelper {
         @BeforeClass
         @JvmStatic
         fun setup() {
+            if (InstrumentationRegistry.getArguments().getString("test") == "true")
+                System.setProperty("test", "true")
             MyResultLauncher.beforeClassJvmStaticSetup()
 
             // TODO: MOCK THIS TOO!

@@ -4,12 +4,26 @@ import org.junit.Assert.assertEquals
 import org.junit.Ignore
 import org.junit.Test
 
-@Ignore
 class ApplicationSuffixTest {
 
     @Test
+    fun verifyUnitTestSetup() {
+        assert("true" == System.getProperty("test")) {
+            """
+# Make sure we're flagged as test mode, add to build.gradle.kts :app
+# Handy when debugging mocking issues etc., in code you can:
+#    require(System.getProperty("test") == "true") { "Mocking failed" }
+tasks.withType<Test> {
+    systemProperty("test", "true")
+}
+            """.trimIndent()
+        }
+    }
+
+
+    @Ignore
     fun verifyApplicationIdSuffix() {
-        val expectedSuffix = ".safetest"
+        val expectedSuffix = ".test"
         val actualApplicationId = BuildConfig.APPLICATION_ID
         val hasCorrectSuffix = actualApplicationId.endsWith(expectedSuffix)
 

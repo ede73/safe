@@ -24,7 +24,7 @@ android {
         versionName = "${versionMajor}.${versionMinor}.${versionPatch}"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
+        testInstrumentationRunnerArguments["test"] = "true"
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -57,11 +57,6 @@ android {
             buildConfigField("Boolean", "ENABLE_HIBP", ENABLE_HIBP.toString())
             buildConfigField("Boolean", "ENABLE_OIIMPORT", ENABLE_OIIMPORT.toString())
         }
-        // SEPARATE_TEST_TYPE:
-//        create("safetest") {
-//            initWith(buildTypes.getByName("debug"))
-//            applicationIdSuffix = ".safetest"
-//        }
     }
 
     compileOptions {
@@ -74,7 +69,6 @@ android {
         buildConfig = true
     }
 
-    // SEPARATE_TEST_TYPE: DOES NOT WORK testBuildType = "release"
     testOptions {
         unitTests.isReturnDefaultValues = true
         packaging {
@@ -146,12 +140,13 @@ tasks.configureEach {
     if (name == "assembleRelease") {
         // UNIT TESTS
         dependsOn("testReleaseUnitTest")
+        // TODO:
     }
 }
 
 // enable mocking ZonedDateTime (et.all)
 // https://mockk.io/doc/md/jdk16-access-exceptions.html
 tasks.withType<Test> {
-//    useJUnitPlatform()
+    systemProperty("test", "true")
     jvmArgs("--add-opens", "java.base/java.time=ALL-UNNAMED")
 }
