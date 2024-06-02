@@ -47,5 +47,6 @@ fun registerActivityForResults(
 ) = registerFunction(contract, callback)
 
 fun throwIfFeatureNotEnabled(feature: Boolean) {
-    throw Exception("Feature not enabled")
+    if (!feature)
+        throw Exception("Feature not enabled")
 }
