@@ -129,6 +129,7 @@ dependencies {
 tasks.configureEach {
     // When ever doing release(Generate Signed App Bundle), run also all the tests...
     when (name) {
+        "connectedDebugAndroidTest" -> dependsOn("unlockEmulator")
         "bundleRelease" -> {
             dependsOn("testReleaseUnitTest")
             //dependsOn("connectedAndroidTest")
@@ -154,4 +155,27 @@ tasks.configureEach {
 tasks.withType<Test> {
     systemProperty("test", "true")
     jvmArgs("--add-opens", "java.base/java.time=ALL-UNNAMED")
+}
+
+//tasks.named<AndroidTest>("connectedAndroidTest") {
+//    print("=====connectedAndroidTest")
+//}
+//tasks.named<AndroidTest>("connectedDebugAndroidTest") {
+//    print("=====connectedDebugAndroidTest")
+//}
+
+tasks.register("unlockEmulator") {
+    /*
+    Enable...
+tasks.configureEach {when (name) {"connectedDebugAndroidTest" -> dependsOn("unlockEmulator")}}
+     */
+    doLast {
+        exec {
+            commandLine(
+                "adb",
+                "shell",
+                "dumpsys deviceidle|grep mScreenOn=false && input keyevent KEYCODE_POWER;dumpsys deviceidle|grep mScreenLocked=true && (input keyevent KEYCODE_MENU ;input text 0000;input keyevent KEYCODE_ENTER);true"
+            )
+        }
+    }
 }
