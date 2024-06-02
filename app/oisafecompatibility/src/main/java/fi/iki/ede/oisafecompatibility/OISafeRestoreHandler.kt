@@ -14,7 +14,7 @@ import javax.xml.parsers.SAXParserFactory
 
 // TODO: make shared
 fun throwIfFeatureNotEnabled(feature: Boolean) {
-    throw Exception("Feature not enabled")
+    if (!feature) throw Exception("Feature not enabled")
 }
 
 @Deprecated("Just for backwards compatibility")
