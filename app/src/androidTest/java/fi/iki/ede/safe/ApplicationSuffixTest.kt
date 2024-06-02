@@ -1,6 +1,10 @@
 package fi.iki.ede.safe
 
+import android.app.KeyguardManager
+import android.content.Context
+import android.view.KeyEvent
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.UiDevice
 import org.junit.Assert.assertEquals
 import org.junit.Ignore
 import org.junit.Test
@@ -24,6 +28,24 @@ defaultConfig {
 #                System.setProperty("test", "true")
 
             """.trimIndent()
+        }
+    }
+
+    @Test
+    fun unlockDevice() {
+        val keyguardManager =
+            InstrumentationRegistry.getInstrumentation().context.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+        if (keyguardManager.isKeyguardLocked) {
+            val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+            if (!device.isScreenOn) {
+                device.wakeUp()
+            }
+            device.swipe(100, 1000, 100, 500, 2)
+            device.pressKeyCode(KeyEvent.KEYCODE_0)
+            device.pressKeyCode(KeyEvent.KEYCODE_0)
+            device.pressKeyCode(KeyEvent.KEYCODE_0)
+            device.pressKeyCode(KeyEvent.KEYCODE_0)
+            device.pressEnter()
         }
     }
 
