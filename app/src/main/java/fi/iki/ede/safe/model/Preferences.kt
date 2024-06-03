@@ -5,12 +5,18 @@ import android.content.SharedPreferences
 import android.os.Environment
 import androidx.preference.PreferenceManager
 import fi.iki.ede.crypto.date.DateUtils
+import fi.iki.ede.safe.BuildConfig
 import java.time.ZonedDateTime
 
 object Preferences {
     lateinit var sharedPreferences: SharedPreferences
 
     fun initialize(context: Context) {
+        if (BuildConfig.DEBUG) {
+            require(System.getProperty("test") != "test") {
+                "You MUST mock shared preferences in androidTests"
+            }
+        }
         sharedPreferences =
             PreferenceManager.getDefaultSharedPreferences(context.applicationContext)
     }
