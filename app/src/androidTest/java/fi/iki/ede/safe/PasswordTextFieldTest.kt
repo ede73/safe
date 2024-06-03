@@ -23,8 +23,6 @@ import org.junit.runner.RunWith
 // https://developer.android.com/jetpack/compose/testing
 @RunWith(AndroidJUnit4::class)
 class PasswordTextFieldTest {
-    //private val pwdId = "pwd"
-
     @get:Rule
     val composeTestRule = createComposeRule()
 
