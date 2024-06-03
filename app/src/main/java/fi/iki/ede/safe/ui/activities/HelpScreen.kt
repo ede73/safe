@@ -11,9 +11,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.composable.HelpViewer
+import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeTheme
-import java.io.InputStream
 
 class HelpScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,23 +25,25 @@ class HelpScreen : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    HelpViewer(readHelp(this))
+                    HelpViewer(
+                        readHelp(this),
+                        modifier = Modifier.testTag(TestTag.TEST_TAG_HELP)
+                    )
                 }
             }
         }
     }
 
-    private fun readHelp(context: Context): String {
-        val inputStream: InputStream = context.assets.open("help.html")
-        val buffer = ByteArray(inputStream.available())
-        inputStream.read(buffer)
-        return String(buffer)
+    private fun readHelp(context: Context): String = context.assets.open("help.html").let {
+        ByteArray(it.available()).let { buffer ->
+            it.read(buffer)
+            String(buffer)
+        }
     }
 
     companion object {
-        fun startMe(context: Context) {
+        fun startMe(context: Context) =
             context.startActivity(Intent(context, HelpScreen::class.java))
-        }
     }
 }
 
