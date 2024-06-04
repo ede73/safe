@@ -43,7 +43,7 @@ import kotlin.time.Duration.Companion.seconds
  * - correct categories are shown when loaded [verifyBothCategoriesShow]
  * - adding a category works [addCategory]
  * - search can be opened and is functional [tryOpenSearchSearch]
- * - non empty categorie cannot be deleted [mustNotBeAbleToDeleteNonEmptyCategories]
+ * - non empty categories` cannot be deleted [mustNotBeAbleToDeleteNonEmptyCategories]
  * - long pressing to delete a category (but cancelling) works [deleteCategoryCancel]
  * - long pressing to delete a category works [deleteCategory]
  */

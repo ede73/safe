@@ -25,8 +25,14 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-// https://developer.android.com/jetpack/compose/testing
-//@LargeTest
+/**
+ * Test plan, verify that...
+ * - finds the passwords by description [trySearch]
+ * - finds the passwords by encrypted passwords TODO:
+ * - finds the passwords by encrypted notes TODO:
+ * - finds the passwords by encrypted website TODO:
+ * - finds the passwords by encrypted username TODO:
+ */
 @RunWith(AndroidJUnit4::class)
 class SearchListScreenTest {
     @get:Rule
