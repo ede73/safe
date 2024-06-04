@@ -46,6 +46,7 @@ import kotlin.time.Duration.Companion.seconds
  * - non empty categories` cannot be deleted [mustNotBeAbleToDeleteNonEmptyCategories]
  * - long pressing to delete a category (but cancelling) works [deleteCategoryCancel]
  * - long pressing to delete a category works [deleteCategory]
+ * - TODO: test transition to LoginScreen after timeout
  */
 @RunWith(AndroidJUnit4::class)
 class CategoryListScreenTest {

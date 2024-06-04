@@ -32,6 +32,7 @@ import org.junit.runner.RunWith
  * - finds the passwords by encrypted notes TODO:
  * - finds the passwords by encrypted website TODO:
  * - finds the passwords by encrypted username TODO:
+ * - TODO: test transition to LoginScreen after timeout
  */
 @RunWith(AndroidJUnit4::class)
 class SearchListScreenTest {
