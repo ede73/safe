@@ -22,6 +22,13 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 
+/**
+ * Test plan, verify that...
+ * - entered password is hidden [ensurePasswordIsHiddenTest]
+ * - password is shown when clicked reveal button [ensureShownPasswordIsShownTest]
+ * - zoom TODO:
+ *
+ */
 @RunWith(AndroidJUnit4::class)
 class PasswordTextFieldTest : NodeHelper {
     @get:Rule
