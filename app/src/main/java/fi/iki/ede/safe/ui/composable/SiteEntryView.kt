@@ -40,11 +40,11 @@ import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.clipboard.ClipboardUtils
 import fi.iki.ede.safe.password.PasswordGenerator
-import fi.iki.ede.safe.ui.activities.AvertInactivityDuringLongTask
 import fi.iki.ede.safe.ui.activities.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import fi.iki.ede.safe.ui.theme.SafeButton
+import fi.iki.ede.safe.ui.utilities.AvertInactivityDuringLongTask
 import java.time.ZonedDateTime
 
 @Composable

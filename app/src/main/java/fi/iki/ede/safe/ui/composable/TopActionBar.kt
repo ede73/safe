@@ -45,15 +45,15 @@ import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
 import fi.iki.ede.safe.ui.TestTag
-import fi.iki.ede.safe.ui.activities.AutolockingBaseComponentActivity
 import fi.iki.ede.safe.ui.activities.HelpScreen
 import fi.iki.ede.safe.ui.activities.LoginScreen
 import fi.iki.ede.safe.ui.activities.PreferenceActivity
 import fi.iki.ede.safe.ui.activities.PrepareDataBaseRestorationScreen
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
-import fi.iki.ede.safe.ui.activities.throwIfFeatureNotEnabled
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeButton
+import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
+import fi.iki.ede.safe.ui.utilities.throwIfFeatureNotEnabled
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

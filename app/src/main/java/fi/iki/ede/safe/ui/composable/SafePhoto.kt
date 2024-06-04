@@ -17,9 +17,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.ui.activities.AvertInactivityDuringLongTask
 import fi.iki.ede.safe.ui.theme.SafeTextButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
+import fi.iki.ede.safe.ui.utilities.AvertInactivityDuringLongTask
 
 @Composable
 fun SafePhoto(

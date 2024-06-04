@@ -25,6 +25,7 @@ import fi.iki.ede.safe.ui.composable.RestoreDatabaseComponent
 import fi.iki.ede.safe.ui.composable.passwordTextField
 import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
+import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
 import kotlinx.coroutines.runBlocking
 
 

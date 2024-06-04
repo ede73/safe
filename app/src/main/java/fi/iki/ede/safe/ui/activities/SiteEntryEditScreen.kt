@@ -36,6 +36,7 @@ import fi.iki.ede.safe.password.PasswordGenerator
 import fi.iki.ede.safe.ui.composable.SiteEntryView
 import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
+import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

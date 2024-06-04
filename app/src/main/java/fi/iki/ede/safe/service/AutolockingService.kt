@@ -12,7 +12,7 @@ import android.os.IBinder
 import androidx.annotation.RequiresApi
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.model.Preferences
-import fi.iki.ede.safe.ui.activities.AutolockingBaseComponentActivity.Companion.lockTheApplication
+import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity.Companion.lockTheApplication
 import java.time.Duration
 
 

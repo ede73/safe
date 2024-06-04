@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.ui.activities
+package fi.iki.ede.safe.ui.utilities
 
 import android.os.Bundle
 import android.view.MotionEvent

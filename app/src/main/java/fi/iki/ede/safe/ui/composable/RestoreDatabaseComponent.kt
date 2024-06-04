@@ -26,7 +26,7 @@ import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.oisafecompatibility.OISafeRestore
 import fi.iki.ede.safe.ui.activities.PrepareDataBaseRestorationScreen
-import fi.iki.ede.safe.ui.activities.throwIfFeatureNotEnabled
+import fi.iki.ede.safe.ui.utilities.throwIfFeatureNotEnabled
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope

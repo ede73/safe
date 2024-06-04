@@ -17,6 +17,7 @@ import fi.iki.ede.safe.model.DataModel.passwordsStateFlow
 import fi.iki.ede.safe.ui.composable.SiteEntryList
 import fi.iki.ede.safe.ui.composable.TopActionBar
 import fi.iki.ede.safe.ui.theme.SafeTheme
+import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 

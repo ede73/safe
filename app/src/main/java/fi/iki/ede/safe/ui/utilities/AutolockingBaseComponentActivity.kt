@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.ui.activities
+package fi.iki.ede.safe.ui.utilities
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -16,6 +16,7 @@ import fi.iki.ede.safe.clipboard.ClipboardUtils
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.service.AutolockingService
+import fi.iki.ede.safe.ui.activities.LoginScreen
 
 // Dedicated interface for averting inactivity a bit
 // during long tasks (that are possibly outside out app scode)

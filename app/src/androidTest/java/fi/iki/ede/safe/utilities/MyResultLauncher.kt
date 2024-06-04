@@ -9,7 +9,7 @@ import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityOptionsCompat
 import fi.iki.ede.safe.ui.TestTag
-import fi.iki.ede.safe.ui.activities.registerActivityForResults
+import fi.iki.ede.safe.ui.utilities.registerActivityForResults
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.verify

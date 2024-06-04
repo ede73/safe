@@ -22,6 +22,7 @@ import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.safe.ui.composable.SearchSiteEntryControls
 import fi.iki.ede.safe.ui.composable.SearchSiteEntryList
 import fi.iki.ede.safe.ui.theme.SafeTheme
+import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class SiteEntrySearchScreen : AutolockingBaseComponentActivity() {

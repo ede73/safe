@@ -10,7 +10,7 @@ import fi.iki.ede.oisafecompatibility.RestoreDataSet
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.model.LoginHandler
-import fi.iki.ede.safe.ui.activities.throwIfFeatureNotEnabled
+import fi.iki.ede.safe.ui.utilities.throwIfFeatureNotEnabled
 import java.io.InputStream
 
 @Deprecated("Just for backwards compatibility")
