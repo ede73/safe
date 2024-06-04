@@ -5,6 +5,11 @@ import org.junit.Assert.assertEquals
 import org.junit.Ignore
 import org.junit.Test
 
+/**
+ * Test plan, verify that...
+ * - test mode is configured properly [verifyUnitTestSetup]
+ * - Application suffix ID is setup for tests [verifyApplicationIdSuffix] TODO: doesnt work
+ */
 class ApplicationSuffixTest {
 
     @Test
