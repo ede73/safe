@@ -132,7 +132,7 @@ tasks.configureEach {
         "connectedDebugAndroidTest" -> dependsOn("unlockEmulator")
         "bundleRelease" -> {
             dependsOn("testReleaseUnitTest")
-            //dependsOn("connectedAndroidTest")
+            dependsOn("connectedAndroidTest")
         }
 
         "assembleDebug" -> {

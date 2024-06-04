@@ -13,7 +13,7 @@ import fi.iki.ede.safe.ui.activities.LoginScreen
 import fi.iki.ede.safe.ui.onAllNodesWithTag
 import fi.iki.ede.safe.ui.onNodeWithTag
 
-interface LoginScreenHelper {
+interface LoginScreenHelper : NodeHelper {
     fun SemanticsNodeInteraction.assertIsNotChecked(): SemanticsNodeInteraction = assert(
         SemanticsMatcher.expectValue(
             SemanticsProperties.ToggleableState,

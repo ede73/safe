@@ -9,6 +9,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import fi.iki.ede.crypto.Password
 import kotlinx.coroutines.job
 
@@ -35,7 +37,9 @@ fun verifiedPasswordTextField(
     passwordTextField(
         textTip = textTip,
         onValueChange = { firstPassword = it },
-        modifier = modifier.focusRequester(focusRequester)
+        modifier = modifier
+            .focusRequester(focusRequester)
+            .semantics { contentDescription = "eka salasana" }
     )
     var secondPassword by remember { mutableStateOf(Password.getEmpty()) }
     if (showVerification) {
@@ -43,6 +47,7 @@ fun verifiedPasswordTextField(
             textTip = verifyPassword,
             onValueChange = { secondPassword = it },
             modifier = modifier
+                .semantics { contentDescription = "toka salasana" }
         )
         if (firstPassword == secondPassword) {
             onMatchingPasswords(firstPassword)

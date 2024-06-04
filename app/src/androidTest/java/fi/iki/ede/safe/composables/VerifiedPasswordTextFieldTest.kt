@@ -29,17 +29,15 @@ class VerifiedPasswordTextFieldTest {
     val composeTestRule = createComposeRule()
 
     @Before
-    fun setup() {
-        composeTestRule.setContent {
-            SafeTheme {
-                Column {
-                    verifiedPasswordTextField(
-                        showVerification = true,
-                        textTip = R.string.login_password_tip,
-                        verifyPassword = R.string.login_verify_password_tip,
-                        modifier = Modifier.testTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)
-                    )
-                }
+    fun setup() = composeTestRule.setContent {
+        SafeTheme {
+            Column {
+                verifiedPasswordTextField(
+                    showVerification = true,
+                    textTip = R.string.login_password_tip,
+                    verifyPassword = R.string.login_verify_password_tip,
+                    modifier = Modifier.testTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)
+                )
             }
         }
     }
@@ -63,25 +61,25 @@ class VerifiedPasswordTextFieldTest {
 
     @Test
     fun ensureShownPasswordIsShownTest() {
+        val passwordText = "abcd"
         composeTestRule.onAllNodesWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)[0].assertIsEnabled()
-        composeTestRule.onAllNodesWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)[0].performTextInput(
-            "abcd"
-        )
+            .performTextInput(passwordText)
         composeTestRule.onAllNodesWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)[0].onChild()
             .performClick()
         composeTestRule.onAllNodesWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)[0].assertTextContains(
-            "abcd"
+            passwordText
         )
     }
 
     @Test
     fun ensureShownVerificationPasswordIsShownTest() {
+        val passwordText = "abcd"
         composeTestRule.onAllNodesWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)[1].assertIsEnabled()
-            .performTextInput("abcd")
+            .performTextInput(passwordText)
         composeTestRule.onAllNodesWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)[1].onChild()
             .performClick()
         composeTestRule.onAllNodesWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)[1].assertTextContains(
-            "abcd"
+            passwordText
         )
     }
 }

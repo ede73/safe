@@ -44,15 +44,17 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
 
     SafeListItem {
         Row(
-            modifier = Modifier.combinedClickable(
-                onClick = {
-                    SiteEntryListScreen.startMe(context, category.id!!)
-                },
-                onLongClick = {
-                    // Creating a dropdown menu
-                    displayMenu = true
-                }
-            )
+            modifier = Modifier
+                .combinedClickable(
+                    onClick = {
+                        SiteEntryListScreen.startMe(context, category.id!!)
+                    },
+                    onLongClick = {
+                        // Creating a dropdown menu
+                        displayMenu = true
+                    }
+                )
+                .testTag(TestTag.TEST_TAG_CATEGORY_ROW),
         ) {
             Text(
                 text = "${category.plainName}",
@@ -61,8 +63,7 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(12.dp)
-                    .weight(2f)
-                    .testTag(TestTag.TEST_TAG_CATEGORY_ROW),
+                    .weight(2f),
                 style = safeTheme.customFonts.listEntries
             )
             Spacer(modifier = Modifier.weight(1f)) // This will push the Text to the end

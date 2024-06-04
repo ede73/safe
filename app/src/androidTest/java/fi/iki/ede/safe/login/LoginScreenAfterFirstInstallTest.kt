@@ -1,4 +1,4 @@
-package fi.iki.ede.safe
+package fi.iki.ede.safe.login
 
 import android.app.Activity.RESULT_CANCELED
 import androidx.activity.result.ActivityResult
@@ -12,28 +12,27 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import fi.iki.ede.crypto.DecryptableCategoryEntry
-import fi.iki.ede.crypto.DecryptableSiteEntry
-import fi.iki.ede.crypto.Password
-import fi.iki.ede.crypto.Salt
-import fi.iki.ede.crypto.hexToByteArray
-import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_ITERATION_COUNT
-import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_LENGTH_BITS
-import fi.iki.ede.crypto.keystore.KeyManagement
-import fi.iki.ede.crypto.keystore.KeyManagement.generatePBKDF2AESKey
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
-import fi.iki.ede.safe.AutoMockingUtilities.Companion.fetchDBKeys
-import fi.iki.ede.safe.AutoMockingUtilities.Companion.mockIsBiometricsEnabled
-import fi.iki.ede.safe.AutoMockingUtilities.Companion.mockIsBiometricsInitialized
-import fi.iki.ede.safe.LoginScreenFirstInstallTest.Companion.mockKeyStoreHelper
 import fi.iki.ede.safe.model.LoginHandler
+import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.BiometricsActivity
 import fi.iki.ede.safe.ui.activities.CategoryListScreen
 import fi.iki.ede.safe.ui.activities.LoginScreen
+import fi.iki.ede.safe.utilities.AutoMockingUtilities
+import fi.iki.ede.safe.utilities.AutoMockingUtilities.Companion.mockIsBiometricsEnabled
+import fi.iki.ede.safe.utilities.AutoMockingUtilities.Companion.mockIsBiometricsInitialized
+import fi.iki.ede.safe.utilities.AutoMockingUtilities.Companion.mockIsFirstTimeLogin
+import fi.iki.ede.safe.utilities.LoginScreenHelper
+import fi.iki.ede.safe.utilities.MockDataModel
+import fi.iki.ede.safe.utilities.MockKeyStore
+import fi.iki.ede.safe.utilities.MyResultLauncher
+import io.mockk.every
 import io.mockk.mockkObject
+import io.mockk.unmockkAll
 import io.mockk.verify
 import org.junit.After
+import org.junit.AfterClass
+import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Rule
 import org.junit.Test
@@ -42,22 +41,26 @@ import org.junit.runner.RunWith
 /**
  * Test logging in when password has been previously set
  */
-//@LargeTest
 @RunWith(AndroidJUnit4::class)
-class LoginScreenTest : AutoMockingUtilities, LoginScreenHelper {
+class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
+    @get:Rule
+    val loginActivityTestRule = createAndroidComposeRule<LoginScreen>()
+
+    @Before
+    fun beforeEachTest() {
+    }
+
     @After
     fun clearAll() {
         MyResultLauncher.afterEachTest()
     }
 
-    @get:Rule
-    val loginActivityTestRule = createAndroidComposeRule<LoginScreen>()
-
     @Test
     fun verifyLoginScreenAfterInitialSetupTest() {
         // probably too late to change...
-        mockIsBiometricsInitialized { false }
+        mockIsBiometricsInitialized { true }
         mockIsBiometricsEnabled { false }
+        assert(!Preferences.isFirstTimeLogin()) { "somethign fails" }
         getPasswordFields(loginActivityTestRule).assertCountEquals(1)
         getPasswordFields(loginActivityTestRule)[0].assertIsDisplayed()
         getPasswordFields(loginActivityTestRule)[0].assertIsFocused()
@@ -84,9 +87,8 @@ class LoginScreenTest : AutoMockingUtilities, LoginScreenHelper {
     fun testLoggingInWorks() {
         // too late?bio already launched?
         mockIsBiometricsInitialized { true }
-        mockkObject(LoginHandler)
         mockkObject(CategoryListScreen)
-        getPasswordFields(loginActivityTestRule)[0].performTextInput(FAKE_PASSWORD_TEXT)
+        getPasswordFields(loginActivityTestRule)[0].performTextInput(MockKeyStore.fakePasswordText())
         getLoginButton(loginActivityTestRule).assertIsEnabled()
         getLoginButton(loginActivityTestRule).performClick()
         verify(exactly = 1) { LoginHandler.passwordLogin(any(), any()) }
@@ -105,7 +107,6 @@ class LoginScreenTest : AutoMockingUtilities, LoginScreenHelper {
             ActivityResult(RESULT_CANCELED, null)
         }
 
-        mockkObject(LoginHandler)
         mockkObject(CategoryListScreen)
         //getPasswordFields(loginActivityTestRule)[0].performTextInput(FAKE_PASSWORD_TEXT)
         getLoginButton(loginActivityTestRule).assertIsDisplayed()
@@ -116,7 +117,7 @@ class LoginScreenTest : AutoMockingUtilities, LoginScreenHelper {
         verify(exactly = 0) { LoginHandler.firstTimeLogin(any(), any()) }
         verify(exactly = 0) { LoginHandler.passwordLogin(any(), any()) }
         verify(exactly = 0) { BiometricsActivity.getRegistrationIntent(any()) }
-        verify(exactly = 0) { BiometricsActivity.getVerificationIntent(any()) }
+        verify(exactly = 1) { BiometricsActivity.getVerificationIntent(any()) }
         verify(exactly = 0) { LoginHandler.biometricLogin() }
 
         MyResultLauncher.fetchResults()
@@ -142,7 +143,6 @@ class LoginScreenTest : AutoMockingUtilities, LoginScreenHelper {
             ActivityResult(RESULT_CANCELED, null)
         }
 
-        mockkObject(LoginHandler)
         mockkObject(CategoryListScreen)
         //getPasswordFields(loginActivityTestRule)[0].performTextInput(FAKE_PASSWORD_TEXT)
         getLoginButton(loginActivityTestRule).assertIsDisplayed()
@@ -153,7 +153,7 @@ class LoginScreenTest : AutoMockingUtilities, LoginScreenHelper {
         verify(exactly = 0) { LoginHandler.firstTimeLogin(any(), any()) }
         verify(exactly = 0) { LoginHandler.passwordLogin(any(), any()) }
         verify(exactly = 0) { BiometricsActivity.getRegistrationIntent(any()) }
-        verify(exactly = 0) { BiometricsActivity.getVerificationIntent(any()) }
+        verify(exactly = 1) { BiometricsActivity.getVerificationIntent(any()) }
         verify(exactly = 0) { LoginHandler.biometricLogin() }
 
         MyResultLauncher.fetchResults()
@@ -184,7 +184,6 @@ class LoginScreenTest : AutoMockingUtilities, LoginScreenHelper {
             ActivityResult(BiometricsActivity.RESULT_FAILED, null)
         }
 
-        mockkObject(LoginHandler)
         mockkObject(CategoryListScreen)
         //getPasswordFields(loginActivityTestRule)[0].performTextInput(FAKE_PASSWORD_TEXT)
         getLoginButton(loginActivityTestRule).assertIsDisplayed()
@@ -195,7 +194,7 @@ class LoginScreenTest : AutoMockingUtilities, LoginScreenHelper {
         verify(exactly = 0) { LoginHandler.firstTimeLogin(any(), any()) }
         verify(exactly = 0) { LoginHandler.passwordLogin(any(), any()) }
         verify(exactly = 0) { BiometricsActivity.getRegistrationIntent(any()) }
-        verify(exactly = 0) { BiometricsActivity.getVerificationIntent(any()) }
+        verify(exactly = 1) { BiometricsActivity.getVerificationIntent(any()) }
         verify(exactly = 0) { LoginHandler.biometricLogin() }
 
         MyResultLauncher.fetchResults()
@@ -216,58 +215,28 @@ class LoginScreenTest : AutoMockingUtilities, LoginScreenHelper {
         getBiometricsButton(loginActivityTestRule).assertIsEnabled()
     }
 
-    // TODO: same tests with biometrics, success,cancel,failure
-
     companion object {
-        private val FAKE_SALT = Salt("abcdabcd01234567".hexToByteArray())
-        private const val FAKE_PASSWORD_TEXT = "abcdefgh"
-        private val FAKE_PASSWORD = Password(FAKE_PASSWORD_TEXT.toByteArray())
-        private val FAKE_MASTERKEY_AES =
-            "00112233445566778899AABBCCDDEEFF99887766554433221100123456789ABC".hexToByteArray()
-        private val FAKE_ENCRYPTED_MASTERKEY =
-            KeyManagement.encryptMasterKey(
-                generatePBKDF2AESKey(
-                    FAKE_SALT,
-                    KEY_ITERATION_COUNT,
-                    FAKE_PASSWORD,
-                    KEY_LENGTH_BITS
-                ),
-                FAKE_MASTERKEY_AES
-            )
-
-        // Such a pain, mock needs to be done before @rule (coz we use prefs at LoginScreen)
         @BeforeClass
         @JvmStatic
-        fun setup() {
+        fun initialize() {
             if (InstrumentationRegistry.getArguments().getString("test") == "true")
                 System.setProperty("test", "true")
+
+            mockkObject(Preferences)
+            mockkObject(BiometricsActivity)
+            mockIsFirstTimeLogin { false }
             MyResultLauncher.beforeClassJvmStaticSetup()
 
-            // TODO: MOCK THIS TOO!
-            BiometricsActivity.clearBiometricKeys()
+            MockDataModel.mockAllDataModelNecessities()
 
-            // TODO: Wont work outside .. Activity doesn't notices changes..
-            mockIsBiometricsEnabled { true }
-            mockIsBiometricsInitialized { true }
-            mockKeyStoreHelper()
+            mockkObject(LoginHandler)
+            every { LoginHandler.isLoggedIn() } returns true
+        }
 
-            val ks = KeyStoreHelperFactory.getKeyStoreHelper()
-
-            fetchDBKeys(
-                masterKey = { FAKE_ENCRYPTED_MASTERKEY },
-                salt = { FAKE_SALT }, fetchPasswordsOfCategory = {
-                    listOf(DecryptableSiteEntry(1).let {
-                        it.id = 1
-                        it
-                    })
-                }, fetchCategories = {
-                    listOf(DecryptableCategoryEntry().let {
-                        it.id = 1
-                        it.encryptedName = ks.encryptByteArray("one".toByteArray())
-                        it
-                    })
-                },
-                isFirstTimeLogin = { false })
+        @AfterClass
+        @JvmStatic
+        fun deInitialize() {
+            unmockkAll()
         }
     }
 }

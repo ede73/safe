@@ -158,6 +158,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
             ), "name='${entry.encryptedName}'", null, null, null, null, null
         ).use {
             if (it.count > 0) {
+                // TODO: THIS MAKES NO SENSE! Add shouldn't succeed, if something exists...
                 it.moveToFirst()
                 it.getDBID("id")
             } else { // there isn't already such a category...

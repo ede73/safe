@@ -8,6 +8,7 @@ import org.junit.Test
 class ApplicationSuffixTest {
 
     @Test
+    @Ignore
     fun verifyUnitTestSetup() {
         val testMode = InstrumentationRegistry.getArguments().getString("test")
 

@@ -27,14 +27,14 @@ fun BiometricsComponent(
 ) {
     val context = LocalContext.current
 
-    // TODO: Don't allow biometrics is keystore doesn't initialize
+    // TODO: Don't allow biometrics if keystore doesn't initialize
     // this situation MIGHT happen when app is fresh installed AND google restored backup preferences
-    val keystoreMissingMasterkeyAfterBackupRestore = try {
+    val keystoreIsInitialized = try {
         val ks = KeyStoreHelperFactory.getKeyStoreHelper()
-        false
+        true
     } catch (ex: Exception) {
         BiometricsActivity.clearBiometricKeys()
-        true
+        false
     }
 
     // TODO: Should be remembered and based on preferences (and test case should invoke...)
@@ -42,7 +42,7 @@ fun BiometricsComponent(
     val biometricsRecorded = BiometricsActivity.haveRecordedBiometric()
     var registerBiometrics by remember { mutableStateOf(biometricsActivityEnabled) }
 
-    if (biometricsActivityEnabled && biometricsRecorded && !keystoreMissingMasterkeyAfterBackupRestore) {
+    if (biometricsActivityEnabled && biometricsRecorded && keystoreIsInitialized) {
         // Actually during login, we could JUST launch the bio verification immediately
         // since biometrics is enabled AND we have previously recorded entry
         bioVerify?.launch(BiometricsActivity.getVerificationIntent(context))

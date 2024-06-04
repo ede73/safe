@@ -15,28 +15,26 @@ import fi.iki.ede.safe.ui.composable.passwordTextField
 import fi.iki.ede.safe.ui.onNodeWithTag
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeTheme
+import fi.iki.ede.safe.utilities.NodeHelper
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 
-// https://developer.android.com/jetpack/compose/testing
 @RunWith(AndroidJUnit4::class)
-class PasswordTextFieldTest {
+class PasswordTextFieldTest : NodeHelper {
     @get:Rule
     val composeTestRule = createComposeRule()
 
     @Before
-    fun setup() {
-        composeTestRule.setContent {
-            SafeTheme {
-                Column {
-                    passwordTextField(
-                        textTip = R.string.login_password_tip,
-                        modifier = Modifier.testTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)
-                    )
-                }
+    fun setup() = composeTestRule.setContent {
+        SafeTheme {
+            Column {
+                passwordTextField(
+                    textTip = R.string.login_password_tip,
+                    modifier = Modifier.testTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)
+                )
             }
         }
     }
@@ -53,15 +51,16 @@ class PasswordTextFieldTest {
 
     @Test
     fun ensureShownPasswordIsShownTest() {
+        val passwordText = "abcd"
         composeTestRule.onNodeWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)
             .assertIsEnabled()
         composeTestRule.onNodeWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)
-            .performTextInput("abcd")
-        // TODO: Clumsy, TextField has a trailing icon button (hide/view pwd) which we're gonna click
+            .performTextInput(passwordText)
         composeTestRule.onNodeWithTag(
             TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS,
             useUnmergedTree = false
         ).onChild().performClick()
-        TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS
+        composeTestRule.onNodeWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)
+            .assertTextContains(passwordText)
     }
 }
