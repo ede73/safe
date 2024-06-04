@@ -40,7 +40,10 @@ import org.junit.runner.RunWith
 /**
  * Test scenario when app is fresh installed, all defaults apply
  * No database, no password, no biometrics
- * TODO: Bit of a mess..
+ *
+ * Test plan, verify that...
+ * - must login, initialize keystore, not launch biometrics registration (since not enabled) [newLoginAndBioLaunchedWhenUnchecked]
+ * - must login, initialize keystore, launch biometrics registration (since enabled) [newLoginAndBioLaunchedWhenChecked]
  */
 @Ignore
 @RunWith(AndroidJUnit4::class)

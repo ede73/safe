@@ -40,7 +40,15 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Test logging in when password has been previously set
+ * Test scenario when app user has already logged in once
+ *
+ * Test plan, verify that...
+ * - we have password/biometrics displayed [verifyLoginScreenAfterInitialSetupTest]
+ * - despite pwd min req, user must be able to log in with short password [shortPasswordsMustBeAcceptedTest]
+ * - password login works (biometrics already initialized, but not enabled) [testLoggingInWorks]
+ * - biometrics available, must open biometric prompt [testLoggingWorksWithBiometrics]
+ * - biometrics available, must open biometric prompt, but we cancel it and login with password [testLoggingWorksWithCancelledBiometrics]
+ * - biometrics available, must open biometric prompt, but biometrics reading fails, we login with passeord [testLoggingWorksWithFailingBiometrics]
  */
 @RunWith(AndroidJUnit4::class)
 class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
