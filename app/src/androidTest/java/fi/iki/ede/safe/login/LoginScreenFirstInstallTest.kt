@@ -30,6 +30,11 @@ import org.junit.runner.RunWith
 /**
  * Test scenario when app is fresh installed, all defaults apply
  * No database, no password, no biometrics
+ *
+ * Test plan, verify that...
+ * - Verify both password fields are displayed [verifyPasswordPromptPresentTest]
+ * - TODO: Move to VerifiedPasswordTextFieldTest Verify password minimum length is required [verifyPasswordLengthRequirementTest]
+ * - TODO: Move to VerifiedPasswordTextFieldTest Verify first login only succeeds with matching passwords [verifyMismatchingPasswordNotAcceptedTest]
  */
 @RunWith(AndroidJUnit4::class)
 class LoginScreenFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
