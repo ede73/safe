@@ -22,7 +22,14 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 
-// https://developer.android.com/jetpack/compose/testing
+/**
+ * Test plan, verify that...
+ * - ensure both password fields are displayed [ensureVerificationFieldShownTest]
+ * - entered password is hidden [ensurePasswordIsHiddenTest]
+ * - password is shown when clicked reveal button [ensureShownPasswordIsShownTest]
+ * - verification password is shown when clicked reveal button [ensureShownVerificationPasswordIsShownTest]
+ * - zoom TODO:
+ */
 @RunWith(AndroidJUnit4::class)
 class VerifiedPasswordTextFieldTest {
     @get:Rule
