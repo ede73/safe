@@ -44,7 +44,7 @@ fun verifiedPasswordTextField(
         passwordTextField(
             textTip = verifyPassword,
             onValueChange = { secondPassword = it },
-//            modifier = modifier
+            modifier = modifier
 //                .semantics { contentDescription = "toka salasana" }
         )
         if (firstPassword == secondPassword) {
