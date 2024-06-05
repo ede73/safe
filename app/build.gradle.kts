@@ -85,6 +85,9 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+    testFixtures {
+        enable = true
+    }
 }
 
 composeCompiler {
@@ -113,6 +116,8 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kxml2)
     testImplementation(libs.mockk)
+    testImplementation(project(":app:crypto"))
+    testImplementation(testFixtures(project(":app:crypto")))
 
     androidTestImplementation(libs.androidx.junit.ktx)
     androidTestImplementation(libs.androidx.rules)

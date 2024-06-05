@@ -46,6 +46,10 @@ android {
     buildFeatures {
         buildConfig = true
     }
+
+    testFixtures {
+        enable = true
+    }
 }
 
 dependencies {
@@ -65,4 +69,7 @@ dependencies {
     androidTestImplementation(libs.mockk.agent)
     androidTestImplementation(libs.mockk.android)
 
+    //testFixturesImplementation(libs.bcprov.jdk16)
+    testFixturesImplementation(libs.mockk)
+    testFixturesImplementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.20")
 }
