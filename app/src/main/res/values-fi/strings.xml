@@ -37,7 +37,7 @@
     <string name="login_invalid_password">Väärä salasana</string>
     <string name="login_password_tip">Syötä salana</string>
     <string name="login_tip">Avaa salanalla tai biometriikalla</string>
-    <string name="login_verify_password_tip">Syötö sama salasana uudestaan</string>
+    <string name="login_verify_password_tip">Syötä sama salasana uudestaan</string>
     <string name="login_with_biometrics">Kirjaudu biometriikalla</string>
     <string name="move_password_cancel">Älä siirrä!</string>
     <string name="move_password_confirm">Siirrä!</string>
