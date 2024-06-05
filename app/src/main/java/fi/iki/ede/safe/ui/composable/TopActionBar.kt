@@ -314,8 +314,6 @@ private fun backup(
 private fun EnterNewPassword(
     onNewPassword: (oldAndNewPassword: Pair<Password, Password>) -> Unit
 ) {
-    var oldPassword by remember { mutableStateOf(Password.getEmpty()) }
-    var newPassword by remember { mutableStateOf(Password.getEmpty()) }
     val passwordMinimumLength = integerResource(id = R.integer.password_minimum_length)
 
     Dialog(
