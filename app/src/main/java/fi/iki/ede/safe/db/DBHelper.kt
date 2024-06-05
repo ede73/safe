@@ -14,6 +14,7 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.crypto.keystore.CipherUtilities
+import fi.iki.ede.safe.db.DBHelper.Companion.TableColumns
 import fi.iki.ede.safe.model.Preferences
 import java.time.ZonedDateTime
 
@@ -39,9 +40,9 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         // this will be 0 on first run (even if OLD database DOES exist)
         val version = db?.version
 
-        listOf(CATEGORIES_CREATE, PASSWORDS_CREATE, MASTER_KEY_CREATE, SALT_CREATE).forEach {
+        listOf(Category, Password, Masterkey, SaltTable).forEach {
             try {
-                db?.execSQL(it)
+                db?.execSQL(it.create())
             } catch (ex: SQLiteException) {
                 Log.e(TAG, "error", ex)
                 // if upgrading from OLD DB BEFORE sqlite open helper
@@ -63,7 +64,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
                 if (db != null) {
                     db.beginTransaction()
                     db.execSQL(
-                        "ALTER TABLE $TABLE_PASSWORDS ADD COLUMN $COL_PASSWORDS_PHOTO TEXT;",
+                        "ALTER TABLE ${Password.tableName} ADD COLUMN ${Password.PasswordColumns.PHOTO.columnName} TEXT;",
                     )
                     db.setTransactionSuccessful()
                     db.endTransaction()
@@ -83,13 +84,10 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
 
     private fun fetchSalt() =
         readableDatabase.use { db ->
-            db.query(
-                true, TABLE_SALT, arrayOf("salt"),
-                null, null, null, null, null, null
-            ).use { c ->
+            db.query(true, SaltTable, setOf(SaltTable.SaltColumns.SALT)).use { c ->
                 if (c.count > 0) {
                     c.moveToFirst()
-                    val salt = c.getBlob(c.getColumnIndexOrThrow("salt"))
+                    val salt = c.getBlob(c.getColumnIndexOrThrow(SaltTable.SaltColumns.SALT))
                     Salt(salt)
                 } else {
                     throw SQLException("Could not read SALT")
@@ -98,11 +96,16 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         }
 
     fun storeSaltAndEncryptedMasterKey(salt: Salt, ivCipher: IVCipherText) {
-        // DONT USE Use{} transaction will die
-        storeSalt(salt)
-        // DONT USE Use{} transaction will die
-        storeEncryptedMasterKey(ivCipher)
-        Preferences.setMasterkeyInitialized()
+        writableDatabase.apply {
+            beginTransaction()
+            // DONT USE Use{} transaction will die
+            storeSalt(salt)
+            // DONT USE Use{} transaction will die
+            storeEncryptedMasterKey(ivCipher)
+            setTransactionSuccessful()
+            endTransaction()
+            Preferences.setMasterkeyInitialized()
+        }
     }
 
     // TODO: Replace with SaltedEncryptedPassword (once it supports IVCipher)
@@ -113,26 +116,21 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
     private fun storeSalt(salt: Salt) =
         // DONT USE Use{} transaction will die
         writableDatabase.apply {
-            delete(TABLE_SALT, "1=1", null).let {
+            delete(SaltTable).let {
                 insert(
-                    TABLE_SALT,
-                    null,
-                    ContentValues().apply { put("salt", salt.salt) })
-
+                    SaltTable,
+                    ContentValues().apply { put(SaltTable.SaltColumns.SALT, salt.salt) })
             }
         }
 
     private fun fetchMasterKey() =
         readableDatabase.use { db ->
-            db.query(
-                true, TABLE_MASTER_KEY, arrayOf("encryptedkey"),
-                null, null, null, null, null, null
-            ).use {
+            db.query(true, Masterkey, setOf(Masterkey.MasterKeyColumns.ENCRYPTED_KEY)).use {
                 if (it.count > 0) {
                     it.moveToFirst()
                     IVCipherText(
                         CipherUtilities.IV_LENGTH,
-                        it.getBlob(it.getColumnIndexOrThrow("encryptedkey"))
+                        it.getBlob(it.getColumnIndexOrThrow(Masterkey.MasterKeyColumns.ENCRYPTED_KEY))
                     )
                 } else {
                     throw Exception("No master key")
@@ -141,52 +139,55 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         }
 
     private fun storeEncryptedMasterKey(ivCipher: IVCipherText) =
-        writableDatabase.delete(TABLE_MASTER_KEY, "1=1", null).let {
+        writableDatabase.delete(Masterkey).let {
             writableDatabase.insert(
-                TABLE_MASTER_KEY,
-                null,
-                ContentValues().apply { put("encryptedkey", ivCipher) }
+                Masterkey,
+                ContentValues().apply { put(Masterkey.MasterKeyColumns.ENCRYPTED_KEY, ivCipher) }
             )
         }
 
-
     fun addCategory(entry: DecryptableCategoryEntry) =
-        // DONT USE Use{} transaction will die
+    // DONT USE Use{} transaction will die
+        //            "${Category.CategoryColumns.NAME.columnName}='${entry.encryptedName}'",
         readableDatabase.query(
-            true, TABLE_CATEGORIES, arrayOf(
-                "id", "name"
-            ), "name='${entry.encryptedName}'", null, null, null, null, null
+            true,
+            Category,
+            setOf(Category.CategoryColumns.CAT_ID, Category.CategoryColumns.NAME),
+            whereEq(Category.CategoryColumns.NAME, entry.encryptedName)
         ).use {
             if (it.count > 0) {
                 // TODO: THIS MAKES NO SENSE! Add shouldn't succeed, if something exists...
                 it.moveToFirst()
-                it.getDBID("id")
+                it.getDBID(Category.CategoryColumns.CAT_ID)
             } else { // there isn't already such a category...
-                this.writableDatabase.insert(TABLE_CATEGORIES, null,
+                this.writableDatabase.insert(Category,
                     ContentValues().apply {
-                        put("name", entry.encryptedName)
+                        put(Category.CategoryColumns.NAME, entry.encryptedName)
                     }
                 )
             }
         }
 
     fun deleteCategory(id: DBID) =
-        writableDatabase.use { db -> db.delete(TABLE_CATEGORIES, "id=$id", null) }
+        writableDatabase.use { db ->
+            db.delete(
+                Category,
+                whereEq(Category.CategoryColumns.CAT_ID, id)
+            )
+        }
 
     fun fetchAllCategoryRows(): List<DecryptableCategoryEntry> =
         readableDatabase.use { db ->
             db.query(
-                TABLE_CATEGORIES, arrayOf(
-                    "id", "name"
-                ),
-                null, null, null, null, null
+                Category,
+                setOf(Category.CategoryColumns.CAT_ID, Category.CategoryColumns.NAME)
             ).use {
                 ArrayList<DecryptableCategoryEntry>().apply {
                     it.moveToFirst()
                     (0 until it.count).forEach { _ ->
                         add(DecryptableCategoryEntry().apply {
-                            id = it.getDBID("id")
-                            encryptedName = it.getIVCipher("name")
+                            id = it.getDBID(Category.CategoryColumns.CAT_ID)
+                            encryptedName = it.getIVCipher(Category.CategoryColumns.NAME)
                         })
                         it.moveToNext()
                     }
@@ -194,29 +195,13 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
             }
         }
 
-    private fun Cursor.getZonedDateTimeOfPasswordChange(): ZonedDateTime? =
-        getString(getColumnIndexOrThrow(COL_PASSWORDS_PASSWORD_CHANGED_DATE))?.let { date ->
-            date.toLongOrNull()?.let {
-                DateUtils.unixEpochSecondsToLocalZonedDateTime(it)
-            } ?: run {
-                //ok, we have something that isn't numerical
-                DateUtils.newParse(date)
-            }
-        }
-
-    private fun Cursor.getIVCipher(columnName: String) =
-        IVCipherText(
-            getBlob(getColumnIndexOrThrow(columnName)) ?: byteArrayOf(),
-            CipherUtilities.IV_LENGTH
-        )
-
-    private fun Cursor.getDBID(columnName: String) =
-        getLong(getColumnIndexOrThrow(columnName))
-
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // TODO: DELETE, no one uses!
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     fun getCategoryCount(id: DBID) =
         readableDatabase.use { db ->
             db.rawQuery(
-                "SELECT count(*) FROM $TABLE_PASSWORDS WHERE category=$id",
+                "SELECT count(*) FROM ${Password.tableName} WHERE category=$id",
                 null
             ).use {
                 if (it.count > 0) {
@@ -228,39 +213,31 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
 
     fun updateCategory(id: DBID, entry: DecryptableCategoryEntry) =
         writableDatabase.use { db ->
-            db.update(TABLE_CATEGORIES, ContentValues().apply {
-                put("name", entry.encryptedName)
-            }, "id=$id", null).toLong()
+            db.update(Category, ContentValues().apply {
+                put(Category.CategoryColumns.NAME, entry.encryptedName)
+            }, whereEq(Category.CategoryColumns.CAT_ID, id)).toLong()
         }
 
     fun fetchAllRows(categoryId: DBID? = null) =
         readableDatabase.use { db ->
             db.query(
-                TABLE_PASSWORDS, arrayOf(
-                    COL_PASSWORDS_ID,
-                    COL_PASSWORDS_PASSWORD,
-                    COL_PASSWORDS_DESCRIPTION,
-                    COL_PASSWORDS_USERNAME,
-                    COL_PASSWORDS_WEBSITE,
-                    COL_PASSWORDS_NOTE,
-                    COL_PASSWORDS_CATEGORY,
-                    COL_PASSWORDS_PASSWORD_CHANGED_DATE,
-                    COL_PASSWORDS_PHOTO
-                ), if (categoryId != null) {
-                    "$COL_PASSWORDS_CATEGORY=$categoryId"
-                } else null, null, null, null, null
+                Password,
+                Password.PasswordColumns.values().toSet(),
+                if (categoryId != null) {
+                    whereEq(Password.PasswordColumns.CATEGORY_ID, categoryId)
+                } else null,
             ).use {
                 it.moveToFirst()
                 ArrayList<DecryptableSiteEntry>().apply {
                     (0 until it.count).forEach { _ ->
-                        add(DecryptableSiteEntry(it.getDBID(COL_PASSWORDS_CATEGORY)).apply {
-                            id = it.getDBID(COL_PASSWORDS_ID)
-                            password = it.getIVCipher(COL_PASSWORDS_PASSWORD)
-                            description = it.getIVCipher(COL_PASSWORDS_DESCRIPTION)
-                            username = it.getIVCipher(COL_PASSWORDS_USERNAME)
-                            website = it.getIVCipher(COL_PASSWORDS_WEBSITE)
-                            note = it.getIVCipher(COL_PASSWORDS_NOTE)
-                            photo = it.getIVCipher(COL_PASSWORDS_PHOTO)
+                        add(DecryptableSiteEntry(it.getDBID(Password.PasswordColumns.CATEGORY_ID)).apply {
+                            id = it.getDBID(Password.PasswordColumns.PWD_ID)
+                            password = it.getIVCipher(Password.PasswordColumns.PASSWORD)
+                            description = it.getIVCipher(Password.PasswordColumns.DESCRIPTION)
+                            username = it.getIVCipher(Password.PasswordColumns.USERNAME)
+                            website = it.getIVCipher(Password.PasswordColumns.WEBSITE)
+                            note = it.getIVCipher(Password.PasswordColumns.NOTE)
+                            photo = it.getIVCipher(Password.PasswordColumns.PHOTO)
                             it.getZonedDateTimeOfPasswordChange()
                                 ?.let { passwordChangedDate = it }
                         })
@@ -275,25 +252,24 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         require(entry.id != null) { "Cannot update password without ID" }
         require(entry.categoryId != null) { "Cannot update password without Category ID" }
         val args = ContentValues().apply {
-            put(COL_PASSWORDS_DESCRIPTION, entry.description)
-            put(COL_PASSWORDS_USERNAME, entry.username)
-            put(COL_PASSWORDS_PASSWORD, entry.password)
-            put(COL_PASSWORDS_WEBSITE, entry.website)
-            put(COL_PASSWORDS_NOTE, entry.note)
-            put(COL_PASSWORDS_PHOTO, entry.photo)
+            put(Password.PasswordColumns.DESCRIPTION, entry.description)
+            put(Password.PasswordColumns.USERNAME, entry.username)
+            put(Password.PasswordColumns.PASSWORD, entry.password)
+            put(Password.PasswordColumns.WEBSITE, entry.website)
+            put(Password.PasswordColumns.NOTE, entry.note)
+            put(Password.PasswordColumns.PHOTO, entry.photo)
             if (entry.passwordChangedDate != null) {
                 put(
-                    COL_PASSWORDS_PASSWORD_CHANGED_DATE,
+                    Password.PasswordColumns.PASSWORD_CHANGE_DATE,
                     entry.passwordChangedDate!!
                 )
             }
         }
         val ret = writableDatabase.use { db ->
             db.update(
-                TABLE_PASSWORDS,
+                Password,
                 args,
-                "$COL_PASSWORDS_ID=${entry.id}",
-                null
+                whereEq(Password.PasswordColumns.PWD_ID, entry.id!!)
             )
         }
         assert(ret == 1) { "Oh no...DB update failed to update..." }
@@ -303,44 +279,36 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
     fun updatePasswordCategory(id: DBID, newCategoryId: DBID) =
         writableDatabase.use { db ->
             db.update(
-                TABLE_PASSWORDS,
+                Password,
                 ContentValues().apply {
-                    put("category", newCategoryId)
-                }, "id=$id", null
+                    put(Password.PasswordColumns.CATEGORY_ID, newCategoryId)
+                }, whereEq(Password.PasswordColumns.PWD_ID, id)
             )
         }
 
-    private fun ContentValues.put(key: String, value: IVCipherText) =
-        put(key, value.combineIVAndCipherText())
-
-
-    private fun ContentValues.put(key: String, date: ZonedDateTime) =
-        put(key, DateUtils.toUnixSeconds(date))
-
     fun addPassword(entry: DecryptableSiteEntry) =
         // DONT USE Use{} transaction will die
-        writableDatabase.insertOrThrow(TABLE_PASSWORDS, null, ContentValues().apply {
+        writableDatabase.insertOrThrow(Password, ContentValues().apply {
             if (entry.id != null) {
-                put(COL_PASSWORDS_ID, entry.id)
+                put(Password.PasswordColumns.PWD_ID, entry.id)
             }
-            put(COL_PASSWORDS_CATEGORY, entry.categoryId)
-            put(COL_PASSWORDS_PASSWORD, entry.password)
-            put(COL_PASSWORDS_DESCRIPTION, entry.description)
-            put(COL_PASSWORDS_USERNAME, entry.username)
-            put(COL_PASSWORDS_WEBSITE, entry.website)
-            put(COL_PASSWORDS_NOTE, entry.note)
-            put(COL_PASSWORDS_PHOTO, entry.photo)
+            put(Password.PasswordColumns.CATEGORY_ID, entry.categoryId)
+            put(Password.PasswordColumns.PASSWORD, entry.password)
+            put(Password.PasswordColumns.DESCRIPTION, entry.description)
+            put(Password.PasswordColumns.USERNAME, entry.username)
+            put(Password.PasswordColumns.WEBSITE, entry.website)
+            put(Password.PasswordColumns.NOTE, entry.note)
+            put(Password.PasswordColumns.PHOTO, entry.photo)
             entry.passwordChangedDate?.let {
-                put(COL_PASSWORDS_PASSWORD_CHANGED_DATE, it)
+                put(Password.PasswordColumns.PASSWORD_CHANGE_DATE, it)
             }
         })
 
     fun deletePassword(id: DBID) =
         writableDatabase.use { db ->
             db.delete(
-                TABLE_PASSWORDS,
-                "$COL_PASSWORDS_ID=$id",
-                null
+                Password,
+                whereEq(Password.PasswordColumns.PWD_ID, id)
             )
         }
 
@@ -352,12 +320,11 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
             // best effort to rid of all the tables
             try {
                 listOf(
-                    PASSWORDS_DROP,
-                    PASSWORDS_CREATE,
-                    CATEGORIES_DROP,
-                    CATEGORIES_CREATE,
+                    Password,
+                    Category,
                 ).forEach { sql ->
-                    execSQL(sql)
+                    execSQL(sql.drop())
+                    execSQL(sql.create())
                 }
             } catch (ex: Exception) {
                 endTransaction()
@@ -365,45 +332,203 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
             }
         }
 
-
     companion object {
-        private const val TABLE_PASSWORDS = "passwords"
-        private const val TABLE_CATEGORIES = "categories"
-        private const val TABLE_MASTER_KEY = "master_key"
-        private const val TABLE_SALT = "salt"
         private const val DATABASE_VERSION = 2
         private const val DATABASE_NAME = "safe"
         private const val TAG = "DBHelper"
 
-        // DO NOT EDIT, if you do, you have to create a migration plan for the DB
-        private const val COL_PASSWORDS_ID = "id"
-        private const val COL_PASSWORDS_CATEGORY = "category"
-        private const val COL_PASSWORDS_PASSWORD = "password"
-        private const val COL_PASSWORDS_DESCRIPTION = "description"
-        private const val COL_PASSWORDS_USERNAME = "username"
-        private const val COL_PASSWORDS_WEBSITE = "website"
-        private const val COL_PASSWORDS_NOTE = "note"
-        private const val COL_PASSWORDS_PHOTO = "photo"
+        interface Table {
+            val tableName: String
+            fun create(): String
+            fun drop(): String
+        }
 
-        private const val COL_PASSWORDS_PASSWORD_CHANGED_DATE = "passwordchangeddate"
-        private const val PASSWORDS_CREATE = """CREATE TABLE $TABLE_PASSWORDS (
-                $COL_PASSWORDS_ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                $COL_PASSWORDS_CATEGORY INTEGER NOT NULL,
-                $COL_PASSWORDS_PASSWORD TEXT NOT NULL,
-                $COL_PASSWORDS_DESCRIPTION TEXT NOT NULL,
-                $COL_PASSWORDS_USERNAME TEXT,
-                $COL_PASSWORDS_WEBSITE TEXT,
-                $COL_PASSWORDS_NOTE TEXT,
-                $COL_PASSWORDS_PHOTO TEXT,
-                $COL_PASSWORDS_PASSWORD_CHANGED_DATE TEXT);""" // TODO: Could turn changed date to INTEGER?
-        private const val PASSWORDS_DROP = "DROP TABLE $TABLE_PASSWORDS;"
-        private const val CATEGORIES_CREATE = """CREATE TABLE $TABLE_CATEGORIES (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                lastdatetimeedit TEXT);"""
-        private const val CATEGORIES_DROP = "DROP TABLE $TABLE_CATEGORIES;"
-        private const val MASTER_KEY_CREATE = """CREATE TABLE $TABLE_MASTER_KEY (
-                encryptedkey TEXT NOT NULL);"""
-        private const val SALT_CREATE = "CREATE TABLE $TABLE_SALT (salt TEXT NOT NULL);"
+        interface TableColumns<T : Table> {
+            val columnName: String
+        }
+
+        object Password : Table {
+            override val tableName: String
+                get() = "passwords"
+
+            enum class PasswordColumns(override val columnName: String) : TableColumns<Password> {
+                PWD_ID("id"),
+                CATEGORY_ID("category"),
+                PASSWORD("password"),
+                DESCRIPTION("description"),
+                USERNAME("username"),
+                WEBSITE("website"),
+                NOTE("note"),
+                PHOTO("photo"),
+                PASSWORD_CHANGE_DATE("passwordchangeddate")
+            }
+
+            override fun create() = """
+CREATE TABLE $tableName (
+    ${PasswordColumns.PWD_ID.columnName} INTEGER PRIMARY KEY AUTOINCREMENT,
+    ${PasswordColumns.CATEGORY_ID.columnName} INTEGER NOT NULL,
+    ${PasswordColumns.PASSWORD.columnName} TEXT NOT NULL,
+    ${PasswordColumns.DESCRIPTION.columnName} TEXT NOT NULL,
+    ${PasswordColumns.USERNAME.columnName} TEXT,
+    ${PasswordColumns.WEBSITE.columnName} TEXT,
+    ${PasswordColumns.NOTE.columnName} TEXT,
+    ${PasswordColumns.PHOTO.columnName} TEXT,
+    ${PasswordColumns.PASSWORD_CHANGE_DATE.columnName} TEXT);
+"""
+
+            override fun drop() = "DROP TABLE $tableName;"
+        }
+
+        object Category : Table {
+            override val tableName: String
+                get() = "categories"
+
+            override fun create() = """
+CREATE TABLE $tableName (
+    ${CategoryColumns.CAT_ID.columnName} INTEGER PRIMARY KEY AUTOINCREMENT,
+    ${CategoryColumns.NAME.columnName} TEXT NOT NULL,
+    ${CategoryColumns.LAST_EDIT_TIME.columnName} TEXT);
+        """
+
+            override fun drop() = "DROP TABLE $tableName;"
+
+            enum class CategoryColumns(override val columnName: String) : TableColumns<Category> {
+                CAT_ID("id"),
+                NAME("name"),
+                LAST_EDIT_TIME("lastdatetimeedit"),
+            }
+        }
+
+        object Masterkey : Table {
+            override val tableName: String
+                get() = "master_key"
+
+            override fun create() = """
+CREATE TABLE $tableName (
+    ${MasterKeyColumns.ENCRYPTED_KEY.columnName} TEXT NOT NULL);
+        """
+
+            override fun drop(): String {
+                TODO("Not yet implemented")
+            }
+
+            enum class MasterKeyColumns(override val columnName: String) : TableColumns<Masterkey> {
+                ENCRYPTED_KEY("encryptedkey"),
+            }
+        }
+
+        object SaltTable : Table {
+            override val tableName: String
+                get() = "salt"
+
+            override fun create() = """
+CREATE TABLE $tableName (${SaltColumns.SALT.columnName} TEXT NOT NULL);
+         """
+
+            override fun drop(): String {
+                TODO("Not yet implemented")
+            }
+
+            enum class SaltColumns(override val columnName: String) : TableColumns<SaltTable> {
+                SALT("salt"),
+            }
+        }
     }
 }
+
+private fun ContentValues.put(column: TableColumns<*>, value: IVCipherText) =
+    put(column.columnName, value.combineIVAndCipherText())
+
+private fun ContentValues.put(column: TableColumns<*>, value: Long?) =
+    put(column.columnName, value)
+
+private fun ContentValues.put(column: TableColumns<*>, value: ByteArray) =
+    put(column.columnName, value)
+
+private fun ContentValues.put(column: TableColumns<*>, date: ZonedDateTime) =
+    put(column, DateUtils.toUnixSeconds(date))
+
+private fun Cursor.getColumnIndexOrThrow(column: TableColumns<*>) =
+    getColumnIndexOrThrow(column.columnName)
+
+private fun Cursor.getZonedDateTimeOfPasswordChange(): ZonedDateTime? =
+    getString(getColumnIndexOrThrow(DBHelper.Companion.Password.PasswordColumns.PASSWORD_CHANGE_DATE))?.let { date ->
+        date.toLongOrNull()?.let {
+            DateUtils.unixEpochSecondsToLocalZonedDateTime(it)
+        } ?: run {
+            //ok, we have something that isn't numerical
+            DateUtils.newParse(date)
+        }
+    }
+
+private fun Cursor.getIVCipher(column: TableColumns<*>) =
+    IVCipherText(
+        getBlob(getColumnIndexOrThrow(column.columnName)) ?: byteArrayOf(),
+        CipherUtilities.IV_LENGTH
+    )
+
+private fun Cursor.getDBID(column: TableColumns<*>) =
+    getLong(getColumnIndexOrThrow(column.columnName))
+
+private fun <T : DBHelper.Companion.Table, C : TableColumns<T>> SQLiteDatabase.update(
+    table: T,
+    values: ContentValues,
+    selection: SelectionCondition? = null
+) = update(table.tableName, values, selection?.query(), selection?.args())
+
+private fun <T : DBHelper.Companion.Table, C : TableColumns<T>> SQLiteDatabase.query(
+    distinct: Boolean,
+    table: T,
+    columns: Set<C>,
+    selection: SelectionCondition? = null // TODO: THIS
+) = query(
+    distinct, table.tableName, columns.map { it.columnName }.toTypedArray(),
+    selection?.query(), selection?.args(), null, null, null, null
+)
+
+private fun <T : DBHelper.Companion.Table, C : TableColumns<T>> SQLiteDatabase.query(
+    table: T,
+    columns: Set<C>,
+    selection: SelectionCondition? = null // TODO: THIS
+) = query(false, table, columns, selection)
+
+private fun <T : DBHelper.Companion.Table, C : TableColumns<T>> SQLiteDatabase.delete(
+    table: T,
+    selection: SelectionCondition? = null
+) = delete(table.tableName, selection?.query(), selection?.args())
+
+private fun <T : DBHelper.Companion.Table, C : TableColumns<T>> SQLiteDatabase.insert(
+    table: T,
+    values: ContentValues
+) =
+    insert(table.tableName, null, values)
+
+private fun <T : DBHelper.Companion.Table, C : TableColumns<T>> SQLiteDatabase.insertOrThrow(
+    table: T,
+    values: ContentValues
+) =
+    insert(table.tableName, null, values)
+
+class SelectionCondition(
+    private val column: TableColumns<*>,
+    private val singleArg: Any,
+    private val comparison: String = "="
+) {
+    fun query() = "(${column.columnName} $comparison ?)"
+    fun args() = arrayOf(singleArg.toString())
+
+    companion object {
+        fun alwaysMatch() = SelectionCondition(
+            column = object : TableColumns<Nothing> {
+                override val columnName = "1"
+            },
+            singleArg = "1",
+            comparison = "="
+        )
+    }
+}
+
+private fun <T : DBHelper.Companion.Table, C : TableColumns<T>> whereEq(
+    column: TableColumns<T>,
+    whereArg: Any
+) = SelectionCondition(column, whereArg, "=")
