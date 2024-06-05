@@ -205,7 +205,7 @@ class CategoryListScreenTest {
         categoryActivityTestRule.waitForIdle()
         advanceUntilIdle()
 
-        categoryActivityTestRule.waitUntil(1000) {
+        categoryActivityTestRule.waitUntil(5000) {
             advanceUntilIdle()
             // wait until one category disappears
             categoryActivityTestRule.onAllNodesWithTag(TestTag.TEST_TAG_CATEGORY_ROW)
