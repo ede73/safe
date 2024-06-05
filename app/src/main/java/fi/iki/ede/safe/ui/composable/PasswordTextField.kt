@@ -19,8 +19,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -112,7 +110,7 @@ fun passwordTextField(
         textStyle = if (isPasswordZoomed.value) safeTheme.customFonts.zoomedPassword
         else textStyle ?: safeTheme.customFonts.regularPassword,
         modifier = modifier
-            .semantics { contentDescription = "salasanan textfield" }
+            //.semantics { contentDescription = "salasanan textfield" }
             .testTag(TestTag.TEST_TAG_PASSWORD_TEXT_FIELD)
 //        modifier = modifier.let {
 //            if (isExpanded.value) modifier
