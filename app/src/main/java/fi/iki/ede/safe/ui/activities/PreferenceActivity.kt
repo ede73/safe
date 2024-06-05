@@ -62,7 +62,7 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
                 backupPathClicker?.isEnabled = false
             }
 
-            findPreference<Preference>(Preferences.PREFERENCE_LOCK_TIMEOUT)?.onPreferenceChangeListener =
+            findPreference<Preference>(Preferences.PREFERENCE_LOCK_TIMEOUT_MINUTES)?.onPreferenceChangeListener =
                 Preference.OnPreferenceChangeListener { _: Preference?, _: Any ->
                     activity?.startService(Intent(requireContext(), AutolockingService::class.java))
                     true
