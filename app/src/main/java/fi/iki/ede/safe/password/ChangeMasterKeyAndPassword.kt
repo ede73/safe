@@ -3,7 +3,6 @@ package fi.iki.ede.safe.password
 import android.content.Context
 import android.util.Log
 import fi.iki.ede.crypto.Password
-import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.IV_LENGTH
 import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_ITERATION_COUNT
 import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_LENGTH_BITS
 import fi.iki.ede.crypto.keystore.KeyManagement.decryptMasterKey
@@ -33,11 +32,12 @@ object ChangeMasterKeyAndPassword {
             salt, KEY_ITERATION_COUNT,
             oldPass, KEY_LENGTH_BITS
         )
-        val newPBKDF2Key = generatePBKDF2AESKey(salt, KEY_ITERATION_COUNT, newPass, IV_LENGTH)
+        val newPBKDF2Key = generatePBKDF2AESKey(salt, KEY_ITERATION_COUNT, newPass, KEY_LENGTH_BITS)
 
         try {
             val decryptedMasterKey = decryptMasterKey(existingPBKDF2Key, ivCipher)
             val newEncryptedMasterKey = encryptMasterKey(newPBKDF2Key, decryptedMasterKey.encoded)
+
             dbHelper.storeSaltAndEncryptedMasterKey(salt, newEncryptedMasterKey)
             val myScope = CoroutineScope(Dispatchers.Main)
             myScope.launch {
