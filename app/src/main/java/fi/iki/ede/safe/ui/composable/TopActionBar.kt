@@ -70,6 +70,7 @@ fun TopActionBar(
     val tag = "TopActionBar"
     val context = LocalContext.current
     var displayMenu by remember { mutableStateOf(false) }
+    var exportImport by remember { mutableStateOf(false) }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
@@ -182,23 +183,31 @@ fun TopActionBar(
                 expanded = displayMenu,
                 onDismissRequest = { displayMenu = false }
             ) {
-                if (!loginScreen) {
-                    // Creating dropdown menu item, on click
-                    // would create a Toast message
-                    DropdownMenuItem(
-                        text = { Text(text = stringResource(id = R.string.action_bar_settings)) },
-                        onClick = {
-                            displayMenu = false
-                            PreferenceActivity.startMe(context)
-                        })
-                }
+                // Creating dropdown menu item, on click
+                // would create a Toast message
+                DropdownMenuItem(
+                    enabled = !loginScreen,
+                    text = { Text(text = stringResource(id = R.string.action_bar_settings)) },
+                    onClick = {
+                        displayMenu = false
+                        PreferenceActivity.startMe(context)
+                    })
                 DropdownMenuItem(
                     text = { Text(text = stringResource(id = R.string.action_bar_help)) },
                     onClick = {
                         displayMenu = false
                         HelpScreen.startMe(context)
                     })
-                if (!loginScreen) {
+                DropdownMenuItem(
+                    enabled = !loginScreen,
+                    text = { Text(text = stringResource(id = R.string.action_bar_import_export)) },
+                    onClick = {
+                        exportImport = true
+                    })
+                DropdownMenu(
+                    expanded = exportImport,
+                    onDismissRequest = { exportImport = false }
+                ) {
                     DropdownMenuItem(
                         text = { Text(text = stringResource(id = R.string.action_bar_backup)) },
                         onClick = {
@@ -207,8 +216,6 @@ fun TopActionBar(
                                 ExportConfig.getCreateDocumentIntent(context)
                             )
                         })
-                }
-                if (!loginScreen) {
                     // Currently does not work from login screen
                     // TODO: Make work from login screen?
                     DropdownMenuItem(
@@ -223,29 +230,28 @@ fun TopActionBar(
                                 Log.e(tag, "Cannot launch ACTION_OPEN_DOCUMENT")
                             }
                         })
+                    if (BuildConfig.ENABLE_OIIMPORT) {
+                        DropdownMenuItem(
+                            text = { Text(text = stringResource(id = R.string.action_bar_old_restore)) },
+                            onClick = {
+                                displayMenu = false
+                                try {
+                                    selectRestoreDocumentLauncherOld.launch(
+                                        ExportConfig.getOpenDocumentIntent(context)
+                                    )
+                                } catch (ex: ActivityNotFoundException) {
+                                    Log.e(tag, "Cannot launch ACTION_OPEN_DOCUMENT")
+                                }
+                            })
+                    }
                 }
-                if (BuildConfig.ENABLE_OIIMPORT && !loginScreen) {
-                    DropdownMenuItem(
-                        text = { Text(text = stringResource(id = R.string.action_bar_old_restore)) },
-                        onClick = {
-                            displayMenu = false
-                            try {
-                                selectRestoreDocumentLauncherOld.launch(
-                                    ExportConfig.getOpenDocumentIntent(context)
-                                )
-                            } catch (ex: ActivityNotFoundException) {
-                                Log.e(tag, "Cannot launch ACTION_OPEN_DOCUMENT")
-                            }
-                        })
-                }
-                if (!loginScreen) {
-                    DropdownMenuItem(
-                        text = { Text(text = stringResource(id = R.string.action_bar_change_master_password)) },
-                        onClick = {
-                            displayMenu = false
-                            showChangePasswordDialog = true
-                        })
-                }
+                DropdownMenuItem(
+                    enabled = !loginScreen,
+                    text = { Text(text = stringResource(id = R.string.action_bar_change_master_password)) },
+                    onClick = {
+                        displayMenu = false
+                        showChangePasswordDialog = true
+                    })
             }
             if (showChangePasswordDialog) {
                 val passwordChanged = stringResource(id = R.string.action_bar_password_changed)
