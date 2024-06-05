@@ -3,7 +3,6 @@ package fi.iki.ede.safe.db
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
-import android.database.SQLException
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import android.database.sqlite.SQLiteOpenHelper
@@ -39,7 +38,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         // this will be 0 on first run (even if OLD database DOES exist)
         val version = db?.version
 
-        listOf(Category, Password, Masterkey, SaltTable).forEach {
+        listOf(Category, Password, Keys).forEach {
             try {
                 db?.execSQL(it.create())
             } catch (ex: SQLiteException) {
@@ -79,6 +78,68 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
                 }
             }
 
+            3 -> {
+                if (db != null) {
+                    db.beginTransaction()
+                    //val saltAndMasterkey = fetchSaltAndEncryptedMasterKey()
+                    var masterKey: IVCipherText? = null
+                    var salt: Salt? = null
+                    db.query(
+                        true,
+                        "master_key",
+                        arrayOf("encryptedkey"),
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null
+                    ).use {
+                        if (it.count > 0) {
+                            it.moveToFirst()
+                            masterKey = IVCipherText(
+                                CipherUtilities.IV_LENGTH,
+                                it.getBlob(it.getColumnIndexOrThrow("encryptedkey"))
+                            )
+                        } else {
+                            throw Exception("No master key")
+                        }
+                    }
+
+                    db.query(
+                        true, "salt", arrayOf("salt"), null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null
+                    ).use { c ->
+                        if (c.count > 0) {
+                            c.moveToFirst()
+                            val dsalt = c.getBlob(c.getColumnIndexOrThrow("salt"))
+                            salt = Salt(dsalt)
+                        } else {
+                            throw Exception("Could not read SALT")
+                        }
+                    }
+
+                    db.execSQL("DROP TABLE master_key;")
+                    db.execSQL("DROP TABLE salt;")
+                    db.execSQL(Keys.create())
+
+                    db.insert(
+                        Keys,
+                        ContentValues().apply {
+                            put(Keys.KeysColumns.ENCRYPTED_KEY, masterKey!!)
+                            put(Keys.KeysColumns.SALT, salt!!.salt)
+                        }
+                    )
+
+                    db.setTransactionSuccessful()
+                    db.endTransaction()
+                }
+            }
+
             else -> throw IllegalStateException(
                 "onUpgrade() with unknown oldVersion $oldVersion"
             )
@@ -90,26 +151,21 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         Log.i(TAG, "Downgrade $oldVersion to $newVersion")
     }
 
-    private fun fetchSalt() =
-        readableDatabase.use { db ->
-            db.query(true, SaltTable, setOf(SaltTable.SaltColumns.SALT)).use { c ->
-                if (c.count > 0) {
-                    c.moveToFirst()
-                    val salt = c.getBlob(c.getColumnIndexOrThrow(SaltTable.SaltColumns.SALT))
-                    Salt(salt)
-                } else {
-                    throw SQLException("Could not read SALT")
-                }
-            }
-        }
-
     fun storeSaltAndEncryptedMasterKey(salt: Salt, ivCipher: IVCipherText) {
         writableDatabase.apply {
             beginTransaction()
             // DONT USE Use{} transaction will die
-            storeSalt(salt)
-            // DONT USE Use{} transaction will die
-            storeEncryptedMasterKey(ivCipher)
+
+            writableDatabase.delete(Keys).let {
+                writableDatabase.insert(
+                    Keys,
+                    ContentValues().apply {
+                        put(Keys.KeysColumns.ENCRYPTED_KEY, ivCipher)
+                        put(Keys.KeysColumns.SALT, salt.salt)
+                    }
+                )
+            }
+
             setTransactionSuccessful()
             endTransaction()
             Preferences.setMasterkeyInitialized()
@@ -118,40 +174,22 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
 
     // TODO: Replace with SaltedEncryptedPassword (once it supports IVCipher)
     fun fetchSaltAndEncryptedMasterKey() =
-        Pair(fetchSalt(), fetchMasterKey())
-
-
-    private fun storeSalt(salt: Salt) =
-        // DONT USE Use{} transaction will die
-        writableDatabase.apply {
-            delete(SaltTable).let {
-                insert(
-                    SaltTable,
-                    ContentValues().apply { put(SaltTable.SaltColumns.SALT, salt.salt) })
-            }
-        }
-
-    private fun fetchMasterKey() =
         readableDatabase.use { db ->
-            db.query(true, Masterkey, setOf(Masterkey.MasterKeyColumns.ENCRYPTED_KEY)).use {
+            db.query(true, Keys, setOf(Keys.KeysColumns.ENCRYPTED_KEY, Keys.KeysColumns.SALT)).use {
                 if (it.count > 0) {
                     it.moveToFirst()
-                    IVCipherText(
-                        CipherUtilities.IV_LENGTH,
-                        it.getBlob(it.getColumnIndexOrThrow(Masterkey.MasterKeyColumns.ENCRYPTED_KEY))
+                    val salt = it.getBlob(it.getColumnIndexOrThrow(Keys.KeysColumns.SALT))
+                    Pair(
+                        Salt(salt),
+                        IVCipherText(
+                            CipherUtilities.IV_LENGTH,
+                            it.getBlob(it.getColumnIndexOrThrow(Keys.KeysColumns.ENCRYPTED_KEY))
+                        )
                     )
                 } else {
                     throw Exception("No master key")
                 }
             }
-        }
-
-    private fun storeEncryptedMasterKey(ivCipher: IVCipherText) =
-        writableDatabase.delete(Masterkey).let {
-            writableDatabase.insert(
-                Masterkey,
-                ContentValues().apply { put(Masterkey.MasterKeyColumns.ENCRYPTED_KEY, ivCipher) }
-            )
         }
 
     fun addCategory(entry: DecryptableCategoryEntry) =
@@ -341,7 +379,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         }
 
     companion object {
-        private const val DATABASE_VERSION = 3
+        private const val DATABASE_VERSION = 4
         private const val DATABASE_NAME = "safe"
         private const val TAG = "DBHelper"
     }
@@ -407,37 +445,21 @@ CREATE TABLE $tableName (
     }
 }
 
-private object Masterkey : Table {
+private object Keys : Table {
     override val tableName: String
-        get() = "master_key"
+        get() = "keys"
 
     override fun create() = """
 CREATE TABLE $tableName (
-    ${MasterKeyColumns.ENCRYPTED_KEY.columnName} TEXT NOT NULL);
+    ${KeysColumns.ENCRYPTED_KEY.columnName} TEXT NOT NULL,
+    ${KeysColumns.SALT.columnName} TEXT NOT NULL
+    );
         """
 
-    override fun drop(): String {
-        TODO("Not yet implemented")
-    }
+    override fun drop() = "DROP TABLE ${tableName};"
 
-    enum class MasterKeyColumns(override val columnName: String) : TableColumns<Masterkey> {
+    enum class KeysColumns(override val columnName: String) : TableColumns<Keys> {
         ENCRYPTED_KEY("encryptedkey"),
-    }
-}
-
-object SaltTable : Table {
-    override val tableName: String
-        get() = "salt"
-
-    override fun create() = """
-CREATE TABLE $tableName (${SaltColumns.SALT.columnName} TEXT NOT NULL);
-         """
-
-    override fun drop(): String {
-        TODO("Not yet implemented")
-    }
-
-    enum class SaltColumns(override val columnName: String) : TableColumns<SaltTable> {
         SALT("salt"),
     }
 }
