@@ -329,7 +329,7 @@ private fun EnterNewPassword(
                     R.string.login_password_tip,
                     R.string.login_verify_password_tip,
                     onMatchingPasswords = {
-                        oldPassword = it
+                        newPassword = it
                     },
                 )
                 SafeButton(

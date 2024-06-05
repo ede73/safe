@@ -5,6 +5,7 @@ import android.util.Log
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.IV_LENGTH
 import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_ITERATION_COUNT
+import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_LENGTH_BITS
 import fi.iki.ede.crypto.keystore.KeyManagement.decryptMasterKey
 import fi.iki.ede.crypto.keystore.KeyManagement.encryptMasterKey
 import fi.iki.ede.crypto.keystore.KeyManagement.generatePBKDF2AESKey
@@ -30,7 +31,7 @@ object ChangeMasterKeyAndPassword {
         val (salt, ivCipher) = dbHelper.fetchSaltAndEncryptedMasterKey()
         val existingPBKDF2Key = generatePBKDF2AESKey(
             salt, KEY_ITERATION_COUNT,
-            oldPass, IV_LENGTH
+            oldPass, KEY_LENGTH_BITS
         )
         val newPBKDF2Key = generatePBKDF2AESKey(salt, KEY_ITERATION_COUNT, newPass, IV_LENGTH)
 
