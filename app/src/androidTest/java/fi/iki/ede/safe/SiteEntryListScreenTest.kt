@@ -14,6 +14,7 @@ import org.junit.AfterClass
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Rule
+import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
@@ -35,6 +36,11 @@ class SiteEntryListScreenTest {
     @Before
     fun beforeEachTest() {
         MockDBHelper.initializeBasicTestDataModel()
+    }
+
+    @Test
+    fun empty() {
+
     }
 
     companion object {
