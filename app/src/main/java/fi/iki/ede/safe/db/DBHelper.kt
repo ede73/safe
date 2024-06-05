@@ -14,7 +14,6 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.crypto.keystore.CipherUtilities
-import fi.iki.ede.safe.db.DBHelper.Companion.TableColumns
 import fi.iki.ede.safe.model.Preferences
 import java.time.ZonedDateTime
 
@@ -66,6 +65,15 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
                     db.execSQL(
                         "ALTER TABLE ${Password.tableName} ADD COLUMN ${Password.PasswordColumns.PHOTO.columnName} TEXT;",
                     )
+                    db.setTransactionSuccessful()
+                    db.endTransaction()
+                }
+            }
+
+            2 -> {
+                if (db != null) {
+                    db.beginTransaction()
+                    db.execSQL("ALTER TABLE ${Category.tableName} DROP COLUMN lastdatetimeedit;")
                     db.setTransactionSuccessful()
                     db.endTransaction()
                 }
@@ -333,37 +341,39 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         }
 
     companion object {
-        private const val DATABASE_VERSION = 2
+        private const val DATABASE_VERSION = 3
         private const val DATABASE_NAME = "safe"
         private const val TAG = "DBHelper"
+    }
+}
 
-        interface Table {
-            val tableName: String
-            fun create(): String
-            fun drop(): String
-        }
+interface Table {
+    val tableName: String
+    fun create(): String
+    fun drop(): String
+}
 
-        interface TableColumns<T : Table> {
-            val columnName: String
-        }
+interface TableColumns<T : Table> {
+    val columnName: String
+}
 
-        object Password : Table {
-            override val tableName: String
-                get() = "passwords"
+private object Password : Table {
+    override val tableName: String
+        get() = "passwords"
 
-            enum class PasswordColumns(override val columnName: String) : TableColumns<Password> {
-                PWD_ID("id"),
-                CATEGORY_ID("category"),
-                PASSWORD("password"),
-                DESCRIPTION("description"),
-                USERNAME("username"),
-                WEBSITE("website"),
-                NOTE("note"),
-                PHOTO("photo"),
-                PASSWORD_CHANGE_DATE("passwordchangeddate")
-            }
+    enum class PasswordColumns(override val columnName: String) : TableColumns<Password> {
+        PWD_ID("id"),
+        CATEGORY_ID("category"),
+        PASSWORD("password"),
+        DESCRIPTION("description"),
+        USERNAME("username"),
+        WEBSITE("website"),
+        NOTE("note"),
+        PHOTO("photo"),
+        PASSWORD_CHANGE_DATE("passwordchangeddate")
+    }
 
-            override fun create() = """
+    override fun create() = """
 CREATE TABLE $tableName (
     ${PasswordColumns.PWD_ID.columnName} INTEGER PRIMARY KEY AUTOINCREMENT,
     ${PasswordColumns.CATEGORY_ID.columnName} INTEGER NOT NULL,
@@ -376,63 +386,59 @@ CREATE TABLE $tableName (
     ${PasswordColumns.PASSWORD_CHANGE_DATE.columnName} TEXT);
 """
 
-            override fun drop() = "DROP TABLE $tableName;"
-        }
+    override fun drop() = "DROP TABLE $tableName;"
+}
 
-        object Category : Table {
-            override val tableName: String
-                get() = "categories"
+private object Category : Table {
+    override val tableName: String
+        get() = "categories"
 
-            override fun create() = """
+    override fun create() = """
 CREATE TABLE $tableName (
     ${CategoryColumns.CAT_ID.columnName} INTEGER PRIMARY KEY AUTOINCREMENT,
-    ${CategoryColumns.NAME.columnName} TEXT NOT NULL,
-    ${CategoryColumns.LAST_EDIT_TIME.columnName} TEXT);
+    ${CategoryColumns.NAME.columnName} TEXT NOT NULL);
         """
 
-            override fun drop() = "DROP TABLE $tableName;"
+    override fun drop() = "DROP TABLE $tableName;"
 
-            enum class CategoryColumns(override val columnName: String) : TableColumns<Category> {
-                CAT_ID("id"),
-                NAME("name"),
-                LAST_EDIT_TIME("lastdatetimeedit"),
-            }
-        }
+    enum class CategoryColumns(override val columnName: String) : TableColumns<Category> {
+        CAT_ID("id"),
+        NAME("name"),
+    }
+}
 
-        object Masterkey : Table {
-            override val tableName: String
-                get() = "master_key"
+private object Masterkey : Table {
+    override val tableName: String
+        get() = "master_key"
 
-            override fun create() = """
+    override fun create() = """
 CREATE TABLE $tableName (
     ${MasterKeyColumns.ENCRYPTED_KEY.columnName} TEXT NOT NULL);
         """
 
-            override fun drop(): String {
-                TODO("Not yet implemented")
-            }
+    override fun drop(): String {
+        TODO("Not yet implemented")
+    }
 
-            enum class MasterKeyColumns(override val columnName: String) : TableColumns<Masterkey> {
-                ENCRYPTED_KEY("encryptedkey"),
-            }
-        }
+    enum class MasterKeyColumns(override val columnName: String) : TableColumns<Masterkey> {
+        ENCRYPTED_KEY("encryptedkey"),
+    }
+}
 
-        object SaltTable : Table {
-            override val tableName: String
-                get() = "salt"
+object SaltTable : Table {
+    override val tableName: String
+        get() = "salt"
 
-            override fun create() = """
+    override fun create() = """
 CREATE TABLE $tableName (${SaltColumns.SALT.columnName} TEXT NOT NULL);
          """
 
-            override fun drop(): String {
-                TODO("Not yet implemented")
-            }
+    override fun drop(): String {
+        TODO("Not yet implemented")
+    }
 
-            enum class SaltColumns(override val columnName: String) : TableColumns<SaltTable> {
-                SALT("salt"),
-            }
-        }
+    enum class SaltColumns(override val columnName: String) : TableColumns<SaltTable> {
+        SALT("salt"),
     }
 }
 
@@ -452,7 +458,7 @@ private fun Cursor.getColumnIndexOrThrow(column: TableColumns<*>) =
     getColumnIndexOrThrow(column.columnName)
 
 private fun Cursor.getZonedDateTimeOfPasswordChange(): ZonedDateTime? =
-    getString(getColumnIndexOrThrow(DBHelper.Companion.Password.PasswordColumns.PASSWORD_CHANGE_DATE))?.let { date ->
+    getString(getColumnIndexOrThrow(Password.PasswordColumns.PASSWORD_CHANGE_DATE))?.let { date ->
         date.toLongOrNull()?.let {
             DateUtils.unixEpochSecondsToLocalZonedDateTime(it)
         } ?: run {
@@ -470,13 +476,13 @@ private fun Cursor.getIVCipher(column: TableColumns<*>) =
 private fun Cursor.getDBID(column: TableColumns<*>) =
     getLong(getColumnIndexOrThrow(column.columnName))
 
-private fun <T : DBHelper.Companion.Table, C : TableColumns<T>> SQLiteDatabase.update(
+private fun <T : Table, C : TableColumns<T>> SQLiteDatabase.update(
     table: T,
     values: ContentValues,
     selection: SelectionCondition? = null
 ) = update(table.tableName, values, selection?.query(), selection?.args())
 
-private fun <T : DBHelper.Companion.Table, C : TableColumns<T>> SQLiteDatabase.query(
+private fun <T : Table, C : TableColumns<T>> SQLiteDatabase.query(
     distinct: Boolean,
     table: T,
     columns: Set<C>,
@@ -486,24 +492,24 @@ private fun <T : DBHelper.Companion.Table, C : TableColumns<T>> SQLiteDatabase.q
     selection?.query(), selection?.args(), null, null, null, null
 )
 
-private fun <T : DBHelper.Companion.Table, C : TableColumns<T>> SQLiteDatabase.query(
+private fun <T : Table, C : TableColumns<T>> SQLiteDatabase.query(
     table: T,
     columns: Set<C>,
     selection: SelectionCondition? = null // TODO: THIS
 ) = query(false, table, columns, selection)
 
-private fun <T : DBHelper.Companion.Table, C : TableColumns<T>> SQLiteDatabase.delete(
+private fun <T : Table, C : TableColumns<T>> SQLiteDatabase.delete(
     table: T,
     selection: SelectionCondition? = null
 ) = delete(table.tableName, selection?.query(), selection?.args())
 
-private fun <T : DBHelper.Companion.Table, C : TableColumns<T>> SQLiteDatabase.insert(
+private fun <T : Table, C : TableColumns<T>> SQLiteDatabase.insert(
     table: T,
     values: ContentValues
 ) =
     insert(table.tableName, null, values)
 
-private fun <T : DBHelper.Companion.Table, C : TableColumns<T>> SQLiteDatabase.insertOrThrow(
+private fun <T : Table, C : TableColumns<T>> SQLiteDatabase.insertOrThrow(
     table: T,
     values: ContentValues
 ) =
@@ -528,7 +534,7 @@ class SelectionCondition(
     }
 }
 
-private fun <T : DBHelper.Companion.Table, C : TableColumns<T>> whereEq(
+private fun <T : Table, C : TableColumns<T>> whereEq(
     column: TableColumns<T>,
     whereArg: Any
 ) = SelectionCondition(column, whereArg, "=")
