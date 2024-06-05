@@ -260,34 +260,29 @@ fun TopActionBar(
 
                 EnterNewPassword {
                     val (oldPassword, newPassword) = it
-                    if (oldPassword != newPassword &&
-                        !oldPassword.isEmpty() &&
-                        !newPassword.isEmpty()
-                    ) {
-                        ChangeMasterKeyAndPassword.changeMasterPassword(
-                            context,
-                            oldPassword,
-                            newPassword
-                        ) { success ->
-                            // NOTICE! This isn't a UI thread!
-                            coroutineScope.launch(Dispatchers.Main) {
-                                if (success) {
-                                    // master password successfully changed
-                                    Toast.makeText(
-                                        context,
-                                        passwordChanged,
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                                } else {
-                                    Toast.makeText(
-                                        context,
-                                        passwordChangeFailed,
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                                }
+                    ChangeMasterKeyAndPassword.changeMasterPassword(
+                        context,
+                        oldPassword,
+                        newPassword
+                    ) { success ->
+                        // NOTICE! This isn't a UI thread!
+                        coroutineScope.launch(Dispatchers.Main) {
+                            if (success) {
+                                // master password successfully changed
+                                Toast.makeText(
+                                    context,
+                                    passwordChanged,
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    passwordChangeFailed,
+                                    Toast.LENGTH_LONG
+                                ).show()
                             }
-                            showChangePasswordDialog = false
                         }
+                        showChangePasswordDialog = false
                     }
                 }
             }
@@ -311,7 +306,7 @@ private fun backup(
 }
 
 @Composable
-private fun EnterNewPassword(
+fun EnterNewPassword(
     onNewPassword: (oldAndNewPassword: Pair<Password, Password>) -> Unit
 ) {
     val passwordMinimumLength = integerResource(id = R.integer.password_minimum_length)
@@ -334,9 +329,12 @@ private fun EnterNewPassword(
                 )
                 SafeButton(
                     enabled = !newPassword.isEmpty() &&
+                            !oldPassword.isEmpty() &&
                             newPassword != oldPassword &&
                             newPassword.length >= passwordMinimumLength,
-                    onClick = { onNewPassword(Pair(oldPassword, newPassword)) }) {
+                    onClick = { onNewPassword(Pair(oldPassword, newPassword)) },
+                    modifier = Modifier.testTag(TestTag.TEST_TAG_CHANGE_PASSWORD_OK)
+                ) {
                     Text(text = stringResource(id = R.string.action_bar_change_password_ok))
                 }
             }
