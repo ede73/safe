@@ -7,6 +7,9 @@ import androidx.preference.PreferenceManager
 import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.safe.BuildConfig
 import java.time.ZonedDateTime
+import kotlin.time.Duration
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 object Preferences {
     lateinit var sharedPreferences: SharedPreferences
@@ -73,10 +76,12 @@ object Preferences {
         PREFERENCE_CLIPBOARD_CLEAR_DELAY_DEFAULT_VALUE
     )?.toIntOrNull() ?: PREFERENCE_CLIPBOARD_CLEAR_DELAY_DEFAULT_VALUE.toInt()
 
-    fun getLockTimeoutMinutes() = sharedPreferences.getString(
+    fun getLockTimeoutDuration(): Duration = (sharedPreferences.getString(
         PREFERENCE_LOCK_TIMEOUT_MINUTES,
         PREFERENCE_LOCK_TIMEOUT_DEFAULT_VALUE_MINUTES
-    )?.toIntOrNull() ?: PREFERENCE_LOCK_TIMEOUT_DEFAULT_VALUE_MINUTES.toInt()
+    )?.toIntOrNull() ?: PREFERENCE_LOCK_TIMEOUT_DEFAULT_VALUE_MINUTES.toInt()).toDuration(
+        DurationUnit.MINUTES
+    )
 
     // We're checking notification permission in service (countdown timer)
     // if missing, we'll flag here to request the permission when user is

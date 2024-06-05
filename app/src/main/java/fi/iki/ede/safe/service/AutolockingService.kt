@@ -105,9 +105,7 @@ class AutolockingService : Service() {
         autoLockCountdownNotifier = null
         serviceNotification.setNotification(this@AutolockingService)
 
-        val timeoutMinutes = Preferences.getLockTimeoutMinutes()
-
-        val timeoutUntilStop = Duration.ofMinutes(timeoutMinutes.toLong()).toMillis()
+        val timeoutUntilStop = Preferences.getLockTimeoutDuration().inWholeMilliseconds
 
         autoLockCountdownNotifier =
             object : CountDownTimer(timeoutUntilStop, Duration.ofSeconds(10L).toMillis()) {
