@@ -31,15 +31,22 @@ object MockDBHelper {
         passwords.addAll(initialPasswords)
         categories.addAll(initialCategories)
 
-        salt = initializeSalt
-        masterKey = initializeMasterKey
+        storedSalt = initializeSalt
+        storedMasterKey = initializeMasterKey
         every { db.fetchSaltAndEncryptedMasterKey() } answers {
             Pair(
-                salt!!,
-                masterKey!!
+                storedSalt!!,
+                storedMasterKey!!
             )
         }
-        // TODO: every { db.storeSaltAndEncryptedMasterKey() } returns Pair(salt(), masterKey())
+
+        every { db.close() } answers {}
+
+        every { db.storeSaltAndEncryptedMasterKey(any(), any()) } answers {
+            storedSalt = firstArg()
+            storedMasterKey = secondArg()
+            //Preferences.setMasterkeyInitialized()??
+        }
         every { db.addCategory(any()) } answers {
             // we have ID or dont!
             val category: DecryptableCategoryEntry = firstArg()
@@ -178,7 +185,7 @@ object MockDBHelper {
         return this
     }
 
-    fun isInitialized() = salt != null && masterKey != null
+    fun isInitialized() = storedSalt != null && storedMasterKey != null
 
     fun initializeBasicTestDataModel() {
         require(DBHelperFactory.isMock) { "You MUST call MockDBHelper.mockDBHelper from @BeforeClass,@JvmStatic initializer" }
@@ -208,6 +215,6 @@ object MockDBHelper {
 
     val categories: MutableList<DecryptableCategoryEntry> = mutableListOf()
     private val passwords: MutableList<DecryptableSiteEntry> = mutableListOf()
-    private var salt: Salt? = null
-    private var masterKey: IVCipherText? = null
+    private var storedSalt: Salt? = null
+    private var storedMasterKey: IVCipherText? = null
 }

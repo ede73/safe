@@ -57,7 +57,7 @@ object ChangeMasterKeyAndPassword {
             // setup a transaction to protect stuff, also user always has backup, right? :)
             Log.e("ChangePassword", "Failed modifying master password $e")
         } finally {
-            dbHelper.close()
+            //dbHelper.close()
         }
         finished(false)
         return false

@@ -60,6 +60,8 @@ class AutoLogOutTest {
         // Alas, you can advance time, but it won't affect outside running CountdownTimer
         Thread.sleep(1000)
         advanceUntilIdle()
+        Thread.sleep(1000)
+        advanceUntilIdle()
         activityTestRule.onAllNodesWithTag(TestTag.TEST_TAG_PASSWORD_PROMPT)[0]
             .assertIsDisplayed()
         InstrumentationRegistry.getInstrumentation().targetContext.stopService(serviceIntent)

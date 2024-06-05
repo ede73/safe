@@ -42,21 +42,19 @@ object MockKeyStore {
         return p
     }
 
-    fun fakeSalt() = Salt("abcdabcd01234567".hexToByteArray())
-    fun fakePasswordText() = "abcdefgh"
-    fun fakePassword() = Password(fakePasswordText().toByteArray())
-    fun fakeMasterKeyAES() =
+    val fakeSalt = Salt("abcdabcd01234567".hexToByteArray())
+    const val fakePasswordText = "abcdefgh"
+    val fakePassword = Password(fakePasswordText.toByteArray())
+    private val fakeMasterKeyAES =
         "00112233445566778899AABBCCDDEEFF99887766554433221100123456789ABC".hexToByteArray()
-
-    fun fakePasswordBasedAESKey() = generatePBKDF2AESKey(
-        fakeSalt(),
+    private val fakePasswordBasedAESKey = generatePBKDF2AESKey(
+        fakeSalt,
         KEY_ITERATION_COUNT,
-        fakePassword(),
+        fakePassword,
         KEY_LENGTH_BITS
     )
-
-    fun fakeEncryptedMasterKey() = KeyManagement.encryptMasterKey(
-        fakePasswordBasedAESKey(),
-        fakeMasterKeyAES()
+    val fakeEncryptedMasterKey = KeyManagement.encryptMasterKey(
+        fakePasswordBasedAESKey,
+        fakeMasterKeyAES
     )
 }

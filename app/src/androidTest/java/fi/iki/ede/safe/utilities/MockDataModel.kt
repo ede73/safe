@@ -26,8 +26,8 @@ object MockDataModel {
     fun mockAllDataModelNecessities() {
         MockKeyStore.mockKeyStore()
         MockDBHelper.mockDBHelper(
-            initializeMasterKey = fakeEncryptedMasterKey(),
-            initializeSalt = fakeSalt(),
+            initializeMasterKey = fakeEncryptedMasterKey,
+            initializeSalt = fakeSalt,
             initialPasswords = emptyList(),
             initialCategories = emptyList()
         )

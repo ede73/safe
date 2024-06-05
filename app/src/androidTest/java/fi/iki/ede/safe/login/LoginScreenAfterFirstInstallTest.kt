@@ -97,7 +97,7 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
         // too late?bio already launched?
         mockIsBiometricsInitialized { true }
         mockkObject(CategoryListScreen)
-        getPasswordFields(loginActivityTestRule)[0].performTextInput(MockKeyStore.fakePasswordText())
+        getPasswordFields(loginActivityTestRule)[0].performTextInput(MockKeyStore.fakePasswordText)
         getLoginButton(loginActivityTestRule).assertIsEnabled()
         getLoginButton(loginActivityTestRule).performClick()
         verify(exactly = 1) { LoginHandler.passwordLogin(any(), any()) }
