@@ -15,9 +15,7 @@ import fi.iki.ede.crypto.support.DisallowedFunctions
  *
  * Avoid using, prefer SaltedEncryptedPassword
  */
-open class Password
-@Deprecated("Internally used, you should prefer String constructor")
-constructor(
+open class Password internal constructor(
     open val utf8password: CharArray
 ) : DisallowedFunctions() {
     val length: Int
