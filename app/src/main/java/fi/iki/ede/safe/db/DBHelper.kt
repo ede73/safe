@@ -88,8 +88,8 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
                 insert(
                     Keys,
                     ContentValues().apply {
-                        put(Keys.KeysColumns.ENCRYPTED_KEY, ivCipher)
-                        put(Keys.KeysColumns.SALT, salt.salt)
+                        put(Keys.Columns.ENCRYPTED_KEY, ivCipher)
+                        put(Keys.Columns.SALT, salt.salt)
                     }
                 )
             }
@@ -103,15 +103,15 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
     // TODO: Replace with SaltedEncryptedPassword (once it supports IVCipher)
     fun fetchSaltAndEncryptedMasterKey() =
         readableDatabase.use { db ->
-            db.query(true, Keys, setOf(Keys.KeysColumns.ENCRYPTED_KEY, Keys.KeysColumns.SALT)).use {
+            db.query(true, Keys, setOf(Keys.Columns.ENCRYPTED_KEY, Keys.Columns.SALT)).use {
                 if (it.count > 0) {
                     it.moveToFirst()
-                    val salt = it.getBlob(it.getColumnIndexOrThrow(Keys.KeysColumns.SALT))
+                    val salt = it.getBlob(it.getColumnIndexOrThrow(Keys.Columns.SALT))
                     Pair(
                         Salt(salt),
                         IVCipherText(
                             CipherUtilities.IV_LENGTH,
-                            it.getBlob(it.getColumnIndexOrThrow(Keys.KeysColumns.ENCRYPTED_KEY))
+                            it.getBlob(it.getColumnIndexOrThrow(Keys.Columns.ENCRYPTED_KEY))
                         )
                     )
                 } else {
@@ -126,17 +126,17 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         readableDatabase.query(
             true,
             Category,
-            setOf(Category.CategoryColumns.CAT_ID, Category.CategoryColumns.NAME),
-            whereEq(Category.CategoryColumns.NAME, entry.encryptedName)
+            setOf(Category.Columns.CAT_ID, Category.Columns.NAME),
+            whereEq(Category.Columns.NAME, entry.encryptedName)
         ).use {
             if (it.count > 0) {
                 // TODO: THIS MAKES NO SENSE! Add shouldn't succeed, if something exists...
                 it.moveToFirst()
-                it.getDBID(Category.CategoryColumns.CAT_ID)
+                it.getDBID(Category.Columns.CAT_ID)
             } else { // there isn't already such a category...
                 this.writableDatabase.insert(Category,
                     ContentValues().apply {
-                        put(Category.CategoryColumns.NAME, entry.encryptedName)
+                        put(Category.Columns.NAME, entry.encryptedName)
                     }
                 )
             }
@@ -146,7 +146,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         writableDatabase.use { db ->
             db.delete(
                 Category,
-                whereEq(Category.CategoryColumns.CAT_ID, id)
+                whereEq(Category.Columns.CAT_ID, id)
             )
         }
 
@@ -154,14 +154,14 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         readableDatabase.use { db ->
             db.query(
                 Category,
-                setOf(Category.CategoryColumns.CAT_ID, Category.CategoryColumns.NAME)
+                setOf(Category.Columns.CAT_ID, Category.Columns.NAME)
             ).use {
                 ArrayList<DecryptableCategoryEntry>().apply {
                     it.moveToFirst()
                     (0 until it.count).forEach { _ ->
                         add(DecryptableCategoryEntry().apply {
-                            id = it.getDBID(Category.CategoryColumns.CAT_ID)
-                            encryptedName = it.getIVCipher(Category.CategoryColumns.NAME)
+                            id = it.getDBID(Category.Columns.CAT_ID)
+                            encryptedName = it.getIVCipher(Category.Columns.NAME)
                         })
                         it.moveToNext()
                     }
@@ -188,30 +188,30 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
     fun updateCategory(id: DBID, entry: DecryptableCategoryEntry) =
         writableDatabase.use { db ->
             db.update(Category, ContentValues().apply {
-                put(Category.CategoryColumns.NAME, entry.encryptedName)
-            }, whereEq(Category.CategoryColumns.CAT_ID, id)).toLong()
+                put(Category.Columns.NAME, entry.encryptedName)
+            }, whereEq(Category.Columns.CAT_ID, id)).toLong()
         }
 
     fun fetchAllRows(categoryId: DBID? = null) =
         readableDatabase.use { db ->
             db.query(
                 Password,
-                Password.PasswordColumns.values().toSet(),
+                Password.Columns.values().toSet(),
                 if (categoryId != null) {
-                    whereEq(Password.PasswordColumns.CATEGORY_ID, categoryId)
+                    whereEq(Password.Columns.CATEGORY_ID, categoryId)
                 } else null,
             ).use {
                 it.moveToFirst()
                 ArrayList<DecryptableSiteEntry>().apply {
                     (0 until it.count).forEach { _ ->
-                        add(DecryptableSiteEntry(it.getDBID(Password.PasswordColumns.CATEGORY_ID)).apply {
-                            id = it.getDBID(Password.PasswordColumns.PWD_ID)
-                            password = it.getIVCipher(Password.PasswordColumns.PASSWORD)
-                            description = it.getIVCipher(Password.PasswordColumns.DESCRIPTION)
-                            username = it.getIVCipher(Password.PasswordColumns.USERNAME)
-                            website = it.getIVCipher(Password.PasswordColumns.WEBSITE)
-                            note = it.getIVCipher(Password.PasswordColumns.NOTE)
-                            photo = it.getIVCipher(Password.PasswordColumns.PHOTO)
+                        add(DecryptableSiteEntry(it.getDBID(Password.Columns.CATEGORY_ID)).apply {
+                            id = it.getDBID(Password.Columns.PWD_ID)
+                            password = it.getIVCipher(Password.Columns.PASSWORD)
+                            description = it.getIVCipher(Password.Columns.DESCRIPTION)
+                            username = it.getIVCipher(Password.Columns.USERNAME)
+                            website = it.getIVCipher(Password.Columns.WEBSITE)
+                            note = it.getIVCipher(Password.Columns.NOTE)
+                            photo = it.getIVCipher(Password.Columns.PHOTO)
                             it.getZonedDateTimeOfPasswordChange()
                                 ?.let { passwordChangedDate = it }
                         })
@@ -226,15 +226,15 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         require(entry.id != null) { "Cannot update password without ID" }
         require(entry.categoryId != null) { "Cannot update password without Category ID" }
         val args = ContentValues().apply {
-            put(Password.PasswordColumns.DESCRIPTION, entry.description)
-            put(Password.PasswordColumns.USERNAME, entry.username)
-            put(Password.PasswordColumns.PASSWORD, entry.password)
-            put(Password.PasswordColumns.WEBSITE, entry.website)
-            put(Password.PasswordColumns.NOTE, entry.note)
-            put(Password.PasswordColumns.PHOTO, entry.photo)
+            put(Password.Columns.DESCRIPTION, entry.description)
+            put(Password.Columns.USERNAME, entry.username)
+            put(Password.Columns.PASSWORD, entry.password)
+            put(Password.Columns.WEBSITE, entry.website)
+            put(Password.Columns.NOTE, entry.note)
+            put(Password.Columns.PHOTO, entry.photo)
             if (entry.passwordChangedDate != null) {
                 put(
-                    Password.PasswordColumns.PASSWORD_CHANGE_DATE,
+                    Password.Columns.PASSWORD_CHANGE_DATE,
                     entry.passwordChangedDate!!
                 )
             }
@@ -243,7 +243,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
             db.update(
                 Password,
                 args,
-                whereEq(Password.PasswordColumns.PWD_ID, entry.id!!)
+                whereEq(Password.Columns.PWD_ID, entry.id!!)
             )
         }
         assert(ret == 1) { "Oh no...DB update failed to update..." }
@@ -255,8 +255,8 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
             db.update(
                 Password,
                 ContentValues().apply {
-                    put(Password.PasswordColumns.CATEGORY_ID, newCategoryId)
-                }, whereEq(Password.PasswordColumns.PWD_ID, id)
+                    put(Password.Columns.CATEGORY_ID, newCategoryId)
+                }, whereEq(Password.Columns.PWD_ID, id)
             )
         }
 
@@ -264,17 +264,17 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         // DONT USE Use{} transaction will die
         writableDatabase.insertOrThrow(Password, ContentValues().apply {
             if (entry.id != null) {
-                put(Password.PasswordColumns.PWD_ID, entry.id)
+                put(Password.Columns.PWD_ID, entry.id)
             }
-            put(Password.PasswordColumns.CATEGORY_ID, entry.categoryId)
-            put(Password.PasswordColumns.PASSWORD, entry.password)
-            put(Password.PasswordColumns.DESCRIPTION, entry.description)
-            put(Password.PasswordColumns.USERNAME, entry.username)
-            put(Password.PasswordColumns.WEBSITE, entry.website)
-            put(Password.PasswordColumns.NOTE, entry.note)
-            put(Password.PasswordColumns.PHOTO, entry.photo)
+            put(Password.Columns.CATEGORY_ID, entry.categoryId)
+            put(Password.Columns.PASSWORD, entry.password)
+            put(Password.Columns.DESCRIPTION, entry.description)
+            put(Password.Columns.USERNAME, entry.username)
+            put(Password.Columns.WEBSITE, entry.website)
+            put(Password.Columns.NOTE, entry.note)
+            put(Password.Columns.PHOTO, entry.photo)
             entry.passwordChangedDate?.let {
-                put(Password.PasswordColumns.PASSWORD_CHANGE_DATE, it)
+                put(Password.Columns.PASSWORD_CHANGE_DATE, it)
             }
         })
 
@@ -282,7 +282,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         writableDatabase.use { db ->
             db.delete(
                 Password,
-                whereEq(Password.PasswordColumns.PWD_ID, id)
+                whereEq(Password.Columns.PWD_ID, id)
             )
         }
 
@@ -388,8 +388,8 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
                 db.insert(
                     Keys,
                     ContentValues().apply {
-                        put(Keys.KeysColumns.ENCRYPTED_KEY, masterKey!!)
-                        put(Keys.KeysColumns.SALT, salt!!.salt)
+                        put(Keys.Columns.ENCRYPTED_KEY, masterKey!!)
+                        put(Keys.Columns.SALT, salt!!.salt)
                     }
                 )
             } else {
@@ -455,7 +455,7 @@ private object Password : Table {
     override val tableName: String
         get() = "passwords"
 
-    enum class PasswordColumns(override val columnName: String) : TableColumns<Password> {
+    enum class Columns(override val columnName: String) : TableColumns<Password> {
         PWD_ID("id"),
         CATEGORY_ID("category"),
         PASSWORD("password"),
@@ -467,18 +467,16 @@ private object Password : Table {
         PASSWORD_CHANGE_DATE("passwordchangeddate")
     }
 
-    override fun create() = """
-CREATE TABLE IF NOT EXISTS $tableName (
-    ${PasswordColumns.PWD_ID.columnName} INTEGER PRIMARY KEY AUTOINCREMENT,
-    ${PasswordColumns.CATEGORY_ID.columnName} INTEGER NOT NULL,
-    ${PasswordColumns.PASSWORD.columnName} TEXT NOT NULL,
-    ${PasswordColumns.DESCRIPTION.columnName} TEXT NOT NULL,
-    ${PasswordColumns.USERNAME.columnName} TEXT,
-    ${PasswordColumns.WEBSITE.columnName} TEXT,
-    ${PasswordColumns.NOTE.columnName} TEXT,
-    ${PasswordColumns.PHOTO.columnName} TEXT,
-    ${PasswordColumns.PASSWORD_CHANGE_DATE.columnName} TEXT);
-"""
+    override fun create() = """CREATE TABLE IF NOT EXISTS $tableName (
+    ${Columns.PWD_ID.columnName} INTEGER PRIMARY KEY AUTOINCREMENT,
+    ${Columns.CATEGORY_ID.columnName} INTEGER NOT NULL,
+    ${Columns.PASSWORD.columnName} TEXT NOT NULL,
+    ${Columns.DESCRIPTION.columnName} TEXT NOT NULL,
+    ${Columns.USERNAME.columnName} TEXT,
+    ${Columns.WEBSITE.columnName} TEXT,
+    ${Columns.NOTE.columnName} TEXT,
+    ${Columns.PHOTO.columnName} TEXT,
+    ${Columns.PASSWORD_CHANGE_DATE.columnName} TEXT);"""
 
     override fun drop() = "DROP TABLE IF EXISTS $tableName;"
 }
@@ -487,15 +485,13 @@ private object Category : Table {
     override val tableName: String
         get() = "categories"
 
-    override fun create() = """
-CREATE TABLE IF NOT EXISTS $tableName (
-    ${CategoryColumns.CAT_ID.columnName} INTEGER PRIMARY KEY AUTOINCREMENT,
-    ${CategoryColumns.NAME.columnName} TEXT NOT NULL);
-        """
+    override fun create() = """CREATE TABLE IF NOT EXISTS $tableName (
+    ${Columns.CAT_ID.columnName} INTEGER PRIMARY KEY AUTOINCREMENT,
+    ${Columns.NAME.columnName} TEXT NOT NULL);"""
 
     override fun drop() = "DROP TABLE IF EXISTS $tableName;"
 
-    enum class CategoryColumns(override val columnName: String) : TableColumns<Category> {
+    enum class Columns(override val columnName: String) : TableColumns<Category> {
         CAT_ID("id"),
         NAME("name"),
     }
@@ -506,16 +502,13 @@ private object Keys : Table {
         get() = "keys"
 
     // if you EVER alter this, copy this as hardcoded string to onUpgrade above
-    override fun create() = """
-CREATE TABLE IF NOT EXISTS $tableName (
-    ${KeysColumns.ENCRYPTED_KEY.columnName} TEXT NOT NULL,
-    ${KeysColumns.SALT.columnName} TEXT NOT NULL
-    );
-        """
+    override fun create() = """CREATE TABLE IF NOT EXISTS $tableName (
+    ${Columns.ENCRYPTED_KEY.columnName} TEXT NOT NULL,
+    ${Columns.SALT.columnName} TEXT NOT NULL);"""
 
     override fun drop() = "DROP TABLE IF EXISTS ${tableName};"
 
-    enum class KeysColumns(override val columnName: String) : TableColumns<Keys> {
+    enum class Columns(override val columnName: String) : TableColumns<Keys> {
         ENCRYPTED_KEY("encryptedkey"),
         SALT("salt"),
     }
@@ -537,7 +530,7 @@ private fun Cursor.getColumnIndexOrThrow(column: TableColumns<*>) =
     getColumnIndexOrThrow(column.columnName)
 
 private fun Cursor.getZonedDateTimeOfPasswordChange(): ZonedDateTime? =
-    getString(getColumnIndexOrThrow(Password.PasswordColumns.PASSWORD_CHANGE_DATE))?.let { date ->
+    getString(getColumnIndexOrThrow(Password.Columns.PASSWORD_CHANGE_DATE))?.let { date ->
         date.toLongOrNull()?.let {
             DateUtils.unixEpochSecondsToLocalZonedDateTime(it)
         } ?: run {
