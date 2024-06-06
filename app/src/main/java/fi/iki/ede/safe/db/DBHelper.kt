@@ -36,7 +36,9 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
     override fun onCreate(db: SQLiteDatabase?) {
         listOf(Category, Password, Keys).forEach {
             try {
-                db?.execSQL(it.create())
+                it.create().forEach { sql ->
+                    db?.execSQL(sql)
+                }
             } catch (ex: SQLiteException) {
                 Log.e(TAG, "Error initializing database, sqliteVersion=${sqliteVersion()}", ex)
                 throw ex
@@ -296,9 +298,13 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
                 listOf(
                     Password,
                     Category,
-                ).forEach { sql ->
-                    execSQL(sql.drop())
-                    execSQL(sql.create())
+                ).forEach { tables ->
+                    tables.drop().forEach { sql ->
+                        execSQL(sql)
+                    }
+                    tables.create().forEach { sql ->
+                        execSQL(sql)
+                    }
                 }
             } catch (ex: Exception) {
                 endTransaction()
@@ -382,7 +388,9 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
 
             db.execSQL("DROP TABLE IF EXISTS master_key;")
             db.execSQL("DROP TABLE IF EXISTS salt;")
-            db.execSQL(Keys.create())
+            Keys.create().forEach { sql ->
+                db.execSQL(sql)
+            }
 
             if (masterKey != null && salt != null) {
                 db.insert(
@@ -443,8 +451,8 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
 
 interface Table {
     val tableName: String
-    fun create(): String
-    fun drop(): String
+    fun create(): List<String>
+    fun drop(): List<String>
 }
 
 interface TableColumns<T : Table> {
@@ -467,7 +475,8 @@ private object Password : Table {
         PASSWORD_CHANGE_DATE("passwordchangeddate")
     }
 
-    override fun create() = """CREATE TABLE IF NOT EXISTS $tableName (
+    override fun create() = listOf(
+        """CREATE TABLE IF NOT EXISTS $tableName (
     ${Columns.PWD_ID.columnName} INTEGER PRIMARY KEY AUTOINCREMENT,
     ${Columns.CATEGORY_ID.columnName} INTEGER NOT NULL,
     ${Columns.PASSWORD.columnName} TEXT NOT NULL,
@@ -477,19 +486,22 @@ private object Password : Table {
     ${Columns.NOTE.columnName} TEXT,
     ${Columns.PHOTO.columnName} TEXT,
     ${Columns.PASSWORD_CHANGE_DATE.columnName} TEXT);"""
+    )
 
-    override fun drop() = "DROP TABLE IF EXISTS $tableName;"
+    override fun drop() = listOf("DROP TABLE IF EXISTS $tableName;")
 }
 
 private object Category : Table {
     override val tableName: String
         get() = "categories"
 
-    override fun create() = """CREATE TABLE IF NOT EXISTS $tableName (
+    override fun create() = listOf(
+        """CREATE TABLE IF NOT EXISTS $tableName (
     ${Columns.CAT_ID.columnName} INTEGER PRIMARY KEY AUTOINCREMENT,
     ${Columns.NAME.columnName} TEXT NOT NULL);"""
+    )
 
-    override fun drop() = "DROP TABLE IF EXISTS $tableName;"
+    override fun drop() = listOf("DROP TABLE IF EXISTS $tableName;")
 
     enum class Columns(override val columnName: String) : TableColumns<Category> {
         CAT_ID("id"),
@@ -502,11 +514,13 @@ private object Keys : Table {
         get() = "keys"
 
     // if you EVER alter this, copy this as hardcoded string to onUpgrade above
-    override fun create() = """CREATE TABLE IF NOT EXISTS $tableName (
+    override fun create() = listOf(
+        """CREATE TABLE IF NOT EXISTS $tableName (
     ${Columns.ENCRYPTED_KEY.columnName} TEXT NOT NULL,
     ${Columns.SALT.columnName} TEXT NOT NULL);"""
+    )
 
-    override fun drop() = "DROP TABLE IF EXISTS ${tableName};"
+    override fun drop() = listOf("DROP TABLE IF EXISTS ${tableName};")
 
     enum class Columns(override val columnName: String) : TableColumns<Keys> {
         ENCRYPTED_KEY("encryptedkey"),
