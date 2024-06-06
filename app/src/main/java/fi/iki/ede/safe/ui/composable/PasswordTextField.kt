@@ -34,7 +34,7 @@ import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 
 @Composable
-fun passwordTextField(
+fun PasswordTextField(
     textTip: Int,
     inputValue: String = "",
     onValueChange: (Password) -> Unit = {},
@@ -103,7 +103,7 @@ fun passwordTextField(
         },
         // such a shitshow...
         readOnly = isPasswordZoomed.value,
-        trailingIcon = { showOrHidePassword(revealPassword) },
+        trailingIcon = { ShowOrHidePassword(revealPassword) },
         singleLine = if (isPasswordZoomed.value) false else singleLine,
         maxLines = if (isPasswordZoomed.value) 10 else maxLines,
         colors = hideFocusLine,
@@ -128,7 +128,7 @@ fun isLinefeedLeft(newValue: TextFieldValue): Boolean {
 }
 
 @Composable
-private fun showOrHidePassword(revealPassword: MutableState<Boolean>) =
+private fun ShowOrHidePassword(revealPassword: MutableState<Boolean>) =
     IconButton(onClick = {
         revealPassword.value = !revealPassword.value
     }) {

@@ -87,10 +87,12 @@ class CategoryListScreenTest {
             .performClick()
 
         advanceUntilIdle()
-        categoryActivityTestRule.onAllNodesWithTag(
-            TestTag.TEST_TAG_CATEGORY_ROW,
-            useUnmergedTree = true
-        ).fetchSemanticsNodes().size == 3
+        assert(
+            categoryActivityTestRule.onAllNodesWithTag(
+                TestTag.TEST_TAG_CATEGORY_ROW,
+                useUnmergedTree = true
+            ).fetchSemanticsNodes().size == 3
+        )
         val categoriesEmitted = DataModel.categoriesStateFlow.value
         val wasCategoryAdded = categoriesEmitted.any { it.plainName == newCategory }
         assert(MockDBHelper.categories.find { it.plainName == newCategory } != null)

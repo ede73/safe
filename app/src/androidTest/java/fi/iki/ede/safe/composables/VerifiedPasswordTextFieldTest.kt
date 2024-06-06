@@ -12,7 +12,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
-import fi.iki.ede.safe.ui.composable.verifiedPasswordTextField
+import fi.iki.ede.safe.ui.composable.VerifiedPasswordTextField
 import fi.iki.ede.safe.ui.onAllNodesWithTag
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeTheme
@@ -39,7 +39,7 @@ class VerifiedPasswordTextFieldTest {
     fun setup() = composeTestRule.setContent {
         SafeTheme {
             Column {
-                verifiedPasswordTextField(
+                VerifiedPasswordTextField(
                     showVerification = true,
                     textTip = R.string.login_password_tip,
                     verifyPassword = R.string.login_verify_password_tip,

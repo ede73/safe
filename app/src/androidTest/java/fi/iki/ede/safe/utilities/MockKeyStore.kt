@@ -3,7 +3,6 @@ package fi.iki.ede.safe.utilities
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
-import fi.iki.ede.crypto.hexToByteArray
 import fi.iki.ede.crypto.keystore.CipherUtilities
 import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_ITERATION_COUNT
 import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_LENGTH_BITS
@@ -11,6 +10,7 @@ import fi.iki.ede.crypto.keystore.KeyManagement
 import fi.iki.ede.crypto.keystore.KeyManagement.generatePBKDF2AESKey
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.support.hexToByteArray
 import io.mockk.every
 import io.mockk.mockkClass
 import io.mockk.mockkObject
@@ -44,7 +44,7 @@ object MockKeyStore {
 
     val fakeSalt = Salt("abcdabcd01234567".hexToByteArray())
     const val fakePasswordText = "abcdefgh"
-    val fakePassword = Password(fakePasswordText.toByteArray())
+    val fakePassword = Password(fakePasswordText)
     private val fakeMasterKeyAES =
         "00112233445566778899AABBCCDDEEFF99887766554433221100123456789ABC".hexToByteArray()
     private val fakePasswordBasedAESKey = generatePBKDF2AESKey(

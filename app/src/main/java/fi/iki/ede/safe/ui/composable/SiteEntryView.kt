@@ -30,10 +30,9 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.Password
-import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.support.decrypt
+import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.hibp.BreachCheck
 import fi.iki.ede.hibp.KAnonymity
 import fi.iki.ede.safe.BuildConfig
@@ -121,7 +120,7 @@ fun SiteEntryView(
                 ClipboardUtils.addToClipboard(context, passEntry.username.decrypt(ks))
             }) { Text(stringResource(id = R.string.password_entry_username_label)) }
             Spacer(Modifier.weight(1f))
-            passwordTextField(
+            PasswordTextField(
                 textTip = R.string.password_entry_username_tip,
                 inputValue = passEntry.username.decrypt(ks),
                 onValueChange = {
@@ -158,7 +157,7 @@ fun SiteEntryView(
                 ClipboardUtils.addToClipboard(context, passEntry.password.decrypt(ks))
             }) { Text(stringResource(id = R.string.password_entry_password_label)) }
             Spacer(Modifier.weight(1f))
-            passwordTextField(
+            PasswordTextField(
                 textTip = R.string.password_entry_password_tip,
                 inputValue = passEntry.password.decrypt(ks),
                 //updated = passwordWasUpdated,
@@ -206,7 +205,7 @@ fun SiteEntryView(
                     viewModel.updatePasswordChangedDate(date)
                 })
         }
-        passwordTextField(
+        PasswordTextField(
             textTip = R.string.password_entry_note_tip,
             inputValue = passEntry.note.decrypt(ks),
             onValueChange = {
@@ -236,10 +235,6 @@ private fun tryParseUri(website: String): Uri =
     ) Uri.parse(website)
     else Uri.parse("https://$website")
 
-
-private fun Password.encrypt(ks: KeyStoreHelper) = ks.encryptByteArray(this.password)
-private fun String.encrypt(ks: KeyStoreHelper) = ks.encryptByteArray(this.trim().toByteArray())
-private fun IVCipherText.decrypt(ks: KeyStoreHelper) = String(ks.decryptByteArray(this))
 
 enum class BreachCheckEnum {
     NOT_CHECKED, BREACHED, NOT_BREACHED

@@ -1,10 +1,10 @@
 package fi.iki.ede.oisafecompatibility
 
-import fi.iki.ede.crypto.HexString
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.SaltedPassword
-import fi.iki.ede.crypto.hexToByteArray
+import fi.iki.ede.crypto.support.HexString
+import fi.iki.ede.crypto.support.hexToByteArray
 import fi.iki.ede.oisafecompatibility.OISafeCryptoMocks.getCryptoMock
 import junit.framework.TestCase.assertEquals
 import org.bouncycastle.jce.provider.BouncyCastleProvider

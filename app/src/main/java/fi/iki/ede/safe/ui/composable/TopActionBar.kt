@@ -213,7 +213,7 @@ fun TopActionBar(
                         onClick = {
                             displayMenu = false
                             backupDocumentSelectedResult.launch(
-                                ExportConfig.getCreateDocumentIntent(context)
+                                ExportConfig.getCreateDocumentIntent()
                             )
                         })
                     // Currently does not work from login screen
@@ -224,7 +224,7 @@ fun TopActionBar(
                             try {
                                 displayMenu = false
                                 selectRestoreDocumentLauncher.launch(
-                                    ExportConfig.getOpenDocumentIntent(context)
+                                    ExportConfig.getOpenDocumentIntent()
                                 )
                             } catch (ex: ActivityNotFoundException) {
                                 Log.e(tag, "Cannot launch ACTION_OPEN_DOCUMENT")
@@ -237,7 +237,7 @@ fun TopActionBar(
                                 displayMenu = false
                                 try {
                                     selectRestoreDocumentLauncherOld.launch(
-                                        ExportConfig.getOpenDocumentIntent(context)
+                                        ExportConfig.getOpenDocumentIntent()
                                     )
                                 } catch (ex: ActivityNotFoundException) {
                                     Log.e(tag, "Cannot launch ACTION_OPEN_DOCUMENT")
@@ -317,9 +317,9 @@ fun EnterNewPassword(
             Column {
                 var oldPassword by remember { mutableStateOf(Password.getEmpty()) }
                 var newPassword by remember { mutableStateOf(Password.getEmpty()) }
-                passwordTextField(textTip = R.string.action_bar_old_password,
+                PasswordTextField(textTip = R.string.action_bar_old_password,
                     onValueChange = { oldPassword = it })
-                verifiedPasswordTextField(
+                VerifiedPasswordTextField(
                     true,
                     R.string.login_password_tip,
                     R.string.login_verify_password_tip,

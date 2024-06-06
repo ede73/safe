@@ -5,7 +5,8 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.SaltedEncryptedPassword
-import fi.iki.ede.crypto.hexToByteArray
+import fi.iki.ede.crypto.keystore.CipherUtilities
+import fi.iki.ede.crypto.support.hexToByteArray
 import org.xml.sax.Attributes
 import org.xml.sax.InputSource
 import org.xml.sax.helpers.DefaultHandler
@@ -54,7 +55,12 @@ class OISafeRestoreHandler(
             "MasterKey" -> parsedData.saltedEncryptedPassword =
                 SaltedEncryptedPassword(
                     parsedData.saltedEncryptedPassword.salt,
-                    EncryptedPassword(currentValue.hexToByteArray())
+                    EncryptedPassword(
+                        IVCipherText(
+                            CipherUtilities.IV_LENGTH,
+                            currentValue.hexToByteArray()
+                        )
+                    )
                 )
 
             "Salt" -> parsedData.saltedEncryptedPassword =

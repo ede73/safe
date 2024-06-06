@@ -53,7 +53,7 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
                     Preference.OnPreferenceClickListener { _: Preference? ->
                         backupDocumentSelected.launch(
                             ExportConfig.getCreateDocumentIntent(
-                                requireContext()
+                                // requireContext()
                             )
                         )
                         false

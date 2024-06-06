@@ -1,10 +1,8 @@
 package fi.iki.ede.crypto
 
-//import fi.iki.ede.safe.db.DBID
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.util.Base64
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.support.decryptPhoto
 import java.time.ZonedDateTime
 
 /**
@@ -12,9 +10,9 @@ import java.time.ZonedDateTime
  *
  * NEVER PERSIST THIS CLASS, get rid of it as soon as possible.
  *
+ * TODO: Doesn't really belong to this project, does it?
  */
 class DecryptableSiteEntry(categoryId: Long) {
-    var categoryId: Long? = categoryId
     var description: IVCipherText = IVCipherText.getEmpty()
         set(value) {
             if (field != value) {
@@ -22,6 +20,12 @@ class DecryptableSiteEntry(categoryId: Long) {
                 decryptedCachedPlainDescription = null
             }
         }
+
+    init {
+        this.description = IVCipherText.getEmpty()
+    }
+
+    var categoryId: Long? = categoryId
     var id: Long? = null
     var note: IVCipherText = IVCipherText.getEmpty()
     var password: IVCipherText = IVCipherText.getEmpty()
@@ -44,11 +48,7 @@ class DecryptableSiteEntry(categoryId: Long) {
     val plainNote: String
         get() = decrypt(note)
     val plainPhoto: Bitmap?
-        get() {
-            val base64Photo = decrypt(photo)
-            val imageBytes = Base64.decode(base64Photo, Base64.DEFAULT)
-            return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-        }
+        get() = if (photo.isEmpty()) null else decryptPhoto(keyStore)
 
     // plain description is used A LOT everywhere (listing, sorting, displaying)
     // On a large password DB operating on decrypt-on-demand description is just too slow
@@ -62,13 +62,12 @@ class DecryptableSiteEntry(categoryId: Long) {
         }
 
     private val keyStore = KeyStoreHelperFactory.getKeyStoreHelper()
-    private fun decrypt(value: IVCipherText): String {
-        return try {
-            String(keyStore.decryptByteArray(value))
-        } catch (e: Exception) {
-            "Failed decr $e"
-        }
+    private fun decrypt(value: IVCipherText) = try {
+        String(keyStore.decryptByteArray(value))
+    } catch (e: Exception) {
+        "Failed decr $e"
     }
+
 
     fun contains(
         searchText: String,
@@ -102,10 +101,6 @@ class DecryptableSiteEntry(categoryId: Long) {
 
     fun isSamePassword(comparePassword: IVCipherText) = plainPassword == decrypt(comparePassword)
 
-    init {
-        this.description = IVCipherText.getEmpty()
-    }
-
     // Flow state is annoying since it requires NEW ENTITIES for changes to register
     fun copy(): DecryptableSiteEntry = DecryptableSiteEntry(categoryId!!).apply {
         description = this@DecryptableSiteEntry.description
@@ -119,5 +114,4 @@ class DecryptableSiteEntry(categoryId: Long) {
         username = this@DecryptableSiteEntry.username
         website = this@DecryptableSiteEntry.website
     }
-
 }

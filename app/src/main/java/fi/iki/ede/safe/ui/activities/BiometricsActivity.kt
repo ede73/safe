@@ -18,10 +18,10 @@ import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.date.DateUtils
-import fi.iki.ede.crypto.hexToByteArray
 import fi.iki.ede.crypto.keystore.CipherUtilities
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
-import fi.iki.ede.crypto.toHexString
+import fi.iki.ede.crypto.support.hexToByteArray
+import fi.iki.ede.crypto.support.toHexString
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.model.Preferences.PREFERENCE_BIOMETRICS_ENABLED
@@ -198,7 +198,7 @@ class BiometricsActivity : AppCompatActivity() {
         private fun getBioCipher(): IVCipherText {
             val pm = sharedPreferences
                 .getString(PREFERENCE_BIO_CIPHER, null) ?: return IVCipherText.getEmpty()
-            return IVCipherText(pm.hexToByteArray(), CipherUtilities.IV_LENGTH)
+            return IVCipherText(CipherUtilities.IV_LENGTH, pm.hexToByteArray())
         }
 
         private fun storeBioCipher(cipher: IVCipherText) = sharedPreferences.edit()

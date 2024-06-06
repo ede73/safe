@@ -1,7 +1,7 @@
 [versions]
 activityCompose = "1.9.0"
 agp = "8.5.0-beta02"
-appcompat = "1.6.1"
+appcompat = "1.7.0"
 bcprovJdk16 = "1.46"
 biometricKtx = "1.2.0-alpha05"
 coreKtx = "1.13.1"
@@ -9,6 +9,7 @@ espressoCore = "3.5.1"
 junit = "4.13.2"
 junitVersionKtx = "1.1.5"
 kotlin = "2.0.0"
+kotlinStdlib = "2.0.0"
 kxml2 = "2.3.0"
 material = "1.12.0"
 material3Android = "1.2.1"
@@ -42,6 +43,7 @@ androidx-ui-tooling-preview-android = { group = "androidx.compose.ui", name = "u
 androidx-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "uiautomator" }
 bcprov-jdk16 = { module = "org.bouncycastle:bcprov-jdk16", version.ref = "bcprovJdk16" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
+kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlinStdlib" }
 kxml2 = { group = "net.sf.kxml", name = "kxml2", version.ref = "kxml2" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }

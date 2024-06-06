@@ -2,16 +2,16 @@ package fi.iki.ede.crypto
 
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 
+// TODO: Doesn't really belong to this project, does it?
 class DecryptableCategoryEntry {
     var id: Long? = null
-
-    // TODO: Make IVCipherText
     var encryptedName = IVCipherText.getEmpty()
     val plainName: String
         get() = decrypt(encryptedName)
 
     // TODO: UGLY, could be single use on demand
     private val keyStore = KeyStoreHelperFactory.getKeyStoreHelper()
+
     private fun decrypt(value: IVCipherText): String {
         return String(keyStore.decryptByteArray(value))
     }

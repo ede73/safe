@@ -3,14 +3,14 @@ package fi.iki.ede.safe
 import android.content.Context
 import android.os.Environment
 import fi.iki.ede.crypto.IVCipherText
+import fi.iki.ede.crypto.KeystoreHelperMock4UnitTests
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.date.DateUtils
-import fi.iki.ede.crypto.hexToByteArray
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
-import fi.iki.ede.crypto.toHexString
-import fi.iki.ede.safe.CryptoMocks.mockKeyStoreHelper
+import fi.iki.ede.crypto.support.hexToByteArray
+import fi.iki.ede.crypto.support.toHexString
 import fi.iki.ede.safe.DBMocks.mockDb
 import fi.iki.ede.safe.DataModelMocks.mockDataModel
 import fi.iki.ede.safe.backupandrestore.BackupDatabase
@@ -53,7 +53,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
 
     @Before
     fun initializeMocks() {
-        mockKeyStoreHelper()
+        KeystoreHelperMock4UnitTests.mock()
         ks = KeyStoreHelperFactory.getKeyStoreHelper()
 
         // TODO: FIX mocking?? Still Valid?
@@ -250,7 +250,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
 
     companion object {
         private val salt = Salt("9b90e143578bdbe7".hexToByteArray())
-        private val backupPassword = Password("secret".toByteArray())
+        private val backupPassword = Password("secret")
 
         // TODO: REPLACE WITH PROPER AES MASTER KEY
         @OptIn(ExperimentalEncodingApi::class)

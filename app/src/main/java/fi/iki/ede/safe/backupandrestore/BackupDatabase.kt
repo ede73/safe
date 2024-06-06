@@ -3,12 +3,12 @@ package fi.iki.ede.safe.backupandrestore
 import android.text.TextUtils
 import android.util.Log
 import fi.iki.ede.crypto.DecryptableSiteEntry
-import fi.iki.ede.crypto.HexString
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
-import fi.iki.ede.crypto.toHexString
+import fi.iki.ede.crypto.support.HexString
+import fi.iki.ede.crypto.support.toHexString
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Attributes
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Elements
 import fi.iki.ede.safe.model.DataModel

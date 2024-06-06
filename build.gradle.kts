@@ -11,6 +11,5 @@ plugins {
 // https://kotlinlang.org/docs/whatsnew20.html#experimental-kotlin-power-assert-compiler-plugin
 @OptIn(ExperimentalKotlinGradlePluginApi::class)
 powerAssert {
-    @OptIn(ExperimentalKotlinGradlePluginApi::class)
     functions = listOf("kotlin.assert", "kotlin.test.assertTrue")
 }

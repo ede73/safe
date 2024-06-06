@@ -14,6 +14,15 @@ class SafeShapes(
         var result = button.hashCode()
         return result
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SafeShapes
+
+        return button == other.button
+    }
 }
 
 internal fun SafeTheme.customShapes() = SafeShapes(

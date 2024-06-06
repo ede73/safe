@@ -2,12 +2,12 @@ package fi.iki.ede.oisafecompatibility
 
 import android.util.Log
 import fi.iki.ede.crypto.EncryptedPassword
-import fi.iki.ede.crypto.HexString
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.SaltedPassword
-import fi.iki.ede.crypto.hexToByteArray
-import fi.iki.ede.crypto.toHexString
+import fi.iki.ede.crypto.support.HexString
+import fi.iki.ede.crypto.support.hexToByteArray
+import fi.iki.ede.crypto.support.toHexString
 import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
@@ -69,7 +69,7 @@ open class OISafeCryptoHelper(private val algorithm: Algorithm) {
     private fun setPassword(plaintextPasswordNotStored: Password) {
         check(keyFac != null) { "KeyFactory MUST have been set" }
         require(!plaintextPasswordNotStored.isEmpty()) { "Password must not be empty" }
-        val pbeKeySpec = PBEKeySpec(plaintextPasswordNotStored.toCharArray())
+        val pbeKeySpec = PBEKeySpec(plaintextPasswordNotStored.utf8password)
         secretKey = keyFac!!.generateSecret(pbeKeySpec)
         cipher = Cipher.getInstance(algorithm.algorithm)
         assert(secretKey != null) { "Secretkey failed to initialize" }
@@ -81,10 +81,6 @@ open class OISafeCryptoHelper(private val algorithm: Algorithm) {
         require(saltIn.salt.size == 8) { "Salt must be 8 bytes in length." }
         salt = saltIn.salt
     }
-
-//    fun encrypt(password: Password): EncryptedPassword {
-//        return EncryptedPassword(encrypt(password.password).hexToByteArray())
-//    }
 
     fun encrypt(plaintext: String): HexString {
         return encrypt(plaintext.toByteArray())
@@ -102,7 +98,7 @@ open class OISafeCryptoHelper(private val algorithm: Algorithm) {
     }
 
     fun decrypt(encryptedPassword: EncryptedPassword): Password {
-        return Password(decrypt(encryptedPassword.encryptedPassword))
+        return Password(decrypt(encryptedPassword.ivCipherText.combineIVAndCipherText()))
     }
 
     fun decrypt(hexCipherText: HexString): ByteArray {

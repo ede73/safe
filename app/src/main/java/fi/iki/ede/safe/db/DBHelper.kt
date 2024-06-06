@@ -491,8 +491,8 @@ private fun Cursor.getZonedDateTimeOfPasswordChange(): ZonedDateTime? =
 
 private fun Cursor.getIVCipher(column: TableColumns<*>) =
     IVCipherText(
+        CipherUtilities.IV_LENGTH,
         getBlob(getColumnIndexOrThrow(column.columnName)) ?: byteArrayOf(),
-        CipherUtilities.IV_LENGTH
     )
 
 private fun Cursor.getDBID(column: TableColumns<*>) =

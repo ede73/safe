@@ -11,7 +11,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
-import fi.iki.ede.safe.ui.composable.passwordTextField
+import fi.iki.ede.safe.ui.composable.PasswordTextField
 import fi.iki.ede.safe.ui.onNodeWithTag
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeTheme
@@ -37,7 +37,7 @@ class PasswordTextFieldTest : NodeHelper {
     fun setup() = composeTestRule.setContent {
         SafeTheme {
             Column {
-                passwordTextField(
+                PasswordTextField(
                     textTip = R.string.login_password_tip,
                     modifier = Modifier.testTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)
                 )

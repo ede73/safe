@@ -71,5 +71,5 @@ dependencies {
 
     //testFixturesImplementation(libs.bcprov.jdk16)
     testFixturesImplementation(libs.mockk)
-    testFixturesImplementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.20")
+    testFixturesImplementation(libs.kotlin.stdlib)
 }

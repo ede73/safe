@@ -150,7 +150,7 @@ fun SiteEntryRow(
 
 @Composable
 fun getPasswordAgePlurality(duration: Period): String {
-    val z = buildList<String> {
+    val z = buildList {
         if (duration.years > 0) {
             add(
                 pluralStringResource(

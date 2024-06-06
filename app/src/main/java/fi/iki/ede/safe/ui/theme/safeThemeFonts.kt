@@ -26,6 +26,22 @@ class SafeFonts(
         result = 31 * result + smallNote.hashCode()
         return result
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SafeFonts
+
+        if (regularPassword != other.regularPassword) return false
+        if (zoomedPassword != other.zoomedPassword) return false
+        if (listHeaders != other.listHeaders) return false
+        if (listEntries != other.listEntries) return false
+        if (datePicker != other.datePicker) return false
+        if (smallNote != other.smallNote) return false
+
+        return true
+    }
 }
 
 internal fun SafeTheme.customFonts() = SafeFonts(

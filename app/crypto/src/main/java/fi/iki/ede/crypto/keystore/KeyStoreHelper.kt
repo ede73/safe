@@ -55,42 +55,39 @@ class KeyStoreHelper : CipherUtilities() {
 //        keyStore.deleteEntry(KEY_BIOKEY)
 //    }
 
-    private fun getSecretKey(): Key {
-        return keyStore.getKey(KEY_SECRET_MASTERKEY, null)!!
-    }
+    private fun getSecretKey() = keyStore.getKey(KEY_SECRET_MASTERKEY, null)!!
 
     fun encryptByteArray(
         input: ByteArray,
         secretKey: Key = getSecretKey()
-    ): IVCipherText {
-        if (input.isEmpty()) {
-            return IVCipherText(byteArrayOf(), byteArrayOf())
+    ) = if (input.isEmpty()) {
+        IVCipherText(byteArrayOf(), byteArrayOf())
+    } else
+        getAESCipher().let {
+            it.init(
+                Cipher.ENCRYPT_MODE,
+                secretKey,
+                IvParameterSpec(generateRandomBytes(it.blockSize * 8))
+            )
+            IVCipherText(it.iv, it.doFinal(input))
+
         }
-        val c = getAESCipher()
-        val iv = generateRandomBytes(c.blockSize * 8)
-        c.init(
-            Cipher.ENCRYPT_MODE,
-            secretKey,
-            IvParameterSpec(iv)
-        )
-        return IVCipherText(c.iv, c.doFinal(input))
-    }
 
     fun decryptByteArray(
         encrypted: IVCipherText,
         secretKey: Key = getSecretKey()
-    ): ByteArray {
-        if (encrypted.iv.isEmpty()) {
-            return byteArrayOf()
+    ) = if (encrypted.iv.isEmpty()) {
+        byteArrayOf()
+    } else {
+        getAESCipher().let {
+            it.init(
+                Cipher.DECRYPT_MODE,
+                secretKey,
+                IvParameterSpec(encrypted.iv)
+            )
+            // TODO: Combine IV and cipher text?
+            it.doFinal(encrypted.cipherText)
         }
-        val c = getAESCipher()
-        c.init(
-            Cipher.DECRYPT_MODE,
-            secretKey,
-            IvParameterSpec(encrypted.iv)
-        )
-        // TODO: Combine IV and cipher text?
-        return c.doFinal(encrypted.cipherText)
     }
 
     fun rotateKeys() {
@@ -100,25 +97,24 @@ class KeyStoreHelper : CipherUtilities() {
         throw NotImplementedError("TODO: Keyrotation is mandatory")
     }
 
-    fun getOrCreateBiokey(): SecretKey {
+    fun getOrCreateBiokey(): SecretKey =
         keyStore.getKey(KEY_BIOKEY, null)?.let { return it as SecretKey }
-        val paramsBuilder = KeyGenParameterSpec.Builder(
-            KEY_BIOKEY,
-            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
-        )
-        paramsBuilder.apply {
-            setBlockModes(KeyProperties.BLOCK_MODE_CBC)
-                .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
-                .setEncryptionPaddings(
-                    KeyProperties.ENCRYPTION_PADDING_NONE,
-                    KeyProperties.ENCRYPTION_PADDING_PKCS7
-                )
-                // TODO: FIX
-                .setRandomizedEncryptionRequired(false)
-                // Invalidate key if user registers a new biometric
-                // Kinda dumb, since the oldone might still be usable (perhaps added new finger)
-                // but alas the API doesn't tell what changed, just that something changes, so...
-                .setInvalidatedByBiometricEnrollment(true)
+            ?: KeyGenParameterSpec.Builder(
+                KEY_BIOKEY,
+                KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+            ).let {
+                it.setBlockModes(KeyProperties.BLOCK_MODE_CBC)
+                    .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
+                    .setEncryptionPaddings(
+                        KeyProperties.ENCRYPTION_PADDING_NONE,
+                        KeyProperties.ENCRYPTION_PADDING_PKCS7
+                    )
+                    // TODO: FIX
+                    .setRandomizedEncryptionRequired(false)
+                    // Invalidate key if user registers a new biometric
+                    // Kinda dumb, since the oldone might still be usable (perhaps added new finger)
+                    // but alas the API doesn't tell what changed, just that something changes, so...
+                    .setInvalidatedByBiometricEnrollment(true)
 //                // this should force key expiration after X days
 //                .setKeyValidityEnd(
 //                    Date.from(
@@ -127,14 +123,15 @@ class KeyStoreHelper : CipherUtilities() {
 //                            .toInstant()
 //                    )
 //                )
-            setKeySize(256)
-            //setUserAuthenticationRequired(true)
-        }
-        val keyGenerator =
-            KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
-        keyGenerator.init(paramsBuilder.build())
-        return keyGenerator.generateKey()
-    }
+                    .setKeySize(256)
+                //setUserAuthenticationRequired(true)
+                KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
+                    .let { keyGenerator ->
+                        keyGenerator.init(it.build())
+                        keyGenerator.generateKey()
+                    }
+            }
+
 
     companion object {
         const val ANDROID_KEYSTORE = "AndroidKeyStore"
@@ -142,41 +139,43 @@ class KeyStoreHelper : CipherUtilities() {
         private const val KEY_BIOKEY = "biometrics"
 //        private const val MAX_BIO_KEY_AGE_DAYS = 31
 
-
         // Called when user logs in
         // TODO: Refactor, no point re-importing same key over and over
         fun importExistingEncryptedMasterKey(
             saltedPassword: SaltedPassword,
             ivSecretKey: IVCipherText
-        ) {
-            val pbkdf2key = generatePBKDF2AESKey(
-                saltedPassword.salt,
-                KEY_ITERATION_COUNT,
-                saltedPassword.password,
-                KEY_LENGTH_BITS
+        ) = importANewMasterKey(
+            decryptMasterKey(
+                generatePBKDF2AESKey(
+                    saltedPassword.salt,
+                    KEY_ITERATION_COUNT,
+                    saltedPassword.password,
+                    KEY_LENGTH_BITS
+                ), ivSecretKey
             )
+        )
 
-            val unencryptedKey = decryptMasterKey(pbkdf2key, ivSecretKey)
 
-            // decipher
-            importANewMasterKey(unencryptedKey)
-        }
+        fun createNewKey(password: Password): Pair<Salt, IVCipherText> =
+            Salt(generateRandomBytes(64)).let { salt ->
+                generatePBKDF2AESKey(
+                    salt,
+                    KEY_ITERATION_COUNT,
+                    password,
+                    KEY_LENGTH_BITS
+                ).let { pbkdf2key ->
+                    makeFreshNewKey(
+                        KEY_LENGTH_BITS,
+                        pbkdf2key
+                    ).let { (unencryptedKey, cipheredKey) ->
+                        importANewMasterKey(unencryptedKey)
+                        Pair(salt, cipheredKey)
+                    }
+                }
+            }
 
-        fun createNewKey(password: Password): Pair<Salt, IVCipherText> {
-            val salt = Salt(generateRandomBytes(64))
-            val pbkdf2key = generatePBKDF2AESKey(
-                salt,
-                KEY_ITERATION_COUNT,
-                password,
-                KEY_LENGTH_BITS
-            )
 
-            val (unencryptedKey, cipheredKey) = makeFreshNewKey(KEY_LENGTH_BITS, pbkdf2key)
-            importANewMasterKey(unencryptedKey)
-            return Pair(salt, cipheredKey)
-        }
-
-        private fun importANewMasterKey(aesKey: SecretKeySpec) {
+        private fun importANewMasterKey(aesKey: SecretKeySpec) =
             KeyStore.getInstance(ANDROID_KEYSTORE).apply {
                 load(null)
                 setEntry(
@@ -185,10 +184,10 @@ class KeyStoreHelper : CipherUtilities() {
                     getGenericKeyProtection()
                 )
             }
-        }
 
-        private fun getGenericKeyProtection(): KeyProtection {
-            return KeyProtection.Builder(
+
+        private fun getGenericKeyProtection(): KeyProtection =
+            KeyProtection.Builder(
                 KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
             )
                 .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
@@ -198,23 +197,11 @@ class KeyStoreHelper : CipherUtilities() {
                 )
                 .setRandomizedEncryptionRequired(false) // don't need randomized IV in keystore
                 .build()
-        }
+
     }
 }
 
 fun KeyStoreHelper.decryptByteArray(encryptedPassword: EncryptedPassword): Password {
     assert(!encryptedPassword.isEmpty())
-    return Password(
-        decryptByteArray(
-            IVCipherText(
-                CipherUtilities.IV_LENGTH,
-                encryptedPassword.encryptedPassword
-            )
-        )
-    )
+    return Password(decryptByteArray(encryptedPassword.ivCipherText))
 }
-
-//fun KeyStoreHelper.encryptByteArray(plainPassword: Password): EncryptedPassword {
-//    assert(!plainPassword.isEmpty())
-//    return EncryptedPassword(encryptByteArray(plainPassword.password).combineIVAndCipherText())
-//}

@@ -5,7 +5,6 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.text.TextUtils
-import android.util.Base64
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -28,6 +27,7 @@ import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.db.DBID
 import fi.iki.ede.safe.model.DataModel
@@ -41,7 +41,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.runBlocking
-import java.io.ByteArrayOutputStream
 import java.time.ZonedDateTime
 
 data class EditableSiteEntry(
@@ -373,21 +372,16 @@ class SiteEntryEditScreen : AutolockingBaseComponentActivity() {
     }
 }
 
-private fun makeBase64(bitmap: Bitmap?): String {
-    if (bitmap == null) {
-        return ""
-    }
-    ByteArrayOutputStream().apply {
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, this)
-        val byteArray = toByteArray()
-        return Base64.encodeToString(byteArray, Base64.DEFAULT)
-    }
-}
-
-private fun String.encrypt(ks: KeyStoreHelper) = ks.encryptByteArray(this.trim().toByteArray())
-private fun Bitmap.encrypt(ks: KeyStoreHelper) = makeBase64(this).encrypt(ks)
-//private fun IVCipherText.decrypt(ks: KeyStoreHelper) =
-//    String(ks.decryptByteArray(this))
+//private fun makeBase64(bitmap: Bitmap?): String {
+//    if (bitmap == null) {
+//        return ""
+//    }
+//    ByteArrayOutputStream().apply {
+//        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, this)
+//        val byteArray = toByteArray()
+//        return Base64.encodeToString(byteArray, Base64.DEFAULT)
+//    }
+//}
 
 @Preview(showBackground = true)
 @Composable

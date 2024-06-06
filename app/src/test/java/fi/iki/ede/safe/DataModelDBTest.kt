@@ -1,7 +1,7 @@
 package fi.iki.ede.safe
 
+import fi.iki.ede.crypto.KeystoreHelperMock4UnitTests
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
-import fi.iki.ede.safe.CryptoMocks.mockKeyStoreHelper
 import fi.iki.ede.safe.DataModelMocks.mockDataModel
 import fi.iki.ede.safe.model.DataModel
 import junit.framework.TestCase
@@ -11,8 +11,8 @@ import org.junit.Test
 
 class DataModelDBTest {
     @Test
-    fun datamodel() {
-        mockKeyStoreHelper()
+    fun dataModel() {
+        KeystoreHelperMock4UnitTests.mock()
         val ks = KeyStoreHelperFactory.getKeyStoreHelper()
         mockDataModel(
             linkedMapOf(

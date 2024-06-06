@@ -30,7 +30,7 @@ class KeyStoreHelperTest {
     @Test
     fun changeMasterPassword() {
         val oldPassword: Password = fakePassword
-        val newPassword = Password("aaaaaaaa".toByteArray())
+        val newPassword = Password("aaaaaaaa")
 
         val db = DBHelperFactory.getDBHelper(mockk<Context>())
 

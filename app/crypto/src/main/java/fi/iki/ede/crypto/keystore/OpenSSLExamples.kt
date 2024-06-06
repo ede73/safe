@@ -4,7 +4,7 @@ import android.util.Log
 import fi.iki.ede.crypto.BuildConfig
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
-import fi.iki.ede.crypto.toHexString
+import fi.iki.ede.crypto.support.toHexString
 import java.util.Locale
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
@@ -38,7 +38,7 @@ object OpenSSLExamples {
         if (BuildConfig.DEBUG && OPENSSL_EXAMPLES) {
             sensitiveLog(
                 "OpenSSL counterpart:\n" +
-                        "openssl enc -aes-256-cbc -k ${String(password.password)} -P -md sha256 -S ${salt.toHex()} -iter $iterationCount -pbkdf2\n" +
+                        "openssl enc -aes-256-cbc -k ${String(password.utf8password)} -P -md sha256 -S ${salt.toHex()} -iter $iterationCount -pbkdf2\n" +
                         "SALT=${salt.toHex().uppercase(Locale.getDefault())}\n" +
                         "KEY=${
                             keyBytes.toHexString().uppercase(Locale.getDefault())

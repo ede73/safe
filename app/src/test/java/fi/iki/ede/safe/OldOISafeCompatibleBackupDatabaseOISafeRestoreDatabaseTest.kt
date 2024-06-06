@@ -5,13 +5,14 @@ import fi.iki.ede.crypto.DecryptableCategoryEntry
 import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.EncryptedPassword
 import fi.iki.ede.crypto.IVCipherText
+import fi.iki.ede.crypto.KeystoreHelperMock4UnitTests
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
-import fi.iki.ede.crypto.hexToByteArray
 import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.IV_LENGTH
 import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_ITERATION_COUNT
 import fi.iki.ede.crypto.keystore.KeyManagement
-import fi.iki.ede.safe.CryptoMocks.mockKeyStoreHelper
+import fi.iki.ede.crypto.support.hexToByteArray
+import fi.iki.ede.crypto.support.toHex
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.oisafecompatibility.OISafeRestore
 import io.mockk.every
@@ -29,7 +30,7 @@ import java.security.Security
 
 // TODO: Missing actual encryption/decryption (due to use of bouncy castle, will be gotten rid of and fixed eventually)
 class OldOISafeCompatibleBackupDatabaseOISafeRestoreDatabaseTest {
-    private val passwordOfBackup = Password("abc123".toByteArray())
+    private val passwordOfBackup = Password("abc123")
 
     @Before
     fun setUp() {
@@ -40,7 +41,7 @@ class OldOISafeCompatibleBackupDatabaseOISafeRestoreDatabaseTest {
     @Ignore("yeap")
     fun restoreTest() {
 
-        mockKeyStoreHelper()
+        KeystoreHelperMock4UnitTests.mock()
 
         fun encryptWithNewKey(value: ByteArray): IVCipherText {
             return IVCipherText(byteArrayOf(), value) // TODO: actually encrypt for precise results
@@ -129,7 +130,13 @@ class OldOISafeCompatibleBackupDatabaseOISafeRestoreDatabaseTest {
     companion object {
         private val fakeBackupSalt = Salt("5049b760ba4aca3d".hexToByteArray())
         private val encryptedMasterKey =
-            EncryptedPassword("ff1b6409b2d436d4be1438b70e8a29663168fafb145a5f0cc38957725d031daa2f47653587ef0f3109ffd9b460554a4190fd4921b013c0747a3f3a2645cf32ddc2c0a6ae67418544fdcc48a8aad70500".hexToByteArray())
+            EncryptedPassword(
+                IVCipherText(
+                    IV_LENGTH,
+                    "ff1b6409b2d436d4be1438b70e8a29663168fafb145a5f0cc38957725d031daa2f47653587ef0f3109ffd9b460554a4190fd4921b013c0747a3f3a2645cf32ddc2c0a6ae67418544fdcc48a8aad70500"
+                        .hexToByteArray()
+                )
+            )
         private val expectedBackupContent = """
         <?xml version='1.0' encoding='utf-8' standalone='yes' ?>
         <OISafe version="1" date="Jun 17, 2023 4:02:42 PM Pacific Daylight Time">

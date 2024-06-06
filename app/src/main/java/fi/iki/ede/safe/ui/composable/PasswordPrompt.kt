@@ -26,7 +26,7 @@ fun PasswordPrompt(
     Column {
         Text(text = stringResource(id = R.string.login_tip))
         var verifiedPassword: Password by remember { mutableStateOf(Password.getEmpty()) }
-        verifiedPasswordTextField(
+        VerifiedPasswordTextField(
             firstTimeInitialize,
             R.string.login_password_tip,
             R.string.login_verify_password_tip,

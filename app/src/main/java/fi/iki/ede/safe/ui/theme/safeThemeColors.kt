@@ -15,6 +15,19 @@ class SafeColors(
         result = 31 * result + whiteSpaceL.hashCode()
         return result
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SafeColors
+
+        if (numbers108652 != other.numbers108652) return false
+        if (lettersL != other.lettersL) return false
+        if (whiteSpaceL != other.whiteSpaceL) return false
+
+        return true
+    }
 }
 
 internal fun SafeTheme.customColors() = SafeColors(

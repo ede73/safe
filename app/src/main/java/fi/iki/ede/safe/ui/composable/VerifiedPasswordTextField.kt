@@ -16,7 +16,7 @@ import kotlinx.coroutines.job
  * Display one or two password fields (one + verification)
  */
 @Composable
-fun verifiedPasswordTextField(
+fun VerifiedPasswordTextField(
     showVerification: Boolean,
     textTip: Int,
     verifyPassword: Int,
@@ -32,7 +32,7 @@ fun verifiedPasswordTextField(
     }
 
     var firstPassword by remember { mutableStateOf(Password.getEmpty()) }
-    passwordTextField(
+    PasswordTextField(
         textTip = textTip,
         onValueChange = { firstPassword = it },
         modifier = modifier
@@ -41,7 +41,7 @@ fun verifiedPasswordTextField(
     )
     var secondPassword by remember { mutableStateOf(Password.getEmpty()) }
     if (showVerification) {
-        passwordTextField(
+        PasswordTextField(
             textTip = verifyPassword,
             onValueChange = { secondPassword = it },
             modifier = modifier

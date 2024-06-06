@@ -1,10 +1,17 @@
-package fi.iki.ede.crypto
+package fi.iki.ede.crypto.support
+
+import fi.iki.ede.crypto.EncryptedPassword
+import fi.iki.ede.crypto.IVCipherText
 
 typealias HexString = String
 
+// extension functions helping keep classes and code cleaner going between different representations
 fun ByteArray.toHexString(): HexString = joinToString("") {
     java.lang.Byte.toUnsignedInt(it).toString(radix = 16).padStart(2, '0')
 }
+
+fun IVCipherText.toHexString(): HexString =
+    "iv:${iv.toHexString()},cipherText:${cipherText.toHexString()}"
 
 fun HexString.hexToByteArray(): ByteArray {
     require(this.isNotEmpty()) { "Cannot convert empty to hexadecimal" }
@@ -14,3 +21,5 @@ fun HexString.hexToByteArray(): ByteArray {
         .map { it.toInt(16).toByte() }
         .toByteArray()
 }
+
+fun EncryptedPassword.toHex() = ivCipherText.toHexString()

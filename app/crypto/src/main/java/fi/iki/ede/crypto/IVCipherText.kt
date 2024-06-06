@@ -1,14 +1,15 @@
 package fi.iki.ede.crypto
 
+/**
+ * Convenience class representing encrypted cipher text with exact knowledge of the IV used
+ * Typically in a backup for instance IV is prefixed to cipher and one assumes knowledge of its size
+ */
 data class IVCipherText(val iv: ByteArray, val cipherText: ByteArray) {
-    @Deprecated("Try not to use, depends on actual generated keys (IV might be variable in the future)")
-    constructor(ivSize: Int, ivAndCipherText: ByteArray) : this(
-        ivAndCipherText.copyOfRange(0, ivSize),
-        ivAndCipherText.copyOfRange(ivSize, ivAndCipherText.size)
-    )
+    fun isEmpty() = iv.isEmpty() && cipherText.isEmpty()
+    fun isNotEmpty(): Boolean = !isEmpty()
 
     @Deprecated("Try not to use, depends on actual generated keys (IV might be variable in the future)")
-    constructor(ivAndCipherText: ByteArray, ivLength: Int) : this(
+    constructor(ivLength: Int, ivAndCipherText: ByteArray) : this(
         if (ivAndCipherText.isNotEmpty()) {
             ivAndCipherText.copyOfRange(0, ivLength)
         } else {
@@ -22,14 +23,8 @@ data class IVCipherText(val iv: ByteArray, val cipherText: ByteArray) {
     )
 
     @Deprecated("Try not to use")
-    fun combineIVAndCipherText(): ByteArray {
-        return iv + cipherText
-    }
-
-//    fun toHex() = combineIVAndCipherText().toHexString()
-
-    fun isEmpty() = iv.isEmpty() && cipherText.isEmpty()
-    fun isNotEmpty(): Boolean = !isEmpty()
+    fun combineIVAndCipherText() = iv + cipherText
+    
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -42,11 +37,7 @@ data class IVCipherText(val iv: ByteArray, val cipherText: ByteArray) {
         return true
     }
 
-    override fun hashCode(): Int {
-        var result = iv.contentHashCode()
-        result = 31 * result + cipherText.contentHashCode()
-        return result
-    }
+    override fun hashCode() = 31 * iv.contentHashCode() + cipherText.contentHashCode()
 
     companion object {
         fun getEmpty(): IVCipherText =
