@@ -3,6 +3,7 @@ package fi.iki.ede.safe.db
 import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
+import android.database.DatabaseUtils
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import android.database.sqlite.SQLiteOpenHelper
@@ -32,118 +33,175 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
     context, DATABASE_NAME, null, DATABASE_VERSION,
     // Alas API 33:OpenParams.Builder().setJournalMode(JOURNAL_MODE_MEMORY).build()
 ) {
+    // oh the ... DROP COLUMN not supported until 3.50.0 and above
+    private val sqliteVersion: String = SQLiteDatabase.create(null).use {
+        DatabaseUtils.stringForQuery(it, "SELECT sqlite_version()", null)
+    }
+
+    private fun compareSqliteVersions(version1: String, version2: String): Int {
+        val parts1 = version1.split(".")
+        val parts2 = version2.split(".")
+        val maxLength = maxOf(parts1.size, parts2.size)
+
+        for (i in 0 until maxLength) {
+            val num1 = parts1.getOrElse(i) { "0" }.toInt()
+            val num2 = parts2.getOrElse(i) { "0" }.toInt()
+
+            if (num1 != num2) {
+                return num1.compareTo(num2)
+            }
+        }
+
+        return 0 // versions are equal
+    }
 
     override fun onCreate(db: SQLiteDatabase?) {
-        // pragma user_version
-        // this will be 0 on first run (even if OLD database DOES exist)
-        val version = db?.version
-
         listOf(Category, Password, Keys).forEach {
             try {
                 db?.execSQL(it.create())
             } catch (ex: SQLiteException) {
-                Log.e(TAG, "error", ex)
-                // if upgrading from OLD DB BEFORE sqlite open helper
-                // the version is NOT set(ie.0) (but the tables might exist since previous installation)
-                // we'll swallow the exception
-                if (version != 0) {
-                    // however if there ALREADY is a versioning AND
-                    // table somehow exists, this is an error
-                    throw ex
-                }
+                Log.e(TAG, "Error initializing database, sqliteVersion=$sqliteVersion", ex)
+                throw ex
             }
         }
     }
 
     // called once (regardless of amount of upgrades needed)
-    override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
-        when (oldVersion) {
-            1 -> {
-                if (db != null) {
-                    db.beginTransaction()
-                    db.execSQL(
-                        "ALTER TABLE ${Password.tableName} ADD COLUMN ${Password.PasswordColumns.PHOTO.columnName} TEXT;",
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        // DO USE hardcoded strings for DB references, as it records history
+        (oldVersion until newVersion).forEach { upgrade ->
+            Log.i(TAG, "onUpgrade $upgrade (until $newVersion), sqlite $sqliteVersion")
+            when (upgrade) {
+                0 -> {
+                    // should never happen except maybe during upgrade test scenarios
+                }
+
+                1 -> upgradeFromV1ToV2(db, upgrade)
+
+                2 -> {
+                    // there's no drop column support prior to 3.50.0 - no harm leaving the column
+                    // compared to alternative - full table recreation and copy
+                    // Actually its buggy (potentially destructive) until 3.35.5
+                    upgradeFromV2ToV3(db, upgrade)
+                }
+
+                3 -> {
+                    upgradeFromV3ToV4(db, upgrade)
+                }
+
+                else -> Log.w(
+                    TAG, "onUpgrade() with unknown oldVersion $oldVersion to $newVersion"
+                )
+            }
+        }
+    }
+
+    private fun upgradeFromV3ToV4(db: SQLiteDatabase, upgrade: Int) {
+        db.beginTransaction()
+        var masterKey: IVCipherText? = null
+        var salt: Salt? = null
+        try {
+            db.query(
+                true,
+                "master_key",
+                arrayOf("encryptedkey"),
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+            ).use {
+                if (it.count > 0) {
+                    it.moveToFirst()
+                    masterKey = IVCipherText(
+                        CipherUtilities.IV_LENGTH,
+                        it.getBlob(it.getColumnIndexOrThrow("encryptedkey"))
                     )
-                    db.setTransactionSuccessful()
-                    db.endTransaction()
                 }
             }
 
-            2 -> {
-                if (db != null) {
-                    db.beginTransaction()
-                    db.execSQL("ALTER TABLE ${Category.tableName} DROP COLUMN lastdatetimeedit;")
-                    db.setTransactionSuccessful()
-                    db.endTransaction()
+            db.query(
+                true, "salt", arrayOf("salt"), null,
+                null,
+                null,
+                null,
+                null,
+                null
+            ).use { c ->
+                if (c.count > 0) {
+                    c.moveToFirst()
+                    val dsalt = c.getBlob(c.getColumnIndexOrThrow("salt"))
+                    salt = Salt(dsalt)
                 }
             }
+        } catch (ex: SQLiteException) {
+            // possibly we've already done the upgrade, so just skip the transfer
+            Log.i(TAG, "onUpgrade $upgrade: $ex")
+        }
 
-            3 -> {
-                if (db != null) {
-                    db.beginTransaction()
-                    //val saltAndMasterkey = fetchSaltAndEncryptedMasterKey()
-                    var masterKey: IVCipherText? = null
-                    var salt: Salt? = null
-                    db.query(
-                        true,
-                        "master_key",
-                        arrayOf("encryptedkey"),
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null
-                    ).use {
-                        if (it.count > 0) {
-                            it.moveToFirst()
-                            masterKey = IVCipherText(
-                                CipherUtilities.IV_LENGTH,
-                                it.getBlob(it.getColumnIndexOrThrow("encryptedkey"))
-                            )
-                        } else {
-                            throw Exception("No master key")
-                        }
-                    }
+        db.execSQL("DROP TABLE IF EXISTS master_key;")
+        db.execSQL("DROP TABLE IF EXISTS salt;")
+        db.execSQL(Keys.create())
 
-                    db.query(
-                        true, "salt", arrayOf("salt"), null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null
-                    ).use { c ->
-                        if (c.count > 0) {
-                            c.moveToFirst()
-                            val dsalt = c.getBlob(c.getColumnIndexOrThrow("salt"))
-                            salt = Salt(dsalt)
-                        } else {
-                            throw Exception("Could not read SALT")
-                        }
-                    }
-
-                    db.execSQL("DROP TABLE master_key;")
-                    db.execSQL("DROP TABLE salt;")
-                    db.execSQL(Keys.create())
-
-                    db.insert(
-                        Keys,
-                        ContentValues().apply {
-                            put(Keys.KeysColumns.ENCRYPTED_KEY, masterKey!!)
-                            put(Keys.KeysColumns.SALT, salt!!.salt)
-                        }
-                    )
-
-                    db.setTransactionSuccessful()
-                    db.endTransaction()
+        if (masterKey != null && salt != null) {
+            db.insert(
+                Keys,
+                ContentValues().apply {
+                    put(Keys.KeysColumns.ENCRYPTED_KEY, masterKey!!)
+                    put(Keys.KeysColumns.SALT, salt!!.salt)
                 }
-            }
+            )
+        } else {
+            // should never happen obviously, perhaps user installed OLD version, never logged in..
+            Log.w(TAG, "Failed migrating masterkey $sqliteVersion")
+        }
+        db.setTransactionSuccessful()
+        db.endTransaction()
+    }
 
-            else -> throw IllegalStateException(
-                "onUpgrade() with unknown oldVersion $oldVersion"
+    private fun upgradeFromV2ToV3(db: SQLiteDatabase, upgrade: Int) {
+        if (compareSqliteVersions(sqliteVersion, "3.55.5") >= 0) {
+            db.beginTransaction()
+            try {
+                db.execSQL("ALTER TABLE categories DROP COLUMN lastdatetimeedit;")
+            } catch (ex: SQLiteException) {
+                Log.i(TAG, "onUpgrade $upgrade: $ex")
+            }
+            db.setTransactionSuccessful()
+            db.endTransaction()
+        } else {
+            // do it the hard way...
+            db.execSQL(
+                """
+    BEGIN TRANSACTION;
+    CREATE TABLE new_categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL);
+    INSERT INTO new_categories(id, name) SELECT id, name FROM categories;
+    DROP TABLE categories;
+    ALTER TABLE new_categories RENAME TO categories;
+    COMMIT;
+                                """.trimIndent()
             )
         }
+    }
+
+    private fun upgradeFromV1ToV2(db: SQLiteDatabase, upgrade: Int) {
+        db.beginTransaction()
+        try {
+            db.execSQL(
+                "ALTER TABLE passwords ADD COLUMN photo TEXT;",
+            )
+        } catch (ex: SQLiteException) {
+            if (ex.message?.contains("duplicate column") != true) {
+                // something else wrong than duplicate column
+                Log.i(TAG, "onUpgrade $upgrade: $ex")
+                throw ex
+            }
+        }
+        db.setTransactionSuccessful()
+        db.endTransaction()
     }
 
     // called once (regardless of amount of downgrades needed)
@@ -156,8 +214,8 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
             beginTransaction()
             // DONT USE Use{} transaction will die
 
-            writableDatabase.delete(Keys).let {
-                writableDatabase.insert(
+            delete(Keys).let {
+                insert(
                     Keys,
                     ContentValues().apply {
                         put(Keys.KeysColumns.ENCRYPTED_KEY, ivCipher)
@@ -412,7 +470,7 @@ private object Password : Table {
     }
 
     override fun create() = """
-CREATE TABLE $tableName (
+CREATE TABLE IF NOT EXISTS $tableName (
     ${PasswordColumns.PWD_ID.columnName} INTEGER PRIMARY KEY AUTOINCREMENT,
     ${PasswordColumns.CATEGORY_ID.columnName} INTEGER NOT NULL,
     ${PasswordColumns.PASSWORD.columnName} TEXT NOT NULL,
@@ -424,7 +482,7 @@ CREATE TABLE $tableName (
     ${PasswordColumns.PASSWORD_CHANGE_DATE.columnName} TEXT);
 """
 
-    override fun drop() = "DROP TABLE $tableName;"
+    override fun drop() = "DROP TABLE IF EXISTS $tableName;"
 }
 
 private object Category : Table {
@@ -432,12 +490,12 @@ private object Category : Table {
         get() = "categories"
 
     override fun create() = """
-CREATE TABLE $tableName (
+CREATE TABLE IF NOT EXISTS $tableName (
     ${CategoryColumns.CAT_ID.columnName} INTEGER PRIMARY KEY AUTOINCREMENT,
     ${CategoryColumns.NAME.columnName} TEXT NOT NULL);
         """
 
-    override fun drop() = "DROP TABLE $tableName;"
+    override fun drop() = "DROP TABLE IF EXISTS $tableName;"
 
     enum class CategoryColumns(override val columnName: String) : TableColumns<Category> {
         CAT_ID("id"),
@@ -449,14 +507,15 @@ private object Keys : Table {
     override val tableName: String
         get() = "keys"
 
+    // if you EVER alter this, copy this as hardcoded string to onUpgrade above
     override fun create() = """
-CREATE TABLE $tableName (
+CREATE TABLE IF NOT EXISTS $tableName (
     ${KeysColumns.ENCRYPTED_KEY.columnName} TEXT NOT NULL,
     ${KeysColumns.SALT.columnName} TEXT NOT NULL
     );
         """
 
-    override fun drop() = "DROP TABLE ${tableName};"
+    override fun drop() = "DROP TABLE IF EXISTS ${tableName};"
 
     enum class KeysColumns(override val columnName: String) : TableColumns<Keys> {
         ENCRYPTED_KEY("encryptedkey"),
