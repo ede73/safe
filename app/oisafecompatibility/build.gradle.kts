@@ -41,7 +41,6 @@ android {
     }
 }
 
-
 dependencies {
     implementation(project(":app:crypto"))
 
