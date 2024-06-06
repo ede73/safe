@@ -38,7 +38,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
             try {
                 db?.execSQL(it.create())
             } catch (ex: SQLiteException) {
-                Log.e(TAG, "Error initializing database, sqliteVersion=$sqliteVersion", ex)
+                Log.e(TAG, "Error initializing database, sqliteVersion=${sqliteVersion()}", ex)
                 throw ex
             }
         }
@@ -48,7 +48,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         // DO USE hardcoded strings for DB references, as it records history
         (oldVersion until newVersion).forEach { upgrade ->
-            Log.i(TAG, "onUpgrade $upgrade (until $newVersion), sqlite $sqliteVersion")
+            Log.i(TAG, "onUpgrade $upgrade (until $newVersion), sqlite ${sqliteVersion()}")
             when (upgrade) {
                 0 -> {
                     // should never happen except maybe during upgrade test scenarios
@@ -312,8 +312,12 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         private const val TAG = "DBHelper"
 
         // oh the ... DROP COLUMN not supported until 3.50.0 and above
-        private val sqliteVersion: String = SQLiteDatabase.create(null).use {
-            DatabaseUtils.stringForQuery(it, "SELECT sqlite_version()", null)
+        private fun sqliteVersion(): String = try {
+            SQLiteDatabase.create(null).use {
+                DatabaseUtils.stringForQuery(it, "SELECT sqlite_version()", null)
+            }
+        } catch (ex: Exception) {
+            "0"
         }
 
         private fun compareSqliteVersions(version1: String, version2: String): Int {
@@ -390,14 +394,14 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
                 )
             } else {
                 // should never happen obviously, perhaps user installed OLD version, never logged in..
-                Log.w(TAG, "Failed migrating masterkey $sqliteVersion")
+                Log.w(TAG, "Failed migrating masterkey ${sqliteVersion()}")
             }
             db.setTransactionSuccessful()
             db.endTransaction()
         }
 
         fun upgradeFromV2ToV3RemoveLastDateTimeEdit(db: SQLiteDatabase, upgrade: Int) {
-            if (compareSqliteVersions(sqliteVersion, "3.55.5") >= 0) {
+            if (compareSqliteVersions(sqliteVersion(), "3.55.5") >= 0) {
                 db.beginTransaction()
                 try {
                     db.execSQL("ALTER TABLE categories DROP COLUMN lastdatetimeedit;")

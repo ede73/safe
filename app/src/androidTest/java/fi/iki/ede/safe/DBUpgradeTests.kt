@@ -18,6 +18,30 @@ class DBUpgradeTests {
     private lateinit var context: Context
     private val fakeSalt = "abcdabcd01234567"
     private val fakeMasterkey = "00112233445566778899AABBCCDDEEFF99887766554433221100123456789ABC"
+    private fun basePasswordTable(additions: String = "") = """
+                CREATE TABLE passwords (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    category INTEGER NOT NULL,
+                    password TEXT NOT NULL,
+                    description TEXT NOT NULL,
+                    username TEXT,
+                    website TEXT,
+                    note TEXT,
+                    $additions
+                    passwordchangeddate TEXT);"""
+
+    private fun baseCategoriesTable(additions: String = "") = """
+                CREATE TABLE categories (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL
+                    ${additions});"""
+
+    private val oldKeys = listOf(
+        "CREATE TABLE master_key (encryptedkey TEXT NOT NULL);",
+        "CREATE TABLE salt (salt TEXT NOT NULL);",
+        "INSERT INTO master_key VALUES (X'$fakeMasterkey');",
+        "INSERT INTO salt VALUES (X'$fakeSalt');"
+    )
 
     @Before
     fun setUp() {
@@ -27,101 +51,35 @@ class DBUpgradeTests {
     private fun absoluteV1() = InMemorySQLiteOpenHelper(context, 1) {
         // Set the database as it appeared long ago in version 1
         listOf(
-            """
-                CREATE TABLE passwords (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    category INTEGER NOT NULL,
-                    password TEXT NOT NULL,
-                    description TEXT NOT NULL,
-                    username TEXT,
-                    website TEXT,
-                    note TEXT,
-                    passwordchangeddate TEXT);""",
-            """
-                CREATE TABLE categories (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name TEXT NOT NULL,
-                    lastdatetimeedit TEXT);""",
-            "CREATE TABLE master_key (encryptedkey TEXT NOT NULL);",
-            "CREATE TABLE salt (salt TEXT NOT NULL);",
-            "INSERT INTO master_key VALUES (X'$fakeMasterkey');",
-            "INSERT INTO salt VALUES (X'$fakeSalt');"
-        )
+            basePasswordTable(),
+            baseCategoriesTable(",lastdatetimeedit TEXT"),
+        ) + oldKeys
     }
 
     private fun absoluteV2() = InMemorySQLiteOpenHelper(context, 2) {
         // Set the database as it appeared long ago in version 3
         // ie. passwords has photo
         listOf(
-            """
-                CREATE TABLE passwords (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    category INTEGER NOT NULL,
-                    password TEXT NOT NULL,
-                    description TEXT NOT NULL,
-                    username TEXT,
-                    website TEXT,
-                    note TEXT,
-                    photo TEXT,
-                    passwordchangeddate TEXT);""",
-            """
-                CREATE TABLE categories (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name TEXT NOT NULL,
-                    lastdatetimeedit TEXT);""",
-            "CREATE TABLE master_key (encryptedkey TEXT NOT NULL);",
-            "CREATE TABLE salt (salt TEXT NOT NULL);",
-            "INSERT INTO master_key VALUES (X'$fakeMasterkey');",
-            "INSERT INTO salt VALUES (X'$fakeSalt');"
-        )
+            basePasswordTable("photo TEXT,"),
+            baseCategoriesTable(",lastdatetimeedit TEXT"),
+        ) + oldKeys
     }
 
     private fun absoluteV3() = InMemorySQLiteOpenHelper(context, 3) {
         // Set the database as it appeared long ago in version 2
         // ie. drop lastedit from category
         listOf(
-            """
-                CREATE TABLE passwords (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    category INTEGER NOT NULL,
-                    password TEXT NOT NULL,
-                    description TEXT NOT NULL,
-                    username TEXT,
-                    website TEXT,
-                    note TEXT,
-                    photo TEXT,
-                    passwordchangeddate TEXT);""",
-            // ie. lastedittime removed
-            """
-                CREATE TABLE categories (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name TEXT NOT NULL);""",
-            "CREATE TABLE master_key (encryptedkey TEXT NOT NULL);",
-            "CREATE TABLE salt (salt TEXT NOT NULL);",
-            "INSERT INTO master_key VALUES (X'$fakeMasterkey');",
-            "INSERT INTO salt VALUES (X'$fakeSalt');"
-        )
+            basePasswordTable("photo TEXT,"),
+            baseCategoriesTable(),
+        ) + oldKeys
     }
 
     private fun absoluteV4() = InMemorySQLiteOpenHelper(context, 4) {
         // Set the database as it appeared long ago in version 4
         // ie. passwords has photo,no last edit, merged keys
         listOf(
-            """
-                CREATE TABLE passwords (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    category INTEGER NOT NULL,
-                    password TEXT NOT NULL,
-                    description TEXT NOT NULL,
-                    username TEXT,
-                    website TEXT,
-                    note TEXT,
-                    photo TEXT,
-                    passwordchangeddate TEXT);""",
-            """
-                CREATE TABLE categories (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name TEXT NOT NULL);""",
+            basePasswordTable("photo TEXT,"),
+            baseCategoriesTable(),
             "CREATE TABLE keys (encryptedkey TEXT NOT NULL, salt TEXT NOT NULL);",
             "INSERT INTO (encryptedkey, salt) VALUES (X'$fakeMasterkey', X'$fakeSalt');"
         )
@@ -173,6 +131,7 @@ class DBUpgradeTests {
 
     @Test
     fun testUpgradeV3ToV4() {
+        Log.i("xx", baseCategoriesTable(""))
         dbHelper = absoluteV3()
         val database = dbHelper.writableDatabase.verify(3)
         dbHelper.onUpgrade(database, 3, 4)
@@ -248,10 +207,6 @@ class DBUpgradeTests {
                 val masterKeys = getAllColumnValues(this, "master_key", "encryptedkey")
                 assert(masterKeys.size == 1)
                 assert(salts.size == 1)
-                Log.i("m1", masterKeys[0])
-                Log.i("m2", fakeMasterkey)
-                Log.i("s1", salts[0])
-                Log.i("s2", fakeSalt)
                 assert(masterKeys[0].lowercase().contentEquals(fakeMasterkey.lowercase()))
                 assert(salts[0].lowercase().contentEquals(fakeSalt.lowercase()))
             }
