@@ -33,28 +33,6 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
     context, DATABASE_NAME, null, DATABASE_VERSION,
     // Alas API 33:OpenParams.Builder().setJournalMode(JOURNAL_MODE_MEMORY).build()
 ) {
-    // oh the ... DROP COLUMN not supported until 3.50.0 and above
-    private val sqliteVersion: String = SQLiteDatabase.create(null).use {
-        DatabaseUtils.stringForQuery(it, "SELECT sqlite_version()", null)
-    }
-
-    private fun compareSqliteVersions(version1: String, version2: String): Int {
-        val parts1 = version1.split(".")
-        val parts2 = version2.split(".")
-        val maxLength = maxOf(parts1.size, parts2.size)
-
-        for (i in 0 until maxLength) {
-            val num1 = parts1.getOrElse(i) { "0" }.toInt()
-            val num2 = parts2.getOrElse(i) { "0" }.toInt()
-
-            if (num1 != num2) {
-                return num1.compareTo(num2)
-            }
-        }
-
-        return 0 // versions are equal
-    }
-
     override fun onCreate(db: SQLiteDatabase?) {
         listOf(Category, Password, Keys).forEach {
             try {
@@ -76,17 +54,17 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
                     // should never happen except maybe during upgrade test scenarios
                 }
 
-                1 -> upgradeFromV1ToV2(db, upgrade)
+                1 -> upgradeFromV1ToV2AddPhoto(db, upgrade)
 
                 2 -> {
                     // there's no drop column support prior to 3.50.0 - no harm leaving the column
                     // compared to alternative - full table recreation and copy
                     // Actually its buggy (potentially destructive) until 3.35.5
-                    upgradeFromV2ToV3(db, upgrade)
+                    upgradeFromV2ToV3RemoveLastDateTimeEdit(db, upgrade)
                 }
 
                 3 -> {
-                    upgradeFromV3ToV4(db, upgrade)
+                    upgradeFromV3ToV4MergeKeys(db, upgrade)
                 }
 
                 else -> Log.w(
@@ -94,114 +72,6 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
                 )
             }
         }
-    }
-
-    private fun upgradeFromV3ToV4(db: SQLiteDatabase, upgrade: Int) {
-        db.beginTransaction()
-        var masterKey: IVCipherText? = null
-        var salt: Salt? = null
-        try {
-            db.query(
-                true,
-                "master_key",
-                arrayOf("encryptedkey"),
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-            ).use {
-                if (it.count > 0) {
-                    it.moveToFirst()
-                    masterKey = IVCipherText(
-                        CipherUtilities.IV_LENGTH,
-                        it.getBlob(it.getColumnIndexOrThrow("encryptedkey"))
-                    )
-                }
-            }
-
-            db.query(
-                true, "salt", arrayOf("salt"), null,
-                null,
-                null,
-                null,
-                null,
-                null
-            ).use { c ->
-                if (c.count > 0) {
-                    c.moveToFirst()
-                    val dsalt = c.getBlob(c.getColumnIndexOrThrow("salt"))
-                    salt = Salt(dsalt)
-                }
-            }
-        } catch (ex: SQLiteException) {
-            // possibly we've already done the upgrade, so just skip the transfer
-            Log.i(TAG, "onUpgrade $upgrade: $ex")
-        }
-
-        db.execSQL("DROP TABLE IF EXISTS master_key;")
-        db.execSQL("DROP TABLE IF EXISTS salt;")
-        db.execSQL(Keys.create())
-
-        if (masterKey != null && salt != null) {
-            db.insert(
-                Keys,
-                ContentValues().apply {
-                    put(Keys.KeysColumns.ENCRYPTED_KEY, masterKey!!)
-                    put(Keys.KeysColumns.SALT, salt!!.salt)
-                }
-            )
-        } else {
-            // should never happen obviously, perhaps user installed OLD version, never logged in..
-            Log.w(TAG, "Failed migrating masterkey $sqliteVersion")
-        }
-        db.setTransactionSuccessful()
-        db.endTransaction()
-    }
-
-    private fun upgradeFromV2ToV3(db: SQLiteDatabase, upgrade: Int) {
-        if (compareSqliteVersions(sqliteVersion, "3.55.5") >= 0) {
-            db.beginTransaction()
-            try {
-                db.execSQL("ALTER TABLE categories DROP COLUMN lastdatetimeedit;")
-            } catch (ex: SQLiteException) {
-                Log.i(TAG, "onUpgrade $upgrade: $ex")
-            }
-            db.setTransactionSuccessful()
-            db.endTransaction()
-        } else {
-            // do it the hard way...
-            db.execSQL(
-                """
-    BEGIN TRANSACTION;
-    CREATE TABLE new_categories (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL);
-    INSERT INTO new_categories(id, name) SELECT id, name FROM categories;
-    DROP TABLE categories;
-    ALTER TABLE new_categories RENAME TO categories;
-    COMMIT;
-                                """.trimIndent()
-            )
-        }
-    }
-
-    private fun upgradeFromV1ToV2(db: SQLiteDatabase, upgrade: Int) {
-        db.beginTransaction()
-        try {
-            db.execSQL(
-                "ALTER TABLE passwords ADD COLUMN photo TEXT;",
-            )
-        } catch (ex: SQLiteException) {
-            if (ex.message?.contains("duplicate column") != true) {
-                // something else wrong than duplicate column
-                Log.i(TAG, "onUpgrade $upgrade: $ex")
-                throw ex
-            }
-        }
-        db.setTransactionSuccessful()
-        db.endTransaction()
     }
 
     // called once (regardless of amount of downgrades needed)
@@ -440,6 +310,130 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         private const val DATABASE_VERSION = 4
         private const val DATABASE_NAME = "safe"
         private const val TAG = "DBHelper"
+
+        // oh the ... DROP COLUMN not supported until 3.50.0 and above
+        private val sqliteVersion: String = SQLiteDatabase.create(null).use {
+            DatabaseUtils.stringForQuery(it, "SELECT sqlite_version()", null)
+        }
+
+        private fun compareSqliteVersions(version1: String, version2: String): Int {
+            val parts1 = version1.split(".")
+            val parts2 = version2.split(".")
+            val maxLength = maxOf(parts1.size, parts2.size)
+
+            for (i in 0 until maxLength) {
+                val num1 = parts1.getOrElse(i) { "0" }.toInt()
+                val num2 = parts2.getOrElse(i) { "0" }.toInt()
+
+                if (num1 != num2) {
+                    return num1.compareTo(num2)
+                }
+            }
+            return 0 // versions are equal
+        }
+
+        fun upgradeFromV3ToV4MergeKeys(db: SQLiteDatabase, upgrade: Int) {
+            db.beginTransaction()
+            var masterKey: IVCipherText? = null
+            var salt: Salt? = null
+            try {
+                db.query(
+                    true,
+                    "master_key",
+                    arrayOf("encryptedkey"),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                ).use {
+                    if (it.count > 0) {
+                        it.moveToFirst()
+                        masterKey = IVCipherText(
+                            CipherUtilities.IV_LENGTH,
+                            it.getBlob(it.getColumnIndexOrThrow("encryptedkey"))
+                        )
+                    }
+                }
+
+                db.query(
+                    true, "salt", arrayOf("salt"), null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                ).use { c ->
+                    if (c.count > 0) {
+                        c.moveToFirst()
+                        val dsalt = c.getBlob(c.getColumnIndexOrThrow("salt"))
+                        salt = Salt(dsalt)
+                    }
+                }
+            } catch (ex: SQLiteException) {
+                // possibly we've already done the upgrade, so just skip the transfer
+                Log.i(TAG, "onUpgrade $upgrade: $ex")
+            }
+
+            db.execSQL("DROP TABLE IF EXISTS master_key;")
+            db.execSQL("DROP TABLE IF EXISTS salt;")
+            db.execSQL(Keys.create())
+
+            if (masterKey != null && salt != null) {
+                db.insert(
+                    Keys,
+                    ContentValues().apply {
+                        put(Keys.KeysColumns.ENCRYPTED_KEY, masterKey!!)
+                        put(Keys.KeysColumns.SALT, salt!!.salt)
+                    }
+                )
+            } else {
+                // should never happen obviously, perhaps user installed OLD version, never logged in..
+                Log.w(TAG, "Failed migrating masterkey $sqliteVersion")
+            }
+            db.setTransactionSuccessful()
+            db.endTransaction()
+        }
+
+        fun upgradeFromV2ToV3RemoveLastDateTimeEdit(db: SQLiteDatabase, upgrade: Int) {
+            if (compareSqliteVersions(sqliteVersion, "3.55.5") >= 0) {
+                db.beginTransaction()
+                try {
+                    db.execSQL("ALTER TABLE categories DROP COLUMN lastdatetimeedit;")
+                } catch (ex: SQLiteException) {
+                    Log.i(TAG, "onUpgrade $upgrade: $ex")
+                }
+                db.setTransactionSuccessful()
+                db.endTransaction()
+            } else {
+                // do it the hard way...
+                db.beginTransaction()
+                db.execSQL("CREATE TABLE new_categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL);")
+                db.execSQL("INSERT INTO new_categories(id, name) SELECT id, name FROM categories;")
+                db.execSQL("DROP TABLE categories;")
+                db.execSQL("ALTER TABLE new_categories RENAME TO categories;")
+                db.setTransactionSuccessful()
+                db.endTransaction()
+            }
+        }
+
+        fun upgradeFromV1ToV2AddPhoto(db: SQLiteDatabase, upgrade: Int) {
+            db.beginTransaction()
+            try {
+                db.execSQL(
+                    "ALTER TABLE passwords ADD COLUMN photo TEXT;",
+                )
+            } catch (ex: SQLiteException) {
+                if (ex.message?.contains("duplicate column") != true) {
+                    // something else wrong than duplicate column
+                    Log.i(TAG, "onUpgrade $upgrade: $ex")
+                    throw ex
+                }
+            }
+            db.setTransactionSuccessful()
+            db.endTransaction()
+        }
     }
 }
 
@@ -605,6 +599,7 @@ class SelectionCondition(
     fun args() = arrayOf(singleArg.toString())
 
     companion object {
+
         fun alwaysMatch() = SelectionCondition(
             column = object : TableColumns<Nothing> {
                 override val columnName = "1"
