@@ -28,7 +28,7 @@ import org.junit.BeforeClass
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration.Companion.milliseconds
 
 @RunWith(AndroidJUnit4::class)
 class AutoLogOutTest {
@@ -46,24 +46,31 @@ class AutoLogOutTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun testAutoLogoutService() = runTest {
+        println("=========assert displays category ")
+        activityTestRule.onAllNodesWithTag(TestTag.TEST_TAG_CATEGORY_ROW)[0].assertIsDisplayed()
+
         val serviceIntent = Intent(
             getApplicationContext(),
             AutolockingService::class.java
         )
 
         InstrumentationRegistry.getInstrumentation().targetContext.startService(serviceIntent)
-
+        println("========= service started")
         advanceUntilIdle()
 
-        activityTestRule.onAllNodesWithTag(TestTag.TEST_TAG_CATEGORY_ROW)[0].assertIsDisplayed()
-        advanceUntilIdle()
         // Alas, you can advance time, but it won't affect outside running CountdownTimer
-        Thread.sleep(1000)
-        advanceUntilIdle()
-        Thread.sleep(1000)
-        advanceUntilIdle()
+        // TODO: SADLY without waits this is flaky test
+        // even if timeout it super small, if android emy is busy - IN THIS CODE PATH -
+        // there's nothing we can do to make the CounterDown timer firer quicker (milliseconds)
+        // unless the service code actually RUNS,trying to lure it does...
+        (1..20).forEach { _ ->
+            Thread.sleep(100)
+            advanceUntilIdle()
+        }
+        println("========= waited...")
         activityTestRule.onAllNodesWithTag(TestTag.TEST_TAG_PASSWORD_PROMPT)[0]
             .assertIsDisplayed()
+        println("========= stop service...")
         InstrumentationRegistry.getInstrumentation().targetContext.stopService(serviceIntent)
     }
 
@@ -74,7 +81,7 @@ class AutoLogOutTest {
             MockDataModel.mockAllDataModelNecessities()
 
             mockkObject(Preferences)
-            every { Preferences.getLockTimeoutDuration() } returns 1.seconds
+            every { Preferences.getLockTimeoutDuration() } returns 100.milliseconds
             every { Preferences.getLockOnScreenLock(any()) } returns true
             mockkObject(BiometricsActivity)
             mockIsBiometricsEnabled { false }
