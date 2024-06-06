@@ -34,7 +34,13 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
     // Alas API 33:OpenParams.Builder().setJournalMode(JOURNAL_MODE_MEMORY).build()
 ) {
     override fun onCreate(db: SQLiteDatabase?) {
-        listOf(Category, Password, Keys).forEach {
+        listOf(
+            Category,
+            Password,
+            Keys,
+            GooglePasswordManager,
+            Password2GooglePasswordManager
+        ).forEach {
             try {
                 it.create().forEach { sql ->
                     db?.execSQL(sql)
@@ -67,6 +73,10 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
 
                 3 -> {
                     upgradeFromV3ToV4MergeKeys(db, upgrade)
+                }
+
+                4 -> {
+                    upgradeFromV4ToV5MergeKeys(db, upgrade)
                 }
 
                 else -> Log.w(
@@ -313,7 +323,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         }
 
     companion object {
-        private const val DATABASE_VERSION = 4
+        private const val DATABASE_VERSION = 5
         private const val DATABASE_NAME = "safe"
         private const val TAG = "DBHelper"
 
@@ -340,6 +350,22 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
                 }
             }
             return 0 // versions are equal
+        }
+
+        fun upgradeFromV4ToV5MergeKeys(db: SQLiteDatabase, upgrade: Int) {
+            db.beginTransaction()
+            try {
+                GooglePasswordManager.create().forEach {
+                    db.execSQL(it)
+                }
+                Password2GooglePasswordManager.create().forEach {
+                    db.execSQL(it)
+                }
+            } catch (ex: SQLiteException) {
+                Log.i(TAG, "onUpgrade $upgrade: $ex")
+            }
+            db.setTransactionSuccessful()
+            db.endTransaction()
         }
 
         fun upgradeFromV3ToV4MergeKeys(db: SQLiteDatabase, upgrade: Int) {
@@ -525,6 +551,53 @@ private object Keys : Table {
     enum class Columns(override val columnName: String) : TableColumns<Keys> {
         ENCRYPTED_KEY("encryptedkey"),
         SALT("salt"),
+    }
+}
+
+private object GooglePasswordManager : Table {
+    override val tableName: String
+        get() = "googlepasswords"
+
+    // if you EVER alter this, copy this as hardcoded string to onUpgrade above
+    override fun create() = listOf(
+        """CREATE TABLE IF NOT EXISTS $tableName (
+    ${Columns.ID.columnName} INTEGER PRIMARY KEY AUTOINCREMENT,
+    ${Columns.NAME.columnName} TEXT NOT NULL,
+    ${Columns.URL.columnName} TEXT NOT NULL,
+    ${Columns.PASSWORD.columnName} TEXT NOT NULL,
+    ${Columns.NOTE.columnName} TEXT);"""
+    )
+
+    override fun drop() = listOf("DROP TABLE IF EXISTS ${tableName};")
+
+    enum class Columns(override val columnName: String) : TableColumns<Keys> {
+        ID("id"),
+        NAME("name"),
+        URL("url"),
+        PASSWORD("password"),
+        NOTE("note"),
+    }
+}
+
+private object Password2GooglePasswordManager : Table {
+    override val tableName: String
+        get() = "password2googlepasswords"
+
+    // if you EVER alter this, copy this as hardcoded string to onUpgrade above
+    override fun create() = listOf(
+        """CREATE TABLE IF NOT EXISTS $tableName (
+    ${Columns.PASSWORD_ID.columnName} INTEGER,
+    ${Columns.GOOGLE_ID.columnName} INTEGER,
+    PRIMARY KEY (${Columns.PASSWORD_ID.columnName}, ${Columns.GOOGLE_ID.columnName}),
+    FOREIGN KEY (${Columns.PASSWORD_ID.columnName}) REFERENCES ${Password.tableName}(${Password.Columns.PWD_ID.columnName}) ON DELETE CASCADE,
+    FOREIGN KEY (${Columns.GOOGLE_ID.columnName}) REFERENCES ${GooglePasswordManager.tableName}(${GooglePasswordManager.Columns.ID.columnName}) ON DELETE RESTRICT);"""
+    )
+
+    override fun drop() = listOf("DROP TABLE IF EXISTS ${tableName};")
+
+    enum class Columns(override val columnName: String) : TableColumns<Keys> {
+        PASSWORD_ID("password_id"),
+        GOOGLE_ID("gpm_id"),
     }
 }
 
