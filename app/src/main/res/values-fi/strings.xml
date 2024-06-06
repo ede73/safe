@@ -21,7 +21,7 @@
     <string name="biometrics_authentication_failed">VIRHE: onAuthenticationFailed</string>
     <string name="biometrics_cancel">Peru</string>
     <string name="biometrics_prompt_title">PasswordSafe biometriikka</string>
-    <string name="biometrics_register">Rekisteröi biometriikka onnistuneen sisäänkirjauksen jälkeen</string>
+    <string name="biometrics_register">Rekisteröi biometrinen tunniste onnistuneen sisäänkirjauksen jälkeen</string>
     <string name="biometrics_register_subtitle">Ohittaaksei salasanan, biometriikka on tallennettava. Voit perua, salasanakirjautuminen toimii aina. Voit myös kytkeä biometriikan pois asetuksista myöhemmin. Biometriikka voidaan joutua rekisteröinään uudestaan ajoittain.</string>
     <string name="biometrics_register_title">Rekisteröidään uusi biometriikka</string>
     <string name="category_list_delete">Poista %s?</string>
