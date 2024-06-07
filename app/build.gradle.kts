@@ -184,3 +184,9 @@ tasks.configureEach {when (name) {"connectedDebugAndroidTest" -> dependsOn("unlo
         }
     }
 }
+
+tasks.withType<Test> {
+    testLogging {
+        //showStandardStreams = true
+    }
+}

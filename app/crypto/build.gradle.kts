@@ -2,7 +2,6 @@ plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
 }
-
 android {
     namespace = "fi.iki.ede.crypto"
     compileSdk = 34
@@ -72,4 +71,11 @@ dependencies {
     //testFixturesImplementation(libs.bcprov.jdk16)
     testFixturesImplementation(libs.mockk)
     testFixturesImplementation(libs.kotlin.stdlib)
+}
+
+tasks.withType<Test> {
+    testLogging {
+        //showStandardStreams = true
+        //showExceptions = true
+    }
 }

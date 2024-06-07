@@ -57,3 +57,10 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit.ktx)
 }
+
+tasks.withType<Test> {
+    testLogging {
+        showStandardStreams = true
+        //showExceptions = true
+    }
+}
