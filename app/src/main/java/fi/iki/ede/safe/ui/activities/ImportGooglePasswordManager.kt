@@ -69,7 +69,24 @@ class ImportGooglePasswordManager : AutolockingBaseComponentActivity() {
                     Column {
                         ImportControls(searchText)
                         ImportEntryList(
-                            listOf("oma1", "oma2"),
+                            listOf(
+                                "oma1",
+                                "oma2",
+                                "oma3",
+                                "oma4",
+                                "oma5",
+                                "oma6",
+                                "oma7",
+                                "oma8",
+                                "oma9",
+                                "oma10",
+                                "oma11",
+                                "oma12",
+                                "oma13",
+                                "oma14",
+                                "oma15",
+                                "oma16"
+                            ),
                             listOf("tuo1", "tuo2", "tuo3", "tuo4")
                         )
                     }
@@ -95,10 +112,33 @@ fun Modifier.visibleSpacer(visible: Boolean, color: Color = Color.Magenta) = thi
     }
 )
 
-
 @Composable
 fun ImportEntryList(mine: List<String>, imports: List<String>) {
     val maxSize = maxOf(mine.size, imports.size)
+
+    Row {
+        DraggableText(
+            text = "Add",
+            onItemDropped = {
+                println("Add:$it")
+            }
+        )
+
+        Spacer(
+            modifier = Modifier
+                .fillMaxWidth(0.5f)
+            //.visibleSpacer(true, Color.Yellow)
+        )
+
+        DraggableText(
+            text = "Ignore",
+            onItemDropped = {
+                println("IGNORE:$it")
+            }
+        )
+    }
+
+
     val mySizeModifier = Modifier
         .fillMaxWidth(0.4f)
         .fillMaxHeight(0.2f)
@@ -107,22 +147,21 @@ fun ImportEntryList(mine: List<String>, imports: List<String>) {
             Row {
                 DraggableText(
                     text = if (index < mine.size) mine[index] else null,
-                    modifier = mySizeModifier,
+                    modifier = mySizeModifier.weight(1f),
                     onItemDropped = {
-                        println(it)
+                        println("LINK $it")
                     }
                 )
 
                 Spacer(
                     modifier = Modifier
                         .fillMaxWidth(0.1f)
-                        .visibleSpacer(true, Color.Yellow)
+                    // .visibleSpacer(true, Color.Yellow)
                 )
 
                 DraggableText(
                     text = if (index < imports.size) imports[index] else null,
-                    modifier = mySizeModifier,
-                    onItemDropped = null
+                    modifier = mySizeModifier.weight(1f),
                 )
             }
         }
@@ -137,7 +176,7 @@ fun Modifier.dnd(
 ) = this.then(
     if (onItemDropped == null) {
         Modifier.dragAndDropSource {
-            detectTapGestures(onLongPress = {
+            detectTapGestures(onPress = {
                 println("START THE DRAG!")
                 startTransfer(
                     DragAndDropTransferData(
@@ -159,31 +198,31 @@ fun Modifier.dnd(
     }
 )
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun DraggableText(
     text: String?,
     modifier: Modifier = Modifier,
-    onItemDropped: ((DragAndDropEvent) -> Unit)?
+    onItemDropped: ((DragAndDropEvent) -> Unit)? = null
 ) {
-    var tintColor by remember {
-        mutableStateOf(Color(0xffE5E4E2))
+    val defaultColor = Color.Unspecified
+    var dndHighlith by remember {
+        mutableStateOf(defaultColor)
     }
     val dndTarget = remember {
         object : DragAndDropTarget {
             override fun onEntered(event: DragAndDropEvent) {
                 super.onEntered(event)
-                tintColor = Color(0xff00ff00)
+                dndHighlith = Color(0, 255, 255, 50)
             }
 
             override fun onEnded(event: DragAndDropEvent) {
                 super.onEntered(event)
-                tintColor = Color(0xffE5E4E2)
+                dndHighlith = defaultColor
             }
 
             override fun onExited(event: DragAndDropEvent) {
                 super.onEntered(event)
-                tintColor = Color(0xffE5E4E2)
+                dndHighlith = defaultColor
             }
 
             override fun onDrop(event: DragAndDropEvent): Boolean {
@@ -199,15 +238,16 @@ private fun DraggableText(
     }
 
     if (text == null) {
-        Spacer(modifier = modifier.visibleSpacer(true))
+        Spacer(modifier = modifier)
     } else {
         Box(
             modifier = modifier
-                .border(1.dp, tintColor)
+                .border(1.dp, if (onItemDropped == null) Color.Red else Color.Green)
+                .background(dndHighlith)
                 .padding(10.dp)
                 .dnd(text, onItemDropped, dndTarget)
         ) {
-            Box(modifier = modifier.border(1.dp, Color.Cyan)) {
+            Box {
                 Text(text = text)
             }
         }
