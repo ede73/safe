@@ -26,14 +26,18 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.DecryptableSiteEntry
+import fi.iki.ede.crypto.IVCipherText
+import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen.Companion.searchProgressPerThread
 import fi.iki.ede.safe.ui.testTag
+import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -268,5 +272,22 @@ private fun asyncFilterChunkOfPasswords(
                 matchingPasswordEntries.update { currentList -> currentList + it }
             }
         }
+    }
+}
+
+
+@Preview(showBackground = true)
+@Composable
+fun SearchSiteEntryPreview() {
+    SafeTheme {
+        KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
+        KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
+        val encrypter = KeyStoreHelperFactory.getEncrypter()
+        val site = DecryptableSiteEntry(1).apply {
+            description = encrypter("Description".toByteArray())
+        }
+        val search = remember { mutableStateOf(TextFieldValue()) }
+        val stateFlow = MutableStateFlow(listOf(site, site, site))
+        SearchSiteEntryControls(stateFlow, search)
     }
 }

@@ -131,8 +131,7 @@ class SiteEntryEditScreen : AutolockingBaseComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // we have description, check for edits(changes!)
-        val ks = KeyStoreHelperFactory.getKeyStoreHelper()
+        val encrypter = KeyStoreHelperFactory.getEncrypter()
 
         val viewModel: EditingSiteEntryViewModel by viewModels()
 
@@ -159,9 +158,9 @@ class SiteEntryEditScreen : AutolockingBaseComponentActivity() {
                 )
 
                 viewModel.addPassword(
-                    newPassword.encrypt(ks),
+                    newPassword.encrypt(encrypter),
                     categoryId,
-                    Preferences.getDefaultUserName().encrypt(ks)
+                    Preferences.getDefaultUserName().encrypt(encrypter)
                 )
             } else {
                 require(true) { "Must have password or category ID" }
@@ -216,7 +215,6 @@ class SiteEntryEditScreen : AutolockingBaseComponentActivity() {
                     } else if (saveEntryRequested) {
                         TryPersistPasswordEntryChanges(
                             edits,
-                            ks,
                             passwordChanged,
                             onDismiss = {
                                 saveEntryRequested = false

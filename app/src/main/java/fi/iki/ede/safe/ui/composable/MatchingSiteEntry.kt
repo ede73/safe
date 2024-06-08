@@ -19,10 +19,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.DecryptableCategoryEntry
 import fi.iki.ede.crypto.DecryptableSiteEntry
+import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.date.DateUtils
+import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DataModel.getCategory
@@ -30,6 +33,7 @@ import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import fi.iki.ede.safe.ui.theme.SafeListItem
+import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.launch
 
 // TODO: THIS! Should have MUCH more common with PasswordRow!
@@ -140,5 +144,22 @@ fun MatchingSiteEntry(
                 })
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun MatchingSiteEntryPreview() {
+    SafeTheme {
+        KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
+        KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
+        val encrypter = KeyStoreHelperFactory.getEncrypter()
+        val cat = DecryptableCategoryEntry().apply {
+            encryptedName = encrypter("Category".toByteArray())
+        }
+        val site = DecryptableSiteEntry(1).apply {
+            description = encrypter("Description".toByteArray())
+        }
+        MatchingSiteEntry(site, cat, {}, {}, {})
     }
 }

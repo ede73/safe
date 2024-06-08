@@ -9,7 +9,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
-import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.activities.EditableSiteEntry
 import fi.iki.ede.safe.ui.theme.SafeButton
@@ -17,7 +16,6 @@ import fi.iki.ede.safe.ui.theme.SafeButton
 @Composable
 fun TryPersistPasswordEntryChanges(
     edits: EditableSiteEntry,
-    ks: KeyStoreHelper,
     passwordChanged: Boolean,
     onDismiss: () -> Unit,
     onSaved: (Boolean) -> Unit
@@ -46,7 +44,6 @@ fun TryPersistPasswordEntryChanges(
 
     PersistPasswordEntryChanges(
         edits,
-        ks,
         passwordChanged,
         onSaved
     )

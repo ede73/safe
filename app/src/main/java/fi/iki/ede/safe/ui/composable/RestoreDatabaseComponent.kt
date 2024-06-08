@@ -151,7 +151,7 @@ private fun restoreOiSafeDump(
                     IVCipherText(iv, ciphertext)
                 })
         }
-    val ks = KeyStoreHelperFactory.getKeyStoreHelper()
+    val ks = KeyStoreHelperFactory.getKeyStoreHelper() // needed, new master key
     fun encryptWithNewKey(value: ByteArray) = ks.encryptByteArray(value, newMasterkey)
 
     return try {

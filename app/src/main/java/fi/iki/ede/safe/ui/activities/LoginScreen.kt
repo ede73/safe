@@ -157,8 +157,8 @@ open class LoginScreen : ComponentActivity() {
 
                 if (firstTimeUse) {
                     val entry = DecryptableCategoryEntry().apply {
-                        encryptedName = KeyStoreHelperFactory.getKeyStoreHelper()
-                            .encryptByteArray("Category - Long press to edit".toByteArray())
+                        encryptedName = KeyStoreHelperFactory.getEncrypter().invoke(
+                            ("Category - Long press to edit".toByteArray()))
                     }
                     DataModel.addOrEditCategory(entry)
 

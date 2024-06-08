@@ -11,9 +11,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.DecryptableSiteEntry
+import fi.iki.ede.crypto.IVCipherText
+import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.model.DataModel
+import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @Composable
 fun SiteEntryList(passwords: List<DecryptableSiteEntry>) {
@@ -44,5 +48,23 @@ fun SiteEntryList(passwords: List<DecryptableSiteEntry>) {
         passwordItems.forEach { composable ->
             composable()
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SiteEntryListPreview() {
+    SafeTheme {
+        KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
+        KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
+        val encrypter = KeyStoreHelperFactory.getEncrypter()
+        val site1 = DecryptableSiteEntry(1).apply {
+            description = encrypter("Description1".toByteArray())
+        }
+        val site2 = DecryptableSiteEntry(1).apply {
+            description = encrypter("Description2".toByteArray())
+        }
+        val lst = mutableListOf(site1, site2)
+        SiteEntryList(lst)
     }
 }

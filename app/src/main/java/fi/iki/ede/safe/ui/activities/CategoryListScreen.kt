@@ -55,14 +55,14 @@ class CategoryListScreen : AutolockingBaseComponentActivity() {
                             },
                         )
                         if (displayAddCategoryDialog) {
-                            val ks = KeyStoreHelperFactory.getKeyStoreHelper()
+                            val encrypter = KeyStoreHelperFactory.getEncrypter()
                             AddOrEditCategory(
                                 textId = R.string.category_list_edit_category,
                                 categoryName = "",
                                 onSubmit = {
                                     if (!TextUtils.isEmpty(it)) {
                                         val entry = DecryptableCategoryEntry().apply {
-                                            encryptedName = ks.encryptByteArray(it.toByteArray())
+                                            encryptedName = encrypter(it.toByteArray())
                                         }
                                         coroutineScope.launch {
                                             DataModel.addOrEditCategory(entry)

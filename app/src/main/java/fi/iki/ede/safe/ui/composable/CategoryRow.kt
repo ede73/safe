@@ -19,8 +19,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.DecryptableCategoryEntry
+import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
@@ -29,6 +31,7 @@ import fi.iki.ede.safe.ui.activities.SiteEntryListScreen
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import fi.iki.ede.safe.ui.theme.SafeListItem
+import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -107,7 +110,7 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
             )
         }
         if (displayEditDialog) {
-            val ks = KeyStoreHelperFactory.getKeyStoreHelper()
+            val encrypter = KeyStoreHelperFactory.getEncrypter()
             AddOrEditCategory(
                 textId = R.string.category_list_edit_category,
                 categoryName = category.plainName,
@@ -115,7 +118,7 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
                     if (category.plainName != it) {
                         val entry = DecryptableCategoryEntry()
                         entry.id = category.id
-                        entry.encryptedName = ks.encryptByteArray(it.toByteArray())
+                        entry.encryptedName = encrypter(it.toByteArray())
                         coroutineScope.launch {
                             DataModel.addOrEditCategory(entry)
                         }
@@ -133,5 +136,19 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
                 displayDeleteCategory = false
             })
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun CategoryRowPreview() {
+    SafeTheme {
+        KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
+        KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
+        val encrypter = KeyStoreHelperFactory.getEncrypter()
+        val cat = DecryptableCategoryEntry().apply {
+            encryptedName = encrypter("Category".toByteArray())
+        }
+        CategoryRow(category = cat)
     }
 }

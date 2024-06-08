@@ -48,7 +48,7 @@ class DecryptableSiteEntry(categoryId: Long) {
     val plainNote: String
         get() = decrypt(note)
     val plainPhoto: Bitmap?
-        get() = if (photo.isEmpty()) null else decryptPhoto(keyStore)
+        get() = if (photo.isEmpty()) null else decryptPhoto(decrypter)
 
     // plain description is used A LOT everywhere (listing, sorting, displaying)
     // On a large password DB operating on decrypt-on-demand description is just too slow
@@ -61,12 +61,9 @@ class DecryptableSiteEntry(categoryId: Long) {
             return decryptedCachedPlainDescription ?: ""
         }
 
-    // TODO: UGLY, could be single use on demand
-    // some other interface would be better for testing, we don't really need FULL keystore
-    // and (lack of android keystore) causes issues with @Preview
-    private val keyStore = KeyStoreHelperFactory.getKeyStoreHelper()
+    private val decrypter = KeyStoreHelperFactory.getDecrypter()
     private fun decrypt(value: IVCipherText) = try {
-        String(keyStore.decryptByteArray(value))
+        String(decrypter(value))
     } catch (e: Exception) {
         "Failed decr $e"
     }

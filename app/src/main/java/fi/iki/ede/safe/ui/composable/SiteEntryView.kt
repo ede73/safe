@@ -29,7 +29,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import fi.iki.ede.crypto.DecryptableCategoryEntry
+import fi.iki.ede.crypto.DecryptableSiteEntry
+import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.decrypt
 import fi.iki.ede.crypto.support.encrypt
@@ -38,12 +42,15 @@ import fi.iki.ede.hibp.KAnonymity
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.clipboard.ClipboardUtils
+import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.password.PasswordGenerator
 import fi.iki.ede.safe.ui.activities.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import fi.iki.ede.safe.ui.theme.SafeButton
+import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.AvertInactivityDuringLongTask
+import kotlinx.coroutines.flow.MutableStateFlow
 import java.time.ZonedDateTime
 
 @Composable
@@ -56,13 +63,14 @@ fun SiteEntryView(
         focusedIndicatorColor = Color.Transparent,
         unfocusedIndicatorColor = Color.Transparent,
     )
-    val ks = KeyStoreHelperFactory.getKeyStoreHelper()
     val padding = Modifier.padding(6.dp)
     val passEntry by viewModel.uiState.collectAsState()
     val passwordLength = integerResource(id = R.integer.password_default_length)
     val safeTheme = LocalSafeTheme.current
     var breachCheckResult by remember { mutableStateOf(BreachCheckEnum.NOT_CHECKED) }
     var passwordWasUpdated by remember { mutableStateOf(false) }
+    val decrypter = KeyStoreHelperFactory.getDecrypter()
+    val encrypter = KeyStoreHelperFactory.getEncrypter()
 
     Column(
         modifier = Modifier.verticalScroll(rememberScrollState())
@@ -76,7 +84,7 @@ fun SiteEntryView(
                     passNum = true,
                     passSymbol = true,
                     length = passwordLength
-                ).encrypt(ks)
+                ).encrypt(encrypter)
             )
         }
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
@@ -117,14 +125,14 @@ fun SiteEntryView(
         }
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             SafeButton(onClick = {
-                ClipboardUtils.addToClipboard(context, passEntry.username.decrypt(ks))
+                ClipboardUtils.addToClipboard(context, passEntry.username.decrypt(decrypter))
             }) { Text(stringResource(id = R.string.password_entry_username_label)) }
             Spacer(Modifier.weight(1f))
             PasswordTextField(
                 textTip = R.string.password_entry_username_tip,
-                inputValue = passEntry.username.decrypt(ks),
+                inputValue = passEntry.username.decrypt(decrypter),
                 onValueChange = {
-                    viewModel.updateUsername(it.encrypt(ks))
+                    viewModel.updateUsername(it.encrypt(encrypter))
                 },
                 highlight = false,
                 modifier = modifier
@@ -154,15 +162,15 @@ fun SiteEntryView(
         }
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             SafeButton(onClick = {
-                ClipboardUtils.addToClipboard(context, passEntry.password.decrypt(ks))
+                ClipboardUtils.addToClipboard(context, passEntry.password.decrypt(decrypter))
             }) { Text(stringResource(id = R.string.password_entry_password_label)) }
             Spacer(Modifier.weight(1f))
             PasswordTextField(
                 textTip = R.string.password_entry_password_tip,
-                inputValue = passEntry.password.decrypt(ks),
+                inputValue = passEntry.password.decrypt(decrypter),
                 //updated = passwordWasUpdated,
                 onValueChange = {
-                    viewModel.updatePassword(it.encrypt(ks))
+                    viewModel.updatePassword(it.encrypt(encrypter))
                     breachCheckResult = BreachCheckEnum.NOT_CHECKED
                 },
                 enableZoom = true,
@@ -178,7 +186,7 @@ fun SiteEntryView(
                 if (breachCheckResult == BreachCheckEnum.NOT_CHECKED) {
                     SafeButton(onClick = {
                         BreachCheck.doBreachCheck(
-                            KAnonymity(passEntry.password.decrypt(ks)),
+                            KAnonymity(passEntry.password.decrypt(decrypter)),
                             context,
                             { breached ->
                                 breachCheckResult = when (breached) {
@@ -207,9 +215,9 @@ fun SiteEntryView(
         }
         PasswordTextField(
             textTip = R.string.password_entry_note_tip,
-            inputValue = passEntry.note.decrypt(ks),
+            inputValue = passEntry.note.decrypt(decrypter),
             onValueChange = {
-                viewModel.updateNote(it.encrypt(ks))
+                viewModel.updateNote(it.encrypt(encrypter))
             },
             singleLine = false,
             maxLines = 22,
@@ -217,15 +225,18 @@ fun SiteEntryView(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        SafePhoto(
-            (context as AvertInactivityDuringLongTask),
-            photo = passEntry.plainPhoto,
-            onBitmapCaptured = {
-                val samePhoto = it?.sameAs(passEntry.plainPhoto) ?: (passEntry.plainPhoto == null)
-                if (!samePhoto) {
-                    viewModel.updatePhoto(it)
-                }
-            })
+        if (context is AvertInactivityDuringLongTask){
+            SafePhoto(
+                (context as AvertInactivityDuringLongTask),
+                photo = passEntry.plainPhoto,
+                onBitmapCaptured = {
+                    val samePhoto =
+                        it?.sameAs(passEntry.plainPhoto) ?: (passEntry.plainPhoto == null)
+                    if (!samePhoto) {
+                        viewModel.updatePhoto(it)
+                    }
+                })
+        }
     }
 }
 
@@ -238,4 +249,29 @@ private fun tryParseUri(website: String): Uri =
 
 enum class BreachCheckEnum {
     NOT_CHECKED, BREACHED, NOT_BREACHED
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SiteEntryViewPreview() {
+    SafeTheme {
+        KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
+        KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
+        val encrypter = KeyStoreHelperFactory.getEncrypter()
+        val site1 = DecryptableSiteEntry(1).apply {
+            description = encrypter("Description1".toByteArray())
+        }
+        val site2 = DecryptableSiteEntry(1).apply {
+            description = encrypter("Description2".toByteArray())
+        }
+        val cat = DecryptableCategoryEntry().apply {
+            id = 1
+            encryptedName = encrypter("Category".toByteArray())
+        }
+        val lst = mutableListOf(site1, site2)
+        val sitesFlow = MutableStateFlow(lst.toList())
+        DataModel._categories.put(cat, lst)
+        val model = EditingSiteEntryViewModel()
+        SiteEntryView(model)
+    }
 }
