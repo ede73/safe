@@ -17,9 +17,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
+import fi.iki.ede.safe.ui.theme.SafeTheme
 import java.time.Year
 import java.time.YearMonth
 import java.time.ZonedDateTime
@@ -173,3 +175,13 @@ private fun quickFormat(
         String.format(Locale.getDefault(), format, comp(it))
     } ?: default
 
+@Preview(showBackground = true)
+@Composable
+fun DatePickerPreview() {
+    SafeTheme {
+        DatePicker(
+            ZonedDateTime.now()
+        ) {
+        }
+    }
+}
