@@ -19,8 +19,11 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
+// KeyStoreHelperFactory.provider = { MockKeyStoreHelper() }
 object KeyStoreHelperFactory {
-    fun getKeyStoreHelper() = KeyStoreHelper()
+    var provider: () -> KeyStoreHelper = { KeyStoreHelper() }
+
+    fun getKeyStoreHelper() = provider()
 }
 
 // TODO: Missing key rotation
