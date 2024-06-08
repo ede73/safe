@@ -43,7 +43,7 @@ class KeyStoreHelper : CipherUtilities() {
 
     init {
         keyStore.load(null)
-        check(keyStore.containsAlias(KEY_SECRET_MASTERKEY)) { "Keystore MUST have been initialized with importExistingKey or createNewKey" }
+        check(keyStore.containsAlias(KEY_SECRET_MASTERKEY)) { "Keystore MUST have been initialized with .importExistingEncryptedMasterKey or .createNewKey" }
     }
 
     /**
@@ -196,6 +196,5 @@ class KeyStoreHelper : CipherUtilities() {
                 )
                 .setRandomizedEncryptionRequired(false) // don't need randomized IV in keystore
                 .build()
-
     }
 }
