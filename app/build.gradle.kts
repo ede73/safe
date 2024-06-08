@@ -127,6 +127,7 @@ dependencies {
     androidTestImplementation(libs.mockk.android)
     // needed for val composeTestRule = createComposeRule() but not createComposeRule()<Activity>
     debugImplementation(libs.androidx.ui.test.manifest)
+    debugImplementation(libs.androidx.ui.tooling)
     // Docs say: Test rules and transitive dependencies: but seems to work without
     //androidTestImplementation("androidx.compose.ui:ui-test-junit4:$compose_version")
 }
