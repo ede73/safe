@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
-import android.text.TextUtils
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -25,7 +24,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.ViewModel
 import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.safe.R
@@ -34,13 +32,13 @@ import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.password.PasswordGenerator
 import fi.iki.ede.safe.ui.composable.SiteEntryView
+import fi.iki.ede.safe.ui.composable.TryPersistPasswordEntryChanges
 import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.runBlocking
 import java.time.ZonedDateTime
 
 data class EditableSiteEntry(
@@ -243,80 +241,6 @@ class SiteEntryEditScreen : AutolockingBaseComponentActivity() {
         }
     }
 
-    @Composable
-    private fun TryPersistPasswordEntryChanges(
-        edits: EditableSiteEntry,
-        ks: KeyStoreHelper,
-        passwordChanged: Boolean,
-        onDismiss: () -> Unit,
-        onSaved: (Boolean) -> Unit
-    ) {
-        var emptyDescription by remember { mutableStateOf(false) }
-        // test for empty
-        if (TextUtils.isEmpty(edits.description)) {
-            emptyDescription = true
-        }
-        if (emptyDescription) {
-            AlertDialog(onDismissRequest = {
-                onDismiss()
-                emptyDescription = false
-            },
-                confirmButton = {
-                    SafeButton(onClick = {
-                        onDismiss()
-                        emptyDescription = false
-                    }) {
-                        Text(text = stringResource(id = R.string.generic_ok))
-                    }
-                },
-                title = { Text(text = stringResource(id = R.string.password_entry_description_required)) })
-            return
-        }
-
-        PersistPasswordEntryChanges(
-            edits,
-            ks,
-            passwordChanged,
-            onSaved
-        )
-    }
-
-    @Composable
-    private fun PersistPasswordEntryChanges(
-        edits: EditableSiteEntry,
-        ks: KeyStoreHelper,
-        passwordChanged: Boolean,
-        onSaved: (Boolean) -> Unit
-    ) {
-        require(!TextUtils.isEmpty(edits.description)) { "Description must be set" }
-
-        val passwordEntry = DecryptableSiteEntry(edits.categoryId)
-        passwordEntry.apply {
-            id = edits.id
-            description = edits.description.encrypt(ks)
-            website = edits.website.encrypt(ks)
-            username = edits.username
-            password = edits.password
-            passwordChangedDate = edits.passwordChangedDate
-            note = edits.note
-            photo =
-                if (edits.plainPhoto == null) IVCipherText.getEmpty()
-                else edits.plainPhoto.encrypt(ks)
-
-            if (passwordChanged) {
-                passwordChangedDate = ZonedDateTime.now()
-            }
-        }
-
-        // TODO: MAKE ASYNC
-        //coroutineScope.launch {
-        runBlocking {
-            DataModel.addOrUpdatePassword(passwordEntry)
-        }
-        // TODO: What if failed
-        onSaved(true)
-    }
-
     private fun resolveEditsAndChangedPassword(
         editingPasswordId: DBID?,
         edits: EditableSiteEntry,
@@ -372,17 +296,6 @@ class SiteEntryEditScreen : AutolockingBaseComponentActivity() {
     }
 }
 
-//private fun makeBase64(bitmap: Bitmap?): String {
-//    if (bitmap == null) {
-//        return ""
-//    }
-//    ByteArrayOutputStream().apply {
-//        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, this)
-//        val byteArray = toByteArray()
-//        return Base64.encodeToString(byteArray, Base64.DEFAULT)
-//    }
-//}
-
 @Preview(showBackground = true)
 @Composable
 fun PasswordEntryScreenPreview() {
@@ -407,3 +320,4 @@ fun PasswordEntryScreenPreview() {
         SiteEntryView(fakeViewModel)
     }
 }
+

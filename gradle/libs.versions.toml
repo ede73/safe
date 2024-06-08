@@ -24,6 +24,7 @@ uiTestJunit4Android = "1.6.7"
 uiToolingPreviewAndroid = "1.6.7"
 uiautomator = "2.3.0"
 volley = "1.2.1"
+uiTooling = "1.6.7"
 
 [libraries]
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
@@ -50,6 +51,7 @@ mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 mockk-agent = { group = "io.mockk", name = "mockk-agent", version.ref = "mockkAgent" }
 mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockkAndroid" }
 volley = { module = "com.android.volley:volley", version.ref = "volley" }
+androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "uiTooling" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

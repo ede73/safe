@@ -10,7 +10,6 @@ import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Lock
@@ -32,11 +31,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.integerResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.window.Dialog
-import fi.iki.ede.crypto.Password
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.BackupDatabase
@@ -52,7 +48,6 @@ import fi.iki.ede.safe.ui.activities.PreferenceActivity
 import fi.iki.ede.safe.ui.activities.PrepareDataBaseRestorationScreen
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
 import fi.iki.ede.safe.ui.testTag
-import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
 import fi.iki.ede.safe.ui.utilities.throwIfFeatureNotEnabled
 import kotlinx.coroutines.Dispatchers
@@ -265,16 +260,17 @@ fun TopActionBar(
                     })
             }
             if (showChangePasswordDialog) {
-                val passwordChanged = stringResource(id = R.string.action_bar_password_changed)
-                val passwordChangeFailed =
+                val masterPasswordChanged =
+                    stringResource(id = R.string.action_bar_password_changed)
+                val masterPasswordChangeFailed =
                     stringResource(id = R.string.action_bar_password_change_failed)
 
-                EnterNewPassword {
-                    val (oldPassword, newPassword) = it
+                EnterNewMasterPassword {
+                    val (oldMasterPassword, newMasterPassword) = it
                     ChangeMasterKeyAndPassword.changeMasterPassword(
                         context,
-                        oldPassword,
-                        newPassword
+                        oldMasterPassword,
+                        newMasterPassword
                     ) { success ->
                         // NOTICE! This isn't a UI thread!
                         coroutineScope.launch(Dispatchers.Main) {
@@ -282,13 +278,13 @@ fun TopActionBar(
                                 // master password successfully changed
                                 Toast.makeText(
                                     context,
-                                    passwordChanged,
+                                    masterPasswordChanged,
                                     Toast.LENGTH_LONG
                                 ).show()
                             } else {
                                 Toast.makeText(
                                     context,
-                                    passwordChangeFailed,
+                                    masterPasswordChangeFailed,
                                     Toast.LENGTH_LONG
                                 ).show()
                             }
@@ -314,43 +310,6 @@ private fun backup(
         outputStream.write(document.toByteArray())
         outputStream.close()
     }
-}
-
-@Composable
-fun EnterNewPassword(
-    onNewPassword: (oldAndNewPassword: Pair<Password, Password>) -> Unit
-) {
-    val passwordMinimumLength = integerResource(id = R.integer.password_minimum_length)
-
-    Dialog(
-        onDismissRequest = { onNewPassword(Pair(Password.getEmpty(), Password.getEmpty())) },
-        content = {
-            Column {
-                var oldPassword by remember { mutableStateOf(Password.getEmpty()) }
-                var newPassword by remember { mutableStateOf(Password.getEmpty()) }
-                PasswordTextField(textTip = R.string.action_bar_old_password,
-                    onValueChange = { oldPassword = it })
-                VerifiedPasswordTextField(
-                    true,
-                    R.string.login_password_tip,
-                    R.string.login_verify_password_tip,
-                    onMatchingPasswords = {
-                        newPassword = it
-                    },
-                )
-                SafeButton(
-                    enabled = !newPassword.isEmpty() &&
-                            !oldPassword.isEmpty() &&
-                            newPassword != oldPassword &&
-                            newPassword.length >= passwordMinimumLength,
-                    onClick = { onNewPassword(Pair(oldPassword, newPassword)) },
-                    modifier = Modifier.testTag(TestTag.TEST_TAG_CHANGE_PASSWORD_OK)
-                ) {
-                    Text(text = stringResource(id = R.string.action_bar_change_password_ok))
-                }
-            }
-        }
-    )
 }
 
 @Preview(showBackground = true)

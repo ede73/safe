@@ -3,7 +3,6 @@ package fi.iki.ede.crypto.keystore
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.security.keystore.KeyProtection
-import fi.iki.ede.crypto.EncryptedPassword
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
@@ -19,8 +18,11 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
+// KeyStoreHelperFactory.provider = { MockKeyStoreHelper() }
 object KeyStoreHelperFactory {
-    fun getKeyStoreHelper() = KeyStoreHelper()
+    var provider: () -> KeyStoreHelper = { KeyStoreHelper() }
+
+    fun getKeyStoreHelper() = provider()
 }
 
 // TODO: Missing key rotation
@@ -41,7 +43,7 @@ class KeyStoreHelper : CipherUtilities() {
 
     init {
         keyStore.load(null)
-        check(keyStore.containsAlias(KEY_SECRET_MASTERKEY)) { "Keystore MUST have been initialized with importExistingKey or createNewKey" }
+        check(keyStore.containsAlias(KEY_SECRET_MASTERKEY)) { "Keystore MUST have been initialized with .importExistingEncryptedMasterKey or .createNewKey" }
     }
 
     /**
@@ -76,7 +78,7 @@ class KeyStoreHelper : CipherUtilities() {
     fun decryptByteArray(
         encrypted: IVCipherText,
         secretKey: Key = getSecretKey()
-    ) = if (encrypted.iv.isEmpty()) {
+    ): ByteArray = if (encrypted.iv.isEmpty()) {
         byteArrayOf()
     } else {
         getAESCipher().let {
@@ -144,7 +146,7 @@ class KeyStoreHelper : CipherUtilities() {
         fun importExistingEncryptedMasterKey(
             saltedPassword: SaltedPassword,
             ivSecretKey: IVCipherText
-        ) = importANewMasterKey(
+        ): KeyStore = importANewMasterKey(
             decryptMasterKey(
                 generatePBKDF2AESKey(
                     saltedPassword.salt,
@@ -154,7 +156,6 @@ class KeyStoreHelper : CipherUtilities() {
                 ), ivSecretKey
             )
         )
-
 
         fun createNewKey(password: Password): Pair<Salt, IVCipherText> =
             Salt(generateRandomBytes(64)).let { salt ->
@@ -174,7 +175,6 @@ class KeyStoreHelper : CipherUtilities() {
                 }
             }
 
-
         private fun importANewMasterKey(aesKey: SecretKeySpec) =
             KeyStore.getInstance(ANDROID_KEYSTORE).apply {
                 load(null)
@@ -184,7 +184,6 @@ class KeyStoreHelper : CipherUtilities() {
                     getGenericKeyProtection()
                 )
             }
-
 
         private fun getGenericKeyProtection(): KeyProtection =
             KeyProtection.Builder(
@@ -197,11 +196,5 @@ class KeyStoreHelper : CipherUtilities() {
                 )
                 .setRandomizedEncryptionRequired(false) // don't need randomized IV in keystore
                 .build()
-
     }
-}
-
-fun KeyStoreHelper.decryptByteArray(encryptedPassword: EncryptedPassword): Password {
-    assert(!encryptedPassword.isEmpty())
-    return Password(decryptByteArray(encryptedPassword.ivCipherText))
 }
