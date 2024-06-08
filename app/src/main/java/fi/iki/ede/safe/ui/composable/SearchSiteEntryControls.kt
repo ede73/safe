@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -21,7 +20,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -132,23 +130,6 @@ fun SearchSiteEntryControls(
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
-    }
-}
-
-@Composable
-private fun TextualCheckbox(
-    initiallyChecked: MutableState<Boolean>,
-    textResourceId: Int,
-    startSearch: () -> Unit
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Checkbox(checked = initiallyChecked.value, onCheckedChange = {
-            initiallyChecked.value = it
-            startSearch()
-        })
-        Text(text = stringResource(id = textResourceId))
     }
 }
 
