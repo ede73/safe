@@ -12,6 +12,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.draganddrop.dragAndDropSource
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
@@ -38,6 +40,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +51,8 @@ import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -56,6 +61,7 @@ import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
+import kotlinx.coroutines.launch
 
 class ImportGooglePasswordManager : AutolockingBaseComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -112,6 +118,7 @@ fun Modifier.visibleSpacer(visible: Boolean, color: Color = Color.Magenta) = thi
     }
 )
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ImportEntryList(mine: List<String>, imports: List<String>) {
     val maxSize = maxOf(mine.size, imports.size)
@@ -137,12 +144,64 @@ fun ImportEntryList(mine: List<String>, imports: List<String>) {
             }
         )
     }
+    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+    var lazyColumnTopY by remember { mutableStateOf(0f) }
 
+    val dndTarget = remember {
+        object : DragAndDropTarget {
+            override fun onMoved(event: DragAndDropEvent) {
+                super.onEntered(event)
+//                val y = event.toAndroidDragEvent().y
+//                println("l-m ${y}")
+//                val lazyColumnSize =
+//                    listState.layoutInfo.viewportEndOffset - listState.layoutInfo.viewportStartOffset
+//                val threshold = lazyColumnSize * 0.1f
+
+
+                val absoluteDragY = event.toAndroidDragEvent().y
+                val relativeDragY = absoluteDragY - lazyColumnTopY
+                println("l-m ${relativeDragY}")
+                val lazyColumnSize =
+                    listState.layoutInfo.viewportEndOffset - listState.layoutInfo.viewportStartOffset
+                val threshold = lazyColumnSize * 0.1f // 10% threshold for auto-scroll
+                when {
+                    relativeDragY < threshold -> {
+                        // Scroll up
+                        coroutineScope.launch {
+                            listState.scrollBy(-10f)
+                        }
+                    }
+
+                    relativeDragY > lazyColumnSize - threshold -> {
+                        // Scroll down
+                        coroutineScope.launch {
+                            listState.scrollBy(10f)
+                        }
+                    }
+                }
+            }
+
+            override fun onDrop(event: DragAndDropEvent): Boolean {
+                return false
+            }
+        }
+    }
 
     val mySizeModifier = Modifier
         .fillMaxWidth(0.4f)
         .fillMaxHeight(0.2f)
-    LazyColumn {
+    LazyColumn(
+        state = listState, modifier = Modifier
+            .dragAndDropTarget(
+                shouldStartDragAndDrop = { event ->
+                    true
+                }, target = dndTarget
+            )
+            .onGloballyPositioned { coordinates ->
+                lazyColumnTopY = coordinates.positionInWindow().y
+            }
+    ) {
         itemsIndexed(List(maxSize) { it }) { index, _ ->
             Row {
                 DraggableText(
@@ -166,6 +225,26 @@ fun ImportEntryList(mine: List<String>, imports: List<String>) {
             }
         }
     }
+
+//    val coroutineScope = rememberCoroutineScope()
+//    DragObserver(onDrag = { offset ->
+//        coroutineScope.launch {
+//            val lazyColumnSize =
+//                state.layoutInfo.viewportEndOffset - state.layoutInfo.viewportStartOffset
+//            val threshold = lazyColumnSize * 0.1f // 10% threshold for auto-scroll
+//            when {
+//                offset.y < threshold -> {
+//                    // Scroll up
+//                    state.scrollBy(-threshold)
+//                }
+//
+//                offset.y > lazyColumnSize - threshold -> {
+//                    // Scroll down
+//                    state.scrollBy(threshold)
+//                }
+//            }
+//        }
+//    })
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -212,6 +291,13 @@ private fun DraggableText(
         object : DragAndDropTarget {
             override fun onEntered(event: DragAndDropEvent) {
                 super.onEntered(event)
+                println("e ${event.toAndroidDragEvent().y}")
+                dndHighlith = Color(0, 255, 255, 50)
+            }
+
+            override fun onMoved(event: DragAndDropEvent) {
+                super.onEntered(event)
+                println("m ${event.toAndroidDragEvent().y}")
                 dndHighlith = Color(0, 255, 255, 50)
             }
 
