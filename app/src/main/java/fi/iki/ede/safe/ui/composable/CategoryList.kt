@@ -5,7 +5,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.crypto.DecryptableCategoryEntry
+import fi.iki.ede.crypto.IVCipherText
+import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @Composable
 fun CategoryList(categories: List<DecryptableCategoryEntry>) {
@@ -16,5 +20,19 @@ fun CategoryList(categories: List<DecryptableCategoryEntry>) {
         categories.forEach { category ->
             CategoryRow(category)
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun CategoryListPreview() {
+    SafeTheme {
+        KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
+        KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
+        val encrypter = KeyStoreHelperFactory.getEncrypter()
+        val cat = DecryptableCategoryEntry().apply {
+            encryptedName = encrypter("Category".toByteArray())
+        }
+        CategoryList(listOf(cat, cat, cat))
     }
 }

@@ -151,7 +151,7 @@ class BiometricsActivity : AppCompatActivity() {
          */
         fun registerBiometric(context: Context) {
             // encrypt something funny with biokey
-            val ks = KeyStoreHelperFactory.getKeyStoreHelper()
+            val ks = KeyStoreHelperFactory.getKeyStoreHelper() // needed, new key
             val biokey = ks.getOrCreateBiokey()
             val now = ZonedDateTime.now().toEpochSecond().toString()
             val stamp = ks.encryptByteArray(now.toByteArray(), biokey)
@@ -166,7 +166,7 @@ class BiometricsActivity : AppCompatActivity() {
          */
         fun verificationAccepted(): Boolean {
             val stampCipher = getBioCipher()
-            val ks = KeyStoreHelperFactory.getKeyStoreHelper()
+            val ks = KeyStoreHelperFactory.getKeyStoreHelper() // needed, new key
             val biometricKey = ks.getOrCreateBiokey()
             try {
                 val decrypted = ks.decryptByteArray(stampCipher, biometricKey)

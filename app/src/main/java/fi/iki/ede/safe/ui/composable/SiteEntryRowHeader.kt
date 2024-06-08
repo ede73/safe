@@ -6,9 +6,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import fi.iki.ede.safe.ui.theme.SafeListItem
+import fi.iki.ede.safe.ui.theme.SafeTheme
 
 /**
  * Display nice big start letter of the given header string
@@ -31,5 +33,13 @@ fun SiteEntryRowHeader(headerString: String) {
                 style = safeTheme.customFonts.listHeaders
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SiteEntryRowHeaderPreview() {
+    SafeTheme {
+        SiteEntryRowHeader("A")
     }
 }

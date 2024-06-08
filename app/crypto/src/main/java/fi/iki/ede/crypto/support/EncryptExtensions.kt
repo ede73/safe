@@ -2,25 +2,18 @@ package fi.iki.ede.crypto.support
 
 import android.graphics.Bitmap
 import android.util.Base64
+import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
-import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import java.io.ByteArrayOutputStream
 
-// TODO: move to crypto project
-fun Password.encrypt(ks: KeyStoreHelper) =
-    ks.encryptByteArray(String(this.utf8password).toByteArray())
+fun Password.encrypt(encrypter: (ByteArray) -> IVCipherText) =
+    encrypter(String(this.utf8password).toByteArray())
 
-// TODO: move to crypto project
-fun String.encrypt(ks: KeyStoreHelper) = ks.encryptByteArray(this.trim().toByteArray())
-
-//fun Bitmap.encryptNEW(ks: KeyStoreHelper) = ByteArrayOutputStream().let { ba ->
-//    this.compress(Bitmap.CompressFormat.JPEG, 100, ba)
-//    ks.encryptByteArray(ba.toByteArray())
-//}
+fun String.encrypt(encrypter: (ByteArray) -> IVCipherText) = encrypter(this.trim().toByteArray())
 
 // TODO: just because DecryptableSiteEntry uses IVCipher and its decrypt returns String
 // ie. it doesnt support byte[] storage directly, so convert bitmap to base64 ie.string
-fun Bitmap.encrypt(ks: KeyStoreHelper) = makeBase64(this).encrypt(ks)
+fun Bitmap.encrypt(encrypter: (ByteArray) -> IVCipherText) = makeBase64(this).encrypt(encrypter)
 
 private fun makeBase64(bitmap: Bitmap?): String {
     if (bitmap == null) {

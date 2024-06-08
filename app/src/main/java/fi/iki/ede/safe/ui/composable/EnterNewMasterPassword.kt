@@ -10,12 +10,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.integerResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.window.Dialog
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeButton
+import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @Composable
 fun EnterNewMasterPassword(
@@ -52,4 +54,14 @@ fun EnterNewMasterPassword(
             }
         }
     )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun EnterNewMasterPasswordPreview() {
+    SafeTheme {
+        EnterNewMasterPassword {
+            
+        }
+    }
 }

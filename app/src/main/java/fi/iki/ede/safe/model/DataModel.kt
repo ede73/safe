@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 
 object DataModel {
     // Categories state and events
-    private val _categories =
+    val _categories =
         LinkedHashMap<DecryptableCategoryEntry, MutableList<DecryptableSiteEntry>>()
     private val _categoriesStateFlow = MutableStateFlow(_categories.keys.toList())
     val categoriesStateFlow: StateFlow<List<DecryptableCategoryEntry>> get() = _categoriesStateFlow

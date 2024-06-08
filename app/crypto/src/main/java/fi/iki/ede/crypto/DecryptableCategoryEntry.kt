@@ -9,11 +9,10 @@ class DecryptableCategoryEntry {
     val plainName: String
         get() = decrypt(encryptedName)
 
-    // TODO: UGLY, could be single use on demand
-    private val keyStore = KeyStoreHelperFactory.getKeyStoreHelper()
+    private val decrypter = KeyStoreHelperFactory.getDecrypter()
 
     private fun decrypt(value: IVCipherText): String {
-        return String(keyStore.decryptByteArray(value))
+        return String(decrypter(value))
     }
 
     var containedPasswordCount = 0

@@ -92,7 +92,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         backupData: BackupData,
         userPassword: Password
     ) = ByteArrayInputStream(
-        KeyStoreHelperFactory.getKeyStoreHelper().decryptByteArray(
+        KeyStoreHelperFactory.getKeyStoreHelper().decryptByteArray( // Keystore needed (new key)
             backupData.getEncryptedBackup(),
             decryptMasterKey(backupData, userPassword)
         )

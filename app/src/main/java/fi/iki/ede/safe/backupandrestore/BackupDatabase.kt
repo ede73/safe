@@ -25,7 +25,7 @@ import java.time.ZonedDateTime
  * Make sure to increase the version code. Linter will highlight places to fix
  */
 class BackupDatabase : ExportConfig(ExportVersion.V1) {
-    val ks = KeyStoreHelperFactory.getKeyStoreHelper()
+    private val encrypter = KeyStoreHelperFactory.getEncrypter()
 
     private fun XmlSerializer.addTagAndCData(
         name: Elements,
@@ -116,7 +116,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
             Log.e(TAG, "Oh no, XML export has non breakable spaces")
         }
         assert(!TextUtils.isEmpty(makeThisStreaming)) { "Something is broken, XML serialization produced empty file" }
-        val encryptedBackup = ks.encryptByteArray(makeThisStreaming.toByteArray())
+        val encryptedBackup = encrypter(makeThisStreaming.toByteArray())
 
         val backup = StringWriter()
         backup.appendLine(salt.toHex())

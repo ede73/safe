@@ -30,7 +30,7 @@ fun BiometricsComponent(
     // TODO: Don't allow biometrics if keystore doesn't initialize
     // this situation MIGHT happen when app is fresh installed AND google restored backup preferences
     val keystoreIsInitialized = try {
-        val ks = KeyStoreHelperFactory.getKeyStoreHelper()
+        val ks = KeyStoreHelperFactory.getKeyStoreHelper() // just using to test if were initializer
         true
     } catch (ex: Exception) {
         BiometricsActivity.clearBiometricKeys()
@@ -65,3 +65,10 @@ fun BiometricsComponent(
         }
     }
 }
+
+// cant access preferences
+//@Preview(showBackground = true)
+//@Composable
+//fun BiometricsComponentPreview() {
+//    BiometricsComponent()
+//}

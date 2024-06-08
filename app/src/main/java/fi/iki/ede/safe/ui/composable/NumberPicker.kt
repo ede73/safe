@@ -4,16 +4,21 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.VerticalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -35,6 +40,24 @@ fun NumberPicker(
         Text(
             text = numbers[page],
             color = if (numbers[page].contains("-")) Color.Red else Color.Unspecified,
+        )
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Preview(showBackground = true)
+@Composable
+fun NumberPickerPreview() {
+    SafeTheme {
+        val years = (1990..2023).map { it.toString() }
+        val selectedYear = remember { mutableStateOf("2000") }
+        val yearPagerState = rememberPagerState(
+            pageCount = { years.size },
+            initialPage = years.indexOf(selectedYear.value)
+        )
+        NumberPicker(
+            numbers = years, selectedNumber = selectedYear,
+            pagerState = yearPagerState
         )
     }
 }
