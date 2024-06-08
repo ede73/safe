@@ -22,6 +22,8 @@ import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.tooling.preview.Preview
+import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -123,5 +125,16 @@ fun ImportEntryList(mine: List<String>, imports: List<String>) {
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ImportEntryListPreview() {
+    SafeTheme {
+        val mine = (1990..2023).map { "mine$it" }
+        val imports = (1..10).map { "import$it" }
+
+        ImportEntryList(mine, imports = imports)
     }
 }
