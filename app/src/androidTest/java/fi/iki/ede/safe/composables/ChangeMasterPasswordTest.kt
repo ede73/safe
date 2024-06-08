@@ -9,7 +9,7 @@ import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import fi.iki.ede.safe.ui.TestTag
-import fi.iki.ede.safe.ui.composable.EnterNewPassword
+import fi.iki.ede.safe.ui.composable.EnterNewMasterPassword
 import fi.iki.ede.safe.ui.onAllNodesWithTag
 import fi.iki.ede.safe.ui.onNodeWithTag
 import fi.iki.ede.safe.ui.theme.SafeTheme
@@ -34,7 +34,7 @@ class ChangeMasterPasswordTest : NodeHelper {
     fun setup() = composeTestRule.setContent {
         SafeTheme {
             Column {
-                EnterNewPassword {
+                EnterNewMasterPassword {
                     val (oldPassword, newPassword) = it
 
                 }

@@ -18,13 +18,13 @@ import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeButton
 
 @Composable
-fun EnterNewPassword(
-    onNewPassword: (oldAndNewPassword: Pair<Password, Password>) -> Unit
+fun EnterNewMasterPassword(
+    onNewMasterPassword: (oldAndNewMasterPassword: Pair<Password, Password>) -> Unit
 ) {
     val passwordMinimumLength = integerResource(id = R.integer.password_minimum_length)
 
     Dialog(
-        onDismissRequest = { onNewPassword(Pair(Password.getEmpty(), Password.getEmpty())) },
+        onDismissRequest = { onNewMasterPassword(Pair(Password.getEmpty(), Password.getEmpty())) },
         content = {
             Column {
                 var oldPassword by remember { mutableStateOf(Password.getEmpty()) }
@@ -44,7 +44,7 @@ fun EnterNewPassword(
                             !oldPassword.isEmpty() &&
                             newPassword != oldPassword &&
                             newPassword.length >= passwordMinimumLength,
-                    onClick = { onNewPassword(Pair(oldPassword, newPassword)) },
+                    onClick = { onNewMasterPassword(Pair(oldPassword, newPassword)) },
                     modifier = Modifier.testTag(TestTag.TEST_TAG_CHANGE_PASSWORD_OK)
                 ) {
                     Text(text = stringResource(id = R.string.action_bar_change_password_ok))

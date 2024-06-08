@@ -249,16 +249,17 @@ fun TopActionBar(
                     })
             }
             if (showChangePasswordDialog) {
-                val passwordChanged = stringResource(id = R.string.action_bar_password_changed)
-                val passwordChangeFailed =
+                val masterPasswordChanged =
+                    stringResource(id = R.string.action_bar_password_changed)
+                val masterPasswordChangeFailed =
                     stringResource(id = R.string.action_bar_password_change_failed)
 
-                EnterNewPassword {
-                    val (oldPassword, newPassword) = it
+                EnterNewMasterPassword {
+                    val (oldMasterPassword, newMasterPassword) = it
                     ChangeMasterKeyAndPassword.changeMasterPassword(
                         context,
-                        oldPassword,
-                        newPassword
+                        oldMasterPassword,
+                        newMasterPassword
                     ) { success ->
                         // NOTICE! This isn't a UI thread!
                         coroutineScope.launch(Dispatchers.Main) {
@@ -266,13 +267,13 @@ fun TopActionBar(
                                 // master password successfully changed
                                 Toast.makeText(
                                     context,
-                                    passwordChanged,
+                                    masterPasswordChanged,
                                     Toast.LENGTH_LONG
                                 ).show()
                             } else {
                                 Toast.makeText(
                                     context,
-                                    passwordChangeFailed,
+                                    masterPasswordChangeFailed,
                                     Toast.LENGTH_LONG
                                 ).show()
                             }
