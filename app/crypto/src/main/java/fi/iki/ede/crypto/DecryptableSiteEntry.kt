@@ -61,6 +61,9 @@ class DecryptableSiteEntry(categoryId: Long) {
             return decryptedCachedPlainDescription ?: ""
         }
 
+    // TODO: UGLY, could be single use on demand
+    // some other interface would be better for testing, we don't really need FULL keystore
+    // and (lack of android keystore) causes issues with @Preview
     private val keyStore = KeyStoreHelperFactory.getKeyStoreHelper()
     private fun decrypt(value: IVCipherText) = try {
         String(keyStore.decryptByteArray(value))
