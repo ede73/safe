@@ -110,4 +110,6 @@
     <string name="title_activity_password_screen">Salasananäyttö</string>
     <string name="title_activity_password_search_screen">Salasanan etsintä</string>
     <string name="title_activity_restore_screen">Palauta salasanat</string>
+    <string name="google_password_import_matching_passwords">Samat salasanat</string>
+    <string name="google_password_import_matching_names">Samat nimet</string>
 </resources>

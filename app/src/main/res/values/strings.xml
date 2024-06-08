@@ -46,6 +46,8 @@
     <string name="generic_yes_delete">Do delete!</string>
 
     <!-- google password manager import -->
+    <string name="google_password_import_matching_passwords">Matching passwords</string>
+    <string name="google_password_import_matching_names">Matching names</string>
     <string name="google_password_import_search">Search to limit the entries</string>
     <string name="google_password_import_search_from_mine">Search from your</string>
     <string name="google_password_import_search_from_imports">Search from imports</string>
