@@ -3,7 +3,6 @@ package fi.iki.ede.crypto.keystore
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.security.keystore.KeyProtection
-import fi.iki.ede.crypto.EncryptedPassword
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
@@ -147,7 +146,7 @@ class KeyStoreHelper : CipherUtilities() {
         fun importExistingEncryptedMasterKey(
             saltedPassword: SaltedPassword,
             ivSecretKey: IVCipherText
-        ) = importANewMasterKey(
+        ): KeyStore = importANewMasterKey(
             decryptMasterKey(
                 generatePBKDF2AESKey(
                     saltedPassword.salt,
@@ -157,7 +156,6 @@ class KeyStoreHelper : CipherUtilities() {
                 ), ivSecretKey
             )
         )
-
 
         fun createNewKey(password: Password): Pair<Salt, IVCipherText> =
             Salt(generateRandomBytes(64)).let { salt ->
@@ -177,7 +175,6 @@ class KeyStoreHelper : CipherUtilities() {
                 }
             }
 
-
         private fun importANewMasterKey(aesKey: SecretKeySpec) =
             KeyStore.getInstance(ANDROID_KEYSTORE).apply {
                 load(null)
@@ -187,7 +184,6 @@ class KeyStoreHelper : CipherUtilities() {
                     getGenericKeyProtection()
                 )
             }
-
 
         private fun getGenericKeyProtection(): KeyProtection =
             KeyProtection.Builder(
@@ -202,9 +198,4 @@ class KeyStoreHelper : CipherUtilities() {
                 .build()
 
     }
-}
-
-fun KeyStoreHelper.decryptByteArray(encryptedPassword: EncryptedPassword): Password {
-    assert(!encryptedPassword.isEmpty())
-    return Password(decryptByteArray(encryptedPassword.ivCipherText))
 }
