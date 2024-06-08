@@ -37,7 +37,7 @@ fun TextualCheckboxPreview() {
         val checked = remember { mutableStateOf(false) }
         TextualCheckbox(
             initiallyChecked = checked,
-            textResourceId = R.string.google_password_import_search
+            textResourceId = R.string.login_with_biometrics
         ) {
             checked.value = !checked.value
         }
