@@ -6,6 +6,8 @@
     <string name="action_bar_change_password_ok">Change the password!</string>
     <string name="action_bar_generate_password">Generate password</string>
     <string name="action_bar_help">Help</string>
+    <string name="action_bar_import_export"><![CDATA[Export&Import ▶]]></string>
+    <string name="action_bar_import_google_passwordmanager">Import GooglePassword manager</string>
     <string name="action_bar_lock">Lock app</string>
     <string name="action_bar_old_password">Enter current password</string>
     <string name="action_bar_old_restore">(OISafe compatible) Restore</string>
@@ -14,7 +16,6 @@
     <string name="action_bar_restore">Restore</string>
     <string name="action_bar_search">Search</string>
     <string name="action_bar_settings">Settings</string>
-    <string name="action_bar_import_export"><![CDATA[Export&Import ▶]]></string>
 
     <string name="application_name">Password Safe</string>
 
@@ -43,6 +44,11 @@
     <string name="generic_dont_delete">Don\'t delete!</string>
     <string name="generic_ok">OK!</string>
     <string name="generic_yes_delete">Do delete!</string>
+
+    <!-- google password manager import -->
+    <string name="google_password_import_search">Search to limit the entries</string>
+    <string name="google_password_import_search_from_mine">Search from your</string>
+    <string name="google_password_import_search_from_imports">Search from imports</string>
 
     <!-- login -->
     <string name="login_button">Login</string>

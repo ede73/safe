@@ -6,6 +6,7 @@
     <string name="action_bar_generate_password">Luo salasana</string>
     <string name="action_bar_help">Apua</string>
     <string name="action_bar_import_export">Palauta ja tuo ▶</string>
+    <string name="action_bar_import_google_passwordmanager">Tuo salasanat Google salasanamanagerista</string>
     <string name="action_bar_lock">Lukitse</string>
     <string name="action_bar_old_password">Syötä nykyinen salasana</string>
     <string name="action_bar_old_restore">(OISafe yhteensopiva) palautus</string>
@@ -33,6 +34,9 @@
     <string name="generic_dont_delete">Älä poista!</string>
     <string name="generic_ok">OK!</string>
     <string name="generic_yes_delete">Poista!</string>
+    <string name="google_password_import_search">Etsi rajataksesi valintojen määrää</string>
+    <string name="google_password_import_search_from_imports">Etsi tuotavista</string>
+    <string name="google_password_import_search_from_mine">Etsi salasanoista</string>
     <string name="login_button">Kirjaudu</string>
     <string name="login_invalid_password">Väärä salasana</string>
     <string name="login_password_tip">Syötä salana</string>

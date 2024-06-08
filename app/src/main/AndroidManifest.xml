@@ -39,6 +39,10 @@
             android:exported="false"
             android:label="@string/title_activity_category_screen" />
         <activity
+            android:name=".ui.activities.ImportGooglePasswordManager"
+            android:exported="false"
+            android:theme="@style/Theme.Safe.AppCompat" />
+        <activity
             android:name=".ui.activities.HelpScreen"
             android:exported="false"
             android:label="@string/title_activity_help_screen" />

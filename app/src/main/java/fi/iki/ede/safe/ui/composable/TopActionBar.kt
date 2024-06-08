@@ -46,6 +46,7 @@ import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.HelpScreen
+import fi.iki.ede.safe.ui.activities.ImportGooglePasswordManager
 import fi.iki.ede.safe.ui.activities.LoginScreen
 import fi.iki.ede.safe.ui.activities.PreferenceActivity
 import fi.iki.ede.safe.ui.activities.PrepareDataBaseRestorationScreen
@@ -228,6 +229,16 @@ fun TopActionBar(
                                 )
                             } catch (ex: ActivityNotFoundException) {
                                 Log.e(tag, "Cannot launch ACTION_OPEN_DOCUMENT")
+                            }
+                        })
+                    DropdownMenuItem(
+                        text = { Text(text = stringResource(id = R.string.action_bar_import_google_passwordmanager)) },
+                        onClick = {
+                            try {
+                                displayMenu = false
+                                ImportGooglePasswordManager.startMe(context)
+                            } catch (ex: ActivityNotFoundException) {
+                                Log.e(tag, "Cannot launch ImportGooglePasswordManager", ex)
                             }
                         })
                     if (BuildConfig.ENABLE_OIIMPORT) {
