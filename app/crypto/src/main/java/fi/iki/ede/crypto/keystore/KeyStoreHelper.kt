@@ -79,7 +79,7 @@ class KeyStoreHelper : CipherUtilities() {
     fun decryptByteArray(
         encrypted: IVCipherText,
         secretKey: Key = getSecretKey()
-    ) = if (encrypted.iv.isEmpty()) {
+    ): ByteArray = if (encrypted.iv.isEmpty()) {
         byteArrayOf()
     } else {
         getAESCipher().let {
