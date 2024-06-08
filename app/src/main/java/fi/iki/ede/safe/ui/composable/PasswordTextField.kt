@@ -1,10 +1,13 @@
 package fi.iki.ede.safe.ui.composable
 
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SearchOff
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -27,11 +30,15 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.Password
+import fi.iki.ede.safe.R
 import fi.iki.ede.safe.password.highlightPassword
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
+import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @Composable
 fun PasswordTextField(
@@ -163,4 +170,30 @@ private fun showOrObfuscatePassword(
     }
 } else {
     PasswordVisualTransformation()
+}
+
+
+@Preview(showBackground = true)
+@Composable
+fun PasswordTextFieldPreview() {
+    SafeTheme {
+        Column {
+            PasswordTextField(
+                textTip = R.string.login_password_tip,
+                inputValue = "1234567890",
+                onValueChange = {
+                    println(it)
+                }
+            )
+            HorizontalDivider(modifier = Modifier.padding(10.dp))
+            PasswordTextField(
+                textTip = R.string.login_password_tip,
+                inputValue = "1234567890",
+                onValueChange = {
+                    println(it)
+                },
+                enableZoom = true
+            )
+        }
+    }
 }
