@@ -15,6 +15,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusTarget
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.window.Dialog
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
@@ -66,4 +67,11 @@ fun AddOrEditCategory(
             }
         }
     )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AddOrEditCategoryPreview() {
+    AddOrEditCategory("Category", R.string.category_list_edit_category) {
+    }
 }
