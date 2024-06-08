@@ -565,7 +565,9 @@ private object GooglePasswordManager : Table {
     ${Columns.NAME.columnName} TEXT NOT NULL,
     ${Columns.URL.columnName} TEXT NOT NULL,
     ${Columns.PASSWORD.columnName} TEXT NOT NULL,
-    ${Columns.NOTE.columnName} TEXT);"""
+    ${Columns.NOTE.columnName} TEXT,
+    ${Columns.HASH.columnName} TEXT,
+    ${Columns.STATUS.columnName} INTEGER);"""
     )
 
     override fun drop() = listOf("DROP TABLE IF EXISTS ${tableName};")
@@ -576,6 +578,8 @@ private object GooglePasswordManager : Table {
         URL("url"),
         PASSWORD("password"),
         NOTE("note"),
+        HASH("hash"),
+        STATUS("status"),
     }
 }
 
