@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import fi.iki.ede.gpm.similarity.toLowerCasedTrimmedString
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
-import fi.iki.ede.safe.ui.activities.ImportGPMViewModel
+import fi.iki.ede.safe.ui.models.ImportGPMViewModel
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeTheme
 

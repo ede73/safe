@@ -31,23 +31,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
-import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.model.SavedGPM.Companion.makeFromEncryptedStringFields
 import fi.iki.ede.gpm.model.encrypt
 import fi.iki.ede.gpm.model.encrypter
 import fi.iki.ede.safe.db.DBHelperFactory
-import fi.iki.ede.safe.ui.activities.ImportGPMViewModel
+import fi.iki.ede.safe.ui.models.DNDObject
+import fi.iki.ede.safe.ui.models.ImportGPMViewModel
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-
-sealed class DNDObject {
-    data object Spacer : DNDObject()
-    data class JustString(val string: String) : DNDObject()
-    data class GPM(val savedGPM: SavedGPM) : DNDObject()
-    data class SiteEntry(val decryptableSiteEntry: DecryptableSiteEntry) : DNDObject()
-}
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

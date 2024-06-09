@@ -11,7 +11,7 @@ import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.mimeTypes
-import fi.iki.ede.safe.ui.composable.DNDObject
+import fi.iki.ede.safe.ui.models.DNDObject
 
 @OptIn(ExperimentalFoundationApi::class)
 fun Modifier.dnd(

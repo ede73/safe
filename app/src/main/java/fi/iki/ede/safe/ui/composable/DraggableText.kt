@@ -18,6 +18,7 @@ import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import fi.iki.ede.safe.ui.models.DNDObject
 import fi.iki.ede.safe.ui.modifiers.dnd
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
