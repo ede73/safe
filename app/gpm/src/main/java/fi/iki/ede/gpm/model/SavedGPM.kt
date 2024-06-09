@@ -1,10 +1,9 @@
 package fi.iki.ede.gpm.model
 
 import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.gpm.changeset.calculateSha128
 
 data class SavedGPM private constructor(
-    val id: Int? = null,
+    val id: Long? = null,
     // often decrypted, decryptedName to cache
     val encryptedName: IVCipherText,
     // often decrypted, decryptedUrl to cache
@@ -20,7 +19,7 @@ data class SavedGPM private constructor(
     val decryptedUsername: String by lazy { encryptedUsername.decrypt() } // ok
     val decryptedUrl: String by lazy { encryptedUrl.decrypt() } // ok
 
-    constructor(id: Int? = null, importing: IncomingGPM) : this(
+    constructor(id: Long? = null, importing: IncomingGPM) : this(
         id,
         importing.name.encrypt(),
         importing.url.encrypt(),
@@ -37,13 +36,14 @@ data class SavedGPM private constructor(
 
     companion object {
         fun makeFromEncryptedStringFields(
-            id: Int? = null,
+            id: Long? = null,
             encryptedName: IVCipherText,
             encryptedUrl: IVCipherText,
             encryptedUsername: IVCipherText,
             encryptedPassword: IVCipherText,
             encryptedNote: IVCipherText,
             flaggedIgnored: Boolean,
+            hash: String,
         ): SavedGPM =
             SavedGPM(
                 id,
@@ -53,16 +53,17 @@ data class SavedGPM private constructor(
                 encryptedPassword,
                 encryptedNote,
                 flaggedIgnored,
-                calculateSha128(
-                    listOf(
-                        encryptedName.decrypt(), // ok
-                        encryptedUrl.decrypt(), // ok
-                        encryptedUsername.decrypt(), // ok
-                        encryptedPassword.decrypt(), // ok
-                        encryptedNote.decrypt() // ok
-                    ),
-                    "makeFromEncryptedStringFields"
-                )
+                hash
+//                calculateSha128(
+//                    listOf(
+//                        encryptedName.decrypt(), // ok
+//                        encryptedUrl.decrypt(), // ok
+//                        encryptedUsername.decrypt(), // ok
+//                        encryptedPassword.decrypt(), // ok
+//                        encryptedNote.decrypt() // ok
+//                    ),
+//                    "makeFromEncryptedStringFields"
+//                )
             )
     }
 }

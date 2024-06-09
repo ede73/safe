@@ -66,7 +66,7 @@ fun SearchSiteEntryControls(
     val searchWebsites = remember { mutableStateOf(false) }
 
     // just small gather up for use in UI code below
-    fun findNow() {
+    fun findNow(checked: Boolean) {
         matchingPasswordEntries.value = emptyList()
         beginSearch(
             DataModel.getPasswords(), // ugly but too many recomposes
@@ -93,7 +93,7 @@ fun SearchSiteEntryControls(
                 searchTextField.value = value
                 if (value.text != hackToInvokeSearchOnlyIfTextValueChanges.text) {
                     hackToInvokeSearchOnlyIfTextValueChanges = value
-                    findNow()
+                    findNow(true)
                 }
             },
             modifier = Modifier

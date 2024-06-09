@@ -10,6 +10,7 @@ internal object GooglePasswordManager : Table {
     ${Columns.ID.columnName} INTEGER PRIMARY KEY AUTOINCREMENT,
     ${Columns.NAME.columnName} TEXT NOT NULL,
     ${Columns.URL.columnName} TEXT NOT NULL,
+    ${Columns.USERNAME.columnName} TEXT NOT NULL,
     ${Columns.PASSWORD.columnName} TEXT NOT NULL,
     ${Columns.NOTE.columnName} TEXT,
     ${Columns.HASH.columnName} TEXT,
@@ -18,10 +19,11 @@ internal object GooglePasswordManager : Table {
 
     override fun drop() = listOf("DROP TABLE IF EXISTS ${tableName};")
 
-    enum class Columns(override val columnName: String) : TableColumns<Keys> {
+    enum class Columns(override val columnName: String) : TableColumns<GooglePasswordManager> {
         ID("id"),
         NAME("name"),
         URL("url"),
+        USERNAME("username"),
         PASSWORD("password"),
         NOTE("note"),
         HASH("hash"),

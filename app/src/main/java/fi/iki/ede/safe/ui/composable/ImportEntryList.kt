@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,13 +24,26 @@ import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.tooling.preview.Preview
+import fi.iki.ede.crypto.DecryptableSiteEntry
+import fi.iki.ede.crypto.IVCipherText
+import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.gpm.model.SavedGPM.Companion.makeFromEncryptedStringFields
+import fi.iki.ede.gpm.model.encrypt
+import fi.iki.ede.gpm.model.encrypter
+import fi.iki.ede.safe.ui.activities.ImportGPMViewModel
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ImportEntryList(mine: List<String>, imports: List<String>) {
-    val maxSize = maxOf(mine.size, imports.size)
+fun ImportEntryList(viewModel: ImportGPMViewModel) {
+    //mine: List<DecryptableSiteEntry>, imports: List<SavedGPM>) {
+    //val maxSize = maxOf(mine.size, imports.size)
+    val mine = viewModel.displayedSiteEntries.collectAsState()
+    val imports = viewModel.displayedGPMs.collectAsState()
+
+    val maxSize = maxOf(mine.value.size, imports.value.size)
+    println("${mine.value.size}, ${imports.value.size}")
 
     Row {
         DraggableText(
@@ -106,7 +120,7 @@ fun ImportEntryList(mine: List<String>, imports: List<String>) {
         itemsIndexed(List(maxSize) { it }) { index, _ ->
             Row {
                 DraggableText(
-                    text = if (index < mine.size) mine[index] else null,
+                    text = if (index < mine.value.size) mine.value[index].plainDescription else null,
                     modifier = mySizeModifier.weight(1f),
                     onItemDropped = {
                         println("LINK $it")
@@ -120,7 +134,7 @@ fun ImportEntryList(mine: List<String>, imports: List<String>) {
                 )
 
                 DraggableText(
-                    text = if (index < imports.size) imports[index] else null,
+                    text = if (index < imports.value.size) imports.value[index].decryptedName else null,
                     modifier = mySizeModifier.weight(1f),
                 )
             }
@@ -132,9 +146,25 @@ fun ImportEntryList(mine: List<String>, imports: List<String>) {
 @Composable
 fun ImportEntryListPreview() {
     SafeTheme {
-        val mine = (1990..2023).map { "mine$it" }
-        val imports = (1..10).map { "import$it" }
-
-        ImportEntryList(mine, imports = imports)
+        KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
+        KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
+        val mine = (1990..2023).map {
+            DecryptableSiteEntry(1).apply {
+                description = encrypter("Description $it".toByteArray())
+            }
+        }
+        val imports = (1..10).map {
+            makeFromEncryptedStringFields(
+                it.toLong(),
+                "name($it)".encrypt(),
+                "url".encrypt(),
+                "username".encrypt(),
+                "password".encrypt(),
+                "note".encrypt(),
+                false,
+                "hash"
+            )
+        }
+        //TODO:   ImportEntryList(mine, imports)
     }
 }

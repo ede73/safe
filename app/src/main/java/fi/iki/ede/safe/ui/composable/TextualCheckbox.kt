@@ -17,14 +17,14 @@ import fi.iki.ede.safe.ui.theme.SafeTheme
 fun TextualCheckbox(
     initiallyChecked: MutableState<Boolean>,
     textResourceId: Int,
-    startSearch: () -> Unit
+    checkedChanged: (Boolean) -> Unit
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Checkbox(checked = initiallyChecked.value, onCheckedChange = {
             initiallyChecked.value = it
-            startSearch()
+            checkedChanged(it)
         })
         Text(text = stringResource(id = textResourceId))
     }

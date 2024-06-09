@@ -62,35 +62,35 @@ fun printImportReport(
 
     println()
     println("New unseen entries(or no match found):")
-    importChangeSet.getUnprocessedIncomingGPMs.forEach {
-        println("\t$it")
-    }
+//    importChangeSet.getUnprocessedIncomingGPMs.forEach {
+//        println("\t$it")
+//    }
 
     println()
     println("Known entries with only hash or 1-field-changed against identifiable existing DB entry:")
-    importChangeSet.matchingGPMs.forEach {
-        println("\t${it.first} matches ${it.second}")
-    }
+//    importChangeSet.matchingGPMs.forEach {
+//        println("\t${it.first} matches ${it.second}")
+//    }
 
     println()
     println("Conflicts: input line matches MORE than 1 entry:")
-    importChangeSet.getMatchingConflicts.forEach { it ->
-        println("\t${it.key} matches:")
-        it.value.forEach { scoredSavedGPM ->
-            println("\t\t${scoredSavedGPM.matchScore * 100}% $scoredSavedGPM.item")
-        }
-    }
+//    importChangeSet.getMatchingConflicts.forEach { it ->
+//        println("\t${it.key} matches:")
+//        it.value.forEach { scoredSavedGPM ->
+//            println("\t\t${scoredSavedGPM.matchScore * 100}% $scoredSavedGPM.item")
+//        }
+//    }
 }
 
 fun calculateSha128(fields: List<String>, s: String): String {
     debug {
-        print("Calculate hash (for $s) of (${fields.joinToString(",")}) =")
+        //print("Calculate hash (for $s) of (${fields.joinToString(",")}) =")
     }
     val hash =
         MessageDigest.getInstance("SHA-1").digest(fields.joinToString(separator = "").toByteArray())
             .joinToString("") { "%02x".format(it) }
     debug {
-        println(hash)
+        // println(hash)
     }
     return hash
 }

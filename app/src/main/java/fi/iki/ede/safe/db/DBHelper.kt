@@ -12,6 +12,10 @@ import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.CipherUtilities
+import fi.iki.ede.gpm.model.IncomingGPM
+import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.gpm.model.SavedGPM.Companion.makeFromEncryptedStringFields
+import fi.iki.ede.gpm.model.encrypt
 import fi.iki.ede.safe.model.Preferences
 
 typealias DBID = Long
@@ -308,6 +312,83 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
                 throw ex
             }
         }
+
+    // if user imports new DB , encryption changes and
+    // we dont currently convert GPMs too..all data in the table is irrevocably lost
+    fun deleteAllSavedGPMs() = writableDatabase.use { db ->
+        db.execSQL("DELETE FROM ${GooglePasswordManager.tableName};")
+    }
+
+    fun fetchSavedGPMFromDB(): Set<SavedGPM> =
+        readableDatabase.use { db ->
+            db.query(
+                GooglePasswordManager,
+                GooglePasswordManager.Columns.values().toSet(),
+                null
+            ).use {
+                it.moveToFirst()
+                ArrayList<SavedGPM>().apply {
+                    (0 until it.count).forEach { _ ->
+                        add(
+                            makeFromEncryptedStringFields(
+                                it.getDBID(GooglePasswordManager.Columns.ID),
+                                it.getIVCipher(GooglePasswordManager.Columns.NAME),
+                                it.getIVCipher(GooglePasswordManager.Columns.URL),
+                                it.getIVCipher(GooglePasswordManager.Columns.USERNAME),
+                                it.getIVCipher(GooglePasswordManager.Columns.PASSWORD),
+                                it.getIVCipher(GooglePasswordManager.Columns.NOTE),
+                                it.getDBID(GooglePasswordManager.Columns.STATUS) == 1L,
+                                it.getString(GooglePasswordManager.Columns.HASH),
+                            )
+                        )
+                        it.moveToNext()
+                    }
+                }.toSet()
+            }
+        }
+
+    fun deleteObsoleteSavedGPMs(delete: Set<SavedGPM>) =
+        delete.forEach { savedGPM ->
+            writableDatabase.use { db ->
+                db.delete(
+                    GooglePasswordManager,
+                    whereEq(GooglePasswordManager.Columns.ID, savedGPM.id!!)
+                )
+            }
+        }
+
+    fun updateSavedGPMByIncomingGPM(update: Map<IncomingGPM, SavedGPM>) =
+        update.forEach { (incomingGPM, savedGPM) ->
+            this.writableDatabase.update(
+                GooglePasswordManager,
+                ContentValues().apply {
+                    put(GooglePasswordManager.Columns.NAME, incomingGPM.name.encrypt())
+                    put(GooglePasswordManager.Columns.URL, incomingGPM.url.encrypt())
+                    put(GooglePasswordManager.Columns.USERNAME, incomingGPM.username.encrypt())
+                    put(GooglePasswordManager.Columns.PASSWORD, incomingGPM.password.encrypt())
+                    put(GooglePasswordManager.Columns.NOTE, incomingGPM.note.encrypt())
+                    put(GooglePasswordManager.Columns.HASH, incomingGPM.hash)
+                },
+                whereEq(GooglePasswordManager.Columns.ID, savedGPM.id!!)
+            )
+        }
+
+    fun addNewIncomingGPM(add: Set<IncomingGPM>) =
+        add.forEach { incomingGPM ->
+            this.writableDatabase.insert(GooglePasswordManager,
+                ContentValues().apply {
+                    put(GooglePasswordManager.Columns.ID, null) // auto increment
+                    put(GooglePasswordManager.Columns.NAME, incomingGPM.name.encrypt())
+                    put(GooglePasswordManager.Columns.URL, incomingGPM.url.encrypt())
+                    put(GooglePasswordManager.Columns.USERNAME, incomingGPM.username.encrypt())
+                    put(GooglePasswordManager.Columns.PASSWORD, incomingGPM.password.encrypt())
+                    put(GooglePasswordManager.Columns.NOTE, incomingGPM.note.encrypt())
+                    put(GooglePasswordManager.Columns.STATUS, 0)
+                    put(GooglePasswordManager.Columns.HASH, incomingGPM.hash)
+                }
+            )
+        }
+
 
     companion object {
         private const val DATABASE_VERSION = 5

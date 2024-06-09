@@ -31,14 +31,17 @@ import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @Composable
 fun ImportControls(
-//    matchingPasswordEntries: MutableStateFlow<List<DecryptableSiteEntry>>,
     searchTextField: MutableState<TextFieldValue>,
+    showOnlyMatchingPasswordsCallback: (Boolean) -> Unit = {},
+    showOnlyMatchingNamesCallback: (Boolean) -> Unit = {},
 ) {
     val searchFromBeingImported = remember { mutableStateOf(false) }
     val searchFromMyOwn = remember { mutableStateOf(false) }
+    val showOnlyMatchingPasswords = remember { mutableStateOf(false) }
+    val showOnlyMatchingNames = remember { mutableStateOf(false) }
 
-    fun findNow() {
-
+    fun findNow(checked: Boolean) {
+        println("Findnow $checked")
     }
 
     var hackToInvokeSearchOnlyIfTextValueChanges by remember { mutableStateOf(TextFieldValue("")) }
@@ -94,14 +97,14 @@ fun ImportControls(
         }
         Row {
             TextualCheckbox(
-                searchFromMyOwn,
+                showOnlyMatchingPasswords,
                 R.string.google_password_import_matching_passwords,
-                ::findNow
+                showOnlyMatchingPasswordsCallback
             )
             TextualCheckbox(
-                searchFromBeingImported,
+                showOnlyMatchingNames,
                 R.string.google_password_import_matching_names,
-                ::findNow
+                showOnlyMatchingNamesCallback
             )
         }
     }
