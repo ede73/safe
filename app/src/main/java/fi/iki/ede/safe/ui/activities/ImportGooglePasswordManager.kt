@@ -12,16 +12,21 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.gpm.changeset.ImportChangeSet
 import fi.iki.ede.gpm.changeset.fetchMatchingHashes
 import fi.iki.ede.gpm.changeset.findSimilarNamesWhereUsernameMatchesAndURLDomainLooksTheSame
+import fi.iki.ede.gpm.changeset.harmonizePotentialDomainName
 import fi.iki.ede.gpm.changeset.printImportReport
 import fi.iki.ede.gpm.changeset.processOneFieldChanges
 import fi.iki.ede.gpm.changeset.resolveMatchConflicts
@@ -30,6 +35,9 @@ import fi.iki.ede.gpm.debug
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.model.ScoringConfig
+import fi.iki.ede.gpm.model.decrypt
+import fi.iki.ede.gpm.similarity.findSimilarity
+import fi.iki.ede.gpm.similarity.toLowerCasedTrimmedString
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.DataModel
@@ -44,6 +52,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class ImportGPMViewModel(application: Application) : AndroidViewModel(application) {
+    // LiveData to signal the UI to show loading
+    private val _isLoading = MutableLiveData(false)
+    val isLoading: LiveData<Boolean> = _isLoading
 
     private val _originalGPMs = mutableListOf<SavedGPM>()
     private val _displayedGPMs = MutableStateFlow<List<SavedGPM>>(emptyList())
@@ -52,6 +63,8 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
     private val _originalSiteEntries = mutableListOf<DecryptableSiteEntry>()
     private val _displayedSiteEntries = MutableStateFlow<List<DecryptableSiteEntry>>(emptyList())
     val displayedSiteEntries: StateFlow<List<DecryptableSiteEntry>> = _displayedSiteEntries
+
+    private var requestSearchCancellation = false
 
     init {
         loadGPMs()
@@ -86,8 +99,25 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun applyMatchingPasswords() {
-        _displayedGPMs.value = _originalGPMs.takeLast(10)
-        _displayedSiteEntries.value = _originalSiteEntries.takeLast(10)
+        viewModelScope.launch(Dispatchers.Default) {
+            _isLoading.postValue(true)
+            _displayedGPMs.value = emptyList()
+            _displayedSiteEntries.value = emptyList()
+
+            _originalGPMs.forEach { gpm ->
+                _originalSiteEntries.forEach { siteEntry ->
+                    if (!requestSearchCancellation) {
+                        if (gpm.encryptedPassword.decrypt() == siteEntry.plainPassword) {
+                            _displayedGPMs.value += gpm
+                            _displayedSiteEntries.value += siteEntry
+                        }
+                    }
+                }
+            }
+            println("Applied passwordname match...")
+            _isLoading.postValue(false)
+            requestSearchCancellation = false
+        }
     }
 
     fun clearMatchingPasswords() {
@@ -96,13 +126,39 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun applyMatchingNames() {
-        _displayedGPMs.value = _originalGPMs.take(5)
-        _displayedSiteEntries.value = _originalSiteEntries.take(5)
+        viewModelScope.launch(Dispatchers.Default) {
+            _isLoading.postValue(true)
+            val threshold = 0.8
+            _displayedGPMs.value = emptyList()
+            _displayedSiteEntries.value = emptyList()
+            _originalGPMs.forEach { gpm ->
+                _originalSiteEntries.forEach { siteEntry ->
+                    if (!requestSearchCancellation) {
+                        val score = findSimilarity(
+                            harmonizePotentialDomainName(siteEntry.plainDescription).toLowerCasedTrimmedString(),
+                            harmonizePotentialDomainName(gpm.decryptedName).toLowerCasedTrimmedString()
+                        )
+                        if (score > threshold) {
+                            _displayedGPMs.value += gpm
+                            _displayedSiteEntries.value += siteEntry
+                        }
+                    }
+                }
+            }
+            println("Applied name match...")
+            _isLoading.postValue(false)
+            requestSearchCancellation = false
+        }
     }
 
     fun clearMatchingNames() {
         _displayedGPMs.value = _originalGPMs
         _displayedSiteEntries.value = _originalSiteEntries
+    }
+
+    fun cancelOperation() {
+        requestSearchCancellation = true
+        _isLoading.postValue(false)
     }
 }
 
@@ -132,8 +188,10 @@ class ImportGooglePasswordManager : AutolockingBaseComponentActivity() {
             }
         }
 
+
         importTest(this)
         setContent {
+            val isLoading by viewModel.isLoading.observeAsState(false)
             SafeTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
@@ -141,6 +199,8 @@ class ImportGooglePasswordManager : AutolockingBaseComponentActivity() {
                     val searchText = remember { mutableStateOf(TextFieldValue("")) }
                     Column {
                         ImportControls(
+                            viewModel,
+                            isLoading,
                             searchText,
                             ::showOnlyMatchingPasswords,
                             ::showOnlyMatchingNames

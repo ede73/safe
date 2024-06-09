@@ -37,7 +37,8 @@ class ConflictResolution {
                 "".encrypt(),
                 "".encrypt(),
                 "".encrypt(),
-                false
+                false,
+                ""
             )
         )
 

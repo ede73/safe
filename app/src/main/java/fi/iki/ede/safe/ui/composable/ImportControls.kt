@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -26,11 +28,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
+import fi.iki.ede.safe.ui.activities.ImportGPMViewModel
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @Composable
 fun ImportControls(
+    viewModel: ImportGPMViewModel? = null,
+    isLoading: Boolean,
     searchTextField: MutableState<TextFieldValue>,
     showOnlyMatchingPasswordsCallback: (Boolean) -> Unit = {},
     showOnlyMatchingNamesCallback: (Boolean) -> Unit = {},
@@ -49,40 +54,48 @@ fun ImportControls(
         val iconPadding = Modifier
             .padding(15.dp)
             .size(24.dp)
-        TextField(
-            value = searchTextField.value,
-            onValueChange = { value ->
-                searchTextField.value = value
-                if (value.text != hackToInvokeSearchOnlyIfTextValueChanges.text) {
-                    hackToInvokeSearchOnlyIfTextValueChanges = value
-                    //findNow()
+        Row {
+            if (isLoading) {
+                Button(onClick = { viewModel?.cancelOperation() }) {
+                    Text(text = "Cancel...")
                 }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag(TestTag.TEST_TAG_SEARCH_TEXT_FIELD),
-            leadingIcon = {
-                Icon(
-                    Icons.Default.Search,
-                    contentDescription = "",
-                    modifier = iconPadding
-                )
-            },
-            placeholder = { Text(stringResource(id = R.string.google_password_import_search)) },
-            trailingIcon = {
-                if (searchTextField.value != TextFieldValue("")) {
-                    IconButton(onClick = { searchTextField.value = TextFieldValue("") }) {
-                        Icon(
-                            Icons.Default.Close,
-                            contentDescription = "",
-                            modifier = iconPadding
-                        )
+                CircularProgressIndicator()
+            }
+            TextField(
+                value = searchTextField.value,
+                onValueChange = { value ->
+                    searchTextField.value = value
+                    if (value.text != hackToInvokeSearchOnlyIfTextValueChanges.text) {
+                        hackToInvokeSearchOnlyIfTextValueChanges = value
+                        //findNow()
                     }
-                }
-            },
-            singleLine = true,
-            shape = RectangleShape
-        )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTag.TEST_TAG_SEARCH_TEXT_FIELD),
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = "",
+                        modifier = iconPadding
+                    )
+                },
+                placeholder = { Text(stringResource(id = R.string.google_password_import_search)) },
+                trailingIcon = {
+                    if (searchTextField.value != TextFieldValue("")) {
+                        IconButton(onClick = { searchTextField.value = TextFieldValue("") }) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "",
+                                modifier = iconPadding
+                            )
+                        }
+                    }
+                },
+                singleLine = true,
+                shape = RectangleShape
+            )
+        }
         Row {
             TextualCheckbox(
                 searchFromMyOwn,
@@ -115,6 +128,6 @@ fun ImportControls(
 fun ImportControlsPreview() {
     SafeTheme {
         val searchTextField = remember { mutableStateOf(TextFieldValue("")) }
-        ImportControls(searchTextField)
+        ImportControls(null, true, searchTextField)
     }
 }
