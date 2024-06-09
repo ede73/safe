@@ -17,3 +17,4 @@ local.properties
 /app/release
 .kotlin
 /temp
+/app/*/build
