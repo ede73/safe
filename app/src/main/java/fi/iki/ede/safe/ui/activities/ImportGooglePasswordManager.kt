@@ -75,7 +75,7 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch(Dispatchers.IO) {
             val db = DBHelperFactory.getDBHelper(getApplication())
             val importedGPMs = try {
-                val imports = db.fetchSavedGPMFromDB()
+                val imports = db.fetchUnprocessedSavedGPMsFromDB()
                 // IF user restored a database in the MEAN TIME, that means our previous export
                 // is now totally unreadable (since our import / doesn't change gpm imports)
                 val decryptTest = imports.firstOrNull()?.decryptedName
@@ -294,7 +294,7 @@ private fun launchImport(
 ) {
     CoroutineScope(Dispatchers.IO).launch {
         try {
-            val importChangeSet = ImportChangeSet(file, db.fetchSavedGPMFromDB())
+            val importChangeSet = ImportChangeSet(file, db.fetchSavedGPMsFromDB())
             val scoringConfig = ScoringConfig()
 
             processIncomingGPMs(

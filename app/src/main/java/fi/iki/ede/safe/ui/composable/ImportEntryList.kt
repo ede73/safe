@@ -1,5 +1,6 @@
 package fi.iki.ede.safe.ui.composable
 
+import android.content.ClipDescription
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.gestures.scrollBy
@@ -20,19 +21,32 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
+import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.model.SavedGPM.Companion.makeFromEncryptedStringFields
 import fi.iki.ede.gpm.model.encrypt
 import fi.iki.ede.gpm.model.encrypter
+import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.ui.activities.ImportGPMViewModel
 import fi.iki.ede.safe.ui.theme.SafeTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+
+sealed class DNDObject {
+    data object Spacer : DNDObject()
+    data class JustString(val string: String) : DNDObject()
+    data class GPM(val savedGPM: SavedGPM) : DNDObject()
+    data class SiteEntry(val decryptableSiteEntry: DecryptableSiteEntry) : DNDObject()
+}
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -44,12 +58,38 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
 
     val maxSize = maxOf(mine.value.size, imports.value.size)
     println("${mine.value.size}, ${imports.value.size}")
+    val context = LocalContext.current
 
+    fun ignoreSavedGPM(id: Long?) {
+        if (id == null) return
+        CoroutineScope(Dispatchers.IO).launch {
+            DBHelperFactory.getDBHelper(context).markSavedGPMIgnored(id)
+        }
+        println("Ignore GPM $id, TODO: REMOVE FROM THE LIST TOO")
+    }
+
+    fun linkSavedGPMAndDecryptableSiteEntry(siteEntry: DecryptableSiteEntry, id: Long?) {
+        if (id == null) return
+        CoroutineScope(Dispatchers.IO).launch {
+            DBHelperFactory.getDBHelper(context).linkSaveGPMAndSiteEntry(siteEntry.id!!, id)
+        }
+        println("Link ${siteEntry.id} and SavedGPM $id, TODO: REMOVE FROM LIST")
+    }
+
+    fun addSavedGPM(id: Long?) {
+        if (id == null) return
+        println("Add(import) GPM $id")
+    }
     Row {
         DraggableText(
-            text = "Add",
-            onItemDropped = {
-                println("Add:$it")
+            DNDObject.JustString("Add"),
+            onItemDropped = { event ->
+                if (event.mimeTypes().contains(ClipDescription.MIMETYPE_TEXT_PLAIN)) {
+                    addSavedGPM(
+                        event.toAndroidDragEvent()
+                            .clipData.getItemAt(0).text.toString().toLongOrNull()
+                    )
+                }
             }
         )
 
@@ -60,9 +100,14 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
         )
 
         DraggableText(
-            text = "Ignore",
-            onItemDropped = {
-                println("IGNORE:$it")
+            DNDObject.JustString("Ignore"),
+            onItemDropped = { event ->
+                if (event.mimeTypes().contains(ClipDescription.MIMETYPE_TEXT_PLAIN)) {
+                    ignoreSavedGPM(
+                        event.toAndroidDragEvent()
+                            .clipData.getItemAt(0).text.toString().toLongOrNull()
+                    )
+                }
             }
         )
     }
@@ -120,10 +165,18 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
         itemsIndexed(List(maxSize) { it }) { index, _ ->
             Row {
                 DraggableText(
-                    text = if (index < mine.value.size) mine.value[index].plainDescription else null,
+                    if (index < mine.value.size)
+                        DNDObject.SiteEntry(mine.value[index])
+                    else DNDObject.Spacer,
                     modifier = mySizeModifier.weight(1f),
-                    onItemDropped = {
-                        println("LINK $it")
+                    onItemDropped = { event ->
+                        if (event.mimeTypes().contains(ClipDescription.MIMETYPE_TEXT_PLAIN)) {
+                            linkSavedGPMAndDecryptableSiteEntry(
+                                mine.value[index],
+                                event.toAndroidDragEvent()
+                                    .clipData.getItemAt(0).text.toString().toLongOrNull()
+                            )
+                        }
                     }
                 )
 
@@ -134,7 +187,9 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
                 )
 
                 DraggableText(
-                    text = if (index < imports.value.size) imports.value[index].decryptedName else null,
+                    if (index < imports.value.size)
+                        DNDObject.GPM(imports.value[index])
+                    else DNDObject.Spacer,
                     modifier = mySizeModifier.weight(1f),
                 )
             }

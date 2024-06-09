@@ -319,12 +319,61 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         db.execSQL("DELETE FROM ${GooglePasswordManager.tableName};")
     }
 
-    fun fetchSavedGPMFromDB(): Set<SavedGPM> =
+    fun markSavedGPMIgnored(savedGPMID: DBID) =
+        writableDatabase.use { db ->
+            db.update(GooglePasswordManager, ContentValues().apply {
+                put(GooglePasswordManager.Columns.STATUS, 1)
+            }, whereEq(GooglePasswordManager.Columns.ID, savedGPMID)).toLong()
+        }
+
+    fun linkSaveGPMAndSiteEntry(siteEntryID: DBID, savedGPMID: DBID) =
+        writableDatabase.use { db ->
+            db.insert(Password2GooglePasswordManager, ContentValues().apply {
+                put(Password2GooglePasswordManager.Columns.PASSWORD_ID, siteEntryID)
+                put(Password2GooglePasswordManager.Columns.GOOGLE_ID, savedGPMID)
+            })
+        }
+
+
+    // TODO: skip IGNORED and also skip ones linked
+    fun fetchUnprocessedSavedGPMsFromDB(): Set<SavedGPM> =
+    //    fetchSavedGPMsFromDB(whereNullOr0(GooglePasswordManager.Columns.STATUS, 0))
+        //fetchSavedGPMsFromDB(whereEq(GooglePasswordManager.Columns.STATUS, 0))
+        readableDatabase.rawQuery(
+            """
+            SELECT A.*
+            FROM googlepasswords A
+            LEFT JOIN password2googlepasswords B ON A.id = B.gpm_id
+            WHERE B.gpm_id IS NULL AND COALESCE(A.status,0)=0;
+            """.trimIndent(), null
+        ).use {
+            it.moveToFirst()
+            ArrayList<SavedGPM>().apply {
+                (0 until it.count).forEach { _ ->
+                    add(
+                        makeFromEncryptedStringFields(
+                            it.getDBID(GooglePasswordManager.Columns.ID),
+                            it.getIVCipher(GooglePasswordManager.Columns.NAME),
+                            it.getIVCipher(GooglePasswordManager.Columns.URL),
+                            it.getIVCipher(GooglePasswordManager.Columns.USERNAME),
+                            it.getIVCipher(GooglePasswordManager.Columns.PASSWORD),
+                            it.getIVCipher(GooglePasswordManager.Columns.NOTE),
+                            it.getDBID(GooglePasswordManager.Columns.STATUS) == 1L,
+                            it.getString(GooglePasswordManager.Columns.HASH),
+                        )
+                    )
+                    it.moveToNext()
+                }
+            }.toSet()
+
+        }
+
+    fun fetchSavedGPMsFromDB(where: SelectionCondition? = null): Set<SavedGPM> =
         readableDatabase.use { db ->
             db.query(
                 GooglePasswordManager,
                 GooglePasswordManager.Columns.values().toSet(),
-                null
+                where
             ).use {
                 it.moveToFirst()
                 ArrayList<SavedGPM>().apply {

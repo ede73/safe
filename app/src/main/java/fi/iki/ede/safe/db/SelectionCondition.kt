@@ -1,11 +1,17 @@
 package fi.iki.ede.safe.db
 
-internal class SelectionCondition(
+class SelectionCondition(
     private val column: TableColumns<*>,
     private val singleArg: Any,
-    private val comparison: String = "="
+    private val comparison: String = "=",
+    private val coalesce: Int? = null
 ) {
-    fun query() = "(${column.columnName} $comparison ?)"
+    fun query() =
+        if (coalesce != null)
+            "(IFNULL(${column.columnName}, $coalesce) $comparison ?)"
+        else
+            "(${column.columnName} $comparison ?)"
+
     fun args() = arrayOf(singleArg.toString())
 
     companion object {

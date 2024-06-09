@@ -23,7 +23,7 @@ import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @Composable
 fun DraggableText(
-    text: String?,
+    dragObject: DNDObject,
     modifier: Modifier = Modifier,
     onItemDropped: ((DragAndDropEvent) -> Unit)? = null
 ) {
@@ -33,13 +33,11 @@ fun DraggableText(
         object : DragAndDropTarget {
             override fun onEntered(event: DragAndDropEvent) {
                 super.onEntered(event)
-                println("e ${event.toAndroidDragEvent().y}")
                 dndHighlight = Color(0, 255, 255, 50)
             }
 
             override fun onMoved(event: DragAndDropEvent) {
                 super.onEntered(event)
-                println("m ${event.toAndroidDragEvent().y}")
                 dndHighlight = Color(0, 255, 255, 50)
             }
 
@@ -54,10 +52,8 @@ fun DraggableText(
             }
 
             override fun onDrop(event: DragAndDropEvent): Boolean {
-                println("onDrop $event")
                 val draggedData = event.toAndroidDragEvent()
                     .clipData.getItemAt(0).text
-                println("Got $draggedData")
                 // Parse received data
                 onItemDropped!!(event)
                 return true
@@ -65,20 +61,25 @@ fun DraggableText(
         }
     }
 
-    if (text == null) {
-        Spacer(modifier = modifier)
-    } else {
-        Box(
-            modifier = modifier
-                .border(1.dp, if (onItemDropped == null) Color.Red else Color.Green)
-                .background(dndHighlight)
-                .padding(10.dp)
-                .dnd(text, onItemDropped, dndTarget)
-        ) {
-            Box {
-                Text(text = text)
+    when (dragObject) {
+        is DNDObject.Spacer -> Spacer(modifier = modifier)
+        else ->
+            Box(
+                modifier = modifier
+                    .border(1.dp, if (onItemDropped == null) Color.Red else Color.Green)
+                    .background(dndHighlight)
+                    .padding(10.dp)
+                    .dnd(dragObject, onItemDropped, dndTarget)
+            ) {
+                Box {
+                    when (dragObject) {
+                        is DNDObject.JustString -> Text(text = dragObject.string)
+                        is DNDObject.GPM -> Text(text = dragObject.savedGPM.decryptedName)
+                        is DNDObject.SiteEntry -> Text(text = dragObject.decryptableSiteEntry.plainDescription)
+                        is DNDObject.Spacer -> throw Exception("No spaces allowed")
+                    }
+                }
             }
-        }
     }
 }
 
@@ -86,7 +87,7 @@ fun DraggableText(
 @Composable
 fun DraggableTextPreview() {
     SafeTheme {
-        DraggableText("xxx", onItemDropped = {
+        DraggableText(DNDObject.JustString("Hello"), onItemDropped = {
             println("item dropped")
         })
     }

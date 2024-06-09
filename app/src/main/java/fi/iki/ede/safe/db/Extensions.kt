@@ -92,3 +92,14 @@ internal fun <T : Table, C : TableColumns<T>> whereEq(
     column: TableColumns<T>,
     whereArg: Any
 ) = SelectionCondition(column, whereArg, "=")
+
+internal fun <T : Table, C : TableColumns<T>> whereNot(
+    column: TableColumns<T>,
+    whereArg: Any
+) = SelectionCondition(column, whereArg, "<>")
+
+// something broken here..
+internal fun <T : Table, C : TableColumns<T>> whereNullOr0(
+    column: TableColumns<T>,
+    whereArg: Any
+) = SelectionCondition(column, whereArg, "=", coalesce = 0)

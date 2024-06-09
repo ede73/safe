@@ -11,20 +11,29 @@ import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.mimeTypes
+import fi.iki.ede.safe.ui.composable.DNDObject
 
 @OptIn(ExperimentalFoundationApi::class)
 fun Modifier.dnd(
-    text: String,
+    dragObject: DNDObject,
     onItemDropped: ((DragAndDropEvent) -> Unit)?,
     dndTarget: DragAndDropTarget
 ) = this.then(
     if (onItemDropped == null) {
         Modifier.dragAndDropSource {
             detectTapGestures(onPress = {
-                println("START THE DRAG!")
                 startTransfer(
                     DragAndDropTransferData(
-                        ClipData.newPlainText("image Url", text),
+                        when (dragObject) {
+                            is DNDObject.JustString -> throw Exception("Strings not allowed as source")
+                            is DNDObject.GPM -> ClipData.newPlainText(
+                                dragObject.savedGPM.decryptedName,
+                                dragObject.savedGPM.id.toString()
+                            )
+
+                            is DNDObject.SiteEntry -> throw Exception("DecryptableSiteEntry not allowed as source")
+                            is DNDObject.Spacer -> throw Exception("Spacers not allowed as source")
+                        }
                         //flags = View.DRAG_FLAG_GLOBAL
                     )
                 )
