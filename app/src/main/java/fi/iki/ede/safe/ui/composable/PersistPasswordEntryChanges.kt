@@ -7,7 +7,7 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.safe.model.DataModel
-import fi.iki.ede.safe.ui.activities.EditableSiteEntry
+import fi.iki.ede.safe.ui.models.EditableSiteEntry
 import kotlinx.coroutines.runBlocking
 import java.time.ZonedDateTime
 

@@ -44,8 +44,8 @@ import fi.iki.ede.safe.R
 import fi.iki.ede.safe.clipboard.ClipboardUtils
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.password.PasswordGenerator
-import fi.iki.ede.safe.ui.activities.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
+import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
@@ -225,7 +225,7 @@ fun SiteEntryView(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        if (context is AvertInactivityDuringLongTask){
+        if (context is AvertInactivityDuringLongTask) {
             SafePhoto(
                 (context as AvertInactivityDuringLongTask),
                 photo = passEntry.plainPhoto,
