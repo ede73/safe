@@ -21,11 +21,6 @@ fun fetchMatchingHashes(importChangeSet: ImportChangeSet) =
             .map { savedGPM -> incomingGPM to ScoredMatch(1.0, savedGPM, true) }
     }.toSet()
 
-//fun List<IncomingGPM>.removeMatches(propertyPairList: List<Pair<KProperty1<IncomingGPM, String>, List<Pair<IncomingGPM, SavedGPM>>>>): List<IncomingGPM> =
-//    propertyPairList.flatMap { it.second }.map { it.first }.distinct().let { toRemove ->
-//        return this.filterNot { it in toRemove }
-//    }
-
 private fun findEntriesWithOnlyChangedPropertyIs(
     importChangeSet: ImportChangeSet,
     firstProperty: KProperty1<IncomingGPM, String>,
