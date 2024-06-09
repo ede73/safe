@@ -118,7 +118,7 @@ fun harmonizePotentialDomainName(input: String): String {
     ).joinToString(separator = "|")
     val top75PercentileTLDPrefixes = listOf(
         "www", "mail", "home", "shop", "blog", "web", "cloud", "info", "store", "my",
-        "the", "go", "super", "app", "online", "news", "tech", "site", "wiki", "forum"
+        "the", "go", "super", "app", "online", "news", "tech", "site", "wiki", "forum", "app"
     ).joinToString(separator = "|")
     val patterns =
         listOf("""^($top75PercentileTLDPrefixes)\.?""", """\.(${top86PercentileTLDSuffixes})$""")
