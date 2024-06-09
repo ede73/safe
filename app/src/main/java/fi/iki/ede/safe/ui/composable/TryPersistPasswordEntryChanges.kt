@@ -10,7 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.ui.activities.EditableSiteEntry
+import fi.iki.ede.safe.ui.models.EditableSiteEntry
 import fi.iki.ede.safe.ui.theme.SafeButton
 
 @Composable
