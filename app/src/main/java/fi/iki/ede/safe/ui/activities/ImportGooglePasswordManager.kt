@@ -35,7 +35,7 @@ import fi.iki.ede.gpm.debug
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.model.ScoringConfig
-import fi.iki.ede.gpm.model.decrypt
+import fi.iki.ede.gpm.similarity.LowerCaseTrimmedString
 import fi.iki.ede.gpm.similarity.findSimilarity
 import fi.iki.ede.gpm.similarity.toLowerCasedTrimmedString
 import fi.iki.ede.safe.db.DBHelper
@@ -107,7 +107,7 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
             _originalGPMs.forEach { gpm ->
                 _originalSiteEntries.forEach { siteEntry ->
                     if (!requestSearchCancellation) {
-                        if (gpm.encryptedPassword.decrypt() == siteEntry.plainPassword) {
+                        if (gpm.decryptedPassword == siteEntry.plainPassword) {
                             _displayedGPMs.value += gpm
                             _displayedSiteEntries.value += siteEntry
                         }
@@ -157,8 +157,84 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun cancelOperation() {
-        requestSearchCancellation = true
-        _isLoading.postValue(false)
+        if (isLoading.value == true) {
+            requestSearchCancellation = true
+            _isLoading.postValue(false)
+        }
+    }
+
+    fun search(
+        similarityThresholdOrSubString: Double,
+        searchText: LowerCaseTrimmedString,
+        searchFromMyOwn: Boolean,
+        searchFromBeingImported: Boolean
+    ) {
+        _isLoading.postValue(true)
+        viewModelScope.launch(Dispatchers.Default) {
+            val j1 =
+                if (searchFromMyOwn) {
+                    viewModelScope.launch(Dispatchers.Default) {
+                        _displayedSiteEntries.value = emptyList()
+                        _originalSiteEntries.forEach { siteEntry ->
+                            if (!requestSearchCancellation) {
+                                if (similarityThresholdOrSubString > 0) {
+                                    val score = findSimilarity(
+                                        harmonizePotentialDomainName(siteEntry.plainDescription).toLowerCasedTrimmedString(),
+                                        searchText
+                                    )
+                                    if (score > similarityThresholdOrSubString) {
+                                        _displayedSiteEntries.value += siteEntry
+                                    }
+                                } else {
+                                    if (siteEntry.plainDescription.lowercase()
+                                            .contains(searchText.lowercasedTrimmed)
+                                    ) {
+                                        _displayedSiteEntries.value += siteEntry
+                                    }
+                                }
+
+                            } else {
+                                println("Cancelled ${searchText.lowercasedTrimmed}")
+                            }
+                        }
+                        println("Search siteEntries completed ${searchText.lowercasedTrimmed}")
+                    }
+                } else null
+
+            val j2 = if (searchFromBeingImported) {
+                viewModelScope.launch(Dispatchers.Default) {
+                    _displayedGPMs.value = emptyList()
+                    _originalGPMs.forEach { gpm ->
+                        if (!requestSearchCancellation) {
+                            if (similarityThresholdOrSubString > 0) {
+                                val score = findSimilarity(
+                                    harmonizePotentialDomainName(gpm.decryptedName).toLowerCasedTrimmedString(),
+                                    searchText
+                                )
+                                if (score > similarityThresholdOrSubString) {
+                                    _displayedGPMs.value += gpm
+                                }
+                            } else {
+                                if (gpm.decryptedName.lowercase()
+                                        .contains(searchText.lowercasedTrimmed)
+                                ) {
+                                    _displayedGPMs.value += gpm
+                                }
+                            }
+                        } else {
+                            println("Cancelled ${searchText.lowercasedTrimmed}")
+                        }
+                    }
+                    println("Search GPM completed ${searchText.lowercasedTrimmed}")
+                }
+            } else null
+
+            j1?.join()
+            j2?.join()
+            println("Searches completed")
+            _isLoading.postValue(false)
+            requestSearchCancellation = false
+        }
     }
 }
 
@@ -167,27 +243,6 @@ class ImportGooglePasswordManager : AutolockingBaseComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        fun showOnlyMatchingPasswords(show: Boolean) {
-            if (show) {
-                println("Apply matching passwod")
-                viewModel.applyMatchingPasswords()
-            } else {
-                println("clry matching passwod")
-                viewModel.clearMatchingPasswords()
-            }
-        }
-
-        fun showOnlyMatchingNames(show: Boolean) {
-            if (show) {
-                println("Apply matching name")
-                viewModel.applyMatchingNames()
-            } else {
-                println("clr matching name")
-                viewModel.clearMatchingNames()
-            }
-        }
-
 
         importTest(this)
         setContent {
@@ -201,9 +256,6 @@ class ImportGooglePasswordManager : AutolockingBaseComponentActivity() {
                         ImportControls(
                             viewModel,
                             isLoading,
-                            searchText,
-                            ::showOnlyMatchingPasswords,
-                            ::showOnlyMatchingNames
                         )
                         ImportEntryList(viewModel)
                     }

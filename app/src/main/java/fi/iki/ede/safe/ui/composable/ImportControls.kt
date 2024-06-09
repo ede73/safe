@@ -15,7 +15,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,6 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import fi.iki.ede.gpm.similarity.toLowerCasedTrimmedString
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.ImportGPMViewModel
@@ -36,20 +36,26 @@ import fi.iki.ede.safe.ui.theme.SafeTheme
 fun ImportControls(
     viewModel: ImportGPMViewModel? = null,
     isLoading: Boolean,
-    searchTextField: MutableState<TextFieldValue>,
-    showOnlyMatchingPasswordsCallback: (Boolean) -> Unit = {},
-    showOnlyMatchingNamesCallback: (Boolean) -> Unit = {},
 ) {
     val searchFromBeingImported = remember { mutableStateOf(false) }
     val searchFromMyOwn = remember { mutableStateOf(false) }
     val showOnlyMatchingPasswords = remember { mutableStateOf(false) }
     val showOnlyMatchingNames = remember { mutableStateOf(false) }
+    var searchTextField by remember { mutableStateOf(TextFieldValue("")) }
+    var hackToInvokeSearchOnlyIfTextValueChanges by remember { mutableStateOf(TextFieldValue("")) }
+    val similarityScore = 0 // TODO: make configurable
 
-    fun findNow(checked: Boolean) {
-        println("Findnow $checked")
+    fun initiateSearch() {
+        val search = searchTextField.text.toLowerCasedTrimmedString()
+        if (search.lowercasedTrimmed.isEmpty()) return
+        viewModel?.search(
+            similarityScore.toDouble(),
+            searchTextField.text.toLowerCasedTrimmedString(),
+            searchFromMyOwn.value,
+            searchFromBeingImported.value
+        )
     }
 
-    var hackToInvokeSearchOnlyIfTextValueChanges by remember { mutableStateOf(TextFieldValue("")) }
     Column {
         val iconPadding = Modifier
             .padding(15.dp)
@@ -62,12 +68,12 @@ fun ImportControls(
                 CircularProgressIndicator()
             }
             TextField(
-                value = searchTextField.value,
+                value = searchTextField,
                 onValueChange = { value ->
-                    searchTextField.value = value
+                    searchTextField = value
                     if (value.text != hackToInvokeSearchOnlyIfTextValueChanges.text) {
                         hackToInvokeSearchOnlyIfTextValueChanges = value
-                        //findNow()
+                        initiateSearch()
                     }
                 },
                 modifier = Modifier
@@ -82,8 +88,8 @@ fun ImportControls(
                 },
                 placeholder = { Text(stringResource(id = R.string.google_password_import_search)) },
                 trailingIcon = {
-                    if (searchTextField.value != TextFieldValue("")) {
-                        IconButton(onClick = { searchTextField.value = TextFieldValue("") }) {
+                    if (searchTextField != TextFieldValue("")) {
+                        IconButton(onClick = { searchTextField = TextFieldValue("") }) {
                             Icon(
                                 Icons.Default.Close,
                                 contentDescription = "",
@@ -99,27 +105,32 @@ fun ImportControls(
         Row {
             TextualCheckbox(
                 searchFromMyOwn,
-                R.string.google_password_import_search_from_mine,
-                ::findNow
-            )
+                R.string.google_password_import_search_from_mine
+            ) {
+                initiateSearch()
+            }
             TextualCheckbox(
                 searchFromBeingImported,
-                R.string.google_password_import_search_from_imports,
-                ::findNow
-            )
+                R.string.google_password_import_search_from_imports
+            ) {
+                initiateSearch()
+            }
         }
         Row {
             TextualCheckbox(
                 showOnlyMatchingPasswords,
-                R.string.google_password_import_matching_passwords,
-                showOnlyMatchingPasswordsCallback
-            )
+                R.string.google_password_import_matching_passwords
+            ) {
+                viewModel?.applyMatchingPasswords()
+            }
             TextualCheckbox(
                 showOnlyMatchingNames,
-                R.string.google_password_import_matching_names,
-                showOnlyMatchingNamesCallback
-            )
+                R.string.google_password_import_matching_names
+            ) {
+                viewModel?.applyMatchingNames()
+            }
         }
+        // TODO: Search from what is being displayed?
     }
 }
 
@@ -128,6 +139,6 @@ fun ImportControls(
 fun ImportControlsPreview() {
     SafeTheme {
         val searchTextField = remember { mutableStateOf(TextFieldValue("")) }
-        ImportControls(null, true, searchTextField)
+        ImportControls(null, true)
     }
 }

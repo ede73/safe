@@ -106,17 +106,17 @@ fun processOneFieldChanges(
 
 // harmonize the names by removing commonly used WWW patterns
 fun harmonizePotentialDomainName(input: String): String {
+    val top75PercentileTLDPrefixes = listOf(
+        "www", "mail", "home", "shop", "blog", "web", "cloud", "info", "store", "my",
+        "the", "go", "super", "app", "online", "news", "tech", "site", "wiki", "forum", "app"
+    ).joinToString(separator = "|")
     val top86PercentileTLDSuffixes = setOf(
         "com", "net", "org", "info", "xyz", "online", "shop", "top", "pl", "us",
         "site", "store", "biz", "vip", "cfd", "sbs", "app", "club", "pro", "live",
         "ru", "uk", "de", "br", "in", "it", "fr", "au", "jp", "cn", "nl", "eu", "es", "co", "ir"
     ).joinToString(separator = "|")
-    val top75PercentileTLDPrefixes = listOf(
-        "www", "mail", "home", "shop", "blog", "web", "cloud", "info", "store", "my",
-        "the", "go", "super", "app", "online", "news", "tech", "site", "wiki", "forum", "app"
-    ).joinToString(separator = "|")
     val patterns =
-        listOf("""^($top75PercentileTLDPrefixes)\.?""", """\.(${top86PercentileTLDSuffixes})$""")
+        listOf("""^($top75PercentileTLDPrefixes)\.""", """\.(${top86PercentileTLDSuffixes})$""")
     var result = input
     patterns.forEach { pattern ->
         result = result.replace(Regex(pattern), "")
