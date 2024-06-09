@@ -1,6 +1,7 @@
 package fi.iki.ede.safe.ui.composable
 
 import android.content.ClipDescription
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.gestures.scrollBy
@@ -57,28 +58,45 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
     val imports = viewModel.displayedGPMs.collectAsState()
 
     val maxSize = maxOf(mine.value.size, imports.value.size)
-    println("${mine.value.size}, ${imports.value.size}")
+    //println("${mine.value.size}, ${imports.value.size}")
     val context = LocalContext.current
 
     fun ignoreSavedGPM(id: Long?) {
         if (id == null) return
         CoroutineScope(Dispatchers.IO).launch {
-            DBHelperFactory.getDBHelper(context).markSavedGPMIgnored(id)
+            try {
+                println("ignoreSavedGPM")
+                DBHelperFactory.getDBHelper(context).markSavedGPMIgnored(id)
+                viewModel.removeGPM(id)
+                println("SavedGPM $id ignored and removed from list")
+            } catch (ex: Exception) {
+                Log.i("ImportEntryList", "ignoreSavedGPM $id failed", ex)
+            }
         }
-        println("Ignore GPM $id, TODO: REMOVE FROM THE LIST TOO")
     }
 
     fun linkSavedGPMAndDecryptableSiteEntry(siteEntry: DecryptableSiteEntry, id: Long?) {
         if (id == null) return
         CoroutineScope(Dispatchers.IO).launch {
-            DBHelperFactory.getDBHelper(context).linkSaveGPMAndSiteEntry(siteEntry.id!!, id)
+            try {
+                println("linkSavedGPMAndDecryptableSiteEntry")
+                DBHelperFactory.getDBHelper(context).linkSaveGPMAndSiteEntry(siteEntry.id!!, id)
+                println("Link ${siteEntry.id} and SavedGPM $id")
+                viewModel.removeGPM(id)
+            } catch (ex: Exception) {
+                Log.i(
+                    "ImportEntryList",
+                    "linkSavedGPMAndDecryptableSiteEntry ${siteEntry.id} to $id failed",
+                    ex
+                )
+            }
         }
-        println("Link ${siteEntry.id} and SavedGPM $id, TODO: REMOVE FROM LIST")
     }
 
     fun addSavedGPM(id: Long?) {
         if (id == null) return
         println("Add(import) GPM $id")
+        viewModel.removeGPM(id)
     }
     Row {
         DraggableText(
@@ -121,7 +139,7 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
                 super.onEntered(event)
                 val absoluteDragY = event.toAndroidDragEvent().y
                 val relativeDragY = absoluteDragY - lazyColumnTopY
-                println("l-m ${relativeDragY}")
+                //println("l-m ${relativeDragY}")
                 val lazyColumnSize =
                     listState.layoutInfo.viewportEndOffset - listState.layoutInfo.viewportStartOffset
                 val threshold = lazyColumnSize * 0.1f // 10% threshold for auto-scroll

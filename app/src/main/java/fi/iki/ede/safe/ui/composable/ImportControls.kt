@@ -120,14 +120,24 @@ fun ImportControls(
             TextualCheckbox(
                 showOnlyMatchingPasswords,
                 R.string.google_password_import_matching_passwords
-            ) {
-                viewModel?.applyMatchingPasswords()
+            ) { checked ->
+                if (checked) {
+                    viewModel?.applyMatchingPasswords()
+                } else {
+                    viewModel?.cancelOperation()
+                    viewModel?.clearMatchingPasswords()
+                }
             }
             TextualCheckbox(
                 showOnlyMatchingNames,
                 R.string.google_password_import_matching_names
-            ) {
-                viewModel?.applyMatchingNames()
+            ) { checked ->
+                if (checked) {
+                    viewModel?.applyMatchingNames()
+                } else {
+                    viewModel?.cancelOperation()
+                    viewModel?.clearMatchingNames()
+                }
             }
         }
         // TODO: Search from what is being displayed?
