@@ -9,7 +9,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -35,10 +34,10 @@ import fi.iki.ede.safe.ui.theme.SafeTheme
 @Composable
 fun ImportControls(
     viewModel: ImportGPMViewModel? = null,
-    isLoading: Boolean,
+    jobCompletion: Pair<Boolean, Float?>
 ) {
-    val searchFromBeingImported = remember { mutableStateOf(false) }
-    val searchFromMyOwn = remember { mutableStateOf(false) }
+    val searchFromBeingImported = remember { mutableStateOf(true) }
+    val searchFromMyOwn = remember { mutableStateOf(true) }
     val showOnlyMatchingPasswords = remember { mutableStateOf(false) }
     val showOnlyMatchingNames = remember { mutableStateOf(false) }
     var searchTextField by remember { mutableStateOf(TextFieldValue("")) }
@@ -48,9 +47,9 @@ fun ImportControls(
     fun initiateSearch() {
         val search = searchTextField.text.toLowerCasedTrimmedString()
         if (search.lowercasedTrimmed.isEmpty()) return
-        viewModel?.search(
+        viewModel?.launchSearch(
             similarityScore.toDouble(),
-            searchTextField.text.toLowerCasedTrimmedString(),
+            searchTextField.text,
             searchFromMyOwn.value,
             searchFromBeingImported.value
         )
@@ -61,11 +60,10 @@ fun ImportControls(
             .padding(15.dp)
             .size(24.dp)
         Row {
-            if (isLoading) {
-                Button(onClick = { viewModel?.cancelOperation() }) {
-                    Text(text = "Cancel...")
+            if (jobCompletion.first) {
+                Button(onClick = { viewModel?.launchCancelJobs() }) {
+                    Text(text = "Cancel\n(${"%.1f".format(jobCompletion.second)}%)")
                 }
-                CircularProgressIndicator()
             }
             TextField(
                 value = searchTextField,
@@ -122,10 +120,11 @@ fun ImportControls(
                 R.string.google_password_import_matching_passwords
             ) { checked ->
                 if (checked) {
-                    viewModel?.applyMatchingPasswords()
+                    viewModel?.launchSearchMatchingPasswords()
                 } else {
-                    viewModel?.cancelOperation()
-                    viewModel?.clearMatchingPasswords()
+                    viewModel?.launchCancelJobs {
+                        viewModel.clearMatchingPasswords()
+                    }
                 }
             }
             TextualCheckbox(
@@ -133,10 +132,11 @@ fun ImportControls(
                 R.string.google_password_import_matching_names
             ) { checked ->
                 if (checked) {
-                    viewModel?.applyMatchingNames()
+                    viewModel?.launchSearchMatchingNames()
                 } else {
-                    viewModel?.cancelOperation()
-                    viewModel?.clearMatchingNames()
+                    viewModel?.launchCancelJobs {
+                        viewModel.clearMatchingNames()
+                    }
                 }
             }
         }
@@ -149,6 +149,6 @@ fun ImportControls(
 fun ImportControlsPreview() {
     SafeTheme {
         val searchTextField = remember { mutableStateOf(TextFieldValue("")) }
-        ImportControls(null, true)
+        ImportControls(null, true to 0f)
     }
 }

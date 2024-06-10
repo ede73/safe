@@ -16,15 +16,19 @@ import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.DataModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+
 
 class ImportGPMViewModel(application: Application) : AndroidViewModel(application) {
     // LiveData to signal the UI to show loading
-    private val _isLoading = MutableLiveData(false)
-    val isLoading: LiveData<Boolean> = _isLoading
+    private val _isWorking = MutableLiveData(false to null as Float?)
+    val isWorking: LiveData<Pair<Boolean, Float?>> = _isWorking
 
     private val _originalGPMs = mutableListOf<SavedGPM>()
     private val _displayedGPMs = MutableStateFlow<List<SavedGPM>>(emptyList())
@@ -34,7 +38,9 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
     private val _displayedSiteEntries = MutableStateFlow<List<DecryptableSiteEntry>>(emptyList())
     val displayedSiteEntries: StateFlow<List<DecryptableSiteEntry>> = _displayedSiteEntries
 
-    private var requestSearchCancellation = false
+    private val jobManager = JobManager { completed, percentCompleted ->
+        _isWorking.postValue(completed to percentCompleted)
+    }
 
     init {
         loadGPMs()
@@ -42,19 +48,15 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     private val removeGPMs = mutableSetOf<SavedGPM>()
-
     fun removeGPM(id: Long) {
-        println("Remove GPM $id")
         try {
             val gpm = _originalGPMs.first { it.id == id }
             _originalGPMs.removeAll { it.id == id }
-            // will
-            if (_isLoading.value == true) {
-                removeGPMs.add(gpm)
-            } else {
-                _displayedGPMs.update { currentList ->
-                    currentList.filter { it.id != id }
-                }
+            println("removeGPMs.add(gpm")
+            removeGPMs.add(gpm)
+            println("_displayedGPMs.update")
+            _displayedGPMs.update { currentList ->
+                currentList.filter { it.id != id }
             }
         } catch (ex: Exception) {
             println("remove GPM $id failed $ex")
@@ -88,30 +90,88 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
         _displayedSiteEntries.value = _originalSiteEntries
     }
 
-    fun applyMatchingPasswords() {
-        viewModelScope.launch(Dispatchers.Default) {
-            _isLoading.postValue(true)
-            _displayedGPMs.value = emptyList()
-            _displayedSiteEntries.value = emptyList()
+    // thread safe abstraction allowing implementing easy match algorithms
+    // and the heavy lifting of editing lists while iterating them is done here
+    // not messing up the call site
+    private fun <O, I> launchIterateLists(
+        name: String,
+        outerList: List<O>,
+        innerList: List<I>,
+        outerDisplayList: MutableStateFlow<List<O>>,
+        innerDisplayList: MutableStateFlow<List<I>>,
+        start: () -> Pair<List<O>, List<I>>,
+        compare: (outerItem: O, innerItem: I) -> Pair<O?, I?>,
+        exceptionHandler: (Exception) -> Unit = {}
+    ) = viewModelScope.launch(Dispatchers.Default) {
 
-            try {
-                _originalSiteEntries.forEach { siteEntry ->
-                    checkAndRemoveGPMs()
-                    _originalGPMs.forEach { gpm ->
-                        if (!requestSearchCancellation) {
-                            if (gpm.decryptedPassword == siteEntry.plainPassword) {
-                                _displayedGPMs.value += gpm
-                                _displayedSiteEntries.value += siteEntry
-                            }
+        val (outerDisplayInit, innerDisplayInit) = start()
+        outerDisplayList.value = outerDisplayInit
+        innerDisplayList.value = innerDisplayInit
+
+        // allow iterating while editing
+        val copyOfOuterList = outerList.toList()
+        val copyOfInnerList = innerList.toList()
+
+        val progress =
+            Progress(copyOfOuterList.size * copyOfInnerList.size.toLong()) { percentCompleted ->
+                jobManager.updateProgress(percentCompleted)
+            }
+        try {
+            run jobCancelled@{
+                if (isActive) {
+                    copyOfOuterList.forEach { outerEntry ->
+                        copyOfInnerList.forEach { innerEntry ->
+                            if (!isActive) return@jobCancelled
+                            progress.increment()
+                            val (addOuterItem, addInnerItem) = compare(outerEntry, innerEntry)
+                            addOuterItem?.let { outerDisplayList.value += addOuterItem }
+                            addInnerItem?.let { innerDisplayList.value += addInnerItem }
                         }
                     }
                 }
-            } catch (ex: Exception) {
-                println("applyMatchingPasswords failed $ex")
             }
-            println("Applied passwordname match...")
-            _isLoading.postValue(false)
-            requestSearchCancellation = false
+        } catch (ex: Exception) {
+            println("Something went wrong in $name, $ex")
+            exceptionHandler(ex)
+        } finally {
+            jobManager.updateProgress(100.0f)
+        }
+    }
+
+    private fun <L> launchIterateList(
+        name: String,
+        list: List<L>,
+        displayList: MutableStateFlow<List<L>>,
+        start: () -> List<L>,
+        compare: (item: L) -> L?,
+        exceptionHandler: (Exception) -> Unit = {}
+    ) = launchIterateLists(
+        name,
+        list,
+        listOf<L?>(null),
+        displayList,
+        MutableStateFlow<List<L?>>(listOf(null)),
+        start = { start() to emptyList() },
+        compare = { l, _ -> compare(l) to null },
+        exceptionHandler
+    )
+
+    fun launchSearchMatchingPasswords() {
+        CoroutineScope(Dispatchers.Default).launch {
+            jobManager.cancelAndAddNewJob {
+                launchIterateLists("applyMatchingPasswords",
+                    _originalSiteEntries,
+                    _originalGPMs,
+                    _displayedSiteEntries,
+                    _displayedGPMs,
+                    start = { emptyList<DecryptableSiteEntry>() to emptyList<SavedGPM>() },
+                    compare = { outerEntry, innerEntry ->
+                        if (outerEntry.plainPassword == innerEntry.decryptedPassword) {
+                            outerEntry to innerEntry
+                        }
+                        null to null
+                    })
+            }
         }
     }
 
@@ -120,48 +180,25 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
         _displayedSiteEntries.value = _originalSiteEntries
     }
 
-    fun applyMatchingNames() {
-        viewModelScope.launch(Dispatchers.Default) {
-            _isLoading.postValue(true)
+    fun launchSearchMatchingNames() {
+        CoroutineScope(Dispatchers.Default).launch {
             val threshold = 0.8
-            _displayedGPMs.value = emptyList()
-            _displayedSiteEntries.value = emptyList()
-
-            try {
-                _originalSiteEntries.forEach { siteEntry ->
-                    checkAndRemoveGPMs()
-                    _originalGPMs.forEach { gpm ->
-                        if (!requestSearchCancellation) {
-                            val score = findSimilarity(
-                                harmonizePotentialDomainName(siteEntry.plainDescription).toLowerCasedTrimmedString(),
-                                harmonizePotentialDomainName(gpm.decryptedName).toLowerCasedTrimmedString()
-                            )
-                            if (score > threshold) {
-                                _displayedGPMs.value += gpm
-                                _displayedSiteEntries.value += siteEntry
-                            }
-                        }
+            jobManager.cancelAndAddNewJob {
+                launchIterateLists("applyMatchingNames",
+                    _originalSiteEntries,
+                    _originalGPMs,
+                    _displayedSiteEntries,
+                    _displayedGPMs,
+                    start = { emptyList<DecryptableSiteEntry>() to emptyList<SavedGPM>() },
+                    compare = { outerEntry, innerEntry ->
+                        if (findSimilarity(
+                                harmonizePotentialDomainName(outerEntry.plainDescription).toLowerCasedTrimmedString(),
+                                harmonizePotentialDomainName(innerEntry.decryptedName).toLowerCasedTrimmedString()
+                            ) > threshold
+                        ) outerEntry to innerEntry
+                        null to null
                     }
-                }
-            } catch (ex: Exception) {
-                println("Failed to apply name match $ex")
-            }
-            println("Applied name match...")
-            _isLoading.postValue(false)
-            requestSearchCancellation = false
-        }
-    }
-
-    private fun checkAndRemoveGPMs() {
-        if (removeGPMs.size > 0) {
-            try {
-                val gpmsToRemove = removeGPMs
-                removeGPMs.clear()
-                _displayedGPMs.update { currentList ->
-                    currentList.filterNot { savedGPM -> gpmsToRemove.contains(savedGPM) }
-                }
-            } catch (ex: Exception) {
-                println("checkAndRemoveGPMs failed $ex")
+                )
             }
         }
     }
@@ -171,92 +208,83 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
         _displayedSiteEntries.value = _originalSiteEntries
     }
 
-    fun cancelOperation() {
-        if (isLoading.value == true) {
-            requestSearchCancellation = true
-            _isLoading.postValue(false)
+    // Assuming 'scope' is your CoroutineScope, e.g., viewModelScope
+    private var searchJob: Job? = null
+    fun launchSearch(
+        similarityThresholdOrSubString: Double,
+        searchText: String,
+        searchFromMyOwn: Boolean,
+        searchFromBeingImported: Boolean,
+    ) {
+        if (searchText.isEmpty()) return
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            delay(500)
+            performSearch(
+                similarityThresholdOrSubString,
+                searchText.toLowerCasedTrimmedString(),
+                searchFromMyOwn,
+                searchFromBeingImported
+            )
         }
     }
 
-    fun search(
+    private fun performSearch(
         similarityThresholdOrSubString: Double,
         searchText: LowerCaseTrimmedString,
         searchFromMyOwn: Boolean,
         searchFromBeingImported: Boolean
     ) {
-        _isLoading.postValue(true)
-        viewModelScope.launch(Dispatchers.Default) {
-            val j1 =
-                if (searchFromMyOwn) {
-                    viewModelScope.launch(Dispatchers.Default) {
-                        _displayedSiteEntries.value = emptyList()
-
-                        try {
-                            _originalSiteEntries.forEach { siteEntry ->
-                                if (!requestSearchCancellation) {
-                                    if (similarityThresholdOrSubString > 0) {
-                                        val score = findSimilarity(
-                                            harmonizePotentialDomainName(siteEntry.plainDescription).toLowerCasedTrimmedString(),
-                                            searchText
-                                        )
-                                        if (score > similarityThresholdOrSubString) {
-                                            _displayedSiteEntries.value += siteEntry
-                                        }
-                                    } else {
-                                        if (siteEntry.plainDescription.lowercase()
-                                                .contains(searchText.lowercasedTrimmed)
-                                        ) {
-                                            _displayedSiteEntries.value += siteEntry
-                                        }
-                                    }
-                                } else {
-                                    //println("Cancelled ${searchText.lowercasedTrimmed}")
-                                }
-                            }
-                        } catch (ex: Exception) {
-                            println("Search siteEntries failed $ex")
-                        }
-                        //println("Search siteEntries completed ${searchText.lowercasedTrimmed}")
-                    }
-                } else null
-
-            val j2 = if (searchFromBeingImported) {
-                viewModelScope.launch(Dispatchers.Default) {
-                    _displayedGPMs.value = emptyList()
-                    try {
-                        _originalGPMs.forEach { gpm ->
-                            if (!requestSearchCancellation) {
-                                if (similarityThresholdOrSubString > 0) {
-                                    val score = findSimilarity(
-                                        harmonizePotentialDomainName(gpm.decryptedName).toLowerCasedTrimmedString(),
+        CoroutineScope(Dispatchers.Default).launch {
+            jobManager.cancelAndAddNewJobs {
+                val j1 = if (searchFromMyOwn)
+                    launchIterateList(
+                        "searchSiteEntries",
+                        _originalSiteEntries,
+                        _displayedSiteEntries,
+                        start = { emptyList() },
+                        compare = { item ->
+                            if (similarityThresholdOrSubString > 0) {
+                                if (findSimilarity(
+                                        harmonizePotentialDomainName(item.plainDescription).toLowerCasedTrimmedString(),
                                         searchText
-                                    )
-                                    if (score > similarityThresholdOrSubString) {
-                                        _displayedGPMs.value += gpm
-                                    }
-                                } else {
-                                    if (gpm.decryptedName.lowercase()
-                                            .contains(searchText.lowercasedTrimmed)
-                                    ) {
-                                        _displayedGPMs.value += gpm
-                                    }
-                                }
-                            } else {
-                                //println("Cancelled ${searchText.lowercasedTrimmed}")
-                            }
+                                    ) > similarityThresholdOrSubString
+                                ) item else null
+                            } else if (item.plainDescription.lowercase()
+                                    .contains(searchText.lowercasedTrimmed)
+                            ) item else null
                         }
-                    } catch (ex: Exception) {
-                        println("Failed to search GPMs $ex")
-                    }
-                    //println("Search GPM completed ${searchText.lowercasedTrimmed}")
-                }
-            } else null
+                    )
+                else null
 
-            j1?.join()
-            j2?.join()
-            //println("Searches completed")
-            _isLoading.postValue(false)
-            requestSearchCancellation = false
+                val j2 = if (searchFromBeingImported)
+                    launchIterateList(
+                        "searchGPMs",
+                        _originalGPMs,
+                        _displayedGPMs,
+                        start = { emptyList() },
+                        compare = { item ->
+                            if (similarityThresholdOrSubString > 0) {
+                                if (findSimilarity(
+                                        harmonizePotentialDomainName(item.decryptedName).toLowerCasedTrimmedString(),
+                                        searchText
+                                    ) > similarityThresholdOrSubString
+                                ) item
+                                else null
+                            } else if (item.decryptedName.lowercase()
+                                    .contains(searchText.lowercasedTrimmed)
+                            ) item else null
+                        }
+                    )
+                else null
+                listOfNotNull(j1, j2)
+            }
+        }
+    }
+
+    fun launchCancelJobs(atomicBlock: () -> Unit = {}) {
+        CoroutineScope(Dispatchers.Default).launch {
+            jobManager.cancelAllJobs(atomicBlock)
         }
     }
 }

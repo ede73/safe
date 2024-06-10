@@ -46,7 +46,7 @@ class ImportGooglePasswordManager : AutolockingBaseComponentActivity() {
 
         importTest(this)
         setContent {
-            val isLoading by viewModel.isLoading.observeAsState(false)
+            val isLoading by viewModel.isWorking.observeAsState(false to null as Float?)
             SafeTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
