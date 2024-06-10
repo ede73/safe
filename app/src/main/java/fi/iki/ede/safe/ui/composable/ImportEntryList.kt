@@ -77,7 +77,7 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
                 println("linkSavedGPMAndDecryptableSiteEntry")
                 viewModel.removeGPM(id)
                 DBHelperFactory.getDBHelper(context).linkSaveGPMAndSiteEntry(siteEntry.id!!, id)
-                println("Link ${siteEntry.id} and SavedGPM $id")
+                println("Link ${siteEntry.id} / ${siteEntry.plainDescription} and SavedGPM $id")
             } catch (ex: Exception) {
                 Log.i(
                     "ImportEntryList",
@@ -181,7 +181,11 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
                         maybeId.toLongOrNull()?.let {
                             linkSavedGPMAndDecryptableSiteEntry(
                                 clipDescription,
-                                mine.value[index],
+                                // indeed, in the SCREEN there were only
+                                // 3 SiteEntryes, 3rd being the 23andme
+                                // I might have dragged 6th from the left
+                                // is the DND framework confused? (swapped indexes?)
+                                mine.value[index], //java.lang.IndexOutOfBoundsException: Index 6 out of bounds for length 3
                                 it
                             )
                             true
