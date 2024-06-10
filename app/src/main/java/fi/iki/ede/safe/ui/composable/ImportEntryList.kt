@@ -46,16 +46,14 @@ import kotlinx.coroutines.launch
 fun ImportEntryList(viewModel: ImportGPMViewModel) {
     //mine: List<DecryptableSiteEntry>, imports: List<SavedGPM>) {
     //val maxSize = maxOf(mine.size, imports.size)
-    val mine = viewModel.displayedSiteEntries.collectAsState()
-    val imports = viewModel.displayedGPMs.collectAsState()
+    val mine = viewModel.dataRepository.displayedSiteEntries.collectAsState()
+    val imports = viewModel.dataRepository.displayedGPMs.collectAsState()
 
     val maxSize = maxOf(mine.value.size, imports.value.size)
     val context = LocalContext.current
 
-    fun ignoreSavedGPM(clipDescription: ClipDescription, id: Long?) {
+    fun ignoreSavedGPM(clipDescription: ClipDescription, id: Long) {
         println("ignoreSavedGPM ${clipDescription.label} $id")
-        if (id == null) return
-        return
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 println("ignoreSavedGPM")
@@ -71,17 +69,15 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
     fun linkSavedGPMAndDecryptableSiteEntry(
         clipDescription: ClipDescription,
         siteEntry: DecryptableSiteEntry,
-        id: Long?
+        id: Long
     ) {
         println("linkSavedGPMAndDecryptableSiteEntry ${clipDescription.label} $siteEntry $id")
-        if (id == null) return
-        return
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 println("linkSavedGPMAndDecryptableSiteEntry")
+                viewModel.removeGPM(id)
                 DBHelperFactory.getDBHelper(context).linkSaveGPMAndSiteEntry(siteEntry.id!!, id)
                 println("Link ${siteEntry.id} and SavedGPM $id")
-                viewModel.removeGPM(id)
             } catch (ex: Exception) {
                 Log.i(
                     "ImportEntryList",
@@ -94,10 +90,9 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
 
     fun addSavedGPM(clipDescription: ClipDescription, id: Long) {
         println("Add(import) GPM ${clipDescription.label} $id")
-        if (id == null) return
-        return
         viewModel.removeGPM(id)
     }
+
     Row {
         DraggableText(
             DNDObject.JustString("Add"),

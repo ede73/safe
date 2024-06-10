@@ -17,26 +17,156 @@ import fi.iki.ede.safe.model.DataModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
+class DataRepository {
+    private val _originalGPMs = mutableListOf<SavedGPM>()
+    private val _displayedGPMs = MutableStateFlow<List<SavedGPM>>(emptyList())
+    private val _originalSiteEntries = mutableListOf<DecryptableSiteEntry>()
+    private val _displayedSiteEntries = MutableStateFlow<List<DecryptableSiteEntry>>(emptyList())
+    val displayedGPMs: StateFlow<List<SavedGPM>> = _displayedGPMs
+    val displayedSiteEntries: StateFlow<List<DecryptableSiteEntry>> = _displayedSiteEntries
+
+    private val modificationRequests = MutableSharedFlow<ModificationRequest>()
+    private val repositoryScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
+    init {
+        repositoryScope.launch {
+            modificationRequests.collect { request ->
+                when (request) {
+                    is ModificationRequest.InitializeSiteEntries -> {
+                        _originalSiteEntries.clear()
+                        _originalSiteEntries.addAll(request.siteEntries)
+                        _displayedSiteEntries.value = _originalSiteEntries
+                    }
+
+                    is ModificationRequest.InitializeGPMs -> {
+                        _originalGPMs.clear()
+                        _originalGPMs.addAll(request.savedGPMs)
+                        _displayedGPMs.value = _originalGPMs
+                    }
+
+                    is ModificationRequest.ResetGPMDisplayList ->
+                        _displayedGPMs.value = _originalGPMs
+
+                    is ModificationRequest.ResetSiteEntryDisplayList ->
+                        _displayedSiteEntries.value = _originalSiteEntries
+
+                    is ModificationRequest.DisplayGPM ->
+                        _displayedGPMs.update { it + request.savedGPM }
+
+                    is ModificationRequest.DisplaySiteEntry ->
+                        _displayedSiteEntries.update { it + request.siteEntry }
+
+                    is ModificationRequest.RemoveGPM -> {
+                        _originalGPMs.removeAll { it.id == request.id }
+                        _displayedGPMs.update { it.filterNot { gpm -> gpm.id == request.id } }
+                    }
+
+                    is ModificationRequest.EmptyDisplayLists -> {
+                        _displayedGPMs.value = emptyList()
+                        _displayedSiteEntries.value = emptyList()
+                    }
+                }
+            }
+        }
+    }
+
+    fun removeGPM(id: Long) {
+        repositoryScope.launch {
+            modificationRequests.emit(ModificationRequest.RemoveGPM(id))
+        }
+    }
+
+
+    fun emptyDisplayLists() {
+        repositoryScope.launch {
+            modificationRequests.emit(ModificationRequest.EmptyDisplayLists)
+        }
+    }
+
+    fun addDisplayItem(items: List<Any>) {
+        repositoryScope.launch {
+            items.forEach { item ->
+                when (item) {
+                    is DecryptableSiteEntry ->
+                        modificationRequests.emit(ModificationRequest.DisplaySiteEntry(item))
+
+                    is SavedGPM ->
+                        modificationRequests.emit(ModificationRequest.DisplayGPM(item))
+                }
+            }
+        }
+    }
+
+    fun resetGPMDisplayList(newGPMs: Set<SavedGPM>? = null) {
+        repositoryScope.launch {
+            if (newGPMs != null)
+                modificationRequests.emit(ModificationRequest.InitializeGPMs(newGPMs.toList()))
+            else
+                modificationRequests.emit(ModificationRequest.ResetGPMDisplayList)
+        }
+    }
+
+    fun resetSiteEntryDisplayList(newSiteEntries: List<DecryptableSiteEntry>? = null) {
+        repositoryScope.launch {
+            if (newSiteEntries != null)
+                modificationRequests.emit(ModificationRequest.InitializeSiteEntries(newSiteEntries))
+            else
+                modificationRequests.emit(ModificationRequest.ResetSiteEntryDisplayList)
+        }
+    }
+
+//    inline fun <reified T> giveOriginalListOf(): MutableList<T> {
+//        return when (T::class) {
+//            // TODO: xxx
+//            SavedGPM::class -> _originalGPMs.map { it.copy() } as MutableList<T>
+//            DecryptableSiteEntry::class -> _originalSiteEntries as MutableList<T>
+//            else -> throw Exception("Not supported")
+//        }
+//    }
+
+    fun getList(dataType: DataType): List<Any> {
+        return when (dataType) {
+            DataType.GPM -> _originalGPMs.toList()
+            DataType.DecryptableSiteEntry -> _originalSiteEntries.toList()
+            // Handle other data types similarly
+        }
+    }
+}
+
+sealed class DataType {
+    object GPM : DataType()
+    object DecryptableSiteEntry : DataType()
+    // Add other data types as needed
+}
+
+sealed class ModificationRequest {
+    data class DisplayGPM(val savedGPM: SavedGPM) : ModificationRequest()
+    data class DisplaySiteEntry(val siteEntry: DecryptableSiteEntry) : ModificationRequest()
+    data class RemoveGPM(val id: Long) : ModificationRequest()
+    data object ResetSiteEntryDisplayList : ModificationRequest()
+    data object ResetGPMDisplayList : ModificationRequest()
+    data object EmptyDisplayLists : ModificationRequest()
+    data class InitializeSiteEntries(val siteEntries: List<DecryptableSiteEntry>) :
+        ModificationRequest()
+
+    data class InitializeGPMs(val savedGPMs: List<SavedGPM>) : ModificationRequest()
+}
 
 class ImportGPMViewModel(application: Application) : AndroidViewModel(application) {
     // LiveData to signal the UI to show loading
     private val _isWorking = MutableLiveData(false to null as Float?)
     val isWorking: LiveData<Pair<Boolean, Float?>> = _isWorking
 
-    private val _originalGPMs = mutableListOf<SavedGPM>()
-    private val _displayedGPMs = MutableStateFlow<List<SavedGPM>>(emptyList())
-    val displayedGPMs: StateFlow<List<SavedGPM>> = _displayedGPMs
-
-    private val _originalSiteEntries = mutableListOf<DecryptableSiteEntry>()
-    private val _displayedSiteEntries = MutableStateFlow<List<DecryptableSiteEntry>>(emptyList())
-    val displayedSiteEntries: StateFlow<List<DecryptableSiteEntry>> = _displayedSiteEntries
+    val dataRepository = DataRepository()
 
     private val jobManager = JobManager { completed, percentCompleted ->
         _isWorking.postValue(completed to percentCompleted)
@@ -47,20 +177,8 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
         loadSiteEntries()
     }
 
-    private val removeGPMs = mutableSetOf<SavedGPM>()
     fun removeGPM(id: Long) {
-        try {
-            val gpm = _originalGPMs.first { it.id == id }
-            _originalGPMs.removeAll { it.id == id }
-            println("removeGPMs.add(gpm")
-            removeGPMs.add(gpm)
-            println("_displayedGPMs.update")
-            _displayedGPMs.update { currentList ->
-                currentList.filter { it.id != id }
-            }
-        } catch (ex: Exception) {
-            println("remove GPM $id failed $ex")
-        }
+        dataRepository.removeGPM(id)
     }
 
     private fun loadGPMs() {
@@ -80,14 +198,12 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
                 }
                 emptySet()
             }
-            _originalGPMs.addAll(importedGPMs)
-            _displayedGPMs.value = _originalGPMs
+            dataRepository.resetGPMDisplayList(importedGPMs)
         }
     }
 
     private fun loadSiteEntries() {
-        _originalSiteEntries.addAll(DataModel.getPasswords())
-        _displayedSiteEntries.value = _originalSiteEntries
+        dataRepository.resetSiteEntryDisplayList(DataModel.getPasswords())
     }
 
     // thread safe abstraction allowing implementing easy match algorithms
@@ -97,35 +213,35 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
         name: String,
         outerList: List<O>,
         innerList: List<I>,
-        outerDisplayList: MutableStateFlow<List<O>>,
-        innerDisplayList: MutableStateFlow<List<I>>,
-        start: () -> Pair<List<O>, List<I>>,
+        start: () -> Unit,
         compare: (outerItem: O, innerItem: I) -> Pair<O?, I?>,
         exceptionHandler: (Exception) -> Unit = {}
     ) = viewModelScope.launch(Dispatchers.Default) {
 
-        val (outerDisplayInit, innerDisplayInit) = start()
-        outerDisplayList.value = outerDisplayInit
-        innerDisplayList.value = innerDisplayInit
+        start()
+        dataRepository.emptyDisplayLists()
 
         // allow iterating while editing
         val copyOfOuterList = outerList.toList()
-        val copyOfInnerList = innerList.toList()
 
         val progress =
-            Progress(copyOfOuterList.size * copyOfInnerList.size.toLong()) { percentCompleted ->
+            Progress(copyOfOuterList.size * innerList.size.toLong()) { percentCompleted ->
                 jobManager.updateProgress(percentCompleted)
             }
         try {
             run jobCancelled@{
                 if (isActive) {
                     copyOfOuterList.forEach { outerEntry ->
+                        // TODO: this might NOT be enuf if GPMs removed(ignored/linked)
+                        // while search on going, another solution is to add a removed items list
+                        // and just in case subtract from here..
+                        // just in case GPM list was modified, lets search on new entries
+                        val copyOfInnerList = innerList.toList()
                         copyOfInnerList.forEach { innerEntry ->
                             if (!isActive) return@jobCancelled
                             progress.increment()
                             val (addOuterItem, addInnerItem) = compare(outerEntry, innerEntry)
-                            addOuterItem?.let { outerDisplayList.value += addOuterItem }
-                            addInnerItem?.let { innerDisplayList.value += addInnerItem }
+                            dataRepository.addDisplayItem(listOfNotNull(addInnerItem, addOuterItem))
                         }
                     }
                 }
@@ -141,17 +257,14 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
     private fun <L> launchIterateList(
         name: String,
         list: List<L>,
-        displayList: MutableStateFlow<List<L>>,
-        start: () -> List<L>,
+        start: () -> Unit,
         compare: (item: L) -> L?,
         exceptionHandler: (Exception) -> Unit = {}
     ) = launchIterateLists(
         name,
         list,
         listOf<L?>(null),
-        displayList,
-        MutableStateFlow<List<L?>>(listOf(null)),
-        start = { start() to emptyList() },
+        start = { start() },
         compare = { l, _ -> compare(l) to null },
         exceptionHandler
     )
@@ -160,11 +273,9 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
         CoroutineScope(Dispatchers.Default).launch {
             jobManager.cancelAndAddNewJob {
                 launchIterateLists("applyMatchingPasswords",
-                    _originalSiteEntries,
-                    _originalGPMs,
-                    _displayedSiteEntries,
-                    _displayedGPMs,
-                    start = { emptyList<DecryptableSiteEntry>() to emptyList<SavedGPM>() },
+                    dataRepository.getList(DataType.DecryptableSiteEntry) as List<DecryptableSiteEntry>,
+                    dataRepository.getList(DataType.GPM) as List<SavedGPM>,
+                    start = { },
                     compare = { outerEntry, innerEntry ->
                         if (outerEntry.plainPassword == innerEntry.decryptedPassword) {
                             outerEntry to innerEntry
@@ -176,8 +287,8 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun clearMatchingPasswords() {
-        _displayedGPMs.value = _originalGPMs
-        _displayedSiteEntries.value = _originalSiteEntries
+        dataRepository.resetSiteEntryDisplayList()
+        dataRepository.resetGPMDisplayList()
     }
 
     fun launchSearchMatchingNames() {
@@ -185,11 +296,11 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
             val threshold = 0.8
             jobManager.cancelAndAddNewJob {
                 launchIterateLists("applyMatchingNames",
-                    _originalSiteEntries,
-                    _originalGPMs,
-                    _displayedSiteEntries,
-                    _displayedGPMs,
-                    start = { emptyList<DecryptableSiteEntry>() to emptyList<SavedGPM>() },
+//                    dataRepository.giveOriginalListOf<DecryptableSiteEntry>(),
+//                    dataRepository.giveOriginalListOf<SavedGPM>(),
+                    dataRepository.getList(DataType.DecryptableSiteEntry) as List<DecryptableSiteEntry>,
+                    dataRepository.getList(DataType.GPM) as List<SavedGPM>,
+                    start = { },
                     compare = { outerEntry, innerEntry ->
                         if (findSimilarity(
                                 harmonizePotentialDomainName(outerEntry.plainDescription).toLowerCasedTrimmedString(),
@@ -203,10 +314,7 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    fun clearMatchingNames() {
-        _displayedGPMs.value = _originalGPMs
-        _displayedSiteEntries.value = _originalSiteEntries
-    }
+    fun clearMatchingNames() = clearMatchingPasswords()
 
     // Assuming 'scope' is your CoroutineScope, e.g., viewModelScope
     private var searchJob: Job? = null
@@ -240,9 +348,9 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
                 val j1 = if (searchFromMyOwn)
                     launchIterateList(
                         "searchSiteEntries",
-                        _originalSiteEntries,
-                        _displayedSiteEntries,
-                        start = { emptyList() },
+//                        dataRepository.giveOriginalListOf<DecryptableSiteEntry>(),
+                        dataRepository.getList(DataType.DecryptableSiteEntry) as List<DecryptableSiteEntry>,
+                        start = { },
                         compare = { item ->
                             if (similarityThresholdOrSubString > 0) {
                                 if (findSimilarity(
@@ -260,9 +368,9 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
                 val j2 = if (searchFromBeingImported)
                     launchIterateList(
                         "searchGPMs",
-                        _originalGPMs,
-                        _displayedGPMs,
-                        start = { emptyList() },
+//                        dataRepository.giveOriginalListOf<SavedGPM>(),
+                        dataRepository.getList(DataType.GPM) as List<SavedGPM>,
+                        start = { },
                         compare = { item ->
                             if (similarityThresholdOrSubString > 0) {
                                 if (findSimilarity(
