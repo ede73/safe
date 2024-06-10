@@ -1,5 +1,6 @@
 package fi.iki.ede.safe.ui.composable
 
+import android.content.ClipDescription
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -14,19 +15,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
-import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.safe.ui.models.DNDObject
 import fi.iki.ede.safe.ui.modifiers.dnd
+import fi.iki.ede.safe.ui.modifiers.getClipData
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @Composable
 fun DraggableText(
     dragObject: DNDObject,
     modifier: Modifier = Modifier,
-    onItemDropped: ((DragAndDropEvent) -> Unit)? = null
+    onItemDropped: ((Pair<ClipDescription, String>) -> Boolean)? = null
 ) {
     val defaultColor = Color.Unspecified
     var dndHighlight by remember { mutableStateOf(defaultColor) }
@@ -52,13 +53,11 @@ fun DraggableText(
                 dndHighlight = defaultColor
             }
 
-            override fun onDrop(event: DragAndDropEvent): Boolean {
-                val draggedData = event.toAndroidDragEvent()
-                    .clipData.getItemAt(0).text
-                // Parse received data
-                onItemDropped!!(event)
-                return true
-            }
+            // delegate onwards
+            override fun onDrop(event: DragAndDropEvent) =
+                getClipData(event)?.let {
+                    onItemDropped?.invoke(it)
+                } ?: false
         }
     }
 
@@ -90,6 +89,7 @@ fun DraggableTextPreview() {
     SafeTheme {
         DraggableText(DNDObject.JustString("Hello"), onItemDropped = {
             println("item dropped")
+            false
         })
     }
 }

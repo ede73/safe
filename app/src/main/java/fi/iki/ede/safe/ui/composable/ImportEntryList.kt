@@ -22,7 +22,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
-import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
@@ -51,11 +50,12 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
     val imports = viewModel.displayedGPMs.collectAsState()
 
     val maxSize = maxOf(mine.value.size, imports.value.size)
-    //println("${mine.value.size}, ${imports.value.size}")
     val context = LocalContext.current
 
-    fun ignoreSavedGPM(id: Long?) {
+    fun ignoreSavedGPM(clipDescription: ClipDescription, id: Long?) {
+        println("ignoreSavedGPM ${clipDescription.label} $id")
         if (id == null) return
+        return
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 println("ignoreSavedGPM")
@@ -68,8 +68,14 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
         }
     }
 
-    fun linkSavedGPMAndDecryptableSiteEntry(siteEntry: DecryptableSiteEntry, id: Long?) {
+    fun linkSavedGPMAndDecryptableSiteEntry(
+        clipDescription: ClipDescription,
+        siteEntry: DecryptableSiteEntry,
+        id: Long?
+    ) {
+        println("linkSavedGPMAndDecryptableSiteEntry ${clipDescription.label} $siteEntry $id")
         if (id == null) return
+        return
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 println("linkSavedGPMAndDecryptableSiteEntry")
@@ -86,21 +92,20 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
         }
     }
 
-    fun addSavedGPM(id: Long?) {
+    fun addSavedGPM(clipDescription: ClipDescription, id: Long) {
+        println("Add(import) GPM ${clipDescription.label} $id")
         if (id == null) return
-        println("Add(import) GPM $id")
+        return
         viewModel.removeGPM(id)
     }
     Row {
         DraggableText(
             DNDObject.JustString("Add"),
-            onItemDropped = { event ->
-                if (event.mimeTypes().contains(ClipDescription.MIMETYPE_TEXT_PLAIN)) {
-                    addSavedGPM(
-                        event.toAndroidDragEvent()
-                            .clipData.getItemAt(0).text.toString().toLongOrNull()
-                    )
-                }
+            onItemDropped = { (clipDescription, maybeId) ->
+                maybeId.toLongOrNull()?.let {
+                    addSavedGPM(clipDescription, it)
+                    true
+                } ?: false
             }
         )
 
@@ -112,13 +117,11 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
 
         DraggableText(
             DNDObject.JustString("Ignore"),
-            onItemDropped = { event ->
-                if (event.mimeTypes().contains(ClipDescription.MIMETYPE_TEXT_PLAIN)) {
-                    ignoreSavedGPM(
-                        event.toAndroidDragEvent()
-                            .clipData.getItemAt(0).text.toString().toLongOrNull()
-                    )
-                }
+            onItemDropped = { (clipDescription, maybeId) ->
+                maybeId.toLongOrNull()?.let {
+                    ignoreSavedGPM(clipDescription, it)
+                    true
+                } ?: false
             }
         )
     }
@@ -132,7 +135,6 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
                 super.onEntered(event)
                 val absoluteDragY = event.toAndroidDragEvent().y
                 val relativeDragY = absoluteDragY - lazyColumnTopY
-                //println("l-m ${relativeDragY}")
                 val lazyColumnSize =
                     listState.layoutInfo.viewportEndOffset - listState.layoutInfo.viewportStartOffset
                 val threshold = lazyColumnSize * 0.1f // 10% threshold for auto-scroll
@@ -180,14 +182,15 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
                         DNDObject.SiteEntry(mine.value[index])
                     else DNDObject.Spacer,
                     modifier = mySizeModifier.weight(1f),
-                    onItemDropped = { event ->
-                        if (event.mimeTypes().contains(ClipDescription.MIMETYPE_TEXT_PLAIN)) {
+                    onItemDropped = { (clipDescription, maybeId) ->
+                        maybeId.toLongOrNull()?.let {
                             linkSavedGPMAndDecryptableSiteEntry(
+                                clipDescription,
                                 mine.value[index],
-                                event.toAndroidDragEvent()
-                                    .clipData.getItemAt(0).text.toString().toLongOrNull()
+                                it
                             )
-                        }
+                            true
+                        } ?: false
                     }
                 )
 
