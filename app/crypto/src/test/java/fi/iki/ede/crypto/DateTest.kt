@@ -30,6 +30,11 @@ class DateTest {
         }
     }
 
+    @Test
+    fun FailedOnesBefore() {
+        DateUtils.newParse("Jan 12, 2024, 12:44:37")
+    }
+
     companion object {
         // Exactly Wed May 31 2023 22:21:47 GMT+0000
         private const val UNIX_STAMP_MILLIS = 1685571707000L
