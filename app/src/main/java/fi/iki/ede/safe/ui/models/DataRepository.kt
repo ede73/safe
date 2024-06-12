@@ -54,7 +54,7 @@ class DataRepository {
                         if (_originalGPMs.removeAll { it.id == request.id }) {
                             println("GPM $request.id removed")
                         } else {
-                            println("GPM $request.id not found (wasnt removed)")
+                            println("GPM $request.id not found (wasnt removed from ORIGINAL)")
                         }
                         _displayedGPMs.update { it.filterNot { gpm -> gpm.id == request.id } }
                     }
