@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -16,12 +17,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.safe.ui.models.DNDObject
 import fi.iki.ede.safe.ui.modifiers.dnd
 import fi.iki.ede.safe.ui.modifiers.getClipData
 import fi.iki.ede.safe.ui.theme.SafeTheme
+
+fun DNDObject.dump(): String =
+    "DNDObject:" +
+            when (this) {
+                is DNDObject.JustString -> this.string
+                is DNDObject.GPM -> "${this.savedGPM.decryptedName} - ${this.savedGPM.id}"
+                is DNDObject.SiteEntry -> "${this.decryptableSiteEntry.plainDescription} - ${this.decryptableSiteEntry.id}"
+                is DNDObject.Spacer -> "Spacer"
+            }
 
 @Composable
 fun DraggableText(
@@ -61,6 +73,15 @@ fun DraggableText(
         }
     }
 
+    val isVisible = remember { mutableStateOf(false) }
+
+    // Modifier to update visibility
+    fun Modifier.checkIfVisible(isVisible: MutableState<Boolean>): Modifier =
+        this.onGloballyPositioned { layoutCoordinates ->
+            val positionInParent = layoutCoordinates.positionInParent()
+            isVisible.value = positionInParent.x >= 0 && positionInParent.y >= 0
+        }
+
     when (dragObject) {
         is DNDObject.Spacer -> Spacer(modifier = modifier)
         else ->
@@ -69,7 +90,20 @@ fun DraggableText(
                     .border(1.dp, if (onItemDropped == null) Color.Red else Color.Green)
                     .background(dndHighlight)
                     .padding(10.dp)
-                    .dnd(dragObject, onItemDropped, dndTarget)
+                    .checkIfVisible(isVisible)
+                    .let {
+                        if (isVisible.value) {
+                            //println("Add a DND Target ${dragObject.dump()}..we are visible")
+                            // works but doesnt act as DND targe
+                            it.dnd(dragObject, onItemDropped, dndTarget)
+                            //it.dndTargetThatWorksPerfectly(dragObject, dndTarget, isVisible.value)
+                            // literally DOES NOT work
+                            //it.dnd(dragObject, false, dndTarget)
+                        } else {
+                            println("Skip a DND Target${dragObject.dump()}..we are NOT visible")
+                            it
+                        }
+                    }
             ) {
                 Box {
                     when (dragObject) {

@@ -119,7 +119,8 @@ fun harmonizePotentialDomainName(input: String): String {
         listOf("""^($top75PercentileTLDPrefixes)\.""", """\.(${top86PercentileTLDSuffixes})$""")
     var result = input
     patterns.forEach { pattern ->
-        result = result.replace(Regex(pattern), "")
+        result =
+            result.replace(Regex(pattern, RegexOption.IGNORE_CASE), "").replace("^https?://", "")
     }
     return result
 }

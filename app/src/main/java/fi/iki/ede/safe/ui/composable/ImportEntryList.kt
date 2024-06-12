@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -30,16 +30,42 @@ import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.model.SavedGPM.Companion.makeFromEncryptedStringFields
 import fi.iki.ede.gpm.model.encrypt
 import fi.iki.ede.gpm.model.encrypter
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.ui.models.DNDObject
 import fi.iki.ede.safe.ui.models.ImportGPMViewModel
+import fi.iki.ede.safe.ui.modifiers.doesItHaveText
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+
+sealed class CombinedListPairs {
+    data class SiteEntryToGPM(val siteEntry: DecryptableSiteEntry?, val gpm: SavedGPM?) :
+        CombinedListPairs()
+}
+
+fun combineLists(
+    siteEntries: List<DecryptableSiteEntry>,
+    gpms: List<SavedGPM>
+): List<CombinedListPairs> {
+    val maxSize = maxOf(siteEntries.size, gpms.size)
+    val combinedList = mutableListOf<CombinedListPairs>()
+
+    for (i in 0 until maxSize) {
+        combinedList.add(
+            CombinedListPairs.SiteEntryToGPM(
+                siteEntries.getOrNull(i),
+                gpms.getOrNull(i)
+            )
+        )
+    }
+
+    return combinedList
+}
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -48,7 +74,7 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
     //val maxSize = maxOf(mine.size, imports.size)
     val mine = viewModel.dataRepository.displayedSiteEntries.collectAsState()
     val imports = viewModel.dataRepository.displayedGPMs.collectAsState()
-
+    val combinedList = combineLists(mine.value, imports.value)
     val maxSize = maxOf(mine.value.size, imports.value.size)
     val context = LocalContext.current
 
@@ -71,7 +97,7 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
         siteEntry: DecryptableSiteEntry,
         id: Long
     ) {
-        println("linkSavedGPMAndDecryptableSiteEntry ${clipDescription.label} $siteEntry $id")
+        println("LINK GPM AND ENTRY--> clip=(${clipDescription.label})  ==TO site=(${siteEntry.plainDescription}) gpmid=$id")
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 println("linkSavedGPMAndDecryptableSiteEntry")
@@ -124,6 +150,11 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
     val coroutineScope = rememberCoroutineScope()
     var lazyColumnTopY by remember { mutableStateOf(0f) }
 
+    println("==========================================")
+    combinedList.forEach { k ->
+        val x = k as CombinedListPairs.SiteEntryToGPM
+        println("key ${x.siteEntry?.id} ${x.siteEntry?.plainDescription} gpmid=${x.gpm?.id}")
+    }
     val dndTarget = remember {
         object : DragAndDropTarget {
             override fun onMoved(event: DragAndDropEvent) {
@@ -160,48 +191,45 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
         .fillMaxWidth(0.4f)
         .fillMaxHeight(0.2f)
     LazyColumn(
-        state = listState, modifier = Modifier
+        state = listState,
+        modifier = Modifier
             .dragAndDropTarget(
                 shouldStartDragAndDrop = { event ->
-                    true
+                    doesItHaveText(event)
                 }, target = dndTarget
             )
             .onGloballyPositioned { coordinates ->
                 lazyColumnTopY = coordinates.positionInWindow().y
             }
     ) {
-        itemsIndexed(List(maxSize) { it }) { index, _ ->
+        items(
+            combinedList,
+            key = { item ->
+                val site = item as CombinedListPairs.SiteEntryToGPM
+                "site=${site.siteEntry?.id} gpmid=${site.gpm?.id}"
+            }
+        ) { x ->
+            val site = x as CombinedListPairs.SiteEntryToGPM
             Row {
+                val siteEntry = site.siteEntry
+                println("print ${siteEntry?.plainDescription}")
                 DraggableText(
-                    if (index < mine.value.size)
-                        DNDObject.SiteEntry(mine.value[index])
-                    else DNDObject.Spacer,
+                    if (siteEntry != null) DNDObject.SiteEntry(siteEntry) else DNDObject.Spacer,
                     modifier = mySizeModifier.weight(1f),
                     onItemDropped = { (clipDescription, maybeId) ->
-                        maybeId.toLongOrNull()?.let {
-                            linkSavedGPMAndDecryptableSiteEntry(
-                                clipDescription,
-                                // indeed, in the SCREEN there were only
-                                // 3 SiteEntryes, 3rd being the 23andme
-                                // I might have dragged 6th from the left
-                                // is the DND framework confused? (swapped indexes?)
-                                mine.value[index], //java.lang.IndexOutOfBoundsException: Index 6 out of bounds for length 3
-                                it
-                            )
+                        if (siteEntry == null) false
+                        else maybeId.toLongOrNull()?.let {
+                            linkSavedGPMAndDecryptableSiteEntry(clipDescription, siteEntry, it)
                             true
                         } ?: false
                     }
                 )
 
-                Spacer(
-                    modifier = Modifier
-                        .fillMaxWidth(0.1f)
-                    // .visibleSpacer(true, Color.Yellow)
-                )
+                Spacer(modifier = Modifier.fillMaxWidth(0.1f))
 
                 DraggableText(
-                    if (index < imports.value.size)
-                        DNDObject.GPM(imports.value[index])
+                    if (site.gpm != null)
+                        DNDObject.GPM(site.gpm)
                     else DNDObject.Spacer,
                     modifier = mySizeModifier.weight(1f),
                 )

@@ -70,6 +70,8 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
     // thread safe abstraction allowing implementing easy match algorithms
     // and the heavy lifting of editing lists while iterating them is done here
     // not messing up the call site
+    // TODO: ADD PRE-MANGLE! instead of decrypting 300000 entries, do 400+700 , make hash and compare the hashes! (or parts)
+    // TODO: pre-mangle, make all lowercase - for instance
     private fun <O, I> launchIterateLists(
         name: String,
         outerList: List<O>,
@@ -130,6 +132,7 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
         exceptionHandler
     )
 
+    // TODO: PRE-MANGLE! calculate hash of all the PWDs and compare those
     fun launchSearchMatchingPasswords() {
         CoroutineScope(Dispatchers.Default).launch {
             jobManager.cancelAndAddNewJob {
@@ -154,7 +157,8 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun launchSearchMatchingNames() {
         CoroutineScope(Dispatchers.Default).launch {
-            val threshold = 0.8
+            // TODO: ScoreCOnfig!
+            val threshold = 0.55
             jobManager.cancelAndAddNewJob {
                 launchIterateLists("applyMatchingNames",
 //                    dataRepository.giveOriginalListOf<DecryptableSiteEntry>(),
@@ -163,10 +167,17 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
                     dataRepository.getList(DataType.GPM) as List<SavedGPM>,
                     start = { },
                     compare = { outerEntry, innerEntry ->
-                        if (findSimilarity(
-                                harmonizePotentialDomainName(outerEntry.plainDescription).toLowerCasedTrimmedString(),
-                                harmonizePotentialDomainName(innerEntry.decryptedName).toLowerCasedTrimmedString()
-                            ) > threshold
+                        val eka =
+                            harmonizePotentialDomainName(outerEntry.plainDescription).toLowerCasedTrimmedString()
+                        val toka =
+                            harmonizePotentialDomainName(innerEntry.decryptedName).toLowerCasedTrimmedString()
+
+                        val score = findSimilarity(
+                            eka, toka
+                        )
+                        if (score > threshold)
+                            println("$score = ${eka.lowercasedTrimmed} == ${toka.lowercasedTrimmed}")
+                        if (score > threshold
                         ) outerEntry to innerEntry
                         null to null
                     }
