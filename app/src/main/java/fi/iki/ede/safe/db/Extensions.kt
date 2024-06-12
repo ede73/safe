@@ -17,6 +17,9 @@ internal fun ContentValues.put(column: TableColumns<*>, value: Long?) =
 internal fun ContentValues.put(column: TableColumns<*>, value: ByteArray) =
     put(column.columnName, value)
 
+internal fun ContentValues.put(column: TableColumns<*>, value: String) =
+    put(column.columnName, value)
+
 internal fun ContentValues.put(column: TableColumns<*>, date: ZonedDateTime) =
     put(column, DateUtils.toUnixSeconds(date))
 
@@ -38,6 +41,9 @@ internal fun Cursor.getIVCipher(column: TableColumns<*>) =
         CipherUtilities.IV_LENGTH,
         getBlob(getColumnIndexOrThrow(column.columnName)) ?: byteArrayOf(),
     )
+
+internal fun Cursor.getString(column: TableColumns<*>) =
+    getString(getColumnIndexOrThrow(column.columnName))
 
 internal fun Cursor.getDBID(column: TableColumns<*>) =
     getLong(getColumnIndexOrThrow(column.columnName))
