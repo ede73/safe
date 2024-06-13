@@ -38,7 +38,7 @@ class CategoryListScreen : AutolockingBaseComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        setContent { CategoryListScreenCompose() }
+        setContent { CategoryListScreenCompose(DataModel.categoriesStateFlow) }
     }
 
     companion object {
@@ -54,7 +54,11 @@ class CategoryListScreen : AutolockingBaseComponentActivity() {
 }
 
 @Composable
-private fun CategoryListScreenCompose(flow: StateFlow<List<DecryptableCategoryEntry>> = MutableStateFlow(     emptyList())) {
+private fun CategoryListScreenCompose(
+    flow: StateFlow<List<DecryptableCategoryEntry>> = MutableStateFlow(
+        emptyList()
+    )
+) {
     val coroutineScope = rememberCoroutineScope()
     val categoriesState by flow.map { categories -> categories.sortedBy { it.plainName.lowercase() } }
         .collectAsState(initial = emptyList())

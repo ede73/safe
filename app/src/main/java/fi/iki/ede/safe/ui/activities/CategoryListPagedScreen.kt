@@ -51,7 +51,7 @@ class CategoryListPagedScreen : AutolockingBaseComponentActivity() {
             context.startActivity(
                 Intent(
                     context,
-                    CategoryListScreen::class.java
+                    CategoryListPagedScreen::class.java
                 ).setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
             )
         }
