@@ -201,8 +201,12 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
                             website = it.getIVCipher(Password.Columns.WEBSITE)
                             note = it.getIVCipher(Password.Columns.NOTE)
                             photo = it.getIVCipher(Password.Columns.PHOTO)
-                            it.getZonedDateTimeOfPasswordChange()
-                                ?.let { passwordChangedDate = it }
+                            try {
+                                it.getZonedDateTimeOfPasswordChange()
+                                    ?.let { passwordChangedDate = it }
+                            } catch (ex: Exception) {
+                                Log.d(TAG, "Date parsing issue", ex)
+                            }
                         })
                         it.moveToNext()
                     }
