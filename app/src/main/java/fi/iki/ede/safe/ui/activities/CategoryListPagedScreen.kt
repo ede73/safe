@@ -60,7 +60,11 @@ class CategoryListPagedScreen : AutolockingBaseComponentActivity() {
 
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
-private fun CategoryListScreenPagedCompose(flow: StateFlow<List<DecryptableCategoryEntry>> = MutableStateFlow(emptyList())) {
+private fun CategoryListScreenPagedCompose(
+    flow: StateFlow<List<DecryptableCategoryEntry>> = MutableStateFlow(
+        emptyList()
+    )
+) {
     val coroutineScope = rememberCoroutineScope()
     val categoriesState by flow.map { categories -> categories.sortedBy { it.plainName.lowercase() } }
         .collectAsState(initial = emptyList())
@@ -68,7 +72,6 @@ private fun CategoryListScreenPagedCompose(flow: StateFlow<List<DecryptableCateg
     val pagerState = rememberPagerState(pageCount = { categoriesState.size })
 
     SafeTheme {
-        // A surface container using the 'background' color from the theme
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background

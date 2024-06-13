@@ -55,8 +55,7 @@ class SiteEntryEditScreen : AutolockingBaseComponentActivity() {
                 // Edit a password
                 val passwordId = intent.getLongExtra(PASSWORD_ID, -1L)
                 require(passwordId != -1L) { "Password must be value and exist" }
-                val password = DataModel.getPassword(passwordId)
-                viewModel.editPassword(password)
+                viewModel.editPassword(DataModel.getPassword(passwordId))
             } else if (intent.hasExtra(CATEGORY_ID)) {
                 // Add a new password
                 val categoryId = intent.getLongExtra(CATEGORY_ID, -1L)
@@ -151,7 +150,6 @@ private fun SiteEntryEditCompose(
     finishActivity: () -> Unit,
 ) {
     SafeTheme {
-        // A surface container using the 'background' color from the theme
         Surface(
             modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
         ) {

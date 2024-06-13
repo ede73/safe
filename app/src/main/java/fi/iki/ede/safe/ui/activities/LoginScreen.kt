@@ -49,7 +49,6 @@ open class LoginScreen : ComponentActivity() {
         // (unless we literally DO go snooping in the database)
 
         val firstTimeUse = Preferences.isFirstTimeLogin()
-        val context = this
         setContent {
             LoginScreenCompose(
                 firstTimeUse,

@@ -65,7 +65,6 @@ private fun CategoryListScreenCompose(
     var displayAddCategoryDialog by remember { mutableStateOf(false) }
 
     SafeTheme {
-        // A surface container using the 'background' color from the theme
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
