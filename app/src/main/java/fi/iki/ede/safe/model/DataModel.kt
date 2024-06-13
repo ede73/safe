@@ -24,6 +24,7 @@ object DataModel {
     private val _categoriesStateFlow = MutableStateFlow(_categories.keys.toList())
     val categoriesStateFlow: StateFlow<List<DecryptableCategoryEntry>> get() = _categoriesStateFlow
 
+    // NO USE FOR NOW
     private val _categoriesSharedFlow =
         MutableSharedFlow<PasswordSafeEvent.CategoryEvent>(extraBufferCapacity = 10, replay = 10)
     val categoriesSharedFlow: SharedFlow<PasswordSafeEvent.CategoryEvent> get() = _categoriesSharedFlow
@@ -31,7 +32,6 @@ object DataModel {
     // Passwords state and events
     private val _passwordsStateFlow = MutableStateFlow<List<DecryptableSiteEntry>>(emptyList())
     val passwordsStateFlow: StateFlow<List<DecryptableSiteEntry>> get() = _passwordsStateFlow
-
     private val _passwordsSharedFlow =
         MutableSharedFlow<PasswordSafeEvent.PasswordEvent>(extraBufferCapacity = 10, replay = 10)
 
@@ -254,7 +254,7 @@ object DataModel {
             _categoriesStateFlow.value = _categories.keys.toList()
         }
 
-        suspend fun loadPasswordsFromDB() {
+        suspend fun loadSiteEntriesFromDB() {
             // passwords..
             // TODO: This is NOT mocked at the moment
             //val passwords = db!!.fetchAllRows()
@@ -294,7 +294,7 @@ object DataModel {
         }
 
         loadCategoriesFromDB()
-        loadPasswordsFromDB()
+        loadSiteEntriesFromDB()
         launchDecryptDescriptions()
 
         if (BuildConfig.DEBUG) {
