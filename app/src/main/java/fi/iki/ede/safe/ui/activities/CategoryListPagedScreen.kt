@@ -5,8 +5,11 @@ import android.content.Intent
 import android.os.Bundle
 import android.text.TextUtils
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -22,23 +25,25 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
+import fi.iki.ede.safe.model.DataModel.passwordsStateFlow
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.ui.composable.AddOrEditCategory
-import fi.iki.ede.safe.ui.composable.CategoryList
+import fi.iki.ede.safe.ui.composable.CategoryRow
+import fi.iki.ede.safe.ui.composable.SiteEntryList
 import fi.iki.ede.safe.ui.composable.TopActionBar
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 
-class CategoryListScreen : AutolockingBaseComponentActivity() {
+class CategoryListPagedScreen : AutolockingBaseComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        setContent { CategoryListScreenCompose() }
+        setContent { CategoryListScreenPagedCompose(DataModel.categoriesStateFlow) }
     }
 
     companion object {
@@ -54,11 +59,13 @@ class CategoryListScreen : AutolockingBaseComponentActivity() {
 }
 
 @Composable
-private fun CategoryListScreenCompose(flow: StateFlow<List<DecryptableCategoryEntry>> = MutableStateFlow(     emptyList())) {
+@OptIn(ExperimentalFoundationApi::class)
+private fun CategoryListScreenPagedCompose(flow: StateFlow<List<DecryptableCategoryEntry>> = MutableStateFlow(emptyList())) {
     val coroutineScope = rememberCoroutineScope()
     val categoriesState by flow.map { categories -> categories.sortedBy { it.plainName.lowercase() } }
         .collectAsState(initial = emptyList())
     var displayAddCategoryDialog by remember { mutableStateOf(false) }
+    val pagerState = rememberPagerState(pageCount = { categoriesState.size })
 
     SafeTheme {
         // A surface container using the 'background' color from the theme
@@ -66,32 +73,41 @@ private fun CategoryListScreenCompose(flow: StateFlow<List<DecryptableCategoryEn
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                TopActionBar(
-                    onAddRequested = {
-                        displayAddCategoryDialog = true
-                    },
-                )
-                if (displayAddCategoryDialog) {
-                    val encrypter = KeyStoreHelperFactory.getEncrypter()
-                    AddOrEditCategory(
-                        textId = R.string.category_list_edit_category,
-                        categoryName = "",
-                        onSubmit = {
-                            if (!TextUtils.isEmpty(it)) {
-                                val entry = DecryptableCategoryEntry().apply {
-                                    encryptedName = encrypter(it.toByteArray())
+            HorizontalPager(state = pagerState) { page ->
+                val category = categoriesState[page]
+                val passwordsState by passwordsStateFlow
+                    .map { passwords -> passwords.filter { it.categoryId == category.id } }
+                    .map { passwords -> passwords.sortedBy { it.plainDescription.lowercase() } }
+                    .filterNotNull()
+                    .collectAsState(initial = emptyList())
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    TopActionBar(
+                        onAddRequested = {
+                            displayAddCategoryDialog = true
+                        },
+                    )
+                    if (displayAddCategoryDialog) {
+                        val encrypter = KeyStoreHelperFactory.getEncrypter()
+                        AddOrEditCategory(
+                            textId = R.string.category_list_edit_category,
+                            categoryName = "",
+                            onSubmit = {
+                                if (!TextUtils.isEmpty(it)) {
+                                    val entry = DecryptableCategoryEntry().apply {
+                                        encryptedName = encrypter(it.toByteArray())
+                                    }
+                                    coroutineScope.launch {
+                                        DataModel.addOrEditCategory(entry)
+                                    }
                                 }
-                                coroutineScope.launch {
-                                    DataModel.addOrEditCategory(entry)
-                                }
-                            }
-                            displayAddCategoryDialog = false
-                        })
+                                displayAddCategoryDialog = false
+                            })
+                    }
+                    CategoryRow(category)
+                    SiteEntryList(passwordsState)
                 }
-                CategoryList(categoriesState)
             }
         }
     }
@@ -99,7 +115,7 @@ private fun CategoryListScreenCompose(flow: StateFlow<List<DecryptableCategoryEn
 
 @Preview(showBackground = true)
 @Composable
-fun CategoryScreenPreview() {
+fun CategoryListPagedScreenPreview() {
     KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
     KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
 
@@ -108,5 +124,5 @@ fun CategoryScreenPreview() {
     }, DecryptableCategoryEntry().apply {
         encryptedName = KeyStoreHelperFactory.getEncrypter()("iPhone".toByteArray())
     })
-    CategoryListScreenCompose(MutableStateFlow(flow))
+    CategoryListScreenPagedCompose(MutableStateFlow(flow))
 }
