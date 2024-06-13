@@ -53,6 +53,11 @@ import fi.iki.ede.safe.ui.utilities.AvertInactivityDuringLongTask
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.time.ZonedDateTime
 
+inline fun <T, C : Collection<T>> C.ifNotEmpty(block: (C) -> Unit): C {
+    if (this.isNotEmpty()) block(this)
+    return this
+}
+
 @Composable
 fun SiteEntryView(
     viewModel: EditingSiteEntryViewModel,
@@ -212,6 +217,11 @@ fun SiteEntryView(
                 onValueChange = { date: ZonedDateTime? ->
                     viewModel.updatePasswordChangedDate(date)
                 })
+            passEntry.id?.let { pid ->
+                DataModel.getLinkedGPMs(pid).ifNotEmpty {
+                    Text(text = "Has ${it.size} linked GPMs")
+                }
+            }
         }
         PasswordTextField(
             textTip = R.string.password_entry_note_tip,

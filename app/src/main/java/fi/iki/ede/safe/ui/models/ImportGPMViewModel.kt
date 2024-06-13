@@ -12,7 +12,6 @@ import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.similarity.LowerCaseTrimmedString
 import fi.iki.ede.gpm.similarity.findSimilarity
 import fi.iki.ede.gpm.similarity.toLowerCasedTrimmedString
-import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.DataModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -44,9 +43,10 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
 
     private fun loadGPMs() {
         viewModelScope.launch(Dispatchers.IO) {
-            val db = DBHelperFactory.getDBHelper(getApplication())
             val importedGPMs = try {
-                val imports = db.fetchUnprocessedSavedGPMsFromDB()
+                val imports = DataModel._savedGPMs.filter { savedGPM ->
+                    !savedGPM.flaggedIgnored && DataModel._siteEntryToSavedGPM.none { (_, savedGPMList) -> savedGPM in savedGPMList }
+                }.toSet()
                 // IF user restored a database in the MEAN TIME, that means our previous export
                 // is now totally unreadable (since our import / doesn't change gpm imports)
                 val decryptTest = imports.firstOrNull()?.decryptedName
@@ -55,7 +55,7 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
                 Log.e("ImportTest", "BadPaddingException: delete all GPM imports")
                 // sorry dude, no point keeping imports we've NO WAY ever ever reading
                 CoroutineScope(Dispatchers.IO).launch {
-                    db.deleteAllSavedGPMs()
+                    DataModel.deleteAllSavedGPMs()
                 }
                 emptySet()
             }

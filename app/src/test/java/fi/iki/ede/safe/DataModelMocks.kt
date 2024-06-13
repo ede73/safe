@@ -172,7 +172,8 @@ object DataModelMocks {
 
         // GPMs (partial TODO:)
         every { db.fetchSavedGPMsFromDB() } returns emptySet()
-
+        every { db.fetchAllSiteEntryGPMMappings() } returns emptyMap()
+        
         runBlocking {
             DataModel.loadFromDatabase()
         }

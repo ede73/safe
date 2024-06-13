@@ -371,7 +371,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
 
         }
 
-    fun fetchAllBPMMappings(): Map<DBID, Set<DBID>> =
+    fun fetchAllSiteEntryGPMMappings(): Map<DBID, Set<DBID>> =
         readableDatabase.use { db ->
             db.query(
                 Password2GooglePasswordManager,

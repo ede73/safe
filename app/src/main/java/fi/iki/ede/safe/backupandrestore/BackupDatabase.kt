@@ -141,7 +141,8 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
         if (gpms.isNotEmpty()) {
             serializer.startTag(Elements.IMPORTS)
             val gpmIdToPasswords =
-                dbHelper.fetchAllBPMMappings().flatMap { (a, bSet) -> bSet.map { b -> b to a } }
+                dbHelper.fetchAllSiteEntryGPMMappings()
+                    .flatMap { (a, bSet) -> bSet.map { b -> b to a } }
                     .groupBy({ it.first }, { it.second })
                     .mapValues { (_, v) -> v.toSet() }
             serializer.startTag(Elements.IMPORTS_GPM)

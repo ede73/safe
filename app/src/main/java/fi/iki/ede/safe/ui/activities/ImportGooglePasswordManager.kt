@@ -29,6 +29,7 @@ import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.ScoringConfig
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.db.DBHelperFactory
+import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.ui.composable.ImportControls
 import fi.iki.ede.safe.ui.composable.ImportEntryList
 import fi.iki.ede.safe.ui.models.ImportGPMViewModel
@@ -79,7 +80,8 @@ fun importTest(activity: Activity) {
             val file = activity.openFileInput(inputPath).use { inputStream ->
                 readCsv(inputStream)
             }
-            val db = DBHelperFactory.getDBHelper(activity.applicationContext)
+            val db =
+                DBHelperFactory.getDBHelper(activity.applicationContext) // USED FOR IMPORT - for now TODO:
 
             launchImport(db, file)
         } catch (ex: Exception) {
@@ -119,9 +121,11 @@ private fun launchImport(
             //assert(delete.intersect(add).size == 0)
             // There must be no overlap between ones we delete/we update!
             assert(update.map { it.value }.toSet().intersect(delete).isEmpty())
+            // TODO: shouldnt access directly
             db.deleteObsoleteSavedGPMs(delete)
             db.updateSavedGPMByIncomingGPM(update)
             db.addNewIncomingGPM(add)
+            DataModel.loadFromDatabase()
         } catch (ex: Exception) {
             Log.e("ImportTest", "Import failed", ex)
         }

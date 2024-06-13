@@ -34,7 +34,7 @@ import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.model.SavedGPM.Companion.makeFromEncryptedStringFields
 import fi.iki.ede.gpm.model.encrypt
 import fi.iki.ede.gpm.model.encrypter
-import fi.iki.ede.safe.db.DBHelperFactory
+import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.ui.models.DNDObject
 import fi.iki.ede.safe.ui.models.ImportGPMViewModel
 import fi.iki.ede.safe.ui.modifiers.doesItHaveText
@@ -83,7 +83,9 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 println("ignoreSavedGPM")
-                DBHelperFactory.getDBHelper(context).markSavedGPMIgnored(id)
+                // TODO: who sets flagged ignore here!
+                DataModel.markSavedGPMIgnored(id)
+                // TODO: should autolink(from datamodel)
                 viewModel.removeGPM(id)
                 println("SavedGPM $id ignored and removed from list")
             } catch (ex: Exception) {
@@ -101,8 +103,9 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 println("linkSavedGPMAndDecryptableSiteEntry")
+                // TODO: can link these two soon
                 viewModel.removeGPM(id)
-                DBHelperFactory.getDBHelper(context).linkSaveGPMAndSiteEntry(siteEntry.id!!, id)
+                DataModel.linkSaveGPMAndSiteEntry(siteEntry, id)
                 println("Link ${siteEntry.id} / ${siteEntry.plainDescription} and SavedGPM $id")
             } catch (ex: Exception) {
                 Log.i(

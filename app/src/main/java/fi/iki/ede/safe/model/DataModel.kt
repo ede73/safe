@@ -3,6 +3,7 @@ package fi.iki.ede.safe.model
 import android.util.Log
 import fi.iki.ede.crypto.DecryptableCategoryEntry
 import fi.iki.ede.crypto.DecryptableSiteEntry
+import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.db.DBID
@@ -18,12 +19,17 @@ import kotlinx.coroutines.launch
 
 
 object DataModel {
+    // GPM Imports: READ DATA CLASSES BTW. collection may change on new imports
+    val _savedGPMs = mutableSetOf<SavedGPM>()
+    val _siteEntryToSavedGPM = LinkedHashMap<DecryptableSiteEntry, MutableList<SavedGPM>>()
+
     // Categories state and events
     val _categories =
         LinkedHashMap<DecryptableCategoryEntry, MutableList<DecryptableSiteEntry>>()
     private val _categoriesStateFlow = MutableStateFlow(_categories.keys.toList())
     val categoriesStateFlow: StateFlow<List<DecryptableCategoryEntry>> get() = _categoriesStateFlow
 
+    // NO USE FOR NOW
     private val _categoriesSharedFlow =
         MutableSharedFlow<PasswordSafeEvent.CategoryEvent>(extraBufferCapacity = 10, replay = 10)
     val categoriesSharedFlow: SharedFlow<PasswordSafeEvent.CategoryEvent> get() = _categoriesSharedFlow
@@ -31,7 +37,6 @@ object DataModel {
     // Passwords state and events
     private val _passwordsStateFlow = MutableStateFlow<List<DecryptableSiteEntry>>(emptyList())
     val passwordsStateFlow: StateFlow<List<DecryptableSiteEntry>> get() = _passwordsStateFlow
-
     private val _passwordsSharedFlow =
         MutableSharedFlow<PasswordSafeEvent.PasswordEvent>(extraBufferCapacity = 10, replay = 10)
 
@@ -56,6 +61,11 @@ object DataModel {
     fun getCategorysPasswords(categoryId: DBID): List<DecryptableSiteEntry> =
         _categories.filter { it.key.id == categoryId }.values.flatten()
 
+
+    // TODO: used only while developing? or fixing broken imports?
+    fun deleteAllSavedGPMs() {
+        db!!.deleteAllSavedGPMs()
+    }
 
     // TODO: RENAME
     suspend fun addOrEditCategory(category: DecryptableCategoryEntry) {
@@ -254,13 +264,25 @@ object DataModel {
             _categoriesStateFlow.value = _categories.keys.toList()
         }
 
-        suspend fun loadPasswordsFromDB() {
-            // passwords..
-            // TODO: This is NOT mocked at the moment
-            //val passwords = db!!.fetchAllRows()
+        fun loadGPMsFromDB() {
+            _savedGPMs.clear()
+            _savedGPMs.addAll(db!!.fetchSavedGPMsFromDB())
+        }
+
+        suspend fun loadSiteEntriesFromDB() {
+            val siteEntryGPMMappings = db!!.fetchAllSiteEntryGPMMappings()
+
             val catKeys = _categories.keys.toList()
             catKeys.forEach { category ->
                 val categoriesPasswords = db!!.fetchAllRows(categoryId = category.id as DBID)
+
+                categoriesPasswords.forEach { password ->
+                    if (password.id in siteEntryGPMMappings) {
+                        val savedGPMIds = siteEntryGPMMappings[password.id]
+                        _siteEntryToSavedGPM[password] =
+                            _savedGPMs.filter { it.id in savedGPMIds!! }.toMutableList()
+                    }
+                }
 
                 // Update model
                 _categories[category]!!.addAll(categoriesPasswords)
@@ -294,7 +316,8 @@ object DataModel {
         }
 
         loadCategoriesFromDB()
-        loadPasswordsFromDB()
+        loadGPMsFromDB()
+        loadSiteEntriesFromDB()
         launchDecryptDescriptions()
 
         if (BuildConfig.DEBUG) {
@@ -346,6 +369,18 @@ object DataModel {
             }
         }
     }
+
+    fun linkSaveGPMAndSiteEntry(siteEntry: DecryptableSiteEntry, savedGPMID: Long) {
+        db!!.linkSaveGPMAndSiteEntry(siteEntry.id!!, savedGPMID)
+    }
+
+    fun markSavedGPMIgnored(gpmID: Long) {
+        // should set the flag too!
+        db!!.markSavedGPMIgnored(gpmID)
+    }
+
+    fun getLinkedGPMs(siteEntryID: DBID): Set<SavedGPM> =
+        _siteEntryToSavedGPM.filterKeys { it.id == siteEntryID }.values.flatten().toSet()
 
     private const val TAG = "DataModel"
 }
