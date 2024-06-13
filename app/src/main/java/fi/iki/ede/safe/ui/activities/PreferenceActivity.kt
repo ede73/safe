@@ -79,7 +79,7 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
             preferenceScreen.sharedPreferences?.registerOnSharedPreferenceChangeListener(this)
 
             backupPathClicker?.summary = Preferences.getBackupDocument()
-            val lb = Preferences.getLastBackupTime()?.toLocalTime()?.toString()
+            val lb = Preferences.getLastBackupTime()?.toLocalDateTime()?.toString()
                 ?: resources.getString(R.string.preferences_summary_lastback_never_done)
             val lastBackupTime =
                 findPreference<Preference>(Preferences.PREFERENCE_LAST_BACKUP_TIME)
