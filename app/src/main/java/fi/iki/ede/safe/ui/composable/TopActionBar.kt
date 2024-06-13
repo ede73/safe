@@ -307,9 +307,9 @@ private fun backup(
     it: ActivityResult,
 ) {
     val n = BackupDatabase()
-    val (salt, currentEncryptedMasterKey) = DBHelperFactory.getDBHelper(context)
-        .fetchSaltAndEncryptedMasterKey()
-    val document = n.generate(salt, currentEncryptedMasterKey)
+    val dbHelper = DBHelperFactory.getDBHelper(context)
+    val (salt, currentEncryptedMasterKey) = dbHelper.fetchSaltAndEncryptedMasterKey()
+    val document = n.generate(dbHelper, salt, currentEncryptedMasterKey)
     val outputStream = context.contentResolver.openOutputStream(it.data?.data!!, "wt")
     if (outputStream != null) {
         outputStream.write(document.toByteArray())

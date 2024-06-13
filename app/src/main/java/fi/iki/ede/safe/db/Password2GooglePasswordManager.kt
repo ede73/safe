@@ -16,7 +16,8 @@ internal object Password2GooglePasswordManager : Table {
 
     override fun drop() = listOf("DROP TABLE IF EXISTS ${tableName};")
 
-    enum class Columns(override val columnName: String) : TableColumns<Keys> {
+    enum class Columns(override val columnName: String) :
+        TableColumns<Password2GooglePasswordManager> {
         PASSWORD_ID("password_id"),
         GOOGLE_ID("gpm_id"),
     }

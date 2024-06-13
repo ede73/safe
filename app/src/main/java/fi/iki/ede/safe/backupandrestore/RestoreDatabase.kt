@@ -15,6 +15,7 @@ import fi.iki.ede.crypto.keystore.KeyManagement
 import fi.iki.ede.crypto.keystore.KeyManagement.generatePBKDF2AESKey
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.hexToByteArray
+import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Attributes
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Elements
@@ -69,6 +70,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         val db = dbHelper.beginRestoration()
 
         try {
+            // TODO: this also has inner transaction
             dbHelper.storeSaltAndEncryptedMasterKey(
                 backupData.getSalt(),
                 backupData.getEncryptedMasterKey()
@@ -112,7 +114,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
     )
 
 
-    inline fun <reified T : Enum<T>, V> valueOrNull(value: V, valueSelector: (T) -> V): T? =
+    private inline fun <reified T : Enum<T>, V> valueOrNull(value: V, valueSelector: (T) -> V): T? =
         enumValues<T>().find { valueSelector(it) == value }
 
 
@@ -147,12 +149,13 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         val path = mutableListOf<Elements?>()
         var category: DecryptableCategoryEntry? = null
         var password: DecryptableSiteEntry? = null
+        var readGPM: SavedGPM? = null
+        val readGPMMapsToPasswords: MutableMap<Long, Set<Long>> = mutableMapOf()
         var passwords = 0
         while (myParser.eventType != XmlPullParser.END_DOCUMENT) {
             when (myParser.eventType) {
                 XmlPullParser.START_TAG -> {
                     path.add(valueOrNull<Elements, String>(myParser.name) { it.value })
-
                     when (path) {
                         listOf(Elements.ROOT_PASSWORD_SAFE) -> {
                             val rawVersion = myParser.getTrimmedAttributeValue(
@@ -192,6 +195,35 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             }
                         }
 
+                        listOf(
+                            Elements.ROOT_PASSWORD_SAFE,
+                            Elements.IMPORTS,
+                            Elements.IMPORTS_GPM,
+                            Elements.IMPORTS_GPM_ITEM
+                        ) -> {
+                            // actually import GPM entries
+                            readGPM = SavedGPM.makeFromEncryptedStringFields(
+                                myParser.getTrimmedAttributeValue(Attributes.IMPORTS_GPM_ITEM_ID)
+                                    .toLong(),
+                                myParser.getEncryptedAttribute(Attributes.IMPORTS_GPM_ITEM_NAME),
+                                myParser.getEncryptedAttribute(Attributes.IMPORTS_GPM_ITEM_URL),
+                                myParser.getEncryptedAttribute(Attributes.IMPORTS_GPM_ITEM_USERNAME),
+                                myParser.getEncryptedAttribute(Attributes.IMPORTS_GPM_ITEM_PASSWORD),
+                                myParser.getEncryptedAttribute(Attributes.IMPORTS_GPM_ITEM_NOTE),
+                                myParser.getTrimmedAttributeValue(Attributes.IMPORTS_GPM_ITEM_STATUS)
+                                    .toInt() == 1,
+                                myParser.getTrimmedAttributeValue(Attributes.IMPORTS_GPM_ITEM_HASH)
+                            )
+
+                            val mapsToPasswords =
+                                myParser.getTrimmedAttributeValue(Attributes.IMPORTS_GPM_ITEM_MAP_TO_PASSWORDS)
+                                    .takeIf { it.isNotBlank() }?.split(",")
+                                    ?.mapNotNull { it.toLongOrNull() }?.toSet() ?: emptySet<Long>()
+                            if (mapsToPasswords.isNotEmpty()) {
+                                readGPMMapsToPasswords[readGPM.id!!] = mapsToPasswords
+                            }
+                        }
+
                         listOf(Elements.ROOT_PASSWORD_SAFE, Elements.CATEGORY) -> {
                             require(category == null) { "Must have no pending objects" }
                             category = DecryptableCategoryEntry()
@@ -208,6 +240,10 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             require(category != null) { "Must have category" }
                             require(password == null) { "Must not have password" }
                             password = DecryptableSiteEntry(category.id!!)
+                            myParser.getTrimmedAttributeValue(Attributes.CATEGORY_ITEM_ID)
+                                .toLongOrNull()?.let {
+                                    password!!.id = it
+                                }
                             passwords++
                         }
 
@@ -256,9 +292,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             require(password != null) { "Must have password entry" }
 
                             val changed =
-                                myParser.getTrimmedAttributeValue(
-                                    Attributes.CATEGORY_ITEM_PASSWORD_CHANGED
-                                )
+                                myParser.getTrimmedAttributeValue(Attributes.CATEGORY_ITEM_PASSWORD_CHANGED)
                             if (changed.isNotBlank()) {
                                 try {
                                     password.passwordChangedDate =
@@ -311,6 +345,14 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                 XmlPullParser.END_TAG -> {
                     when (path) {
                         listOf(Elements.ROOT_PASSWORD_SAFE) -> {
+                            if (readGPMMapsToPasswords.isNotEmpty()) {
+                                readGPMMapsToPasswords.forEach { (gpmid, passwords) ->
+                                    passwords.forEach { password ->
+                                        dbHelper.linkSaveGPMAndSiteEntry(password, gpmid)
+                                    }
+                                }
+                                readGPMMapsToPasswords.clear()
+                            }
                             // All should be finished now
                             db.setTransactionSuccessful()
                             db.endTransaction()
@@ -330,8 +372,19 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             dbHelper.addPassword(password)
                             password = null
                         }
+
+                        listOf(
+                            Elements.ROOT_PASSWORD_SAFE,
+                            Elements.IMPORTS,
+                            Elements.IMPORTS_GPM,
+                            Elements.IMPORTS_GPM_ITEM
+                        ) -> {
+                            require(readGPM != null) { "Must have GPM entry" }
+                            dbHelper.addSavedGPM(readGPM)
+                            readGPM = null
+                        }
                     }
-                    path.remove(valueOrNull<Elements, String>(myParser.name) { it.value })
+                    path.removeLast()
                 }
             }
             myParser.next()

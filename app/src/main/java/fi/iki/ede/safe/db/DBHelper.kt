@@ -84,7 +84,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
 
     fun storeSaltAndEncryptedMasterKey(salt: Salt, ivCipher: IVCipherText) {
         writableDatabase.apply {
-            beginTransaction()
+            beginTransaction() // TODO: BAD, we have transaction in restore already
             // DONT USE Use{} transaction will die
 
             delete(Keys).let {
@@ -299,6 +299,8 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
                 listOf(
                     Password,
                     Category,
+                    GooglePasswordManager,
+                    Password2GooglePasswordManager
                 ).forEach { tables ->
                     tables.drop().forEach { sql ->
                         execSQL(sql)
@@ -327,8 +329,9 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         }
 
     fun linkSaveGPMAndSiteEntry(siteEntryID: DBID, savedGPMID: DBID) =
-        writableDatabase.use { db ->
-            db.insert(Password2GooglePasswordManager, ContentValues().apply {
+        //writableDatabase.use { db -> //effin transaction dies with ...
+        writableDatabase.apply {
+            insert(Password2GooglePasswordManager, ContentValues().apply {
                 put(Password2GooglePasswordManager.Columns.PASSWORD_ID, siteEntryID)
                 put(Password2GooglePasswordManager.Columns.GOOGLE_ID, savedGPMID)
             })
@@ -367,6 +370,24 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
             }.toSet()
 
         }
+
+    fun fetchAllBPMMappings(): Map<DBID, Set<DBID>> =
+        readableDatabase.use { db ->
+            db.query(
+                Password2GooglePasswordManager,
+                Password2GooglePasswordManager.Columns.values().toSet(),
+            ).use { c ->
+                (0 until c.count)
+                    .map { _ ->
+                        c.moveToNext()
+                        c.getDBID(Password2GooglePasswordManager.Columns.PASSWORD_ID) to
+                                c.getDBID(Password2GooglePasswordManager.Columns.GOOGLE_ID)
+                    }
+                    .groupBy({ it.first }, { it.second })
+                    .mapValues { (_, values) -> values.toSet() }
+            }
+        }
+
 
     fun fetchSavedGPMsFromDB(where: SelectionCondition? = null): Set<SavedGPM> =
         readableDatabase.use { db ->
@@ -438,6 +459,19 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
             )
         }
 
+    fun addSavedGPM(savedGPM: SavedGPM) =
+        this.writableDatabase.insert(GooglePasswordManager,
+            ContentValues().apply {
+                put(GooglePasswordManager.Columns.ID, savedGPM.id) // auto increment
+                put(GooglePasswordManager.Columns.NAME, savedGPM.encryptedName)
+                put(GooglePasswordManager.Columns.URL, savedGPM.encryptedUrl)
+                put(GooglePasswordManager.Columns.USERNAME, savedGPM.encryptedUsername)
+                put(GooglePasswordManager.Columns.PASSWORD, savedGPM.encryptedPassword)
+                put(GooglePasswordManager.Columns.NOTE, savedGPM.encryptedNote)
+                put(GooglePasswordManager.Columns.STATUS, if (savedGPM.flaggedIgnored) 1 else 0)
+                put(GooglePasswordManager.Columns.HASH, savedGPM.hash)
+            }
+        )
 
     companion object {
         private const val DATABASE_VERSION = 5

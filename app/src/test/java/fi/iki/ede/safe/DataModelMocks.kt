@@ -10,6 +10,7 @@ import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.db.DBID
 import fi.iki.ede.safe.model.DataModel
 import io.mockk.every
+import io.mockk.isMockKMock
 import io.mockk.mockkClass
 import io.mockk.slot
 import kotlinx.coroutines.runBlocking
@@ -72,6 +73,8 @@ object DataModelMocks {
 
 
         val db = mockkClass(DBHelper::class)
+        require(isMockKMock(db)) { "Mocking failed somehow" }
+
         // FULL DB mock
         DataModel.attachDBHelper(db)
         //every { DBHelperFactory.getDBHelper(any()) } returns db
@@ -166,6 +169,9 @@ object DataModelMocks {
             }
             transactionSuccess = false
         }
+
+        // GPMs (partial TODO:)
+        every { db.fetchSavedGPMsFromDB() } returns emptySet()
 
         runBlocking {
             DataModel.loadFromDatabase()

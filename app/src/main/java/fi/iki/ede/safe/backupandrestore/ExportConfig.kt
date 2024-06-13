@@ -60,15 +60,28 @@ abstract class ExportConfig(currentCodedVersion: ExportVersion) {
             CATEGORY_ITEM_USERNAME("username"),
             CATEGORY_ITEM_PASSWORD("password"),
             CATEGORY_ITEM_NOTE("note"),
-            CATEGORY_ITEM_PHOTO("photo")
+            CATEGORY_ITEM_PHOTO("photo"),
+            IMPORTS("imports"),
+            IMPORTS_GPM("gpm"),
+            IMPORTS_GPM_ITEM("gpmitem"),
         }
 
         enum class Attributes(val value: String) {
             ROOT_PASSWORD_SAFE_VERSION("version"),
             ROOT_PASSWORD_SAFE_CREATION_TIME("created"),
             CATEGORY_NAME("name"),
+            CATEGORY_ITEM_ID("ID"),
             CATEGORY_ITEM_PASSWORD_CHANGED("changed"),
-            IV("iv")
+            IV("iv"),
+            IMPORTS_GPM_ITEM_ID("name"),
+            IMPORTS_GPM_ITEM_MAP_TO_PASSWORDS("password_ids"),
+            IMPORTS_GPM_ITEM_NAME("name"),
+            IMPORTS_GPM_ITEM_URL("url"),
+            IMPORTS_GPM_ITEM_USERNAME("username"),
+            IMPORTS_GPM_ITEM_PASSWORD("password"),
+            IMPORTS_GPM_ITEM_NOTE("note"),
+            IMPORTS_GPM_ITEM_HASH("hash"),
+            IMPORTS_GPM_ITEM_STATUS("status"),
         }
     }
 }
