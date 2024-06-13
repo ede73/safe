@@ -185,7 +185,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         readableDatabase.use { db ->
             db.query(
                 Password,
-                Password.Columns.values().toSet(),
+                Password.Columns.entries.toSet(),
                 if (categoryId != null) {
                     whereEq(Password.Columns.CATEGORY_ID, categoryId)
                 } else null,
