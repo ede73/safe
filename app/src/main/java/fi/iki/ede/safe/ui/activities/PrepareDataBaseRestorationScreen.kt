@@ -83,7 +83,12 @@ private fun PrepareDBRestoreCompose(
         ) {
             var doRestore by remember { mutableStateOf(false) }
             var backupPassword by remember { mutableStateOf(Password.getEmpty()) }
+            val toast = remember { mutableStateOf("") }
             Column {
+                if (toast.value.isNotEmpty()) {
+                    Toast.makeText(context, toast.value, Toast.LENGTH_LONG).show()
+                    toast.value = ""
+                }
                 Text(
                     text = stringResource(
                         id = R.string.restore_screen_backup_help,
@@ -111,6 +116,7 @@ private fun PrepareDBRestoreCompose(
                     ).show()
 
                     avertInactivity(context, "Begin database restoration")
+                    val toastContext = context
                     RestoreDatabaseComponent(
                         context,
                         compatibility,
@@ -119,30 +125,20 @@ private fun PrepareDBRestoreCompose(
                         onFinished = { restoredPasswords, ex ->
                             // YES, we could have 0 passwords, but 1 category
                             if (ex == null) {
-                                // No point clearing biometrics(passkey not tied to masterkey)
-                                //Biometrics.clearBiometricKeys(context)
                                 // TODO: MAKE ASYNC
                                 runBlocking {
                                     DataModel.loadFromDatabase()
                                 }
-                                //                                        Toast.makeText(
-                                //                                            context,
-                                //                                            getString(
-                                //                                                R.string.restore_screen_restored,
-                                //                                                restoredPasswords
-                                //                                            ),
-                                //                                            Toast.LENGTH_LONG
-                                //                                        ).show()
+                                toast.value = context.getString(
+                                    R.string.restore_screen_restored,
+                                    restoredPasswords
+                                )
                                 CategoryListScreen.startMe(context)
                                 context.setResult(RESULT_OK)
                                 context.finish()
                             } else {
-                                // java.lang.NullPointerException: Can't toast on a thread that has not called Looper.prepare()
-                                //                                        Toast.makeText(
-                                //                                            context,
-                                //                                            getString(R.string.restore_screen_restore_failed),
-                                //                                            Toast.LENGTH_LONG
-                                //                                        ).show()
+                                toast.value =
+                                    context.getString(R.string.restore_screen_restore_failed)
                                 CategoryListScreen.startMe(context)
                                 context.setResult(RESULT_CANCELED)
                                 context.finish()
