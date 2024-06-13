@@ -27,7 +27,27 @@ import java.time.ZonedDateTime
 class BackupDatabase : ExportConfig(ExportVersion.V1) {
     private val encrypter = KeyStoreHelperFactory.getEncrypter()
 
-    private fun XmlSerializer.addTagAndCData(
+    private fun XmlSerializer.attribute(
+        name: Attributes,
+        encryptedValue: IVCipherText,
+    ): XmlSerializer {
+        this.attribute(
+            null,
+            "${ATTRIBUTE_PREFIX_IV}${name.value}",
+            encryptedValue.iv.toHexString()
+        )
+        this.attribute(
+            null,
+            "${ATTRIBUTE_PREFIX_CIPHER}${name.value}",
+            encryptedValue.cipherText.toHexString()
+        )
+        return this
+    }
+
+
+    private
+
+    fun XmlSerializer.addTagAndCData(
         name: Elements,
         encryptedValue: IVCipherText,
         attr: Pair<Attributes, String>? = null
@@ -56,18 +76,19 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
 
 
     @Suppress("SameParameterValue")
-    private fun XmlSerializer.startTagWithAttribute(
+    private fun XmlSerializer.startTagWithIVCipherAttribute(
         name: Elements,
         attr: Pair<Attributes, IVCipherText>? = null
     ) = startTag(name)
         .let {
             if (attr?.first != null) {
-                it.attribute(attr.first, ATTRIBUTE_PREFIX_IV, attr.second.iv.toHexString())
-                it.attribute(
-                    attr.first,
-                    ATTRIBUTE_PREFIX_CIPHER,
-                    attr.second.cipherText.toHexString()
-                )
+                it.attribute(attr.first, attr.second)
+//                it.attribute(attr.first, ATTRIBUTE_PREFIX_IV, attr.second.iv.toHexString())
+//                it.attribute(
+//                    attr.first,
+//                    ATTRIBUTE_PREFIX_CIPHER,
+//                    attr.second.cipherText.toHexString()
+//                )
             }
             this
         }
@@ -98,7 +119,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
             )
 
         for (category in DataModel.getCategories()) {
-            serializer.startTagWithAttribute(
+            serializer.startTagWithIVCipherAttribute(
                 Elements.CATEGORY,
                 makePair(Attributes.CATEGORY_NAME, category.encryptedName)
             )
@@ -130,7 +151,11 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
     private fun XmlSerializer.writePasswordEntry(
         decryptablePassword: DecryptableSiteEntry,
     ) {
-        startTag(Elements.CATEGORY_ITEM)
+        // needed for GPM mapping, won't break bank nor backwards compatibility
+        startTag(Elements.CATEGORY_ITEM).attribute(
+            Attributes.CATEGORY_ITEM_ID,
+            decryptablePassword.id.toString()
+        )
         addTagAndCData(Elements.CATEGORY_ITEM_DESCRIPTION, decryptablePassword.description)
         addTagAndCData(Elements.CATEGORY_ITEM_WEBSITE, decryptablePassword.website)
         addTagAndCData(Elements.CATEGORY_ITEM_USERNAME, decryptablePassword.username)
