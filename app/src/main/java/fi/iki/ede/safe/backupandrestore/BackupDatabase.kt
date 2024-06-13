@@ -2,7 +2,6 @@ package fi.iki.ede.safe.backupandrestore
 
 import android.text.TextUtils
 import android.util.Log
-import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.date.DateUtils
@@ -13,9 +12,7 @@ import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Attributes
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Elements
 import fi.iki.ede.safe.model.DataModel
 import org.xmlpull.v1.XmlPullParserFactory
-import org.xmlpull.v1.XmlSerializer
 import java.io.StringWriter
-import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 /**
@@ -26,73 +23,6 @@ import java.time.ZonedDateTime
  */
 class BackupDatabase : ExportConfig(ExportVersion.V1) {
     private val encrypter = KeyStoreHelperFactory.getEncrypter()
-
-    private fun XmlSerializer.attribute(
-        name: Attributes,
-        encryptedValue: IVCipherText,
-    ): XmlSerializer {
-        this.attribute(
-            null,
-            "${ATTRIBUTE_PREFIX_IV}${name.value}",
-            encryptedValue.iv.toHexString()
-        )
-        this.attribute(
-            null,
-            "${ATTRIBUTE_PREFIX_CIPHER}${name.value}",
-            encryptedValue.cipherText.toHexString()
-        )
-        return this
-    }
-
-
-    private
-
-    fun XmlSerializer.addTagAndCData(
-        name: Elements,
-        encryptedValue: IVCipherText,
-        attr: Pair<Attributes, String>? = null
-    ) = startTag(name)
-        .let {
-            if (attr?.first != null) {
-                it.attribute(attr.first, attr.second)
-            }
-            this
-        }
-        .let {
-            it.attribute(Attributes.IV, encryptedValue.iv.toHexString())
-            it.text(encryptedValue.cipherText.toHexString())
-            this
-        }
-        .endTag(name)
-
-
-    private fun XmlSerializer.endTag(name: Elements) = endTag(null, name.value)
-    private fun XmlSerializer.startTag(name: Elements) = startTag(null, name.value)
-    private fun XmlSerializer.attribute(name: Attributes, value: String) =
-        attribute(null, name.value, value)
-
-    private fun XmlSerializer.attribute(name: Attributes, prefix: String, value: String) =
-        attribute(null, "${prefix}${name.value}", value)
-
-
-    @Suppress("SameParameterValue")
-    private fun XmlSerializer.startTagWithIVCipherAttribute(
-        name: Elements,
-        attr: Pair<Attributes, IVCipherText>? = null
-    ) = startTag(name)
-        .let {
-            if (attr?.first != null) {
-                it.attribute(attr.first, attr.second)
-//                it.attribute(attr.first, ATTRIBUTE_PREFIX_IV, attr.second.iv.toHexString())
-//                it.attribute(
-//                    attr.first,
-//                    ATTRIBUTE_PREFIX_CIPHER,
-//                    attr.second.cipherText.toHexString()
-//                )
-            }
-            this
-        }
-
 
     @Suppress("SameParameterValue")
     private fun makePair(
@@ -146,36 +76,6 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
         backup.appendLine(encryptedBackup.iv.toHexString())
         backup.appendLine(encryptedBackup.cipherText.toHexString())
         return backup.toString()
-    }
-
-    private fun XmlSerializer.writePasswordEntry(
-        decryptablePassword: DecryptableSiteEntry,
-    ) {
-        // needed for GPM mapping, won't break bank nor backwards compatibility
-        startTag(Elements.CATEGORY_ITEM).attribute(
-            Attributes.CATEGORY_ITEM_ID,
-            decryptablePassword.id.toString()
-        )
-        addTagAndCData(Elements.CATEGORY_ITEM_DESCRIPTION, decryptablePassword.description)
-        addTagAndCData(Elements.CATEGORY_ITEM_WEBSITE, decryptablePassword.website)
-        addTagAndCData(Elements.CATEGORY_ITEM_USERNAME, decryptablePassword.username)
-
-        addTagAndCData(
-            Elements.CATEGORY_ITEM_PASSWORD, decryptablePassword.password,
-            decryptablePassword.passwordChangedDate?.let {
-                Pair(
-                    Attributes.CATEGORY_ITEM_PASSWORD_CHANGED,
-                    it.withZoneSameInstant(ZoneOffset.UTC).toEpochSecond().toString()
-                )
-            }
-        )
-
-        addTagAndCData(Elements.CATEGORY_ITEM_NOTE, decryptablePassword.note)
-
-        if (decryptablePassword.photo != IVCipherText.getEmpty()) {
-            addTagAndCData(Elements.CATEGORY_ITEM_PHOTO, decryptablePassword.photo)
-        }
-        endTag(Elements.CATEGORY_ITEM)
     }
 
     companion object {

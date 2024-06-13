@@ -30,23 +30,7 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeParseException
 
 class RestoreDatabase : ExportConfig(ExportVersion.V1) {
-    private fun XmlPullParser.getAttributeValue(
-        attribute: Attributes,
-        prefix: String? = null
-    ): String {
-        val attrName = if (prefix == null) attribute.value else "$prefix${attribute.value}"
-        return getAttributeValue(null, attrName) ?: ""
-    }
-
-    // After some recent update while restoring, date parsing fails due to non breakable space
-    // Wasn't able to track IN THE EMULATOR where it comes from
-    private fun XmlPullParser.getTrimmedAttributeValue(
-        attribute: Attributes,
-        prefix: String? = null
-    ): String =
-        getAttributeValue(attribute, prefix).trim()
-
-    data class BackupData(val data: List<String>) {
+    data class BackupEncryptionKeys(val data: List<String>) {
         fun getSalt(): Salt = Salt(data[0].hexToByteArray())
         fun getEncryptedMasterKey(): IVCipherText =
             IVCipherText(data[1].hexToByteArray(), data[2].hexToByteArray())
@@ -64,19 +48,20 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
     ): Int {
         val myParser = XmlPullParserFactory.newInstance().newPullParser()
 
-        val backupData = BackupData(StringReader(backup.trimIndent().trim()).readLines())
+        val backupEncryptionKeys =
+            BackupEncryptionKeys(StringReader(backup.trimIndent().trim()).readLines())
 
         val db = dbHelper.beginRestoration()
 
         try {
             // TODO: this also has inner transaction
             dbHelper.storeSaltAndEncryptedMasterKey(
-                backupData.getSalt(),
-                backupData.getEncryptedMasterKey()
+                backupEncryptionKeys.getSalt(),
+                backupEncryptionKeys.getEncryptedMasterKey()
             )
             // body
             myParser.setInput(
-                getDocumentStream(backupData, userPassword),
+                getDocumentStream(backupEncryptionKeys, userPassword),
                 null
             )
 
@@ -90,31 +75,27 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
     }
 
     private fun getDocumentStream(
-        backupData: BackupData,
+        backupEncryptionKeys: BackupEncryptionKeys,
         userPassword: Password
     ) = ByteArrayInputStream(
         KeyStoreHelperFactory.getKeyStoreHelper().decryptByteArray( // Keystore needed (new key)
-            backupData.getEncryptedBackup(),
-            decryptMasterKey(backupData, userPassword)
+            backupEncryptionKeys.getEncryptedBackup(),
+            decryptMasterKey(backupEncryptionKeys, userPassword)
         )
     )
 
 
     private fun decryptMasterKey(
-        backupData: BackupData,
+        backupEncryptionKeys: BackupEncryptionKeys,
         userPassword: Password,
     ) = KeyManagement.decryptMasterKey(
         generatePBKDF2AESKey(
-            backupData.getSalt(),
+            backupEncryptionKeys.getSalt(),
             KEY_ITERATION_COUNT,
             userPassword,
             KEY_LENGTH_BITS
-        ), backupData.getEncryptedMasterKey()
+        ), backupEncryptionKeys.getEncryptedMasterKey()
     )
-
-
-    private inline fun <reified T : Enum<T>, V> valueOrNull(value: V, valueSelector: (T) -> V): T? =
-        enumValues<T>().find { valueSelector(it) == value }
 
 
     private fun parseXML(
@@ -123,28 +104,6 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         myParser: XmlPullParser,
         verifyOldBackupRestoration: (backupCreated: ZonedDateTime, lastBackupDone: ZonedDateTime) -> Boolean,
     ): Int {
-        fun XmlPullParser.getEncryptedAttribute(name: Attributes): IVCipherText {
-            val iv = getTrimmedAttributeValue(name, ATTRIBUTE_PREFIX_IV)
-            val cipher = getTrimmedAttributeValue(name, ATTRIBUTE_PREFIX_CIPHER)
-            if (iv.isNotBlank() && cipher.isNotBlank()) {
-                return IVCipherText(iv.hexToByteArray(), cipher.hexToByteArray())
-            }
-            return IVCipherText.getEmpty()
-        }
-
-        fun XmlPullParser.maybeGetText(gotTextNode: (encryptedText: IVCipherText) -> Unit) {
-            val iv = getTrimmedAttributeValue(ExportConfig.Companion.Attributes.IV)
-            next()
-            if (eventType == XmlPullParser.TEXT && text != null && iv.isNotBlank()) {
-                gotTextNode.invoke(
-                    IVCipherText(
-                        iv.hexToByteArray(),
-                        text.hexToByteArray()
-                    )
-                )
-            }
-        }
-
         val path = mutableListOf<Elements?>()
         var category: DecryptableCategoryEntry? = null
         var password: DecryptableSiteEntry? = null
