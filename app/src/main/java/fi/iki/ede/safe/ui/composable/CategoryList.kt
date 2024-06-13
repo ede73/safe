@@ -6,9 +6,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import fi.iki.ede.crypto.DecryptableCategoryEntry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @Composable

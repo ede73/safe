@@ -13,7 +13,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import fi.iki.ede.crypto.DecryptableCategoryEntry
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.model.DataModel
@@ -24,6 +23,7 @@ import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.composable.BiometricsComponent
 import fi.iki.ede.safe.ui.composable.PasswordPrompt
 import fi.iki.ede.safe.ui.composable.TopActionBar
+import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.startActivityForResults
 import kotlinx.coroutines.CoroutineScope
@@ -158,7 +158,8 @@ open class LoginScreen : ComponentActivity() {
                 if (firstTimeUse) {
                     val entry = DecryptableCategoryEntry().apply {
                         encryptedName = KeyStoreHelperFactory.getEncrypter().invoke(
-                            ("Category - Long press to edit".toByteArray()))
+                            ("Category - Long press to edit".toByteArray())
+                        )
                     }
                     DataModel.addOrEditCategory(entry)
 

@@ -31,8 +31,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.crypto.DecryptableCategoryEntry
-import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.decrypt
@@ -45,6 +43,8 @@ import fi.iki.ede.safe.clipboard.ClipboardUtils
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.password.PasswordGenerator
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
+import fi.iki.ede.safe.model.DecryptableCategoryEntry
+import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import fi.iki.ede.safe.ui.theme.SafeButton

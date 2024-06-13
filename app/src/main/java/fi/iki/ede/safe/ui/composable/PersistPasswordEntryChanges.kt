@@ -2,11 +2,11 @@ package fi.iki.ede.safe.ui.composable
 
 import android.text.TextUtils
 import androidx.compose.runtime.Composable
-import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.safe.model.DataModel
+import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.ui.models.EditableSiteEntry
 import kotlinx.coroutines.runBlocking
 import java.time.ZonedDateTime

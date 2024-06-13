@@ -2,15 +2,23 @@ package fi.iki.ede.oisafecompatibility
 
 import android.text.TextUtils
 import android.util.Log
-import fi.iki.ede.crypto.DecryptableCategoryEntry
-import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.SaltedEncryptedPassword
 import fi.iki.ede.crypto.SaltedPassword
 import fi.iki.ede.crypto.date.DateUtils
 import java.text.ParseException
+import java.time.ZonedDateTime
 
+data class OISafeCategoryEntry(val id: Long, val encryptedName: IVCipherText)
+class OISafeSiteEntry(val categoryId: Long) {
+    var description: IVCipherText = IVCipherText.getEmpty()
+    var website: IVCipherText = IVCipherText.getEmpty()
+    var username: IVCipherText = IVCipherText.getEmpty()
+    var password: IVCipherText = IVCipherText.getEmpty()
+    var note: IVCipherText = IVCipherText.getEmpty()
+    var passwordChangedDate: ZonedDateTime? = null
+}
 
 @Deprecated("Just for backwards compatibility")
 class RestoreDataSet(
@@ -22,17 +30,16 @@ class RestoreDataSet(
     var saltedEncryptedPassword: SaltedEncryptedPassword =
         SaltedEncryptedPassword.getEmpty()
     private var totalEntries = 0
-    val categories = ArrayList<DecryptableCategoryEntry>()
-    val pass = ArrayList<DecryptableSiteEntry>()
+    val categories = ArrayList<OISafeCategoryEntry>()
+    val pass = ArrayList<OISafeSiteEntry>()
     private var currentCategoryId = 0L
-    private var currentCategory: DecryptableCategoryEntry? = null
-    private var currentEntry: DecryptableSiteEntry? = null
+    private var currentCategory: OISafeCategoryEntry? = null
+    private var currentEntry: OISafeSiteEntry? = null
 
     fun newCategory(extractedCategoryName: String) {
-        currentCategory = DecryptableCategoryEntry()
+        currentCategory =
+            OISafeCategoryEntry(currentCategoryId, encryptDecrypted(extractedCategoryName))
         currentCategoryId++
-        currentCategory!!.id = currentCategoryId
-        currentCategory!!.encryptedName = encryptDecrypted(extractedCategoryName)
     }
 
     fun storyCategory() {
@@ -43,7 +50,7 @@ class RestoreDataSet(
     }
 
     fun newEntry() {
-        currentEntry = DecryptableSiteEntry(currentCategoryId)
+        currentEntry = OISafeSiteEntry(currentCategoryId)
     }
 
     fun storeEntry() {

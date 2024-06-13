@@ -1,8 +1,8 @@
-package fi.iki.ede.crypto
+package fi.iki.ede.safe.model
 
 import android.graphics.Bitmap
+import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
-import fi.iki.ede.crypto.support.decryptPhoto
 import java.time.ZonedDateTime
 
 /**

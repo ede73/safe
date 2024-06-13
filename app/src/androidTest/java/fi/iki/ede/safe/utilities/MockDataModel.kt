@@ -1,9 +1,9 @@
 package fi.iki.ede.safe.utilities
 
 import android.content.Context
-import fi.iki.ede.crypto.DecryptableCategoryEntry
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.DataModel
+import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.utilities.MockKeyStore.fakeEncryptedMasterKey
 import fi.iki.ede.safe.utilities.MockKeyStore.fakeSalt
 import io.mockk.mockk

@@ -7,12 +7,12 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
-import fi.iki.ede.crypto.DecryptableCategoryEntry
-import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.CipherUtilities
 import fi.iki.ede.safe.model.Preferences
+import fi.iki.ede.safe.model.DecryptableCategoryEntry
+import fi.iki.ede.safe.model.DecryptableSiteEntry
 
 typealias DBID = Long
 
