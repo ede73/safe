@@ -15,8 +15,9 @@ import fi.iki.ede.crypto.support.DisallowedFunctions
  *
  * Avoid using, prefer SaltedEncryptedPassword
  */
-open class Password internal constructor(
-    open val utf8password: CharArray
+data class Password internal constructor(
+    // TODO: make private and only allow getting EncryptedPassword out of it(or salted password)
+    val utf8password: CharArray
 ) : DisallowedFunctions() {
     val length: Int
         get() {
@@ -32,7 +33,7 @@ open class Password internal constructor(
         utf8PasswordAsString.toCharArray()
     )
 
-    open fun isEmpty(): Boolean = utf8password.isEmpty()
+    fun isEmpty(): Boolean = utf8password.isEmpty()
     override fun hashCode() = utf8password.contentHashCode()
 
     override fun equals(other: Any?): Boolean =

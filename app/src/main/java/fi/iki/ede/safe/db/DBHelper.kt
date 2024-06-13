@@ -7,8 +7,6 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
-import fi.iki.ede.crypto.DecryptableCategoryEntry
-import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.CipherUtilities
@@ -17,6 +15,8 @@ import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.model.SavedGPM.Companion.makeFromEncryptedStringFields
 import fi.iki.ede.gpm.model.encrypt
 import fi.iki.ede.safe.model.Preferences
+import fi.iki.ede.safe.model.DecryptableCategoryEntry
+import fi.iki.ede.safe.model.DecryptableSiteEntry
 
 typealias DBID = Long
 
@@ -199,7 +199,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         readableDatabase.use { db ->
             db.query(
                 Password,
-                Password.Columns.values().toSet(),
+                Password.Columns.entries.toSet(),
                 if (categoryId != null) {
                     whereEq(Password.Columns.CATEGORY_ID, categoryId)
                 } else null,
@@ -215,8 +215,12 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
                             website = it.getIVCipher(Password.Columns.WEBSITE)
                             note = it.getIVCipher(Password.Columns.NOTE)
                             photo = it.getIVCipher(Password.Columns.PHOTO)
-                            it.getZonedDateTimeOfPasswordChange()
-                                ?.let { passwordChangedDate = it }
+                            try {
+                                it.getZonedDateTimeOfPasswordChange()
+                                    ?.let { passwordChangedDate = it }
+                            } catch (ex: Exception) {
+                                Log.d(TAG, "Date parsing issue", ex)
+                            }
                         })
                         it.moveToNext()
                     }

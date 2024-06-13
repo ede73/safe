@@ -1,14 +1,14 @@
 package fi.iki.ede.safe
 
 import android.database.sqlite.SQLiteDatabase
-import fi.iki.ede.crypto.DecryptableCategoryEntry
-import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.db.DBID
 import fi.iki.ede.safe.model.DataModel
+import fi.iki.ede.safe.model.DecryptableCategoryEntry
+import fi.iki.ede.safe.model.DecryptableSiteEntry
 import io.mockk.every
 import io.mockk.isMockKMock
 import io.mockk.mockkClass

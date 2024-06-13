@@ -118,11 +118,6 @@ open class OISafeCryptoHelper(private val algorithm: Algorithm) {
     companion object {
         private const val DEBUG = true
         private const val TAG = "CryptoHelper"
-//        fun generateMasterKey(): Password {
-//            val keygen = KeyGenerator.getInstance("AES")
-//            keygen.init(256)
-//            return Password(keygen.generateKey().encoded)
-//        }
 
         fun generateSalt(): Salt {
             val salt = ByteArray(8)

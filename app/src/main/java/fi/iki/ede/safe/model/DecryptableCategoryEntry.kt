@@ -1,5 +1,6 @@
-package fi.iki.ede.crypto
+package fi.iki.ede.safe.model
 
+import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 
 // TODO: Doesn't really belong to this project, does it?

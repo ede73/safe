@@ -1,8 +1,6 @@
 package fi.iki.ede.safe
 
 import android.database.sqlite.SQLiteDatabase
-import fi.iki.ede.crypto.DecryptableCategoryEntry
-import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.EncryptedPassword
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.KeystoreHelperMock4UnitTests
@@ -15,6 +13,8 @@ import fi.iki.ede.crypto.support.hexToByteArray
 import fi.iki.ede.crypto.support.toHex
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.oisafecompatibility.OISafeRestore
+import fi.iki.ede.safe.model.DecryptableCategoryEntry
+import fi.iki.ede.safe.model.DecryptableSiteEntry
 import io.mockk.every
 import io.mockk.mockkClass
 import io.mockk.slot

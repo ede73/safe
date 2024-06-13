@@ -5,13 +5,35 @@ import android.util.Log
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
+import fi.iki.ede.oisafecompatibility.OISafeCategoryEntry
 import fi.iki.ede.oisafecompatibility.OISafeRestoreHandler
+import fi.iki.ede.oisafecompatibility.OISafeSiteEntry
 import fi.iki.ede.oisafecompatibility.RestoreDataSet
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.db.DBHelper
+import fi.iki.ede.safe.model.DecryptableCategoryEntry
+import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.ui.utilities.throwIfFeatureNotEnabled
 import java.io.InputStream
+
+internal fun fromOiSafeCat(oiSafeCategoryEntry: OISafeCategoryEntry) =
+    DecryptableCategoryEntry().apply {
+        id = oiSafeCategoryEntry.id
+        encryptedName = oiSafeCategoryEntry.encryptedName
+    }
+
+internal fun fromOiSafePwd(id: Long, oiSafeSiteEntry: OISafeSiteEntry) =
+    DecryptableSiteEntry(oiSafeSiteEntry.categoryId).apply {
+        this.id = id
+        description = oiSafeSiteEntry.description
+        website = oiSafeSiteEntry.website
+        username = oiSafeSiteEntry.username
+        password = oiSafeSiteEntry.password
+        note = oiSafeSiteEntry.note
+        passwordChangedDate = oiSafeSiteEntry.passwordChangedDate
+    }
+
 
 @Deprecated("Just for backwards compatibility")
 object OISafeRestore {
@@ -54,16 +76,16 @@ object OISafeRestore {
             throw Exception("Internal failure")
         }
         for (category in dataSet.categories) {
-            dbHelper.addCategory(category)
+            dbHelper.addCategory(fromOiSafeCat(category))
         }
         var totalPasswords = 0
         for (password in dataSet.pass) {
             totalPasswords++
-            password.id = totalPasswords.toLong()
+            val pwdId = totalPasswords.toLong()
             try {
-                dbHelper.addPassword(password)
+                dbHelper.addPassword(fromOiSafePwd(pwdId, password))
             } catch (ex: SQLiteException) {
-                Log.e(TAG, "ERROR adding password ${password.id}")
+                Log.e(TAG, "ERROR adding password ${pwdId}")
                 db.endTransaction()
                 return -1
             }

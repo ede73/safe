@@ -18,9 +18,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.safe.ui.composable.SearchSiteEntryControls
 import fi.iki.ede.safe.ui.composable.SearchSiteEntryList
+import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
 import kotlinx.coroutines.flow.MutableStateFlow

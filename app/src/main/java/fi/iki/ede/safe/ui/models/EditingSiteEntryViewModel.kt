@@ -2,9 +2,9 @@ package fi.iki.ede.safe.ui.models
 
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
-import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.safe.db.DBID
+import fi.iki.ede.safe.model.DecryptableSiteEntry
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

@@ -9,8 +9,8 @@ import fi.iki.ede.crypto.support.DisallowedFunctions
  *
  * Avoid using, prefer SaltedEncryptedPassword
  */
-open class SaltedPassword(val salt: Salt, open val password: Password) : DisallowedFunctions() {
-    open fun isEmpty() = salt.isEmpty() || password.isEmpty()
+data class SaltedPassword(val salt: Salt, val password: Password) : DisallowedFunctions() {
+    fun isEmpty() = salt.isEmpty() || password.isEmpty()
 
     companion object {
         fun getEmpty(): SaltedPassword =

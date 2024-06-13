@@ -9,13 +9,9 @@ import fi.iki.ede.crypto.support.DisallowedFunctions
  *
  * Prefer using SaltedEncryptedPassword
  */
-class EncryptedPassword(val ivCipherText: IVCipherText) : DisallowedFunctions() {
+data class EncryptedPassword(val ivCipherText: IVCipherText) : DisallowedFunctions() {
     fun isEmpty(): Boolean = ivCipherText.isEmpty()
-    override fun hashCode() = ivCipherText.hashCode()
 
-    override fun equals(other: Any?): Boolean =
-        (other != null) && (this.hashCode() == (other as? EncryptedPassword)?.hashCode())
-    
     companion object {
         fun getEmpty() = EncryptedPassword(IVCipherText.getEmpty())
     }
