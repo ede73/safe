@@ -67,6 +67,7 @@ abstract class ExportConfig(currentCodedVersion: ExportVersion) {
             ROOT_PASSWORD_SAFE_VERSION("version"),
             ROOT_PASSWORD_SAFE_CREATION_TIME("created"),
             CATEGORY_NAME("name"),
+            CATEGORY_ITEM_ID("ID"),
             CATEGORY_ITEM_PASSWORD_CHANGED("changed"),
             IV("iv")
         }

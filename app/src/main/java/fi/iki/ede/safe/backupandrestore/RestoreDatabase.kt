@@ -69,6 +69,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         val db = dbHelper.beginRestoration()
 
         try {
+            // TODO: this also has inner transaction
             dbHelper.storeSaltAndEncryptedMasterKey(
                 backupData.getSalt(),
                 backupData.getEncryptedMasterKey()
@@ -112,7 +113,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
     )
 
 
-    inline fun <reified T : Enum<T>, V> valueOrNull(value: V, valueSelector: (T) -> V): T? =
+    private inline fun <reified T : Enum<T>, V> valueOrNull(value: V, valueSelector: (T) -> V): T? =
         enumValues<T>().find { valueSelector(it) == value }
 
 
@@ -152,7 +153,6 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
             when (myParser.eventType) {
                 XmlPullParser.START_TAG -> {
                     path.add(valueOrNull<Elements, String>(myParser.name) { it.value })
-
                     when (path) {
                         listOf(Elements.ROOT_PASSWORD_SAFE) -> {
                             val rawVersion = myParser.getTrimmedAttributeValue(
@@ -208,6 +208,10 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             require(category != null) { "Must have category" }
                             require(password == null) { "Must not have password" }
                             password = DecryptableSiteEntry(category.id!!)
+                            myParser.getTrimmedAttributeValue(Attributes.CATEGORY_ITEM_ID)
+                                .toLongOrNull()?.let {
+                                    password!!.id = it
+                                }
                             passwords++
                         }
 
@@ -256,9 +260,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             require(password != null) { "Must have password entry" }
 
                             val changed =
-                                myParser.getTrimmedAttributeValue(
-                                    Attributes.CATEGORY_ITEM_PASSWORD_CHANGED
-                                )
+                                myParser.getTrimmedAttributeValue(Attributes.CATEGORY_ITEM_PASSWORD_CHANGED)
                             if (changed.isNotBlank()) {
                                 try {
                                     password.passwordChangedDate =
@@ -331,7 +333,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             password = null
                         }
                     }
-                    path.remove(valueOrNull<Elements, String>(myParser.name) { it.value })
+                    path.removeLast()
                 }
             }
             myParser.next()
