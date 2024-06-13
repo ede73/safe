@@ -70,7 +70,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
 
     fun storeSaltAndEncryptedMasterKey(salt: Salt, ivCipher: IVCipherText) {
         writableDatabase.apply {
-            beginTransaction()
+            beginTransaction() // TODO: BAD, we have transaction in restore already
             // DONT USE Use{} transaction will die
 
             delete(Keys).let {
