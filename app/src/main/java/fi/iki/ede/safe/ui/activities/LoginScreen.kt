@@ -1,6 +1,5 @@
 package fi.iki.ede.safe.ui.activities
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -22,6 +21,7 @@ import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.service.AutolockingService
+import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.composable.BiometricsComponent
 import fi.iki.ede.safe.ui.composable.PasswordPrompt
@@ -34,14 +34,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 open class LoginScreen : ComponentActivity() {
-    private var dontOpenCategoryListScreen: Boolean = false
+    private var oenCategoryListScreen: Boolean = true
     private val biometricsFirstTimeRegister = biometricsFirstTimeActivity()
     private val biometricsVerify = biometricsVerifyActivity()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        dontOpenCategoryListScreen = intent.getBooleanExtra(
-            DONT_OPEN_CATEGORY_SCREEN_AFTER_LOGIN, false
+        oenCategoryListScreen = intent.getBooleanExtra(
+            OPEN_CATEGORY_SCREEN_AFTER_LOGIN, true
         )
         // "upgrade" from old versions where first time login was solely
         // determined by existence of passwords in the database
@@ -92,8 +92,8 @@ open class LoginScreen : ComponentActivity() {
         Preferences.setMasterkeyInitialized()
         setResult(RESULT_OK, Intent())
         startService(Intent(applicationContext, AutolockingService::class.java))
-        if (!dontOpenCategoryListScreen) {
-            CategoryListScreen.startMe(this)
+        if (oenCategoryListScreen) {
+            IntentManager.startCategoryScreen(this)
         }
         finish()
     }
@@ -160,15 +160,7 @@ open class LoginScreen : ComponentActivity() {
         }
 
     companion object {
-        const val DONT_OPEN_CATEGORY_SCREEN_AFTER_LOGIN = "dont_open_category_screen"
-        fun startMe(context: Context, dontOpenCategoryScreenAfterLogin: Boolean = false) {
-            context.startActivity(
-                Intent(
-                    context,
-                    LoginScreen::class.java
-                ).putExtra(DONT_OPEN_CATEGORY_SCREEN_AFTER_LOGIN, dontOpenCategoryScreenAfterLogin)
-            )
-        }
+        const val OPEN_CATEGORY_SCREEN_AFTER_LOGIN = "open_category_screen"
     }
 }
 

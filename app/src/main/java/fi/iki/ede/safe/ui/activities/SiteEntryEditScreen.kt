@@ -2,7 +2,6 @@ package fi.iki.ede.safe.ui.activities
 
 import android.app.Activity.RESULT_CANCELED
 import android.app.Activity.RESULT_OK
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.BackHandler
@@ -130,14 +129,6 @@ class SiteEntryEditScreen : AutolockingBaseComponentActivity() {
         const val PASSWORD_ID = "password_id"
         const val CATEGORY_ID = "category_id"
         const val TAG = "PasswordEntryScreen"
-
-        fun getEditPassword(context: Context, passwordId: DBID) =
-            getIntent(context).putExtra(PASSWORD_ID, passwordId)
-
-        fun getAddPassword(context: Context, categoryId: DBID) =
-            getIntent(context).putExtra(CATEGORY_ID, categoryId)
-
-        private fun getIntent(context: Context) = Intent(context, SiteEntryEditScreen::class.java)
     }
 }
 

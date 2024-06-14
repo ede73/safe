@@ -16,6 +16,7 @@ import fi.iki.ede.safe.clipboard.ClipboardUtils
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.service.AutolockingService
+import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.activities.LoginScreen
 
 // Dedicated interface for averting inactivity a bit
@@ -52,7 +53,7 @@ interface ScreenOffLocker : AvertInactivityDuringLongTask {
             }
 
             AutolockingService.ACTION_LAUNCH_LOGIN_SCREEN -> {
-                LoginScreen.startMe(context, dontOpenCategoryScreenAfterLogin = true)
+                IntentManager.startLoginScreen(context, openCategoryScreenAfterLogin = false)
             }
         }
     }
@@ -93,7 +94,7 @@ interface ScreenOffLocker : AvertInactivityDuringLongTask {
         }
         val activity = this as ComponentActivity
         if (activity !is LoginScreen) {
-            LoginScreen.startMe(context, dontOpenCategoryScreenAfterLogin = true)
+            IntentManager.startLoginScreen(context, openCategoryScreenAfterLogin = false)
         }
         return true
     }

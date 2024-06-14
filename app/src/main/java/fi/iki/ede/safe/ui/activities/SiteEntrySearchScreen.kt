@@ -1,7 +1,5 @@
 package fi.iki.ede.safe.ui.activities
 
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
@@ -43,9 +41,6 @@ class SiteEntrySearchScreen : AutolockingBaseComponentActivity() {
         // minimum threshold for threaded search, else it's just single thread/linear
         const val MIN_PASSWORDS_FOR_THREADED_SEARCH = 20
         var searchProgressPerThread = mutableStateListOf<Float>()
-        fun startMe(context: Context) {
-            context.startActivity(Intent(context, SiteEntrySearchScreen::class.java))
-        }
     }
 }
 

@@ -25,9 +25,9 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
-import fi.iki.ede.safe.ui.TestTag
-import fi.iki.ede.safe.ui.activities.SiteEntryListScreen
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
+import fi.iki.ede.safe.splits.IntentManager
+import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import fi.iki.ede.safe.ui.theme.SafeListItem
@@ -50,7 +50,7 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
             modifier = Modifier
                 .combinedClickable(
                     onClick = {
-                        SiteEntryListScreen.startMe(context, category.id!!)
+                        IntentManager.startSiteEntryListScreen(context, category.id!!)
                     },
                     onLongClick = {
                         // Creating a dropdown menu

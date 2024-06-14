@@ -1,7 +1,6 @@
 package fi.iki.ede.safe.ui.activities
 
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -39,11 +38,6 @@ class HelpScreen : ComponentActivity() {
             it.read(buffer)
             String(buffer)
         }
-    }
-
-    companion object {
-        fun startMe(context: Context) =
-            context.startActivity(Intent(context, HelpScreen::class.java))
     }
 }
 

@@ -1,6 +1,5 @@
 package fi.iki.ede.safe.ui.activities
 
-import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
@@ -96,16 +95,6 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
                         Preferences.getBackupDocument()
                 }
             }
-        }
-    }
-
-    companion object {
-        fun startMe(context: Context) {
-            val meIntent = Intent(
-                context,
-                PreferenceActivity::class.java
-            ).setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-            context.startActivity(meIntent)
         }
     }
 }
