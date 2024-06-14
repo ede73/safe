@@ -1,7 +1,5 @@
 package fi.iki.ede.safe.ui.activities
 
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.text.TextUtils
 import androidx.activity.compose.setContent
@@ -37,19 +35,7 @@ import kotlinx.coroutines.launch
 class CategoryListScreen : AutolockingBaseComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContent { CategoryListScreenCompose(DataModel.categoriesStateFlow) }
-    }
-
-    companion object {
-        fun startMe(context: Context) {
-            context.startActivity(
-                Intent(
-                    context,
-                    CategoryListScreen::class.java
-                ).setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-            )
-        }
     }
 }
 

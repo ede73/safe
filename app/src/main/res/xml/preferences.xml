@@ -41,5 +41,13 @@
         <Preference
             android:key="time_of_last_backup"
             android:title="@string/preferences_title_time_of_last_backup" />
+        <MultiSelectListPreference
+            android:id="@+id/experimental_features"
+            android:dialogTitle="@string/preferences_experimental_features_title"
+            android:key="experiments"
+            android:entries="@array/dummy_entries"
+            android:entryValues="@array/dummy_entry_values"
+            android:summary="@string/preferences_summary_experimental_features"
+            android:title="@string/preferences_title_experimental_features" />
     </PreferenceCategory>
 </PreferenceScreen>

@@ -35,6 +35,7 @@ object Preferences {
         level = DeprecationLevel.WARNING
     )
     const val PREFERENCE_BACKUP_DOCUMENT = "backup_document"
+    const val PREFERENCE_EXPERIMENTAL_FEATURES = "experiments"
     private val PREFERENCE_BACKUP_PATH_DEFAULT_VALUE =
         Environment.getExternalStorageDirectory().absolutePath + "/" + PASSWORDSAFE_EXPORT_FILE
     const val PREFERENCE_BIOMETRICS_ENABLED = "biometrics"
@@ -58,7 +59,6 @@ object Preferences {
     } else {
         PREFERENCE_BACKUP_PATH_DEFAULT_VALUE
     }
-
 
     fun setBackupDocument(uriString: String?) =
         sharedPreferences.edit()
@@ -104,4 +104,7 @@ object Preferences {
             ZonedDateTime.now()
         )
     ).apply()
+
+    fun getEnabledExperiments(): Set<String> =
+        sharedPreferences.getStringSet(PREFERENCE_EXPERIMENTAL_FEATURES, emptySet()) ?: emptySet()
 }

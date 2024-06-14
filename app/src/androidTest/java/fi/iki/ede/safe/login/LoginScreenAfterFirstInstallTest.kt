@@ -101,7 +101,7 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
         getLoginButton(loginActivityTestRule).assertIsEnabled()
         getLoginButton(loginActivityTestRule).performClick()
         verify(exactly = 1) { LoginHandler.passwordLogin(any(), any()) }
-        verify(exactly = 1) { CategoryListScreen.startMe(any()) }
+        verify(exactly = 1) { CategoryListScreen.startCategoryScreen(any()) }
         verify(exactly = 0) { LoginHandler.firstTimeLogin(any(), any()) }
         verify(exactly = 0) { LoginHandler.biometricLogin() }
     }

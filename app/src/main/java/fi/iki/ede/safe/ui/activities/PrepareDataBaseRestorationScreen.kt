@@ -3,7 +3,6 @@ package fi.iki.ede.safe.ui.activities
 import android.app.Activity.RESULT_CANCELED
 import android.app.Activity.RESULT_OK
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
@@ -27,6 +26,7 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.Preferences
+import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.composable.PasswordTextField
 import fi.iki.ede.safe.ui.composable.RestoreDatabaseComponent
 import fi.iki.ede.safe.ui.theme.SafeButton
@@ -50,21 +50,7 @@ class PrepareDataBaseRestorationScreen : AutolockingBaseComponentActivity() {
     }
 
     companion object {
-        private const val OISAFE_COMPATIBILITY = "oisafe_compatibility"
-        fun startMe(context: Context, uri: Uri, oisafeCompatibility: Boolean) {
-            context.startActivity(
-                getIntent(context, oisafeCompatibility, uri)
-            )
-        }
-
-        fun getIntent(
-            context: Context,
-            oisafeCompatibility: Boolean,
-            uri: Uri
-        ) = Intent(
-            context, PrepareDataBaseRestorationScreen::class.java
-        ).putExtra(OISAFE_COMPATIBILITY, oisafeCompatibility)
-            .apply { data = uri }
+        const val OISAFE_COMPATIBILITY = "oisafe_compatibility"
     }
 }
 
@@ -133,13 +119,13 @@ private fun PrepareDBRestoreCompose(
                                     R.string.restore_screen_restored,
                                     restoredPasswords
                                 )
-                                CategoryListScreen.startMe(context)
+                                IntentManager.startCategoryScreen(context)
                                 context.setResult(RESULT_OK)
                                 context.finish()
                             } else {
                                 toast.value =
                                     context.getString(R.string.restore_screen_restore_failed)
-                                CategoryListScreen.startMe(context)
+                                IntentManager.startCategoryScreen(context)
                                 context.setResult(RESULT_CANCELED)
                                 context.finish()
                             }

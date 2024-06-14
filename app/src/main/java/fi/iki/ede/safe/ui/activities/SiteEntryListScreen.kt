@@ -1,7 +1,6 @@
 package fi.iki.ede.safe.ui.activities
 
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
@@ -16,9 +15,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
-import fi.iki.ede.safe.db.DBID
 import fi.iki.ede.safe.model.DataModel.passwordsStateFlow
 import fi.iki.ede.safe.model.DecryptableSiteEntry
+import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.composable.SiteEntryList
 import fi.iki.ede.safe.ui.composable.TopActionBar
 import fi.iki.ede.safe.ui.theme.SafeTheme
@@ -46,14 +45,7 @@ class SiteEntryListScreen : AutolockingBaseComponentActivity() {
     }
 
     companion object {
-        private const val CATEGORY_ID = "category_id"
-        fun startMe(context: Context, id: DBID) {
-            context.startActivity(
-                Intent(
-                    context, SiteEntryListScreen::class.java
-                ).putExtra(CATEGORY_ID, id).setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-            )
-        }
+        const val CATEGORY_ID = "category_id"
     }
 }
 
@@ -73,7 +65,7 @@ private fun SiteEntryListCompose(
                 TopActionBar(onAddRequested = {
                     context?.let { context ->
                         it.launch(
-                            SiteEntryEditScreen.getAddPassword(context, categoryId = categoryId)
+                            IntentManager.getAddPassword(context, categoryId = categoryId)
                         )
                     }
                 })

@@ -73,7 +73,7 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
         verify(exactly = 0) { LoginHandler.passwordLogin(any(), any()) }
         verify(exactly = 0) { BiometricsActivity.getRegistrationIntent(any()) }
         verify(exactly = 0) { BiometricsActivity.getVerificationIntent(any()) }
-        verify(exactly = 1) { CategoryListScreen.startMe(any()) }
+        verify(exactly = 1) { CategoryListScreen.startCategoryScreen(any()) }
     }
 
     @Test
@@ -119,7 +119,7 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
         every { LoginHandler.firstTimeLogin(any(), any()) } just runs
 
         mockkObject(CategoryListScreen)
-        every { CategoryListScreen.startMe(any()) } just runs
+        every { CategoryListScreen.startCategoryScreen(any()) } just runs
 
         // for the FIRST TIME init we do display biometrics
         getPasswordFields(loginActivityTestRule)[0].assertIsDisplayed()

@@ -44,12 +44,8 @@ import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
+import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.TestTag
-import fi.iki.ede.safe.ui.activities.HelpScreen
-import fi.iki.ede.safe.ui.activities.LoginScreen
-import fi.iki.ede.safe.ui.activities.PreferenceActivity
-import fi.iki.ede.safe.ui.activities.PrepareDataBaseRestorationScreen
-import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
@@ -108,13 +104,16 @@ fun TopActionBar(
 
                 IconButton(onClick = {
                     AutolockingBaseComponentActivity.lockTheApplication(context)
-                    LoginScreen.startMe(context, dontOpenCategoryScreenAfterLogin = true)
+                    IntentManager.startLoginScreen(
+                        context,
+                        openCategoryScreenAfterLogin = false
+                    )
                 }) {
                     Icon(Icons.Default.Lock, stringResource(id = R.string.action_bar_lock))
                 }
 
                 IconButton(
-                    onClick = { SiteEntrySearchScreen.startMe(context) },
+                    onClick = { IntentManager.startSiteEntrySearchScreen(context) },
                     modifier = Modifier.testTag(TestTag.TEST_TAG_TOP_ACTION_BAR_SEARCH)
                 ) {
                     Icon(Icons.Default.Search, stringResource(id = R.string.action_bar_search))
@@ -197,7 +196,11 @@ private fun MakeDropdownMenu(
 
     val selectRestoreDocumentLauncher = setupActivityResultLauncher {
         restoreCompleted.launch(
-            PrepareDataBaseRestorationScreen.getIntent(context, false, it.data!!.data!!)
+            IntentManager.getDatabaseRestorationScreenIntent(
+                context,
+                false,
+                it.data!!.data!!
+            )
         )
     }
 
@@ -218,7 +221,11 @@ private fun MakeDropdownMenu(
     val selectRestoreDocumentLauncherOld = setupActivityResultLauncher {
         throwIfFeatureNotEnabled(BuildConfig.ENABLE_OIIMPORT)
         restoreCompleted.launch(
-            PrepareDataBaseRestorationScreen.getIntent(context, true, it.data!!.data!!)
+            IntentManager.getDatabaseRestorationScreenIntent(
+                context,
+                true,
+                it.data!!.data!!
+            )
         )
     }
 
@@ -233,13 +240,13 @@ private fun MakeDropdownMenu(
             text = { Text(text = stringResource(id = R.string.action_bar_settings)) },
             onClick = {
                 displayMenu.value = false
-                PreferenceActivity.startMe(context)
+                IntentManager.startPreferencesActivity(context)
             })
         DropdownMenuItem(
             text = { Text(text = stringResource(id = R.string.action_bar_help)) },
             onClick = {
                 displayMenu.value = false
-                HelpScreen.startMe(context)
+                IntentManager.startHelpScreen(context)
             })
         DropdownMenuItem(
             enabled = !loginScreen,
