@@ -15,19 +15,6 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-            packaging {
-                resources {
-                    // AndroidStudio Koala adds all sort of this to release builds
-                    excludes += setOf(
-                        "**/DebugProbesKt.bin",
-                        "**/base/junit/**",
-                    )
-                }
-            }
         }
     }
 

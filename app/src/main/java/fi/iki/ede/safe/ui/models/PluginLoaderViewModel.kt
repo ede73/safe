@@ -4,8 +4,6 @@ import android.app.Application
 import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import com.google.android.play.core.splitinstall.SplitInstallManagerFactory
 import com.google.android.play.core.splitinstall.SplitInstallRequest
 import com.google.android.play.core.splitinstall.SplitInstallStateUpdatedListener
@@ -24,19 +22,18 @@ class PluginLoaderViewModel(app: Application) : AndroidViewModel(app) {
     private val splitInstallManager = SplitInstallManagerFactory.create(getApplication())
     private var sessionId = 0
 
-    private val _counter = MutableLiveData<Int>()
-    val counter: LiveData<Int> = _counter
-
     private val listener = SplitInstallStateUpdatedListener { state ->
         if (state.sessionId() == sessionId) {
-            val pluginName = PluginName.valueOf(state.moduleNames().first())
+            val pluginName = PluginName.entries.first {
+                it.pluginName == state.moduleNames().first()
+            }
 
             when (state.status()) {
                 SplitInstallSessionStatus.FAILED -> {
-                    Log.d(TAG, "$pluginName install failed with ${state.errorCode()}")
+                    Log.d(TAG, "${pluginName.pluginName} install failed with ${state.errorCode()}")
                     Toast.makeText(
                         getApplication(),
-                        "$pluginName install failed with ${state.errorCode()}",
+                        "${pluginName.pluginName} install failed with ${state.errorCode()}",
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -44,13 +41,14 @@ class PluginLoaderViewModel(app: Application) : AndroidViewModel(app) {
                 SplitInstallSessionStatus.INSTALLED -> {
                     Toast.makeText(
                         getApplication(),
-                        "$pluginName module installed successfully",
+                        "${pluginName.pluginName} module installed successfully",
                         Toast.LENGTH_SHORT
                     ).show()
                     initializePlugin(getApplication(), pluginName)
+                    sessionId = 0
                 }
 
-                else -> Log.d(TAG, "Status: $pluginName ${state.status()}")
+                else -> Log.d(TAG, "Status: ${pluginName.pluginName} ${state.status()}")
             }
         }
     }
@@ -65,6 +63,7 @@ class PluginLoaderViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun getOrInstallPlugin(pluginName: PluginName): RegistrationAPI? =
+        // TODO: TOGGLE THIS IN BUNDLE INSTALL TEST
         if (PluginManager.isPluginInstalled(splitInstallManager, pluginName))
             initializePlugin(getApplication(), pluginName)
         else

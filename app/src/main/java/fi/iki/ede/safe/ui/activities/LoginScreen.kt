@@ -16,12 +16,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.service.AutolockingService
 import fi.iki.ede.safe.splits.IntentManager
+import fi.iki.ede.safe.splits.PluginManager
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.composable.BiometricsComponent
 import fi.iki.ede.safe.ui.composable.PasswordPrompt
@@ -43,6 +45,10 @@ open class LoginScreen : ComponentActivity() {
         oenCategoryListScreen = intent.getBooleanExtra(
             OPEN_CATEGORY_SCREEN_AFTER_LOGIN, true
         )
+        if (BuildConfig.DEBUG) {
+            val isBundleTest = intent.getStringExtra("isBundleTest") == "true"
+            PluginManager.setBundleTestMode(isBundleTest)
+        }
         // "upgrade" from old versions where first time login was solely
         // determined by existence of passwords in the database
         // we don't really know if this is first time login or not

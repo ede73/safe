@@ -12,6 +12,17 @@ import java.util.ServiceLoader
 private const val TAG = "PluginManager"
 
 object PluginManager {
+    /* NEVER READ THIS */
+    private var _bundleTestMode = false
+
+    fun setBundleTestMode(isBundleTest: Boolean) {
+        if (BuildConfig.DEBUG) {
+            _bundleTestMode = isBundleTest
+        }
+    }
+
+    fun getBundleTestMode() = if (BuildConfig.DEBUG) _bundleTestMode else false
+
     fun reinitializePlugins(appContext: Context) {
         val sm = SplitInstallManagerFactory.create(appContext)
         Preferences.getEnabledExperiments().forEach {
@@ -22,9 +33,14 @@ object PluginManager {
     }
 
     fun isPluginInstalled(splitInstallManager: SplitInstallManager, pluginName: PluginName) =
-        if (BuildConfig.DEBUG) true else splitInstallManager.installedModules.contains(
-            pluginName.pluginName
-        )
+        if (getBundleTestMode())
+            false
+        else if (BuildConfig.DEBUG)
+            true
+        else
+            splitInstallManager.installedModules.contains(
+                pluginName.pluginName
+            )
 
     fun initializePlugin(context: Context, pluginName: PluginName): RegistrationAPI? {
         val serviceLoader = ServiceLoader.load(
