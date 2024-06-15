@@ -4,6 +4,23 @@ plugins {
     alias(libs.plugins.org.jetbrains.kotlin.android)
 }
 
+/**
+ * To enable project wide flags for enabling/disabling features:
+ *
+ * In here:
+ *   project.ext.set("FLAG_NAME", true)
+ *   val FLAG_NAME: Boolean = project(":app").ext.get("FLAG_NAME") as Boolean
+ *
+ * In the other project (project/build.gradle.kts):
+ *   val FLAG_NAME: Boolean = project(":app").ext.get("FLAG_NAME") as Boolean
+ *   buildTypes {
+ *     release { buildConfigField("Boolean", "FLAG_NAME", FLAG_NAME.toString())}
+ *     debug { buildConfigField("Boolean", "FLAG_NAME", FLAG_NAME.toString())}
+ *   }
+ *
+ * In code (of the project in question):
+ *  throwIfFeatureNotEnabled(BuildConfig.FLAG_NAME) etc.
+ */
 project.ext.set("ENABLE_HIBP", true)
 project.ext.set("ENABLE_OIIMPORT", false)
 val ENABLE_HIBP: Boolean = project(":app").ext.get("ENABLE_HIBP") as Boolean
