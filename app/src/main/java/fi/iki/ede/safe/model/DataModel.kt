@@ -1,8 +1,6 @@
 package fi.iki.ede.safe.model
 
 import android.util.Log
-import fi.iki.ede.crypto.DecryptableCategoryEntry
-import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.db.DBHelper

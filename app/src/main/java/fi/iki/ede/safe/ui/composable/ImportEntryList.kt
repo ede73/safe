@@ -25,9 +25,7 @@ import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
-import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.gpm.model.SavedGPM
@@ -35,6 +33,7 @@ import fi.iki.ede.gpm.model.SavedGPM.Companion.makeFromEncryptedStringFields
 import fi.iki.ede.gpm.model.encrypt
 import fi.iki.ede.gpm.model.encrypter
 import fi.iki.ede.safe.model.DataModel
+import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.ui.models.DNDObject
 import fi.iki.ede.safe.ui.models.ImportGPMViewModel
 import fi.iki.ede.safe.ui.modifiers.doesItHaveText
@@ -70,19 +69,14 @@ fun combineLists(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ImportEntryList(viewModel: ImportGPMViewModel) {
-    //mine: List<DecryptableSiteEntry>, imports: List<SavedGPM>) {
-    //val maxSize = maxOf(mine.size, imports.size)
     val mine = viewModel.dataRepository.displayedSiteEntries.collectAsState()
     val imports = viewModel.dataRepository.displayedGPMs.collectAsState()
     val combinedList = combineLists(mine.value, imports.value)
-    val maxSize = maxOf(mine.value.size, imports.value.size)
-    val context = LocalContext.current
 
     fun ignoreSavedGPM(clipDescription: ClipDescription, id: Long) {
         println("ignoreSavedGPM ${clipDescription.label} $id")
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                println("ignoreSavedGPM")
                 // TODO: who sets flagged ignore here!
                 DataModel.markSavedGPMIgnored(id)
                 // TODO: should autolink(from datamodel)
@@ -102,7 +96,6 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
         println("LINK GPM AND ENTRY--> clip=(${clipDescription.label})  ==TO site=(${siteEntry.plainDescription}) gpmid=$id")
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                println("linkSavedGPMAndDecryptableSiteEntry")
                 // TODO: can link these two soon
                 viewModel.removeGPM(id)
                 DataModel.linkSaveGPMAndSiteEntry(siteEntry, id)
@@ -153,11 +146,6 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
     val coroutineScope = rememberCoroutineScope()
     var lazyColumnTopY by remember { mutableStateOf(0f) }
 
-    println("==========================================")
-    combinedList.forEach { k ->
-        val x = k as CombinedListPairs.SiteEntryToGPM
-        println("key ${x.siteEntry?.id} ${x.siteEntry?.plainDescription} gpmid=${x.gpm?.id}")
-    }
     val dndTarget = remember {
         object : DragAndDropTarget {
             override fun onMoved(event: DragAndDropEvent) {
@@ -215,7 +203,6 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
             val site = x as CombinedListPairs.SiteEntryToGPM
             Row {
                 val siteEntry = site.siteEntry
-                println("print ${siteEntry?.plainDescription}")
                 DraggableText(
                     if (siteEntry != null) DNDObject.SiteEntry(siteEntry) else DNDObject.Spacer,
                     modifier = mySizeModifier.weight(1f),

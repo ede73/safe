@@ -1,6 +1,7 @@
 package fi.iki.ede.safe.ui.activities
 
-import android.content.Context
+import android.app.Activity.RESULT_CANCELED
+import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.BackHandler
@@ -26,11 +27,12 @@ import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.db.DBID
 import fi.iki.ede.safe.model.DataModel
+import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.password.PasswordGenerator
+import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen.Companion.PASSWORD_ID
 import fi.iki.ede.safe.ui.composable.SiteEntryView
 import fi.iki.ede.safe.ui.composable.TryPersistPasswordEntryChanges
-import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.ui.models.EditableSiteEntry
 import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.theme.SafeButton
@@ -52,8 +54,7 @@ class SiteEntryEditScreen : AutolockingBaseComponentActivity() {
                 // Edit a password
                 val passwordId = intent.getLongExtra(PASSWORD_ID, -1L)
                 require(passwordId != -1L) { "Password must be value and exist" }
-                val password = DataModel.getPassword(passwordId)
-                viewModel.editPassword(password)
+                viewModel.editPassword(DataModel.getPassword(passwordId))
             } else if (intent.hasExtra(CATEGORY_ID)) {
                 // Add a new password
                 val categoryId = intent.getLongExtra(CATEGORY_ID, -1L)
@@ -79,76 +80,21 @@ class SiteEntryEditScreen : AutolockingBaseComponentActivity() {
             }
         }
 
+        val editingPasswordId = intent.getLongExtra(PASSWORD_ID, -1L)
+
         setContent {
-            SafeTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
-                ) {
-                    // Something return this activity, despite calling finish()
-                    // TODO: Not sure! AlertDialogs are both closed, anyway this solves the issue
-                    var finnishTheActivity by remember { mutableStateOf(false) }
-                    var showSaveOrDiscardDialog by remember { mutableStateOf(false) }
-                    var saveEntryRequested by remember { mutableStateOf(false) }
-
-                    val edits = viewModel.uiState.collectAsState().value
-                    var somethingChanged by remember { mutableStateOf(false) }
-                    val editingPasswordId: DBID? =
-                        intent.getLongExtra(PASSWORD_ID, -1).takeIf { it != -1L }
-
-                    val (passwordEntryChanged, passwordChanged) = resolveEditsAndChangedPassword(
-                        editingPasswordId,
-                        edits,
-                    )
-                    somethingChanged = passwordEntryChanged
-
-                    // If we've some edits AND back button is pressed, show dialog
-                    BackHandler(enabled = somethingChanged) {
-                        showSaveOrDiscardDialog = somethingChanged
-                    }
-
-                    if (showSaveOrDiscardDialog) {
-                        AlertDialog(onDismissRequest = {
-                            showSaveOrDiscardDialog = false
-                        }, confirmButton = {
-                            SafeButton(onClick = {
-                                showSaveOrDiscardDialog = false
-                                saveEntryRequested = true
-                            }) { Text(text = stringResource(id = R.string.password_entry_save)) }
-                        }, dismissButton = {
-                            SafeButton(onClick = {
-                                setResult(RESULT_CANCELED)
-                                showSaveOrDiscardDialog = false
-                                finnishTheActivity = true
-                            }) { Text(text = stringResource(id = R.string.password_entry_discard)) }
-                        }, title = {
-                            Text(text = stringResource(id = R.string.password_entry_save_info))
-                        })
-                    } else if (saveEntryRequested) {
-                        TryPersistPasswordEntryChanges(
-                            edits,
-                            passwordChanged,
-                            onDismiss = {
-                                saveEntryRequested = false
-                            },
-                            onSaved = {
-                                // TODO: what if failed?
-                                val resultIntent = Intent()
-                                resultIntent.putExtra(PASSWORD_ID, edits.id)
-                                setResult(RESULT_OK, resultIntent)
-                                saveEntryRequested = false
-                                finnishTheActivity = true
-                            }
-                        )
-                    }
-                    if (finnishTheActivity) {
-                        finish()
-                    } else {
-                        SiteEntryView(viewModel)
-                    }
-                }
-            }
+            SiteEntryEditCompose(
+                viewModel,
+                editingPasswordId.takeIf { it != -1L },
+                ::resolveEditsAndChangedPassword,
+                ::setResult,
+                ::finishActivity
+            )
         }
+    }
+
+    private fun finishActivity() {
+        finish()
     }
 
     private fun resolveEditsAndChangedPassword(
@@ -183,32 +129,90 @@ class SiteEntryEditScreen : AutolockingBaseComponentActivity() {
         const val PASSWORD_ID = "password_id"
         const val CATEGORY_ID = "category_id"
         const val TAG = "PasswordEntryScreen"
-
-        fun getEditPassword(context: Context, passwordId: DBID) =
-            getIntent(context).putExtra(PASSWORD_ID, passwordId)
-
-        fun getAddPassword(context: Context, categoryId: DBID) =
-            getIntent(context).putExtra(CATEGORY_ID, categoryId)
-
-        private fun getIntent(context: Context) = Intent(context, SiteEntryEditScreen::class.java)
-        // TODO: (NavigationFlow) Not sure why this FLAG_ACTIVITY_REORDER_TO_FRONT was added (or used), but this makes
-        // Search behave oddly. Repro:
-        // Search for smthg, open password entry (call it A), lock the screen
-        // open screen lock, PasswordSafe is also locked, open it, it's in main view
-        // Search again (same maybe), open another entry(call it B), previous entry opens instead
-        // Correct password ID is passed in here, however REORDER notices
-        // PasswordEntryScreen already exists, and pops that in front - just happens to be the entry A
-        // PasswordEntryScreen is not refreshed, it's CTOR not called
-        // EDIT: HA! ok, without this one, we'll end up multiple password entries and they fill up window back stack
-        // Basically most logical fix would be enabling this AND
-        // making sure if password entry WAS open during lock (or rather IF there is a password entry at unlock, then pop that one open!)
-        //.setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
     }
 }
+
+@Composable
+private fun SiteEntryEditCompose(
+    viewModel: EditingSiteEntryViewModel,
+    editingPasswordId: DBID?,
+    resolveEditsAndChangedPassword: (DBID?, EditableSiteEntry) -> Pair<Boolean, Boolean>,
+    setResult: (Int, Intent?) -> Unit,
+    finishActivity: () -> Unit,
+) {
+    SafeTheme {
+        Surface(
+            modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
+        ) {
+            // Something return this activity, despite calling finish()
+            // TODO: Not sure! AlertDialogs are both closed, anyway this solves the issue
+            var finnishTheActivity by remember { mutableStateOf(false) }
+            var showSaveOrDiscardDialog by remember { mutableStateOf(false) }
+            var saveEntryRequested by remember { mutableStateOf(false) }
+
+            val edits = viewModel.uiState.collectAsState().value
+            var somethingChanged by remember { mutableStateOf(false) }
+
+            val (passwordEntryChanged, passwordChanged) = resolveEditsAndChangedPassword(
+                editingPasswordId,
+                edits,
+            )
+            somethingChanged = passwordEntryChanged
+
+            // If we've some edits AND back button is pressed, show dialog
+            BackHandler(enabled = somethingChanged) {
+                showSaveOrDiscardDialog = somethingChanged
+            }
+
+            if (showSaveOrDiscardDialog) {
+                AlertDialog(onDismissRequest = {
+                    showSaveOrDiscardDialog = false
+                }, confirmButton = {
+                    SafeButton(onClick = {
+                        showSaveOrDiscardDialog = false
+                        saveEntryRequested = true
+                    }) { Text(text = stringResource(id = R.string.password_entry_save)) }
+                }, dismissButton = {
+                    SafeButton(onClick = {
+                        setResult(RESULT_CANCELED, null)
+                        showSaveOrDiscardDialog = false
+                        finnishTheActivity = true
+                    }) { Text(text = stringResource(id = R.string.password_entry_discard)) }
+                }, title = {
+                    Text(text = stringResource(id = R.string.password_entry_save_info))
+                })
+            } else if (saveEntryRequested) {
+                TryPersistPasswordEntryChanges(
+                    edits,
+                    passwordChanged,
+                    onDismiss = {
+                        saveEntryRequested = false
+                    },
+                    onSaved = {
+                        // TODO: what if failed?
+                        val resultIntent = Intent()
+                        resultIntent.putExtra(PASSWORD_ID, edits.id)
+                        setResult(RESULT_OK, resultIntent)
+                        saveEntryRequested = false
+                        finnishTheActivity = true
+                    }
+                )
+            }
+            if (finnishTheActivity) {
+                finishActivity()
+            } else {
+                SiteEntryView(viewModel)
+            }
+        }
+    }
+}
+
 
 @Preview(showBackground = true)
 @Composable
 fun PasswordEntryScreenPreview() {
+    KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
+    KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
     val entry = DecryptableSiteEntry(1)
     entry.id = 1
     entry.categoryId = 1
@@ -227,7 +231,13 @@ fun PasswordEntryScreenPreview() {
     }
     SafeTheme {
         //TODO:
-        SiteEntryView(fakeViewModel)
+        //SiteEntryView(fakeViewModel)
+        SiteEntryEditCompose(
+            fakeViewModel,
+            1,
+            { _, _ -> true to true },
+            { _, _ -> },
+            {})
     }
 }
 

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="action_bar_backup">Varmuuskopio</string>
+    <string name="action_bar_backup_completed">Varmuuskopiointi valmis</string>
     <string name="action_bar_change_master_password">Vaihda pääsalasana</string>
     <string name="action_bar_change_password_ok">Vaihda salasana</string>
     <string name="action_bar_generate_password">Luo salasana</string>

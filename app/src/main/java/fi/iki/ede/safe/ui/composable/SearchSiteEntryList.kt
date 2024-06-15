@@ -18,9 +18,10 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DataModel.getCategory
-import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
+import fi.iki.ede.safe.splits.IntentManager
+import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -65,7 +66,7 @@ fun SearchSiteEntryList(
                 passwordEntry = filteredItem,
                 categoryEntry = filteredItem.getCategory(), onEntryClick = {
                     launcher.launch(
-                        SiteEntryEditScreen.getEditPassword(context, it.id!!)
+                        IntentManager.getEditPassword(context, it.id!!)
                     )
                 }, onDelete = { deletedEntry ->
                     // it is gone already

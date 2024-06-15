@@ -1,7 +1,7 @@
 package fi.iki.ede.safe.ui.models
 
-import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.safe.model.DecryptableSiteEntry
 
 sealed class DNDObject {
     data object Spacer : DNDObject()

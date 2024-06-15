@@ -12,7 +12,6 @@ import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
-import fi.iki.ede.safe.ui.composable.dump
 import fi.iki.ede.safe.ui.models.DNDObject
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -48,7 +47,6 @@ fun Modifier.dnd(
 )
 
 fun setClipData(dragObject: DNDObject.GPM): ClipData {
-    println("=====set Clip Data ${dragObject.dump()}")
     return ClipData.newPlainText(
         dragObject.savedGPM.decryptedName,
         dragObject.savedGPM.id.toString()
@@ -60,24 +58,17 @@ fun doesItHaveText(event: DragAndDropEvent) =
 
 fun getClipData(event: DragAndDropEvent): Pair<ClipDescription, String>? =
     doesItHaveText(event).let {
-        println("Has text data in it atleast...${event.toAndroidDragEvent().clipDescription.label}")
-        if (event.toAndroidDragEvent().localState == null) {
-            println("got local state ${event.toAndroidDragEvent().localState}")
-        }
         getDraggedClipData(event)?.let { data ->
             val item = data.getItemAt(0)
-            println("ALSO HAS AN ITEM!")
             data.description to item.text.toString()
         }
     }
 
 fun getDraggedClipData(event: DragAndDropEvent): ClipData? =
     event.toAndroidDragEvent().clipData?.let {
-        println(" we have some clip data!")
         if (it.itemCount > 0) {
             it
         } else {
-            println("no items..")
             null
         }
     }

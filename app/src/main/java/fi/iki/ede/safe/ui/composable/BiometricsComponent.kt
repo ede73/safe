@@ -22,9 +22,7 @@ import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeButton
 
 @Composable
-fun BiometricsComponent(
-    bioVerify: ActivityResultLauncher<Intent>? = null,
-) {
+fun BiometricsComponent(bioVerify: ActivityResultLauncher<Intent>) {
     val context = LocalContext.current
 
     // TODO: Don't allow biometrics if keystore doesn't initialize
@@ -45,10 +43,10 @@ fun BiometricsComponent(
     if (biometricsActivityEnabled && biometricsRecorded && keystoreIsInitialized) {
         // Actually during login, we could JUST launch the bio verification immediately
         // since biometrics is enabled AND we have previously recorded entry
-        bioVerify?.launch(BiometricsActivity.getVerificationIntent(context))
+        bioVerify.launch(BiometricsActivity.getVerificationIntent(context))
         SafeButton(
             onClick = {
-                bioVerify?.launch(BiometricsActivity.getVerificationIntent(context))
+                bioVerify.launch(BiometricsActivity.getVerificationIntent(context))
             },
             modifier = Modifier.testTag(TestTag.TEST_TAG_BIOMETRICS_BUTTON)
         ) { Text(stringResource(id = R.string.login_with_biometrics)) }

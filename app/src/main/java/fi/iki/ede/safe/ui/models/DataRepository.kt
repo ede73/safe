@@ -1,7 +1,7 @@
 package fi.iki.ede.safe.ui.models
 
-import fi.iki.ede.crypto.DecryptableSiteEntry
 import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.safe.model.DecryptableSiteEntry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -29,20 +29,20 @@ class DataRepository {
                     is ModificationRequest.InitializeSiteEntries -> {
                         _originalSiteEntries.clear()
                         _originalSiteEntries.addAll(request.siteEntries)
-                        _displayedSiteEntries.value = _originalSiteEntries
+                        _displayedSiteEntries.value = _originalSiteEntries.toList()
                     }
 
                     is ModificationRequest.InitializeGPMs -> {
                         _originalGPMs.clear()
                         _originalGPMs.addAll(request.savedGPMs)
-                        _displayedGPMs.value = _originalGPMs
+                        _displayedGPMs.value = _originalGPMs.toList()
                     }
 
                     is ModificationRequest.ResetGPMDisplayList ->
-                        _displayedGPMs.value = _originalGPMs
+                        _displayedGPMs.value = _originalGPMs.toList()
 
                     is ModificationRequest.ResetSiteEntryDisplayList ->
-                        _displayedSiteEntries.value = _originalSiteEntries
+                        _displayedSiteEntries.value = _originalSiteEntries.toList()
 
                     is ModificationRequest.DisplayGPM ->
                         _displayedGPMs.update { it + request.savedGPM }
@@ -51,12 +51,12 @@ class DataRepository {
                         _displayedSiteEntries.update { it + request.siteEntry }
 
                     is ModificationRequest.RemoveGPM -> {
-                        if (_originalGPMs.removeAll { it.id == request.id }) {
-                            println("GPM $request.id removed")
-                        } else {
+                        if (_originalGPMs.removeAll { it.id == request.id } == false) {
                             println("GPM $request.id not found (wasnt removed from ORIGINAL)")
                         }
-                        _displayedGPMs.update { it.filterNot { gpm -> gpm.id == request.id } }
+                        _displayedGPMs.update {
+                            it.filterNot { gpm -> gpm.id == request.id }
+                        }
                     }
 
                     is ModificationRequest.EmptyDisplayLists -> {
@@ -112,15 +112,6 @@ class DataRepository {
                 modificationRequests.emit(ModificationRequest.ResetSiteEntryDisplayList)
         }
     }
-
-//    inline fun <reified T> giveOriginalListOf(): MutableList<T> {
-//        return when (T::class) {
-//            // TODO: xxx
-//            SavedGPM::class -> _originalGPMs.map { it.copy() } as MutableList<T>
-//            DecryptableSiteEntry::class -> _originalSiteEntries as MutableList<T>
-//            else -> throw Exception("Not supported")
-//        }
-//    }
 
     fun getList(dataType: DataType): List<Any> {
         return when (dataType) {

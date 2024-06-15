@@ -2,6 +2,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <!-- action bar -->
     <string name="action_bar_backup">Backup</string>
+    <string name="action_bar_backup_completed">Backup completed</string>
     <string name="action_bar_change_master_password">Change master password</string>
     <string name="action_bar_change_password_ok">Change the password!</string>
     <string name="action_bar_generate_password">Generate password</string>

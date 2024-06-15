@@ -100,7 +100,7 @@ fun DraggableText(
                             // literally DOES NOT work
                             //it.dnd(dragObject, false, dndTarget)
                         } else {
-                            println("Skip a DND Target${dragObject.dump()}..we are NOT visible")
+                            //println("Skip a DND Target${dragObject.dump()}..we are NOT visible")
                             it
                         }
                     }

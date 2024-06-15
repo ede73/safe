@@ -1,19 +1,23 @@
 package fi.iki.ede.safe.ui.activities
 
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import fi.iki.ede.safe.db.DBID
+import androidx.compose.ui.tooling.preview.Preview
+import fi.iki.ede.crypto.IVCipherText
+import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.model.DataModel.passwordsStateFlow
+import fi.iki.ede.safe.model.DecryptableSiteEntry
+import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.composable.SiteEntryList
 import fi.iki.ede.safe.ui.composable.TopActionBar
 import fi.iki.ede.safe.ui.theme.SafeTheme
@@ -36,38 +40,52 @@ class SiteEntryListScreen : AutolockingBaseComponentActivity() {
                 .filterNotNull()
                 .collectAsState(initial = emptyList())
 
-            SafeTheme {
-                // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        TopActionBar(onAddRequested = {
-                            it.launch(
-                                SiteEntryEditScreen.getAddPassword(
-                                    context,
-                                    categoryId = categoryId
-                                )
-                            )
-                        })
-                        SiteEntryList(passwordsState)
-                        // last row
-                    }
-                }
-            }
+            SiteEntryListCompose(context, categoryId, passwordsState)
         }
     }
 
     companion object {
-        private const val CATEGORY_ID = "category_id"
-        fun startMe(context: Context, id: DBID) {
-            context.startActivity(
-                Intent(
-                    context, SiteEntryListScreen::class.java
-                ).putExtra(CATEGORY_ID, id).setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-            )
+        const val CATEGORY_ID = "category_id"
+    }
+}
+
+@Composable
+private fun SiteEntryListCompose(
+    context: Context?,
+    categoryId: Long,
+    passwordsState: List<DecryptableSiteEntry>
+) {
+    SafeTheme {
+        Surface(
+            modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                TopActionBar(onAddRequested = {
+                    context?.let { context ->
+                        it.launch(
+                            IntentManager.getAddPassword(context, categoryId = categoryId)
+                        )
+                    }
+                })
+                SiteEntryList(passwordsState)
+                // last row
+            }
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SiteEntryListScreenPreview() {
+    KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
+    KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
+
+    val flow = listOf(DecryptableSiteEntry(1).apply {
+        description = KeyStoreHelperFactory.getEncrypter()("Android".toByteArray())
+    }, DecryptableSiteEntry(1).apply {
+        description = KeyStoreHelperFactory.getEncrypter()("iPhone".toByteArray())
+    })
+    SiteEntryListCompose(null, 1, flow)
 }
