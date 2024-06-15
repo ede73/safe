@@ -1,12 +1,13 @@
 package fi.iki.ede.safe
 
-import android.app.Application
+import com.google.android.play.core.splitcompat.SplitCompatApplication
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.Preferences
+import fi.iki.ede.safe.splits.PluginManager.reinitializePlugins
 
 
-class SafeApplication : Application() {
+class SafeApplication : SplitCompatApplication() {
     init {
         instance = this
 //        if (BuildConfig.DEBUG) {
@@ -26,6 +27,7 @@ class SafeApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         Preferences.initialize(this)
+        reinitializePlugins(this)
     }
 
     companion object {

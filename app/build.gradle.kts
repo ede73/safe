@@ -18,7 +18,7 @@ android {
         minSdk = 26
         targetSdk = 34
 
-        val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(3, 0, 42, 0)
+        val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(3, 0, 43, 0)
         versionCode =
             versionMajor * 10000 + versionMinor * 1000 + versionPatch * 100 + versionBuild
         versionName = "${versionMajor}.${versionMinor}.${versionPatch}"
@@ -81,10 +81,12 @@ android {
             }
         }
     }
+
     // this should have been deprecated in Kotlin 2.0 but some why AndroidStudio wants it
     kotlinOptions {
         jvmTarget = "1.8"
     }
+    dynamicFeatures += setOf(":categorypager")
     testFixtures {
         enable = true
     }
@@ -99,7 +101,7 @@ dependencies {
     // cant dynamically filter these out as imports would fail and making stub is too much work..
     implementation(project(":app:hibp"))
     implementation(project(":app:oisafecompatibility"))
-
+    implementation(libs.app.update.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.biometric.ktx)
@@ -107,9 +109,12 @@ dependencies {
     implementation(libs.androidx.material.icons.extended.android)
     implementation(libs.androidx.material3.android)
     implementation(libs.androidx.preference.ktx)
+    // TODO: WHY IS THIS HERE?
     implementation(libs.androidx.ui.test.junit4.android)
     implementation(libs.androidx.ui.tooling.preview.android)
     implementation(libs.material)
+    //implementation(libs.core.ktx)
+    implementation(libs.feature.delivery.ktx)
 
     // Bring bouncy castle to unit tests
     testImplementation("org.bouncycastle:bcprov-jdk16:1.46")
@@ -130,6 +135,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     // Docs say: Test rules and transitive dependencies: but seems to work without
     //androidTestImplementation("androidx.compose.ui:ui-test-junit4:$compose_version")
+    implementation(kotlin("reflect"))
 }
 
 tasks.configureEach {

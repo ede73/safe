@@ -6,6 +6,7 @@ import android.os.Environment
 import androidx.preference.PreferenceManager
 import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.safe.BuildConfig
+import fi.iki.ede.safe.ui.models.PluginName
 import java.time.ZonedDateTime
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
@@ -35,6 +36,7 @@ object Preferences {
         level = DeprecationLevel.WARNING
     )
     const val PREFERENCE_BACKUP_DOCUMENT = "backup_document"
+    const val PREFERENCE_EXPERIMENTAL_FEATURES = "experiments"
     private val PREFERENCE_BACKUP_PATH_DEFAULT_VALUE =
         Environment.getExternalStorageDirectory().absolutePath + "/" + PASSWORDSAFE_EXPORT_FILE
     const val PREFERENCE_BIOMETRICS_ENABLED = "biometrics"
@@ -58,7 +60,6 @@ object Preferences {
     } else {
         PREFERENCE_BACKUP_PATH_DEFAULT_VALUE
     }
-
 
     fun setBackupDocument(uriString: String?) =
         sharedPreferences.edit()
@@ -104,4 +105,9 @@ object Preferences {
             ZonedDateTime.now()
         )
     ).apply()
+
+    fun getEnabledExperiments(): Set<PluginName> =
+        sharedPreferences.getStringSet(PREFERENCE_EXPERIMENTAL_FEATURES, emptySet())
+            ?.mapNotNull { PluginName.entries.firstOrNull { p -> p.pluginName == it } }
+            ?.toSet() ?: emptySet()
 }

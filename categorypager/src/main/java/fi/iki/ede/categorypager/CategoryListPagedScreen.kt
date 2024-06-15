@@ -1,7 +1,5 @@
-package fi.iki.ede.safe.ui.activities
+package fi.iki.ede.categorypager
 
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.text.TextUtils
 import androidx.activity.compose.setContent
@@ -44,17 +42,6 @@ class CategoryListPagedScreen : AutolockingBaseComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent { CategoryListScreenPagedCompose(DataModel.categoriesStateFlow) }
-    }
-
-    companion object {
-        fun startMe(context: Context) {
-            context.startActivity(
-                Intent(
-                    context,
-                    CategoryListPagedScreen::class.java
-                ).setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-            )
-        }
     }
 }
 

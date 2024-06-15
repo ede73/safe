@@ -117,6 +117,7 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
             ActivityResult(RESULT_CANCELED, null)
         }
 
+        //mockkObject(CategoryListScreen)
         //getPasswordFields(loginActivityTestRule)[0].performTextInput(FAKE_PASSWORD_TEXT)
         getLoginButton(loginActivityTestRule).assertIsDisplayed()
         //getBiometricsCheckbox(loginActivityTestRule).performClick()
@@ -153,6 +154,7 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
             ActivityResult(RESULT_CANCELED, null)
         }
 
+        //mockkObject(CategoryListScreen)
         //getPasswordFields(loginActivityTestRule)[0].performTextInput(FAKE_PASSWORD_TEXT)
         getLoginButton(loginActivityTestRule).assertIsDisplayed()
         //getBiometricsCheckbox(loginActivityTestRule).performClick()
@@ -194,6 +196,7 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
             ActivityResult(BiometricsActivity.RESULT_FAILED, null)
         }
 
+        //mockkObject(CategoryListScreen)
         //getPasswordFields(loginActivityTestRule)[0].performTextInput(FAKE_PASSWORD_TEXT)
         getLoginButton(loginActivityTestRule).assertIsDisplayed()
         //getBiometricsCheckbox(loginActivityTestRule).performClick()

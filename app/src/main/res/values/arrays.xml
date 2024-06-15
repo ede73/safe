@@ -29,4 +29,10 @@
         <item>60</item>
         <item>120</item>
     </string-array>
+    <string-array name="dummy_entries">
+        <item>categorypager</item>
+    </string-array>
+    <string-array name="dummy_entry_values">
+        <item>Enhanced category and password view</item>
+    </string-array>
 </resources>
