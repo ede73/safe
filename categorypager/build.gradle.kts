@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.org.jetbrains.kotlin.android)
 }
+
 android {
     namespace = "fi.iki.ede.categorypager"
     compileSdk = 34
@@ -23,6 +24,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_1_8
     }
 
+    // this should have been deprecated in Kotlin 2.0 but some why AndroidStudio wants it
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+
     buildFeatures {
         compose = true
         buildConfig = true
@@ -39,11 +45,6 @@ android {
                 excludes += "META-INF/LICENSE-notice.md"
             }
         }
-    }
-
-    // this should have been deprecated in Kotlin 2.0 but some why AndroidStudio wants it
-    kotlinOptions {
-        jvmTarget = "1.8"
     }
 }
 
