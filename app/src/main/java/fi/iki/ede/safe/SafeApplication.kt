@@ -4,7 +4,7 @@ import com.google.android.play.core.splitcompat.SplitCompatApplication
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.Preferences
-import fi.iki.ede.safe.splits.registerDFM
+import fi.iki.ede.safe.splits.PluginManager.reinitializePlugins
 
 
 class SafeApplication : SplitCompatApplication() {
@@ -27,9 +27,9 @@ class SafeApplication : SplitCompatApplication() {
     override fun onCreate() {
         super.onCreate()
         Preferences.initialize(this)
-        registerDFM(this, "categorypager")
+        reinitializePlugins(this)
     }
-    
+
     companion object {
         private var instance: SafeApplication? = null
     }

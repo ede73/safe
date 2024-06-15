@@ -5,6 +5,8 @@ import android.content.SharedPreferences
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.os.Bundle
 import android.view.MenuItem
+import androidx.activity.viewModels
+import androidx.fragment.app.activityViewModels
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -13,13 +15,15 @@ import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.service.AutolockingService
-import fi.iki.ede.safe.splits.getDFMs
 import fi.iki.ede.safe.ui.TestTag
+import fi.iki.ede.safe.ui.models.PluginLoaderViewModel
+import fi.iki.ede.safe.ui.models.PluginName
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseAppCompatActivity
 import fi.iki.ede.safe.ui.utilities.startActivityForResults
 
 
 class PreferenceActivity : AutolockingBaseAppCompatActivity() {
+    private val pluginLoaderViewModel: PluginLoaderViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,7 +41,7 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
     }
 
     class PreferenceFragment : PreferenceFragmentCompat(), OnSharedPreferenceChangeListener {
-
+        private val pluginLoaderViewModel: PluginLoaderViewModel by activityViewModels()
         private val backupDocumentSelected =
             startActivityForResults(TestTag.TEST_TAG_PREFERENCES_SAVE_LOCATION) { result ->
                 if (result.resultCode == RESULT_OK) {
@@ -48,7 +52,7 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             addPreferencesFromResource(R.xml.preferences)
 
-            val dfms = getDFMs(requireContext())
+            val dfms = PluginName.entries.map { it.pluginName }
             val experimentalFeatures =
                 findPreference<MultiSelectListPreference>(Preferences.PREFERENCE_EXPERIMENTAL_FEATURES)
             experimentalFeatures?.apply {
@@ -102,12 +106,13 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
         ) {
             when (key) {
                 Preferences.PREFERENCE_EXPERIMENTAL_FEATURES -> {
-                    val sharedPrefs =
-                        PreferenceManager.getDefaultSharedPreferences(requireContext())
-                    sharedPrefs.getStringSet(Preferences.PREFERENCE_EXPERIMENTAL_FEATURES, null)
-                        ?.forEach { dfm ->
-                            println(dfm)
-                        }
+                    sharedPreferences?.getStringSet(
+                        Preferences.PREFERENCE_EXPERIMENTAL_FEATURES,
+                        null
+                    )?.forEach { dfm ->
+                        val pluginName = PluginName.entries.first { it.pluginName == dfm }
+                        pluginLoaderViewModel.getOrInstallPlugin(pluginName)
+                    }
                 }
 
                 Preferences.PREFERENCE_BACKUP_DOCUMENT -> {

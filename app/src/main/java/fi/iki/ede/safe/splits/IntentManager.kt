@@ -18,6 +18,7 @@ import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen.Companion.CATEGORY_ID
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen.Companion.PASSWORD_ID
 import fi.iki.ede.safe.ui.activities.SiteEntryListScreen
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
+import fi.iki.ede.safe.ui.models.PluginName
 
 // Every intent retrieved/launched in the app go thru IntentManager
 // If a plugin wants to tap into the intent, they can modify or even replace it
@@ -64,8 +65,8 @@ object IntentManager {
         extras: Bundle? = null
     ) = context.startActivity(getActivityIntent(context, activityClass, flags, extras))
 
-    private val intentReplacements = mutableMapOf<String, MutableMap<Class<*>, Intent>>()
-    fun replaceIntents(plugin: String, screen: Class<*>, intent: Intent) {
+    private val intentReplacements = mutableMapOf<PluginName, MutableMap<Class<*>, Intent>>()
+    fun replaceIntents(plugin: PluginName, screen: Class<*>, intent: Intent) {
         intentReplacements.getOrPut(plugin) { mutableMapOf() }[screen] = intent
     }
 

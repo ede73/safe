@@ -6,6 +6,7 @@ import android.os.Environment
 import androidx.preference.PreferenceManager
 import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.safe.BuildConfig
+import fi.iki.ede.safe.ui.models.PluginName
 import java.time.ZonedDateTime
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
@@ -105,6 +106,8 @@ object Preferences {
         )
     ).apply()
 
-    fun getEnabledExperiments(): Set<String> =
-        sharedPreferences.getStringSet(PREFERENCE_EXPERIMENTAL_FEATURES, emptySet()) ?: emptySet()
+    fun getEnabledExperiments(): Set<PluginName> =
+        sharedPreferences.getStringSet(PREFERENCE_EXPERIMENTAL_FEATURES, emptySet())
+            ?.mapNotNull { PluginName.entries.firstOrNull { p -> p.pluginName == it } }
+            ?.toSet() ?: emptySet()
 }

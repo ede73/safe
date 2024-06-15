@@ -6,6 +6,7 @@ import android.util.Log
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.splits.RegistrationAPI
 import fi.iki.ede.safe.ui.activities.CategoryListScreen
+import fi.iki.ede.safe.ui.models.PluginName
 
 class RegistrationAPIImpl : RegistrationAPI {
     override fun register(context: Context) {
@@ -14,7 +15,11 @@ class RegistrationAPIImpl : RegistrationAPI {
             CategoryListPagedScreen::class.java
         ).setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
 
-        IntentManager.replaceIntents("categorypager", CategoryListScreen::class.java, intent)
+        IntentManager.replaceIntents(
+            PluginName.CATEGORY_PAGER,
+            CategoryListScreen::class.java,
+            intent
+        )
         // Implementation
         Log.e("RegistrationAPIImpl", "RegistrationAPIImpl::register()")
     }
@@ -23,6 +28,8 @@ class RegistrationAPIImpl : RegistrationAPI {
         // Implementation
         Log.e("RegistrationAPIImpl", "RegistrationAPIImpl::deregister()")
     }
+
+    override fun getName() = PluginName.CATEGORY_PAGER
 
     override fun requestToDeregister(ex: Exception?) {
         // Implementation
