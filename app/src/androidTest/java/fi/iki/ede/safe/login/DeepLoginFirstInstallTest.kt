@@ -12,9 +12,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.model.Preferences
+import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.BiometricsActivity
-import fi.iki.ede.safe.ui.activities.CategoryListScreen
 import fi.iki.ede.safe.ui.activities.LoginScreen
 import fi.iki.ede.safe.utilities.AutoMockingUtilities
 import fi.iki.ede.safe.utilities.AutoMockingUtilities.Companion.mockIsBiometricsEnabled
@@ -67,13 +67,13 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
         // TODO: Logic is "iffy", we've mocked mockIsBiometricsEnabled
         // but if we DO enable the biometrics checkbox, it tries to
         // call BiometricsActivity.setBiometricEnabled(true) and messes up the results
-        mockkObject(CategoryListScreen)
+        mockkObject(IntentManager)
         properPasswordLogin(false)
 
         verify(exactly = 0) { LoginHandler.passwordLogin(any(), any()) }
         verify(exactly = 0) { BiometricsActivity.getRegistrationIntent(any()) }
         verify(exactly = 0) { BiometricsActivity.getVerificationIntent(any()) }
-        verify(exactly = 1) { CategoryListScreen.startMe(any()) }
+        verify(exactly = 1) { IntentManager.startCategoryScreen(any()) }
     }
 
     @Test
@@ -118,8 +118,8 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
         // TODO: this should INITIALIZE keystore
         every { LoginHandler.firstTimeLogin(any(), any()) } just runs
 
-        mockkObject(CategoryListScreen)
-        every { CategoryListScreen.startMe(any()) } just runs
+        mockkObject(IntentManager)
+        every { IntentManager.startCategoryScreen(any()) } just runs
 
         // for the FIRST TIME init we do display biometrics
         getPasswordFields(loginActivityTestRule)[0].assertIsDisplayed()
