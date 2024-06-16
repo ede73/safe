@@ -6,7 +6,6 @@ bcprovJdk16 = "1.46"
 biometricKtx = "1.2.0-alpha05"
 coreKtx = "1.13.1"
 espressoCore = "3.5.1"
-firebaseBom = "33.1.0"
 junit = "4.13.2"
 junitVersionKtx = "1.1.5"
 kotlin = "2.0.0"
@@ -49,8 +48,6 @@ androidx-ui-tooling-preview-android = { group = "androidx.compose.ui", name = "u
 androidx-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "uiautomator" }
 app-update-ktx = { module = "com.google.android.play:app-update-ktx", version.ref = "featureDeliveryKtx" }
 bcprov-jdk16 = { module = "org.bouncycastle:bcprov-jdk16", version.ref = "bcprovJdk16" }
-firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
-firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlinStdlib" }
 kxml2 = { group = "net.sf.kxml", name = "kxml2", version.ref = "kxml2" }
