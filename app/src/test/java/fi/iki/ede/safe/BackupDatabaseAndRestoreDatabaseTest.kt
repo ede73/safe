@@ -170,7 +170,8 @@ class BackupDatabaseAndRestoreDatabaseTest {
                     context,
                     PASSWORD_ENCRYPTED_BACKUP_AT_1234,
                     backupPassword,
-                    dbHelper
+                    dbHelper,
+                    { categories: Int, passwords: Int -> }
                 ) { thisBackupCreationTime, lastBackupDone ->
                     askedUser = true
                     if (!mustAskUser) {
@@ -207,7 +208,8 @@ class BackupDatabaseAndRestoreDatabaseTest {
             mockk<Context>(),
             PASSWORD_ENCRYPTED_BACKUP_AT_1234,
             backupPassword,
-            dbHelper
+            dbHelper,
+            { categories: Int, passwords: Int -> }
         ) { thisBackupCreationTime, lastBackupDone ->
             throw Exception("We should not ask user anything, valid backup!")
         }
