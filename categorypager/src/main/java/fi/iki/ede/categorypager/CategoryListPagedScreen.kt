@@ -11,12 +11,12 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.crypto.IVCipherText
@@ -31,6 +31,7 @@ import fi.iki.ede.safe.ui.composable.SiteEntryList
 import fi.iki.ede.safe.ui.composable.TopActionBar
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
@@ -48,14 +49,12 @@ class CategoryListPagedScreen : AutolockingBaseComponentActivity() {
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
 private fun CategoryListScreenPagedCompose(
-    flow: StateFlow<List<DecryptableCategoryEntry>> = MutableStateFlow(
-        emptyList()
-    )
+    flow: StateFlow<List<DecryptableCategoryEntry>> = MutableStateFlow(emptyList())
 ) {
     val coroutineScope = rememberCoroutineScope()
     val categoriesState by flow.map { categories -> categories.sortedBy { it.plainName.lowercase() } }
         .collectAsState(initial = emptyList())
-    var displayAddCategoryDialog by remember { mutableStateOf(false) }
+    val displayAddCategoryDialog = remember { mutableStateOf(false) }
     val pagerState = rememberPagerState(pageCount = { categoriesState.size })
 
     SafeTheme {
@@ -63,44 +62,46 @@ private fun CategoryListScreenPagedCompose(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            HorizontalPager(state = pagerState) { page ->
-                val category = categoriesState[page]
-                val passwordsState by passwordsStateFlow
-                    .map { passwords -> passwords.filter { it.categoryId == category.id } }
-                    .map { passwords -> passwords.sortedBy { it.plainDescription.lowercase() } }
-                    .filterNotNull()
-                    .collectAsState(initial = emptyList())
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    TopActionBar(
-                        onAddRequested = {
-                            displayAddCategoryDialog = true
-                        },
-                    )
-                    if (displayAddCategoryDialog) {
-                        val encrypter = KeyStoreHelperFactory.getEncrypter()
-                        AddOrEditCategory(
-                            textId = R.string.category_list_edit_category,
-                            categoryName = "",
-                            onSubmit = {
-                                if (!TextUtils.isEmpty(it)) {
-                                    val entry = DecryptableCategoryEntry().apply {
-                                        encryptedName = encrypter(it.toByteArray())
-                                    }
-                                    coroutineScope.launch {
-                                        DataModel.addOrEditCategory(entry)
-                                    }
-                                }
-                                displayAddCategoryDialog = false
-                            })
-                    }
+            Column(modifier = Modifier.fillMaxSize()) {
+                TopActionBar(onAddRequested = { displayAddCategoryDialog.value = true })
+                if (displayAddCategoryDialog.value) {
+                    AddOrEditCategory(coroutineScope, displayAddCategoryDialog)
+                }
+                HorizontalPager(state = pagerState) { page ->
+                    val category = categoriesState[page]
+                    val passwordsState by passwordsStateFlow
+                        .map { passwords -> passwords.filter { it.categoryId == category.id } }
+                        .map { passwords -> passwords.sortedBy { it.plainDescription.lowercase() } }
+                        .filterNotNull()
+                        .collectAsState(initial = emptyList())
                     CategoryRow(category)
                     SiteEntryList(passwordsState)
                 }
             }
         }
     }
+}
+
+@Composable
+private fun AddOrEditCategory(
+    coroutineScope: CoroutineScope,
+    displayAddCategoryDialog: MutableState<Boolean>
+) {
+    val encrypter = KeyStoreHelperFactory.getEncrypter()
+    AddOrEditCategory(
+        textId = R.string.category_list_edit_category,
+        categoryName = "",
+        onSubmit = {
+            if (!TextUtils.isEmpty(it)) {
+                val entry = DecryptableCategoryEntry().apply {
+                    encryptedName = encrypter(it.toByteArray())
+                }
+                coroutineScope.launch {
+                    DataModel.addOrEditCategory(entry)
+                }
+            }
+            displayAddCategoryDialog.value = false
+        })
 }
 
 @Preview(showBackground = true)
