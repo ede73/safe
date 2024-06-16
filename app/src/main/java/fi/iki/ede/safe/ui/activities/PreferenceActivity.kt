@@ -83,13 +83,21 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
                     true
                 }
 
-            preferenceScreen.sharedPreferences?.registerOnSharedPreferenceChangeListener(this)
-
             findPreference<Preference>(Preferences.PREFERENCE_LAST_BACKUP_TIME).let { lastBackupTime ->
                 val lb = Preferences.getLastBackupTime()?.toLocalDateTime()?.toString()
                     ?: resources.getString(R.string.preferences_summary_lastback_never_done)
                 lastBackupTime?.summary = lb
             }
+        }
+
+        override fun onResume() {
+            super.onResume()
+            preferenceScreen.sharedPreferences?.registerOnSharedPreferenceChangeListener(this)
+        }
+
+        override fun onPause() {
+            super.onPause()
+            preferenceScreen.sharedPreferences?.unregisterOnSharedPreferenceChangeListener(this)
         }
 
         override fun onSharedPreferenceChanged(
