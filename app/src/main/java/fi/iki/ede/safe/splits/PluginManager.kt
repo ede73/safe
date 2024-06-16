@@ -7,6 +7,7 @@ import com.google.android.play.core.splitinstall.SplitInstallManagerFactory
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.model.Preferences
 import java.util.ServiceLoader
+import kotlin.reflect.full.createInstance
 
 private const val TAG = "PluginManager"
 
@@ -27,12 +28,19 @@ object PluginManager {
         Preferences.getEnabledExperiments().forEach {
             println("Test $it")
             if (isPluginInstalled(sm, it)) {
-                println(" is instaleld $it, initialize now")
+                println(" is installed $it, initialize now")
                 initializePlugin(appContext, it)
             }
         }
     }
 
+    fun isPluginEnabled(plugin: PluginName) =
+        plugin in Preferences.getEnabledExperiments()
+
+    /**
+     * Literally answers if plugin is INSTALLED, it is different from enabled
+     * Use isPluginEnabled() if you need to know if user wants the plugin active
+     */
     fun isPluginInstalled(splitInstallManager: SplitInstallManager, pluginName: PluginName) =
         if (getBundleTestMode())
             false
@@ -43,7 +51,39 @@ object PluginManager {
                 pluginName.pluginName
             )
 
+    fun getComposableInterface(plugin: PluginName): GetComposable? =
+        getPluginFQCN(plugin)?.let {
+            // If plugin isn't enabled, we won't allow it to function
+            if (!isPluginEnabled(plugin)) return null
+            try {
+                return Class.forName(it).kotlin.let { getComposable ->
+                    getComposable.createInstance() as GetComposable
+                }
+            } catch (c: ClassNotFoundException) {
+                Log.e(TAG, "${plugin.pluginName} getComposable not found")
+            }
+            null
+        }
+
+    private fun getPluginFQCN(plugin: PluginName): String? {
+        val serviceLoader = ServiceLoader.load(
+            RegistrationAPI.Provider::class.java,
+            RegistrationAPI.Provider::class.java.classLoader
+        )
+        val iterator = serviceLoader.iterator()
+        while (iterator.hasNext()) {
+            val next = iterator.next()
+            val module = next.get()
+            if (module.getName() == plugin) {
+                return next.javaClass.canonicalName
+            }
+        }
+        return null
+    }
+
     fun initializePlugin(context: Context, pluginName: PluginName): RegistrationAPI? {
+        //if (!isPluginEnabled(pluginName)) return null
+        // If plugin isn't enabled, we won't allow it to function
         val serviceLoader = ServiceLoader.load(
             RegistrationAPI.Provider::class.java,
             RegistrationAPI.Provider::class.java.classLoader

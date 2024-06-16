@@ -21,8 +21,6 @@ plugins {
  * In code (of the project in question):
  *  throwIfFeatureNotEnabled(BuildConfig.FLAG_NAME) etc.
  */
-project.ext.set("ENABLE_HIBP", true)
-val ENABLE_HIBP: Boolean = project(":app").ext.get("ENABLE_HIBP") as Boolean
 
 android {
     namespace = "fi.iki.ede.safe"
@@ -79,11 +77,9 @@ android {
                 }
 
             }
-            buildConfigField("Boolean", "ENABLE_HIBP", ENABLE_HIBP.toString())
         }
         debug {
             applicationIdSuffix = ".debug"
-            buildConfigField("Boolean", "ENABLE_HIBP", ENABLE_HIBP.toString())
         }
     }
 
@@ -114,7 +110,7 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-    dynamicFeatures += setOf(":categorypager", ":oisaferestore")
+    dynamicFeatures += setOf(":categorypager", ":oisaferestore", ":hibp")
     testFixtures {
         enable = true
     }
@@ -127,7 +123,6 @@ composeCompiler {
 dependencies {
     implementation(project(":app:crypto"))
     // cant dynamically filter these out as imports would fail and making stub is too much work..
-    implementation(project(":app:hibp"))
     implementation(libs.app.update.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)

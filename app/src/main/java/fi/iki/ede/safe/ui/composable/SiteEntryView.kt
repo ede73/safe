@@ -1,9 +1,9 @@
 package fi.iki.ede.safe.ui.composable
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.text.TextUtils
-import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -35,16 +35,14 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.decrypt
 import fi.iki.ede.crypto.support.encrypt
-import fi.iki.ede.hibp.BreachCheck
-import fi.iki.ede.hibp.KAnonymity
-import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.clipboard.ClipboardUtils
 import fi.iki.ede.safe.model.DataModel
-import fi.iki.ede.safe.password.PasswordGenerator
-import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
+import fi.iki.ede.safe.password.PasswordGenerator
+import fi.iki.ede.safe.splits.PluginManager
+import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import fi.iki.ede.safe.ui.theme.SafeButton
@@ -52,6 +50,8 @@ import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.AvertInactivityDuringLongTask
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.time.ZonedDateTime
+
+private const val TAG = "SiteEntryView"
 
 @Composable
 fun SiteEntryView(
@@ -67,7 +67,6 @@ fun SiteEntryView(
     val passEntry by viewModel.uiState.collectAsState()
     val passwordLength = integerResource(id = R.integer.password_default_length)
     val safeTheme = LocalSafeTheme.current
-    var breachCheckResult by remember { mutableStateOf(BreachCheckEnum.NOT_CHECKED) }
     var passwordWasUpdated by remember { mutableStateOf(false) }
     val decrypter = KeyStoreHelperFactory.getDecrypter()
     val encrypter = KeyStoreHelperFactory.getEncrypter()
@@ -168,10 +167,8 @@ fun SiteEntryView(
             PasswordTextField(
                 textTip = R.string.password_entry_password_tip,
                 inputValue = passEntry.password.decrypt(decrypter),
-                //updated = passwordWasUpdated,
                 onValueChange = {
                     viewModel.updatePassword(it.encrypt(encrypter))
-                    breachCheckResult = BreachCheckEnum.NOT_CHECKED
                 },
                 enableZoom = true,
                 modifier = modifier
@@ -181,30 +178,8 @@ fun SiteEntryView(
             )
             passwordWasUpdated = false
         }
-        if (BuildConfig.ENABLE_HIBP) {
-            Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
-                if (breachCheckResult == BreachCheckEnum.NOT_CHECKED) {
-                    SafeButton(onClick = {
-                        BreachCheck.doBreachCheck(
-                            KAnonymity(passEntry.password.decrypt(decrypter)),
-                            context,
-                            { breached ->
-                                breachCheckResult = when (breached) {
-                                    true -> BreachCheckEnum.BREACHED
-                                    false -> BreachCheckEnum.NOT_BREACHED
-                                }
-                            },
-                            { error -> Log.e(SiteEntryEditScreen.TAG, "Error: $error") })
-                    }) { Text(stringResource(id = R.string.password_entry_breach_check)) }
-                }
-                when (breachCheckResult) {
-                    BreachCheckEnum.BREACHED -> Text(stringResource(id = R.string.password_entry_breached))
-
-                    BreachCheckEnum.NOT_BREACHED -> Text(stringResource(id = R.string.password_entry_not_breached))
-
-                    else -> {}
-                }
-            }
+        Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
+            breachCheckButton(PluginName.HIBP, context, passEntry.password)()
         }
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             DatePicker(
@@ -240,16 +215,22 @@ fun SiteEntryView(
     }
 }
 
+@Composable
+fun breachCheckButton(
+    plugin: PluginName,
+    context: Context,
+    encryptedPassword: IVCipherText
+): @Composable () -> Unit = {
+    PluginManager.getComposableInterface(plugin)?.getComposable(context, encryptedPassword)
+        ?.invoke()
+}
+
 private fun tryParseUri(website: String): Uri =
     if (website.lowercase().startsWith("http://") ||
         website.lowercase().startsWith("https://")
     ) Uri.parse(website)
     else Uri.parse("https://$website")
 
-
-enum class BreachCheckEnum {
-    NOT_CHECKED, BREACHED, NOT_BREACHED
-}
 
 @Preview(showBackground = true)
 @Composable

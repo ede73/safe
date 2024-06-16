@@ -112,4 +112,5 @@
     <string name="title_activity_restore_screen">Palauta salasanat</string>
     <string name="title_categorypager">Sivutettu kategorianäyttö</string>
     <string name="title_oisafeimport">OISafe salasanojen sisääntuonti</string>
+    <string name="title_hibp">HIBP tuki</string>
 </resources>

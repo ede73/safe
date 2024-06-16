@@ -162,4 +162,5 @@
 
     <string name="title_categorypager">Paged Category View</string>
     <string name="title_oisafeimport">OISafe Import</string>
+    <string name="title_hibp">HIBP support</string>
 </resources>
