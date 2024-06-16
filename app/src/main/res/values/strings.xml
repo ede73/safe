@@ -150,10 +150,12 @@
 
     <string name="preferences_automatic_locking_selection_title">Choose automatic locking timeout</string>
     <string name="preferences_clipboard_clear_delay_title">Clipboard clearing timeout</string>
+    <string name="preferences_experimental_features_title">Available Experimental Features</string>
     <string name="preferences_summary_automatic_locking_timeout">After chosen amount of minutes, password safe will lock and require logging in again</string>
     <string name="preferences_summary_clipboard_clear_delay">Delay in seconds after which clipboard is cleared</string>
     <string name="preferences_summary_default_user_name">Default username when adding a new password. Completely optional, typically your email address.</string>
     <string name="preferences_summary_enable_biometrics">Instead of password you can login with biometrics. Password fallback always available. Android will take care of actual biometric authenticatin. Password safe only receives information whether it succeeded or not. Even when enabled you may have to occasionally re-enroll for added security.</string>
+    <string name="preferences_summary_experimental_features">Some new feature may be tested by enabling them. There might be problems until they mature.</string>
     <string name="preferences_summary_lastback_never_done">No backups yet</string>
     <string name="preferences_summary_lock_when_screen_locks">When android screen lock turns on, password safe will automatically lock</string>
     <string name="preferences_title">Settings</string>
@@ -162,6 +164,10 @@
     <string name="preferences_title_default_backup_path">Default backup path</string>
     <string name="preferences_title_default_user_name">Default username</string>
     <string name="preferences_title_enable_biometrics">Enable biometric identification</string>
+    <string name="preferences_title_experimental_features">Experimental Features</string>
     <string name="preferences_title_lock_when_screen_locks">Lock when screen locks</string>
     <string name="preferences_title_time_of_last_backup">Time of last backup</string>
+
+    <string name="title_categorypager">Paged Category View</string>
+    <string name="title_oisafeimport">OISafe Import</string>
 </resources>

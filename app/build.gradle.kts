@@ -4,10 +4,25 @@ plugins {
     alias(libs.plugins.org.jetbrains.kotlin.android)
 }
 
+/**
+ * To enable project wide flags for enabling/disabling features:
+ *
+ * In here:
+ *   project.ext.set("FLAG_NAME", true)
+ *   val FLAG_NAME: Boolean = project(":app").ext.get("FLAG_NAME") as Boolean
+ *
+ * In the other project (project/build.gradle.kts):
+ *   val FLAG_NAME: Boolean = project(":app").ext.get("FLAG_NAME") as Boolean
+ *   buildTypes {
+ *     release { buildConfigField("Boolean", "FLAG_NAME", FLAG_NAME.toString())}
+ *     debug { buildConfigField("Boolean", "FLAG_NAME", FLAG_NAME.toString())}
+ *   }
+ *
+ * In code (of the project in question):
+ *  throwIfFeatureNotEnabled(BuildConfig.FLAG_NAME) etc.
+ */
 project.ext.set("ENABLE_HIBP", true)
-project.ext.set("ENABLE_OIIMPORT", false)
 val ENABLE_HIBP: Boolean = project(":app").ext.get("ENABLE_HIBP") as Boolean
-val ENABLE_OIIMPORT = project(":app").ext.get("ENABLE_OIIMPORT") as Boolean
 
 android {
     namespace = "fi.iki.ede.safe"
@@ -18,7 +33,7 @@ android {
         minSdk = 26
         targetSdk = 34
 
-        val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(3, 0, 42, 0)
+        val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(3, 0, 43, 0)
         versionCode =
             versionMajor * 10000 + versionMinor * 1000 + versionPatch * 100 + versionBuild
         versionName = "${versionMajor}.${versionMinor}.${versionPatch}"
@@ -47,15 +62,28 @@ android {
                         "**/DebugProbesKt.bin",
                         "**/base/junit/**",
                     )
+                    // something fuckety fuck is going on with bundle tool
+                    // (there's a 4 year old bug report in this too)
+                    // it doesn't like if DFMs have service records with differing content
+                    // and this should be FINE since each DFM is in their own namespace
+                    // not even merge helped, so currently all service records of DFMs are
+                    // stored under META-INF/services of the APP
+                    merges += "/META-INF/services/fi.iki.ede.safe.splits.RegistrationAPI\$Provider"
                 }
             }
+            debug {
+                packaging {
+                    resources {
+                        merges += "/META-INF/services/fi.iki.ede.safe.splits.RegistrationAPI\$Provider"
+                    }
+                }
+
+            }
             buildConfigField("Boolean", "ENABLE_HIBP", ENABLE_HIBP.toString())
-            buildConfigField("Boolean", "ENABLE_OIIMPORT", ENABLE_OIIMPORT.toString())
         }
         debug {
             applicationIdSuffix = ".debug"
             buildConfigField("Boolean", "ENABLE_HIBP", ENABLE_HIBP.toString())
-            buildConfigField("Boolean", "ENABLE_OIIMPORT", ENABLE_OIIMPORT.toString())
         }
     }
 
@@ -81,10 +109,12 @@ android {
             }
         }
     }
+
     // this should have been deprecated in Kotlin 2.0 but some why AndroidStudio wants it
     kotlinOptions {
         jvmTarget = "1.8"
     }
+    dynamicFeatures += setOf(":categorypager", ":oisaferestore")
     testFixtures {
         enable = true
     }
@@ -98,7 +128,7 @@ dependencies {
     implementation(project(":app:crypto"))
     // cant dynamically filter these out as imports would fail and making stub is too much work..
     implementation(project(":app:hibp"))
-    implementation(project(":app:oisafecompatibility"))
+    implementation(libs.app.update.ktx)
     implementation(project(":app:gpm"))
 
     implementation(libs.androidx.activity.compose)
@@ -108,9 +138,12 @@ dependencies {
     implementation(libs.androidx.material.icons.extended.android)
     implementation(libs.androidx.material3.android)
     implementation(libs.androidx.preference.ktx)
+    // TODO: WHY IS THIS HERE?
     implementation(libs.androidx.ui.test.junit4.android)
     implementation(libs.androidx.ui.tooling.preview.android)
     implementation(libs.material)
+    //implementation(libs.core.ktx)
+    implementation(libs.feature.delivery.ktx)
     implementation(libs.androidx.runtime.livedata)
 
     // Bring bouncy castle to unit tests

@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.compose.compiler) apply false
     kotlin("plugin.power-assert") version "2.0.0"
     alias(libs.plugins.org.jetbrains.kotlin.android) apply false
+    alias(libs.plugins.android.dynamic.feature) apply false
     alias(libs.plugins.android.library) apply false
 }
 

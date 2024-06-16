@@ -37,20 +37,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.BackupDatabase
 import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
+import fi.iki.ede.safe.splits.DRODOWN_MENU
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.ImportGooglePasswordManager
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
-import fi.iki.ede.safe.ui.utilities.throwIfFeatureNotEnabled
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -58,7 +57,7 @@ import kotlinx.coroutines.withContext
 private const val TAG = "TopActionBar"
 
 @Composable
-private fun setupActivityResultLauncher(resultOk: (ActivityResult) -> Unit): ManagedActivityResultLauncher<Intent, ActivityResult> {
+fun setupActivityResultLauncher(resultOk: (ActivityResult) -> Unit): ManagedActivityResultLauncher<Intent, ActivityResult> {
     return rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
     ) {
@@ -197,11 +196,7 @@ private fun MakeDropdownMenu(
 
     val selectRestoreDocumentLauncher = setupActivityResultLauncher {
         restoreCompleted.launch(
-            IntentManager.getDatabaseRestorationScreenIntent(
-                context,
-                false,
-                it.data!!.data!!
-            )
+            IntentManager.getDatabaseRestorationScreenIntent(context, it.data!!.data!!)
         )
     }
 
@@ -217,17 +212,6 @@ private fun MakeDropdownMenu(
                 }
             }
         }
-    }
-
-    val selectRestoreDocumentLauncherOld = setupActivityResultLauncher {
-        throwIfFeatureNotEnabled(BuildConfig.ENABLE_OIIMPORT)
-        restoreCompleted.launch(
-            IntentManager.getDatabaseRestorationScreenIntent(
-                context,
-                true,
-                it.data!!.data!!
-            )
-        )
     }
 
     DropdownMenu(
@@ -249,6 +233,24 @@ private fun MakeDropdownMenu(
                 displayMenu.value = false
                 IntentManager.startHelpScreen(context)
             })
+        DropdownMenuItem(
+            enabled = !loginScreen,
+            text = { Text(text = stringResource(id = R.string.action_bar_change_master_password)) },
+            onClick = {
+                displayMenu.value = false
+                showChangePasswordDialog.value = true
+            })
+        IntentManager.getMenuItems(DRODOWN_MENU.TOPACTIONBAR_MENU).forEach {
+            DropdownMenuItem(text = { Text(text = stringResource(id = it.first)) },
+                onClick = {
+                    displayMenu.value = false
+                    try {
+                        it.second(context)
+                    } catch (ex: Exception) {
+                        Log.e(TAG, "Plugin failed to do the menu", ex)
+                    }
+                })
+        }
         DropdownMenuItem(
             enabled = !loginScreen,
             text = { Text(text = stringResource(id = R.string.action_bar_import_export)) },
@@ -291,28 +293,20 @@ private fun MakeDropdownMenu(
                         Log.e(TAG, "Cannot launch ImportGooglePasswordManager", ex)
                     }
                 })
-            if (BuildConfig.ENABLE_OIIMPORT) {
-                DropdownMenuItem(
-                    text = { Text(text = stringResource(id = R.string.action_bar_old_restore)) },
+            IntentManager.getMenuItems(DRODOWN_MENU.TOPACTIONBAR_IMPORT_EXPORT_MENU).forEach {
+                DropdownMenuItem(text = { Text(text = stringResource(id = it.first)) },
                     onClick = {
                         displayMenu.value = false
                         try {
-                            selectRestoreDocumentLauncherOld.launch(
-                                ExportConfig.getOpenDocumentIntent()
-                            )
-                        } catch (ex: ActivityNotFoundException) {
-                            Log.e(TAG, "Cannot launch ACTION_OPEN_DOCUMENT")
+                            coroutineScope.launch {
+                                it.second(context)
+                            }
+                        } catch (ex: Exception) {
+                            Log.e(TAG, "Plugin failed to do the menu", ex)
                         }
                     })
             }
         }
-        DropdownMenuItem(
-            enabled = !loginScreen,
-            text = { Text(text = stringResource(id = R.string.action_bar_change_master_password)) },
-            onClick = {
-                displayMenu.value = false
-                showChangePasswordDialog.value = true
-            })
     }
 }
 

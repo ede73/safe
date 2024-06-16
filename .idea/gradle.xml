@@ -13,7 +13,8 @@
             <option value="$PROJECT_DIR$/app/crypto" />
             <option value="$PROJECT_DIR$/app/gpm" />
             <option value="$PROJECT_DIR$/app/hibp" />
-            <option value="$PROJECT_DIR$/app/oisafecompatibility" />
+            <option value="$PROJECT_DIR$/categorypager" />
+            <option value="$PROJECT_DIR$/oisaferestore" />
           </set>
         </option>
         <option name="resolveExternalAnnotations" value="false" />

@@ -82,10 +82,12 @@
     <string name="password_search_websites">+Webosoitteet</string>
     <string name="preferences_automatic_locking_selection_title">Valitse automaattinen lukitusviive</string>
     <string name="preferences_clipboard_clear_delay_title">Leikekirjan tyhjennysviive</string>
+    <string name="preferences_experimental_features_title">Saatavilla olevat kokeelliset ominaisuudet</string>
     <string name="preferences_summary_automatic_locking_timeout">Valitun viiveen jälkeen, ohjelma lukitsee itsensä ja vaatii sisäänkirjauksen</string>
     <string name="preferences_summary_clipboard_clear_delay">Viive sekunneissa, jonka jälkeen leikekirja tyhjennetään</string>
     <string name="preferences_summary_default_user_name">Oletuskäyttäjänimi kun lisätään uusi salasana. Valinnainen, yleensä sähkäpostiosoitteesi</string>
     <string name="preferences_summary_enable_biometrics">Salasanan sijaan voit kirjautua biometriikalla. Salasanakirjaus on aina mahdollinen. Android järjestemä huolehtii biometriikan tallennuksesta ja varmennuksesta.</string>
+    <string name="preferences_summary_experimental_features">Täältä voi testata kokeellisia ominaisuuksia. Ne ei välttämättä toimi täydellisesti.</string>
     <string name="preferences_summary_lastback_never_done">Ei varmuuskopioita</string>
     <string name="preferences_summary_lock_when_screen_locks">Lukitse sovellus kun näyttö lukitaan</string>
     <string name="preferences_title">Asetukset</string>
@@ -94,6 +96,7 @@
     <string name="preferences_title_default_backup_path">Oletusvarmuuskkopiopolku</string>
     <string name="preferences_title_default_user_name">Oletuskäyttäjänimi</string>
     <string name="preferences_title_enable_biometrics">Salli biometrinen tunnistautuminen</string>
+    <string name="preferences_title_experimental_features">Kokeelliset ominaisuudet</string>
     <string name="preferences_title_lock_when_screen_locks">Lukitse kun näyttö lukitaan</string>
     <string name="preferences_title_time_of_last_backup">VIimeisen varmuuskopion aika</string>
     <string name="restore_screen_backup_help">Palauttaksesi varmuuskopion, tarvitset sen salasanan. Varmuuskopio %s</string>
@@ -111,6 +114,8 @@
     <string name="title_activity_password_screen">Salasananäyttö</string>
     <string name="title_activity_password_search_screen">Salasanan etsintä</string>
     <string name="title_activity_restore_screen">Palauta salasanat</string>
+    <string name="title_categorypager">Sivutettu kategorianäyttö</string>
+    <string name="title_oisafeimport">OISafe salasanojen sisääntuonti</string>
     <string name="google_password_import_matching_passwords">Samat salasanat</string>
     <string name="google_password_import_matching_names">Samat nimet</string>
 </resources>

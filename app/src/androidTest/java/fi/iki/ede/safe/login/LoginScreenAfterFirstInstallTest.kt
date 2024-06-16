@@ -14,9 +14,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.model.Preferences
+import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.BiometricsActivity
-import fi.iki.ede.safe.ui.activities.CategoryListScreen
 import fi.iki.ede.safe.ui.activities.LoginScreen
 import fi.iki.ede.safe.utilities.AutoMockingUtilities
 import fi.iki.ede.safe.utilities.AutoMockingUtilities.Companion.mockIsBiometricsEnabled
@@ -96,12 +96,12 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
     fun testLoggingInWorks() {
         // too late?bio already launched?
         mockIsBiometricsInitialized { true }
-        mockkObject(CategoryListScreen)
+        mockkObject(IntentManager)
         getPasswordFields(loginActivityTestRule)[0].performTextInput(MockKeyStore.fakePasswordText)
         getLoginButton(loginActivityTestRule).assertIsEnabled()
         getLoginButton(loginActivityTestRule).performClick()
         verify(exactly = 1) { LoginHandler.passwordLogin(any(), any()) }
-        verify(exactly = 1) { CategoryListScreen.startMe(any()) }
+        verify(exactly = 1) { IntentManager.startCategoryScreen(any()) }
         verify(exactly = 0) { LoginHandler.firstTimeLogin(any(), any()) }
         verify(exactly = 0) { LoginHandler.biometricLogin() }
     }
@@ -117,7 +117,7 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
             ActivityResult(RESULT_CANCELED, null)
         }
 
-        mockkObject(CategoryListScreen)
+        //mockkObject(CategoryListScreen)
         //getPasswordFields(loginActivityTestRule)[0].performTextInput(FAKE_PASSWORD_TEXT)
         getLoginButton(loginActivityTestRule).assertIsDisplayed()
         //getBiometricsCheckbox(loginActivityTestRule).performClick()
@@ -154,7 +154,7 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
             ActivityResult(RESULT_CANCELED, null)
         }
 
-        mockkObject(CategoryListScreen)
+        //mockkObject(CategoryListScreen)
         //getPasswordFields(loginActivityTestRule)[0].performTextInput(FAKE_PASSWORD_TEXT)
         getLoginButton(loginActivityTestRule).assertIsDisplayed()
         //getBiometricsCheckbox(loginActivityTestRule).performClick()
@@ -196,7 +196,7 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
             ActivityResult(BiometricsActivity.RESULT_FAILED, null)
         }
 
-        mockkObject(CategoryListScreen)
+        //mockkObject(CategoryListScreen)
         //getPasswordFields(loginActivityTestRule)[0].performTextInput(FAKE_PASSWORD_TEXT)
         getLoginButton(loginActivityTestRule).assertIsDisplayed()
         //getBiometricsCheckbox(loginActivityTestRule).performClick()
