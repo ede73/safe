@@ -46,10 +46,7 @@ object PluginManager {
             false
         else if (BuildConfig.DEBUG)
             true
-        else
-            splitInstallManager.installedModules.contains(
-                pluginName.pluginName
-            )
+        else splitInstallManager.installedModules.contains(pluginName.pluginName)
 
     fun getComposableInterface(plugin: PluginName): GetComposable? =
         getPluginFQCN(plugin)?.let {

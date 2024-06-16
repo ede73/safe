@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.os.Bundle
 import android.view.MenuItem
-import androidx.activity.viewModels
 import androidx.fragment.app.activityViewModels
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.Preference
@@ -23,8 +22,6 @@ import fi.iki.ede.safe.ui.utilities.startActivityForResults
 
 
 class PreferenceActivity : AutolockingBaseAppCompatActivity() {
-    private val pluginLoaderViewModel: PluginLoaderViewModel by viewModels()
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.preferences)
@@ -52,28 +49,24 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             addPreferencesFromResource(R.xml.preferences)
 
-            val dfms = PluginName.entries.map { it.pluginName }
-            val experimentalFeatures =
-                findPreference<MultiSelectListPreference>(Preferences.PREFERENCE_EXPERIMENTAL_FEATURES)
-            experimentalFeatures?.apply {
-                entries = dfms.toTypedArray()
-                entryValues = dfms.toTypedArray()
+            findPreference<MultiSelectListPreference>(Preferences.PREFERENCE_EXPERIMENTAL_FEATURES).let { experimentalFeatures ->
+                experimentalFeatures?.apply {
+                    PluginName.entries.map { it.pluginName }.let { dfms ->
+                        entries = dfms.toTypedArray()
+                        entryValues = dfms.toTypedArray()
+                    }
+                }
             }
 
-            val backupPathClicker =
-                findPreference<Preference>(Preferences.PREFERENCE_BACKUP_DOCUMENT)
-            if (Preferences.SUPPORT_EXPORT_LOCATION_MEMORY) {
-                backupPathClicker?.onPreferenceClickListener =
-                    Preference.OnPreferenceClickListener { _: Preference? ->
-                        backupDocumentSelected.launch(
-                            ExportConfig.getCreateDocumentIntent(
-                                // requireContext()
-                            )
-                        )
-                        false
-                    }
-            } else {
-                backupPathClicker?.isEnabled = false
+            findPreference<Preference>(Preferences.PREFERENCE_BACKUP_DOCUMENT).let { backupPathClicker ->
+                backupPathClicker?.summary = Preferences.getBackupDocument()
+                if (Preferences.SUPPORT_EXPORT_LOCATION_MEMORY) {
+                    backupPathClicker?.onPreferenceClickListener =
+                        Preference.OnPreferenceClickListener { _: Preference? ->
+                            backupDocumentSelected.launch(ExportConfig.getCreateDocumentIntent())
+                            false
+                        }
+                } else backupPathClicker?.isEnabled = false
             }
 
             findPreference<Preference>(Preferences.PREFERENCE_LOCK_TIMEOUT_MINUTES)?.onPreferenceChangeListener =
@@ -92,12 +85,11 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
 
             preferenceScreen.sharedPreferences?.registerOnSharedPreferenceChangeListener(this)
 
-            backupPathClicker?.summary = Preferences.getBackupDocument()
-            val lb = Preferences.getLastBackupTime()?.toLocalDateTime()?.toString()
-                ?: resources.getString(R.string.preferences_summary_lastback_never_done)
-            val lastBackupTime =
-                findPreference<Preference>(Preferences.PREFERENCE_LAST_BACKUP_TIME)
-            lastBackupTime?.summary = lb
+            findPreference<Preference>(Preferences.PREFERENCE_LAST_BACKUP_TIME).let { lastBackupTime ->
+                val lb = Preferences.getLastBackupTime()?.toLocalDateTime()?.toString()
+                    ?: resources.getString(R.string.preferences_summary_lastback_never_done)
+                lastBackupTime?.summary = lb
+            }
         }
 
         override fun onSharedPreferenceChanged(
