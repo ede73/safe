@@ -161,4 +161,5 @@
     <string name="preferences_title_time_of_last_backup">Time of last backup</string>
 
     <string name="title_categorypager">Paged Category View</string>
+    <string name="title_oisafeimport">OISafe Import</string>
 </resources>

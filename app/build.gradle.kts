@@ -22,9 +22,7 @@ plugins {
  *  throwIfFeatureNotEnabled(BuildConfig.FLAG_NAME) etc.
  */
 project.ext.set("ENABLE_HIBP", true)
-project.ext.set("ENABLE_OIIMPORT", false)
 val ENABLE_HIBP: Boolean = project(":app").ext.get("ENABLE_HIBP") as Boolean
-val ENABLE_OIIMPORT = project(":app").ext.get("ENABLE_OIIMPORT") as Boolean
 
 android {
     namespace = "fi.iki.ede.safe"
@@ -64,15 +62,28 @@ android {
                         "**/DebugProbesKt.bin",
                         "**/base/junit/**",
                     )
+                    // something fuckety fuck is going on with bundle tool
+                    // (there's a 4 year old bug report in this too)
+                    // it doesn't like if DFMs have service records with differing content
+                    // and this should be FINE since each DFM is in their own namespace
+                    // not even merge helped, so currently all service records of DFMs are
+                    // stored under META-INF/services of the APP
+                    merges += "/META-INF/services/fi.iki.ede.safe.splits.RegistrationAPI\$Provider"
                 }
             }
+            debug {
+                packaging {
+                    resources {
+                        merges += "/META-INF/services/fi.iki.ede.safe.splits.RegistrationAPI\$Provider"
+                    }
+                }
+
+            }
             buildConfigField("Boolean", "ENABLE_HIBP", ENABLE_HIBP.toString())
-            buildConfigField("Boolean", "ENABLE_OIIMPORT", ENABLE_OIIMPORT.toString())
         }
         debug {
             applicationIdSuffix = ".debug"
             buildConfigField("Boolean", "ENABLE_HIBP", ENABLE_HIBP.toString())
-            buildConfigField("Boolean", "ENABLE_OIIMPORT", ENABLE_OIIMPORT.toString())
         }
     }
 
@@ -103,7 +114,7 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-    dynamicFeatures += setOf(":categorypager")
+    dynamicFeatures += setOf(":categorypager", ":oisaferestore")
     testFixtures {
         enable = true
     }
@@ -117,7 +128,6 @@ dependencies {
     implementation(project(":app:crypto"))
     // cant dynamically filter these out as imports would fail and making stub is too much work..
     implementation(project(":app:hibp"))
-    implementation(project(":app:oisafecompatibility"))
     implementation(libs.app.update.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)

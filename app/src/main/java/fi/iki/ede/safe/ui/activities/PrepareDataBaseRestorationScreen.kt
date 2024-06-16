@@ -1,7 +1,5 @@
 package fi.iki.ede.safe.ui.activities
 
-import android.app.Activity.RESULT_CANCELED
-import android.app.Activity.RESULT_OK
 import android.content.Context
 import android.net.Uri
 import android.os.Bundle
@@ -40,27 +38,56 @@ class PrepareDataBaseRestorationScreen : AutolockingBaseComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val compatibility = intent.getBooleanExtra(OISAFE_COMPATIBILITY, false)
         val selectedDoc = intent.data!!
         Preferences.setBackupDocument(intent.dataString)
 
+        val context = this
         setContent {
-            PrepareDBRestoreCompose(selectedDoc, this, compatibility, ::avertInactivity)
+            AskBackupPasswordAndCommence(
+                selectedDoc,
+                this,
+                ::avertInactivity
+            ) { backupPassword, makeToast ->
+                RestoreDatabaseComponent(
+                    context,
+                    backupPassword,
+                    selectedDoc,
+                    onFinished = { restoredPasswords, ex ->
+                        // YES, we could have 0 passwords, but 1 category
+                        if (ex == null) {
+                            // TODO: MAKE ASYNC
+                            runBlocking {
+                                DataModel.loadFromDatabase()
+                            }
+                            makeToast(
+                                context.getString(
+                                    R.string.restore_screen_restored,
+                                    restoredPasswords
+                                )
+                            )
+                            IntentManager.startCategoryScreen(context)
+                            context.setResult(RESULT_OK)
+                            context.finish()
+                        } else {
+                            makeToast(context.getString(R.string.restore_screen_restore_failed))
+                            IntentManager.startCategoryScreen(context)
+                            context.setResult(RESULT_CANCELED)
+                            context.finish()
+                        }
+                    }
+                )
+            }
         }
-    }
-
-    companion object {
-        const val OISAFE_COMPATIBILITY = "oisafe_compatibility"
     }
 }
 
 
 @Composable
-private fun PrepareDBRestoreCompose(
+fun AskBackupPasswordAndCommence(
     selectedDoc: Uri,
-    context: PrepareDataBaseRestorationScreen,
-    compatibility: Boolean,
-    avertInactivity: (Context, String) -> Unit
+    context: Context,
+    avertInactivity: (Context, String) -> Unit,
+    doBackup: @Composable (backupPassword: Password, makeToast: (String) -> Unit) -> Unit
 ) {
     SafeTheme {
         Surface(
@@ -102,35 +129,10 @@ private fun PrepareDBRestoreCompose(
                     ).show()
 
                     avertInactivity(context, "Begin database restoration")
-                    val toastContext = context
-                    RestoreDatabaseComponent(
-                        context,
-                        compatibility,
-                        backupPassword,
-                        selectedDoc,
-                        onFinished = { restoredPasswords, ex ->
-                            // YES, we could have 0 passwords, but 1 category
-                            if (ex == null) {
-                                // TODO: MAKE ASYNC
-                                runBlocking {
-                                    DataModel.loadFromDatabase()
-                                }
-                                toast.value = context.getString(
-                                    R.string.restore_screen_restored,
-                                    restoredPasswords
-                                )
-                                IntentManager.startCategoryScreen(context)
-                                context.setResult(RESULT_OK)
-                                context.finish()
-                            } else {
-                                toast.value =
-                                    context.getString(R.string.restore_screen_restore_failed)
-                                IntentManager.startCategoryScreen(context)
-                                context.setResult(RESULT_CANCELED)
-                                context.finish()
-                            }
-                        }
-                    )
+                    fun makeToast(message: String) {
+                        toast.value = message
+                    }
+                    doBackup(backupPassword, ::makeToast)
                 }
             }
         }
@@ -144,11 +146,11 @@ fun PrepareDBRestorePreview() {
     KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
     KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
     SafeTheme {
-        PrepareDBRestoreCompose(
+        AskBackupPasswordAndCommence(
             selectedDoc = Uri.EMPTY,
             context = PrepareDataBaseRestorationScreen(),
-            compatibility = false,
-            avertInactivity = { _, _ -> }
+            avertInactivity = { _, _ -> },
+            { _, _ -> }
         )
     }
 }

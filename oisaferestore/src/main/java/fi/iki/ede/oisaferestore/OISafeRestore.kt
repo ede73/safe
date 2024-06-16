@@ -1,21 +1,22 @@
-package fi.iki.ede.safe.oisafecompatibility
+package fi.iki.ede.oisaferestore
 
+import android.content.Context
 import android.database.sqlite.SQLiteException
 import android.util.Log
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
-import fi.iki.ede.oisafecompatibility.OISafeCategoryEntry
-import fi.iki.ede.oisafecompatibility.OISafeRestoreHandler
-import fi.iki.ede.oisafecompatibility.OISafeSiteEntry
-import fi.iki.ede.oisafecompatibility.RestoreDataSet
-import fi.iki.ede.safe.BuildConfig
+import fi.iki.ede.crypto.keystore.CipherUtilities
+import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_ITERATION_COUNT
+import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_LENGTH_BITS
+import fi.iki.ede.crypto.keystore.KeyManagement
+import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.model.LoginHandler
-import fi.iki.ede.safe.ui.utilities.throwIfFeatureNotEnabled
 import java.io.InputStream
+import javax.crypto.spec.SecretKeySpec
 
 internal fun fromOiSafeCat(oiSafeCategoryEntry: OISafeCategoryEntry) =
     DecryptableCategoryEntry().apply {
@@ -46,7 +47,6 @@ object OISafeRestore {
         encryptedRenewedSaltedMasterKey: Pair<Salt, IVCipherText>,
         dbHelper: DBHelper,
     ): Int {
-        throwIfFeatureNotEnabled(BuildConfig.ENABLE_OIIMPORT)
         require(!encryptedRenewedSaltedMasterKey.first.isEmpty()) { "Empty salt passed to readAndRestore" }
         require(!encryptedRenewedSaltedMasterKey.second.isEmpty()) { "Empty master cipher passed to readAndRestore" }
         require(!passwordOfBackup.isEmpty()) { "Empty backup password passed to readAndRestore" }
@@ -101,5 +101,51 @@ object OISafeRestore {
             Log.e(TAG, "This should never happen")
         }
         return totalPasswords
+    }
+}
+
+// this horrible lump here just to pass fake crypto stuff from test case
+fun restoreOiSafeDump(
+    context: Context,
+    dbHelper: DBHelper,
+    passwordOfBackup: Password,
+    selectedDocStream: InputStream
+): Int {
+    val newRawMasterkey = KeyManagement.generateAESKey(KEY_LENGTH_BITS)
+    val newMasterkey = SecretKeySpec(newRawMasterkey, "AES")
+
+    val encryptedRenewedMasterKeyAndSalt =
+        Salt(CipherUtilities.generateRandomBytes(8 * 8)).let { salt ->
+            Pair(salt,
+                KeyManagement.encryptMasterKey(
+                    KeyManagement.generatePBKDF2AESKey(
+                        salt,
+                        KEY_ITERATION_COUNT,
+                        passwordOfBackup,
+                        KEY_LENGTH_BITS
+                    ), newRawMasterkey
+                ).let { (iv, ciphertext) ->
+                    IVCipherText(iv, ciphertext)
+                })
+        }
+    val ks = KeyStoreHelperFactory.getKeyStoreHelper() // needed, new master key
+    fun encryptWithNewKey(value: ByteArray) = ks.encryptByteArray(value, newMasterkey)
+
+    return try {
+        val totalPasswords = OISafeRestore.readAndRestore(
+            selectedDocStream,
+            ::encryptWithNewKey,
+            passwordOfBackup,
+            encryptedRenewedMasterKeyAndSalt,
+            dbHelper
+        )
+        if (totalPasswords >= 0) {
+            // Also re-import(replace) existing key
+            LoginHandler.passwordLogin(context, passwordOfBackup)
+        }
+        totalPasswords
+    } catch (ex: Exception) {
+        Log.e("RestoreDatabase", "$ex")
+        -1
     }
 }

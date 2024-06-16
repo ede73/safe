@@ -12,13 +12,18 @@ import fi.iki.ede.safe.ui.activities.LoginScreen
 import fi.iki.ede.safe.ui.activities.LoginScreen.Companion.OPEN_CATEGORY_SCREEN_AFTER_LOGIN
 import fi.iki.ede.safe.ui.activities.PreferenceActivity
 import fi.iki.ede.safe.ui.activities.PrepareDataBaseRestorationScreen
-import fi.iki.ede.safe.ui.activities.PrepareDataBaseRestorationScreen.Companion.OISAFE_COMPATIBILITY
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen.Companion.CATEGORY_ID
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen.Companion.PASSWORD_ID
 import fi.iki.ede.safe.ui.activities.SiteEntryListScreen
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
-import fi.iki.ede.safe.ui.models.PluginName
+
+enum class DRODOWN_MENU {
+    TOPACTIONBAR_MENU,
+    TOPACTIONBAR_IMPORT_EXPORT_MENU,
+}
+
+private const val TAG = "IntentManager"
 
 // Every intent retrieved/launched in the app go thru IntentManager
 // If a plugin wants to tap into the intent, they can modify or even replace it
@@ -70,14 +75,27 @@ object IntentManager {
         intentReplacements.getOrPut(plugin) { mutableMapOf() }[screen] = intent
     }
 
+    private val menuAdditions =
+        mutableMapOf<PluginName, MutableMap<DRODOWN_MENU, MutableList<Pair<Int, (Context) -> Unit>>>>()
+
+    fun registerSubMenu(
+        plugin: PluginName,
+        menu: DRODOWN_MENU,
+        stringResource: Int,
+        selected: (Context) -> Unit
+    ) = menuAdditions.getOrPut(plugin) { mutableMapOf() }
+        .getOrPut(menu) { mutableListOf() }
+        .add(stringResource to selected)
+
+    fun getMenuItems(menu: DRODOWN_MENU) =
+        menuAdditions.flatMap { (_, menuMap) -> menuMap[menu]?.toList() ?: listOf() }
+
     fun getDatabaseRestorationScreenIntent(
         context: Context,
-        oiSafeCompatibility: Boolean,
         uri: Uri
     ) = Intent(
         context, PrepareDataBaseRestorationScreen::class.java
-    ).putExtra(OISAFE_COMPATIBILITY, oiSafeCompatibility)
-        .apply { data = uri }
+    ).apply { data = uri }
 
     fun getEditPassword(context: Context, passwordId: DBID) =
         getActivityIntent(context, SiteEntryEditScreen::class.java, extras = Bundle().apply {
@@ -121,4 +139,12 @@ object IntentManager {
             extras = Bundle().apply {
                 putLong(SiteEntryListScreen.CATEGORY_ID, id)
             })
+
+    fun removePluginIntegrations(pluginName: PluginName) {
+        println("Plugin ${pluginName.pluginName} is being disabled")
+        // not perfect, category pager ..is uninstalled/disabled YES, but app
+        // requires restart to get the original category screen established
+        intentReplacements.remove(pluginName)
+        menuAdditions.remove(pluginName)
+    }
 }

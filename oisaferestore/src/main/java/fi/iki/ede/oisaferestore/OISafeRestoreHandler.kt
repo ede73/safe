@@ -1,4 +1,4 @@
-package fi.iki.ede.oisafecompatibility
+package fi.iki.ede.oisaferestore
 
 import fi.iki.ede.crypto.EncryptedPassword
 import fi.iki.ede.crypto.IVCipherText
@@ -95,7 +95,6 @@ class OISafeRestoreHandler(
     }
 
     fun parse(streamData: InputStream): RestoreDataSet {
-        throwIfFeatureNotEnabled(BuildConfig.ENABLE_OIIMPORT)
         val xr = SAXParserFactory.newInstance().newSAXParser().xmlReader
         xr.contentHandler = this
         xr.parse(InputSource(streamData))

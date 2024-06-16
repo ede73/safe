@@ -21,7 +21,7 @@ dependencyResolutionManagement {
 
 rootProject.name = "safe"
 include(":app")
-include(":app:oisafecompatibility")
 include(":app:crypto")
 include(":app:hibp")
+include(":oisaferestore")
 include(":categorypager")

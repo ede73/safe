@@ -1,4 +1,4 @@
-package fi.iki.ede.oisafecompatibility
+package fi.iki.ede.oisaferestore
 
 import fi.iki.ede.crypto.SaltedPassword
 

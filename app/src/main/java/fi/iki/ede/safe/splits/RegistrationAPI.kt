@@ -1,7 +1,6 @@
 package fi.iki.ede.safe.splits
 
 import android.content.Context
-import fi.iki.ede.safe.ui.models.PluginName
 
 interface RegistrationAPI {
     // Main app asks DFM module to perform registration

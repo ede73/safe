@@ -15,9 +15,9 @@ import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.service.AutolockingService
+import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.models.PluginLoaderViewModel
-import fi.iki.ede.safe.ui.models.PluginName
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseAppCompatActivity
 import fi.iki.ede.safe.ui.utilities.startActivityForResults
 

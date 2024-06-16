@@ -10,13 +10,10 @@ import com.google.android.play.core.splitinstall.SplitInstallStateUpdatedListene
 import com.google.android.play.core.splitinstall.model.SplitInstallSessionStatus
 import fi.iki.ede.safe.splits.PluginManager
 import fi.iki.ede.safe.splits.PluginManager.initializePlugin
+import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.splits.RegistrationAPI
 
 private const val TAG = "PluginLoaderViewModel"
-
-enum class PluginName(val pluginName: String) {
-    CATEGORY_PAGER("categorypager"),
-}
 
 class PluginLoaderViewModel(app: Application) : AndroidViewModel(app) {
     private val splitInstallManager = SplitInstallManagerFactory.create(getApplication())

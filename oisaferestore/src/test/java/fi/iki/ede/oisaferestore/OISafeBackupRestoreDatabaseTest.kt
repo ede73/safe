@@ -1,9 +1,8 @@
-package fi.iki.ede.safe
+package fi.iki.ede.oisaferestore
 
 import android.database.sqlite.SQLiteDatabase
 import fi.iki.ede.crypto.EncryptedPassword
 import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.KeystoreHelperMock4UnitTests
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.IV_LENGTH
@@ -12,7 +11,6 @@ import fi.iki.ede.crypto.keystore.KeyManagement
 import fi.iki.ede.crypto.support.hexToByteArray
 import fi.iki.ede.crypto.support.toHex
 import fi.iki.ede.safe.db.DBHelper
-import fi.iki.ede.safe.oisafecompatibility.OISafeRestore
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
 import io.mockk.every
@@ -29,7 +27,7 @@ import java.io.ByteArrayInputStream
 import java.security.Security
 
 // TODO: Missing actual encryption/decryption (due to use of bouncy castle, will be gotten rid of and fixed eventually)
-class OldOISafeCompatibleBackupDatabaseOISafeRestoreDatabaseTest {
+class OISafeBackupRestoreDatabaseTest {
     private val passwordOfBackup = Password("abc123")
 
     @Before
@@ -41,7 +39,8 @@ class OldOISafeCompatibleBackupDatabaseOISafeRestoreDatabaseTest {
     @Ignore("yeap")
     fun restoreTest() {
 
-        KeystoreHelperMock4UnitTests.mock()
+        throw Exception("GOTTA FIX THIS FIRST KeystoreHelperMock4UnitTests.mock()")
+        //KeystoreHelperMock4UnitTests.mock()
 
         fun encryptWithNewKey(value: ByteArray): IVCipherText {
             return IVCipherText(byteArrayOf(), value) // TODO: actually encrypt for precise results

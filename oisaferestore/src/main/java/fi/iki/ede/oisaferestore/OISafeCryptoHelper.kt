@@ -1,4 +1,4 @@
-package fi.iki.ede.oisafecompatibility
+package fi.iki.ede.oisaferestore
 
 import android.util.Log
 import fi.iki.ede.crypto.EncryptedPassword

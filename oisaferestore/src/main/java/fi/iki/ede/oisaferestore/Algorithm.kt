@@ -1,4 +1,4 @@
-package fi.iki.ede.oisafecompatibility
+package fi.iki.ede.oisaferestore
 
 @Deprecated("Just for backwards compatibility")
 enum class Algorithm(val algorithm: String) {

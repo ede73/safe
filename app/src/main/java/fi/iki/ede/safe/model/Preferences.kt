@@ -6,7 +6,7 @@ import android.os.Environment
 import androidx.preference.PreferenceManager
 import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.safe.BuildConfig
-import fi.iki.ede.safe.ui.models.PluginName
+import fi.iki.ede.safe.splits.PluginName
 import java.time.ZonedDateTime
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
