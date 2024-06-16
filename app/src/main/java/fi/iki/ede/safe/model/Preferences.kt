@@ -110,4 +110,8 @@ object Preferences {
         sharedPreferences.getStringSet(PREFERENCE_EXPERIMENTAL_FEATURES, emptySet())
             ?.mapNotNull { PluginName.entries.firstOrNull { p -> p.pluginName == it } }
             ?.toSet() ?: emptySet()
+
+    fun clearAllPlugins() {
+        sharedPreferences.edit().putStringSet(PREFERENCE_EXPERIMENTAL_FEATURES, emptySet()).commit()
+    }
 }

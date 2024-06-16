@@ -28,6 +28,8 @@ class SafeApplication : SplitCompatApplication(),
         DataModel.attachDBHelper(
             DBHelperFactory.getDBHelper(this),
         )
+        Thread.setDefaultUncaughtExceptionHandler(Thread.getDefaultUncaughtExceptionHandler()
+            ?.let { MyExceptionHandler(it) })
     }
 
     override fun onCreate() {

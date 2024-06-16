@@ -62,18 +62,18 @@ private fun CategoryListScreenPagedCompose(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                TopActionBar(onAddRequested = { displayAddCategoryDialog.value = true })
-                if (displayAddCategoryDialog.value) {
-                    AddOrEditCategory(coroutineScope, displayAddCategoryDialog)
-                }
-                HorizontalPager(state = pagerState) { page ->
-                    val category = categoriesState[page]
-                    val passwordsState by passwordsStateFlow
-                        .map { passwords -> passwords.filter { it.categoryId == category.id } }
-                        .map { passwords -> passwords.sortedBy { it.plainDescription.lowercase() } }
-                        .filterNotNull()
-                        .collectAsState(initial = emptyList())
+            HorizontalPager(state = pagerState) { page ->
+                val category = categoriesState[page]
+                val passwordsState by passwordsStateFlow
+                    .map { passwords -> passwords.filter { it.categoryId == category.id } }
+                    .map { passwords -> passwords.sortedBy { it.plainDescription.lowercase() } }
+                    .filterNotNull()
+                    .collectAsState(initial = emptyList())
+                Column(modifier = Modifier.fillMaxSize()) {
+                    TopActionBar(onAddRequested = { displayAddCategoryDialog.value = true })
+                    if (displayAddCategoryDialog.value) {
+                        AddOrEditCategory(coroutineScope, displayAddCategoryDialog)
+                    }
                     CategoryRow(category)
                     SiteEntryList(passwordsState)
                 }
