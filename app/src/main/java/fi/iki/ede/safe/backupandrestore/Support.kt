@@ -67,9 +67,7 @@ internal fun XmlSerializer.startTagWithIVCipherAttribute(
         this
     }
 
-internal fun XmlSerializer.writePasswordEntry(
-    decryptablePassword: DecryptableSiteEntry,
-) {
+internal fun XmlSerializer.writePasswordEntry(decryptablePassword: DecryptableSiteEntry) {
     // needed for GPM mapping, won't break bank nor backwards compatibility
     startTag(Elements.CATEGORY_ITEM).attribute(
         Attributes.CATEGORY_ITEM_ID,
