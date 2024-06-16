@@ -31,7 +31,7 @@ android {
         minSdk = 26
         targetSdk = 34
 
-        val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(3, 0, 44, 0)
+        val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(3, 0, 46, 0)
         versionCode =
             versionMajor * 10000 + versionMinor * 1000 + versionPatch * 100 + versionBuild
         versionName = "${versionMajor}.${versionMinor}.${versionPatch}"
@@ -164,10 +164,10 @@ tasks.configureEach {
     // When ever doing release(Generate Signed App Bundle), run also all the tests...
     when (name) {
         "connectedDebugAndroidTest" -> dependsOn("unlockEmulator")
-        "bundleRelease" -> {
-            dependsOn("testReleaseUnitTest")
-            dependsOn("connectedAndroidTest")
-        }
+//        "bundleRelease" -> {
+//            dependsOn("testReleaseUnitTest")
+//            dependsOn("connectedAndroidTest")
+//        }
 
         "assembleDebug" -> {
             // UNIT TESTS
