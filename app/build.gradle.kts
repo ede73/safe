@@ -139,8 +139,8 @@ dependencies {
     implementation(libs.material)
     //implementation(libs.core.ktx)
     implementation(libs.feature.delivery.ktx)
-    implementation(platform("com.google.firebase:firebase-bom:33.1.0")) // firebase crashalytics
-    implementation("com.google.firebase:firebase-analytics") // firebase crashalytics
+    implementation(libs.firebase.bom) // firebase crashalytics
+    implementation(libs.firebase.analytics) // firebase crashalytics
     implementation(libs.firebase.crashlytics.ktx) // firebase crashalytics
 
     // Bring bouncy castle to unit tests
