@@ -33,7 +33,7 @@ android {
         minSdk = 26
         targetSdk = 34
 
-        val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(3, 0, 50, 0)
+        val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(3, 0, 52, 0)
         versionCode =
             versionMajor * 10000 + versionMinor * 1000 + versionPatch * 100 + versionBuild
         versionName = "${versionMajor}.${versionMinor}.${versionPatch}"
@@ -141,7 +141,7 @@ dependencies {
     implementation(libs.feature.delivery.ktx)
     // Don't convert to catalog declaration, something is broken
     implementation(platform("com.google.firebase:firebase-bom:33.1.0")) // firebase crashalytics
-    //implementation("com.google.firebase:firebase-analytics") // firebase crashalytics
+    implementation("com.google.firebase:firebase-analytics") // firebase crashalytics (breadcrumbs)
     implementation(libs.firebase.crashlytics.ktx) // firebase crashalytics
 
     // Bring bouncy castle to unit tests
