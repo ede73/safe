@@ -3,6 +3,7 @@ package fi.iki.ede.safe
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
 import com.google.android.play.core.splitcompat.SplitCompatApplication
+import com.google.firebase.FirebaseApp
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.Preferences
@@ -34,6 +35,9 @@ class SafeApplication : SplitCompatApplication(),
 
     override fun onCreate() {
         super.onCreate()
+        FirebaseApp.initializeApp(this)
+//        FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
+//        throw RuntimeException("Test Crash")
         Preferences.initialize(this)
         reinitializePlugins(this)
         PreferenceManager.getDefaultSharedPreferences(this)

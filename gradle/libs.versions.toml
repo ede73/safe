@@ -28,6 +28,7 @@ uiTooling = "1.6.7"
 junitVersion = "1.1.5"
 coreKtxVersion = "1.10.3"
 featureDeliveryKtx = "2.1.0"
+firebaseCrashlyticsKtx = "19.0.1"
 
 [libraries]
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
@@ -59,6 +60,7 @@ androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", vers
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 #core-ktx = { group = "com.google.android.play", name = "core-ktx", version.ref = "coreKtxVersion" }
 feature-delivery-ktx = { group = "com.google.android.play", name = "feature-delivery-ktx", version.ref = "featureDeliveryKtx" }
+firebase-crashlytics-ktx = { group = "com.google.firebase", name = "firebase-crashlytics-ktx", version.ref = "firebaseCrashlyticsKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
