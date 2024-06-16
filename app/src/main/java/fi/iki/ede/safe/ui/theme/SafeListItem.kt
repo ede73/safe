@@ -11,12 +11,13 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun SafeListItem(
     modifier: Modifier = Modifier,
+    fillWidthFraction: Float = 1f,
     content: @Composable () -> Unit
 ) {
     Card(
         modifier = modifier
             .padding(6.dp)
-            .then(Modifier.fillMaxWidth()),
+            .fillMaxWidth(fillWidthFraction),
         shape = MaterialTheme.shapes.medium
     ) {
         content()
