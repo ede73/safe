@@ -171,7 +171,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
                     PASSWORD_ENCRYPTED_BACKUP_AT_1234,
                     backupPassword,
                     dbHelper,
-                    { categories: Int, passwords: Int -> }
+                    { _, _, _ -> }
                 ) { thisBackupCreationTime, lastBackupDone ->
                     askedUser = true
                     if (!mustAskUser) {
@@ -209,7 +209,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
             PASSWORD_ENCRYPTED_BACKUP_AT_1234,
             backupPassword,
             dbHelper,
-            { categories: Int, passwords: Int -> }
+            { _, _, _ -> }
         ) { thisBackupCreationTime, lastBackupDone ->
             throw Exception("We should not ask user anything, valid backup!")
         }

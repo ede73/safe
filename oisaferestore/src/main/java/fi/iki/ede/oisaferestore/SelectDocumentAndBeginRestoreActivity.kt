@@ -8,6 +8,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -38,6 +39,9 @@ class SelectDocumentAndBeginRestoreActivity : AutolockingBaseComponentActivity()
                         selectedDoc = result.data!!.data!!
                     }
                 }
+            val processedPasswords = remember { mutableIntStateOf(0) }
+            val processedCategories = remember { mutableIntStateOf(0) }
+            val processedMessage = remember { mutableStateOf("") }
 
             LaunchedEffect(Unit) {
                 selectDocument.launch(ExportConfig.getOpenDocumentIntent())
@@ -45,10 +49,13 @@ class SelectDocumentAndBeginRestoreActivity : AutolockingBaseComponentActivity()
 
             if (selectedDoc != null) {
                 AskBackupPasswordAndCommence(
+                    processedPasswords,
+                    processedCategories,
+                    processedMessage,
                     selectedDoc!!,
                     this,
                     ::avertInactivity
-                ) { backupPassword, makeToast ->
+                ) { backupPassword ->
                     RestoreOISafeBackup(
                         context,
                         backupPassword,
@@ -60,17 +67,16 @@ class SelectDocumentAndBeginRestoreActivity : AutolockingBaseComponentActivity()
                                 runBlocking {
                                     DataModel.loadFromDatabase()
                                 }
-                                makeToast(
-                                    context.getString(
-                                        R.string.restore_screen_restored,
-                                        restoredPasswords
-                                    )
+                                processedMessage.value = context.getString(
+                                    R.string.restore_screen_restored,
+                                    restoredPasswords
                                 )
                                 IntentManager.startCategoryScreen(context)
                                 context.setResult(RESULT_OK)
                                 context.finish()
                             } else {
-                                makeToast(context.getString(R.string.restore_screen_restore_failed))
+                                processedMessage.value =
+                                    context.getString(R.string.restore_screen_restore_failed)
                                 IntentManager.startCategoryScreen(context)
                                 context.setResult(RESULT_CANCELED)
                                 context.finish()
