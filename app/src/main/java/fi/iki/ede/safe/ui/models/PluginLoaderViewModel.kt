@@ -38,14 +38,18 @@ class PluginLoaderViewModel(app: Application) : AndroidViewModel(app) {
                 Log.d(TAG, "${session.plugin.pluginName} install failed with ${state.errorCode()}")
                 informUser("${session.plugin.pluginName} install failed with ${state.errorCode()}")
                 session.completed = true
-                sessions.removeIf { it.sessionId == state.sessionId() }
+                synchronized(sessions) {
+                    sessions.removeIf { it.sessionId == state.sessionId() }
+                }
             }
 
             SplitInstallSessionStatus.INSTALLED -> {
                 informUser("${session.plugin.pluginName} module installed successfully")
                 initializePlugin(getApplication(), session.plugin)
                 session.completed = true
-                sessions.removeIf { it.sessionId == state.sessionId() }
+                synchronized(sessions) {
+                    sessions.removeIf { it.sessionId == state.sessionId() }
+                }
             }
 
             else -> Log.d(TAG, "Status: ${session.plugin.pluginName} ${state.status()}")
@@ -76,7 +80,11 @@ class PluginLoaderViewModel(app: Application) : AndroidViewModel(app) {
             .build().let { request ->
                 splitInstallManager
                     .startInstall(request)
-                    .addOnSuccessListener { id -> sessions.add(SplitSession(id, plugin)) }
+                    .addOnSuccessListener { id ->
+                        synchronized(sessions) {
+                            sessions.add(SplitSession(id, plugin))
+                        }
+                    }
                     .addOnFailureListener { exception ->
                         Log.e(TAG, "Error installing module: ", exception)
                         informUser("Error requesting module install ${plugin.pluginName}")
