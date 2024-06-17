@@ -4,9 +4,9 @@
     android:installLocation="auto">
 
     <!-- Make sure google analytics ad id doesn't creep back up ever -->
-    <!--    <uses-permission-->
-    <!--        android:name="com.google.android.gms.permission.AD_ID"-->
-    <!--        tools:node="remove" />-->
+    <uses-permission
+        android:name="com.google.android.gms.permission.AD_ID"
+        tools:node="remove" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
