@@ -10,6 +10,7 @@ import androidx.preference.MultiSelectListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.model.Preferences
@@ -59,6 +60,19 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
                 }
         }
 
+        private fun <T : Preference> addPreferenceClickListener(
+            preferenceKey: String,
+            clicked: () -> Boolean
+        ) {
+            findPreference<T>(preferenceKey)?.onPreferenceClickListener =
+                addClickListener(clicked)
+        }
+
+        private fun addClickListener(clicked: () -> Boolean) =
+            Preference.OnPreferenceClickListener { _ ->
+                clicked()
+            }
+
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             addPreferencesFromResource(R.xml.preferences)
 
@@ -74,11 +88,10 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
             findPreference<Preference>(Preferences.PREFERENCE_BACKUP_DOCUMENT).let { backupPathClicker ->
                 backupPathClicker?.summary = Preferences.getBackupDocument()
                 if (Preferences.SUPPORT_EXPORT_LOCATION_MEMORY) {
-                    backupPathClicker?.onPreferenceClickListener =
-                        Preference.OnPreferenceClickListener { _: Preference? ->
-                            backupDocumentSelected.launch(ExportConfig.getCreateDocumentIntent())
-                            false
-                        }
+                    backupPathClicker?.onPreferenceClickListener = addClickListener {
+                        backupDocumentSelected.launch(ExportConfig.getCreateDocumentIntent())
+                        false
+                    }
                 } else backupPathClicker?.isEnabled = false
             }
 
@@ -95,6 +108,11 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
                 if (enabledOrDisabled) {
                     BiometricsActivity.clearBiometricKeys()
                 }
+            }
+
+            addPreferenceClickListener<Preference>(Preferences.PREFERENCE_MAKE_CRASH) { ->
+                FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
+                throw RuntimeException("Crash Test from preferences")
             }
 
             findPreference<Preference>(Preferences.PREFERENCE_LAST_BACKUP_TIME).let { lastBackupTime ->

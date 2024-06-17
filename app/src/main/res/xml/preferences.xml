@@ -41,6 +41,9 @@
         <Preference
             android:key="time_of_last_backup"
             android:title="@string/preferences_title_time_of_last_backup" />
+        <Preference
+            android:key="make_a_crash"
+            android:title="@string/preferences_title_make_a_crash" />
         <MultiSelectListPreference
             android:id="@+id/experimental_features"
             android:dialogTitle="@string/preferences_experimental_features_title"
