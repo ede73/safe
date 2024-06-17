@@ -37,6 +37,7 @@ object Preferences {
     )
     const val PREFERENCE_BACKUP_DOCUMENT = "backup_document"
     const val PREFERENCE_EXPERIMENTAL_FEATURES = "experiments"
+    const val PREFERENCE_MAKE_CRASH = "make_a_crash"
     private val PREFERENCE_BACKUP_PATH_DEFAULT_VALUE =
         Environment.getExternalStorageDirectory().absolutePath + "/" + PASSWORDSAFE_EXPORT_FILE
     const val PREFERENCE_BIOMETRICS_ENABLED = "biometrics"
