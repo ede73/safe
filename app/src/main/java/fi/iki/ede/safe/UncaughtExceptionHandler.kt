@@ -6,6 +6,9 @@ class MyExceptionHandler(private val defaultHandler: Thread.UncaughtExceptionHan
     Thread.UncaughtExceptionHandler {
 
     override fun uncaughtException(thread: Thread, exception: Throwable) {
+        // Log the exception to Crashlytics - shouldn't be needed though
+        // FirebaseCrashlytics.getInstance().recordException(exception)
+
         // Clear all plugins
         try {
             Preferences.clearAllPlugins()
