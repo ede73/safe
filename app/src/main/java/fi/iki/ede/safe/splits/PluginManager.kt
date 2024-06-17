@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.google.android.play.core.splitinstall.SplitInstallManager
 import com.google.android.play.core.splitinstall.SplitInstallManagerFactory
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.model.Preferences
 import java.util.ServiceLoader
@@ -95,14 +96,19 @@ object PluginManager {
         }
 
         while (iterator.hasNext()) {
-            val next = iterator.next()
-            print("Got $next searching for ${pluginName.pluginName}")
-            val module = next.get()
-            print("Got2 $module search ${pluginName.pluginName}")
-            if (module.getName() == pluginName) {
-                module.register(context)
-                Log.d(TAG, "Loaded $pluginName feature through ServiceLoader")
-                return module
+            try {
+                val next = iterator.next()
+                print("Got $next searching for ${pluginName.pluginName}")
+                val module = next.get()
+                print("Got2 $module search ${pluginName.pluginName}")
+                if (module.getName() == pluginName) {
+                    module.register(context)
+                    Log.d(TAG, "Loaded $pluginName feature through ServiceLoader")
+                    return module
+                }
+            } catch (i: Exception) {
+                // on samsung S7+ iterator.next throws...don't understand or know why, workse everywhere else
+                FirebaseCrashlytics.getInstance().recordException(i)
             }
         }
         return null
