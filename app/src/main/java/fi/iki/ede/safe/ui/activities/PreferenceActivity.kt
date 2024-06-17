@@ -46,6 +46,19 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
                 }
             }
 
+        inline fun <reified T : Preference, reified C : Any> addChangeListener(
+            preferenceKey: String,
+            noinline changed: (change: C) -> Unit
+        ) {
+            findPreference<T>(preferenceKey)?.onPreferenceChangeListener =
+                Preference.OnPreferenceChangeListener { _, newValue ->
+                    if (newValue is C) {
+                        changed(newValue)
+                    }
+                    true
+                }
+        }
+
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             addPreferencesFromResource(R.xml.preferences)
 
@@ -69,19 +82,20 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
                 } else backupPathClicker?.isEnabled = false
             }
 
-            findPreference<Preference>(Preferences.PREFERENCE_LOCK_TIMEOUT_MINUTES)?.onPreferenceChangeListener =
-                Preference.OnPreferenceChangeListener { _: Preference?, _: Any ->
-                    activity?.startService(Intent(requireContext(), AutolockingService::class.java))
-                    true
-                }
+            addChangeListener<Preference, Any>(Preferences.PREFERENCE_LOCK_TIMEOUT_MINUTES) {
+                activity?.startService(
+                    Intent(
+                        requireContext(),
+                        AutolockingService::class.java
+                    )
+                )
+            }
 
-            findPreference<Preference>(Preferences.PREFERENCE_BIOMETRICS_ENABLED)?.onPreferenceChangeListener =
-                Preference.OnPreferenceChangeListener { _: Preference?, enabledOrDisabled: Any ->
-                    if (!(enabledOrDisabled as Boolean)) {
-                        BiometricsActivity.clearBiometricKeys()
-                    }
-                    true
+            addChangeListener<Preference, Boolean>(Preferences.PREFERENCE_BIOMETRICS_ENABLED) { enabledOrDisabled ->
+                if (enabledOrDisabled) {
+                    BiometricsActivity.clearBiometricKeys()
                 }
+            }
 
             findPreference<Preference>(Preferences.PREFERENCE_LAST_BACKUP_TIME).let { lastBackupTime ->
                 val lb = Preferences.getLastBackupTime()?.toLocalDateTime()?.toString()
