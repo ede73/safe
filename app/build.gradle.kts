@@ -27,6 +27,20 @@ plugins {
  *  throwIfFeatureNotEnabled(BuildConfig.FLAG_NAME) etc.
  */
 
+abstract class GitRevListCountValueSource : ValueSource<String, ValueSourceParameters.None> {
+    @get:Inject
+    abstract val execOperations: ExecOperations
+
+    override fun obtain(): String {
+        val output = ByteArrayOutputStream()
+        execOperations.exec {
+            commandLine("git", "rev-list", "--count", "HEAD")
+            standardOutput = output
+        }
+        return String(output.toByteArray(), Charset.defaultCharset())
+    }
+}
+
 android {
     namespace = "fi.iki.ede.safe"
     compileSdk = 34
@@ -36,7 +50,15 @@ android {
         minSdk = 26
         targetSdk = 34
 
-        val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(3, 0, 59, 0)
+        val gitRevListProvider = providers.of(GitRevListCountValueSource::class) {}
+        val gitRevListCount = gitRevListProvider.get().trim().toInt()
+        
+        val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(
+            3,
+            1,
+            gitRevListCount / 100,
+            gitRevListCount % 100
+        )
         versionCode =
             versionMajor * 10000 + versionMinor * 1000 + versionPatch * 100 + versionBuild
         versionName = "${versionMajor}.${versionMinor}.${versionPatch}"
@@ -207,59 +229,10 @@ tasks.withType<Test> {
     jvmArgs("--add-opens", "java.base/java.time=ALL-UNNAMED")
 }
 
-//abstract class UnlockEmulatorValueSource : ValueSource<String, ValueSourceParameters.None> {
-//    override fun obtain(): String {
-//        // Logic to run the command and return its output
-//        val processBuilder = ProcessBuilder(
-//            "adb", "shell",
-//            "dumpsys deviceidle|grep mScreenOn=false && input keyevent KEYCODE_POWER;dumpsys deviceidle|grep mScreenLocked=true && (input keyevent KEYCODE_MENU ;input text 0000;input keyevent KEYCODE_ENTER);true"
-//        )
-//        processBuilder.redirectErrorStream(true)
-//        val process = processBuilder.start()
-//        val output = process.inputStream.bufferedReader().readText()
-//        process.waitFor()
-//        return output
-//    }
-//}
-
-//abstract class UnlockEmulatorValueSource @Inject constructor(
-//    private val execOperations: ExecOperations
-//) : ValueSource<String, ValueSourceParameters.None> {
-//    override fun obtain(): String {
-//        // Logic to run the command and return its output
-//        val command = listOf(
-//            "adb", "shell",
-//            "dumpsys deviceidle|grep mScreenOn=false && input keyevent KEYCODE_POWER;dumpsys deviceidle|grep mScreenLocked=true && (input keyevent KEYCODE_MENU ;input text 0000;input keyevent KEYCODE_ENTER);true"
-//        )
-//        return execOperations.exec {
-//            commandLine(command)
-//            isIgnoreExitValue = true
-//        }.toString()//.output.get()
-//    }
-//}
 abstract class MyValueSource @Inject constructor(private val execOperations: ExecOperations) :
     ValueSource<String?, ValueSourceParameters.None?> {
     override fun obtain(): String {
         // your custom implementation
-        return ""
-    }
-}
-
-abstract class UnlockEmulatorValueSource @Inject constructor(
-    private val execOperations: ExecOperations
-) : ValueSource<String, ValueSourceParameters.None> {
-    override fun obtain(): String {
-        println("=========================================")
-        // Logic to run the command and return its output
-        val command = listOf(
-            "adb", "shell",
-            "dumpsys deviceidle|grep mScreenOn=false && input keyevent KEYCODE_POWER;dumpsys deviceidle|grep mScreenLocked=true && (input keyevent KEYCODE_MENU ;input text 0000;input keyevent KEYCODE_ENTER);true >/dev/null"
-        )
-        val execResult = execOperations.exec {
-            commandLine(command)
-            isIgnoreExitValue = true
-        }
-        execResult.assertNormalExitValue()
         return ""
     }
 }
@@ -270,11 +243,10 @@ abstract class UnlockEmulator2ValueSource : ValueSource<String, ValueSourceParam
 
     override fun obtain(): String {
         val output = ByteArrayOutputStream()
-        println("-------------running now ")
         execOperations.exec {
             commandLine(
                 "adb", "shell",
-                "dumpsys deviceidle|grep mScreenOn=false && input keyevent KEYCODE_POWER;dumpsys deviceidle|grep mScreenLocked=true && (input keyevent KEYCODE_MENU ;input text 0000;input keyevent KEYCODE_ENTER);true"
+                "dumpsys deviceidle|grep mScreenOn=false && input keyevent KEYCODE_POWER;dumpsys deviceidle|grep mScreenLocked=true && (input keyevent KEYCODE_MENU ;input text 0000;input keyevent KEYCODE_ENTER);true >/dev/null"
             )
             standardOutput = output
             isIgnoreExitValue = true
@@ -283,68 +255,16 @@ abstract class UnlockEmulator2ValueSource : ValueSource<String, ValueSourceParam
     }
 }
 
-
-abstract class GitVersionValueSource : ValueSource<String, ValueSourceParameters.None> {
-    @get:Inject
-    abstract val execOperations: ExecOperations
-
-    override fun obtain(): String {
-        val output = ByteArrayOutputStream()
-        execOperations.exec {
-            commandLine("git", "--version")
-            standardOutput = output
-        }
-        return String(output.toByteArray(), Charset.defaultCharset())
-    }
-}
-
-
-//val unlockEmulatorOutput: Provider<String> =
-//    project.providers.of(UnlockEmulatorValueSource::class.java) {
-//        UnlockEmulatorValueSource(execOperations).obtain()
-//    }
-
-//println(unlockEmulatorOutput.get())
-//val unlockEmulatorOutput: Provider<String> =
-//    project.providers.of(UnlockEmulatorValueSource::class.java)
-//val unlockEmulatorOutput: Provider<String> = project.objects.provider {
-//    project.providers.of(UnlockEmulatorValueSource::class.java).get()
-//}
-//val unlockEmulatorOutput by project.objects.newInstance(UnlockEmulatorValueSource::class)
-
+// Things have gotten more "complicated" with cache, just doLast{exec{}} makes a cache failure
+// need to use ValueSources nowadays, and them too in exact right order
+// https://docs.gradle.org/current/userguide/configuration_cache.html
 // ./gradlew --configuration-cache unlockEmulator
-val gitVersionProvider = providers.of(GitVersionValueSource::class) {}
 /* Enable...tasks.configureEach {when (name) {"connectedDebugAndroidTest" -> dependsOn("unlockEmulator")}} */
 tasks.register("unlockEmulator") {
-    println("Obtain git version")
-    val gitVersion = gitVersionProvider.get()
-    println("UNLOCK NOW?")
     val unlockEmulator2Provider = providers.of(UnlockEmulator2ValueSource::class) {}
     doLast {
-        println("or unlock now?")
         unlockEmulator2Provider.get()
-        println("print git verdion?")
-        println(gitVersion)
-        println("Print unlcok result?")
-        //println(unlock)
-//        exec {
-//            commandLine(
-//                "adb",
-//                "shell",
-//                "dumpsys deviceidle|grep mScreenOn=false && input keyevent KEYCODE_POWER;dumpsys deviceidle|grep mScreenLocked=true && (input keyevent KEYCODE_MENU ;input text 0000;input keyevent KEYCODE_ENTER);true"
-//            )
-//        }
     }
-//    outputs.cacheIf { false }
-//    outputs.upToDateWhen { false }
-//// Create a dummy output file
-//    val dummyOutputFile = file("$buildDir/tmp/unlockEmulator.dummy")
-//    outputs.file(dummyOutputFile)
-//    outputs.upToDateWhen { false } // Always consider the task out-of-date
-//    doLast {
-//        // Ensure the dummy file exists to satisfy Gradle's requirement
-//        dummyOutputFile.writeText("dummy content")
-//    }
 }
 
 tasks.withType<Test> {
