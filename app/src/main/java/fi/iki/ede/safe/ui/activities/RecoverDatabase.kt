@@ -32,6 +32,7 @@ import fi.iki.ede.crypto.keystore.KeyManagement.makeFreshNewKey
 import fi.iki.ede.crypto.keystore.KeyStoreHelper.Companion.ANDROID_KEYSTORE
 import fi.iki.ede.crypto.keystore.KeyStoreHelper.Companion.importExistingEncryptedMasterKey
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
@@ -76,6 +77,9 @@ class RecoverDatabase : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (!BuildConfig.DEBUG) {
+            finish()
+        }
         setContent {
             CopyDatabase(createDocumentLauncher, null) {
                 output = it
@@ -271,6 +275,7 @@ private fun reconvertDatabase(pwd: String, completed: () -> Unit) {
     val newPwds = pwds.map { pwd ->
         DecryptableSiteEntry(pwd.categoryId!!).apply {
             id = pwd.id
+            categoryId = pwd.categoryId
             description = reEncrypt(pwd.description, existingUnencryptedMasterKey, unencryptedKey)
             password = reEncrypt(pwd.password, existingUnencryptedMasterKey, unencryptedKey)
             note = reEncrypt(pwd.note, existingUnencryptedMasterKey, unencryptedKey)

@@ -47,10 +47,6 @@
             android:exported="false"
             android:label="@string/title_activity_help_screen" />
         <activity
-            android:name=".ui.activities.RecoverDatabase"
-            android:exported="true"
-            android:label="Recover" />
-        <activity
             android:name=".ui.activities.LoginScreen"
             android:exported="true">
             <intent-filter>
