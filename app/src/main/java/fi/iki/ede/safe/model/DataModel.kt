@@ -2,7 +2,7 @@ package fi.iki.ede.safe.model
 
 import android.util.Log
 import fi.iki.ede.safe.BuildConfig
-import fi.iki.ede.safe.db.DBHelper
+import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.db.DBID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
 
 object DataModel {
     // Categories state and events
@@ -36,8 +35,6 @@ object DataModel {
     // Test only now...
     val passwordsSharedFlow: SharedFlow<PasswordSafeEvent.PasswordEvent> get() = _passwordsSharedFlow
 
-    private var db: DBHelper? = null
-
     fun DecryptableSiteEntry.getCategory(): DecryptableCategoryEntry =
         _categories.keys.first { it.id == categoryId }
 
@@ -58,13 +55,14 @@ object DataModel {
     // TODO: RENAME
     suspend fun addOrEditCategory(category: DecryptableCategoryEntry) {
         CoroutineScope(Dispatchers.IO).launch {
+            val db = DBHelperFactory.getDBHelper()
             if (category.id == null) {
                 // NEW
-                category.id = db!!.addCategory(category)
+                category.id = db.addCategory(category)
                 _categories[category] = mutableListOf()
                 _categoriesSharedFlow.emit(PasswordSafeEvent.CategoryEvent.Added(category))
             } else {
-                db!!.updateCategory(category.id!!, category)
+                db.updateCategory(category.id!!, category)
 
                 // Update model
                 val existingCategory = category.getCategory()
@@ -88,7 +86,8 @@ object DataModel {
             "Alas category OBJECTS THEMSELVES are different, and SEARCH is needed"
         }
         CoroutineScope(Dispatchers.IO).launch {
-            db!!.deleteCategory(category.id!!)
+            val db = DBHelperFactory.getDBHelper()
+            val rows = db.deleteCategory(category.id!!)
 
             // Update model
             _categories.remove(category)
@@ -103,10 +102,11 @@ object DataModel {
     suspend fun addOrUpdatePassword(password: DecryptableSiteEntry) {
         require(password.categoryId != null) { "Password's category must be known" }
         CoroutineScope(Dispatchers.IO).launch {
+            val db = DBHelperFactory.getDBHelper()
             val category = getCategories().first { it.id == password.categoryId }
             if (password.id == null) {
                 // we're adding a new PWD
-                password.id = db!!.addPassword(password)
+                password.id = db.addPassword(password)
 
                 // Update model
                 _categories[category]!!.add(password)
@@ -122,7 +122,7 @@ object DataModel {
                     )
                 )
             } else {
-                db!!.updatePassword(password)
+                db.updatePassword(password)
 
                 // Update model
                 val passwords = _categories[category]
@@ -145,7 +145,8 @@ object DataModel {
     ) {
         require(password.categoryId != null) { "Password's category must be known" }
         CoroutineScope(Dispatchers.IO).launch {
-            db!!.updatePasswordCategory(password.id!!, targetCategory.id!!)
+            val db = DBHelperFactory.getDBHelper()
+            db.updatePasswordCategory(password.id!!, targetCategory.id!!)
 
             // Update model
             val oldCategory = password.getCategory()
@@ -189,7 +190,8 @@ object DataModel {
     suspend fun deletePassword(password: DecryptableSiteEntry) {
         require(password.categoryId != null) { "Password's category must be known" }
         CoroutineScope(Dispatchers.IO).launch {
-            db!!.deletePassword(password.id!!)
+            val db = DBHelperFactory.getDBHelper()
+            db.deletePassword(password.id!!)
 
             // Update model
             val category = password.getCategory()
@@ -242,7 +244,8 @@ object DataModel {
         _categories.clear()
 
         fun loadCategoriesFromDB() {
-            val categories = db!!.fetchAllCategoryRows()
+            val db = DBHelperFactory.getDBHelper()
+            val categories = db.fetchAllCategoryRows()
 
             // Update model
             // Quickly update all categories first and then the slow one..all the passwords of all the categories...
@@ -256,9 +259,10 @@ object DataModel {
             // passwords..
             // TODO: This is NOT mocked at the moment
             //val passwords = db!!.fetchAllRows()
+            val db = DBHelperFactory.getDBHelper()
             val catKeys = _categories.keys.toList()
             catKeys.forEach { category ->
-                val categoriesPasswords = db!!.fetchAllRows(categoryId = category.id as DBID)
+                val categoriesPasswords = db.fetchAllRows(categoryId = category.id as DBID)
 
                 // Update model
                 _categories[category]!!.addAll(categoriesPasswords)
@@ -324,10 +328,6 @@ object DataModel {
                 }
             }
         }
-    }
-
-    fun attachDBHelper(dbHelper: DBHelper) {
-        db = dbHelper
     }
 
     suspend fun dump() {

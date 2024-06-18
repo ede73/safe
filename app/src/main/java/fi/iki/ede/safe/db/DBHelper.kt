@@ -10,17 +10,59 @@ import android.util.Log
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.CipherUtilities
-import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
+import fi.iki.ede.safe.model.Preferences
 
 typealias DBID = Long
 
-class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
-    context, DATABASE_NAME, null, DATABASE_VERSION,
-    // Alas API 33:OpenParams.Builder().setJournalMode(JOURNAL_MODE_MEMORY).build()
-) {
+class DBHelper internal constructor(
+    context: Context,
+    databaseName: String? = DATABASE_NAME,
+    mainApp: Boolean = false
+) :
+    SQLiteOpenHelper(
+        context, databaseName, null, DATABASE_VERSION,
+        // Alas API 33:OpenParams.Builder().setJournalMode(JOURNAL_MODE_MEMORY).build()
+    ) {
+    init {
+        if (!mainApp) {
+            // MUST be a test case
+            require(databaseName == null) { "MUST BE INMEMORY DB" }
+        }
+    }
+
+//    @OptIn(ExperimentalStdlibApi::class)
+//    fun dumpInMemoryDb() {
+//        return
+//        val database = readableDatabase
+//        val cursor = database.rawQuery("SELECT name FROM sqlite_master WHERE type='table'", null)
+//        while (cursor.moveToNext()) {
+//            val tableName = cursor.getString(0)
+//            println("Table: $tableName")
+//            val tableCursor = database.rawQuery(
+//                "SELECT * FROM $tableName", null,
+//            )
+//            val columnCount = tableCursor.columnCount
+//            while (tableCursor.moveToNext()) {
+//                for (i in 0 until columnCount) {
+//                    if (tableCursor.getType(i) == Cursor.FIELD_TYPE_BLOB) {
+//                        print(tableCursor.getBlob(i).toHexString() + " | ")
+//                    } else {
+//                        print(tableCursor.getString(i) + " | ")
+//                    }
+//                }
+//                println()
+//            }
+//            tableCursor.close()
+//        }
+//        cursor.close()
+//    }
+
+    private var onCreateCalled = false
     override fun onCreate(db: SQLiteDatabase?) {
+        require(onCreateCalled == false) { "========ON create called TWICE" }
+        onCreateCalled = true
         listOf(Category, Password, Keys).forEach {
             try {
                 it.create().forEach { sql ->
@@ -91,7 +133,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
 
     // TODO: Replace with SaltedEncryptedPassword (once it supports IVCipher)
     fun fetchSaltAndEncryptedMasterKey() =
-        readableDatabase.use { db ->
+        readableDatabase.let { db ->
             db.query(true, Keys, setOf(Keys.Columns.ENCRYPTED_KEY, Keys.Columns.SALT)).use {
                 if (it.count > 0) {
                     it.moveToFirst()
@@ -132,15 +174,13 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         }
 
     fun deleteCategory(id: DBID) =
-        writableDatabase.use { db ->
-            db.delete(
-                Category,
-                whereEq(Category.Columns.CAT_ID, id)
-            )
-        }
+        writableDatabase.delete(
+            Category,
+            whereEq(Category.Columns.CAT_ID, id)
+        )
 
     fun fetchAllCategoryRows(): List<DecryptableCategoryEntry> =
-        readableDatabase.use { db ->
+        readableDatabase.let { db ->
             db.query(
                 Category,
                 setOf(Category.Columns.CAT_ID, Category.Columns.NAME)
@@ -162,7 +202,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
     // TODO: DELETE, no one uses!
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     fun getCategoryCount(id: DBID) =
-        readableDatabase.use { db ->
+        readableDatabase.let { db ->
             db.rawQuery(
                 "SELECT count(*) FROM ${Password.tableName} WHERE category=$id",
                 null
@@ -175,14 +215,24 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         }
 
     fun updateCategory(id: DBID, entry: DecryptableCategoryEntry) =
-        writableDatabase.use { db ->
-            db.update(Category, ContentValues().apply {
-                put(Category.Columns.NAME, entry.encryptedName)
-            }, whereEq(Category.Columns.CAT_ID, id)).toLong()
-        }
+        writableDatabase.update(Category, ContentValues().apply {
+            put(Category.Columns.NAME, entry.encryptedName)
+        }, whereEq(Category.Columns.CAT_ID, id)).toLong()
+
+//    fun joo() {
+//        readableDatabase.let {
+//            val c = it.rawQuery("SELECT * FROM passwords", null)
+//            c.moveToFirst()
+//            println("Got ${c.count} passwords.!.!.")
+//            (0 until c.count).forEach { _ ->
+//                println("Might fech some")
+//                c.moveToNext()
+//            }
+//        }
+//    }
 
     fun fetchAllRows(categoryId: DBID? = null) =
-        readableDatabase.use { db ->
+        readableDatabase.let { db ->
             db.query(
                 Password,
                 Password.Columns.entries.toSet(),
@@ -214,7 +264,6 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
             }
         }
 
-
     fun updatePassword(entry: DecryptableSiteEntry): DBID {
         require(entry.id != null) { "Cannot update password without ID" }
         require(entry.categoryId != null) { "Cannot update password without Category ID" }
@@ -232,26 +281,23 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
                 )
             }
         }
-        val ret = writableDatabase.use { db ->
-            db.update(
-                Password,
-                args,
-                whereEq(Password.Columns.PWD_ID, entry.id!!)
-            )
-        }
+        val ret = writableDatabase.update(
+            Password,
+            args,
+            whereEq(Password.Columns.PWD_ID, entry.id!!)
+        )
         assert(ret == 1) { "Oh no...DB update failed to update..." }
         return entry.id as DBID
     }
 
     fun updatePasswordCategory(id: DBID, newCategoryId: DBID) =
-        writableDatabase.use { db ->
-            db.update(
-                Password,
-                ContentValues().apply {
-                    put(Password.Columns.CATEGORY_ID, newCategoryId)
-                }, whereEq(Password.Columns.PWD_ID, id)
-            )
-        }
+        writableDatabase.update(
+            Password,
+            ContentValues().apply {
+                put(Password.Columns.CATEGORY_ID, newCategoryId)
+            }, whereEq(Password.Columns.PWD_ID, id)
+        )
+
 
     fun addPassword(entry: DecryptableSiteEntry) =
         // DONT USE Use{} transaction will die
@@ -272,12 +318,10 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
         })
 
     fun deletePassword(id: DBID) =
-        writableDatabase.use { db ->
-            db.delete(
-                Password,
-                whereEq(Password.Columns.PWD_ID, id)
-            )
-        }
+        writableDatabase.delete(
+            Password,
+            whereEq(Password.Columns.PWD_ID, id)
+        )
 
     // Begin restoration, starts a transaction, if preparation fails, exception is throw and changes have been rolled back
     fun beginRestoration(): SQLiteDatabase =
@@ -305,7 +349,7 @@ class DBHelper internal constructor(context: Context) : SQLiteOpenHelper(
 
     companion object {
         private const val DATABASE_VERSION = 4
-        private const val DATABASE_NAME = "safe"
+        const val DATABASE_NAME = "safe"
         private const val TAG = "DBHelper"
 
         // oh the ... DROP COLUMN not supported until 3.50.0 and above

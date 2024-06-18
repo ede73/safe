@@ -11,7 +11,7 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.hexToByteArray
 import fi.iki.ede.crypto.support.toHexString
-import fi.iki.ede.safe.DataModelMocks.mockDataModel
+import fi.iki.ede.safe.DataModelMocks.mockDataModelFor_UNIT_TESTS_ONLY
 import fi.iki.ede.safe.backupandrestore.BackupDatabase
 import fi.iki.ede.safe.backupandrestore.RestoreDatabase
 import fi.iki.ede.safe.db.DBHelper
@@ -129,7 +129,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
     fun backupTestOnlyACategory() {
         val backupDatabase = BackupDatabase()
 
-        mockDataModel(linkedMapOf(Pair(DataModelMocks.makeCat(1, ks), listOf())))
+        mockDataModelFor_UNIT_TESTS_ONLY(linkedMapOf(Pair(DataModelMocks.makeCat(1, ks), listOf())))
 
         val out = backupDatabase.generate(
             salt,
@@ -141,7 +141,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
 
     @Test
     fun testUserCanCancelOldBackupRestoration() {
-        val dbHelper = mockDataModel(linkedMapOf())
+        val dbHelper = mockDataModelFor_UNIT_TESTS_ONLY(linkedMapOf())
         val r = RestoreDatabase()
         val context = mockkClass(Context::class)
 
@@ -244,7 +244,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
     }
 
     private fun mockPasswordObjectForBackup() =
-        mockDataModel(
+        mockDataModelFor_UNIT_TESTS_ONLY(
             linkedMapOf(
                 Pair(
                     DataModelMocks.makeCat(1, ks), listOf(

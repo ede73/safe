@@ -9,5 +9,14 @@ import android.content.Context
  * So as a work around, DBHelperFactory will provide the DBHelper (or DBHelper mock) in test
  */
 object DBHelperFactory {
-    fun getDBHelper(context: Context) = DBHelper(context)
+    private var instance: DBHelper? = null
+    fun initializeDatabase(dbHelper: DBHelper): DBHelper {
+        instance = dbHelper
+        return instance!!
+    }
+
+    fun getDBHelper(not_used: Context? = null): DBHelper {
+        require(instance != null) { "Someone forgot to call DBHelperFactory.initializeDatabase()" }
+        return instance!!
+    }
 }
