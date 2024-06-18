@@ -9,6 +9,8 @@ import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.BiometricsActivity
 import fi.iki.ede.safe.ui.onAllNodesWithTag
 import fi.iki.ede.safe.utilities.AutoMockingUtilities.Companion.mockIsBiometricsEnabled
+import fi.iki.ede.safe.utilities.MockKeyStore.fakeEncryptedMasterKey
+import fi.iki.ede.safe.utilities.MockKeyStore.fakeSalt
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
@@ -37,6 +39,10 @@ open class LoggedOutTest {
 
     @Before
     fun beforeEachTest() {
+        DBHelper4AndroidTest.justStoreSaltAndMasterKey(
+            initializeMasterKey = fakeEncryptedMasterKey,
+            initializeSalt = fakeSalt,
+        )
         DBHelper4AndroidTest.initializeEverything(context)
         DBHelper4AndroidTest.configureDefaultTestDataModelAndDB()
     }

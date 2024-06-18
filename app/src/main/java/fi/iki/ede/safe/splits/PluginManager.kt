@@ -7,6 +7,7 @@ import com.google.android.play.core.splitinstall.SplitInstallManagerFactory
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.model.Preferences
+import java.util.ServiceConfigurationError
 import java.util.ServiceLoader
 import kotlin.reflect.full.createInstance
 
@@ -49,7 +50,7 @@ object PluginManager {
             true
         else splitInstallManager.installedModules.contains(pluginName.pluginName)
 
-    fun getComposableInterface(plugin: PluginName): GetComposable? =
+    fun getComposableInterface(plugin: PluginName): GetComposable? = try {
         getPluginFQCN(plugin)?.let {
             // If plugin isn't enabled, we won't allow it to function
             if (!isPluginEnabled(plugin)) return null
@@ -62,19 +63,27 @@ object PluginManager {
             }
             null
         }
+    } catch (e: ServiceConfigurationError) {
+        FirebaseCrashlytics.getInstance().recordException(e)
+        null
+    }
 
     private fun getPluginFQCN(plugin: PluginName): String? {
-        val serviceLoader = ServiceLoader.load(
-            RegistrationAPI.Provider::class.java,
-            RegistrationAPI.Provider::class.java.classLoader
-        )
-        val iterator = serviceLoader.iterator()
-        while (iterator.hasNext()) {
-            val next = iterator.next()
-            val module = next.get()
-            if (module.getName() == plugin) {
-                return next.javaClass.canonicalName
+        try {
+            val serviceLoader = ServiceLoader.load(
+                RegistrationAPI.Provider::class.java,
+                RegistrationAPI.Provider::class.java.classLoader
+            )
+            val iterator = serviceLoader.iterator()
+            while (iterator.hasNext()) {
+                val next = iterator.next()
+                val module = next.get()
+                if (module.getName() == plugin) {
+                    return next.javaClass.canonicalName
+                }
             }
+        } catch (e: ServiceConfigurationError) {
+            FirebaseCrashlytics.getInstance().recordException(e)
         }
         return null
     }
