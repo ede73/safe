@@ -165,6 +165,7 @@ dependencies {
     // Docs say: Test rules and transitive dependencies: but seems to work without
     //androidTestImplementation("androidx.compose.ui:ui-test-junit4:$compose_version")
     implementation(kotlin("reflect"))
+    testFixturesImplementation(libs.kotlin.stdlib)
 }
 
 tasks.configureEach {
