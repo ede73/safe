@@ -18,24 +18,6 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
-// KeyStoreHelperFactory.provider = { MockKeyStoreHelper() }
-object KeyStoreHelperFactory {
-    var provider: () -> KeyStoreHelper = { KeyStoreHelper() }
-    fun getKeyStoreHelper() = provider()
-
-    var decrypterProvider: (IVCipherText) -> ByteArray = { encrypted ->
-        getKeyStoreHelper().decryptByteArray(encrypted)
-    }
-
-    fun getDecrypter() = decrypterProvider
-
-    var encrypterProvider: (ByteArray) -> IVCipherText = { plaintext ->
-        getKeyStoreHelper().encryptByteArray(plaintext)
-    }
-
-    fun getEncrypter() = encrypterProvider
-}
-
 // TODO: Missing key rotation
 // Some apps claim android keystore doesn't work with passwords but then
 // some PBE support seems to exist according to https://developer.android.com/reference/java/security/KeyStore
