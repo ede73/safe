@@ -83,7 +83,6 @@ class KeyStoreHelper : CipherUtilities() {
                 IvParameterSpec(generateRandomBytes(it.blockSize * 8))
             )
             IVCipherText(it.iv, it.doFinal(input))
-
         }
 
     fun decryptByteArray(

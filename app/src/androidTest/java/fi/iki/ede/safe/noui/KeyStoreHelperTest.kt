@@ -51,7 +51,6 @@ class KeyStoreHelperTest {
         assert(oldOnes.second == fakeEncryptedMasterKey) { "Wrong masterkey from the start" }
 
         ChangeMasterKeyAndPassword.changeMasterPassword(
-            mockk<Context>(),
             oldPassword,
             newPassword
         ) { success ->

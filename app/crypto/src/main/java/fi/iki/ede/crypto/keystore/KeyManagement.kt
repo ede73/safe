@@ -69,7 +69,6 @@ object KeyManagement {
             }
         }
 
-
     /**
      * Encrypt given AES key with PBKDF2 key
      *

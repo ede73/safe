@@ -3,11 +3,13 @@ package fi.iki.ede.safe.ui.activities
 import android.content.Context
 import android.os.Bundle
 import android.os.Environment
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -18,8 +20,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import fi.iki.ede.crypto.IVCipherText
+import fi.iki.ede.crypto.Password
+import fi.iki.ede.crypto.Salt
+import fi.iki.ede.crypto.SaltedPassword
+import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_ITERATION_COUNT
+import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_LENGTH_BITS
+import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.generateRandomBytes
+import fi.iki.ede.crypto.keystore.KeyManagement.generatePBKDF2AESKey
+import fi.iki.ede.crypto.keystore.KeyManagement.makeFreshNewKey
+import fi.iki.ede.crypto.keystore.KeyStoreHelper.Companion.ANDROID_KEYSTORE
+import fi.iki.ede.crypto.keystore.KeyStoreHelper.Companion.importExistingEncryptedMasterKey
+import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.db.DBHelper
-import fi.iki.ede.safe.model.Preferences
+import fi.iki.ede.safe.db.DBHelperFactory
+import fi.iki.ede.safe.model.DecryptableCategoryEntry
+import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
 import fi.iki.ede.safe.ui.composable.EnterNewMasterPassword
 import fi.iki.ede.safe.ui.theme.SafeTheme
@@ -27,6 +43,9 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.nio.channels.FileChannel
+import java.security.Key
+import java.security.KeyStore
+import javax.crypto.spec.SecretKeySpec
 
 
 // am start -n  fi.iki.ede.safe.debug/fi.iki.ede.safe.ui.activities.RecoverDatabase
@@ -94,8 +113,6 @@ private fun CopyDatabase(
                     ?: ""
             )
         }
-    val oldPassword = remember { mutableStateOf("") }
-    val newPassword = remember { mutableStateOf("") }
 
     Column {
         Text("Input")
@@ -141,13 +158,17 @@ private fun CopyDatabase(
             Text(text)
         }
 
-        Button(onClick = {
-            //val db = DBHelperFactory.getDBHelper()
-            Preferences.resetMasterkeyInitialized()
-        }) {
-            Text("Reset DB Password")
+        var pwd by remember { mutableStateOf("12345678") }
+        Row {
+            TextField(value = pwd, onValueChange = { pwd = it })
+            Button(onClick = {
+                reconvertDatabase(pwd) {
+                    Toast.makeText(context, "Reset", Toast.LENGTH_SHORT).show()
+                }
+            }) {
+                Text("Reset DB Password")
+            }
         }
-
 
         var changePassword by remember { mutableStateOf(false) }
 
@@ -155,7 +176,6 @@ private fun CopyDatabase(
             EnterNewMasterPassword {
                 val (oldMasterPassword, newMasterPassword) = it
                 ChangeMasterKeyAndPassword.changeMasterPassword(
-                    context,
                     oldMasterPassword,
                     newMasterPassword
                 ) { success ->
@@ -170,6 +190,144 @@ private fun CopyDatabase(
             Text("Change password")
         }
 
+        val res = nudepwd()
+        Text(res)
+
+        //        val newPass = Password("newpass")
+//        val salt = Salt(generateRandomBytes(64))
+//        val newPBKDF2Key = generatePBKDF2AESKey(salt, KEY_ITERATION_COUNT, newPass, KEY_LENGTH_BITS)
+//        Cipher.getInstance("AES/CBC/PKCS7Padding").let {
+//            it.init(
+//                Cipher.ENCRYPT_MODE,
+//                sm,
+//                IvParameterSpec(generateRandomBytes(it.blockSize * 8))
+//            )
+//            IVCipherText(it.iv, it.doFinal(input))
+//        }
+
+    }
+}
+
+private fun reconvertDatabase(pwd: String, completed: () -> Unit) {
+    val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
+    keyStore.load(null)
+    val existingUnencryptedMasterKey = keyStore.getKey("secret_masterkey", null)!!
+    val ks = KeyStoreHelperFactory.getKeyStoreHelper()
+
+    fun decryptWithExistingMasterKey(encrypted: IVCipherText): ByteArray {
+        return ks.decryptByteArray(encrypted, existingUnencryptedMasterKey)
+    }
+
+    val salt = Salt(generateRandomBytes(64))
+    val saltedPassword = SaltedPassword(salt, Password(pwd))
+    val pbkdf2key = generatePBKDF2AESKey(
+        salt,
+        KEY_ITERATION_COUNT,
+        saltedPassword.password,
+        KEY_LENGTH_BITS
+    )
+    val (unencryptedKey, cipheredKey) = makeFreshNewKey(
+        KEY_LENGTH_BITS,
+        pbkdf2key
+    )
+
+//    fun generateAESKey(bits: Int): ByteArray =
+//        KeyGenerator.getInstance("AES").let {
+//            it.init(bits)
+//            it.generateKey().encoded
+//        }
+    //val a = existingUnencryptedMasterKey.encoded
+    //val secretKeySpec = SecretKeySpec(existingUnencryptedMasterKey.encoded, "AES")
+
+//    fun encryptWithNewMasterKey(input: ByteArray, sm: SecretKeySpec): IVCipherText {
+//
+//    }
+
+//    encryptWithNewMasterKey("".toByteArray(), secretKeySpec)
+
+    //val z = ks.encryptByteArray("".toByteArray(), unencryptedKey)
+
+    val db = DBHelperFactory.getDBHelper()
+    val cats = db.fetchAllCategoryRows()
+
+    fun reEncrypt(
+        oldEncrypted: IVCipherText,
+        existingUnencryptedMasterKey: Key,
+        unencryptedKey: SecretKeySpec
+    ): IVCipherText {
+        val decrypted = ks.decryptByteArray(oldEncrypted, existingUnencryptedMasterKey)
+        return ks.encryptByteArray(decrypted, unencryptedKey)
+    }
+
+    val newCategories = cats.map { cat ->
+        DecryptableCategoryEntry().apply {
+            id = cat.id
+            encryptedName =
+                reEncrypt(cat.encryptedName, existingUnencryptedMasterKey, unencryptedKey)
+        }
+    }
+
+    val pwds = db.fetchAllRows()
+    val newPwds = pwds.map { pwd ->
+        DecryptableSiteEntry(pwd.categoryId!!).apply {
+            id = pwd.id
+            description = reEncrypt(pwd.description, existingUnencryptedMasterKey, unencryptedKey)
+            password = reEncrypt(pwd.password, existingUnencryptedMasterKey, unencryptedKey)
+            note = reEncrypt(pwd.note, existingUnencryptedMasterKey, unencryptedKey)
+            photo = reEncrypt(pwd.photo, existingUnencryptedMasterKey, unencryptedKey)
+            website = reEncrypt(pwd.website, existingUnencryptedMasterKey, unencryptedKey)
+            username = reEncrypt(pwd.username, existingUnencryptedMasterKey, unencryptedKey)
+            passwordChangedDate = pwd.passwordChangedDate
+        }
+    }
+
+    db.writableDatabase.execSQL("DELETE FROM passwords")
+    db.writableDatabase.execSQL("DELETE FROM categories")
+
+    newCategories.forEach {
+        db.addCategory(it)
+    }
+    newPwds.forEach {
+        db.addPassword(it)
+    }
+    db.storeSaltAndEncryptedMasterKey(salt, cipheredKey)
+
+    importExistingEncryptedMasterKey(saltedPassword, cipheredKey)
+    completed()
+}
+
+private fun encryptMasterPassword(salt: Salt, newPBKDF2Key: SecretKeySpec): String {
+    try {
+        val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
+        keyStore.load(null)
+        val sm = keyStore.getKey("secret_masterkey", null)!!
+        val ks = KeyStoreHelperFactory.getKeyStoreHelper()
+
+
+        val encryptedMasterKey = ks.encryptByteArray("".toByteArray(), sm)
+
+        val db = DBHelperFactory.getDBHelper()
+        db.storeSaltAndEncryptedMasterKey(salt, encryptedMasterKey)
+        return "Changed"
+    } catch (e: Exception) {
+        return e.toString()
+    }
+}
+
+private fun nudepwd(): String {
+    try {
+        val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
+        keyStore.load(null)
+        val sm = keyStore.getKey("secret_masterkey", null)!!
+        val ks = KeyStoreHelperFactory.getKeyStoreHelper()
+        val db = DBHelperFactory.getDBHelper()
+        val cats = db.fetchAllCategoryRows()
+
+        val encrypted = cats.first().encryptedName
+        val res = String(ks.decryptByteArray(encrypted, sm))
+        return res
+    } catch (e: Exception) {
+        return e.toString()
     }
 }
 
