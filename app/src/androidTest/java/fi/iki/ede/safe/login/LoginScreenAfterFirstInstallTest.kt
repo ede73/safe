@@ -1,6 +1,7 @@
 package fi.iki.ede.safe.login
 
 import android.app.Activity.RESULT_CANCELED
+import android.content.Context
 import androidx.activity.result.ActivityResult
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -22,8 +23,8 @@ import fi.iki.ede.safe.utilities.AutoMockingUtilities
 import fi.iki.ede.safe.utilities.AutoMockingUtilities.Companion.mockIsBiometricsEnabled
 import fi.iki.ede.safe.utilities.AutoMockingUtilities.Companion.mockIsBiometricsInitialized
 import fi.iki.ede.safe.utilities.AutoMockingUtilities.Companion.mockIsFirstTimeLogin
+import fi.iki.ede.safe.utilities.DBHelper4AndroidTest
 import fi.iki.ede.safe.utilities.LoginScreenHelper
-import fi.iki.ede.safe.utilities.MockDataModel
 import fi.iki.ede.safe.utilities.MockKeyStore
 import fi.iki.ede.safe.utilities.MyResultLauncher
 import io.mockk.every
@@ -55,8 +56,13 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
     @get:Rule
     val loginActivityTestRule = createAndroidComposeRule<LoginScreen>()
 
+    private val context: Context =
+        InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
+
     @Before
     fun beforeEachTest() {
+        DBHelper4AndroidTest.initializeEverything(context)
+        DBHelper4AndroidTest.configureDefaultTestDataModelAndDB()
     }
 
     @After
@@ -239,7 +245,7 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
             mockIsFirstTimeLogin { false }
             MyResultLauncher.beforeClassJvmStaticSetup()
 
-            MockDataModel.mockAllDataModelNecessities()
+            MockKeyStore.mockKeyStore()
 
             mockkObject(LoginHandler)
             every { LoginHandler.isLoggedIn() } returns true

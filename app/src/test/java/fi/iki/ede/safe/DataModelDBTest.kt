@@ -2,7 +2,7 @@ package fi.iki.ede.safe
 
 import fi.iki.ede.crypto.KeystoreHelperMock4UnitTests
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
-import fi.iki.ede.safe.DataModelMocks.mockDataModel
+import fi.iki.ede.safe.DataModelMocks.mockDataModelFor_UNIT_TESTS_ONLY
 import fi.iki.ede.safe.model.DataModel
 import junit.framework.TestCase
 import kotlinx.coroutines.flow.take
@@ -14,7 +14,7 @@ class DataModelDBTest {
     fun dataModel() {
         KeystoreHelperMock4UnitTests.mock()
         val ks = KeyStoreHelperFactory.getKeyStoreHelper()
-        mockDataModel(
+        mockDataModelFor_UNIT_TESTS_ONLY(
             linkedMapOf(
                 Pair(
                     DataModelMocks.makeCat(1, ks),

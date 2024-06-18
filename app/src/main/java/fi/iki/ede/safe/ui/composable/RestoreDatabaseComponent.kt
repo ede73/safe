@@ -75,7 +75,7 @@ fun RestoreDatabaseComponent(
         return result.await()
     }
 
-    val dbHelper = DBHelperFactory.getDBHelper(LocalContext.current)
+    val dbHelper = DBHelperFactory.getDBHelper()
 
     val ctx = LocalContext.current
     LaunchedEffect(Unit) {

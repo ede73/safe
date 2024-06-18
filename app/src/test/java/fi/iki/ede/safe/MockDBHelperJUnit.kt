@@ -1,4 +1,5 @@
-package fi.iki.ede.safe.utilities
+package fi.iki.ede.safe
+
 
 import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.crypto.IVCipherText
@@ -6,16 +7,29 @@ import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.db.DBHelperFactory
+import fi.iki.ede.safe.db.DBHelperFactory.getDBHelper
 import fi.iki.ede.safe.db.DBID
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
+import io.mockk.MockKGateway
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import kotlinx.coroutines.runBlocking
 
-object MockDBHelper {
+val <T : Any> T.isMock: Boolean
+    get() {
+        return try {
+            MockKGateway.implementation().mockFactory.isMock(this)
+        } catch (e: UninitializedPropertyAccessException) {
+            false
+        }
+    }
+
+
+object MockDBHelperJUnit {
+
     fun mockDBHelper(
         initializeMasterKey: IVCipherText,//TODO: Should ne SaltedEncryptedPassword these two
         initializeSalt: Salt,
@@ -108,12 +122,12 @@ object MockDBHelper {
         }
 
         mockkObject(DBHelperFactory)
-        every { DBHelperFactory.getDBHelper(any()) } returns db
+        every { getDBHelper(any()) } returns db
 
         // Self assertion check that all functions
         val context =
             InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
-        val dBInstance = DBHelperFactory.getDBHelper(context)
+        val dBInstance = getDBHelper(context)
         assert(dBInstance == db) { "DBInstance mismatch" }
         val saltyMaster = dBInstance.fetchSaltAndEncryptedMasterKey()
 
@@ -124,12 +138,12 @@ object MockDBHelper {
         return db
     }
 
-    fun clearCategories(): MockDBHelper {
+    fun clearCategories(): MockDBHelperJUnit {
         categories.clear()
         return this
     }
 
-    fun clearPasswords(): MockDBHelper {
+    fun clearPasswords(): MockDBHelperJUnit {
         passwords.clear()
         return this
     }
@@ -153,8 +167,12 @@ object MockDBHelper {
         name: String,
         forceId: DBID? = null,
         addPasswords: (categoryId: DBID) -> Unit = { _ -> }
-    ): MockDBHelper {
+    ): MockDBHelperJUnit {
         val catId: DBID = forceId ?: getNextFreeCategoryId()
+//        val catId = getDBHelper().addCategory(DecryptableCategoryEntry().apply {
+//            id = forceId
+//            encryptedName = getKeyStore().encryptByteArray(name.toByteArray())
+//        })
         categories.add(DecryptableCategoryEntry().apply {
             id = catId
             encryptedName = getKeyStore().encryptByteArray(name.toByteArray())
@@ -172,10 +190,14 @@ object MockDBHelper {
 
     fun addPassword(
         description: String,
-        forceCategoryId: DBID? = null,
+        forceCategoryId: DBID,
         forceId: DBID? = null,
-    ): MockDBHelper {
-        val catId: DBID = forceCategoryId ?: getNextFreeCategoryId()
+    ): MockDBHelperJUnit {
+//        getDBHelper().addPassword(DecryptableSiteEntry(forceCategoryId).apply {
+//            id = forceId
+//            this.description = getKeyStore().encryptByteArray(description.toByteArray())
+//        })
+        val catId: DBID = forceCategoryId
         val passwordId: DBID = forceId ?: getNextFreePasswordId()
         passwords.add(DecryptableSiteEntry(catId).apply {
             id = passwordId
@@ -185,11 +207,20 @@ object MockDBHelper {
         return this
     }
 
-    fun isInitialized() = storedSalt != null && storedMasterKey != null
+//    fun isInitialized() = storedSalt != null && storedMasterKey != null
+
+    fun initializeEverything() {
+//        require(!DBHelperFactory.isMock) { "You MUST NOT double-mock DBHelperFactory" }
+//        mockkObject(DBHelperFactory)
+        val context = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
+        val dbHelper = DBHelper(context, null, false)
+        DBHelperFactory.initializeDatabase(dbHelper)
+        dbHelper.storeSaltAndEncryptedMasterKey(storedSalt!!, storedMasterKey!!)
+    }
 
     fun initializeBasicTestDataModel() {
         require(DBHelperFactory.isMock) { "You MUST call MockDBHelper.mockDBHelper from @BeforeClass,@JvmStatic initializer" }
-        clearCategories().clearPasswords()
+        //clearCategories().clearPasswords()
         addCategory(DEFAULT_1ST_CATEGORY, addPasswords = {
             addPassword(DEFAULT_1ST_PASSWORD_OF_1ST_CATEGORY, it)
             addPassword(DEFAULT_2ND_PASSWORD_OF_1ST_CATEGORY, it)

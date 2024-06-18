@@ -5,6 +5,7 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.safe.db.DBHelper
+import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.db.DBID
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
@@ -56,7 +57,7 @@ object DataModelMocks {
     /**
      * This actually MOCKS the DB instead (as that is the source input of the datamodel
      */
-    fun mockDataModel(
+    fun mockDataModelFor_UNIT_TESTS_ONLY(
         fakeModel: LinkedHashMap<DecryptableCategoryEntry, List<DecryptableSiteEntry>>
     ): DBHelper {
 
@@ -74,9 +75,10 @@ object DataModelMocks {
 
         val db = mockkClass(DBHelper::class)
         require(isMockKMock(db)) { "Mocking failed somehow" }
+        DBHelperFactory.initializeDatabase(db)
 
         // FULL DB mock
-        DataModel.attachDBHelper(db)
+        //DataModel.attachDBHelper(db)
         //every { DBHelperFactory.getDBHelper(any()) } returns db
         val password = slot<DecryptableSiteEntry>()
         every { db.addPassword(capture(password)) } answers {

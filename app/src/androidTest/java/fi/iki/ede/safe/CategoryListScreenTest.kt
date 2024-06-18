@@ -1,5 +1,7 @@
 package fi.iki.ede.safe
 
+import android.content.Context
+import android.database.sqlite.SQLiteDatabase
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotDisplayed
@@ -9,15 +11,18 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.safe.model.DataModel
+import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.CategoryListScreen
-import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.ui.onAllNodesWithTag
 import fi.iki.ede.safe.ui.onNodeWithTag
-import fi.iki.ede.safe.utilities.MockDBHelper
-import fi.iki.ede.safe.utilities.MockDataModel
+import fi.iki.ede.safe.utilities.DBHelper4AndroidTest
+import fi.iki.ede.safe.utilities.MockKeyStore
+import fi.iki.ede.safe.utilities.MockKeyStore.fakeEncryptedMasterKey
+import fi.iki.ede.safe.utilities.MockKeyStore.fakeSalt
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
@@ -30,6 +35,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.AfterClass
 import org.junit.Before
 import org.junit.BeforeClass
@@ -53,11 +59,25 @@ class CategoryListScreenTest {
     @get:Rule
     val categoryActivityTestRule = createAndroidComposeRule<CategoryListScreen>()
 
-    val testDispatcher = StandardTestDispatcher()
+    private val testDispatcher = StandardTestDispatcher()
+    private val context: Context =
+        InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
+    private var writableDatabase: SQLiteDatabase? = null
 
     @Before
     fun beforeEachTest() {
-        MockDBHelper.initializeBasicTestDataModel()
+        DBHelper4AndroidTest.justStoreSaltAndMasterKey(
+            initializeMasterKey = fakeEncryptedMasterKey,
+            initializeSalt = fakeSalt,
+        )
+        //writableDatabase =
+        DBHelper4AndroidTest.initializeEverything(context)
+        DBHelper4AndroidTest.configureDefaultTestDataModelAndDB()
+    }
+
+    @After
+    fun deleteDatabase() {
+        writableDatabase = null
     }
 
     @Test
@@ -95,7 +115,8 @@ class CategoryListScreenTest {
         )
         val categoriesEmitted = DataModel.categoriesStateFlow.value
         val wasCategoryAdded = categoriesEmitted.any { it.plainName == newCategory }
-        assert(MockDBHelper.categories.find { it.plainName == newCategory } != null)
+        assert(DataModel.getCategories().find { it.plainName == newCategory } != null)
+        //assert(MockDBHelper.categories.find { it.plainName == newCategory } != null)
         { "Failed to find added category from the DB" }
 
         assertTrue("The category was not added as expected.", wasCategoryAdded)
@@ -109,7 +130,7 @@ class CategoryListScreenTest {
             .assertIsDisplayed()
         // DEFAULT_2ND_CATEGORY -> category name is part of the default site entry description
         categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_SEARCH_TEXT_FIELD)
-            .performTextInput(MockDBHelper.DEFAULT_2ND_CATEGORY)
+            .performTextInput(DBHelper4AndroidTest.DEFAULT_2ND_CATEGORY)
         categoryActivityTestRule.waitForIdle()
         categoryActivityTestRule.waitForIdle()
         categoryActivityTestRule.waitUntil(timeoutMillis = 5000) {
@@ -129,7 +150,8 @@ class CategoryListScreenTest {
             .assertIsDisplayed()
         categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE)
             .assertIsNotDisplayed()
-        assert(MockDBHelper.categories.find { it.plainName == MockDBHelper.DEFAULT_1ST_CATEGORY } != null)
+        assert(DataModel.getCategories()
+            .find { it.plainName == DBHelper4AndroidTest.DEFAULT_1ST_CATEGORY } != null)
         { "Failed to find cancelled deleted category from the DB" }
     }
 
@@ -138,7 +160,7 @@ class CategoryListScreenTest {
     fun deleteCategoryCancel() {
         val newCategory = "newCategory"
         runTest {
-            MockDBHelper.addCategory(newCategory)
+            DBHelper4AndroidTest.addCategory(newCategory)
             runBlocking {
                 DataModel.loadFromDatabase()
             }
@@ -162,7 +184,7 @@ class CategoryListScreenTest {
             categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE_CANCEL)
                 .performClick()
             advanceUntilIdle()
-            categoryActivityTestRule.waitUntil(10000) {
+            categoryActivityTestRule.waitUntil(3000) {
                 // wait until one category disappears
                 categoryActivityTestRule.onAllNodesWithTag(TestTag.TEST_TAG_CATEGORY_ROW)
                     .fetchSemanticsNodes().size == 3
@@ -172,7 +194,8 @@ class CategoryListScreenTest {
             }
             assertTrue("The category was deleted.", categoryStillExists)
             collectionJob.cancel()
-            assert(MockDBHelper.categories.find { it.plainName == newCategory } != null)
+            assert(DataModel.getCategories().find { it.plainName == newCategory } != null)
+            //assert(MockDBHelper.categories.find { it.plainName == newCategory } != null)
             { "Failed to find cancelled deletion-cancelled category from the DB" }
         }
     }
@@ -181,7 +204,7 @@ class CategoryListScreenTest {
     @Test
     fun deleteCategory() = runTest {
         val newCategory = "newCategory"
-        MockDBHelper.addCategory(newCategory)
+        DBHelper4AndroidTest.addCategory(newCategory)
         runBlocking {
             DataModel.loadFromDatabase()
         }
@@ -207,7 +230,7 @@ class CategoryListScreenTest {
         categoryActivityTestRule.waitForIdle()
         advanceUntilIdle()
 
-        categoryActivityTestRule.waitUntil(5000) {
+        categoryActivityTestRule.waitUntil(3000) {
             advanceUntilIdle()
             // wait until one category disappears
             categoryActivityTestRule.onAllNodesWithTag(TestTag.TEST_TAG_CATEGORY_ROW)
@@ -220,7 +243,7 @@ class CategoryListScreenTest {
         assertFalse("The category was deleted.", categoryStillExists)
         collectionJob.cancel()
 
-        assert(MockDBHelper.categories.find { it.plainName == newCategory } == null)
+        assert(DataModel.getCategories().find { it.plainName == newCategory } == null)
         { "Found deleted category from the DB" }
     }
 
@@ -228,7 +251,7 @@ class CategoryListScreenTest {
         @BeforeClass
         @JvmStatic
         fun initialize() {
-            MockDataModel.mockAllDataModelNecessities()
+            MockKeyStore.mockKeyStore()
 
             mockkObject(LoginHandler)
             every { LoginHandler.isLoggedIn() } returns true

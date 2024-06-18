@@ -1,5 +1,6 @@
 package fi.iki.ede.safe
 
+import android.content.Context
 import android.content.Intent
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -14,8 +15,10 @@ import fi.iki.ede.safe.ui.activities.BiometricsActivity
 import fi.iki.ede.safe.ui.activities.CategoryListScreen
 import fi.iki.ede.safe.ui.onAllNodesWithTag
 import fi.iki.ede.safe.utilities.AutoMockingUtilities.Companion.mockIsBiometricsEnabled
-import fi.iki.ede.safe.utilities.MockDBHelper
-import fi.iki.ede.safe.utilities.MockDataModel
+import fi.iki.ede.safe.utilities.DBHelper4AndroidTest
+import fi.iki.ede.safe.utilities.MockKeyStore
+import fi.iki.ede.safe.utilities.MockKeyStore.fakeEncryptedMasterKey
+import fi.iki.ede.safe.utilities.MockKeyStore.fakeSalt
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
@@ -37,10 +40,17 @@ class AutoLogOutTest {
 
     @get:Rule
     val activityTestRule = createAndroidComposeRule<CategoryListScreen>()
+    private val context: Context =
+        InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
 
     @Before
     fun beforeEachTest() {
-        MockDBHelper.initializeBasicTestDataModel()
+        DBHelper4AndroidTest.justStoreSaltAndMasterKey(
+            initializeMasterKey = fakeEncryptedMasterKey,
+            initializeSalt = fakeSalt,
+        )
+        DBHelper4AndroidTest.initializeEverything(context)
+        DBHelper4AndroidTest.configureDefaultTestDataModelAndDB()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -78,7 +88,7 @@ class AutoLogOutTest {
         @BeforeClass
         @JvmStatic
         fun initialize() {
-            MockDataModel.mockAllDataModelNecessities()
+            MockKeyStore.mockKeyStore()
 
             mockkObject(Preferences)
             every { Preferences.getLockTimeoutDuration() } returns 100.milliseconds

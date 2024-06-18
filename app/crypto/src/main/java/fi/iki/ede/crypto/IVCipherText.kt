@@ -24,7 +24,7 @@ data class IVCipherText(val iv: ByteArray, val cipherText: ByteArray) {
 
     @Deprecated("Try not to use")
     fun combineIVAndCipherText() = iv + cipherText
-    
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

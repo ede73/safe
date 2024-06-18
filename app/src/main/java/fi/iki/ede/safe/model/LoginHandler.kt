@@ -15,14 +15,14 @@ object LoginHandler {
         // this instance has no password (no exported master key!)
         val (salt, cipheredKey) = KeyStoreHelper.createNewKey(password)
         // TODO: async
-        DBHelperFactory.getDBHelper(context).storeSaltAndEncryptedMasterKey(salt, cipheredKey)
+        DBHelperFactory.getDBHelper().storeSaltAndEncryptedMasterKey(salt, cipheredKey)
         loggedIn = true
     }
 
     fun passwordLogin(context: Context, password: Password): Boolean {
         // TODO: async
         val (salt, cipheredMasterKey) =
-            DBHelperFactory.getDBHelper(context).fetchSaltAndEncryptedMasterKey()
+            DBHelperFactory.getDBHelper().fetchSaltAndEncryptedMasterKey()
         return try {
             KeyStoreHelper.importExistingEncryptedMasterKey(
                 SaltedPassword(salt, password),

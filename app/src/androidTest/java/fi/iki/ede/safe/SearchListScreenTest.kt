@@ -1,17 +1,19 @@
 package fi.iki.ede.safe
 
+import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
 import fi.iki.ede.safe.ui.onAllNodesWithTag
 import fi.iki.ede.safe.ui.onNodeWithTag
-import fi.iki.ede.safe.utilities.MockDBHelper
-import fi.iki.ede.safe.utilities.MockDBHelper.DEFAULT_2ND_CATEGORY
-import fi.iki.ede.safe.utilities.MockDataModel
+import fi.iki.ede.safe.utilities.DBHelper4AndroidTest
+import fi.iki.ede.safe.utilities.DBHelper4AndroidTest.DEFAULT_2ND_CATEGORY
+import fi.iki.ede.safe.utilities.MockKeyStore
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
@@ -38,10 +40,13 @@ import org.junit.runner.RunWith
 class SearchListScreenTest {
     @get:Rule
     val siteEntryActivityTestRule = createAndroidComposeRule<SiteEntrySearchScreen>()
+    private val context: Context =
+        InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
 
     @Before
     fun beforeEachTest() {
-        MockDBHelper.initializeBasicTestDataModel()
+        DBHelper4AndroidTest.initializeEverything(context)
+        DBHelper4AndroidTest.configureDefaultTestDataModelAndDB()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -68,8 +73,7 @@ class SearchListScreenTest {
         @BeforeClass
         @JvmStatic
         fun initialize() {
-            MockDataModel.mockAllDataModelNecessities()
-
+            MockKeyStore.mockKeyStore()
             mockkObject(LoginHandler)
             every { LoginHandler.isLoggedIn() } returns true
         }

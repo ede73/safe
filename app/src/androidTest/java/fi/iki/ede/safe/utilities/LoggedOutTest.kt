@@ -1,7 +1,9 @@
 package fi.iki.ede.safe.utilities
 
+import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
+import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.BiometricsActivity
@@ -30,9 +32,13 @@ import org.junit.BeforeClass
  * - TODO: test transition to LoginScreen after timeout
  */
 open class LoggedOutTest {
+    private val context: Context =
+        InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
+
     @Before
     fun beforeEachTest() {
-        MockDBHelper.initializeBasicTestDataModel()
+        DBHelper4AndroidTest.initializeEverything(context)
+        DBHelper4AndroidTest.configureDefaultTestDataModelAndDB()
     }
 
     fun transitionToLoginScreenIfNotLoggedIn(activityTestRule: AndroidComposeTestRule<*, *>) {
@@ -44,7 +50,7 @@ open class LoggedOutTest {
         @BeforeClass
         @JvmStatic
         fun initialize() {
-            MockDataModel.mockAllDataModelNecessities()
+            MockKeyStore.mockKeyStore()
 
             mockkObject(BiometricsActivity)
             mockIsBiometricsEnabled { false }

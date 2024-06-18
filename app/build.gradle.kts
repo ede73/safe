@@ -33,7 +33,7 @@ android {
         minSdk = 26
         targetSdk = 34
 
-        val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(3, 0, 55, 0)
+        val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(3, 0, 58, 0)
         versionCode =
             versionMajor * 10000 + versionMinor * 1000 + versionPatch * 100 + versionBuild
         versionName = "${versionMajor}.${versionMinor}.${versionPatch}"
@@ -151,6 +151,7 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(project(":app:crypto"))
     testImplementation(testFixtures(project(":app:crypto")))
+    testImplementation(project(":app"))
 
     androidTestImplementation(libs.androidx.junit.ktx)
     androidTestImplementation(libs.androidx.rules)
@@ -170,10 +171,10 @@ tasks.configureEach {
     // When ever doing release(Generate Signed App Bundle), run also all the tests...
     when (name) {
         "connectedDebugAndroidTest" -> dependsOn("unlockEmulator")
-//        "bundleRelease" -> {
-//            dependsOn("testReleaseUnitTest")
-//            dependsOn("connectedAndroidTest")
-//        }
+        "bundleRelease" -> {
+            dependsOn("testReleaseUnitTest")
+            dependsOn("connectedAndroidTest")
+        }
 
         "assembleDebug" -> {
             // UNIT TESTS

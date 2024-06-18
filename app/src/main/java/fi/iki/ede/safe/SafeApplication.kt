@@ -4,8 +4,8 @@ import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
 import com.google.android.play.core.splitcompat.SplitCompatApplication
 import com.google.firebase.FirebaseApp
+import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.db.DBHelperFactory
-import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.model.Preferences.PREFERENCE_EXPERIMENTAL_FEATURES
 import fi.iki.ede.safe.splits.IntentManager
@@ -26,9 +26,6 @@ class SafeApplication : SplitCompatApplication(),
 //            )
 //            StrictMode.enableDefaults()
 //        }
-        DataModel.attachDBHelper(
-            DBHelperFactory.getDBHelper(this),
-        )
         Thread.setDefaultUncaughtExceptionHandler(Thread.getDefaultUncaughtExceptionHandler()
             ?.let { MyExceptionHandler(it) })
     }
@@ -39,6 +36,7 @@ class SafeApplication : SplitCompatApplication(),
 //        FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
 //        throw RuntimeException("Test Crash")
         Preferences.initialize(this)
+        DBHelperFactory.initializeDatabase(DBHelper(this, DBHelper.DATABASE_NAME, true))
         reinitializePlugins(this)
         PreferenceManager.getDefaultSharedPreferences(this)
             .registerOnSharedPreferenceChangeListener(this)
