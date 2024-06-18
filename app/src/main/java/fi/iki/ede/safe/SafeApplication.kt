@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
 import com.google.android.play.core.splitcompat.SplitCompatApplication
 import com.google.firebase.FirebaseApp
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.Preferences
@@ -33,6 +34,8 @@ class SafeApplication : SplitCompatApplication(),
     override fun onCreate() {
         super.onCreate()
         FirebaseApp.initializeApp(this)
+        FirebaseCrashlytics.getInstance()
+            .setCustomKey("git_commit_hash", BuildConfig.GIT_COMMIT_HASH)
 //        FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
 //        throw RuntimeException("Test Crash")
         Preferences.initialize(this)
@@ -55,7 +58,6 @@ class SafeApplication : SplitCompatApplication(),
     // We want to ensure as plugins are loaded/unloaded their registration is correctly removed
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
         if (key == PREFERENCE_EXPERIMENTAL_FEATURES) {
-            println("==================")
             val enabledExperiments = Preferences.getEnabledExperiments()
             PluginName.entries.forEach {
                 if (!(it in enabledExperiments)) {

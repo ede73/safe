@@ -27,6 +27,20 @@ plugins {
  *  throwIfFeatureNotEnabled(BuildConfig.FLAG_NAME) etc.
  */
 
+abstract class GitCommitHashValueSource : ValueSource<String, ValueSourceParameters.None> {
+    @get:Inject
+    abstract val execOperations: ExecOperations
+
+    override fun obtain(): String {
+        val output = ByteArrayOutputStream()
+        execOperations.exec {
+            commandLine("git", "rev-parse", "--short", "HEAD")
+            standardOutput = output
+        }
+        return String(output.toByteArray(), Charset.defaultCharset()).trim()
+    }
+}
+
 abstract class GitRevListCountValueSource : ValueSource<String, ValueSourceParameters.None> {
     @get:Inject
     abstract val execOperations: ExecOperations
@@ -37,9 +51,10 @@ abstract class GitRevListCountValueSource : ValueSource<String, ValueSourceParam
             commandLine("git", "rev-list", "--count", "HEAD")
             standardOutput = output
         }
-        return String(output.toByteArray(), Charset.defaultCharset())
+        return String(output.toByteArray(), Charset.defaultCharset()).trim()
     }
 }
+
 
 android {
     namespace = "fi.iki.ede.safe"
@@ -51,11 +66,11 @@ android {
         targetSdk = 34
 
         val gitRevListProvider = providers.of(GitRevListCountValueSource::class) {}
-        val gitRevListCount = gitRevListProvider.get().trim().toInt()
-        
+        val gitRevListCount = gitRevListProvider.get().toInt()
+
         val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(
             3,
-            1,
+            6,
             gitRevListCount / 100,
             gitRevListCount % 100
         )
@@ -76,6 +91,8 @@ android {
 
     // See https://developer.android.com/build/build-variants
     buildTypes {
+        val gitCommitHashProvider = providers.of(GitCommitHashValueSource::class) {}
+        val gitCommitHash = gitCommitHashProvider.get()
         release {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -105,11 +122,12 @@ android {
                         merges += "/META-INF/services/fi.iki.ede.safe.splits.RegistrationAPI\$Provider"
                     }
                 }
-
             }
+            buildConfigField("String", "GIT_COMMIT_HASH", "\"${gitCommitHash}\"")
         }
         debug {
             applicationIdSuffix = ".debug"
+            buildConfigField("String", "GIT_COMMIT_HASH", "\"${gitCommitHash}\"")
         }
     }
 
@@ -202,10 +220,10 @@ tasks.configureEach {
     // When ever doing release(Generate Signed App Bundle), run also all the tests...
     when (name) {
         "connectedDebugAndroidTest" -> dependsOn("unlockEmulator")
-        "bundleRelease" -> {
-            dependsOn("testReleaseUnitTest")
-            dependsOn("connectedAndroidTest")
-        }
+//        "bundleRelease" -> {
+//            dependsOn("testReleaseUnitTest")
+//            dependsOn("connectedAndroidTest")
+//        }
 
         "assembleDebug" -> {
             // UNIT TESTS

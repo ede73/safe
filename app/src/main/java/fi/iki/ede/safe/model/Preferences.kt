@@ -97,6 +97,9 @@ object Preferences {
     fun setMasterkeyInitialized() =
         sharedPreferences.edit().putBoolean(PREFERENCE_MASTERKEY_INITIALIZED, true).apply()
 
+    fun resetMasterkeyInitialized() =
+        sharedPreferences.edit().putBoolean(PREFERENCE_MASTERKEY_INITIALIZED, false).apply()
+
     fun getLastBackupTime() = sharedPreferences.getLong(PREFERENCE_LAST_BACKUP_TIME, 0)
         .takeIf { it != 0L }
         ?.let { DateUtils.unixEpochSecondsToLocalZonedDateTime(it) }
