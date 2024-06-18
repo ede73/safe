@@ -16,12 +16,10 @@ import java.time.temporal.ChronoField
 object DateUtils {
 
     const val TAG = "DateUtils"
-    fun unixEpochSecondsToLocalZonedDateTime(unixEpochSeconds: Long) =
-        Instant.ofEpochSecond(unixEpochSeconds)
-            .atZone(ZoneId.systemDefault())
+    fun unixEpochSecondsToLocalZonedDateTime(unixEpochSeconds: Long): ZonedDateTime =
+        Instant.ofEpochSecond(unixEpochSeconds).atZone(ZoneId.systemDefault())
 
-    fun toUnixSeconds(input: ZonedDateTime) =
-        input.toEpochSecond()
+    fun toUnixSeconds(input: ZonedDateTime) = input.toEpochSecond()
 
     @Deprecated("DO NOT USE! Only allowed use case is DBHelper and Restore - for backwards compatibility")
     fun newParse(flakyStringDate: String): ZonedDateTime {
@@ -33,7 +31,7 @@ object DateUtils {
             try {
                 return LocalDate.from(formatter.parse(date)).atStartOfDay(ZoneId.systemDefault())
             } catch (ex: DateTimeParseException) {
-                Log.d(TAG, "..Failed $date with ${formatter}", ex)
+                Log.d(TAG, "..Failed $date with $formatter", ex)
             }
         }
         // Biometrics calls us too..

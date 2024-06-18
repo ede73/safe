@@ -32,18 +32,18 @@ fun PasswordPrompt(
             firstTimeInitialize,
             R.string.login_password_tip,
             R.string.login_verify_password_tip,
+            modifier.testTag(TestTag.TEST_TAG_PASSWORD_PROMPT),
             onMatchingPasswords = {
                 verifiedPassword = it
-            },
-            modifier.testTag(TestTag.TEST_TAG_PASSWORD_PROMPT)
+            }
         )
 
         SafeButton(
-            enabled = if (firstTimeInitialize) verifiedPassword != null && verifiedPassword.length >= passwordMinimumLength else !(verifiedPassword == null || verifiedPassword.isEmpty()),
+            modifier = Modifier.testTag(TestTag.TEST_TAG_LOGIN_BUTTON),
             onClick = {
                 goodPasswordEntered(verifiedPassword)
             },
-            modifier = Modifier.testTag(TestTag.TEST_TAG_LOGIN_BUTTON)
+            enabled = if (firstTimeInitialize) verifiedPassword != null && verifiedPassword.length >= passwordMinimumLength else !(verifiedPassword == null || verifiedPassword.isEmpty())
         ) { Text(stringResource(id = R.string.login_button)) }
     }
 }

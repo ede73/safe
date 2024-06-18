@@ -43,7 +43,7 @@ import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
-import fi.iki.ede.safe.splits.DRODOWN_MENU
+import fi.iki.ede.safe.splits.DropDownMenu
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
@@ -80,7 +80,7 @@ fun TopActionBar(
     val displayMenu = remember { mutableStateOf(false) }
     val exportImport = remember { mutableStateOf(false) }
     val showChangePasswordDialog = remember { mutableStateOf(false) }
-    var toast = remember { mutableStateOf("") }
+    val toast = remember { mutableStateOf("") }
 
     val context = LocalContext.current
 
@@ -238,7 +238,7 @@ private fun MakeDropdownMenu(
                 displayMenu.value = false
                 showChangePasswordDialog.value = true
             })
-        IntentManager.getMenuItems(DRODOWN_MENU.TOPACTIONBAR_MENU).forEach {
+        IntentManager.getMenuItems(DropDownMenu.TopActionBarMenu).forEach {
             DropdownMenuItem(text = { Text(text = stringResource(id = it.first)) },
                 onClick = {
                     displayMenu.value = false
@@ -281,7 +281,7 @@ private fun MakeDropdownMenu(
                         Log.e(TAG, "Cannot launch ACTION_OPEN_DOCUMENT")
                     }
                 })
-            IntentManager.getMenuItems(DRODOWN_MENU.TOPACTIONBAR_IMPORT_EXPORT_MENU).forEach {
+            IntentManager.getMenuItems(DropDownMenu.TopActionBarImportExportMenu).forEach {
                 DropdownMenuItem(text = { Text(text = stringResource(id = it.first)) },
                     onClick = {
                         displayMenu.value = false

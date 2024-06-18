@@ -149,7 +149,7 @@ class BiometricsActivity : AppCompatActivity() {
          * We shall store the masterkey to KeyStore (and use it for subsequent biometric
          * verifications)
          */
-        fun registerBiometric(context: Context) {
+        fun registerBiometric() {
             // encrypt something funny with biokey
             val ks = KeyStoreHelperFactory.getKeyStoreHelper() // needed, new key
             val biokey = ks.getOrCreateBiokey()

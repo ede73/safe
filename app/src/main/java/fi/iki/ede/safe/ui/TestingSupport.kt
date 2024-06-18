@@ -9,8 +9,6 @@ import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
 import androidx.compose.ui.test.hasTestTag
 import fi.iki.ede.safe.BuildConfig
 
-object TestingSupport
-
 fun Modifier.testTag(tag: TestTag) = semantics(
     properties = {
         // Make sure we don't leak stuff to production

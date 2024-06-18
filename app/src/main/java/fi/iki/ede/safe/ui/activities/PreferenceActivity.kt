@@ -16,7 +16,6 @@ import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.service.AutolockingService
 import fi.iki.ede.safe.splits.PluginName
-import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.models.PluginLoaderViewModel
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseAppCompatActivity
 import fi.iki.ede.safe.ui.utilities.startActivityForResults
@@ -41,13 +40,13 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
     class PreferenceFragment : PreferenceFragmentCompat(), OnSharedPreferenceChangeListener {
         private val pluginLoaderViewModel: PluginLoaderViewModel by activityViewModels()
         private val backupDocumentSelected =
-            startActivityForResults(TestTag.TEST_TAG_PREFERENCES_SAVE_LOCATION) { result ->
+            startActivityForResults { result ->
                 if (result.resultCode == RESULT_OK) {
                     Preferences.setBackupDocument(result.data!!.data!!.path)
                 }
             }
 
-        inline fun <reified T : Preference, reified C : Any> addChangeListener(
+        private inline fun <reified T : Preference, reified C : Any> addChangeListener(
             preferenceKey: String,
             noinline changed: (change: C) -> Unit
         ) {
@@ -110,7 +109,7 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
                 }
             }
 
-            addPreferenceClickListener<Preference>(Preferences.PREFERENCE_MAKE_CRASH) { ->
+            addPreferenceClickListener<Preference>(Preferences.PREFERENCE_MAKE_CRASH) {
                 FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
                 throw RuntimeException("Crash Test from preferences")
             }

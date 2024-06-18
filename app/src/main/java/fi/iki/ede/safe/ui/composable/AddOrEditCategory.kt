@@ -59,8 +59,8 @@ fun AddOrEditCategory(
                         .focusTarget()
                 )
                 SafeButton(
-                    onClick = { onSubmit(newCategory) },
-                    modifier = Modifier.testTag(TestTag.TEST_TAG_CATEGORY_BUTTON)
+                    modifier = Modifier.testTag(TestTag.TEST_TAG_CATEGORY_BUTTON),
+                    onClick = { onSubmit(newCategory) }
                 ) {
                     Text(text = stringResource(id = R.string.generic_ok))
                 }

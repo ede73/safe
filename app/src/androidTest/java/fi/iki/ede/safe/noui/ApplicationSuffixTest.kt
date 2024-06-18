@@ -8,7 +8,7 @@ import org.junit.Test
 /**
  * Test plan, verify that...
  * - test mode is configured properly [verifyUnitTestSetup]
- * - Application suffix ID is setup for tests [verifyApplicationIdSuffix] TODO: doesnt work
+ * - Application suffix ID is setup for tests [verifyApplicationIdSuffix] TODO: doesn't work
  */
 class ApplicationSuffixTest {
 

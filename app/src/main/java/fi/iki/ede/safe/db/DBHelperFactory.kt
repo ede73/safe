@@ -15,7 +15,7 @@ object DBHelperFactory {
         return instance!!
     }
 
-    fun getDBHelper(not_used: Context? = null): DBHelper {
+    fun getDBHelper(notUsed: Context? = null): DBHelper {
         require(instance != null) { "Someone forgot to call DBHelperFactory.initializeDatabase()" }
         return instance!!
     }

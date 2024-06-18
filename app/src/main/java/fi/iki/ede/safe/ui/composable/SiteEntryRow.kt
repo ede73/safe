@@ -96,7 +96,7 @@ fun SiteEntryRow(
                 Spacer(modifier = Modifier.weight(1f)) // This will push the Text to the end
 
                 Text(
-                    text = GetPasswordAgePlurality(DateUtils.getPeriodBetweenDates(passEntry.passwordChangedDate!!)),
+                    text = getPasswordAgePlurality(DateUtils.getPeriodBetweenDates(passEntry.passwordChangedDate!!)),
                     modifier = Modifier.padding(12.dp),
                     style = safeTheme.customFonts.smallNote
                 )

@@ -51,8 +51,6 @@ import fi.iki.ede.safe.ui.utilities.AvertInactivityDuringLongTask
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.time.ZonedDateTime
 
-private const val TAG = "SiteEntryView"
-
 @Composable
 fun SiteEntryView(
     viewModel: EditingSiteEntryViewModel,
@@ -103,14 +101,15 @@ fun SiteEntryView(
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             val website = passEntry.website
             SafeButton(
-                enabled = !TextUtils.isEmpty(website) && Uri.parse(website) != null,
                 onClick = {
                     val uri = tryParseUri(website)
                     // Without scheme, ACTION_VIEW will fail
                     if (uri.scheme != null) {
                         context.startActivity(Intent(Intent.ACTION_VIEW, uri))
                     }
-                }) { Text(stringResource(id = R.string.password_entry_visit)) }
+                },
+                enabled = !TextUtils.isEmpty(website) && Uri.parse(website) != null
+            ) { Text(stringResource(id = R.string.password_entry_visit)) }
             Spacer(Modifier.weight(1f))
             TextField(
                 value = passEntry.website,
@@ -129,14 +128,14 @@ fun SiteEntryView(
             Spacer(Modifier.weight(1f))
             PasswordTextField(
                 textTip = R.string.password_entry_username_tip,
+                modifier = modifier
+                    .padding(horizontal = 8.dp)
+                    .fillMaxWidth(),
                 inputValue = passEntry.username.decrypt(decrypter),
                 onValueChange = {
                     viewModel.updateUsername(it.encrypt(encrypter))
                 },
                 highlight = false,
-                modifier = modifier
-                    .padding(horizontal = 8.dp)
-                    .fillMaxWidth(),
             )
         }
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
@@ -166,15 +165,15 @@ fun SiteEntryView(
             Spacer(Modifier.weight(1f))
             PasswordTextField(
                 textTip = R.string.password_entry_password_tip,
+                modifier = modifier
+                    .padding(horizontal = 8.dp)
+                    .fillMaxWidth(),
                 inputValue = passEntry.password.decrypt(decrypter),
                 onValueChange = {
                     viewModel.updatePassword(it.encrypt(encrypter))
                 },
-                enableZoom = true,
-                modifier = modifier
-                    .padding(horizontal = 8.dp)
-                    .fillMaxWidth(),
-                textStyle = safeTheme.customFonts.regularPassword
+                textStyle = safeTheme.customFonts.regularPassword,
+                enableZoom = true
             )
             passwordWasUpdated = false
         }
@@ -190,6 +189,7 @@ fun SiteEntryView(
         }
         PasswordTextField(
             textTip = R.string.password_entry_note_tip,
+            modifier = Modifier.fillMaxWidth(),
             inputValue = passEntry.note.decrypt(decrypter),
             onValueChange = {
                 viewModel.updateNote(it.encrypt(encrypter))
@@ -197,7 +197,6 @@ fun SiteEntryView(
             singleLine = false,
             maxLines = 22,
             highlight = false,
-            modifier = Modifier.fillMaxWidth(),
         )
 
         if (context is AvertInactivityDuringLongTask) {
@@ -251,7 +250,7 @@ fun SiteEntryViewPreview() {
         }
         val lst = mutableListOf(site1, site2)
         val sitesFlow = MutableStateFlow(lst.toList())
-        DataModel._categories.put(cat, lst)
+        DataModel._categories[cat] = lst
         val model = EditingSiteEntryViewModel()
         SiteEntryView(model)
     }

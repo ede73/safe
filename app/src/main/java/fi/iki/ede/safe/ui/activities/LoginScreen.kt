@@ -24,7 +24,6 @@ import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.service.AutolockingService
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.splits.PluginManager
-import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.composable.BiometricsComponent
 import fi.iki.ede.safe.ui.composable.PasswordPrompt
 import fi.iki.ede.safe.ui.composable.TopActionBar
@@ -70,7 +69,7 @@ open class LoginScreen : ComponentActivity() {
     ) {
         val context = this
         val passwordIsAccepted = if (firstTimeUse) {
-            LoginHandler.firstTimeLogin(context, it)
+            LoginHandler.firstTimeLogin(it)
             true
         } else {
             LoginHandler.passwordLogin(context, it)
@@ -125,11 +124,11 @@ open class LoginScreen : ComponentActivity() {
     }
 
     private fun biometricsFirstTimeActivity() =
-        startActivityForResults(TestTag.TEST_TAG_LOGIN_BIOMETRICS_REGISTER) { result ->
+        startActivityForResults { result ->
             // This is FIRST TIME call..we're just about to be set up...
             when (result.resultCode) {
                 RESULT_OK -> {
-                    BiometricsActivity.registerBiometric(this)
+                    BiometricsActivity.registerBiometric()
                     finishLoginProcess(true)
                 }
 
@@ -142,7 +141,7 @@ open class LoginScreen : ComponentActivity() {
         }
 
     private fun biometricsVerifyActivity() =
-        startActivityForResults(TestTag.TEST_TAG_LOGIN_BIOMETRICS_VERIFY) { result ->
+        startActivityForResults { result ->
             when (result.resultCode) {
                 RESULT_OK -> {
                     if (!BiometricsActivity.verificationAccepted()) {

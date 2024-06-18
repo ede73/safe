@@ -45,10 +45,10 @@ fun BiometricsComponent(bioVerify: ActivityResultLauncher<Intent>) {
         // since biometrics is enabled AND we have previously recorded entry
         bioVerify.launch(BiometricsActivity.getVerificationIntent(context))
         SafeButton(
+            modifier = Modifier.testTag(TestTag.TEST_TAG_BIOMETRICS_BUTTON),
             onClick = {
                 bioVerify.launch(BiometricsActivity.getVerificationIntent(context))
-            },
-            modifier = Modifier.testTag(TestTag.TEST_TAG_BIOMETRICS_BUTTON)
+            }
         ) { Text(stringResource(id = R.string.login_with_biometrics)) }
     } else {
         Row(verticalAlignment = Alignment.CenterVertically) {

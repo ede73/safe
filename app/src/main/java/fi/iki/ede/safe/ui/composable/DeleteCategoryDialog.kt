@@ -25,20 +25,20 @@ fun DeleteCategoryDialog(
         onDismissRequest = { },
         confirmButton = {
             SafeButton(
+                modifier = Modifier.testTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE_CONFIRM),
                 onClick = {
                     onConfirm()
-                },
-                modifier = Modifier.testTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE_CONFIRM)
+                }
             ) {
                 Text(text = stringResource(R.string.generic_yes_delete))
             }
         },
         dismissButton = {
             SafeButton(
+                modifier = Modifier.testTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE_CANCEL),
                 onClick = {
                     onDismiss()
-                },
-                modifier = Modifier.testTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE_CANCEL)
+                }
             ) {
                 Text(text = stringResource(R.string.generic_dont_delete))
             }

@@ -18,13 +18,6 @@ import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen.Companion.PASSWORD_ID
 import fi.iki.ede.safe.ui.activities.SiteEntryListScreen
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
 
-enum class DRODOWN_MENU {
-    TOPACTIONBAR_MENU,
-    TOPACTIONBAR_IMPORT_EXPORT_MENU,
-}
-
-private const val TAG = "IntentManager"
-
 // Every intent retrieved/launched in the app go thru IntentManager
 // If a plugin wants to tap into the intent, they can modify or even replace it
 object IntentManager {
@@ -76,18 +69,18 @@ object IntentManager {
     }
 
     private val menuAdditions =
-        mutableMapOf<PluginName, MutableMap<DRODOWN_MENU, MutableList<Pair<Int, (Context) -> Unit>>>>()
+        mutableMapOf<PluginName, MutableMap<DropDownMenu, MutableList<Pair<Int, (Context) -> Unit>>>>()
 
     fun registerSubMenu(
         plugin: PluginName,
-        menu: DRODOWN_MENU,
+        menu: DropDownMenu,
         stringResource: Int,
         selected: (Context) -> Unit
     ) = menuAdditions.getOrPut(plugin) { mutableMapOf() }
         .getOrPut(menu) { mutableListOf() }
         .add(stringResource to selected)
 
-    fun getMenuItems(menu: DRODOWN_MENU) =
+    fun getMenuItems(menu: DropDownMenu) =
         menuAdditions.flatMap { (_, menuMap) -> menuMap[menu]?.toList() ?: listOf() }
 
     fun getDatabaseRestorationScreenIntent(

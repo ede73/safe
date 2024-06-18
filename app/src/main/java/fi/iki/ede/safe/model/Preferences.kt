@@ -1,5 +1,6 @@
 package fi.iki.ede.safe.model
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Environment
@@ -115,6 +116,8 @@ object Preferences {
             ?.mapNotNull { PluginName.entries.firstOrNull { p -> p.pluginName == it } }
             ?.toSet() ?: emptySet()
 
+    // This is safety measure on app crash, it must go to the disk immediately
+    @SuppressLint("ApplySharedPref")
     fun clearAllPlugins() {
         sharedPreferences.edit().putStringSet(PREFERENCE_EXPERIMENTAL_FEATURES, emptySet()).commit()
     }

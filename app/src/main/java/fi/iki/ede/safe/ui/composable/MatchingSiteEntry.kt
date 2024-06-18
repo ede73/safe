@@ -82,7 +82,7 @@ fun MatchingSiteEntry(
                 if (passwordEntry.passwordChangedDate != null) {
                     Spacer(modifier = Modifier.weight(1f)) // This will push the Text to the end
                     Text(
-                        text = GetPasswordAgePlurality(
+                        text = getPasswordAgePlurality(
                             duration = DateUtils.getPeriodBetweenDates(
                                 passwordEntry.passwordChangedDate!!
                             )

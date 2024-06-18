@@ -5,8 +5,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.org.jetbrains.kotlin.android)
-    id("com.google.gms.google-services") // Firebase crashalytics
-    id("com.google.firebase.crashlytics") // Firebase crashalytics
+    id("com.google.gms.google-services") // Firebase crashlytics
+    id("com.google.firebase.crashlytics") // Firebase crashlytics
 }
 
 /**
@@ -186,9 +186,9 @@ dependencies {
     //implementation(libs.core.ktx)
     implementation(libs.feature.delivery.ktx)
     // Don't convert to catalog declaration, something is broken
-    implementation(platform("com.google.firebase:firebase-bom:33.1.0")) // firebase crashalytics
-    implementation("com.google.firebase:firebase-analytics") // firebase crashalytics (breadcrumbs)
-    implementation(libs.firebase.crashlytics.ktx) // firebase crashalytics
+    implementation(platform("com.google.firebase:firebase-bom:33.1.0")) // firebase crashlytics
+    implementation("com.google.firebase:firebase-analytics") // firebase crashlytics (breadcrumbs)
+    implementation(libs.firebase.crashlytics.ktx) // firebase crashlytics
 
     // Bring bouncy castle to unit tests
     testImplementation("org.bouncycastle:bcprov-jdk16:1.46")

@@ -27,8 +27,8 @@ fun VerifiedPasswordTextField(
     showVerification: Boolean,
     textTip: Int,
     verifyPassword: Int,
-    onMatchingPasswords: (Password) -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onMatchingPasswords: (Password) -> Unit = {}
 ) {
     // Initial focus on first pwd field..
     val focusRequester = remember { FocusRequester() }
@@ -41,17 +41,17 @@ fun VerifiedPasswordTextField(
     var firstPassword by remember { mutableStateOf(Password.getEmpty()) }
     PasswordTextField(
         textTip = textTip,
-        onValueChange = { firstPassword = it },
         modifier = modifier
-            .focusRequester(focusRequester)
+            .focusRequester(focusRequester),
+        onValueChange = { firstPassword = it }
         //.semantics { contentDescription = "eka salasana" }
     )
     var secondPassword by remember { mutableStateOf(Password.getEmpty()) }
     if (showVerification) {
         PasswordTextField(
             textTip = verifyPassword,
-            onValueChange = { secondPassword = it },
-            modifier = modifier
+            modifier = modifier,
+            onValueChange = { secondPassword = it }
 //                .semantics { contentDescription = "toka salasana" }
         )
         if (firstPassword == secondPassword) {

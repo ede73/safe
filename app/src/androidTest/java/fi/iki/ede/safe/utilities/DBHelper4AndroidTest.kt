@@ -88,10 +88,10 @@ object DBHelper4AndroidTest {
 
     const val DEFAULT_1ST_CATEGORY = "one"
     const val DEFAULT_2ND_CATEGORY = "two"
-    const val DEFAULT_1ST_PASSWORD_OF_1ST_CATEGORY = "1st of $DEFAULT_1ST_CATEGORY"
-    const val DEFAULT_2ND_PASSWORD_OF_1ST_CATEGORY = "2nd of $DEFAULT_1ST_CATEGORY"
-    const val DEFAULT_1ST_PASSWORD_OF_2ND_CATEGORY = "1st of $DEFAULT_2ND_CATEGORY"
-    const val DEFAULT_2ND_PASSWORD_OF_2ND_CATEGORY = "2nd of $DEFAULT_2ND_CATEGORY"
+    private const val DEFAULT_1ST_PASSWORD_OF_1ST_CATEGORY = "1st of $DEFAULT_1ST_CATEGORY"
+    private const val DEFAULT_2ND_PASSWORD_OF_1ST_CATEGORY = "2nd of $DEFAULT_1ST_CATEGORY"
+    private const val DEFAULT_1ST_PASSWORD_OF_2ND_CATEGORY = "1st of $DEFAULT_2ND_CATEGORY"
+    private const val DEFAULT_2ND_PASSWORD_OF_2ND_CATEGORY = "2nd of $DEFAULT_2ND_CATEGORY"
 
     private var storedSalt: Salt? = null
     private var storedMasterKey: IVCipherText? = null

@@ -54,7 +54,7 @@
     <string name="login_with_biometrics">Login with biometrics</string>
 
     <!-- notifications -->
-    <string name="notification_lock_description">Notification when when password Safe is unlocked</string>
+    <string name="notification_lock_description">Notification when password Safe is unlocked</string>
     <string name="notification_lock_logged_in">Logged in</string>
     <string name="notification_lock_title">Automatic locking</string>
 

@@ -23,7 +23,7 @@ object PluginManager {
         }
     }
 
-    fun getBundleTestMode() = if (BuildConfig.DEBUG) _bundleTestMode else false
+    private fun getBundleTestMode() = if (BuildConfig.DEBUG) _bundleTestMode else false
 
     fun reinitializePlugins(appContext: Context) {
         val sm = SplitInstallManagerFactory.create(appContext)

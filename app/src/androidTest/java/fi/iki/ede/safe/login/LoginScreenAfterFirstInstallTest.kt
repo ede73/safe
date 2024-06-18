@@ -103,12 +103,12 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
         // too late?bio already launched?
         mockIsBiometricsInitialized { true }
         mockkObject(IntentManager)
-        getPasswordFields(loginActivityTestRule)[0].performTextInput(MockKeyStore.fakePasswordText)
+        getPasswordFields(loginActivityTestRule)[0].performTextInput(MockKeyStore.FAKE_PASSWORD_PLAINTEXT)
         getLoginButton(loginActivityTestRule).assertIsEnabled()
         getLoginButton(loginActivityTestRule).performClick()
         verify(exactly = 1) { LoginHandler.passwordLogin(any(), any()) }
         verify(exactly = 1) { IntentManager.startCategoryScreen(any()) }
-        verify(exactly = 0) { LoginHandler.firstTimeLogin(any(), any()) }
+        verify(exactly = 0) { LoginHandler.firstTimeLogin(any()) }
         verify(exactly = 0) { LoginHandler.biometricLogin() }
     }
 
@@ -130,7 +130,7 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
         //getLoginButton(loginActivityTestRule).performClick()
 
         //verify(exactly = 1) { CategoryListScreen.startMe(any()) }
-        verify(exactly = 0) { LoginHandler.firstTimeLogin(any(), any()) }
+        verify(exactly = 0) { LoginHandler.firstTimeLogin(any()) }
         verify(exactly = 0) { LoginHandler.passwordLogin(any(), any()) }
         verify(exactly = 0) { BiometricsActivity.getRegistrationIntent(any()) }
         verify(exactly = 1) { BiometricsActivity.getVerificationIntent(any()) }
@@ -167,7 +167,7 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
         //getLoginButton(loginActivityTestRule).performClick()
 
         //verify(exactly = 1) { CategoryListScreen.startMe(any()) }
-        verify(exactly = 0) { LoginHandler.firstTimeLogin(any(), any()) }
+        verify(exactly = 0) { LoginHandler.firstTimeLogin(any()) }
         verify(exactly = 0) { LoginHandler.passwordLogin(any(), any()) }
         verify(exactly = 0) { BiometricsActivity.getRegistrationIntent(any()) }
         verify(exactly = 1) { BiometricsActivity.getVerificationIntent(any()) }
@@ -209,7 +209,7 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
         //getLoginButton(loginActivityTestRule).performClick()
 
         //verify(exactly = 1) { CategoryListScreen.startMe(any()) }
-        verify(exactly = 0) { LoginHandler.firstTimeLogin(any(), any()) }
+        verify(exactly = 0) { LoginHandler.firstTimeLogin(any()) }
         verify(exactly = 0) { LoginHandler.passwordLogin(any(), any()) }
         verify(exactly = 0) { BiometricsActivity.getRegistrationIntent(any()) }
         verify(exactly = 1) { BiometricsActivity.getVerificationIntent(any()) }
