@@ -1,3 +1,6 @@
+import java.io.ByteArrayOutputStream
+import java.nio.charset.Charset
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
@@ -33,7 +36,7 @@ android {
         minSdk = 26
         targetSdk = 34
 
-        val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(3, 0, 58, 0)
+        val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(3, 0, 59, 0)
         versionCode =
             versionMajor * 10000 + versionMinor * 1000 + versionPatch * 100 + versionBuild
         versionName = "${versionMajor}.${versionMinor}.${versionPatch}"
@@ -45,6 +48,9 @@ android {
         }
         // SEPARATE_TEST_TYPE: testApplicationId = "$applicationId.safetest"
     }
+
+    sourceSets["main"].manifest.srcFile("src/main/AndroidManifest.xml")
+    sourceSets["debug"].manifest.srcFile("src/debug/AndroidManifest.xml")
 
     // See https://developer.android.com/build/build-variants
     buildTypes {
@@ -159,12 +165,15 @@ dependencies {
     androidTestImplementation(libs.androidx.uiautomator)
     androidTestImplementation(libs.mockk.agent)
     androidTestImplementation(libs.mockk.android)
+    // Firebase testlab screenshot ability
+    androidTestImplementation("com.google.firebase:testlab-instr-lib:0.2")
     // needed for val composeTestRule = createComposeRule() but not createComposeRule()<Activity>
     debugImplementation(libs.androidx.ui.test.manifest)
     debugImplementation(libs.androidx.ui.tooling)
     // Docs say: Test rules and transitive dependencies: but seems to work without
     //androidTestImplementation("androidx.compose.ui:ui-test-junit4:$compose_version")
     implementation(kotlin("reflect"))
+    testFixturesImplementation(libs.kotlin.stdlib)
 }
 
 tasks.configureEach {
@@ -198,27 +207,144 @@ tasks.withType<Test> {
     jvmArgs("--add-opens", "java.base/java.time=ALL-UNNAMED")
 }
 
-//tasks.named<AndroidTest>("connectedAndroidTest") {
-//    print("=====connectedAndroidTest")
-//}
-//tasks.named<AndroidTest>("connectedDebugAndroidTest") {
-//    print("=====connectedDebugAndroidTest")
+//abstract class UnlockEmulatorValueSource : ValueSource<String, ValueSourceParameters.None> {
+//    override fun obtain(): String {
+//        // Logic to run the command and return its output
+//        val processBuilder = ProcessBuilder(
+//            "adb", "shell",
+//            "dumpsys deviceidle|grep mScreenOn=false && input keyevent KEYCODE_POWER;dumpsys deviceidle|grep mScreenLocked=true && (input keyevent KEYCODE_MENU ;input text 0000;input keyevent KEYCODE_ENTER);true"
+//        )
+//        processBuilder.redirectErrorStream(true)
+//        val process = processBuilder.start()
+//        val output = process.inputStream.bufferedReader().readText()
+//        process.waitFor()
+//        return output
+//    }
 //}
 
-tasks.register("unlockEmulator") {
-    /*
-    Enable...
-tasks.configureEach {when (name) {"connectedDebugAndroidTest" -> dependsOn("unlockEmulator")}}
-     */
-    doLast {
-        exec {
+//abstract class UnlockEmulatorValueSource @Inject constructor(
+//    private val execOperations: ExecOperations
+//) : ValueSource<String, ValueSourceParameters.None> {
+//    override fun obtain(): String {
+//        // Logic to run the command and return its output
+//        val command = listOf(
+//            "adb", "shell",
+//            "dumpsys deviceidle|grep mScreenOn=false && input keyevent KEYCODE_POWER;dumpsys deviceidle|grep mScreenLocked=true && (input keyevent KEYCODE_MENU ;input text 0000;input keyevent KEYCODE_ENTER);true"
+//        )
+//        return execOperations.exec {
+//            commandLine(command)
+//            isIgnoreExitValue = true
+//        }.toString()//.output.get()
+//    }
+//}
+abstract class MyValueSource @Inject constructor(private val execOperations: ExecOperations) :
+    ValueSource<String?, ValueSourceParameters.None?> {
+    override fun obtain(): String {
+        // your custom implementation
+        return ""
+    }
+}
+
+abstract class UnlockEmulatorValueSource @Inject constructor(
+    private val execOperations: ExecOperations
+) : ValueSource<String, ValueSourceParameters.None> {
+    override fun obtain(): String {
+        println("=========================================")
+        // Logic to run the command and return its output
+        val command = listOf(
+            "adb", "shell",
+            "dumpsys deviceidle|grep mScreenOn=false && input keyevent KEYCODE_POWER;dumpsys deviceidle|grep mScreenLocked=true && (input keyevent KEYCODE_MENU ;input text 0000;input keyevent KEYCODE_ENTER);true >/dev/null"
+        )
+        val execResult = execOperations.exec {
+            commandLine(command)
+            isIgnoreExitValue = true
+        }
+        execResult.assertNormalExitValue()
+        return ""
+    }
+}
+
+abstract class UnlockEmulator2ValueSource : ValueSource<String, ValueSourceParameters.None> {
+    @get:Inject
+    abstract val execOperations: ExecOperations
+
+    override fun obtain(): String {
+        val output = ByteArrayOutputStream()
+        println("-------------running now ")
+        execOperations.exec {
             commandLine(
-                "adb",
-                "shell",
+                "adb", "shell",
                 "dumpsys deviceidle|grep mScreenOn=false && input keyevent KEYCODE_POWER;dumpsys deviceidle|grep mScreenLocked=true && (input keyevent KEYCODE_MENU ;input text 0000;input keyevent KEYCODE_ENTER);true"
             )
+            standardOutput = output
+            isIgnoreExitValue = true
         }
+        return String(output.toByteArray(), Charset.defaultCharset())
     }
+}
+
+
+abstract class GitVersionValueSource : ValueSource<String, ValueSourceParameters.None> {
+    @get:Inject
+    abstract val execOperations: ExecOperations
+
+    override fun obtain(): String {
+        val output = ByteArrayOutputStream()
+        execOperations.exec {
+            commandLine("git", "--version")
+            standardOutput = output
+        }
+        return String(output.toByteArray(), Charset.defaultCharset())
+    }
+}
+
+
+//val unlockEmulatorOutput: Provider<String> =
+//    project.providers.of(UnlockEmulatorValueSource::class.java) {
+//        UnlockEmulatorValueSource(execOperations).obtain()
+//    }
+
+//println(unlockEmulatorOutput.get())
+//val unlockEmulatorOutput: Provider<String> =
+//    project.providers.of(UnlockEmulatorValueSource::class.java)
+//val unlockEmulatorOutput: Provider<String> = project.objects.provider {
+//    project.providers.of(UnlockEmulatorValueSource::class.java).get()
+//}
+//val unlockEmulatorOutput by project.objects.newInstance(UnlockEmulatorValueSource::class)
+
+// ./gradlew --configuration-cache unlockEmulator
+val gitVersionProvider = providers.of(GitVersionValueSource::class) {}
+/* Enable...tasks.configureEach {when (name) {"connectedDebugAndroidTest" -> dependsOn("unlockEmulator")}} */
+tasks.register("unlockEmulator") {
+    println("Obtain git version")
+    val gitVersion = gitVersionProvider.get()
+    println("UNLOCK NOW?")
+    val unlockEmulator2Provider = providers.of(UnlockEmulator2ValueSource::class) {}
+    doLast {
+        println("or unlock now?")
+        unlockEmulator2Provider.get()
+        println("print git verdion?")
+        println(gitVersion)
+        println("Print unlcok result?")
+        //println(unlock)
+//        exec {
+//            commandLine(
+//                "adb",
+//                "shell",
+//                "dumpsys deviceidle|grep mScreenOn=false && input keyevent KEYCODE_POWER;dumpsys deviceidle|grep mScreenLocked=true && (input keyevent KEYCODE_MENU ;input text 0000;input keyevent KEYCODE_ENTER);true"
+//            )
+//        }
+    }
+//    outputs.cacheIf { false }
+//    outputs.upToDateWhen { false }
+//// Create a dummy output file
+//    val dummyOutputFile = file("$buildDir/tmp/unlockEmulator.dummy")
+//    outputs.file(dummyOutputFile)
+//    outputs.upToDateWhen { false } // Always consider the task out-of-date
+//    doLast {
+//        // Ensure the dummy file exists to satisfy Gradle's requirement
+//        dummyOutputFile.writeText("dummy content")
+//    }
 }
 
 tasks.withType<Test> {

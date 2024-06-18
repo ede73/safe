@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    android:installLocation="auto">
+
+    <!-- https://firebase.google.com/docs/test-lab/android/instrumentation-test -->
+    <!-- Firebase test lab requirement, not needed if testing android 10/API29+ -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <!-- Firebase lab test instructions broken... -->
+    <!--    <instrumentation-->
+    <!--        android:name="androidx.test.runner.AndroidJUnitRunner"-->
+    <!--        android:targetPackage="fi.iki.ede.safe">-->
+    <!--        <meta-data-->
+    <!--            android:name="screenCaptureProcessors"-->
+    <!--            android:value="com.google.firebase.testlab.screenshot.FirebaseScreenCaptureProcessor" />-->
+    <!--    </instrumentation>-->
+</manifest>
