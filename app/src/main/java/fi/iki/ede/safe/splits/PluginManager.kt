@@ -36,7 +36,7 @@ object PluginManager {
         }
     }
 
-    fun isPluginEnabled(plugin: PluginName) =
+    private fun isPluginEnabled(plugin: PluginName) =
         plugin in Preferences.getEnabledExperiments()
 
     /**

@@ -61,7 +61,7 @@ fun EnterNewMasterPassword(
 fun EnterNewMasterPasswordPreview() {
     SafeTheme {
         EnterNewMasterPassword {
-            
+
         }
     }
 }

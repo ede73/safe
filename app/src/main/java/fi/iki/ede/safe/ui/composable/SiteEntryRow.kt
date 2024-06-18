@@ -66,8 +66,10 @@ fun SiteEntryRow(
     // bit more padding on the start to emphasize difference between header and entry
     // TODO: themable?
     SafeListItem(
-        borderColor = BorderStroke(1.dp,
-            MaterialTheme.colorScheme.outlineVariant),
+        borderColor = BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant
+        ),
         modifier = Modifier
             .padding(start = 32.dp, 6.dp)
             .fillMaxWidth()
