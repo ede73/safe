@@ -153,7 +153,6 @@ private fun EnterNewMasterPassword(
     EnterNewMasterPassword {
         val (oldMasterPassword, newMasterPassword) = it
         ChangeMasterKeyAndPassword.changeMasterPassword(
-            context,
             oldMasterPassword,
             newMasterPassword
         ) { success ->

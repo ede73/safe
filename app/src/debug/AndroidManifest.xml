@@ -6,6 +6,12 @@
     <!-- Firebase test lab requirement, not needed if testing android 10/API29+ -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
+    <application>
+        <activity
+            android:name=".ui.activities.RecoverDatabase"
+            android:exported="true"
+            android:label="Recover" />
+    </application>
     <!-- Firebase lab test instructions broken... -->
     <!--    <instrumentation-->
     <!--        android:name="androidx.test.runner.AndroidJUnitRunner"-->
