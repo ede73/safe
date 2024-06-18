@@ -31,7 +31,7 @@ class DateTest {
     }
 
     @Test
-    fun FailedOnesBefore() {
+    fun failedOnceBeforeDateTest() {
         DateUtils.newParse("Jan 12, 2024, 12:44:37")
     }
 

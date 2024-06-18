@@ -60,7 +60,7 @@ class SafeApplication : SplitCompatApplication(),
         if (key == PREFERENCE_EXPERIMENTAL_FEATURES) {
             val enabledExperiments = Preferences.getEnabledExperiments()
             PluginName.entries.forEach {
-                if (!(it in enabledExperiments)) {
+                if (it !in enabledExperiments) {
                     // this plugin might have just been disabled
                     IntentManager.removePluginIntegrations(it)
                 }

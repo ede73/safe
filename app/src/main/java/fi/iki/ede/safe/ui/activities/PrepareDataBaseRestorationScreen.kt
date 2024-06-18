@@ -127,12 +127,14 @@ fun AskBackupPasswordAndCommence(
                     onValueChange = {
                         backupPassword = it
                     })
-                SafeButton(enabled = !doRestore,
+                SafeButton(
                     onClick = {
                         doRestore = true
                         // Disable the button? Progress?
                         // Toasts are bit bad..
-                    }) {
+                    },
+                    enabled = !doRestore
+                ) {
                     Text(text = "Restore")
                 }
                 Column {

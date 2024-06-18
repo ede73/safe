@@ -68,7 +68,6 @@ dependencies {
     androidTestImplementation(libs.mockk.agent)
     androidTestImplementation(libs.mockk.android)
 
-    //testFixturesImplementation(libs.bcprov.jdk16)
     testFixturesImplementation(libs.mockk)
     testFixturesImplementation(libs.kotlin.stdlib)
 }

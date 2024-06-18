@@ -66,8 +66,10 @@ fun SiteEntryRow(
     // bit more padding on the start to emphasize difference between header and entry
     // TODO: themable?
     SafeListItem(
-        borderColor = BorderStroke(1.dp,
-            MaterialTheme.colorScheme.outlineVariant),
+        borderColor = BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant
+        ),
         modifier = Modifier
             .padding(start = 32.dp, 6.dp)
             .fillMaxWidth()
@@ -94,7 +96,7 @@ fun SiteEntryRow(
                 Spacer(modifier = Modifier.weight(1f)) // This will push the Text to the end
 
                 Text(
-                    text = GetPasswordAgePlurality(DateUtils.getPeriodBetweenDates(passEntry.passwordChangedDate!!)),
+                    text = getPasswordAgePlurality(DateUtils.getPeriodBetweenDates(passEntry.passwordChangedDate!!)),
                     modifier = Modifier.padding(12.dp),
                     style = safeTheme.customFonts.smallNote
                 )

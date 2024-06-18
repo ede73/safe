@@ -6,7 +6,7 @@ import fi.iki.ede.safe.R
 import java.time.Period
 
 @Composable
-fun GetPasswordAgePlurality(duration: Period): String {
+fun getPasswordAgePlurality(duration: Period): String {
     val z = buildList {
         if (duration.years > 0) {
             add(

@@ -21,7 +21,6 @@ import io.mockk.mockkObject
 import io.mockk.unmockkAll
 import org.junit.After
 import org.junit.AfterClass
-import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Rule
 import org.junit.Test
@@ -40,10 +39,6 @@ import org.junit.runner.RunWith
 class LoginScreenFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
     @get:Rule
     val loginActivityTestRule = createAndroidComposeRule<LoginScreen>()
-
-    @Before
-    fun beforeEachTest() {
-    }
 
     @After
     fun clearAll() {

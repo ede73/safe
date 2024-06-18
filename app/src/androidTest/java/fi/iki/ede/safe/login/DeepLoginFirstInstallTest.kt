@@ -128,7 +128,7 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
     private fun properPasswordLogin(biometricsRegister: Boolean) {
         every { LoginHandler.passwordLogin(any(), any()) } returns true
         // TODO: this should INITIALIZE keystore
-        every { LoginHandler.firstTimeLogin(any(), any()) } just runs
+        every { LoginHandler.firstTimeLogin(any()) } just runs
 
         mockkObject(IntentManager)
         every { IntentManager.startCategoryScreen(any()) } just runs
@@ -162,7 +162,7 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
         getPasswordFields(loginActivityTestRule)[1].performTextInput("quite_a_password")
         getLoginButton(loginActivityTestRule).performClick()
 
-        verify(exactly = 1) { LoginHandler.firstTimeLogin(any(), any()) }
+        verify(exactly = 1) { LoginHandler.firstTimeLogin(any()) }
     }
 
     companion object {

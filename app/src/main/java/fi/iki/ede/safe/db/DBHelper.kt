@@ -61,7 +61,7 @@ class DBHelper internal constructor(
 
     private var onCreateCalled = false
     override fun onCreate(db: SQLiteDatabase?) {
-        require(onCreateCalled == false) { "========ON create called TWICE" }
+        require(!onCreateCalled) { "========ON create called TWICE" }
         onCreateCalled = true
         listOf(Category, Password, Keys).forEach {
             try {
@@ -253,7 +253,7 @@ class DBHelper internal constructor(
                             photo = it.getIVCipher(Password.Columns.PHOTO)
                             try {
                                 it.getZonedDateTimeOfPasswordChange()
-                                    ?.let { passwordChangedDate = it }
+                                    ?.let { time -> passwordChangedDate = time }
                             } catch (ex: Exception) {
                                 Log.d(TAG, "Date parsing issue", ex)
                             }

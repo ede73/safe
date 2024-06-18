@@ -43,12 +43,12 @@ import fi.iki.ede.safe.ui.theme.SafeTheme
 @Composable
 fun PasswordTextField(
     textTip: Int,
+    modifier: Modifier = Modifier,
     inputValue: String = "",
     onValueChange: (Password) -> Unit = {},
     singleLine: Boolean = true,
     maxLines: Int = 1,
     highlight: Boolean = true,
-    modifier: Modifier = Modifier,
     textStyle: TextStyle? = null,
     enableZoom: Boolean = false
 ) {
@@ -56,11 +56,11 @@ fun PasswordTextField(
         focusedIndicatorColor = Color.Transparent,
         unfocusedIndicatorColor = Color.Transparent,
     )
-    var isPasswordZoomed = remember { mutableStateOf(false) }
+    val isPasswordZoomed = remember { mutableStateOf(false) }
     val safeTheme = LocalSafeTheme.current
     val splitAt = 6
     var password by remember { mutableStateOf(TextFieldValue(text = inputValue)) }
-    var revealPassword = remember { mutableStateOf(false) }
+    val revealPassword = remember { mutableStateOf(false) }
 
     TextField(
         value = password,

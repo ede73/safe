@@ -11,7 +11,7 @@ import fi.iki.ede.safe.db.DBHelperFactory
 object LoginHandler {
     private var loggedIn: Boolean = false
 
-    fun firstTimeLogin(context: Context, password: Password) {
+    fun firstTimeLogin(password: Password) {
         // this instance has no password (no exported master key!)
         val (salt, cipheredKey) = KeyStoreHelper.createNewKey(password)
         // TODO: async

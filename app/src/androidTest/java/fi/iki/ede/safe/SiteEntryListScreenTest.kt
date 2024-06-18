@@ -11,12 +11,10 @@ import fi.iki.ede.safe.utilities.MockKeyStore
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
-import kotlinx.coroutines.test.StandardTestDispatcher
 import org.junit.AfterClass
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Rule
-import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
@@ -33,7 +31,7 @@ class SiteEntryListScreenTest {
     @get:Rule
     val siteEntryActivityTestRule = createAndroidComposeRule<SiteEntryListScreen>()
 
-    val testDispatcher = StandardTestDispatcher()
+    //val testDispatcher = StandardTestDispatcher()
     private val context: Context =
         InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
 
@@ -41,11 +39,6 @@ class SiteEntryListScreenTest {
     fun beforeEachTest() {
         DBHelper4AndroidTest.initializeEverything(context)
         DBHelper4AndroidTest.configureDefaultTestDataModelAndDB()
-    }
-
-    @Test
-    fun empty() {
-
     }
 
     companion object {

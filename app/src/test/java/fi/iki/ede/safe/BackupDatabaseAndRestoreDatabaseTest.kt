@@ -146,7 +146,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         val context = mockkClass(Context::class)
 
         listOf(
-            // TODO: don't have mocks in place to mimick no changed date...
+            // TODO: don't have mocks in place to mimic no changed date...
 //            // unknown backup creation time(set creationTime manually to null in RestoreDatabase), known last backup, must succeed(we wont consult user)
 //            Triple(1234L, 1234L, true),
 //            // unknown backup creation time(set creationTime manually to null in RestoreDatabase), unknown last backup, must succeed(we wont consult user)

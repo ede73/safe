@@ -6,9 +6,9 @@ import androidx.compose.ui.Modifier
 
 @Composable
 fun SafeButton(
+    modifier: Modifier = Modifier,
     onClick: () -> Unit,
     enabled: Boolean = true,
-    modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
     val safeTheme = LocalSafeTheme.current

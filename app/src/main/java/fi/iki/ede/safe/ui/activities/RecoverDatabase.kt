@@ -81,7 +81,7 @@ class RecoverDatabase : ComponentActivity() {
             finish()
         }
         setContent {
-            CopyDatabase(createDocumentLauncher, null) {
+            CopyDatabase(createDocumentLauncher) {
                 output = it
             }
         }
@@ -100,7 +100,6 @@ class RecoverDatabase : ComponentActivity() {
 @Composable
 private fun CopyDatabase(
     createDocumentLauncher: ActivityResultLauncher<String>?,
-    requestPermissionLauncher: ActivityResultLauncher<String>?,
     updateOutput: (String) -> Unit
 ) {
     val context: Context = LocalContext.current
@@ -139,7 +138,7 @@ private fun CopyDatabase(
 //                }
 //            )
 
-        var text by remember { mutableStateOf("Copy") }
+        val text by remember { mutableStateOf("Copy") }
         ///text = "Copy"
 
         Button(onClick = {
@@ -340,7 +339,7 @@ private fun nudepwd(): String {
 @Composable
 fun RecoverDatabasePreview() {
     SafeTheme {
-        CopyDatabase(null, null) {}
+        CopyDatabase(null) {}
     }
 }
 

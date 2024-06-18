@@ -13,11 +13,6 @@ import org.xml.sax.helpers.DefaultHandler
 import java.io.InputStream
 import javax.xml.parsers.SAXParserFactory
 
-// TODO: make shared
-fun throwIfFeatureNotEnabled(feature: Boolean) {
-    if (!feature) throw Exception("Feature not enabled")
-}
-
 @Deprecated("Just for backwards compatibility")
 class OISafeRestoreHandler(
     encrypt: (ByteArray) -> IVCipherText,

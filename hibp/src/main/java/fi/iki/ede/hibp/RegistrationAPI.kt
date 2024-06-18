@@ -48,7 +48,6 @@ class RegistrationAPIProviderImpl : RegistrationAPI.Provider, GetComposable {
         return RegistrationAPIImpl()
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     @Composable
     override fun getComposable(
         context: Context,

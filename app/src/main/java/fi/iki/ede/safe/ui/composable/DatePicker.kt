@@ -77,17 +77,15 @@ fun DatePicker(zonedDateTime: ZonedDateTime?, onValueChange: (ZonedDateTime?) ->
         initialPage = months.indexOf(selectedMonth.value)
     )
 
+    val result = days.value.indexOf(selectedDay.value)
     val dayPagerState =
         rememberPagerState(
             pageCount = { days.value.size },
-            initialPage = {
-                val result = days.value.indexOf(selectedDay.value)
-                if (result == -1) {
-                    days.value.size
-                } else {
-                    result
-                }
-            }()
+            initialPage = if (result == -1) {
+                days.value.size
+            } else {
+                result
+            }
         )
 
     // Tiny issue here on null dates

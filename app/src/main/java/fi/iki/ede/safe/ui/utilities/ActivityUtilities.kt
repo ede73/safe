@@ -8,14 +8,11 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.preference.PreferenceFragmentCompat
-import fi.iki.ede.safe.ui.TestTag
 
 
 fun ComponentActivity.startActivityForResults(
-    testTag: TestTag,
     result: ActivityResultCallback<ActivityResult>,
 ) = registerActivityForResults(
-    testTag,
     ActivityResultContracts.StartActivityForResult(),
     result,
     ::registerForActivityResult
@@ -23,10 +20,8 @@ fun ComponentActivity.startActivityForResults(
 
 
 fun PreferenceFragmentCompat.startActivityForResults(
-    testTag: TestTag,
     result: ActivityResultCallback<ActivityResult>,
 ) = registerActivityForResults(
-    testTag,
     ActivityResultContracts.StartActivityForResult(),
     result,
     ::registerForActivityResult
@@ -40,13 +35,7 @@ fun PreferenceFragmentCompat.startActivityForResults(
 //    registerFunction(contract, callback)
 
 fun registerActivityForResults(
-    testTag: TestTag,
     contract: ActivityResultContract<Intent, ActivityResult>,
     callback: ActivityResultCallback<ActivityResult>,
     registerFunction: (ActivityResultContract<Intent, ActivityResult>, ActivityResultCallback<ActivityResult>) -> ActivityResultLauncher<Intent>
 ) = registerFunction(contract, callback)
-
-fun throwIfFeatureNotEnabled(feature: Boolean) {
-    if (!feature)
-        throw Exception("Feature not enabled")
-}
