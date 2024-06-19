@@ -4,6 +4,8 @@ import android.net.Uri
 import androidx.appcompat.app.AlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -23,6 +25,9 @@ import java.time.ZonedDateTime
 
 @Composable
 fun RestoreDatabaseComponent(
+    processedPasswords: MutableIntState,
+    processedCategories: MutableIntState,
+    processedMessage: MutableState<String>,
     context: PrepareDataBaseRestorationScreen,
     backupPassword: Password,
     selectedDoc: Uri,
@@ -32,7 +37,7 @@ fun RestoreDatabaseComponent(
     val coroutineScope = rememberCoroutineScope()
 
     val restoringOldBackupTitle = stringResource(R.string.restore_screen_not_most_recent_backup)
-    val restoreAnyway = stringResource(R.string.restore_screen_not_most_recent_backup_restore)
+    val restoreAnywayText = stringResource(R.string.restore_screen_not_most_recent_backup_restore)
     val cancelRestoration = stringResource(R.string.restore_screen_not_most_recent_backup_cancel)
 
     suspend fun verifyUserWantsToRestoreOldBackup(
@@ -53,7 +58,7 @@ fun RestoreDatabaseComponent(
             AlertDialog.Builder(context)
                 .setTitle(restoringOldBackupTitle)
                 .setMessage(restoreOldBackupMessage)
-                .setPositiveButton(restoreAnyway) { _, _ ->
+                .setPositiveButton(restoreAnywayText) { _, _ ->
                     result.complete(true)
                 }
                 .setNegativeButton(cancelRestoration) { _, _ ->
@@ -70,7 +75,7 @@ fun RestoreDatabaseComponent(
         return result.await()
     }
 
-    val dbHelper = DBHelperFactory.getDBHelper(LocalContext.current)
+    val dbHelper = DBHelperFactory.getDBHelper()
 
     val ctx = LocalContext.current
     LaunchedEffect(Unit) {
@@ -80,7 +85,18 @@ fun RestoreDatabaseComponent(
                     ctx,
                     String(stream.readBytes()),
                     backupPassword,
-                    dbHelper
+                    dbHelper,
+                    { categories: Int?, passwords: Int?, message: String? ->
+                        categories?.let {
+                            processedCategories.intValue = it
+                        }
+                        passwords?.let {
+                            processedPasswords.intValue = it
+                        }
+                        message?.let {
+                            processedMessage.value = it
+                        }
+                    }
                 ) { backupCreationTime, lastBackupDone ->
                     val restoreAnyway = runBlocking {
                         verifyUserWantsToRestoreOldBackup(

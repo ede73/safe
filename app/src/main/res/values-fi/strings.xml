@@ -39,8 +39,10 @@
     <string name="google_password_import_search_from_imports">Etsi tuotavista</string>
     <string name="google_password_import_search_from_mine">Etsi salasanoista</string>
     <string name="login_button">Kirjaudu</string>
+    <string name="login_button_clear_db">Kirjaudu/Nollaa tietokanta</string>
     <string name="login_invalid_password">Väärä salasana</string>
     <string name="login_password_tip">Syötä salana</string>
+    <string name="login_screen_restore_mark_message">"Näyttää että Googlen automaattisen varmuuskopion palautus tehtiin noin %1$s"</string>
     <string name="login_tip">Avaa salanalla tai biometriikalla</string>
     <string name="login_verify_password_tip">Syötä sama salasana uudestaan</string>
     <string name="login_with_biometrics">Kirjaudu biometriikalla</string>
@@ -80,6 +82,8 @@
     <string name="password_search_search_hint">Etsi kuvauksista</string>
     <string name="password_search_usernames">+Käyttäjänimet</string>
     <string name="password_search_websites">+Webosoitteet</string>
+    <string name="preferences_autobackup_restore_finished">Google automaattisen varmuuskopion palautus päättyi</string>
+    <string name="preferences_autobackup_restore_started">Google automaattinen varmuuskopio palautettu</string>
     <string name="preferences_automatic_locking_selection_title">Valitse automaattinen lukitusviive</string>
     <string name="preferences_clipboard_clear_delay_title">Leikekirjan tyhjennysviive</string>
     <string name="preferences_experimental_features_title">Saatavilla olevat kokeelliset ominaisuudet</string>
@@ -91,6 +95,8 @@
     <string name="preferences_summary_lastback_never_done">Ei varmuuskopioita</string>
     <string name="preferences_summary_lock_when_screen_locks">Lukitse sovellus kun näyttö lukitaan</string>
     <string name="preferences_title">Asetukset</string>
+    <string name="preferences_title_autobackup_quota_exceeded">Googlen automaattisen varmuuskopioinnin tila loppui</string>
+    <string name="preferences_title_autobackup_started">Google automaattinen varmuuskopiointi alkoi (ja ehkä päättyi)</string>
     <string name="preferences_title_automatic_locking_timeout">Automaattisen lukituksen viive</string>
     <string name="preferences_title_clipboard_clear_delay">Leikekirjan tyhjennysviive</string>
     <string name="preferences_title_default_backup_path">Oletusvarmuuskkopiopolku</string>
@@ -98,6 +104,7 @@
     <string name="preferences_title_enable_biometrics">Salli biometrinen tunnistautuminen</string>
     <string name="preferences_title_experimental_features">Kokeelliset ominaisuudet</string>
     <string name="preferences_title_lock_when_screen_locks">Lukitse kun näyttö lukitaan</string>
+    <string name="preferences_title_make_a_crash">Kaada sovellus</string>
     <string name="preferences_title_time_of_last_backup">VIimeisen varmuuskopion aika</string>
     <string name="restore_screen_backup_help">Palauttaksesi varmuuskopion, tarvitset sen salasanan. Varmuuskopio %s</string>
     <string name="restore_screen_backups_password">Syötä varmuuskopion salasana</string>
@@ -115,7 +122,10 @@
     <string name="title_activity_password_search_screen">Salasanan etsintä</string>
     <string name="title_activity_restore_screen">Palauta salasanat</string>
     <string name="title_categorypager">Sivutettu kategorianäyttö</string>
+    <string name="title_hibp">HIBP tuki</string>
     <string name="title_oisafeimport">OISafe salasanojen sisääntuonti</string>
+    <string name="login_anew_button">Hylkää varmuuskopio, aloita alusta</string>
+    <string name="login_anew_retry_button">Kokeile kuitenkin perussisäänkirjausta</string>
     <string name="google_password_import_matching_passwords">Samat salasanat</string>
     <string name="google_password_import_matching_names">Samat nimet</string>
 </resources>

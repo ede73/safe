@@ -1,20 +1,20 @@
 package fi.iki.ede.safe
 
+import android.content.Context
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.ui.activities.SiteEntryListScreen
-import fi.iki.ede.safe.utilities.MockDBHelper
-import fi.iki.ede.safe.utilities.MockDataModel
+import fi.iki.ede.safe.utilities.DBHelper4AndroidTest
+import fi.iki.ede.safe.utilities.MockKeyStore
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
-import kotlinx.coroutines.test.StandardTestDispatcher
 import org.junit.AfterClass
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Rule
-import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
@@ -31,23 +31,21 @@ class SiteEntryListScreenTest {
     @get:Rule
     val siteEntryActivityTestRule = createAndroidComposeRule<SiteEntryListScreen>()
 
-    val testDispatcher = StandardTestDispatcher()
+    //val testDispatcher = StandardTestDispatcher()
+    private val context: Context =
+        InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
 
     @Before
     fun beforeEachTest() {
-        MockDBHelper.initializeBasicTestDataModel()
-    }
-
-    @Test
-    fun empty() {
-
+        DBHelper4AndroidTest.initializeEverything(context)
+        DBHelper4AndroidTest.configureDefaultTestDataModelAndDB()
     }
 
     companion object {
         @BeforeClass
         @JvmStatic
         fun initialize() {
-            MockDataModel.mockAllDataModelNecessities()
+            MockKeyStore.mockKeyStore()
 
             mockkObject(LoginHandler)
             every { LoginHandler.isLoggedIn() } returns true

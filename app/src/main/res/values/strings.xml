@@ -55,14 +55,16 @@
 
     <!-- login -->
     <string name="login_button">Login</string>
+    <string name="login_button_clear_db">Login/Clear database</string>
     <string name="login_invalid_password">Invalid password</string>
     <string name="login_password_tip">Enter your password</string>
+    <string name="login_screen_restore_mark_message">"Looks like Google Automatic backup restored our data around %1$s"</string>
     <string name="login_tip">Open with your password - or optionally with biometrics if you registered</string>
     <string name="login_verify_password_tip">Enter the same password again</string>
     <string name="login_with_biometrics">Login with biometrics</string>
 
     <!-- notifications -->
-    <string name="notification_lock_description">Notification when when password Safe is unlocked</string>
+    <string name="notification_lock_description">Notification when password Safe is unlocked</string>
     <string name="notification_lock_logged_in">Logged in</string>
     <string name="notification_lock_title">Automatic locking</string>
 
@@ -170,4 +172,14 @@
 
     <string name="title_categorypager">Paged Category View</string>
     <string name="title_oisafeimport">OISafe Import</string>
+    <string name="title_hibp">HIBP support</string>
+    <string name="preferences_title_make_a_crash">Make application crash</string>
+
+    <!-- Google Automatic Backup -->
+    <string name="preferences_title_autobackup_quota_exceeded">Google Automatic backup quota exceeded</string>
+    <string name="preferences_title_autobackup_started">Google Automatic backup started(perhaps done)</string>
+    <string name="preferences_autobackup_restore_started">Google Automatic backup was restored</string>
+    <string name="preferences_autobackup_restore_finished">Google Automatic backups\' restore finished</string>
+    <string name="login_anew_button">Discard backup, start fresh</string>
+    <string name="login_anew_retry_button">Try login afterall</string>
 </resources>

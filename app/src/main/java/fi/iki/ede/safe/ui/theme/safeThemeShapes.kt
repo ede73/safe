@@ -10,10 +10,8 @@ import androidx.compose.ui.unit.dp
 class SafeShapes(
     val button: Shape,
 ) {
-    override fun hashCode(): Int {
-        var result = button.hashCode()
-        return result
-    }
+    override fun hashCode(): Int =
+        button.hashCode()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

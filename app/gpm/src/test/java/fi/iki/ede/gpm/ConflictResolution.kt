@@ -15,44 +15,16 @@ import org.junit.Test
 class ConflictResolution {
     val importChangeSet = ImportChangeSet(emptySet(), emptySet())
 
+    @After
+    fun afterTests() {
+    }
+
     @Before
     fun beforeTests() {
         importChangeSet.matchingGPMs.clear()
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
     }
-
-    @After
-    fun afterTests() {
-    }
-
-    private fun incoming(name: String) = IncomingGPM.makeFromCSVImport(name, "", "", "", "")
-    private fun scored(scoredMatch: Double, name: String) =
-        ScoredMatch(
-            scoredMatch,
-            SavedGPM.makeFromEncryptedStringFields(
-                null,
-                name.encrypt(),
-                "".encrypt(),
-                "".encrypt(),
-                "".encrypt(),
-                "".encrypt(),
-                false,
-                ""
-            )
-        )
-
-
-    private fun makeScoredConflictMap(
-        incomingName: String,
-        vararg xs: Pair<Double, String>
-    ): Set<Pair<IncomingGPM, ScoredMatch>> = xs.map { it ->
-        incoming(incomingName) to scored(it.first, it.second)
-    }.toSet()
-
-
-    private fun Map<IncomingGPM, Set<ScoredMatch>>.getScoredMatches(name: String) =
-        filter { it.key.name == name }.values.flatten().toSet()
 
     @Test
     fun sameConflictResolution() {
@@ -102,6 +74,33 @@ class ConflictResolution {
         assert(resolved.getScoredMatches("B").size == 2)
         assert(resolved.getScoredMatches("C").size == 2)
     }
+
+    private fun Map<IncomingGPM, Set<ScoredMatch>>.getScoredMatches(name: String) =
+        filter { it.key.name == name }.values.flatten().toSet()
+
+    private fun incoming(name: String) = IncomingGPM.makeFromCSVImport(name, "", "", "", "")
+
+    private fun makeScoredConflictMap(
+        incomingName: String,
+        vararg xs: Pair<Double, String>
+    ): Set<Pair<IncomingGPM, ScoredMatch>> = xs.map { it ->
+        incoming(incomingName) to scored(it.first, it.second)
+    }.toSet()
+
+    private fun scored(scoredMatch: Double, name: String) =
+        ScoredMatch(
+            scoredMatch,
+            SavedGPM.makeFromEncryptedStringFields(
+                null,
+                name.encrypt(),
+                "".encrypt(),
+                "".encrypt(),
+                "".encrypt(),
+                "".encrypt(),
+                false,
+                ""
+            )
+        )
 
     // TODO: Test also
 //    val add = importChangeSet.newAddedOrUnmatchedIncomingGPMs

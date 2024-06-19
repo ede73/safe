@@ -21,89 +21,6 @@ fun fetchMatchingHashes(importChangeSet: ImportChangeSet) =
             .map { savedGPM -> incomingGPM to ScoredMatch(1.0, savedGPM, true) }
     }.toSet()
 
-private fun findEntriesWithOnlyChangedPropertyIs(
-    importChangeSet: ImportChangeSet,
-    firstProperty: KProperty1<IncomingGPM, String>,
-    secondProperty: KProperty1<SavedGPM, IVCipherText>,
-    scoringConfig: ScoringConfig
-): Set<Pair<IncomingGPM, ScoredMatch>> =
-    importChangeSet.getUnprocessedIncomingGPMs.mapNotNull { incomingGPMs ->
-        importChangeSet.getUnprocessedSavedGPMs.firstOrNull { savedGPMs ->
-            hasOnlyOneFieldChange(incomingGPMs, savedGPMs, firstProperty, secondProperty)
-        }?.let { dbGpmEntry ->
-            incomingGPMs to ScoredMatch(
-                scoringConfig.oneFieldChangeScore,
-                dbGpmEntry
-            )
-        }
-    }.toSet()
-
-private fun hasOnlyOneFieldChange(
-    first: IncomingGPM,
-    second: SavedGPM,
-    firstProperty: KProperty1<IncomingGPM, String>,
-    secondProperty: KProperty1<SavedGPM, IVCipherText>
-): Boolean {
-// List of all comparable properties in GPMEntry and their corresponding encrypted versions in DBGPMEntry
-    val properties = listOf(
-        IncomingGPM::name to SavedGPM::encryptedName,
-        IncomingGPM::url to SavedGPM::encryptedUrl,
-        IncomingGPM::username to SavedGPM::encryptedUsername,
-        IncomingGPM::password to SavedGPM::encryptedPassword
-    )
-
-    // Check if the specified properties are different
-    // TODO: Could we refer to decrypted properties? we do know the pop name, but makes code more complex
-    val isSpecifiedPropertyDifferent =
-        firstProperty.get(first) != secondProperty.get(second).decrypt() // TODO: decrypt
-
-    // Check if all other properties are the same
-    val areOtherPropertiesSame = properties.all { (gpmProp, dbGpmProp) ->
-        // Skip the comparison for the specified property
-        if (gpmProp == firstProperty && dbGpmProp == secondProperty) true
-        // TODO: Could we refer to decrypted properties? we do know the pop name, but makes code more complex
-        else gpmProp.get(first).toLowerCasedTrimmedString() == dbGpmProp.get(second)
-            .decrypt() // TODO: decrypt
-            .toLowerCasedTrimmedString()
-    }
-
-    // Return true if the specified property is different and all other properties are the same
-    return isSpecifiedPropertyDifferent && areOtherPropertiesSame
-}
-
-// return pair of
-// 1) GPMEntry lists denoting potentially new unseen rows
-// 2) List of pairs where
-//    a) first field is GPMEntry property,
-//    b) second is a pair of GPMEntry and DBGPMEntry rows
-// where only one field has changed, the GPMEntry property denotes the changed field
-fun processOneFieldChanges(
-    importChangeSet: ImportChangeSet,
-    scoringConfig: ScoringConfig,
-) = listOf(
-    Pair(IncomingGPM::name, SavedGPM::encryptedName),
-    Pair(IncomingGPM::password, SavedGPM::encryptedPassword),
-    Pair(IncomingGPM::username, SavedGPM::encryptedUsername),
-    Pair(IncomingGPM::url, SavedGPM::encryptedUrl),
-    Pair(IncomingGPM::note, SavedGPM::encryptedNote),
-).map {
-    // for debuggability, this would be nice, but for clarity not
-    // we don't care WHICH field it really was...
-    //    Pair(
-    //        it.first,
-    findEntriesWithOnlyChangedPropertyIs(
-        importChangeSet,
-        it.first,
-        it.second,
-        scoringConfig
-    )
-//    )
-}.let {
-    // now that we know the tiny changes, filter those out too from new entries
-    //Pair(incomingNewOrChangedPasswords.removeMatches(it), it)
-    importChangeSet.matchingGPMs.addAll(it.flatten())
-}
-
 // harmonize the names by removing commonly used WWW patterns
 fun harmonizePotentialDomainName(input: String): String {
     val top75PercentileTLDPrefixes = listOf(
@@ -157,53 +74,37 @@ fun findSimilarNamesWhereUsernameMatchesAndURLDomainLooksTheSame(
         }
     }.toSet()
 
-private fun parseUrl(potentialUrl: LowerCaseTrimmedString): URL? {
-    return try {
-        URL(potentialUrl.lowercasedTrimmed)
-    } catch (e: MalformedURLException) {
-        try {
-            URL("https://${potentialUrl.lowercasedTrimmed}")
-        } catch (e: MalformedURLException) {
-            null
-        }
-    }
-}
-
-private fun doesUserNameOrDomainNameMatch(
-    incomingGPM: IncomingGPM,
-    scoredSavedGPM: ScoredMatch,
-    scoringConfig: ScoringConfig
-): ScoredMatch? {
-    val incomingUsername = incomingGPM.username.toLowerCasedTrimmedString()
-    val savedUsername = scoredSavedGPM.item.decryptedUsername.toLowerCasedTrimmedString()
-    val userNameMatches = incomingUsername == savedUsername
-
-    // of course there's a chance that username was changed, but assuming recent enuf import, 1-field-change should caught that
-    if (!userNameMatches) {
-        return null
-    }
-    val incomingUrl = parseUrl(incomingGPM.url.toLowerCasedTrimmedString())
-    val savedUrl = parseUrl(scoredSavedGPM.item.decryptedUrl.toLowerCasedTrimmedString())
-    val bothHaveDomains = (incomingUrl != null && savedUrl != null)
-
-    val domainMatchSimilarityScore = if (bothHaveDomains) findSimilarity(
-        incomingUrl!!.host.toLowerCasedTrimmedString(),
-        savedUrl!!.host.toLowerCasedTrimmedString(),
-    ) else 0.0
-
-    if (domainMatchSimilarityScore > scoringConfig.urlDomainMatchThresholdIfUsernameMatches) {
-        // username AND the domain part parsed from URL matches
-        // including call site name (similarity) match, let's increase odds by 10%
-        // so username matches as well as URL domain part, including fact that both have URL set
-        return ScoredMatch(
-            max(
-                1.0,
-                scoredSavedGPM.matchScore + scoringConfig.scoreIncrementIfUsernameAndUrlDomainMatch
-            ),
-            scoredSavedGPM.item
-        )
-    }
-    return scoredSavedGPM
+// return pair of
+// 1) GPMEntry lists denoting potentially new unseen rows
+// 2) List of pairs where
+//    a) first field is GPMEntry property,
+//    b) second is a pair of GPMEntry and DBGPMEntry rows
+// where only one field has changed, the GPMEntry property denotes the changed field
+fun processOneFieldChanges(
+    importChangeSet: ImportChangeSet,
+    scoringConfig: ScoringConfig,
+) = listOf(
+    Pair(IncomingGPM::name, SavedGPM::encryptedName),
+    Pair(IncomingGPM::password, SavedGPM::encryptedPassword),
+    Pair(IncomingGPM::username, SavedGPM::encryptedUsername),
+    Pair(IncomingGPM::url, SavedGPM::encryptedUrl),
+    Pair(IncomingGPM::note, SavedGPM::encryptedNote),
+).map {
+    // for debuggability, this would be nice, but for clarity not
+    // we don't care WHICH field it really was...
+    //    Pair(
+    //        it.first,
+    findEntriesWithOnlyChangedPropertyIs(
+        importChangeSet,
+        it.first,
+        it.second,
+        scoringConfig
+    )
+//    )
+}.let {
+    // now that we know the tiny changes, filter those out too from new entries
+    //Pair(incomingNewOrChangedPasswords.removeMatches(it), it)
+    importChangeSet.matchingGPMs.addAll(it.flatten())
 }
 
 /*
@@ -278,6 +179,16 @@ whoops we lost B
 though that is fine, we want THE BEST candidate ALWAYS
  */
 
+// each match of IncomingGPM to potentially multiple SavedGPM has a match scroe
+// say incoming A maps to x(0.95),y(0.91),z(0.9)
+// B maps to z(0.9),y(0.9)
+// C maps to x(0.91),z(0.92)
+// it might be possible to untangle as
+// A->x (0.95!)
+// C->z (0.92)
+// B->y (0.91)
+// that leaves B with z and y equal, but since z was mapped with higher score to C, then gotta be y
+//fun findBestCandidates(conflicts: Map<IncomingGPM, Set<ScoredMatch>>): Map<IncomingGPM, ScoredMatch> {
 fun resolveMatchConflicts(importChangeSet: ImportChangeSet) {
     val bestEffortConflictResolution =
         importChangeSet.getMatchingConflicts.mapValues { (_, matches) ->
@@ -296,16 +207,101 @@ fun resolveMatchConflicts(importChangeSet: ImportChangeSet) {
     }
 }
 
-// each match of IncomingGPM to potentially multiple SavedGPM has a match scroe
-// say incoming A maps to x(0.95),y(0.91),z(0.9)
-// B maps to z(0.9),y(0.9)
-// C maps to x(0.91),z(0.92)
-// it might be possible to untangle as
-// A->x (0.95!)
-// C->z (0.92)
-// B->y (0.91)
-// that leaves B with z and y equal, but since z was mapped with higher score to C, then gotta be y
-//fun findBestCandidates(conflicts: Map<IncomingGPM, Set<ScoredMatch>>): Map<IncomingGPM, ScoredMatch> {
+private fun doesUserNameOrDomainNameMatch(
+    incomingGPM: IncomingGPM,
+    scoredSavedGPM: ScoredMatch,
+    scoringConfig: ScoringConfig
+): ScoredMatch? {
+    val incomingUsername = incomingGPM.username.toLowerCasedTrimmedString()
+    val savedUsername = scoredSavedGPM.item.decryptedUsername.toLowerCasedTrimmedString()
+    val userNameMatches = incomingUsername == savedUsername
 
+    // of course there's a chance that username was changed, but assuming recent enuf import, 1-field-change should caught that
+    if (!userNameMatches) {
+        return null
+    }
+    val incomingUrl = parseUrl(incomingGPM.url.toLowerCasedTrimmedString())
+    val savedUrl = parseUrl(scoredSavedGPM.item.decryptedUrl.toLowerCasedTrimmedString())
+    val bothHaveDomains = (incomingUrl != null && savedUrl != null)
 
+    val domainMatchSimilarityScore = if (bothHaveDomains) findSimilarity(
+        incomingUrl!!.host.toLowerCasedTrimmedString(),
+        savedUrl!!.host.toLowerCasedTrimmedString(),
+    ) else 0.0
 
+    if (domainMatchSimilarityScore > scoringConfig.urlDomainMatchThresholdIfUsernameMatches) {
+        // username AND the domain part parsed from URL matches
+        // including call site name (similarity) match, let's increase odds by 10%
+        // so username matches as well as URL domain part, including fact that both have URL set
+        return ScoredMatch(
+            max(
+                1.0,
+                scoredSavedGPM.matchScore + scoringConfig.scoreIncrementIfUsernameAndUrlDomainMatch
+            ),
+            scoredSavedGPM.item
+        )
+    }
+    return scoredSavedGPM
+}
+
+private fun findEntriesWithOnlyChangedPropertyIs(
+    importChangeSet: ImportChangeSet,
+    firstProperty: KProperty1<IncomingGPM, String>,
+    secondProperty: KProperty1<SavedGPM, IVCipherText>,
+    scoringConfig: ScoringConfig
+): Set<Pair<IncomingGPM, ScoredMatch>> =
+    importChangeSet.getUnprocessedIncomingGPMs.mapNotNull { incomingGPMs ->
+        importChangeSet.getUnprocessedSavedGPMs.firstOrNull { savedGPMs ->
+            hasOnlyOneFieldChange(incomingGPMs, savedGPMs, firstProperty, secondProperty)
+        }?.let { dbGpmEntry ->
+            incomingGPMs to ScoredMatch(
+                scoringConfig.oneFieldChangeScore,
+                dbGpmEntry
+            )
+        }
+    }.toSet()
+
+private fun hasOnlyOneFieldChange(
+    first: IncomingGPM,
+    second: SavedGPM,
+    firstProperty: KProperty1<IncomingGPM, String>,
+    secondProperty: KProperty1<SavedGPM, IVCipherText>
+): Boolean {
+// List of all comparable properties in GPMEntry and their corresponding encrypted versions in DBGPMEntry
+    val properties = listOf(
+        IncomingGPM::name to SavedGPM::encryptedName,
+        IncomingGPM::url to SavedGPM::encryptedUrl,
+        IncomingGPM::username to SavedGPM::encryptedUsername,
+        IncomingGPM::password to SavedGPM::encryptedPassword
+    )
+
+    // Check if the specified properties are different
+    // TODO: Could we refer to decrypted properties? we do know the pop name, but makes code more complex
+    val isSpecifiedPropertyDifferent =
+        firstProperty.get(first) != secondProperty.get(second).decrypt() // TODO: decrypt
+
+    // Check if all other properties are the same
+    val areOtherPropertiesSame = properties.all { (gpmProp, dbGpmProp) ->
+        // Skip the comparison for the specified property
+        if (gpmProp == firstProperty && dbGpmProp == secondProperty) true
+        // TODO: Could we refer to decrypted properties? we do know the pop name, but makes code more complex
+        else gpmProp.get(first).toLowerCasedTrimmedString() == dbGpmProp.get(second)
+            .decrypt() // TODO: decrypt
+            .toLowerCasedTrimmedString()
+    }
+
+    // Return true if the specified property is different and all other properties are the same
+    return isSpecifiedPropertyDifferent && areOtherPropertiesSame
+}
+
+private fun parseUrl(potentialUrl: LowerCaseTrimmedString): URL? {
+    return try {
+        URL(potentialUrl.lowercasedTrimmed)
+    } catch (e: MalformedURLException) {
+        try {
+            URL("https://${potentialUrl.lowercasedTrimmed}")
+        } catch (e: MalformedURLException) {
+            null
+        }
+    }
+}

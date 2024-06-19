@@ -18,16 +18,32 @@ import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen.Companion.PASSWORD_ID
 import fi.iki.ede.safe.ui.activities.SiteEntryListScreen
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
 
-enum class DRODOWN_MENU {
-    TOPACTIONBAR_MENU,
-    TOPACTIONBAR_IMPORT_EXPORT_MENU,
-}
-
-private const val TAG = "IntentManager"
-
 // Every intent retrieved/launched in the app go thru IntentManager
 // If a plugin wants to tap into the intent, they can modify or even replace it
 object IntentManager {
+    fun registerSubMenu(
+        plugin: PluginName,
+        menu: DropDownMenu,
+        stringResource: Int,
+        selected: (Context) -> Unit
+    ) = menuAdditions.getOrPut(plugin) { mutableMapOf() }
+        .getOrPut(menu) { mutableListOf() }
+        .add(stringResource to selected)
+
+    fun replaceIntents(plugin: PluginName, screen: Class<*>, intent: Intent) {
+        intentReplacements.getOrPut(plugin) { mutableMapOf() }[screen] = intent
+    }
+
+    fun getMenuItems(menu: DropDownMenu) =
+        menuAdditions.flatMap { (_, menuMap) -> menuMap[menu]?.toList() ?: listOf() }
+
+    fun getDatabaseRestorationScreenIntent(
+        context: Context,
+        uri: Uri
+    ) = Intent(
+        context, PrepareDataBaseRestorationScreen::class.java
+    ).apply { data = uri }
+
     private inline fun <reified T> getActivityIntent(
         context: Context,
         activityClass: Class<T>,
@@ -63,57 +79,20 @@ object IntentManager {
         }
     }
 
-    private inline fun <reified T> startActivity(
-        context: Context,
-        activityClass: Class<T>,
-        flags: Int? = null,
-        extras: Bundle? = null
-    ) = context.startActivity(getActivityIntent(context, activityClass, flags, extras))
-
     private val intentReplacements = mutableMapOf<PluginName, MutableMap<Class<*>, Intent>>()
-    fun replaceIntents(plugin: PluginName, screen: Class<*>, intent: Intent) {
-        intentReplacements.getOrPut(plugin) { mutableMapOf() }[screen] = intent
-    }
 
     private val menuAdditions =
-        mutableMapOf<PluginName, MutableMap<DRODOWN_MENU, MutableList<Pair<Int, (Context) -> Unit>>>>()
-
-    fun registerSubMenu(
-        plugin: PluginName,
-        menu: DRODOWN_MENU,
-        stringResource: Int,
-        selected: (Context) -> Unit
-    ) = menuAdditions.getOrPut(plugin) { mutableMapOf() }
-        .getOrPut(menu) { mutableListOf() }
-        .add(stringResource to selected)
-
-    fun getMenuItems(menu: DRODOWN_MENU) =
-        menuAdditions.flatMap { (_, menuMap) -> menuMap[menu]?.toList() ?: listOf() }
-
-    fun getDatabaseRestorationScreenIntent(
-        context: Context,
-        uri: Uri
-    ) = Intent(
-        context, PrepareDataBaseRestorationScreen::class.java
-    ).apply { data = uri }
-
-    fun getEditPassword(context: Context, passwordId: DBID) =
-        getActivityIntent(context, SiteEntryEditScreen::class.java, extras = Bundle().apply {
-            putLong(PASSWORD_ID, passwordId)
-        })
+        mutableMapOf<PluginName, MutableMap<DropDownMenu, MutableList<Pair<Int, (Context) -> Unit>>>>()
 
     fun getAddPassword(context: Context, categoryId: DBID) =
         getActivityIntent(context, SiteEntryEditScreen::class.java, extras = Bundle().apply {
             putLong(CATEGORY_ID, categoryId)
         })
 
-    // start
-    fun startPreferencesActivity(context: Context) =
-        startActivity(
-            context,
-            PreferenceActivity::class.java,
-            Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
-        )
+    fun getEditPassword(context: Context, passwordId: DBID) =
+        getActivityIntent(context, SiteEntryEditScreen::class.java, extras = Bundle().apply {
+            putLong(PASSWORD_ID, passwordId)
+        })
 
     fun startCategoryScreen(context: Context) =
         startActivity(
@@ -129,6 +108,14 @@ object IntentManager {
         startActivity(context, LoginScreen::class.java, extras = Bundle().apply {
             putBoolean(OPEN_CATEGORY_SCREEN_AFTER_LOGIN, openCategoryScreenAfterLogin)
         })
+
+    // start
+    fun startPreferencesActivity(context: Context) =
+        startActivity(
+            context,
+            PreferenceActivity::class.java,
+            Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+        )
 
     fun startSiteEntrySearchScreen(context: Context) =
         startActivity(context, SiteEntrySearchScreen::class.java)
@@ -147,4 +134,11 @@ object IntentManager {
         intentReplacements.remove(pluginName)
         menuAdditions.remove(pluginName)
     }
+
+    private inline fun <reified T> startActivity(
+        context: Context,
+        activityClass: Class<T>,
+        flags: Int? = null,
+        extras: Bundle? = null
+    ) = context.startActivity(getActivityIntent(context, activityClass, flags, extras))
 }

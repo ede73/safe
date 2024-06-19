@@ -61,14 +61,6 @@ class DecryptableSiteEntry(categoryId: Long) {
             return decryptedCachedPlainDescription ?: ""
         }
 
-    private val decrypter = KeyStoreHelperFactory.getDecrypter()
-    private fun decrypt(value: IVCipherText) = try {
-        String(decrypter(value))
-    } catch (e: Exception) {
-        "Failed decr $e"
-    }
-
-
     fun contains(
         searchText: String,
         searchWebsites: Boolean,
@@ -113,5 +105,13 @@ class DecryptableSiteEntry(categoryId: Long) {
         photo = this@DecryptableSiteEntry.photo
         username = this@DecryptableSiteEntry.username
         website = this@DecryptableSiteEntry.website
+    }
+
+    private val decrypter = KeyStoreHelperFactory.getDecrypter()
+
+    private fun decrypt(value: IVCipherText) = try {
+        String(decrypter(value))
+    } catch (e: Exception) {
+        "Failed decr $e"
     }
 }

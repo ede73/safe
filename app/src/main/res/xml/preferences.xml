@@ -41,13 +41,28 @@
         <Preference
             android:key="time_of_last_backup"
             android:title="@string/preferences_title_time_of_last_backup" />
+        <Preference
+            android:key="make_a_crash"
+            android:title="@string/preferences_title_make_a_crash" />
         <MultiSelectListPreference
             android:id="@+id/experimental_features"
             android:dialogTitle="@string/preferences_experimental_features_title"
-            android:key="experiments"
             android:entries="@array/dummy_entries"
             android:entryValues="@array/dummy_entry_values"
+            android:key="experiments"
             android:summary="@string/preferences_summary_experimental_features"
             android:title="@string/preferences_title_experimental_features" />
+        <Preference
+            android:key="autobackup_quota_exceeded"
+            android:title="@string/preferences_title_autobackup_quota_exceeded" />
+        <Preference
+            android:key="autobackup_started"
+            android:title="@string/preferences_title_autobackup_started" />
+        <Preference
+            android:key="autobackup_restore_started"
+            android:title="@string/preferences_autobackup_restore_started" />
+        <Preference
+            android:key="autobackup_restore_finished"
+            android:title="@string/preferences_autobackup_restore_finished" />
     </PreferenceCategory>
 </PreferenceScreen>

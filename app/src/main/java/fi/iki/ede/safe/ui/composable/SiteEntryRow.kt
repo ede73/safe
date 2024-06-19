@@ -3,6 +3,7 @@ package fi.iki.ede.safe.ui.composable
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Row
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -44,8 +46,8 @@ fun SiteEntryRow(
     categoriesState: List<DecryptableCategoryEntry>,
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
     val safeTheme = LocalSafeTheme.current
+    val coroutineScope = rememberCoroutineScope()
     var displayDeleteDialog by remember { mutableStateOf(false) }
     var displayMenu by remember { mutableStateOf(false) }
     var displayMoveDialog by remember { mutableStateOf(false) }
@@ -64,20 +66,22 @@ fun SiteEntryRow(
     // bit more padding on the start to emphasize difference between header and entry
     // TODO: themable?
     SafeListItem(
-        modifier = Modifier.padding(start = 32.dp, 6.dp),
+        borderColor = BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant
+        ),
+        modifier = Modifier
+            .padding(start = 32.dp, 6.dp)
+            .fillMaxWidth()
+            .combinedClickable(onClick = {
+                editCompleted.launch(
+                    IntentManager.getEditPassword(context, passEntry.id!!)
+                )
+            }, onLongClick = {
+                displayMenu = true
+            }),
     ) {
-        Row(
-            modifier = Modifier
-                .padding(vertical = 0.dp)
-                .fillMaxWidth()
-                .combinedClickable(onClick = {
-                    editCompleted.launch(
-                        IntentManager.getEditPassword(context, passEntry.id!!)
-                    )
-                }, onLongClick = {
-                    displayMenu = true
-                })
-        ) {
+        Row {
             Text(
                 text = passEntry.plainDescription,
                 maxLines = 1,
@@ -92,7 +96,7 @@ fun SiteEntryRow(
                 Spacer(modifier = Modifier.weight(1f)) // This will push the Text to the end
 
                 Text(
-                    text = GetPasswordAgePlurality(DateUtils.getPeriodBetweenDates(passEntry.passwordChangedDate!!)),
+                    text = getPasswordAgePlurality(DateUtils.getPeriodBetweenDates(passEntry.passwordChangedDate!!)),
                     modifier = Modifier.padding(12.dp),
                     style = safeTheme.customFonts.smallNote
                 )

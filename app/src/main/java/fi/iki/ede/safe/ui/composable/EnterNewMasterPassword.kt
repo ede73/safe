@@ -42,12 +42,12 @@ fun EnterNewMasterPassword(
                     },
                 )
                 SafeButton(
+                    modifier = Modifier.testTag(TestTag.TEST_TAG_CHANGE_PASSWORD_OK),
+                    onClick = { onNewMasterPassword(Pair(oldPassword, newPassword)) },
                     enabled = !newPassword.isEmpty() &&
                             !oldPassword.isEmpty() &&
                             newPassword != oldPassword &&
-                            newPassword.length >= passwordMinimumLength,
-                    onClick = { onNewMasterPassword(Pair(oldPassword, newPassword)) },
-                    modifier = Modifier.testTag(TestTag.TEST_TAG_CHANGE_PASSWORD_OK)
+                            newPassword.length >= passwordMinimumLength
                 ) {
                     Text(text = stringResource(id = R.string.action_bar_change_password_ok))
                 }
@@ -61,7 +61,7 @@ fun EnterNewMasterPassword(
 fun EnterNewMasterPasswordPreview() {
     SafeTheme {
         EnterNewMasterPassword {
-            
+
         }
     }
 }

@@ -9,8 +9,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
+import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
@@ -25,20 +25,20 @@ fun DeleteCategoryDialog(
         onDismissRequest = { },
         confirmButton = {
             SafeButton(
+                modifier = Modifier.testTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE_CONFIRM),
                 onClick = {
                     onConfirm()
-                },
-                modifier = Modifier.testTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE_CONFIRM)
+                }
             ) {
                 Text(text = stringResource(R.string.generic_yes_delete))
             }
         },
         dismissButton = {
             SafeButton(
+                modifier = Modifier.testTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE_CANCEL),
                 onClick = {
                     onDismiss()
-                },
-                modifier = Modifier.testTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE_CANCEL)
+                }
             ) {
                 Text(text = stringResource(R.string.generic_dont_delete))
             }

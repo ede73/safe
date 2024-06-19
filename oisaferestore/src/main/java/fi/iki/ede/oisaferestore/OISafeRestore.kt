@@ -85,7 +85,7 @@ object OISafeRestore {
             try {
                 dbHelper.addPassword(fromOiSafePwd(pwdId, password))
             } catch (ex: SQLiteException) {
-                Log.e(TAG, "ERROR adding password ${pwdId}")
+                Log.e(TAG, "ERROR adding password $pwdId")
                 db.endTransaction()
                 return -1
             }

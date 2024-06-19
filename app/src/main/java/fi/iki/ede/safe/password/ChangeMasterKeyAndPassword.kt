@@ -1,6 +1,5 @@
 package fi.iki.ede.safe.password
 
-import android.content.Context
 import android.util.Log
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_ITERATION_COUNT
@@ -21,12 +20,11 @@ object ChangeMasterKeyAndPassword {
     // Change the user password derived (PBKDF2) key that is used to encrypt the actual master key
     // the master key remains unchanged, so no need to 'convert' the database
     fun changeMasterPassword(
-        context: Context,
         oldPass: Password,
         newPass: Password,
         finished: (Boolean) -> Unit
     ): Boolean {
-        val dbHelper = DBHelperFactory.getDBHelper(context)
+        val dbHelper = DBHelperFactory.getDBHelper()
         val (salt, ivCipher) = dbHelper.fetchSaltAndEncryptedMasterKey()
         val existingPBKDF2Key = generatePBKDF2AESKey(
             salt, KEY_ITERATION_COUNT,

@@ -11,18 +11,29 @@ import fi.iki.ede.safe.db.DBHelperFactory
 object LoginHandler {
     private var loggedIn: Boolean = false
 
-    fun firstTimeLogin(context: Context, password: Password) {
+    fun biometricLogin() {
+        // Alas biometrics is just signal
+        loggedIn = true
+    }
+
+    fun firstTimeLogin(password: Password) {
         // this instance has no password (no exported master key!)
         val (salt, cipheredKey) = KeyStoreHelper.createNewKey(password)
         // TODO: async
-        DBHelperFactory.getDBHelper(context).storeSaltAndEncryptedMasterKey(salt, cipheredKey)
+        DBHelperFactory.getDBHelper().storeSaltAndEncryptedMasterKey(salt, cipheredKey)
         loggedIn = true
+    }
+
+    fun isLoggedIn() = loggedIn
+
+    fun logout() {
+        loggedIn = false
     }
 
     fun passwordLogin(context: Context, password: Password): Boolean {
         // TODO: async
         val (salt, cipheredMasterKey) =
-            DBHelperFactory.getDBHelper(context).fetchSaltAndEncryptedMasterKey()
+            DBHelperFactory.getDBHelper().fetchSaltAndEncryptedMasterKey()
         return try {
             KeyStoreHelper.importExistingEncryptedMasterKey(
                 SaltedPassword(salt, password),
@@ -42,15 +53,4 @@ object LoginHandler {
             false
         }
     }
-
-    fun biometricLogin() {
-        // Alas biometrics is just signal
-        loggedIn = true
-    }
-
-    fun logout() {
-        loggedIn = false
-    }
-
-    fun isLoggedIn() = loggedIn
 }

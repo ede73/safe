@@ -3,7 +3,7 @@ package fi.iki.ede.oisaferestore
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import fi.iki.ede.safe.splits.DRODOWN_MENU
+import fi.iki.ede.safe.splits.DropDownMenu
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.splits.RegistrationAPI
@@ -16,7 +16,7 @@ class RegistrationAPIImpl : RegistrationAPI {
         Log.e(TAG, "RegistrationAPIImpl::register()")
         IntentManager.registerSubMenu(
             getName(),
-            DRODOWN_MENU.TOPACTIONBAR_IMPORT_EXPORT_MENU,
+            DropDownMenu.TopActionBarImportExportMenu,
             fi.iki.ede.safe.R.string.action_bar_old_restore
         ) { context ->
             context.startActivity(

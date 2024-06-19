@@ -11,7 +11,7 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.hexToByteArray
 import fi.iki.ede.crypto.support.toHexString
-import fi.iki.ede.safe.DataModelMocks.mockDataModel
+import fi.iki.ede.safe.DataModelMocks.mockDataModelFor_UNIT_TESTS_ONLY
 import fi.iki.ede.safe.backupandrestore.BackupDatabase
 import fi.iki.ede.safe.backupandrestore.RestoreDatabase
 import fi.iki.ede.safe.db.DBHelper
@@ -129,9 +129,14 @@ class BackupDatabaseAndRestoreDatabaseTest {
     @Test
     fun backupTestOnlyACategory() {
         val backupDatabase = BackupDatabase()
-        val dbHelper = mockDataModel(linkedMapOf())
-
-        mockDataModel(linkedMapOf(Pair(DataModelMocks.makeCat(1, ks), listOf())))
+        val dbHelper = mockDataModelFor_UNIT_TESTS_ONLY(
+            linkedMapOf(
+                Pair(
+                    DataModelMocks.makeCat(1, ks),
+                    listOf()
+                )
+            )
+        )
 
         val out = backupDatabase.generate(
             dbHelper,
@@ -144,12 +149,12 @@ class BackupDatabaseAndRestoreDatabaseTest {
 
     @Test
     fun testUserCanCancelOldBackupRestoration() {
-        val dbHelper = mockDataModel(linkedMapOf())
+        val dbHelper = mockDataModelFor_UNIT_TESTS_ONLY(linkedMapOf())
         val r = RestoreDatabase()
         val context = mockkClass(Context::class)
 
         listOf(
-            // TODO: don't have mocks in place to mimick no changed date...
+            // TODO: don't have mocks in place to mimic no changed date...
 //            // unknown backup creation time(set creationTime manually to null in RestoreDatabase), known last backup, must succeed(we wont consult user)
 //            Triple(1234L, 1234L, true),
 //            // unknown backup creation time(set creationTime manually to null in RestoreDatabase), unknown last backup, must succeed(we wont consult user)
@@ -173,7 +178,8 @@ class BackupDatabaseAndRestoreDatabaseTest {
                     context,
                     PASSWORD_ENCRYPTED_BACKUP_AT_1234,
                     backupPassword,
-                    dbHelper
+                    dbHelper,
+                    { _, _, _ -> }
                 ) { thisBackupCreationTime, lastBackupDone ->
                     askedUser = true
                     if (!mustAskUser) {
@@ -209,7 +215,8 @@ class BackupDatabaseAndRestoreDatabaseTest {
             mockk<Context>(),
             PASSWORD_ENCRYPTED_BACKUP_AT_1234,
             backupPassword,
-            dbHelper
+            dbHelper,
+            { _, _, _ -> }
         ) { thisBackupCreationTime, lastBackupDone ->
             throw Exception("We should not ask user anything, valid backup!")
         }
@@ -244,7 +251,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
     }
 
     private fun mockPasswordObjectForBackup() =
-        mockDataModel(
+        mockDataModelFor_UNIT_TESTS_ONLY(
             linkedMapOf(
                 Pair(
                     DataModelMocks.makeCat(1, ks), listOf(

@@ -43,8 +43,8 @@ object MockKeyStore {
     }
 
     val fakeSalt = Salt("abcdabcd01234567".hexToByteArray())
-    const val fakePasswordText = "abcdefgh"
-    val fakePassword = Password(fakePasswordText)
+    const val FAKE_PASSWORD_PLAINTEXT = "abcdefgh"
+    val fakePassword = Password(FAKE_PASSWORD_PLAINTEXT)
     private val fakeMasterKeyAES =
         "00112233445566778899AABBCCDDEEFF99887766554433221100123456789ABC".hexToByteArray()
     private val fakePasswordBasedAESKey = generatePBKDF2AESKey(

@@ -3,6 +3,7 @@ package fi.iki.ede.crypto.keystore
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.security.keystore.KeyProtection
+import fi.iki.ede.crypto.BuildConfig
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
@@ -17,24 +18,6 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
-
-// KeyStoreHelperFactory.provider = { MockKeyStoreHelper() }
-object KeyStoreHelperFactory {
-    var provider: () -> KeyStoreHelper = { KeyStoreHelper() }
-    fun getKeyStoreHelper() = provider()
-
-    var decrypterProvider: (IVCipherText) -> ByteArray = { encrypted ->
-        getKeyStoreHelper().decryptByteArray(encrypted)
-    }
-
-    fun getDecrypter() = decrypterProvider
-
-    var encrypterProvider: (ByteArray) -> IVCipherText = { plaintext ->
-        getKeyStoreHelper().encryptByteArray(plaintext)
-    }
-
-    fun getEncrypter() = encrypterProvider
-}
 
 // TODO: Missing key rotation
 // Some apps claim android keystore doesn't work with passwords but then
@@ -55,6 +38,15 @@ class KeyStoreHelper : CipherUtilities() {
     init {
         keyStore.load(null)
         check(keyStore.containsAlias(KEY_SECRET_MASTERKEY)) { "Keystore MUST have been initialized with .importExistingEncryptedMasterKey or .createNewKey" }
+    }
+
+    // never ever in release, only used for testing
+    fun testingDeleteKeys_DO_NOT_USE() {
+        if (BuildConfig.DEBUG) {
+            keyStore.deleteEntry(KEY_BIOKEY)
+            keyStore.deleteEntry(KEY_SECRET_MASTERKEY)
+            check(!keyStore.containsAlias(KEY_SECRET_MASTERKEY)) { "Keystore MUST be empty" }
+        }
     }
 
     /**
@@ -83,7 +75,6 @@ class KeyStoreHelper : CipherUtilities() {
                 IvParameterSpec(generateRandomBytes(it.blockSize * 8))
             )
             IVCipherText(it.iv, it.doFinal(input))
-
         }
 
     fun decryptByteArray(

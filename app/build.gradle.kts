@@ -1,7 +1,12 @@
+import java.io.ByteArrayOutputStream
+import java.nio.charset.Charset
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.org.jetbrains.kotlin.android)
+    id("com.google.gms.google-services") // Firebase crashlytics
+    id("com.google.firebase.crashlytics") // Firebase crashlytics
 }
 
 /**
@@ -21,8 +26,35 @@ plugins {
  * In code (of the project in question):
  *  throwIfFeatureNotEnabled(BuildConfig.FLAG_NAME) etc.
  */
-project.ext.set("ENABLE_HIBP", true)
-val ENABLE_HIBP: Boolean = project(":app").ext.get("ENABLE_HIBP") as Boolean
+
+abstract class GitCommitHashValueSource : ValueSource<String, ValueSourceParameters.None> {
+    @get:Inject
+    abstract val execOperations: ExecOperations
+
+    override fun obtain(): String {
+        val output = ByteArrayOutputStream()
+        execOperations.exec {
+            commandLine("git", "rev-parse", "--short", "HEAD")
+            standardOutput = output
+        }
+        return String(output.toByteArray(), Charset.defaultCharset()).trim()
+    }
+}
+
+abstract class GitRevListCountValueSource : ValueSource<String, ValueSourceParameters.None> {
+    @get:Inject
+    abstract val execOperations: ExecOperations
+
+    override fun obtain(): String {
+        val output = ByteArrayOutputStream()
+        execOperations.exec {
+            commandLine("git", "rev-list", "--count", "HEAD")
+            standardOutput = output
+        }
+        return String(output.toByteArray(), Charset.defaultCharset()).trim()
+    }
+}
+
 
 android {
     namespace = "fi.iki.ede.safe"
@@ -33,7 +65,15 @@ android {
         minSdk = 26
         targetSdk = 34
 
-        val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(3, 0, 43, 0)
+        val gitRevListProvider = providers.of(GitRevListCountValueSource::class) {}
+        val gitRevListCount = gitRevListProvider.get().toInt()
+
+        val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(
+            3,
+            6,
+            gitRevListCount / 100,
+            gitRevListCount % 100
+        )
         versionCode =
             versionMajor * 10000 + versionMinor * 1000 + versionPatch * 100 + versionBuild
         versionName = "${versionMajor}.${versionMinor}.${versionPatch}"
@@ -46,8 +86,13 @@ android {
         // SEPARATE_TEST_TYPE: testApplicationId = "$applicationId.safetest"
     }
 
+    sourceSets["main"].manifest.srcFile("src/main/AndroidManifest.xml")
+    sourceSets["debug"].manifest.srcFile("src/debug/AndroidManifest.xml")
+
     // See https://developer.android.com/build/build-variants
     buildTypes {
+        val gitCommitHashProvider = providers.of(GitCommitHashValueSource::class) {}
+        val gitCommitHash = gitCommitHashProvider.get()
         release {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -77,13 +122,12 @@ android {
                         merges += "/META-INF/services/fi.iki.ede.safe.splits.RegistrationAPI\$Provider"
                     }
                 }
-
             }
-            buildConfigField("Boolean", "ENABLE_HIBP", ENABLE_HIBP.toString())
+            buildConfigField("String", "GIT_COMMIT_HASH", "\"${gitCommitHash}\"")
         }
         debug {
             applicationIdSuffix = ".debug"
-            buildConfigField("Boolean", "ENABLE_HIBP", ENABLE_HIBP.toString())
+            buildConfigField("String", "GIT_COMMIT_HASH", "\"${gitCommitHash}\"")
         }
     }
 
@@ -114,7 +158,7 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-    dynamicFeatures += setOf(":categorypager", ":oisaferestore")
+    dynamicFeatures += setOf(":categorypager", ":oisaferestore", ":hibp")
     testFixtures {
         enable = true
     }
@@ -127,9 +171,8 @@ composeCompiler {
 dependencies {
     implementation(project(":app:crypto"))
     // cant dynamically filter these out as imports would fail and making stub is too much work..
-    implementation(project(":app:hibp"))
-    implementation(libs.app.update.ktx)
     implementation(project(":app:gpm"))
+    implementation(libs.app.update.ktx)
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)
@@ -144,7 +187,11 @@ dependencies {
     implementation(libs.material)
     //implementation(libs.core.ktx)
     implementation(libs.feature.delivery.ktx)
-    implementation(libs.androidx.runtime.livedata)
+    // Don't convert to catalog declaration, something is broken
+    implementation(platform("com.google.firebase:firebase-bom:33.1.0")) // firebase crashlytics
+    implementation("com.google.firebase:firebase-analytics") // firebase crashlytics (breadcrumbs)
+    implementation(libs.firebase.crashlytics.ktx)
+    implementation(libs.androidx.runtime.livedata) // firebase crashlytics
 
     // Bring bouncy castle to unit tests
     testImplementation("org.bouncycastle:bcprov-jdk16:1.46")
@@ -153,6 +200,7 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(project(":app:crypto"))
     testImplementation(testFixtures(project(":app:crypto")))
+    testImplementation(project(":app"))
 
     androidTestImplementation(libs.androidx.junit.ktx)
     androidTestImplementation(libs.androidx.rules)
@@ -160,21 +208,25 @@ dependencies {
     androidTestImplementation(libs.androidx.uiautomator)
     androidTestImplementation(libs.mockk.agent)
     androidTestImplementation(libs.mockk.android)
+    // Firebase testlab screenshot ability
+    androidTestImplementation("com.google.firebase:testlab-instr-lib:0.2")
     // needed for val composeTestRule = createComposeRule() but not createComposeRule()<Activity>
     debugImplementation(libs.androidx.ui.test.manifest)
     debugImplementation(libs.androidx.ui.tooling)
     // Docs say: Test rules and transitive dependencies: but seems to work without
     //androidTestImplementation("androidx.compose.ui:ui-test-junit4:$compose_version")
+    implementation(kotlin("reflect"))
+    testFixturesImplementation(libs.kotlin.stdlib)
 }
 
 tasks.configureEach {
     // When ever doing release(Generate Signed App Bundle), run also all the tests...
     when (name) {
         "connectedDebugAndroidTest" -> dependsOn("unlockEmulator")
-        "bundleRelease" -> {
-            dependsOn("testReleaseUnitTest")
-            dependsOn("connectedAndroidTest")
-        }
+//        "bundleRelease" -> {
+//            dependsOn("testReleaseUnitTest")
+//            dependsOn("connectedAndroidTest")
+//        }
 
         "assembleDebug" -> {
             // UNIT TESTS
@@ -198,26 +250,41 @@ tasks.withType<Test> {
     jvmArgs("--add-opens", "java.base/java.time=ALL-UNNAMED")
 }
 
-//tasks.named<AndroidTest>("connectedAndroidTest") {
-//    print("=====connectedAndroidTest")
-//}
-//tasks.named<AndroidTest>("connectedDebugAndroidTest") {
-//    print("=====connectedDebugAndroidTest")
-//}
+abstract class MyValueSource @Inject constructor(private val execOperations: ExecOperations) :
+    ValueSource<String?, ValueSourceParameters.None?> {
+    override fun obtain(): String {
+        // your custom implementation
+        return ""
+    }
+}
 
-tasks.register("unlockEmulator") {
-    /*
-    Enable...
-tasks.configureEach {when (name) {"connectedDebugAndroidTest" -> dependsOn("unlockEmulator")}}
-     */
-    doLast {
-        exec {
+abstract class UnlockEmulator2ValueSource : ValueSource<String, ValueSourceParameters.None> {
+    @get:Inject
+    abstract val execOperations: ExecOperations
+
+    override fun obtain(): String {
+        val output = ByteArrayOutputStream()
+        execOperations.exec {
             commandLine(
-                "adb",
-                "shell",
-                "dumpsys deviceidle|grep mScreenOn=false && input keyevent KEYCODE_POWER;dumpsys deviceidle|grep mScreenLocked=true && (input keyevent KEYCODE_MENU ;input text 0000;input keyevent KEYCODE_ENTER);true"
+                "adb", "shell",
+                "dumpsys deviceidle|grep mScreenOn=false && input keyevent KEYCODE_POWER;dumpsys deviceidle|grep mScreenLocked=true && (input keyevent KEYCODE_MENU ;input text 0000;input keyevent KEYCODE_ENTER);true >/dev/null"
             )
+            standardOutput = output
+            isIgnoreExitValue = true
         }
+        return String(output.toByteArray(), Charset.defaultCharset())
+    }
+}
+
+// Things have gotten more "complicated" with cache, just doLast{exec{}} makes a cache failure
+// need to use ValueSources nowadays, and them too in exact right order
+// https://docs.gradle.org/current/userguide/configuration_cache.html
+// ./gradlew --configuration-cache unlockEmulator
+/* Enable...tasks.configureEach {when (name) {"connectedDebugAndroidTest" -> dependsOn("unlockEmulator")}} */
+tasks.register("unlockEmulator") {
+    val unlockEmulator2Provider = providers.of(UnlockEmulator2ValueSource::class) {}
+    doLast {
+        unlockEmulator2Provider.get()
     }
 }
 

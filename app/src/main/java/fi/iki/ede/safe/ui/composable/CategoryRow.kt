@@ -60,7 +60,7 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
                 .testTag(TestTag.TEST_TAG_CATEGORY_ROW),
         ) {
             Text(
-                text = "${category.plainName}",
+                text = category.plainName,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier

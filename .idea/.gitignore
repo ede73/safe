@@ -3,3 +3,5 @@
 /workspace.xml
 /deploymentTargetSelector.xml
 /androidTestResultsUserPreferences.xml
+/appInsightsSettings.xml
+/.idea/

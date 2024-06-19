@@ -8,28 +8,7 @@ import org.junit.Test
 
 class CSVReaderKtTest {
 
-    @Test
-    fun splitInputLineTest() {
-        // stupid, but documenting
-        assertArrayEquals(
-            arrayOf("a", "b", "c", "d", "e,f,g,h"),
-            splitInputLine("a,b,c,d,e,f,g,h").toTypedArray()
-        )
-        assertArrayEquals(
-            arrayOf("a", "b", "c", "d", "e"),
-            splitInputLine("a,b,c,d,e").toTypedArray()
-        )
-        assertArrayEquals(
-            arrayOf("a", "b", "c", "d"),
-            splitInputLine(" a, b, c, d ").toTypedArray()
-        )
-        assertArrayEquals(arrayOf("a", "b", "c", ""), splitInputLine(" a, b, c,  ").toTypedArray())
-    }
-
 //    @Test(expected = IndexOutOfBoundsException::class)
-//    fun tooManyInputs() {
-//        splitInputLine("a,b,c,d,e,f")
-//    }
 
     @Test
     fun readCsvTest() {
@@ -60,5 +39,26 @@ class CSVReaderKtTest {
         // TODO: STUPID but documenting
         assert(results.elementAt(2) == makeFromCSVImport("d", "b", "\"c", "a\"", ""))
         assert(results.size == 3) { "Expected 3, got ${results.size}" }
+    }
+
+    //    }
+//        splitInputLine("a,b,c,d,e,f")
+//    fun tooManyInputs() {
+    @Test
+    fun splitInputLineTest() {
+        // stupid, but documenting
+        assertArrayEquals(
+            arrayOf("a", "b", "c", "d", "e,f,g,h"),
+            splitInputLine("a,b,c,d,e,f,g,h").toTypedArray()
+        )
+        assertArrayEquals(
+            arrayOf("a", "b", "c", "d", "e"),
+            splitInputLine("a,b,c,d,e").toTypedArray()
+        )
+        assertArrayEquals(
+            arrayOf("a", "b", "c", "d"),
+            splitInputLine(" a, b, c, d ").toTypedArray()
+        )
+        assertArrayEquals(arrayOf("a", "b", "c", ""), splitInputLine(" a, b, c,  ").toTypedArray())
     }
 }

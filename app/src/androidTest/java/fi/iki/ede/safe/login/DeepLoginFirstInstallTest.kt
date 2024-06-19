@@ -1,6 +1,7 @@
 package fi.iki.ede.safe.login
 
 import android.app.Activity.RESULT_CANCELED
+import android.content.Context
 import android.content.Intent
 import androidx.activity.result.ActivityResult
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -20,8 +21,9 @@ import fi.iki.ede.safe.utilities.AutoMockingUtilities
 import fi.iki.ede.safe.utilities.AutoMockingUtilities.Companion.mockIsBiometricsEnabled
 import fi.iki.ede.safe.utilities.AutoMockingUtilities.Companion.mockIsBiometricsInitialized
 import fi.iki.ede.safe.utilities.AutoMockingUtilities.Companion.mockIsFirstTimeLogin
+import fi.iki.ede.safe.utilities.DBHelper4AndroidTest
 import fi.iki.ede.safe.utilities.LoginScreenHelper
-import fi.iki.ede.safe.utilities.MockDataModel
+import fi.iki.ede.safe.utilities.MockKeyStore
 import fi.iki.ede.safe.utilities.MyResultLauncher
 import io.mockk.every
 import io.mockk.just
@@ -31,6 +33,7 @@ import io.mockk.unmockkAll
 import io.mockk.verify
 import org.junit.After
 import org.junit.AfterClass
+import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Ignore
 import org.junit.Rule
@@ -50,6 +53,15 @@ import org.junit.runner.RunWith
 class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
     @get:Rule
     val loginActivityTestRule = createAndroidComposeRule<LoginScreen>()
+
+    private val context: Context =
+        InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
+
+    @Before
+    fun beforeEachTest() {
+        DBHelper4AndroidTest.initializeEverything(context)
+        DBHelper4AndroidTest.configureDefaultTestDataModelAndDB()
+    }
 
     @After
     fun clearAll() {
@@ -116,7 +128,7 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
     private fun properPasswordLogin(biometricsRegister: Boolean) {
         every { LoginHandler.passwordLogin(any(), any()) } returns true
         // TODO: this should INITIALIZE keystore
-        every { LoginHandler.firstTimeLogin(any(), any()) } just runs
+        every { LoginHandler.firstTimeLogin(any()) } just runs
 
         mockkObject(IntentManager)
         every { IntentManager.startCategoryScreen(any()) } just runs
@@ -150,7 +162,7 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
         getPasswordFields(loginActivityTestRule)[1].performTextInput("quite_a_password")
         getLoginButton(loginActivityTestRule).performClick()
 
-        verify(exactly = 1) { LoginHandler.firstTimeLogin(any(), any()) }
+        verify(exactly = 1) { LoginHandler.firstTimeLogin(any()) }
     }
 
     companion object {
@@ -167,7 +179,7 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
 
             // initializes keystore, we don't want that!
             // missing keystore is the state of the 'first install
-            MockDataModel.mockAllDataModelNecessities()
+            MockKeyStore.mockKeyStore()
 
             mockkObject(LoginHandler)
             every { LoginHandler.isLoggedIn() } returns false

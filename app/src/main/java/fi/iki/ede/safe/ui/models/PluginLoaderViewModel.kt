@@ -12,41 +12,47 @@ import fi.iki.ede.safe.splits.PluginManager
 import fi.iki.ede.safe.splits.PluginManager.initializePlugin
 import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.splits.RegistrationAPI
+import java.util.Collections
 
 private const val TAG = "PluginLoaderViewModel"
 
+data class SplitSession(val sessionId: Int, val plugin: PluginName) {
+    var completed: Boolean = false
+}
+
 class PluginLoaderViewModel(app: Application) : AndroidViewModel(app) {
     private val splitInstallManager = SplitInstallManagerFactory.create(getApplication())
-    private var sessionId = 0
+
+    private val sessions = Collections.synchronizedList(mutableListOf<SplitSession>())
+
+    private fun informUser(message: String) = Toast.makeText(
+        getApplication(), message, Toast.LENGTH_SHORT
+    ).show()
 
     private val listener = SplitInstallStateUpdatedListener { state ->
-        if (state.sessionId() == sessionId) {
-            val pluginName = PluginName.entries.first {
-                it.pluginName == state.moduleNames().first()
+        val session = sessions.firstOrNull { it.sessionId == state.sessionId() }
+        if (session == null) return@SplitInstallStateUpdatedListener
+
+        when (state.status()) {
+            SplitInstallSessionStatus.FAILED -> {
+                Log.d(TAG, "${session.plugin.pluginName} install failed with ${state.errorCode()}")
+                informUser("${session.plugin.pluginName} install failed with ${state.errorCode()}")
+                session.completed = true
+                synchronized(sessions) {
+                    sessions.removeIf { it.sessionId == state.sessionId() }
+                }
             }
 
-            when (state.status()) {
-                SplitInstallSessionStatus.FAILED -> {
-                    Log.d(TAG, "${pluginName.pluginName} install failed with ${state.errorCode()}")
-                    Toast.makeText(
-                        getApplication(),
-                        "${pluginName.pluginName} install failed with ${state.errorCode()}",
-                        Toast.LENGTH_SHORT
-                    ).show()
+            SplitInstallSessionStatus.INSTALLED -> {
+                informUser("${session.plugin.pluginName} module installed successfully")
+                initializePlugin(getApplication(), session.plugin)
+                session.completed = true
+                synchronized(sessions) {
+                    sessions.removeIf { it.sessionId == state.sessionId() }
                 }
-
-                SplitInstallSessionStatus.INSTALLED -> {
-                    Toast.makeText(
-                        getApplication(),
-                        "${pluginName.pluginName} module installed successfully",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    initializePlugin(getApplication(), pluginName)
-                    sessionId = 0
-                }
-
-                else -> Log.d(TAG, "Status: ${pluginName.pluginName} ${state.status()}")
             }
+
+            else -> Log.d(TAG, "Status: ${session.plugin.pluginName} ${state.status()}")
         }
     }
 
@@ -60,32 +66,29 @@ class PluginLoaderViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun getOrInstallPlugin(pluginName: PluginName): RegistrationAPI? =
-        // TODO: TOGGLE THIS IN BUNDLE INSTALL TEST
+        // Run app-bundle-dfm with launch flags: "-e isBundleTest true"
         if (PluginManager.isPluginInstalled(splitInstallManager, pluginName))
             initializePlugin(getApplication(), pluginName)
         else
-            requestStorageInstall(pluginName)
+            requestStorageInstall(pluginName).let { null }
 
-    private fun requestStorageInstall(pluginName: PluginName): RegistrationAPI? {
-        Toast.makeText(getApplication(), "Requesting storage module install", Toast.LENGTH_SHORT)
-            .show()
-        val request =
-            SplitInstallRequest
-                .newBuilder()
-                .addModule(pluginName.pluginName)
-                .build()
-
-        splitInstallManager
-            .startInstall(request)
-            .addOnSuccessListener { id -> sessionId = id }
-            .addOnFailureListener { exception ->
-                Log.e(TAG, "Error installing module: ", exception)
-                Toast.makeText(
-                    getApplication(),
-                    "Error requesting module install",
-                    Toast.LENGTH_SHORT
-                ).show()
+    private fun requestStorageInstall(plugin: PluginName) {
+        informUser("Requesting storage module install")
+        SplitInstallRequest
+            .newBuilder()
+            .addModule(plugin.pluginName)
+            .build().let { request ->
+                splitInstallManager
+                    .startInstall(request)
+                    .addOnSuccessListener { id ->
+                        synchronized(sessions) {
+                            sessions.add(SplitSession(id, plugin))
+                        }
+                    }
+                    .addOnFailureListener { exception ->
+                        Log.e(TAG, "Error installing module: ", exception)
+                        informUser("Error requesting module install ${plugin.pluginName}")
+                    }
             }
-        return null
     }
 }

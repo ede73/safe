@@ -7,6 +7,8 @@ plugins {
     kotlin("plugin.power-assert") version "2.0.0"
     alias(libs.plugins.org.jetbrains.kotlin.android) apply false
     alias(libs.plugins.android.dynamic.feature) apply false
+    id("com.google.gms.google-services") version "4.4.2" apply false // Firebase crashalytics
+    id("com.google.firebase.crashlytics") version "3.0.1" apply false
     alias(libs.plugins.android.library) apply false
 }
 

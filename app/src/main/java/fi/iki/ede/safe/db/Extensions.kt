@@ -85,7 +85,7 @@ internal fun <T : Table, C : TableColumns<T>> SQLiteDatabase.insertOrThrow(
     table: T,
     values: ContentValues
 ) =
-    insert(table.tableName, null, values)
+    insertOrThrow(table.tableName, null, values)
 
 
 internal fun <T : Table, C : TableColumns<T>> whereEq(

@@ -18,10 +18,10 @@ import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Attributes
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Elements
 import fi.iki.ede.safe.db.DBHelper
-import fi.iki.ede.safe.model.LoginHandler
-import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
+import fi.iki.ede.safe.model.LoginHandler
+import fi.iki.ede.safe.model.Preferences
 import kotlinx.coroutines.CancellationException
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
@@ -45,8 +45,10 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         backup: String,
         userPassword: Password,
         dbHelper: DBHelper,
-        verifyOldBackupRestoration: (backupCreated: ZonedDateTime, lastBackupDone: ZonedDateTime) -> Boolean
+        reportProgress: (categories: Int?, passwords: Int?, message: String?) -> Unit,
+        verifyUserWantForOldBackup: (backupCreated: ZonedDateTime, lastBackupDone: ZonedDateTime) -> Boolean
     ): Int {
+        reportProgress(null, null, "Begin restoration")
         val myParser = XmlPullParserFactory.newInstance().newPullParser()
 
         val backupEncryptionKeys =
@@ -66,11 +68,15 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                 null
             )
 
-            val passwords = parseXML(dbHelper, db, myParser, verifyOldBackupRestoration)
+            reportProgress(null, null, "Process backup")
+            val passwords =
+                parseXML(dbHelper, db, myParser, verifyUserWantForOldBackup, reportProgress)
             LoginHandler.passwordLogin(context, userPassword)
+            reportProgress(null, null, "Finished with backup")
             return passwords
         } catch (ex: Exception) {
             db.endTransaction()
+            reportProgress(null, null, "Something failed, rollback")
             throw ex
         }
     }
@@ -104,6 +110,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         db: SQLiteDatabase,
         myParser: XmlPullParser,
         verifyOldBackupRestoration: (backupCreated: ZonedDateTime, lastBackupDone: ZonedDateTime) -> Boolean,
+        reportProgress: (categories: Int?, passwords: Int?, message: String?) -> Unit,
     ): Int {
         val path = mutableListOf<Elements?>()
         var category: DecryptableCategoryEntry? = null
@@ -111,6 +118,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         var readGPM: SavedGPM? = null
         val readGPMMapsToPasswords: MutableMap<Long, Set<Long>> = mutableMapOf()
         var passwords = 0
+        var categories = 0
         while (myParser.eventType != XmlPullParser.END_DOCUMENT) {
             when (myParser.eventType) {
                 XmlPullParser.START_TAG -> {
@@ -147,6 +155,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                     lastBackupDone
                                         ?.let { lastBackupTime -> backupCreatedTime < lastBackupTime }
                                 } == true) {
+                                reportProgress(null, null, "Restoring old backup")
                                 if (!verifyOldBackupRestoration(creationTime, lastBackupDone!!)) {
                                     // user wants to cancel
                                     throw CancellationException()
@@ -189,6 +198,9 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             category.encryptedName =
                                 myParser.getEncryptedAttribute(Attributes.CATEGORY_NAME)
                             category.id = dbHelper.addCategory(category)
+                            categories++
+                            reportProgress(categories, null, null)
+
                         }
 
                         listOf(
@@ -328,6 +340,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             Elements.CATEGORY_ITEM
                         ) -> {
                             require(password != null) { "Must have password entry" }
+                            reportProgress(null, passwords, null)
                             dbHelper.addPassword(password)
                             password = null
                         }

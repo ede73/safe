@@ -4,9 +4,12 @@ import android.content.Context
 import android.util.Log
 import com.google.android.play.core.splitinstall.SplitInstallManager
 import com.google.android.play.core.splitinstall.SplitInstallManagerFactory
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.model.Preferences
+import java.util.ServiceConfigurationError
 import java.util.ServiceLoader
+import kotlin.reflect.full.createInstance
 
 private const val TAG = "PluginManager"
 
@@ -14,36 +17,27 @@ object PluginManager {
     /* NEVER READ THIS */
     private var _bundleTestMode = false
 
-    fun setBundleTestMode(isBundleTest: Boolean) {
-        if (BuildConfig.DEBUG) {
-            _bundleTestMode = isBundleTest
-        }
-    }
-
-    fun getBundleTestMode() = if (BuildConfig.DEBUG) _bundleTestMode else false
-
-    fun reinitializePlugins(appContext: Context) {
-        val sm = SplitInstallManagerFactory.create(appContext)
-        Preferences.getEnabledExperiments().forEach {
-            println("Test $it")
-            if (isPluginInstalled(sm, it)) {
-                println(" is instaleld $it, initialize now")
-                initializePlugin(appContext, it)
+    fun getComposableInterface(plugin: PluginName): GetComposable? = try {
+        getPluginFQCN(plugin)?.let {
+            // If plugin isn't enabled, we won't allow it to function
+            if (!isPluginEnabled(plugin)) return null
+            try {
+                return Class.forName(it).kotlin.let { getComposable ->
+                    getComposable.createInstance() as GetComposable
+                }
+            } catch (c: ClassNotFoundException) {
+                Log.e(TAG, "${plugin.pluginName} getComposable not found")
             }
+            null
         }
+    } catch (e: ServiceConfigurationError) {
+        FirebaseCrashlytics.getInstance().recordException(e)
+        null
     }
-
-    fun isPluginInstalled(splitInstallManager: SplitInstallManager, pluginName: PluginName) =
-        if (getBundleTestMode())
-            false
-        else if (BuildConfig.DEBUG)
-            true
-        else
-            splitInstallManager.installedModules.contains(
-                pluginName.pluginName
-            )
 
     fun initializePlugin(context: Context, pluginName: PluginName): RegistrationAPI? {
+        //if (!isPluginEnabled(pluginName)) return null
+        // If plugin isn't enabled, we won't allow it to function
         val serviceLoader = ServiceLoader.load(
             RegistrationAPI.Provider::class.java,
             RegistrationAPI.Provider::class.java.classLoader
@@ -58,16 +52,74 @@ object PluginManager {
         }
 
         while (iterator.hasNext()) {
-            val next = iterator.next()
-            print("Got $next searching for ${pluginName.pluginName}")
-            val module = next.get()
-            print("Got2 $module search ${pluginName.pluginName}")
-            if (module.getName() == pluginName) {
-                module.register(context)
-                Log.d(TAG, "Loaded $pluginName feature through ServiceLoader")
-                return module
+            try {
+                val next = iterator.next()
+                print("Got $next searching for ${pluginName.pluginName}")
+                val module = next.get()
+                print("Got2 $module search ${pluginName.pluginName}")
+                if (module.getName() == pluginName) {
+                    module.register(context)
+                    Log.d(TAG, "Loaded $pluginName feature through ServiceLoader")
+                    return module
+                }
+            } catch (i: Exception) {
+                // on samsung S7+ iterator.next throws...don't understand or know why, workse everywhere else
+                FirebaseCrashlytics.getInstance().recordException(i)
             }
         }
         return null
     }
+
+    /**
+     * Literally answers if plugin is INSTALLED, it is different from enabled
+     * Use isPluginEnabled() if you need to know if user wants the plugin active
+     */
+    fun isPluginInstalled(splitInstallManager: SplitInstallManager, pluginName: PluginName) =
+        if (getBundleTestMode())
+            false
+        else if (BuildConfig.DEBUG)
+            true
+        else splitInstallManager.installedModules.contains(pluginName.pluginName)
+
+    fun setBundleTestMode(isBundleTest: Boolean) {
+        if (BuildConfig.DEBUG) {
+            _bundleTestMode = isBundleTest
+        }
+    }
+
+    fun reinitializePlugins(appContext: Context) {
+        val sm = SplitInstallManagerFactory.create(appContext)
+        Preferences.getEnabledExperiments().forEach {
+            println("Test $it")
+            if (isPluginInstalled(sm, it)) {
+                println(" is installed $it, initialize now")
+                initializePlugin(appContext, it)
+            }
+        }
+    }
+
+    private fun getPluginFQCN(plugin: PluginName): String? {
+        try {
+            val serviceLoader = ServiceLoader.load(
+                RegistrationAPI.Provider::class.java,
+                RegistrationAPI.Provider::class.java.classLoader
+            )
+            val iterator = serviceLoader.iterator()
+            while (iterator.hasNext()) {
+                val next = iterator.next()
+                val module = next.get()
+                if (module.getName() == plugin) {
+                    return next.javaClass.canonicalName
+                }
+            }
+        } catch (e: ServiceConfigurationError) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+        }
+        return null
+    }
+
+    private fun getBundleTestMode() = if (BuildConfig.DEBUG) _bundleTestMode else false
+
+    private fun isPluginEnabled(plugin: PluginName) =
+        plugin in Preferences.getEnabledExperiments()
 }

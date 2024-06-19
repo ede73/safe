@@ -20,7 +20,7 @@ class MyResultLauncher(
 ) : ActivityResultLauncher<Intent>() {
 
     init {
-        require(launchedIntents.keys.none { it -> it.first == testTag }) {
+        require(launchedIntents.keys.none { it.first == testTag }) {
             "Each and TestTag must be unique, else we can't identify who's launching and what"
         }
 
@@ -58,19 +58,19 @@ class MyResultLauncher(
         }
 
         fun getLaunchedIntentsAndCallback(testTag: TestTag) =
-            launchedIntents.keys.first { it -> it.first == testTag }.let {
+            launchedIntents.keys.first { it.first == testTag }.let {
                 Pair(it.second, launchedIntents[it]!!)
             }
 
-        fun clearLaunchedIntents(testTag: TestTag) =
-            launchedIntents.remove(launchedIntents.keys.first { it -> it.first == testTag })
+//        fun clearLaunchedIntents(testTag: TestTag) =
+//            launchedIntents.remove(launchedIntents.keys.first { it.first == testTag })
 
         fun beforeClassJvmStaticSetup() {
             mockkStatic(::registerActivityForResults)
             // Only place to mock these is here, when @Test starts, it is too late, activity already initialized
             every {
 //            registerActivityForResults<Intent, ActivityResult>(
-                registerActivityForResults(any(), any(), any(), any())
+                registerActivityForResults(any(), any(), any())
             } answers {
                 val instance = it.invocation
                 val testTag = firstArg<TestTag>()
@@ -83,7 +83,7 @@ class MyResultLauncher(
         }
 
         fun fetchResults() {
-            verify { registerActivityForResults(any(), any(), any(), any()) }
+            verify { registerActivityForResults(any(), any(), any()) }
         }
     }
 }
