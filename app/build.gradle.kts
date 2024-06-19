@@ -116,18 +116,16 @@ android {
                     merges += "/META-INF/services/fi.iki.ede.safe.splits.RegistrationAPI\$Provider"
                 }
             }
-            debug {
-                packaging {
-                    resources {
-                        merges += "/META-INF/services/fi.iki.ede.safe.splits.RegistrationAPI\$Provider"
-                    }
-                }
-            }
             buildConfigField("String", "GIT_COMMIT_HASH", "\"${gitCommitHash}\"")
         }
         debug {
             applicationIdSuffix = ".debug"
             buildConfigField("String", "GIT_COMMIT_HASH", "\"${gitCommitHash}\"")
+            packaging {
+                resources {
+                    merges += "/META-INF/services/fi.iki.ede.safe.splits.RegistrationAPI\$Provider"
+                }
+            }
         }
     }
 
