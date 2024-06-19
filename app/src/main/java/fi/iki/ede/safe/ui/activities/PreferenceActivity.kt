@@ -14,6 +14,14 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.model.Preferences
+import fi.iki.ede.safe.model.Preferences.PREFERENCE_AUTOBACKUP_QUOTA_EXCEEDED
+import fi.iki.ede.safe.model.Preferences.PREFERENCE_AUTOBACKUP_RESTORE_FINISHED
+import fi.iki.ede.safe.model.Preferences.PREFERENCE_AUTOBACKUP_RESTORE_STARTED
+import fi.iki.ede.safe.model.Preferences.PREFERENCE_AUTOBACKUP_STARTED
+import fi.iki.ede.safe.model.Preferences.getAutoBackupQuotaExceeded
+import fi.iki.ede.safe.model.Preferences.getAutoBackupRestoreFinished
+import fi.iki.ede.safe.model.Preferences.getAutoBackupRestoreStarts
+import fi.iki.ede.safe.model.Preferences.getAutoBackupStarts
 import fi.iki.ede.safe.service.AutolockingService
 import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.ui.models.PluginLoaderViewModel
@@ -114,10 +122,21 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
                 throw RuntimeException("Crash Test from preferences")
             }
 
-            findPreference<Preference>(Preferences.PREFERENCE_LAST_BACKUP_TIME).let { lastBackupTime ->
+            findPreference<Preference>(Preferences.PREFERENCE_LAST_BACKUP_TIME).let { it ->
                 val lb = Preferences.getLastBackupTime()?.toLocalDateTime()?.toString()
                     ?: resources.getString(R.string.preferences_summary_lastback_never_done)
-                lastBackupTime?.summary = lb
+                it?.summary = lb
+            }
+
+            listOf(
+                PREFERENCE_AUTOBACKUP_QUOTA_EXCEEDED to ::getAutoBackupQuotaExceeded,
+                PREFERENCE_AUTOBACKUP_STARTED to ::getAutoBackupStarts,
+                PREFERENCE_AUTOBACKUP_RESTORE_STARTED to ::getAutoBackupRestoreStarts,
+                PREFERENCE_AUTOBACKUP_RESTORE_FINISHED to ::getAutoBackupRestoreFinished
+            ).forEach { (prefKey, getTime) ->
+                findPreference<Preference>(prefKey)?.summary =
+                    getTime()?.toLocalDateTime()?.toString()
+                        ?: "N/A"
             }
         }
 

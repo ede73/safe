@@ -6,8 +6,13 @@
    See https://developer.android.com/about/versions/12/backup-restore
 -->
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <include
+        domain="database"
+        path="safe-journal" />
+    <include
+        domain="database"
+        path="safe" />
+    <include
+        domain="sharedpref"
+        path="fi.iki.ede.safe.debug_preferences.xml" />
 </full-backup-content>

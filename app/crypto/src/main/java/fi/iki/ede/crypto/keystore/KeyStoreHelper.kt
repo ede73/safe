@@ -3,6 +3,7 @@ package fi.iki.ede.crypto.keystore
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.security.keystore.KeyProtection
+import fi.iki.ede.crypto.BuildConfig
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
@@ -37,6 +38,15 @@ class KeyStoreHelper : CipherUtilities() {
     init {
         keyStore.load(null)
         check(keyStore.containsAlias(KEY_SECRET_MASTERKEY)) { "Keystore MUST have been initialized with .importExistingEncryptedMasterKey or .createNewKey" }
+    }
+
+    // never ever in release, only used for testing
+    fun testingDeleteKeys_DO_NOT_USE() {
+        if (BuildConfig.DEBUG) {
+            keyStore.deleteEntry(KEY_BIOKEY)
+            keyStore.deleteEntry(KEY_SECRET_MASTERKEY)
+            check(!keyStore.containsAlias(KEY_SECRET_MASTERKEY)) { "Keystore MUST be empty" }
+        }
     }
 
     /**

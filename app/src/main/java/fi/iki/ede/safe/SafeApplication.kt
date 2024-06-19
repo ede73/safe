@@ -1,6 +1,7 @@
 package fi.iki.ede.safe
 
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.preference.PreferenceManager
 import com.google.android.play.core.splitcompat.SplitCompatApplication
 import com.google.firebase.FirebaseApp
@@ -13,11 +14,13 @@ import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.splits.PluginManager.reinitializePlugins
 import fi.iki.ede.safe.splits.PluginName
 
+private val TAG = "SafeApplication"
 
 class SafeApplication : SplitCompatApplication(),
     SharedPreferences.OnSharedPreferenceChangeListener {
     init {
         instance = this
+        Log.w(TAG, "init")
 //        if (BuildConfig.DEBUG) {
 //            StrictMode.setVmPolicy(
 //                StrictMode.VmPolicy.Builder()
@@ -33,6 +36,7 @@ class SafeApplication : SplitCompatApplication(),
 
     override fun onCreate() {
         super.onCreate()
+        Log.w(TAG, "onCreate")
         FirebaseApp.initializeApp(this)
         FirebaseCrashlytics.getInstance()
             .setCustomKey("git_commit_hash", BuildConfig.GIT_COMMIT_HASH)
@@ -47,6 +51,7 @@ class SafeApplication : SplitCompatApplication(),
 
     override fun onTerminate() {
         super.onTerminate()
+        Log.w(TAG, "onTerminate")
         PreferenceManager.getDefaultSharedPreferences(this)
             .unregisterOnSharedPreferenceChangeListener(this)
     }

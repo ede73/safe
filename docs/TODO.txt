@@ -32,3 +32,36 @@ Looks great ! https://developer.android.com/studio/test/other-testing-tools/app-
 - Credentials Manager Api (14+ devices - no one supports)
 DONE:
 - long name/desc + date overflows
+
+
+
+XML
+
+<resources>
+  <bool name="enableOnBackInvokedCallback">false</bool>
+  <bool name="useFullBackupContent">true</bool>
+</resources>
+AI-generated code. Review and use carefully. More info on FAQ.
+In res/values-v33/bools.xml (for API level 33 and higher):
+XML
+
+<resources>
+  <bool name="enableOnBackInvokedCallback">true</bool>
+</resources>
+AI-generated code. Review and use carefully. More info on FAQ.
+In res/values-v31/bools.xml (for API level 31 and higher):
+XML
+
+<resources>
+  <bool name="useFullBackupContent">false</bool>
+</resources>
+AI-generated code. Review and use carefully. More info on FAQ.
+Use Boolean Values in Manifest: Modify your AndroidManifest.xml to use these boolean resources:
+XML
+
+<application
+  android:enableOnBackInvokedCallback="@bool/enableOnBackInvokedCallback"
+  android:fullBackupContent="@xml/backup_rules"
+  tools:targetApi="33">
+  ...
+</application>
