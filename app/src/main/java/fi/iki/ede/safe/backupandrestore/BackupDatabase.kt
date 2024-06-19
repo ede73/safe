@@ -24,17 +24,6 @@ import java.time.ZonedDateTime
 class BackupDatabase : ExportConfig(ExportVersion.V1) {
     private val encrypter = KeyStoreHelperFactory.getEncrypter()
 
-    @Suppress("SameParameterValue")
-    private fun makePair(
-        name: Attributes,
-        encryptedValue: IVCipherText?
-    ) = if (encryptedValue == null || encryptedValue.isEmpty()) {
-        null
-    } else {
-        Pair(name, encryptedValue)
-    }
-
-
     fun generate(salt: Salt, currentEncryptedMasterKey: IVCipherText): HexString {
         val serializer = XmlPullParserFactory.newInstance().newSerializer()
         val xmlStringWriter = StringWriter()
@@ -76,6 +65,16 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
         backup.appendLine(encryptedBackup.iv.toHexString())
         backup.appendLine(encryptedBackup.cipherText.toHexString())
         return backup.toString()
+    }
+    
+    @Suppress("SameParameterValue")
+    private fun makePair(
+        name: Attributes,
+        encryptedValue: IVCipherText?
+    ) = if (encryptedValue == null || encryptedValue.isEmpty()) {
+        null
+    } else {
+        Pair(name, encryptedValue)
     }
 
     companion object {

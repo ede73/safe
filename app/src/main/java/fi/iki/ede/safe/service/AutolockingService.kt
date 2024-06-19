@@ -22,6 +22,10 @@ class AutolockingService : Service() {
     private lateinit var mIntentReceiver: BroadcastReceiver
     private lateinit var serviceNotification: ServiceNotification
 
+    override fun onBind(intent: Intent): IBinder? {
+        return null
+    }
+
     override fun onCreate() {
         mIntentReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
@@ -45,35 +49,6 @@ class AutolockingService : Service() {
         serviceNotification = ServiceNotification(this)
     }
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    private fun newRegisterReceiver() {
-        registerReceiver(
-            mIntentReceiver,
-            IntentFilter(ACTION_RESTART_TIMER).let {
-                it.addAction(Intent.ACTION_SCREEN_OFF)
-                it
-            }, RECEIVER_NOT_EXPORTED
-        )
-    }
-
-    @SuppressLint("UnspecifiedRegisterReceiverFlag")
-    private fun oldRegisterReceiver() {
-        registerReceiver(
-            mIntentReceiver,
-            IntentFilter(ACTION_RESTART_TIMER).let {
-                it.addAction(Intent.ACTION_SCREEN_OFF)
-                it
-            }
-        )
-    }
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        initializeAutolockCountdownTimer()
-        // We want this service to continue running until it is explicitly
-        // stopped, so return sticky.
-        return START_STICKY
-    }
-
     override fun onDestroy() {
         unregisterReceiver(mIntentReceiver)
         if (LoginHandler.isLoggedIn()) {
@@ -83,16 +58,11 @@ class AutolockingService : Service() {
         autoLockCountdownNotifier?.cancel()
     }
 
-    override fun onBind(intent: Intent): IBinder? {
-        return null
-    }
-
-    private fun lockOut() {
-        serviceNotification.clearNotification()
-        autoLockCountdownNotifier?.cancel()
-        sendRestartTimer(this)
-        lockTheApplication(this)
-        launchLoginScreen(this)
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        initializeAutolockCountdownTimer()
+        // We want this service to continue running until it is explicitly
+        // stopped, so return sticky.
+        return START_STICKY
     }
 
     private fun initializeAutolockCountdownTimer() {
@@ -130,6 +100,42 @@ class AutolockingService : Service() {
         millisecondsTillAutoLock = timeoutUntilStop
     }
 
+    private fun launchLoginScreen(context: Context) {
+        this.sendBroadcast(Intent(ACTION_LAUNCH_LOGIN_SCREEN).apply {
+            setPackage(context.packageName)
+        })
+    }
+
+    private fun lockOut() {
+        serviceNotification.clearNotification()
+        autoLockCountdownNotifier?.cancel()
+        sendRestartTimer(this)
+        lockTheApplication(this)
+        launchLoginScreen(this)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun newRegisterReceiver() {
+        registerReceiver(
+            mIntentReceiver,
+            IntentFilter(ACTION_RESTART_TIMER).let {
+                it.addAction(Intent.ACTION_SCREEN_OFF)
+                it
+            }, RECEIVER_NOT_EXPORTED
+        )
+    }
+
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
+    private fun oldRegisterReceiver() {
+        registerReceiver(
+            mIntentReceiver,
+            IntentFilter(ACTION_RESTART_TIMER).let {
+                it.addAction(Intent.ACTION_SCREEN_OFF)
+                it
+            }
+        )
+    }
+
     /**
      * Restart the CountDownTimer()
      */
@@ -137,12 +143,6 @@ class AutolockingService : Service() {
         // must be started with startTimer first.
         autoLockCountdownNotifier?.cancel()
         initializeAutolockCountdownTimer()
-    }
-
-    private fun launchLoginScreen(context: Context) {
-        this.sendBroadcast(Intent(ACTION_LAUNCH_LOGIN_SCREEN).apply {
-            setPackage(context.packageName)
-        })
     }
 
     companion object {

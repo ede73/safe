@@ -10,6 +10,13 @@ class DecryptableCategoryEntry {
     val plainName: String
         get() = decrypt(encryptedName)
 
+    // Flow state is annoying since it requires NEW ENTITIES for changes to register
+    fun copy(): DecryptableCategoryEntry = DecryptableCategoryEntry().apply {
+        id = this@DecryptableCategoryEntry.id
+        encryptedName = this@DecryptableCategoryEntry.encryptedName
+        containedPasswordCount = this@DecryptableCategoryEntry.containedPasswordCount
+    }
+
     private val decrypter = KeyStoreHelperFactory.getDecrypter()
 
     private fun decrypt(value: IVCipherText): String {
@@ -18,10 +25,4 @@ class DecryptableCategoryEntry {
 
     var containedPasswordCount = 0
 
-    // Flow state is annoying since it requires NEW ENTITIES for changes to register
-    fun copy(): DecryptableCategoryEntry = DecryptableCategoryEntry().apply {
-        id = this@DecryptableCategoryEntry.id
-        encryptedName = this@DecryptableCategoryEntry.encryptedName
-        containedPasswordCount = this@DecryptableCategoryEntry.containedPasswordCount
-    }
 }

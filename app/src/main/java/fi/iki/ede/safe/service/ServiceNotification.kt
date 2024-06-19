@@ -23,16 +23,8 @@ class ServiceNotification(val context: Context) {
         createChannel(context)
     }
 
-    private fun createChannel(context: Context) {
-        val name = context.getString(R.string.notification_lock_title)
-        val description = context.getString(R.string.notification_lock_description)
-        val importance = NotificationManager.IMPORTANCE_LOW
-        val mChannel = NotificationChannel(CHANNEL_ID, name, importance)
-        mChannel.enableLights(false)
-        mChannel.enableVibration(false)
-        mChannel.description = description
-        (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
-            .createNotificationChannel(mChannel)
+    fun clearNotification() {
+        mNotifyManager.cancel(NOTIFICATION_ID)
     }
 
     fun setNotification(context: Context) {
@@ -62,17 +54,6 @@ class ServiceNotification(val context: Context) {
         mNotifyManager.notify(NOTIFICATION_ID, notificationBuilder.build())
     }
 
-    // Alas permissions can ONLY be requested from Activity
-    // And this is running as services, so we need to route the request
-    // And pop up the question once activity is opened (let's say CategoryList)
-    private fun flagToRequestNotificationPermission() {
-        Preferences.setNotificationPermissionRequired(true)
-    }
-
-    fun clearNotification() {
-        mNotifyManager.cancel(NOTIFICATION_ID)
-    }
-
     /**
      * Update the existing notification progress bar. This should start with
      * progress == max and progress decreasing over time to depict time running
@@ -90,6 +71,25 @@ class ServiceNotification(val context: Context) {
         }
         Preferences.setNotificationPermissionRequired(false)
         mNotifyManager.notify(NOTIFICATION_ID, notificationBuilder.build())
+    }
+
+    private fun createChannel(context: Context) {
+        val name = context.getString(R.string.notification_lock_title)
+        val description = context.getString(R.string.notification_lock_description)
+        val importance = NotificationManager.IMPORTANCE_LOW
+        val mChannel = NotificationChannel(CHANNEL_ID, name, importance)
+        mChannel.enableLights(false)
+        mChannel.enableVibration(false)
+        mChannel.description = description
+        (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
+            .createNotificationChannel(mChannel)
+    }
+
+    // Alas permissions can ONLY be requested from Activity
+    // And this is running as services, so we need to route the request
+    // And pop up the question once activity is opened (let's say CategoryList)
+    private fun flagToRequestNotificationPermission() {
+        Preferences.setNotificationPermissionRequired(true)
     }
 
     companion object {

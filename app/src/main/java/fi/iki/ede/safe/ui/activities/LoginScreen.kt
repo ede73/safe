@@ -37,7 +37,7 @@ import fi.iki.ede.safe.service.AutolockingService
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.splits.PluginManager
 import fi.iki.ede.safe.ui.composable.BiometricsComponent
-import fi.iki.ede.safe.ui.composable.PasswordPrompt
+import fi.iki.ede.safe.ui.composable.LoginPasswordPrompts
 import fi.iki.ede.safe.ui.composable.TopActionBar
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.startActivityForResults
@@ -235,7 +235,7 @@ private fun LoginScreenCompose(
         ) {
             Column {
                 TopActionBar(loginScreen = true)
-                PasswordPrompt(loginPrecondition) { loginStyle, pwd ->
+                LoginPasswordPrompts(loginPrecondition) { loginStyle, pwd ->
                     goodPasswordEntered(loginStyle, pwd)
                 }
                 // TODO: if we're fresh from backup - biometrics don't work
