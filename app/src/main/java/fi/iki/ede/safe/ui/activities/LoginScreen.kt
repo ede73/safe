@@ -1,5 +1,6 @@
 package fi.iki.ede.safe.ui.activities
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -21,12 +22,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
+import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.MyBackupAgent
+import fi.iki.ede.safe.db.DBHelper
+import fi.iki.ede.safe.db.DBHelper.Companion.DATABASE_NAME
+import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.DataModel
-import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.service.AutolockingService
@@ -41,6 +45,28 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
+// This login logic is bit complex:
+// But basically there are two outcomes:
+//  - login (try) with password
+//  - enter new password, which reinitializes DB and master key
+enum class LoginStyle {
+    FIRST_TIME_LOGIN_CLEAR_DATABASE,
+    EXISTING_LOGIN
+}
+
+// And preconditions basically two:
+// - we have no(actually empty) database
+// - we have data base (with masterkey)
+//   - why? because we've gone thru first part and this is 'relogin'
+//   - or! app was perhap uninstalled, reinstalled and Google Autobackup gave us OLD database
+//      - we can accept this and try to login
+//      - or we can just discard it and make totally new one (everyone has backups right?)
+enum class LoginPrecondition {
+    FIRST_TIME_LOGIN_EMPTY_DATABASE,
+    NORMAL_LOGIN,
+    FIRST_TIME_LOGIN_RESTORED_DATABASE
+}
 
 open class LoginScreen : ComponentActivity() {
     private var openCategoryListScreen: Boolean = true
@@ -70,22 +96,36 @@ open class LoginScreen : ComponentActivity() {
             }
         }
 
-        val firstTimeUse = Preferences.isFirstTimeLogin()
+
         setContent {
             LoginScreenCompose(
-                firstTimeUse,
+                getLoginScreenPrecondition(),
                 ::goodPasswordEntered,
                 biometricsVerify
             )
         }
     }
 
+    private fun getLoginScreenPrecondition(): LoginPrecondition =
+        when (haveMasterkeyInDatabase(this) to isGoodRestoredContent(this)) {
+            false to false -> LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE
+            false to true -> LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE
+            true to false -> LoginPrecondition.NORMAL_LOGIN
+            true to true -> LoginPrecondition.FIRST_TIME_LOGIN_RESTORED_DATABASE
+            else -> {
+                // interesting linter error, 2 booleans can only make 4 states
+                throw Exception("Unexpected state")
+            }
+        }
+
     private fun goodPasswordEntered(
-        firstTimeUse: Boolean,
+        loginStyle: LoginStyle,
         it: Password,
-    ) {
+    ): Boolean {
         val context = this
-        val passwordIsAccepted = if (firstTimeUse) {
+        val passwordIsAccepted = if (loginStyle == LoginStyle.FIRST_TIME_LOGIN_CLEAR_DATABASE) {
+            context.deleteDatabase(DATABASE_NAME)
+            DBHelperFactory.initializeDatabase(DBHelper(context, DATABASE_NAME, true))
             LoginHandler.firstTimeLogin(it)
             true
         } else {
@@ -94,49 +134,38 @@ open class LoginScreen : ComponentActivity() {
 
         if (passwordIsAccepted) {
             val registerBiometricsActivity =
-                (firstTimeUse && BiometricsActivity.isBiometricEnabled())
+                (loginStyle == LoginStyle.FIRST_TIME_LOGIN_CLEAR_DATABASE && BiometricsActivity.isBiometricEnabled())
                         || (BiometricsActivity.isBiometricEnabled() &&
                         !BiometricsActivity.haveRecordedBiometric())
             if (registerBiometricsActivity) {
                 biometricsFirstTimeRegister.launch(BiometricsActivity.getRegistrationIntent(context))
             } else {
-                finishLoginProcess(firstTimeUse)
+                finishLoginProcess()
             }
         }
+        return passwordIsAccepted
     }
 
-    private fun finishLoginProcess(firstTimeUse: Boolean) {
-        beginToLoadDB(firstTimeUse)
+    private fun finishLoginProcess() {
+        beginToLoadDB()
+        MyBackupAgent.removeRestoreMark(this)
 
         // We've LOGGED IN, so we must have master key ready and done
         // Mitigate coming from old client where first time login preference
         // wasn't used
-        Preferences.setMasterkeyInitialized()
         setResult(RESULT_OK, Intent())
         startService(Intent(applicationContext, AutolockingService::class.java))
         if (openCategoryListScreen) {
             IntentManager.startCategoryScreen(this)
         }
-        MyBackupAgent.removeRestoreMark(this)
         finish()
     }
 
-    private fun beginToLoadDB(firstTimeUse: Boolean) {
+    private fun beginToLoadDB() {
         val myScope = CoroutineScope(Dispatchers.Main)
         myScope.launch {
             withContext(Dispatchers.IO) {
                 DataModel.loadFromDatabase()
-
-                if (firstTimeUse) {
-                    val entry = DecryptableCategoryEntry().apply {
-                        encryptedName = KeyStoreHelperFactory.getEncrypter().invoke(
-                            ("Category - Long press to edit".toByteArray())
-                        )
-                    }
-                    DataModel.addOrEditCategory(entry)
-
-                    // TODO: well, do add some passwords as well
-                }
             }
         }
     }
@@ -147,7 +176,7 @@ open class LoginScreen : ComponentActivity() {
             when (result.resultCode) {
                 RESULT_OK -> {
                     BiometricsActivity.registerBiometric()
-                    finishLoginProcess(true)
+                    finishLoginProcess()
                 }
 
                 RESULT_CANCELED -> {
@@ -166,7 +195,7 @@ open class LoginScreen : ComponentActivity() {
                         // should never happen
                         Log.e("---", "Biometric verification NOT accepted - perhaps a new backup?")
                     } else {
-                        finishLoginProcess(false)
+                        finishLoginProcess()
                     }
                 }
 
@@ -189,20 +218,25 @@ open class LoginScreen : ComponentActivity() {
 
 @Composable
 private fun LoginScreenCompose(
-    firstTimeUse: Boolean,
-    goodPasswordEntered: (Boolean, Password) -> Unit,
+    loginPrecondition: LoginPrecondition,
+    goodPasswordEntered: (LoginStyle, Password) -> Boolean,
     biometricsVerify: ActivityResultLauncher<Intent>? = null,
 ) {
     SafeTheme {
         val context = LocalContext.current
+
+        val weHaveRestoredDatabase = isGoodRestoredContent(context)
+        // there is one big caveat now
+        // IF our data was indeed restored from backup
+        // making NEW login will basically render our database un-readable(???)
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
             Column {
                 TopActionBar(loginScreen = true)
-                PasswordPrompt(firstTimeUse) { it: Password ->
-                    goodPasswordEntered(firstTimeUse, it)
+                PasswordPrompt(loginPrecondition) { loginStyle, pwd ->
+                    goodPasswordEntered(loginStyle, pwd)
                 }
                 // TODO: if we're fresh from backup - biometrics don't work
                 biometricsVerify?.let { BiometricsComponent(it) }
@@ -228,6 +262,23 @@ private fun LoginScreenCompose(
     }
 }
 
+private fun haveMasterkeyInDatabase(context: Context): Boolean {
+    val db = DBHelperFactory.getDBHelper()
+    val (salt, cipheredMasterKey) = try {
+        db.fetchSaltAndEncryptedMasterKey()
+    } catch (n: Exception) {
+        Salt.getEmpty() to IVCipherText.getEmpty()
+    }
+    if (salt.isEmpty()) return false
+    if (cipheredMasterKey.isEmpty()) return false
+    return true
+}
+
+private fun isGoodRestoredContent(context: Context) =
+    if (!MyBackupAgent.haveRestoreMark(context)) false
+    else haveMasterkeyInDatabase(context)
+
+
 @Preview(showBackground = true)
 @Composable
 fun LoginScreenPreview() {
@@ -235,8 +286,8 @@ fun LoginScreenPreview() {
     KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
     SafeTheme {
         LoginScreenCompose(
-            firstTimeUse = true,
-            goodPasswordEntered = { _, _ -> /* No-op for preview */ },
+            LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE,
+            goodPasswordEntered = { _, _ -> /* No-op for preview */ true },
         )
     }
 }

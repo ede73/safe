@@ -35,6 +35,7 @@
     <string name="generic_ok">OK!</string>
     <string name="generic_yes_delete">Poista!</string>
     <string name="login_button">Kirjaudu</string>
+    <string name="login_button_clear_db">Kirjaudu/Nollaa tietokanta</string>
     <string name="login_invalid_password">Väärä salasana</string>
     <string name="login_password_tip">Syötä salana</string>
     <string name="login_screen_restore_mark_message">"Näyttää että Googlen automaattisen varmuuskopion palautus tehtiin noin %1$s"</string>
@@ -119,4 +120,6 @@
     <string name="title_categorypager">Sivutettu kategorianäyttö</string>
     <string name="title_hibp">HIBP tuki</string>
     <string name="title_oisafeimport">OISafe salasanojen sisääntuonti</string>
+    <string name="login_anew_button">Hylkää varmuuskopio, aloita alusta</string>
+    <string name="login_anew_retry_button">Kokeile kuitenkin perussisäänkirjausta</string>
 </resources>

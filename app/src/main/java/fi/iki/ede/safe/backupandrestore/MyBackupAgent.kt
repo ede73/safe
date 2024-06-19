@@ -85,7 +85,7 @@ class MyBackupAgent : BackupAgentHelper() {
 
         fun removeRestoreMark(context: Context) {
             val restored = File(context.filesDir, RESTORE_MARK)
-            if (!restored.exists()) {
+            if (restored.exists()) {
                 restored.delete()
             }
         }

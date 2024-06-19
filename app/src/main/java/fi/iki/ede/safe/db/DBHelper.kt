@@ -12,7 +12,6 @@ import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.CipherUtilities
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
-import fi.iki.ede.safe.model.Preferences
 
 typealias DBID = Long
 
@@ -113,8 +112,6 @@ class DBHelper internal constructor(
     fun storeSaltAndEncryptedMasterKey(salt: Salt, ivCipher: IVCipherText) {
         writableDatabase.apply {
             beginTransaction() // TODO: BAD, we have transaction in restore already
-            // DONT USE Use{} transaction will die
-
             delete(Keys).let {
                 insert(
                     Keys,
@@ -127,7 +124,6 @@ class DBHelper internal constructor(
 
             setTransactionSuccessful()
             endTransaction()
-            Preferences.setMasterkeyInitialized()
         }
     }
 
@@ -152,8 +148,6 @@ class DBHelper internal constructor(
         }
 
     fun addCategory(entry: DecryptableCategoryEntry) =
-    // DONT USE Use{} transaction will die
-        //            "${Category.CategoryColumns.NAME.columnName}='${entry.encryptedName}'",
         readableDatabase.query(
             true,
             Category,
