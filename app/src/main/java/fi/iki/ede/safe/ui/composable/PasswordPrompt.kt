@@ -14,22 +14,26 @@ import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
+import fi.iki.ede.safe.ui.activities.LoginPrecondition
+import fi.iki.ede.safe.ui.activities.LoginStyle
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @Composable
 fun PasswordPrompt(
-    firstTimeInitialize: Boolean,
+    loginPrecondition: LoginPrecondition,
     modifier: Modifier = Modifier,
-    goodPasswordEntered: (password: Password) -> Unit,
+    goodPasswordEntered: (loginStyle: LoginStyle, password: Password) -> Boolean,
 ) {
+    var loginStyle by remember { mutableStateOf(loginPrecondition) }
+    //var loginInProgress by remember { mutableStateOf(false) }
     val passwordMinimumLength = integerResource(id = R.integer.password_minimum_length)
     Column {
         Text(text = stringResource(id = R.string.login_tip))
         var verifiedPassword: Password by remember { mutableStateOf(Password.getEmpty()) }
         VerifiedPasswordTextField(
-            firstTimeInitialize,
+            loginStyle == LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE,
             R.string.login_password_tip,
             R.string.login_verify_password_tip,
             modifier.testTag(TestTag.TEST_TAG_PASSWORD_PROMPT),
@@ -41,10 +45,44 @@ fun PasswordPrompt(
         SafeButton(
             modifier = Modifier.testTag(TestTag.TEST_TAG_LOGIN_BUTTON),
             onClick = {
-                goodPasswordEntered(verifiedPassword)
+                val whatToDoAfterLogin = when (loginStyle) {
+                    LoginPrecondition.FIRST_TIME_LOGIN_RESTORED_DATABASE -> LoginStyle.EXISTING_LOGIN
+                    LoginPrecondition.NORMAL_LOGIN -> LoginStyle.EXISTING_LOGIN
+                    LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE -> LoginStyle.FIRST_TIME_LOGIN_CLEAR_DATABASE
+                }
+                if (!goodPasswordEntered(whatToDoAfterLogin, verifiedPassword)) {
+                    //loginInProgress = false
+                }
             },
-            enabled = if (firstTimeInitialize) verifiedPassword != null && verifiedPassword.length >= passwordMinimumLength else !(verifiedPassword == null || verifiedPassword.isEmpty())
-        ) { Text(stringResource(id = R.string.login_button)) }
+            enabled = /*!loginInProgress &&*/ (if (loginStyle == LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE)
+                verifiedPassword != null && verifiedPassword.length >= passwordMinimumLength
+            else !(verifiedPassword == null || verifiedPassword.isEmpty()))
+        ) {
+            when (loginStyle) {
+                LoginPrecondition.FIRST_TIME_LOGIN_RESTORED_DATABASE -> Text(stringResource(id = R.string.login_button))
+                LoginPrecondition.NORMAL_LOGIN -> Text(stringResource(id = R.string.login_button))
+                LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE -> Text(stringResource(id = R.string.login_button_clear_db))
+            }
+        }
+
+        if (loginPrecondition == LoginPrecondition.FIRST_TIME_LOGIN_RESTORED_DATABASE) {
+            SafeButton(
+                modifier = Modifier.testTag(TestTag.TEST_TAG_LOGIN_ANEW_BUTTON),
+                onClick = {
+                    loginStyle = when (loginStyle) {
+                        LoginPrecondition.FIRST_TIME_LOGIN_RESTORED_DATABASE -> LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE
+                        LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE -> LoginPrecondition.FIRST_TIME_LOGIN_RESTORED_DATABASE
+                        LoginPrecondition.NORMAL_LOGIN -> throw Exception("Normal login here is not possible")
+                    }
+                },
+            ) {
+                when (loginStyle) {
+                    LoginPrecondition.FIRST_TIME_LOGIN_RESTORED_DATABASE -> Text(stringResource(id = R.string.login_anew_button))
+                    LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE -> Text(stringResource(id = R.string.login_anew_retry_button))
+                    LoginPrecondition.NORMAL_LOGIN -> {}
+                }
+            }
+        }
     }
 }
 
@@ -54,12 +92,19 @@ fun PasswordPromptPreview() {
     SafeTheme {
         Column {
             Text(text = "------ First time init")
-            PasswordPrompt(firstTimeInitialize = true) {
+            PasswordPrompt(LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE) { _, _ ->
                 println("Got a good password")
+                true
+            }
+            Text(text = "------ First time init")
+            PasswordPrompt(LoginPrecondition.NORMAL_LOGIN) { _, _ ->
+                println("Got a good password")
+                true
             }
             Text(text = "------ Normal login")
-            PasswordPrompt(firstTimeInitialize = false) {
+            PasswordPrompt(LoginPrecondition.FIRST_TIME_LOGIN_RESTORED_DATABASE) { _, _ ->
                 println("Got a good password")
+                true
             }
         }
     }

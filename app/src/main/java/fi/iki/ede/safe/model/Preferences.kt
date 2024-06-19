@@ -50,7 +50,6 @@ object Preferences {
     private const val PREFERENCE_LOCK_ON_SCREEN_LOCK = "lock_on_screen_lock"
     private const val PREFERENCE_LOCK_TIMEOUT_DEFAULT_VALUE_MINUTES = "5"
     private const val PREFERENCE_CLIPBOARD_CLEAR_DELAY_DEFAULT_VALUE = "45"
-    private const val PREFERENCE_MASTERKEY_INITIALIZED = "masterkey_initialized"
     const val PREFERENCE_LAST_BACKUP_TIME = "time_of_last_backup"
     const val PREFERENCE_AUTOBACKUP_QUOTA_EXCEEDED = "autobackup_quota_exceeded"
     const val PREFERENCE_AUTOBACKUP_STARTED = "autobackup_started"
@@ -95,16 +94,7 @@ object Preferences {
     // at screen (ie. from activity)
     fun setNotificationPermissionRequired(value: Boolean) =
         sharedPreferences.edit().putBoolean(NOTIFICATION_PERMISSION_REQUIRED, value).apply()
-
-    fun isFirstTimeLogin() =
-        !sharedPreferences.getBoolean(PREFERENCE_MASTERKEY_INITIALIZED, false)
-
-    fun setMasterkeyInitialized() =
-        sharedPreferences.edit().putBoolean(PREFERENCE_MASTERKEY_INITIALIZED, true).apply()
-
-    fun resetMasterkeyInitialized() =
-        sharedPreferences.edit().putBoolean(PREFERENCE_MASTERKEY_INITIALIZED, false).apply()
-
+    
     fun getLastBackupTime() = sharedPreferences.getLong(PREFERENCE_LAST_BACKUP_TIME, 0)
         .takeIf { it != 0L }
         ?.let { DateUtils.unixEpochSecondsToLocalZonedDateTime(it) }
