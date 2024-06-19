@@ -85,7 +85,7 @@ fun MoveSiteEntry(
                                     }
                                     .fillMaxWidth()
                                     .padding(12.dp)
-                                    .testTag(TestTag.TEST_TAG_CATEGORY_MOVE_ROW)
+                                    .testTag(TestTag.CATEGORY_MOVE_ROW)
                             )
                         }
                     }

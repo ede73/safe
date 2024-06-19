@@ -52,10 +52,10 @@ class SearchListScreenTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun trySearch() = runTest {
-        siteEntryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_SEARCH_TEXT_FIELD)
+        siteEntryActivityTestRule.onNodeWithTag(TestTag.SEARCH_TEXT_FIELD)
             .assertIsDisplayed()
         // DEFAULT_2ND_CATEGORY -> category name is part of default passwords
-        siteEntryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_SEARCH_TEXT_FIELD)
+        siteEntryActivityTestRule.onNodeWithTag(TestTag.SEARCH_TEXT_FIELD)
             .performTextInput(DEFAULT_2ND_CATEGORY)
         siteEntryActivityTestRule.waitForIdle()
 
@@ -63,7 +63,7 @@ class SearchListScreenTest {
 
         siteEntryActivityTestRule.waitUntil {
             siteEntryActivityTestRule.onAllNodesWithTag(
-                TestTag.TEST_TAG_SEARCH_MATCH,
+                TestTag.SEARCH_MATCH,
                 useUnmergedTree = true
             ).fetchSemanticsNodes().size == 2
         }

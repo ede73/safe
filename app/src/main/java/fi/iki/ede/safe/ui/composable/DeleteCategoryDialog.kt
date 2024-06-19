@@ -25,7 +25,7 @@ fun DeleteCategoryDialog(
         onDismissRequest = { },
         confirmButton = {
             SafeButton(
-                modifier = Modifier.testTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE_CONFIRM),
+                modifier = Modifier.testTag(TestTag.CATEGORY_ROW_DELETE_CONFIRM),
                 onClick = {
                     onConfirm()
                 }
@@ -35,7 +35,7 @@ fun DeleteCategoryDialog(
         },
         dismissButton = {
             SafeButton(
-                modifier = Modifier.testTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE_CANCEL),
+                modifier = Modifier.testTag(TestTag.CATEGORY_ROW_DELETE_CANCEL),
                 onClick = {
                     onDismiss()
                 }

@@ -98,7 +98,7 @@ fun SearchSiteEntryControls(
             },
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag(TestTag.TEST_TAG_SEARCH_TEXT_FIELD)
+                .testTag(TestTag.SEARCH_TEXT_FIELD)
                 .focusRequester(focusRequester),
             leadingIcon = {
                 Icon(

@@ -57,7 +57,7 @@ class AutoLogOutTest {
     @Test
     fun testAutoLogoutService() = runTest {
         println("=========assert displays category ")
-        activityTestRule.onAllNodesWithTag(TestTag.TEST_TAG_CATEGORY_ROW)[0].assertIsDisplayed()
+        activityTestRule.onAllNodesWithTag(TestTag.CATEGORY_ROW)[0].assertIsDisplayed()
 
         val serviceIntent = Intent(
             getApplicationContext(),
@@ -78,7 +78,7 @@ class AutoLogOutTest {
             advanceUntilIdle()
         }
         println("========= waited...")
-        activityTestRule.onAllNodesWithTag(TestTag.TEST_TAG_PASSWORD_PROMPT)[0]
+        activityTestRule.onAllNodesWithTag(TestTag.PASSWORD_PROMPT)[0]
             .assertIsDisplayed()
         println("========= stop service...")
         InstrumentationRegistry.getInstrumentation().targetContext.stopService(serviceIntent)

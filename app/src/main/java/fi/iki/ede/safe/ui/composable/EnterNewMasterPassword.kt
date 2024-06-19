@@ -42,7 +42,7 @@ fun EnterNewMasterPassword(
                     },
                 )
                 SafeButton(
-                    modifier = Modifier.testTag(TestTag.TEST_TAG_CHANGE_PASSWORD_OK),
+                    modifier = Modifier.testTag(TestTag.CHANGE_PASSWORD_OK),
                     onClick = { onNewMasterPassword(Pair(oldPassword, newPassword)) },
                     enabled = !newPassword.isEmpty() &&
                             !oldPassword.isEmpty() &&

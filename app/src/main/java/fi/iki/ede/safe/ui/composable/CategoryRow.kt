@@ -57,7 +57,7 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
                         displayMenu = true
                     }
                 )
-                .testTag(TestTag.TEST_TAG_CATEGORY_ROW),
+                .testTag(TestTag.CATEGORY_ROW),
         ) {
             Text(
                 text = category.plainName,
@@ -93,7 +93,7 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
                         displayMenu = false
                         displayDeleteCategory = true
                     },
-                    modifier = Modifier.testTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE)
+                    modifier = Modifier.testTag(TestTag.CATEGORY_ROW_DELETE)
                 )
             }
             DropdownMenuItem(
@@ -106,7 +106,7 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
                     displayMenu = false
                     displayEditDialog = true
                 },
-                modifier = Modifier.testTag(TestTag.TEST_TAG_CATEGORY_ROW_EDIT)
+                modifier = Modifier.testTag(TestTag.CATEGORY_ROW_EDIT)
             )
         }
         if (displayEditDialog) {

@@ -1,6 +1,5 @@
 package fi.iki.ede.safe.utilities
 
-import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.ui.activities.BiometricsActivity
 import io.mockk.every
 
@@ -17,11 +16,6 @@ interface AutoMockingUtilities {
         fun mockIsBiometricsInitialized(isBiometricsInitialized: () -> Boolean) {
             require(BiometricsActivity.isMock) { "You need to mockkObject(BiometricsActivity)" }
             every { BiometricsActivity.haveRecordedBiometric() } returns isBiometricsInitialized()
-        }
-
-        fun mockIsFirstTimeLogin(isFirstTimeLogin: () -> Boolean) {
-            require(Preferences.isMock) { "You need to mockkObject(Preferences)" }
-            every { Preferences.isFirstTimeLogin() } returns isFirstTimeLogin()
         }
     }
 }

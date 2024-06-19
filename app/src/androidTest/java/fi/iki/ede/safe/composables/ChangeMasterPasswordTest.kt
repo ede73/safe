@@ -45,9 +45,9 @@ class ChangeMasterPasswordTest : NodeHelper {
     @Test
     fun ensurePasswordIsHiddenTest() {
         val passwordFields =
-            composeTestRule.onAllNodesWithTag(TestTag.TEST_TAG_PASSWORD_TEXT_FIELD)
+            composeTestRule.onAllNodesWithTag(TestTag.PASSWORD_TEXT_FIELD)
         val button =
-            composeTestRule.onNodeWithTag(TestTag.TEST_TAG_CHANGE_PASSWORD_OK)
+            composeTestRule.onNodeWithTag(TestTag.CHANGE_PASSWORD_OK)
         passwordFields[0].assertIsDisplayed()
         passwordFields[1].assertIsDisplayed()
         passwordFields[2].assertIsDisplayed()

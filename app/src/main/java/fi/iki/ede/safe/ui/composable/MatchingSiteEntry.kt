@@ -77,7 +77,7 @@ fun MatchingSiteEntry(
                     modifier = Modifier
                         .padding(8.dp)
                         .weight(2f)
-                        .testTag(TestTag.TEST_TAG_SEARCH_MATCH)
+                        .testTag(TestTag.SEARCH_MATCH)
                 )
                 if (passwordEntry.passwordChangedDate != null) {
                     Spacer(modifier = Modifier.weight(1f)) // This will push the Text to the end

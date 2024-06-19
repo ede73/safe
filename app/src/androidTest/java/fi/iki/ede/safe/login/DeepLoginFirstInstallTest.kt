@@ -20,7 +20,6 @@ import fi.iki.ede.safe.ui.activities.LoginScreen
 import fi.iki.ede.safe.utilities.AutoMockingUtilities
 import fi.iki.ede.safe.utilities.AutoMockingUtilities.Companion.mockIsBiometricsEnabled
 import fi.iki.ede.safe.utilities.AutoMockingUtilities.Companion.mockIsBiometricsInitialized
-import fi.iki.ede.safe.utilities.AutoMockingUtilities.Companion.mockIsFirstTimeLogin
 import fi.iki.ede.safe.utilities.DBHelper4AndroidTest
 import fi.iki.ede.safe.utilities.LoginScreenHelper
 import fi.iki.ede.safe.utilities.MockKeyStore
@@ -98,7 +97,7 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
 //        )
 //        every { BiometricsActivity.getRegistrationIntent(any()) } returns expectedIntent
 
-        MyResultLauncher.registerTestLaunchResult(TestTag.TEST_TAG_LOGIN_BIOMETRICS_REGISTER) {
+        MyResultLauncher.registerTestLaunchResult(TestTag.LOGIN_BIOMETRICS_REGISTER) {
             println("Cancelling biometrics")
             ActivityResult(RESULT_CANCELED, null)
         }
@@ -112,7 +111,7 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
         MyResultLauncher.fetchResults()
 
         val la =
-            MyResultLauncher.getLaunchedIntentsAndCallback(TestTag.TEST_TAG_LOGIN_BIOMETRICS_REGISTER)
+            MyResultLauncher.getLaunchedIntentsAndCallback(TestTag.LOGIN_BIOMETRICS_REGISTER)
         assert(la.second.size == 1) {
             "Only one intent expected, got ${la.second.size}"
         }
@@ -174,7 +173,6 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
 
             mockkObject(Preferences)
             mockkObject(BiometricsActivity)
-            mockIsFirstTimeLogin { true }
             MyResultLauncher.beforeClassJvmStaticSetup()
 
             // initializes keystore, we don't want that!

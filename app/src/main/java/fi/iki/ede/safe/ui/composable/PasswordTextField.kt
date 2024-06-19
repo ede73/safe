@@ -118,7 +118,7 @@ fun PasswordTextField(
         else textStyle ?: safeTheme.customFonts.regularPassword,
         modifier = modifier
             //.semantics { contentDescription = "salasanan textfield" }
-            .testTag(TestTag.TEST_TAG_PASSWORD_TEXT_FIELD)
+            .testTag(TestTag.PASSWORD_TEXT_FIELD)
 //        modifier = modifier.let {
 //            if (isExpanded.value) modifier
 //                .fillMaxWidth(fraction = 1f)

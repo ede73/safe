@@ -14,7 +14,6 @@ import fi.iki.ede.safe.ui.activities.LoginScreen
 import fi.iki.ede.safe.utilities.AutoMockingUtilities
 import fi.iki.ede.safe.utilities.AutoMockingUtilities.Companion.mockIsBiometricsEnabled
 import fi.iki.ede.safe.utilities.AutoMockingUtilities.Companion.mockIsBiometricsInitialized
-import fi.iki.ede.safe.utilities.AutoMockingUtilities.Companion.mockIsFirstTimeLogin
 import fi.iki.ede.safe.utilities.LoginScreenHelper
 import fi.iki.ede.safe.utilities.MyResultLauncher
 import io.mockk.mockkObject
@@ -95,8 +94,6 @@ class LoginScreenFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
         fun initialize() {
             mockkObject(Preferences)
             mockkObject(BiometricsActivity)
-            // first time running
-            mockIsFirstTimeLogin { true }
             mockIsBiometricsInitialized { false }
         }
 

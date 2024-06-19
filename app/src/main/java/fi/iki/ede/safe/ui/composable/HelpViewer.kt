@@ -18,7 +18,7 @@ fun HelpViewer(sourceString: String, modifier: Modifier = Modifier) {
     AndroidView(
         modifier = modifier
             .verticalScroll(rememberScrollState())
-            .testTag(TestTag.TEST_TAG_HELP),
+            .testTag(TestTag.TAG_HELP),
         factory = { MaterialTextView(it) },
         update = { it.text = spannedText }
     )

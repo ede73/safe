@@ -26,7 +26,7 @@ class HelpScreen : ComponentActivity() {
                 ) {
                     HelpViewer(
                         readHelp(this),
-                        modifier = Modifier.testTag(TestTag.TEST_TAG_HELP)
+                        modifier = Modifier.testTag(TestTag.TAG_HELP)
                     )
                 }
             }

@@ -97,7 +97,7 @@ fun TopActionBar(
             if (!loginScreen) {
                 IconButton(onClick = {
                     onAddRequested(addCompleted)
-                }, modifier = Modifier.testTag(TestTag.TEST_TAG_TOP_ACTION_BAR_ADD)) {
+                }, modifier = Modifier.testTag(TestTag.TOP_ACTION_BAR_ADD)) {
                     Icon(Icons.Default.Add, stringResource(id = R.string.generic_add))
                 }
 
@@ -113,7 +113,7 @@ fun TopActionBar(
 
                 IconButton(
                     onClick = { IntentManager.startSiteEntrySearchScreen(context) },
-                    modifier = Modifier.testTag(TestTag.TEST_TAG_TOP_ACTION_BAR_SEARCH)
+                    modifier = Modifier.testTag(TestTag.TOP_ACTION_BAR_SEARCH)
                 ) {
                     Icon(Icons.Default.Search, stringResource(id = R.string.action_bar_search))
                 }
