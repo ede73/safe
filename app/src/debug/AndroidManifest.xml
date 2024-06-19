@@ -6,6 +6,7 @@
     <!-- Firebase test lab requirement, not needed if testing android 10/API29+ -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
+    <!--    <application android:backupAgent="fi.iki.ede.safe.debug.backupandrestore.MyBackupAgent">-->
     <application>
         <activity
             android:name=".ui.activities.RecoverDatabase"

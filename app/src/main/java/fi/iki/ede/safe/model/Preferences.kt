@@ -52,6 +52,10 @@ object Preferences {
     private const val PREFERENCE_CLIPBOARD_CLEAR_DELAY_DEFAULT_VALUE = "45"
     private const val PREFERENCE_MASTERKEY_INITIALIZED = "masterkey_initialized"
     const val PREFERENCE_LAST_BACKUP_TIME = "time_of_last_backup"
+    const val PREFERENCE_AUTOBACKUP_QUOTA_EXCEEDED = "autobackup_quota_exceeded"
+    const val PREFERENCE_AUTOBACKUP_STARTED = "autobackup_started"
+    const val PREFERENCE_AUTOBACKUP_RESTORE_STARTED = "autobackup_restore_started"
+    const val PREFERENCE_AUTOBACKUP_RESTORE_FINISHED = "autobackup_restore_finished"
 
     fun getBackupDocument() = if (SUPPORT_EXPORT_LOCATION_MEMORY) {
         sharedPreferences
@@ -121,4 +125,44 @@ object Preferences {
     fun clearAllPlugins() {
         sharedPreferences.edit().putStringSet(PREFERENCE_EXPERIMENTAL_FEATURES, emptySet()).commit()
     }
+
+    fun autoBackupQuotaExceeded() =
+        sharedPreferences.edit().putLong(
+            PREFERENCE_AUTOBACKUP_QUOTA_EXCEEDED, DateUtils.toUnixSeconds(ZonedDateTime.now())
+        ).apply()
+
+    fun getAutoBackupQuotaExceeded() =
+        sharedPreferences.getLong(PREFERENCE_AUTOBACKUP_QUOTA_EXCEEDED, 0)
+            .takeIf { it != 0L }
+            ?.let { DateUtils.unixEpochSecondsToLocalZonedDateTime(it) }
+
+    fun autoBackupRestoreStarts() =
+        sharedPreferences.edit().putLong(
+            PREFERENCE_AUTOBACKUP_RESTORE_STARTED, DateUtils.toUnixSeconds(ZonedDateTime.now())
+        ).apply()
+
+    fun getAutoBackupRestoreStarts() =
+        sharedPreferences.getLong(PREFERENCE_AUTOBACKUP_RESTORE_STARTED, 0)
+            .takeIf { it != 0L }
+            ?.let { DateUtils.unixEpochSecondsToLocalZonedDateTime(it) }
+
+    fun autoBackupStarts() =
+        sharedPreferences.edit().putLong(
+            PREFERENCE_AUTOBACKUP_STARTED, DateUtils.toUnixSeconds(ZonedDateTime.now())
+        ).apply()
+
+    fun getAutoBackupStarts() =
+        sharedPreferences.getLong(PREFERENCE_AUTOBACKUP_STARTED, 0)
+            .takeIf { it != 0L }
+            ?.let { DateUtils.unixEpochSecondsToLocalZonedDateTime(it) }
+
+    fun autoBackupRestoreFinished() =
+        sharedPreferences.edit().putLong(
+            PREFERENCE_AUTOBACKUP_RESTORE_FINISHED, DateUtils.toUnixSeconds(ZonedDateTime.now())
+        ).apply()
+
+    fun getAutoBackupRestoreFinished() =
+        sharedPreferences.getLong(PREFERENCE_AUTOBACKUP_RESTORE_FINISHED, 0)
+            .takeIf { it != 0L }
+            ?.let { DateUtils.unixEpochSecondsToLocalZonedDateTime(it) }
 }

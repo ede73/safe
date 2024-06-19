@@ -6,17 +6,25 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.BuildConfig
+import fi.iki.ede.safe.R
+import fi.iki.ede.safe.backupandrestore.MyBackupAgent
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.LoginHandler
@@ -35,13 +43,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 open class LoginScreen : ComponentActivity() {
-    private var oenCategoryListScreen: Boolean = true
+    private var openCategoryListScreen: Boolean = true
     private val biometricsFirstTimeRegister = biometricsFirstTimeActivity()
     private val biometricsVerify = biometricsVerifyActivity()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        oenCategoryListScreen = intent.getBooleanExtra(
+        openCategoryListScreen = intent.getBooleanExtra(
             OPEN_CATEGORY_SCREEN_AFTER_LOGIN, true
         )
         if (BuildConfig.DEBUG) {
@@ -52,6 +60,15 @@ open class LoginScreen : ComponentActivity() {
         // determined by existence of passwords in the database
         // we don't really know if this is first time login or not
         // (unless we literally DO go snooping in the database)
+
+        if (BuildConfig.DEBUG) {
+            if (intent.getStringExtra("WipeKeyStore") == "true") {
+                val ks = KeyStoreHelperFactory.getKeyStoreHelper()
+                ks.testingDeleteKeys_DO_NOT_USE()
+                finish()
+                return
+            }
+        }
 
         val firstTimeUse = Preferences.isFirstTimeLogin()
         setContent {
@@ -97,9 +114,10 @@ open class LoginScreen : ComponentActivity() {
         Preferences.setMasterkeyInitialized()
         setResult(RESULT_OK, Intent())
         startService(Intent(applicationContext, AutolockingService::class.java))
-        if (oenCategoryListScreen) {
+        if (openCategoryListScreen) {
             IntentManager.startCategoryScreen(this)
         }
+        MyBackupAgent.removeRestoreMark(this)
         finish()
     }
 
@@ -176,6 +194,7 @@ private fun LoginScreenCompose(
     biometricsVerify: ActivityResultLauncher<Intent>? = null,
 ) {
     SafeTheme {
+        val context = LocalContext.current
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
@@ -187,6 +206,23 @@ private fun LoginScreenCompose(
                 }
                 // TODO: if we're fresh from backup - biometrics don't work
                 biometricsVerify?.let { BiometricsComponent(it) }
+
+                // just FYI
+                if (MyBackupAgent.haveRestoreMark(context)) {
+                    val time =
+                        Preferences.getAutoBackupRestoreFinished()?.toLocalDateTime()?.toString()
+                            ?: ""
+                    Text(
+                        stringResource(R.string.login_screen_restore_mark_message, time),
+                        modifier = Modifier.border(
+                            BorderStroke(
+                                1.dp,
+                                MaterialTheme.colorScheme.primary
+                            )
+                        )
+                    )
+                }
+
             }
         }
     }

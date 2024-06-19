@@ -52,5 +52,17 @@
             android:key="experiments"
             android:summary="@string/preferences_summary_experimental_features"
             android:title="@string/preferences_title_experimental_features" />
+        <Preference
+            android:key="autobackup_quota_exceeded"
+            android:title="@string/preferences_title_autobackup_quota_exceeded" />
+        <Preference
+            android:key="autobackup_started"
+            android:title="@string/preferences_title_autobackup_started" />
+        <Preference
+            android:key="autobackup_restore_started"
+            android:title="@string/preferences_autobackup_restore_started" />
+        <Preference
+            android:key="autobackup_restore_finished"
+            android:title="@string/preferences_autobackup_restore_finished" />
     </PreferenceCategory>
 </PreferenceScreen>
