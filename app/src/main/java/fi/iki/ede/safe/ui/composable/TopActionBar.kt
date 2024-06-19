@@ -37,6 +37,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.BackupDatabase
 import fi.iki.ede.safe.backupandrestore.ExportConfig
@@ -92,7 +93,12 @@ fun TopActionBar(
     val addCompleted = setupActivityResultLauncher {/*  nothing to do anymore (thanks flow!)*/ }
 
     TopAppBar(
-        title = { Text(stringResource(id = R.string.application_name), color = Color.White) },
+        title = {
+            Text(
+                stringResource(id = R.string.application_name),
+                color = if (BuildConfig.DEBUG) Color.Red else Color.White
+            )
+        },
         actions = {
             if (!loginScreen) {
                 IconButton(onClick = {

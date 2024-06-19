@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
 
@@ -34,7 +35,12 @@ fun TopActionBarForSiteEntryView(
     var displayMenu by remember { mutableStateOf(false) }
 
     TopAppBar(
-        title = { Text(stringResource(id = R.string.application_name), color = Color.White) },
+        title = {
+            Text(
+                stringResource(id = R.string.application_name),
+                color = if (BuildConfig.DEBUG) Color.Red else Color.White
+            )
+        },
         actions = {
             IconButton(onClick = {
                 AutolockingBaseComponentActivity.lockTheApplication(context)
