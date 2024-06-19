@@ -30,7 +30,7 @@ import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.delay
 
 @Composable
-fun PasswordPrompt(
+fun LoginPasswordPrompts(
     loginPrecondition: LoginPrecondition,
     modifier: Modifier = Modifier,
     goodPasswordEntered: (loginStyle: LoginStyle, password: Password) -> Boolean,
@@ -144,17 +144,17 @@ fun PasswordPromptPreview() {
     SafeTheme {
         Column {
             Text(text = "------ First time init")
-            PasswordPrompt(LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE) { _, _ ->
+            LoginPasswordPrompts(LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE) { _, _ ->
                 println("Got a good password")
                 true
             }
             Text(text = "------ First time init")
-            PasswordPrompt(LoginPrecondition.NORMAL_LOGIN) { _, _ ->
+            LoginPasswordPrompts(LoginPrecondition.NORMAL_LOGIN) { _, _ ->
                 println("Got a good password")
                 true
             }
             Text(text = "------ Normal login")
-            PasswordPrompt(LoginPrecondition.FIRST_TIME_LOGIN_RESTORED_DATABASE) { _, _ ->
+            LoginPasswordPrompts(LoginPrecondition.FIRST_TIME_LOGIN_RESTORED_DATABASE) { _, _ ->
                 println("Got a good password")
                 true
             }
