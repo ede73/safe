@@ -93,14 +93,10 @@ class BackupDatabaseAndRestoreDatabaseTest {
 
     @Test
     fun backupTest() {
-        val backupDatabase = BackupDatabase()
 
         mockZonedDateTimeNow(1234)
 
-        val out = backupDatabase.generate(
-            salt,
-            cipheredMasterKey
-        )
+        val out = runBlocking { BackupDatabase.backup().toString() }
         unmockkStatic(ZonedDateTime::class)
         println(out)
         Assert.assertEquals(
@@ -127,14 +123,16 @@ class BackupDatabaseAndRestoreDatabaseTest {
 
     @Test
     fun backupTestOnlyACategory() {
-        val backupDatabase = BackupDatabase()
-
-        mockDataModelFor_UNIT_TESTS_ONLY(linkedMapOf(Pair(DataModelMocks.makeCat(1, ks), listOf())))
-
-        val out = backupDatabase.generate(
-            salt,
-            cipheredMasterKey
+        val db = mockDataModelFor_UNIT_TESTS_ONLY(
+            linkedMapOf(
+                Pair(
+                    DataModelMocks.makeCat(1, ks),
+                    listOf()
+                )
+            )
         )
+
+        val out = runBlocking { BackupDatabase.backup().toString() }
         assertEquals(6, out.lines().size)
         unmockkObject(DataModel)
     }

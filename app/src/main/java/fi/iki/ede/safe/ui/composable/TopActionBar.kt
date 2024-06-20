@@ -39,7 +39,6 @@ import androidx.compose.ui.unit.dp
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.BackupDatabase
 import fi.iki.ede.safe.backupandrestore.ExportConfig
-import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
 import fi.iki.ede.safe.splits.DropDownMenu
@@ -305,19 +304,15 @@ private fun MakeDropdownMenu(
 }
 
 // TODO: Wrong place
-private fun initiateBackup(
+private suspend fun initiateBackup(
     context: Context,
     uri: Uri,
     completed: () -> Unit,
 ) {
-    val n = BackupDatabase()
-    val (salt, currentEncryptedMasterKey) = DBHelperFactory.getDBHelper()
-        .fetchSaltAndEncryptedMasterKey()
-    val document = n.generate(salt, currentEncryptedMasterKey)
-    val outputStream = context.contentResolver.openOutputStream(uri, "wt")
-    if (outputStream != null) {
-        outputStream.write(document.toByteArray())
-        outputStream.close()
+    BackupDatabase.backup().let { accumulatedStringBuilder: StringBuilder ->
+        context.contentResolver.openOutputStream(uri, "wt")?.use { outputStream ->
+            outputStream.write(accumulatedStringBuilder.toString().toByteArray())
+        }
     }
     completed()
 }

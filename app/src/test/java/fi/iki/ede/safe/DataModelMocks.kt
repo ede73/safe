@@ -18,6 +18,8 @@ import kotlinx.coroutines.runBlocking
 import java.time.ZonedDateTime
 
 object DataModelMocks {
+    var masterKeyStore: Pair<Salt, IVCipherText>? = null
+
     fun makeCat(
         categoryId: DBID?,
         ks: KeyStoreHelper,
@@ -72,7 +74,6 @@ object DataModelMocks {
             }
         }
 
-
         val db = mockkClass(DBHelper::class)
         require(isMockKMock(db)) { "Mocking failed somehow" }
         DBHelperFactory.initializeDatabase(db)
@@ -117,11 +118,11 @@ object DataModelMocks {
 
         val salt = slot<Salt>()
         val cipher = slot<IVCipherText>()
-        var masterKeyStore: Pair<Salt, IVCipherText>? = null
         every { db.storeSaltAndEncryptedMasterKey(capture(salt), capture(cipher)) } answers {
             masterKeyStore = Pair(salt.captured, cipher.captured)
         }
         every { db.fetchSaltAndEncryptedMasterKey() } answers {
+            require(masterKeyStore != null) { "Master key MUST have been set in the DataModelMocks" }
             masterKeyStore!!
         }
 
