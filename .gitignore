@@ -19,3 +19,4 @@ local.properties
 /temp
 /app/*/build
 /app/.idea
+/in
