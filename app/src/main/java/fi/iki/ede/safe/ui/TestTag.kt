@@ -23,6 +23,7 @@ enum class TestTag {
     PASSWORD_TEXT_FIELD,
     CHANGE_PASSWORD_OK,
     LOGIN_ANEW_BUTTON,
+    PREFERENCES_SAVE_LOCATION,
 
     // TODO: move to extension function in TESTS
     PASSWORD_COMPOSABLE_IN_TESTS,

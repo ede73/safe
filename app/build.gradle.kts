@@ -1,5 +1,21 @@
 import java.io.ByteArrayOutputStream
+import java.io.FileInputStream
 import java.nio.charset.Charset
+import java.util.Properties
+
+//gradle.addListener(object : TaskExecutionListener {
+//    var startTime: Long = 0
+//
+//    override fun beforeExecute(task: Task) {
+//        startTime = System.currentTimeMillis()
+//    }
+//
+//    override fun afterExecute(task: Task, taskState: TaskState) {
+//        val endTime = System.currentTimeMillis()
+//        val duration = endTime - startTime
+//        println("Task ${task.path} took ${duration}ms to execute")
+//    }
+//})
 
 plugins {
     alias(libs.plugins.android.application)
@@ -57,6 +73,20 @@ abstract class GitRevListCountValueSource : ValueSource<String, ValueSourceParam
 
 
 android {
+    val localProperties = Properties().apply {
+        load(FileInputStream(rootProject.file("local.properties")))
+    }
+    // TODO: if I cant make quick 'release build' instrumentation tests to work, remove all
+    // instrumentationTest configs
+//    signingConfigs {
+//        create("instrumentationTest") {
+//            storeFile = file(localProperties.getProperty("instrumentationKeyStore"))
+//            keyAlias = localProperties.getProperty("instrumentationStoreKeyAlias")
+//            // this is just a test key set, not a real key, so password doesn't matter
+//            storePassword = localProperties.getProperty("instrumentationStorePassword")
+//            keyPassword = localProperties.getProperty("instrumentationKeyPassword")
+//        }
+//    }
     namespace = "fi.iki.ede.safe"
     compileSdk = 34
 
@@ -93,6 +123,12 @@ android {
     buildTypes {
         val gitCommitHashProvider = providers.of(GitCommitHashValueSource::class) {}
         val gitCommitHash = gitCommitHashProvider.get()
+
+        val services = "/META-INF/services/fi.iki.ede.safe.splits.RegistrationAPI\$Provider"
+
+        val dynamicFeatureList = setOf(":categorypager", ":oisaferestore", ":hibp")
+        dynamicFeatures += dynamicFeatureList
+
         release {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -113,7 +149,7 @@ android {
                     // and this should be FINE since each DFM is in their own namespace
                     // not even merge helped, so currently all service records of DFMs are
                     // stored under META-INF/services of the APP
-                    merges += "/META-INF/services/fi.iki.ede.safe.splits.RegistrationAPI\$Provider"
+                    merges += services
                 }
             }
             buildConfigField("String", "GIT_COMMIT_HASH", "\"${gitCommitHash}\"")
@@ -123,10 +159,37 @@ android {
             buildConfigField("String", "GIT_COMMIT_HASH", "\"${gitCommitHash}\"")
             packaging {
                 resources {
-                    merges += "/META-INF/services/fi.iki.ede.safe.splits.RegistrationAPI\$Provider"
+                    merges += services
                 }
             }
         }
+// Seemingly "nice" idea to pull new build type for faster instrumentation tests
+// how ever androidstudio doesnt allow attaching this to run configuration
+// running the tests, fail to some Android Studio command line takes too long error
+// DFM modules don't work (they cannot support applicationIdSuffix)
+// even if you can disable DFM modules here, the META-INF/services forcibly comes in
+// and linter complains for missing classes (can be fixed by empty)
+// app/src/instrumentationTest/resources/META-INF/services/fi.iki.ede.safe.splits.RegistrationAPI$Provider
+// Other than that, YES, this does produce release build type, signed with 'new debug key'
+// and separate application index, so can install 'almost release' app along side
+// playstore release app (i opted in playstore signing keys, so can't install release app
+// in my emu any more due to keyconflict :( )
+// and META-INF
+//        create("instrumentationTest") {
+//            initWith(getByName("release"))
+//            isMinifyEnabled = false
+//            isShrinkResources = false
+//            applicationIdSuffix = ".instrumentation"
+//            // DFMs don't support app suffix, do have to disable them
+//            dynamicFeatures -= dynamicFeatureList
+//            signingConfig = signingConfigs.getByName("instrumentationTest")
+//            packaging {
+//                resources {
+//                    merges -= services
+//                    excludes += services
+//                }
+//            }
+//        }
     }
 
     compileOptions {
@@ -156,7 +219,6 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-    dynamicFeatures += setOf(":categorypager", ":oisaferestore", ":hibp")
     testFixtures {
         enable = true
     }

@@ -70,7 +70,8 @@ class MyResultLauncher(
             // Only place to mock these is here, when @Test starts, it is too late, activity already initialized
             every {
 //            registerActivityForResults<Intent, ActivityResult>(
-                registerActivityForResults(any(), any(), any())
+                // YES! The TestTag is REALLY necessary! Do not remove!
+                registerActivityForResults(any(), any(), any(), any())
             } answers {
                 val instance = it.invocation
                 val testTag = firstArg<TestTag>()
@@ -83,7 +84,7 @@ class MyResultLauncher(
         }
 
         fun fetchResults() {
-            verify { registerActivityForResults(any(), any(), any()) }
+            verify { registerActivityForResults(any(), any(), any(), any()) }
         }
     }
 }

@@ -36,6 +36,7 @@ import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.service.AutolockingService
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.splits.PluginManager
+import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.composable.BiometricsComponent
 import fi.iki.ede.safe.ui.composable.LoginPasswordPrompts
 import fi.iki.ede.safe.ui.composable.TopActionBar
@@ -107,7 +108,7 @@ open class LoginScreen : ComponentActivity() {
     }
 
     private fun getLoginScreenPrecondition(): LoginPrecondition =
-        when (haveMasterkeyInDatabase(this) to isGoodRestoredContent(this)) {
+        when (haveMasterkeyInDatabase() to isGoodRestoredContent(this)) {
             false to false -> LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE
             false to true -> LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE
             true to false -> LoginPrecondition.NORMAL_LOGIN
@@ -171,7 +172,7 @@ open class LoginScreen : ComponentActivity() {
     }
 
     private fun biometricsFirstTimeActivity() =
-        startActivityForResults { result ->
+        startActivityForResults(TestTag.LOGIN_BIOMETRICS_REGISTER) { result ->
             // This is FIRST TIME call..we're just about to be set up...
             when (result.resultCode) {
                 RESULT_OK -> {
@@ -188,7 +189,7 @@ open class LoginScreen : ComponentActivity() {
         }
 
     private fun biometricsVerifyActivity() =
-        startActivityForResults { result ->
+        startActivityForResults(TestTag.LOGIN_BIOMETRICS_VERIFY) { result ->
             when (result.resultCode) {
                 RESULT_OK -> {
                     if (!BiometricsActivity.verificationAccepted()) {
@@ -262,7 +263,7 @@ private fun LoginScreenCompose(
     }
 }
 
-private fun haveMasterkeyInDatabase(context: Context): Boolean {
+private fun haveMasterkeyInDatabase(): Boolean {
     val db = DBHelperFactory.getDBHelper()
     val (salt, cipheredMasterKey) = try {
         db.fetchSaltAndEncryptedMasterKey()
@@ -276,7 +277,7 @@ private fun haveMasterkeyInDatabase(context: Context): Boolean {
 
 private fun isGoodRestoredContent(context: Context) =
     if (!MyBackupAgent.haveRestoreMark(context)) false
-    else haveMasterkeyInDatabase(context)
+    else haveMasterkeyInDatabase()
 
 
 @Preview(showBackground = true)

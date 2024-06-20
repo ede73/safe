@@ -15,6 +15,7 @@ import org.junit.AfterClass
 import org.junit.Before
 import org.junit.BeforeClass
 import org.junit.Rule
+import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
@@ -41,12 +42,16 @@ class SiteEntryListScreenTest {
         DBHelper4AndroidTest.configureDefaultTestDataModelAndDB()
     }
 
+    @Test
+    fun needsOneTest() {
+
+    }
+
     companion object {
         @BeforeClass
         @JvmStatic
         fun initialize() {
             MockKeyStore.mockKeyStore()
-
             mockkObject(LoginHandler)
             every { LoginHandler.isLoggedIn() } returns true
         }

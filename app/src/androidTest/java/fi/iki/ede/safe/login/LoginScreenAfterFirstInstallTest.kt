@@ -13,6 +13,9 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import fi.iki.ede.safe.backupandrestore.MyBackupAgent
+import fi.iki.ede.safe.db.DBHelper
+import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.splits.IntentManager
@@ -25,6 +28,8 @@ import fi.iki.ede.safe.utilities.AutoMockingUtilities.Companion.mockIsBiometrics
 import fi.iki.ede.safe.utilities.DBHelper4AndroidTest
 import fi.iki.ede.safe.utilities.LoginScreenHelper
 import fi.iki.ede.safe.utilities.MockKeyStore
+import fi.iki.ede.safe.utilities.MockKeyStore.fakeEncryptedMasterKey
+import fi.iki.ede.safe.utilities.MockKeyStore.fakeSalt
 import fi.iki.ede.safe.utilities.MyResultLauncher
 import io.mockk.every
 import io.mockk.mockkObject
@@ -60,6 +65,10 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
 
     @Before
     fun beforeEachTest() {
+        DBHelper4AndroidTest.justStoreSaltAndMasterKey(
+            initializeMasterKey = fakeEncryptedMasterKey,
+            initializeSalt = fakeSalt,
+        )
         DBHelper4AndroidTest.initializeEverything(context)
         DBHelper4AndroidTest.configureDefaultTestDataModelAndDB()
     }
@@ -246,6 +255,18 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
 
             mockkObject(LoginHandler)
             every { LoginHandler.isLoggedIn() } returns true
+            MyBackupAgent.removeRestoreMark(InstrumentationRegistry.getInstrumentation().targetContext.applicationContext)
+            val context =
+                InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
+            MyBackupAgent.removeRestoreMark(context)
+            // we'll overwrite the DBHelper with in-memory one...
+            DBHelperFactory.initializeDatabase(DBHelper(context, null, false))
+            DBHelper4AndroidTest.justStoreSaltAndMasterKey(
+                initializeMasterKey = fakeEncryptedMasterKey,
+                initializeSalt = fakeSalt,
+            )
+            DBHelper4AndroidTest.initializeEverything(context)
+
         }
 
         @AfterClass

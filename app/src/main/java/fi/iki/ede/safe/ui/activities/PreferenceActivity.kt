@@ -24,6 +24,7 @@ import fi.iki.ede.safe.model.Preferences.getAutoBackupRestoreStarts
 import fi.iki.ede.safe.model.Preferences.getAutoBackupStarts
 import fi.iki.ede.safe.service.AutolockingService
 import fi.iki.ede.safe.splits.PluginName
+import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.models.PluginLoaderViewModel
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseAppCompatActivity
 import fi.iki.ede.safe.ui.utilities.startActivityForResults
@@ -48,7 +49,7 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
     class PreferenceFragment : PreferenceFragmentCompat(), OnSharedPreferenceChangeListener {
         private val pluginLoaderViewModel: PluginLoaderViewModel by activityViewModels()
         private val backupDocumentSelected =
-            startActivityForResults { result ->
+            startActivityForResults(TestTag.PREFERENCES_SAVE_LOCATION) { result ->
                 if (result.resultCode == RESULT_OK) {
                     Preferences.setBackupDocument(result.data!!.data!!.path)
                 }
