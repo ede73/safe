@@ -23,26 +23,17 @@ import androidx.core.view.WindowCompat
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
     secondary = PurpleGrey80,
-    tertiary = Pink80
+    tertiary = Pink80,
 )
 
 private val LightColorScheme = lightColorScheme(
     primary = Purple40,
     secondary = PurpleGrey40,
     tertiary = Pink40,
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
 )
 
 object SafeTheme {
-    var colorScheme = darkColorScheme()
+    var colorScheme = LightColorScheme
 }
 
 data class SafeThemeData(
@@ -70,7 +61,7 @@ fun SafeTheme(
     val customShapes by remember { mutableStateOf(SafeTheme.customShapes()) }
 
     // Dynamic color is available on Android 12+
-    val dynamicColor = true
+    val dynamicColor = false
     SafeTheme.colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
@@ -81,6 +72,9 @@ fun SafeTheme(
         else -> LightColorScheme
     }
 
+    BuildDependentSurfaceColor?.let {
+        SafeTheme.colorScheme = SafeTheme.colorScheme.copy(onSurface = it)
+    }
     // try hard to keep top status bar correct color
     LocalView.current.apply {
         if (!isInEditMode) {

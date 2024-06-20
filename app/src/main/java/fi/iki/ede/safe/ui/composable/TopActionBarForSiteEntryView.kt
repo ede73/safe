@@ -15,12 +15,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
+import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
 
 /**
@@ -34,39 +33,41 @@ fun TopActionBarForSiteEntryView(
     val context = LocalContext.current
     var displayMenu by remember { mutableStateOf(false) }
 
-    TopAppBar(
-        title = {
-            Text(
-                stringResource(id = R.string.application_name),
-                color = if (BuildConfig.DEBUG) Color.Red else Color.White
-            )
-        },
-        actions = {
-            IconButton(onClick = {
-                AutolockingBaseComponentActivity.lockTheApplication(context)
-            }) {
-                Icon(Icons.Default.Lock, stringResource(id = R.string.action_bar_lock))
-            }
-
-            // Creating Icon button for dropdown menu
-            IconButton(onClick = { displayMenu = !displayMenu }) {
-                Icon(Icons.Default.MoreVert, "")
-            }
-
-            DropdownMenu(
-                expanded = displayMenu,
-                onDismissRequest = { displayMenu = false }
-            ) {
-                DropdownMenuItem(
-                    text = { Text(text = stringResource(id = R.string.action_bar_generate_password)) },
-                    onClick = {
-                        displayMenu = false
-                        onGeneratePassword()
-                    }
+    SafeTheme {
+        TopAppBar(
+            title = {
+                Text(
+                    stringResource(id = R.string.application_name),
+                    color = SafeTheme.colorScheme.onSurface
                 )
+            },
+            actions = {
+                IconButton(onClick = {
+                    AutolockingBaseComponentActivity.lockTheApplication(context)
+                }) {
+                    Icon(Icons.Default.Lock, stringResource(id = R.string.action_bar_lock))
+                }
+
+                // Creating Icon button for dropdown menu
+                IconButton(onClick = { displayMenu = !displayMenu }) {
+                    Icon(Icons.Default.MoreVert, "")
+                }
+
+                DropdownMenu(
+                    expanded = displayMenu,
+                    onDismissRequest = { displayMenu = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(text = stringResource(id = R.string.action_bar_generate_password)) },
+                        onClick = {
+                            displayMenu = false
+                            onGeneratePassword()
+                        }
+                    )
+                }
             }
-        }
-    )
+        )
+    }
 }
 
 @Preview(showBackground = true)

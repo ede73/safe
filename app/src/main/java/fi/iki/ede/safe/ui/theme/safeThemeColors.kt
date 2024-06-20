@@ -2,6 +2,7 @@ package fi.iki.ede.safe.ui.theme
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
+import fi.iki.ede.safe.BuildConfig
 
 @Immutable
 class SafeColors(
@@ -33,13 +34,20 @@ class SafeColors(
 internal fun SafeTheme.customColors() = SafeColors(
     numbers108652 = Color.Blue.copy(alpha = 0.7f),
     lettersL = Color.Red.copy(alpha = 0.7f),
-    whiteSpaceL = Color.Yellow.copy(alpha = 0.7f)
+    whiteSpaceL = Color.Yellow.copy(alpha = 0.7f),
 )
+
+// onSurface/dark
+val Neutral90 = Color(red = 230, green = 225, blue = 229)
+
+// onSurface/light
+val Neutral10 = Color(red = 28, green = 27, blue = 31)
 
 val Purple80 = Color(0xFFD0BCFF)
 val PurpleGrey80 = Color(0xFFCCC2DC)
 val Pink80 = Color(0xFFEFB8C8)
-
+val BuildDependentSurfaceColor = if (BuildConfig.BUILD_TYPE == "instrumentationTest") Color.Yellow
+else if (BuildConfig.DEBUG) Color.Red else null
 val Purple40 = Color(0xFF6650a4)
 val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)

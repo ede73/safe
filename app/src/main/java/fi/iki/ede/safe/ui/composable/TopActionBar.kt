@@ -32,12 +32,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.BackupDatabase
 import fi.iki.ede.safe.backupandrestore.ExportConfig
@@ -92,56 +90,58 @@ fun TopActionBar(
 
     val addCompleted = setupActivityResultLauncher {/*  nothing to do anymore (thanks flow!)*/ }
 
-    TopAppBar(
-        title = {
-            Text(
-                stringResource(id = R.string.application_name),
-                color = if (BuildConfig.DEBUG) Color.Red else Color.White
-            )
-        },
-        actions = {
-            if (!loginScreen) {
-                IconButton(onClick = {
-                    onAddRequested(addCompleted)
-                }, modifier = Modifier.testTag(TestTag.TOP_ACTION_BAR_ADD)) {
-                    Icon(Icons.Default.Add, stringResource(id = R.string.generic_add))
+    SafeTheme {
+        TopAppBar(
+            title = {
+                Text(
+                    stringResource(id = R.string.application_name),
+                    color = SafeTheme.colorScheme.onSurface
+                )
+            },
+            actions = {
+                if (!loginScreen) {
+                    IconButton(onClick = {
+                        onAddRequested(addCompleted)
+                    }, modifier = Modifier.testTag(TestTag.TOP_ACTION_BAR_ADD)) {
+                        Icon(Icons.Default.Add, stringResource(id = R.string.generic_add))
+                    }
+
+                    IconButton(onClick = {
+                        AutolockingBaseComponentActivity.lockTheApplication(context)
+                        IntentManager.startLoginScreen(
+                            context,
+                            openCategoryScreenAfterLogin = false
+                        )
+                    }) {
+                        Icon(Icons.Default.Lock, stringResource(id = R.string.action_bar_lock))
+                    }
+
+                    IconButton(
+                        onClick = { IntentManager.startSiteEntrySearchScreen(context) },
+                        modifier = Modifier.testTag(TestTag.TOP_ACTION_BAR_SEARCH)
+                    ) {
+                        Icon(Icons.Default.Search, stringResource(id = R.string.action_bar_search))
+                    }
                 }
 
-                IconButton(onClick = {
-                    AutolockingBaseComponentActivity.lockTheApplication(context)
-                    IntentManager.startLoginScreen(
-                        context,
-                        openCategoryScreenAfterLogin = false
-                    )
-                }) {
-                    Icon(Icons.Default.Lock, stringResource(id = R.string.action_bar_lock))
+                IconButton(onClick = { displayMenu.value = !displayMenu.value }) {
+                    Icon(Icons.Default.MoreVert, "")
                 }
 
-                IconButton(
-                    onClick = { IntentManager.startSiteEntrySearchScreen(context) },
-                    modifier = Modifier.testTag(TestTag.TOP_ACTION_BAR_SEARCH)
-                ) {
-                    Icon(Icons.Default.Search, stringResource(id = R.string.action_bar_search))
+                MakeDropdownMenu(
+                    loginScreen,
+                    displayMenu,
+                    exportImport,
+                    showChangePasswordDialog,
+                    toast
+                )
+
+                if (showChangePasswordDialog.value) {
+                    EnterNewMasterPassword(showChangePasswordDialog)
                 }
             }
-
-            IconButton(onClick = { displayMenu.value = !displayMenu.value }) {
-                Icon(Icons.Default.MoreVert, "")
-            }
-
-            MakeDropdownMenu(
-                loginScreen,
-                displayMenu,
-                exportImport,
-                showChangePasswordDialog,
-                toast
-            )
-
-            if (showChangePasswordDialog.value) {
-                EnterNewMasterPassword(showChangePasswordDialog)
-            }
-        }
-    )
+        )
+    }
 }
 
 @Composable
