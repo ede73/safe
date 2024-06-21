@@ -246,9 +246,9 @@ dependencies {
     //implementation(libs.core.ktx)
     implementation(libs.feature.delivery.ktx)
     // Don't convert to catalog declaration, something is broken
-    implementation(platform("com.google.firebase:firebase-bom:33.1.0")) // firebase crashlytics
+    implementation(platform("com.google.firebase:firebase-bom:33.1.1")) // firebase crashlytics
     implementation("com.google.firebase:firebase-analytics") // firebase crashlytics (breadcrumbs)
-    implementation(libs.firebase.crashlytics.ktx) // firebase crashlytics
+    implementation("com.google.firebase:firebase-crashlytics")
 
     // Bring bouncy castle to unit tests
     testImplementation("org.bouncycastle:bcprov-jdk16:1.46")

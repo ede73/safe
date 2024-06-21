@@ -8,6 +8,8 @@ import com.google.android.play.core.splitinstall.SplitInstallManagerFactory
 import com.google.android.play.core.splitinstall.SplitInstallRequest
 import com.google.android.play.core.splitinstall.SplitInstallStateUpdatedListener
 import com.google.android.play.core.splitinstall.model.SplitInstallSessionStatus
+import com.google.firebase.Firebase
+import com.google.firebase.crashlytics.crashlytics
 import fi.iki.ede.safe.splits.PluginManager
 import fi.iki.ede.safe.splits.PluginManager.initializePlugin
 import fi.iki.ede.safe.splits.PluginName
@@ -65,14 +67,25 @@ class PluginLoaderViewModel(app: Application) : AndroidViewModel(app) {
         super.onCleared()
     }
 
+    fun uninstallPlugin(pluginName: PluginName) {
+        try {
+            PluginManager.uninstallPlugin(splitInstallManager, pluginName)
+        } catch (e: Exception) {
+            Firebase.crashlytics.log("Error uninstalling plugin $pluginName -> $e")
+        }
+    }
+
     fun getOrInstallPlugin(pluginName: PluginName): RegistrationAPI? =
         // Run app-bundle-dfm with launch flags: "-e isBundleTest true"
-        if (PluginManager.isPluginInstalled(splitInstallManager, pluginName))
+        if (PluginManager.isPluginInstalled(splitInstallManager, pluginName)) {
+            Firebase.crashlytics.log("Plugin $pluginName is already installed..so pluginManager claims")
             initializePlugin(getApplication(), pluginName)
-        else
+        } else {
             requestStorageInstall(pluginName).let { null }
+        }
 
     private fun requestStorageInstall(plugin: PluginName) {
+        Firebase.crashlytics.log("requestStorageInstall for $plugin")
         informUser("Requesting storage module install")
         SplitInstallRequest
             .newBuilder()
@@ -81,11 +94,19 @@ class PluginLoaderViewModel(app: Application) : AndroidViewModel(app) {
                 splitInstallManager
                     .startInstall(request)
                     .addOnSuccessListener { id ->
+                        Firebase.crashlytics.log("Successfully installed module  $plugin")
                         synchronized(sessions) {
                             sessions.add(SplitSession(id, plugin))
                         }
                     }
+                    .addOnCompleteListener {
+                        Firebase.crashlytics.log("Completed installing module  $plugin")
+                    }
+                    .addOnCanceledListener {
+                        Firebase.crashlytics.log("Cancelled installing module  $plugin")
+                    }
                     .addOnFailureListener { exception ->
+                        Firebase.crashlytics.log("Error installing module  $plugin -> $exception")
                         Log.e(TAG, "Error installing module: ", exception)
                         informUser("Error requesting module install ${plugin.pluginName}")
                     }
