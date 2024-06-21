@@ -10,6 +10,7 @@ import io.mockk.slot
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
+import kotlin.experimental.xor
 
 object KeystoreHelperMock4UnitTests {
     fun mock() {
@@ -21,22 +22,22 @@ object KeystoreHelperMock4UnitTests {
             generateSequence<Byte>(1) { (it + 1).toByte() }
                 .take(CipherUtilities.IV_LENGTH).toList().toByteArray()
 
-        fun chunkReverseByteArray(input: ByteArray): ByteArray {
-            return input.asSequence()
-                .chunked(16)
-                .map { it.reversed() }
-                .flatten()
-                .toList()
-                .toByteArray()
+        fun xorByteArrays(iv: ByteArray, array1: ByteArray): ByteArray {
+            val result = ByteArray(array1.size)
+            for (i in array1.indices) {
+                result[i] = array1[i] xor iv[i % iv.size]
+            }
+            return result
         }
+
 
         fun fakeDecrypt(input: IVCipherText): ByteArray {
             // get rid of IV
-            return chunkReverseByteArray(input.cipherText)
+            return xorByteArrays(input.iv, input.cipherText)
         }
 
         fun fakeEncrypt(input: ByteArray): IVCipherText {
-            return IVCipherText(fakeIV, chunkReverseByteArray(input))
+            return IVCipherText(fakeIV, xorByteArrays(fakeIV, input))
         }
 
         val mc = mockkClass(Cipher::class)
