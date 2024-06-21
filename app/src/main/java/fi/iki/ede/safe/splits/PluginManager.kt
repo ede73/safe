@@ -1,13 +1,14 @@
 package fi.iki.ede.safe.splits
 
 import android.content.Context
-import android.util.Log
 import com.google.android.play.core.splitinstall.SplitInstallManager
 import com.google.android.play.core.splitinstall.SplitInstallManagerFactory
 import com.google.firebase.Firebase
 import com.google.firebase.crashlytics.crashlytics
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.model.Preferences
+import fi.iki.ede.safe.ui.utilities.firebaseLog
+import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import java.util.ServiceConfigurationError
 import java.util.ServiceLoader
 import kotlin.reflect.full.createInstance
@@ -19,65 +20,67 @@ object PluginManager {
     private var _bundleTestMode = false
 
     fun getComposableInterface(plugin: PluginName): GetComposable? = try {
-        Firebase.crashlytics.log("Get getComposableInterface for ${plugin.pluginName}")
+        firebaseLog("Get getComposableInterface for ${plugin.pluginName}")
         getPluginFQCN(plugin)?.let {
-            Firebase.crashlytics.log("Get getComposableInterface got FGCN=$it")
+            firebaseLog("Get getComposableInterface got FGCN=$it")
             // If plugin isn't enabled, we won't allow it to function
-            if (!isPluginEnabled(plugin)) return null
+            if (!isPluginEnabled(plugin)) {
+                firebaseLog("Get getComposableInterface not enabled FGCN=$it")
+                return null
+            }
             try {
-                Firebase.crashlytics.log("Trying to instantiate at getComposableInterface got FGCN=$it")
+                firebaseLog("Trying to instantiate at getComposableInterface got FGCN=$it")
                 return Class.forName(it).kotlin.let { getComposable ->
                     getComposable.createInstance() as GetComposable
                 }
             } catch (c: ClassNotFoundException) {
-                Firebase.crashlytics.recordException(c)
-                Log.e(TAG, "${plugin.pluginName} getComposable not found")
+                firebaseRecordException(c)
             }
             null
         }
     } catch (e: ServiceConfigurationError) {
-        Firebase.crashlytics.recordException(e)
+        firebaseRecordException(e)
         null
     }
 
     fun initializePlugin(context: Context, pluginName: PluginName): RegistrationAPI? {
         //if (!isPluginEnabled(pluginName)) return null
         // If plugin isn't enabled, we won't allow it to function
-        Firebase.crashlytics.log("Get ServiceLoader of RegistrationAPI.Provider::class.java(${RegistrationAPI.Provider::class.java.name}) for $pluginName")
-        val serviceLoader = ServiceLoader.load(
-            RegistrationAPI.Provider::class.java,
-            RegistrationAPI.Provider::class.java.classLoader
-        )
-        require(serviceLoader != null) { "Did not get service loader" }
-        // Explicitly ONLY use the .iterator() method on the returned ServiceLoader to enable R8 optimization.
-        // When these two conditions are met, R8 replaces ServiceLoader calls with direct object instantiation.
         try {
-            Firebase.crashlytics.log("Get ServiceLoader iterator for $pluginName")
+            firebaseLog("initializePlugin Get ServiceLoader of RegistrationAPI.Provider::class.java(${RegistrationAPI.Provider::class.java.name}) for $pluginName")
+            val serviceLoader = ServiceLoader.load(
+                RegistrationAPI.Provider::class.java,
+                RegistrationAPI.Provider::class.java.classLoader
+            )
+            require(serviceLoader != null) { "Did not get service loader" }
+            // Explicitly ONLY use the .iterator() method on the returned ServiceLoader to enable R8 optimization.
+            // When these two conditions are met, R8 replaces ServiceLoader calls with direct object instantiation.
+            firebaseLog("initializePlugin Get ServiceLoader iterator for $pluginName")
             val iterator = serviceLoader.iterator()
             if (!iterator.hasNext()) {
-                println("There is NO next iterator available!?!?")
+                firebaseLog("initializePlugin There is NO next iterator available!?!?")
                 return null
             }
 
             while (iterator.hasNext()) {
                 try {
                     val next = iterator.next()
-                    Firebase.crashlytics.log("Got $next searching for ${pluginName.pluginName}")
+                    firebaseLog("Got $next searching for ${pluginName.pluginName}")
                     val module = next.get()
-                    Firebase.crashlytics.log("Got module=$module search ${pluginName.pluginName}")
+                    firebaseLog("Got module=$module search ${pluginName.pluginName}")
                     if (module.getName() == pluginName) {
-                        Firebase.crashlytics.log("Trying to register module=$module search ${pluginName.pluginName}")
+                        firebaseLog("Trying to register module=$module search ${pluginName.pluginName}")
                         module.register(context)
-                        Log.d(TAG, "Loaded $pluginName feature through ServiceLoader")
+                        firebaseLog("Loaded $pluginName feature through ServiceLoader")
                         return module
                     }
-                } catch (i: Exception) {
-                    // on samsung S7+ iterator.next throws...don't understand or know why, workse everywhere else
-                    Firebase.crashlytics.recordException(i)
+                } catch (i: Throwable) {
+                    // on samsung S7+ iterator.next throws...don't understand or know why, works everywhere else
+                    firebaseRecordException("initializePLugin inner", i)
                 }
             }
-        } catch (e: Exception) {
-            Firebase.crashlytics.recordException(e)
+        } catch (t: Throwable) {
+            firebaseRecordException("initializePLugin uncaught1", t)
         }
         return null
     }
@@ -110,9 +113,9 @@ object PluginManager {
     fun reinitializePlugins(appContext: Context) {
         val sm = SplitInstallManagerFactory.create(appContext)
         Preferences.getEnabledExperiments().forEach {
-            Firebase.crashlytics.log("Is enabled plugin $it installed?")
+            firebaseLog("Is enabled plugin $it installed?")
             if (isPluginInstalled(sm, it)) {
-                Firebase.crashlytics.log(" is installed $it, initialize now")
+                firebaseLog(" is installed $it, initialize now")
                 initializePlugin(appContext, it)
             }
         }
@@ -127,13 +130,15 @@ object PluginManager {
             val iterator = serviceLoader.iterator()
             while (iterator.hasNext()) {
                 val next = iterator.next()
+                firebaseLog("getPluginFQCN $next searching for ${plugin.pluginName}")
                 val module = next.get()
                 if (module.getName() == plugin) {
+                    firebaseLog("getPluginFQCN got $next searching for ${plugin.pluginName}")
                     return next.javaClass.canonicalName
                 }
             }
         } catch (e: ServiceConfigurationError) {
-            Firebase.crashlytics.recordException(e)
+            firebaseRecordException(e)
         }
         return null
     }

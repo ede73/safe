@@ -28,6 +28,8 @@ import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.models.PluginLoaderViewModel
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseAppCompatActivity
+import fi.iki.ede.safe.ui.utilities.firebaseLog
+import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import fi.iki.ede.safe.ui.utilities.startActivityForResults
 
 
@@ -37,6 +39,8 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
         setContentView(R.layout.preferences)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false)
+
+        // TODO: Add commit hash here!
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -167,12 +171,20 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
                     }?.toSet() ?: emptySet()
 
                     allPlugins.intersect(enabledPlugins).forEach { plugin ->
-                        Firebase.crashlytics.log("Begin loading plugin $plugin")
-                        pluginLoaderViewModel.getOrInstallPlugin(plugin)
+                        try {
+                            firebaseLog("Begin loading plugin $plugin")
+                            pluginLoaderViewModel.getOrInstallPlugin(plugin)
+                        } catch (ex: Exception) {
+                            firebaseRecordException(ex)
+                        }
                     }
                     allPlugins.subtract(enabledPlugins).forEach { plugin ->
-                        Firebase.crashlytics.log("Begin Uninstalling plugin $plugin")
-                        pluginLoaderViewModel.uninstallPlugin(plugin)
+                        try {
+                            firebaseLog("Begin Uninstalling plugin $plugin")
+                            pluginLoaderViewModel.uninstallPlugin(plugin)
+                        } catch (ex: Exception) {
+                            firebaseRecordException(ex)
+                        }
                     }
                 }
 

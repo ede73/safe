@@ -42,7 +42,7 @@ class SafeApplication : SplitCompatApplication(),
         Firebase.crashlytics.setCustomKey("git_commit_hash", BuildConfig.GIT_COMMIT_HASH)
         Firebase.crashlytics.setCustomKey("VERSION_NAME", BuildConfig.VERSION_NAME)
         Firebase.crashlytics.setCustomKey("VERSION_CODE", BuildConfig.VERSION_CODE)
-//        FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
+        Firebase.crashlytics.setCrashlyticsCollectionEnabled(true)
 //        throw RuntimeException("Test Crash")
         Preferences.initialize(this)
         DBHelperFactory.initializeDatabase(DBHelper(this, DBHelper.DATABASE_NAME, true))

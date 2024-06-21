@@ -1,19 +1,19 @@
 package fi.iki.ede.safe.ui.models
 
 import android.app.Application
-import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import com.google.android.play.core.splitinstall.SplitInstallManagerFactory
 import com.google.android.play.core.splitinstall.SplitInstallRequest
 import com.google.android.play.core.splitinstall.SplitInstallStateUpdatedListener
 import com.google.android.play.core.splitinstall.model.SplitInstallSessionStatus
-import com.google.firebase.Firebase
-import com.google.firebase.crashlytics.crashlytics
 import fi.iki.ede.safe.splits.PluginManager
 import fi.iki.ede.safe.splits.PluginManager.initializePlugin
 import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.splits.RegistrationAPI
+import fi.iki.ede.safe.ui.utilities.firebaseJustTry
+import fi.iki.ede.safe.ui.utilities.firebaseLog
+import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import java.util.Collections
 
 private const val TAG = "PluginLoaderViewModel"
@@ -27,9 +27,12 @@ class PluginLoaderViewModel(app: Application) : AndroidViewModel(app) {
 
     private val sessions = Collections.synchronizedList(mutableListOf<SplitSession>())
 
-    private fun informUser(message: String) = Toast.makeText(
-        getApplication(), message, Toast.LENGTH_SHORT
-    ).show()
+    private fun informUser(message: String) {
+        firebaseLog(message)
+        Toast.makeText(
+            getApplication(), message, Toast.LENGTH_SHORT
+        ).show()
+    }
 
     private val listener = SplitInstallStateUpdatedListener { state ->
         val session = sessions.firstOrNull { it.sessionId == state.sessionId() }
@@ -37,7 +40,6 @@ class PluginLoaderViewModel(app: Application) : AndroidViewModel(app) {
 
         when (state.status()) {
             SplitInstallSessionStatus.FAILED -> {
-                Log.d(TAG, "${session.plugin.pluginName} install failed with ${state.errorCode()}")
                 informUser("${session.plugin.pluginName} install failed with ${state.errorCode()}")
                 session.completed = true
                 synchronized(sessions) {
@@ -47,14 +49,16 @@ class PluginLoaderViewModel(app: Application) : AndroidViewModel(app) {
 
             SplitInstallSessionStatus.INSTALLED -> {
                 informUser("${session.plugin.pluginName} module installed successfully")
-                initializePlugin(getApplication(), session.plugin)
+                firebaseJustTry("SplitInstallSessionStatus.INSTALLED try to init too") {
+                    initializePlugin(getApplication(), session.plugin)
+                }
                 session.completed = true
                 synchronized(sessions) {
                     sessions.removeIf { it.sessionId == state.sessionId() }
                 }
             }
 
-            else -> Log.d(TAG, "Status: ${session.plugin.pluginName} ${state.status()}")
+            else -> firebaseLog(TAG, "Status: ${session.plugin.pluginName} ${state.status()}")
         }
     }
 
@@ -71,22 +75,26 @@ class PluginLoaderViewModel(app: Application) : AndroidViewModel(app) {
         try {
             PluginManager.uninstallPlugin(splitInstallManager, pluginName)
         } catch (e: Exception) {
-            Firebase.crashlytics.log("Error uninstalling plugin $pluginName -> $e")
+            firebaseLog("Error uninstalling plugin $pluginName -> $e")
         }
     }
 
     fun getOrInstallPlugin(pluginName: PluginName): RegistrationAPI? =
-        // Run app-bundle-dfm with launch flags: "-e isBundleTest true"
-        if (PluginManager.isPluginInstalled(splitInstallManager, pluginName)) {
-            Firebase.crashlytics.log("Plugin $pluginName is already installed..so pluginManager claims")
-            initializePlugin(getApplication(), pluginName)
-        } else {
-            requestStorageInstall(pluginName).let { null }
+        try {
+            // Run app-bundle-dfm with launch flags: "-e isBundleTest true"
+            if (PluginManager.isPluginInstalled(splitInstallManager, pluginName)) {
+                firebaseLog("Plugin $pluginName is already installed..so pluginManager claims")
+                initializePlugin(getApplication(), pluginName)
+            } else {
+                requestStorageInstall(pluginName).let { null }
+            }
+        } catch (ex: Exception) {
+            firebaseRecordException(ex)
+            null
         }
 
     private fun requestStorageInstall(plugin: PluginName) {
-        Firebase.crashlytics.log("requestStorageInstall for $plugin")
-        informUser("Requesting storage module install")
+        informUser("Requesting storage module install ${plugin.pluginName}")
         SplitInstallRequest
             .newBuilder()
             .addModule(plugin.pluginName)
@@ -94,20 +102,22 @@ class PluginLoaderViewModel(app: Application) : AndroidViewModel(app) {
                 splitInstallManager
                     .startInstall(request)
                     .addOnSuccessListener { id ->
-                        Firebase.crashlytics.log("Successfully installed module  $plugin")
+                        firebaseLog("Successfully installed module  ${plugin.pluginName}")
                         synchronized(sessions) {
                             sessions.add(SplitSession(id, plugin))
                         }
                     }
                     .addOnCompleteListener {
-                        Firebase.crashlytics.log("Completed installing module  $plugin")
+                        firebaseLog("Completed installing module  ${plugin.pluginName}")
                     }
                     .addOnCanceledListener {
-                        Firebase.crashlytics.log("Cancelled installing module  $plugin")
+                        firebaseLog("Cancelled installing module  $plugin")
                     }
                     .addOnFailureListener { exception ->
-                        Firebase.crashlytics.log("Error installing module  $plugin -> $exception")
-                        Log.e(TAG, "Error installing module: ", exception)
+                        firebaseRecordException(
+                            "Error installing module  $plugin -> $exception",
+                            exception
+                        )
                         informUser("Error requesting module install ${plugin.pluginName}")
                     }
             }
