@@ -305,7 +305,8 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             password = null
                         }
                     }
-                    path.removeLast()
+                    // removeLast() broken on build tools 35
+                    path.removeLastOrNull()
                 }
             }
             myParser.next()

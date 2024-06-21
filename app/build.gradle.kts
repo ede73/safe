@@ -88,12 +88,12 @@ android {
 //        }
 //    }
     namespace = "fi.iki.ede.safe"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "fi.iki.ede.safe"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 35
 
         val gitRevListProvider = providers.of(GitRevListCountValueSource::class) {}
         val gitRevListCount = gitRevListProvider.get().toInt()
