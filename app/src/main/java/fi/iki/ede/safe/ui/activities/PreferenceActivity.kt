@@ -12,6 +12,7 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import com.google.firebase.Firebase
 import com.google.firebase.crashlytics.crashlytics
+import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.model.Preferences
@@ -39,8 +40,6 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
         setContentView(R.layout.preferences)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false)
-
-        // TODO: Add commit hash here!
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -88,6 +87,16 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
 
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             addPreferencesFromResource(R.xml.preferences)
+
+            val versionPreference = Preference(requireContext()).apply {
+                key = "version_preference"
+                title = "App Version"
+                summary =
+                    "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}) (${BuildConfig.GIT_COMMIT_HASH})"
+                isIconSpaceReserved = false
+            }
+
+            preferenceScreen?.addPreference(versionPreference)
 
             findPreference<MultiSelectListPreference>(Preferences.PREFERENCE_EXPERIMENTAL_FEATURES).let { experimentalFeatures ->
                 experimentalFeatures?.apply {
