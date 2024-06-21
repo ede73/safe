@@ -57,6 +57,7 @@ object PluginManager {
             // When these two conditions are met, R8 replaces ServiceLoader calls with direct object instantiation.
             firebaseLog("initializePlugin Get ServiceLoader iterator for $pluginName")
             val iterator = serviceLoader.iterator()
+            firebaseLog("initializePlugin iterator hasNext() for $pluginName")
             if (!iterator.hasNext()) {
                 firebaseLog("initializePlugin There is NO next iterator available!?!?")
                 return null
