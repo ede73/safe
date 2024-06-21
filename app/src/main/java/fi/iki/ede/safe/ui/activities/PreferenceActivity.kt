@@ -10,7 +10,8 @@ import androidx.preference.MultiSelectListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
-import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.google.firebase.Firebase
+import com.google.firebase.crashlytics.crashlytics
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.model.Preferences
@@ -119,7 +120,7 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
             }
 
             addPreferenceClickListener<Preference>(Preferences.PREFERENCE_MAKE_CRASH) {
-                FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
+                Firebase.crashlytics.setCrashlyticsCollectionEnabled(true)
                 throw RuntimeException("Crash Test from preferences")
             }
 
@@ -157,12 +158,21 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
         ) {
             when (key) {
                 Preferences.PREFERENCE_EXPERIMENTAL_FEATURES -> {
-                    sharedPreferences?.getStringSet(
+                    val allPlugins = PluginName.entries.toSet()
+                    val enabledPlugins = sharedPreferences?.getStringSet(
                         Preferences.PREFERENCE_EXPERIMENTAL_FEATURES,
                         null
-                    )?.forEach { dfm ->
-                        val pluginName = PluginName.entries.first { it.pluginName == dfm }
-                        pluginLoaderViewModel.getOrInstallPlugin(pluginName)
+                    )?.map { dfmName ->
+                        PluginName.entries.first { it.pluginName == dfmName }
+                    }?.toSet() ?: emptySet()
+
+                    allPlugins.intersect(enabledPlugins).forEach { plugin ->
+                        Firebase.crashlytics.log("Begin loading plugin $plugin")
+                        pluginLoaderViewModel.getOrInstallPlugin(plugin)
+                    }
+                    allPlugins.subtract(enabledPlugins).forEach { plugin ->
+                        Firebase.crashlytics.log("Begin Uninstalling plugin $plugin")
+                        pluginLoaderViewModel.uninstallPlugin(plugin)
                     }
                 }
 
