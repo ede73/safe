@@ -82,34 +82,34 @@ class CategoryListScreenTest {
 
     @Test
     fun verifyBothCategoriesShow() {
-        categoryActivityTestRule.onAllNodesWithTag(TestTag.TEST_TAG_CATEGORY_ROW)[0].assertIsDisplayed()
-        categoryActivityTestRule.onAllNodesWithTag(TestTag.TEST_TAG_CATEGORY_ROW)[1].assertIsDisplayed()
+        categoryActivityTestRule.onAllNodesWithTag(TestTag.CATEGORY_ROW)[0].assertIsDisplayed()
+        categoryActivityTestRule.onAllNodesWithTag(TestTag.CATEGORY_ROW)[1].assertIsDisplayed()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun addCategory() = runTest(testDispatcher, timeout = 10.seconds) {
         val newCategory = "newCategory"
-        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_TOP_ACTION_BAR_ADD)
+        categoryActivityTestRule.onNodeWithTag(TestTag.TOP_ACTION_BAR_ADD)
             .performClick()
-        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_BUTTON)
+        categoryActivityTestRule.onNodeWithTag(TestTag.CATEGORY_BUTTON)
             .assertIsDisplayed()
-        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_TEXT_FIELD)
+        categoryActivityTestRule.onNodeWithTag(TestTag.CATEGORY_TEXT_FIELD)
             .assertIsDisplayed()
-        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_TEXT_FIELD)
+        categoryActivityTestRule.onNodeWithTag(TestTag.CATEGORY_TEXT_FIELD)
             .assertIsFocused()
-        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_TEXT_FIELD)
+        categoryActivityTestRule.onNodeWithTag(TestTag.CATEGORY_TEXT_FIELD)
             .performClick()
-        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_TEXT_FIELD)
+        categoryActivityTestRule.onNodeWithTag(TestTag.CATEGORY_TEXT_FIELD)
             .performTextInput(newCategory)
         advanceUntilIdle()
-        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_BUTTON)
+        categoryActivityTestRule.onNodeWithTag(TestTag.CATEGORY_BUTTON)
             .performClick()
 
         advanceUntilIdle()
         assert(
             categoryActivityTestRule.onAllNodesWithTag(
-                TestTag.TEST_TAG_CATEGORY_ROW,
+                TestTag.CATEGORY_ROW,
                 useUnmergedTree = true
             ).fetchSemanticsNodes().size == 3
         )
@@ -124,18 +124,18 @@ class CategoryListScreenTest {
 
     @Test
     fun tryOpenSearchSearch() {
-        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_TOP_ACTION_BAR_SEARCH)
+        categoryActivityTestRule.onNodeWithTag(TestTag.TOP_ACTION_BAR_SEARCH)
             .performClick()
-        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_SEARCH_TEXT_FIELD)
+        categoryActivityTestRule.onNodeWithTag(TestTag.SEARCH_TEXT_FIELD)
             .assertIsDisplayed()
         // DEFAULT_2ND_CATEGORY -> category name is part of the default site entry description
-        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_SEARCH_TEXT_FIELD)
+        categoryActivityTestRule.onNodeWithTag(TestTag.SEARCH_TEXT_FIELD)
             .performTextInput(DBHelper4AndroidTest.DEFAULT_2ND_CATEGORY)
         categoryActivityTestRule.waitForIdle()
         categoryActivityTestRule.waitForIdle()
         categoryActivityTestRule.waitUntil(timeoutMillis = 5000) {
             categoryActivityTestRule.onAllNodesWithTag(
-                TestTag.TEST_TAG_SEARCH_MATCH,
+                TestTag.SEARCH_MATCH,
                 useUnmergedTree = true
             ).fetchSemanticsNodes().size == 2
         }
@@ -143,12 +143,12 @@ class CategoryListScreenTest {
 
     @Test
     fun mustNotBeAbleToDeleteNonEmptyCategories() {
-        categoryActivityTestRule.onAllNodesWithTag(TestTag.TEST_TAG_CATEGORY_ROW)[0].performTouchInput {
+        categoryActivityTestRule.onAllNodesWithTag(TestTag.CATEGORY_ROW)[0].performTouchInput {
             longClick()
         }
-        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_ROW_EDIT)
+        categoryActivityTestRule.onNodeWithTag(TestTag.CATEGORY_ROW_EDIT)
             .assertIsDisplayed()
-        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE)
+        categoryActivityTestRule.onNodeWithTag(TestTag.CATEGORY_ROW_DELETE)
             .assertIsNotDisplayed()
         assert(DataModel.getCategories()
             .find { it.plainName == DBHelper4AndroidTest.DEFAULT_1ST_CATEGORY } != null)
@@ -172,21 +172,21 @@ class CategoryListScreenTest {
                 }
             }
 
-            categoryActivityTestRule.onAllNodesWithTag(TestTag.TEST_TAG_CATEGORY_ROW)[0].performTouchInput {
+            categoryActivityTestRule.onAllNodesWithTag(TestTag.CATEGORY_ROW)[0].performTouchInput {
                 longClick()
             }
-            categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE)
+            categoryActivityTestRule.onNodeWithTag(TestTag.CATEGORY_ROW_DELETE)
                 .assertIsDisplayed()
-            categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE)
+            categoryActivityTestRule.onNodeWithTag(TestTag.CATEGORY_ROW_DELETE)
                 .performClick()
-            categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE_CANCEL)
+            categoryActivityTestRule.onNodeWithTag(TestTag.CATEGORY_ROW_DELETE_CANCEL)
                 .assertIsDisplayed()
-            categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE_CANCEL)
+            categoryActivityTestRule.onNodeWithTag(TestTag.CATEGORY_ROW_DELETE_CANCEL)
                 .performClick()
             advanceUntilIdle()
             categoryActivityTestRule.waitUntil(3000) {
                 // wait until one category disappears
-                categoryActivityTestRule.onAllNodesWithTag(TestTag.TEST_TAG_CATEGORY_ROW)
+                categoryActivityTestRule.onAllNodesWithTag(TestTag.CATEGORY_ROW)
                     .fetchSemanticsNodes().size == 3
             }
             val categoryStillExists = categoriesEmitted.any { categoriesList ->
@@ -216,16 +216,16 @@ class CategoryListScreenTest {
             }
         }
 
-        categoryActivityTestRule.onAllNodesWithTag(TestTag.TEST_TAG_CATEGORY_ROW)[0].performTouchInput {
+        categoryActivityTestRule.onAllNodesWithTag(TestTag.CATEGORY_ROW)[0].performTouchInput {
             longClick()
         }
-        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE)
+        categoryActivityTestRule.onNodeWithTag(TestTag.CATEGORY_ROW_DELETE)
             .assertIsDisplayed()
-        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE)
+        categoryActivityTestRule.onNodeWithTag(TestTag.CATEGORY_ROW_DELETE)
             .performClick()
-        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE_CONFIRM)
+        categoryActivityTestRule.onNodeWithTag(TestTag.CATEGORY_ROW_DELETE_CONFIRM)
             .assertIsDisplayed()
-        categoryActivityTestRule.onNodeWithTag(TestTag.TEST_TAG_CATEGORY_ROW_DELETE_CONFIRM)
+        categoryActivityTestRule.onNodeWithTag(TestTag.CATEGORY_ROW_DELETE_CONFIRM)
             .performClick()
         categoryActivityTestRule.waitForIdle()
         advanceUntilIdle()
@@ -233,7 +233,7 @@ class CategoryListScreenTest {
         categoryActivityTestRule.waitUntil(3000) {
             advanceUntilIdle()
             // wait until one category disappears
-            categoryActivityTestRule.onAllNodesWithTag(TestTag.TEST_TAG_CATEGORY_ROW)
+            categoryActivityTestRule.onAllNodesWithTag(TestTag.CATEGORY_ROW)
                 .fetchSemanticsNodes().size == 2
         }
         advanceUntilIdle()

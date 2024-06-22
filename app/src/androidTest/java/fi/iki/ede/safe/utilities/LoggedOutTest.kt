@@ -48,7 +48,7 @@ open class LoggedOutTest {
     }
 
     fun transitionToLoginScreenIfNotLoggedIn(activityTestRule: AndroidComposeTestRule<*, *>) {
-        activityTestRule.onAllNodesWithTag(TestTag.TEST_TAG_PASSWORD_PROMPT)[0]
+        activityTestRule.onAllNodesWithTag(TestTag.PASSWORD_PROMPT)[0]
             .assertIsDisplayed()
     }
 

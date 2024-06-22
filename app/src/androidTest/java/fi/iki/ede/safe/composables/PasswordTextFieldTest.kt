@@ -39,7 +39,7 @@ class PasswordTextFieldTest : NodeHelper {
             Column {
                 PasswordTextField(
                     textTip = R.string.login_password_tip,
-                    modifier = Modifier.testTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)
+                    modifier = Modifier.testTag(TestTag.PASSWORD_COMPOSABLE_IN_TESTS)
                 )
             }
         }
@@ -47,26 +47,26 @@ class PasswordTextFieldTest : NodeHelper {
 
     @Test
     fun ensurePasswordIsHiddenTest() {
-        composeTestRule.onNodeWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)
+        composeTestRule.onNodeWithTag(TestTag.PASSWORD_COMPOSABLE_IN_TESTS)
             .assertIsEnabled()
-        composeTestRule.onNodeWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)
+        composeTestRule.onNodeWithTag(TestTag.PASSWORD_COMPOSABLE_IN_TESTS)
             .performTextInput("abcd")
-        composeTestRule.onNodeWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)
+        composeTestRule.onNodeWithTag(TestTag.PASSWORD_COMPOSABLE_IN_TESTS)
             .assertTextContains("••••")
     }
 
     @Test
     fun ensureShownPasswordIsShownTest() {
         val passwordText = "abcd"
-        composeTestRule.onNodeWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)
+        composeTestRule.onNodeWithTag(TestTag.PASSWORD_COMPOSABLE_IN_TESTS)
             .assertIsEnabled()
-        composeTestRule.onNodeWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)
+        composeTestRule.onNodeWithTag(TestTag.PASSWORD_COMPOSABLE_IN_TESTS)
             .performTextInput(passwordText)
         composeTestRule.onNodeWithTag(
-            TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS,
+            TestTag.PASSWORD_COMPOSABLE_IN_TESTS,
             useUnmergedTree = false
         ).onChild().performClick()
-        composeTestRule.onNodeWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)
+        composeTestRule.onNodeWithTag(TestTag.PASSWORD_COMPOSABLE_IN_TESTS)
             .assertTextContains(passwordText)
     }
 }

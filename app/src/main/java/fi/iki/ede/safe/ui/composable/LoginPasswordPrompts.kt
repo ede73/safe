@@ -83,7 +83,7 @@ fun LoginPasswordPrompts(
             R.string.login_password_tip,
             R.string.login_verify_password_tip,
             modifier
-                .testTag(TestTag.TEST_TAG_PASSWORD_PROMPT)
+                .testTag(TestTag.PASSWORD_PROMPT)
                 .border(width = 2.dp, color = color.value)
                 .graphicsLayer {
                     translationX = shake.value.toPx()
@@ -95,7 +95,7 @@ fun LoginPasswordPrompts(
         )
 
         SafeButton(
-            modifier = Modifier.testTag(TestTag.TEST_TAG_LOGIN_BUTTON),
+            modifier = Modifier.testTag(TestTag.LOGIN_BUTTON),
             onClick = {
                 val whatToDoAfterLogin = when (loginStyle) {
                     LoginPrecondition.FIRST_TIME_LOGIN_RESTORED_DATABASE -> LoginStyle.EXISTING_LOGIN
@@ -119,7 +119,7 @@ fun LoginPasswordPrompts(
 
         if (loginPrecondition == LoginPrecondition.FIRST_TIME_LOGIN_RESTORED_DATABASE) {
             SafeButton(
-                modifier = Modifier.testTag(TestTag.TEST_TAG_LOGIN_ANEW_BUTTON),
+                modifier = Modifier.testTag(TestTag.LOGIN_ANEW_BUTTON),
                 onClick = {
                     loginStyle = when (loginStyle) {
                         LoginPrecondition.FIRST_TIME_LOGIN_RESTORED_DATABASE -> LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE

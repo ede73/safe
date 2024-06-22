@@ -4,8 +4,9 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.preference.PreferenceManager
 import com.google.android.play.core.splitcompat.SplitCompatApplication
+import com.google.firebase.Firebase
 import com.google.firebase.FirebaseApp
-import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.google.firebase.crashlytics.crashlytics
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.Preferences
@@ -38,9 +39,10 @@ class SafeApplication : SplitCompatApplication(),
         super.onCreate()
         Log.w(TAG, "onCreate")
         FirebaseApp.initializeApp(this)
-        FirebaseCrashlytics.getInstance()
-            .setCustomKey("git_commit_hash", BuildConfig.GIT_COMMIT_HASH)
-//        FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
+        Firebase.crashlytics.setCustomKey("git_commit_hash", BuildConfig.GIT_COMMIT_HASH)
+        Firebase.crashlytics.setCustomKey("VERSION_NAME", BuildConfig.VERSION_NAME)
+        Firebase.crashlytics.setCustomKey("VERSION_CODE", BuildConfig.VERSION_CODE)
+        Firebase.crashlytics.setCrashlyticsCollectionEnabled(true)
 //        throw RuntimeException("Test Crash")
         Preferences.initialize(this)
         DBHelperFactory.initializeDatabase(DBHelper(this, DBHelper.DATABASE_NAME, true))

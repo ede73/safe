@@ -54,12 +54,12 @@ fun AddOrEditCategory(
                     onValueChange = { newCategory = it },
                     modifier = Modifier
                         .focusRequester(focusRequester)
-                        .testTag(TestTag.TEST_TAG_CATEGORY_TEXT_FIELD)
+                        .testTag(TestTag.CATEGORY_TEXT_FIELD)
                         .focusable()
                         .focusTarget()
                 )
                 SafeButton(
-                    modifier = Modifier.testTag(TestTag.TEST_TAG_CATEGORY_BUTTON),
+                    modifier = Modifier.testTag(TestTag.CATEGORY_BUTTON),
                     onClick = { onSubmit(newCategory) }
                 ) {
                     Text(text = stringResource(id = R.string.generic_ok))

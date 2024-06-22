@@ -3,6 +3,7 @@ package fi.iki.ede.safe.composables
 import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.performTextClearance
@@ -45,10 +46,11 @@ class ChangeMasterPasswordTest : NodeHelper {
     @Test
     fun ensurePasswordIsHiddenTest() {
         val passwordFields =
-            composeTestRule.onAllNodesWithTag(TestTag.TEST_TAG_PASSWORD_TEXT_FIELD)
+            composeTestRule.onAllNodesWithTag(TestTag.PASSWORD_TEXT_FIELD)
         val button =
-            composeTestRule.onNodeWithTag(TestTag.TEST_TAG_CHANGE_PASSWORD_OK)
+            composeTestRule.onNodeWithTag(TestTag.CHANGE_PASSWORD_OK)
         passwordFields[0].assertIsDisplayed()
+        passwordFields[0].assertIsFocused() // extra on the same go..verify the FIRST field is focused
         passwordFields[1].assertIsDisplayed()
         passwordFields[2].assertIsDisplayed()
         button.assertIsNotEnabled()

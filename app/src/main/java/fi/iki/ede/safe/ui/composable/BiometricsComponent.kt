@@ -45,7 +45,7 @@ fun BiometricsComponent(bioVerify: ActivityResultLauncher<Intent>) {
         // since biometrics is enabled AND we have previously recorded entry
         bioVerify.launch(BiometricsActivity.getVerificationIntent(context))
         SafeButton(
-            modifier = Modifier.testTag(TestTag.TEST_TAG_BIOMETRICS_BUTTON),
+            modifier = Modifier.testTag(TestTag.BIOMETRICS_BUTTON),
             onClick = {
                 bioVerify.launch(BiometricsActivity.getVerificationIntent(context))
             }
@@ -57,7 +57,7 @@ fun BiometricsComponent(bioVerify: ActivityResultLauncher<Intent>) {
                     BiometricsActivity.setBiometricEnabled(it)
                     registerBiometrics = it
                 },
-                modifier = Modifier.testTag(TestTag.TEST_TAG_BIOMETRICS_CHECKBOX)
+                modifier = Modifier.testTag(TestTag.BIOMETRICS_CHECKBOX)
             )
             Text(stringResource(id = R.string.biometrics_register))
         }

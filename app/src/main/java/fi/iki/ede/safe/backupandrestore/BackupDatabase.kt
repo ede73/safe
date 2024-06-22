@@ -3,15 +3,18 @@ package fi.iki.ede.safe.backupandrestore
 import android.text.TextUtils
 import android.util.Log
 import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
-import fi.iki.ede.crypto.support.HexString
 import fi.iki.ede.crypto.support.toHexString
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Attributes
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Elements
-import fi.iki.ede.safe.db.DBHelper
+import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.DataModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.fold
+import kotlinx.coroutines.flow.transform
 import org.xmlpull.v1.XmlPullParserFactory
 import java.io.StringWriter
 import java.time.ZonedDateTime
@@ -23,13 +26,7 @@ import java.time.ZonedDateTime
  * Make sure to increase the version code. Linter will highlight places to fix
  */
 class BackupDatabase : ExportConfig(ExportVersion.V1) {
-    private val encrypter = KeyStoreHelperFactory.getEncrypter()
-
-    fun generate(
-        dbHelper: DBHelper,
-        salt: Salt,
-        currentEncryptedMasterKey: IVCipherText
-    ): HexString {
+    private fun generateXMLExport(): String {
         val serializer = XmlPullParserFactory.newInstance().newSerializer()
         val xmlStringWriter = StringWriter()
         serializer.setOutput(xmlStringWriter)
@@ -54,11 +51,13 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
         }
 
         // dump all imported passwords!
-        val gpms = dbHelper.fetchSavedGPMsFromDB()
+        // TODO: use datamodel! (proper channels)
+        val gpms = DataModel._savedGPMs
         if (gpms.isNotEmpty()) {
             serializer.startTag(Elements.IMPORTS)
             val gpmIdToPasswords =
-                dbHelper.fetchAllSiteEntryGPMMappings()
+                // TODO: use datamodel!
+                DBHelperFactory.getDBHelper().fetchAllSiteEntryGPMMappings()
                     .flatMap { (a, bSet) -> bSet.map { b -> b to a } }
                     .groupBy({ it.first }, { it.second })
                     .mapValues { (_, v) -> v.toSet() }
@@ -76,19 +75,12 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
         serializer.endTag(Elements.ROOT_PASSWORD_SAFE)
         serializer.endDocument()
         val makeThisStreaming = xmlStringWriter.toString()
+
         if (makeThisStreaming.contains(" ")) {
             Log.e(TAG, "Oh no, XML export has non breakable spaces")
         }
         assert(!TextUtils.isEmpty(makeThisStreaming)) { "Something is broken, XML serialization produced empty file" }
-        val encryptedBackup = encrypter(makeThisStreaming.toByteArray())
-
-        val backup = StringWriter()
-        backup.appendLine(salt.toHex())
-        backup.appendLine(currentEncryptedMasterKey.iv.toHexString())
-        backup.appendLine(currentEncryptedMasterKey.cipherText.toHexString())
-        backup.appendLine(encryptedBackup.iv.toHexString())
-        backup.appendLine(encryptedBackup.cipherText.toHexString())
-        return backup.toString()
+        return makeThisStreaming.trim()
     }
 
     @Suppress("SameParameterValue")
@@ -104,5 +96,27 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
     companion object {
         const val TAG = "Backup"
         const val MIME_TYPE_BACKUP = "text/xml"
+
+        suspend fun backup() = flow<ByteArray> {
+            emit(BackupDatabase().generateXMLExport().toByteArray())
+        }.transform<ByteArray, IVCipherText> { ba ->
+            val encrypter = KeyStoreHelperFactory.getEncrypter()
+            emit(encrypter(ba))
+        }.flowOn(Dispatchers.Default).transform<IVCipherText, String> { encrypted ->
+            val (salt, currentEncryptedMasterKey) = DBHelperFactory.getDBHelper()
+                .fetchSaltAndEncryptedMasterKey()
+            emit(salt.toHex())
+            emit("\n")
+            emit(currentEncryptedMasterKey.iv.toHexString())
+            emit("\n")
+            emit(currentEncryptedMasterKey.cipherText.toHexString())
+            emit("\n")
+            emit(encrypted.iv.toHexString())
+            emit("\n")
+            emit(encrypted.cipherText.toHexString())
+            emit("\n")
+        }.fold(StringBuilder()) { accumulator: StringBuilder, value: String ->
+            accumulator.append(value)
+        }
     }
 }

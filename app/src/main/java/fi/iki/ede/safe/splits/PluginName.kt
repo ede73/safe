@@ -5,3 +5,4 @@ enum class PluginName(val pluginName: String) {
     HIBP("hibp"),
     OISAFERESTORE("oisaferestore")
 }
+

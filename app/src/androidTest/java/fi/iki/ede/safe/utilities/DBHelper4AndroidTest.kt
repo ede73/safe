@@ -28,7 +28,6 @@ object DBHelper4AndroidTest {
     // you have to KEEP the readable database reference, else in memory database will be destroyed
     fun initializeEverything(context: Context): SQLiteDatabase {
         val dbHelper = DBHelperFactory.initializeDatabase(DBHelper(context, null, false))
-        dbHelper.setIdleConnectionTimeout(30 * 1000)
         val writableDatabase = dbHelper.writableDatabase
         dbHelper.storeSaltAndEncryptedMasterKey(storedSalt!!, storedMasterKey!!)
         return writableDatabase!!

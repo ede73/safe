@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-
 object DataModel {
     // GPM Imports: READ DATA CLASSES BTW. collection may change on new imports
     val _savedGPMs = mutableSetOf<SavedGPM>()
@@ -299,7 +298,7 @@ object DataModel {
             _passwordsStateFlow.value = _categories.values.flatten()
         }
 
-        // NOTE: Made a HUGE difference in display speed for 300+ password list on galaxy S25, if completed this is instantaneous
+        // NOTE: Made a HUGE difference in display speed for 300+ password list on galaxy S24, if completed this is instantaneous
         // NOTE: This can ONLY succeed if user has logged in - as it sits now, this is the case, we load the data model only after login
         // Even if descriptions of password entries aren't very sensitive
         // all external access is kept encrypted, this though slows down UI visuals

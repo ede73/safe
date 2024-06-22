@@ -18,7 +18,7 @@ class HelpScreenTest {
 
     @Test
     fun helpScreenOpens() {
-        composeTestRule.onNodeWithTag(TestTag.TEST_TAG_HELP)
+        composeTestRule.onNodeWithTag(TestTag.TAG_HELP)
             .assertIsDisplayed()
     }
 }

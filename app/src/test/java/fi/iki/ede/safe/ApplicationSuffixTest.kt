@@ -20,7 +20,6 @@ tasks.withType<Test> {
         }
     }
 
-
     @Ignore
     fun verifyApplicationIdSuffix() {
         val expectedSuffix = ".test"

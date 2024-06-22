@@ -28,13 +28,16 @@ fun VerifiedPasswordTextField(
     textTip: Int,
     verifyPassword: Int,
     modifier: Modifier = Modifier,
-    onMatchingPasswords: (Password) -> Unit = {}
+    onMatchingPasswords: (Password) -> Unit = {},
+    stealFocus: Boolean = true // TODO: Terrible, remove! Refactor FocusRequests to call site
 ) {
     // Initial focus on first pwd field..
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
-        this.coroutineContext.job.invokeOnCompletion {
-            focusRequester.requestFocus()
+        if (stealFocus) {
+            this.coroutineContext.job.invokeOnCompletion {
+                focusRequester.requestFocus()
+            }
         }
     }
 

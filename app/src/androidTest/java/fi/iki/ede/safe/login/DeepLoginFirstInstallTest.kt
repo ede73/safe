@@ -11,6 +11,9 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import fi.iki.ede.safe.backupandrestore.MyBackupAgent
+import fi.iki.ede.safe.db.DBHelper
+import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.splits.IntentManager
@@ -20,10 +23,11 @@ import fi.iki.ede.safe.ui.activities.LoginScreen
 import fi.iki.ede.safe.utilities.AutoMockingUtilities
 import fi.iki.ede.safe.utilities.AutoMockingUtilities.Companion.mockIsBiometricsEnabled
 import fi.iki.ede.safe.utilities.AutoMockingUtilities.Companion.mockIsBiometricsInitialized
-import fi.iki.ede.safe.utilities.AutoMockingUtilities.Companion.mockIsFirstTimeLogin
 import fi.iki.ede.safe.utilities.DBHelper4AndroidTest
 import fi.iki.ede.safe.utilities.LoginScreenHelper
 import fi.iki.ede.safe.utilities.MockKeyStore
+import fi.iki.ede.safe.utilities.MockKeyStore.fakeEncryptedMasterKey
+import fi.iki.ede.safe.utilities.MockKeyStore.fakeSalt
 import fi.iki.ede.safe.utilities.MyResultLauncher
 import io.mockk.every
 import io.mockk.just
@@ -59,6 +63,10 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
 
     @Before
     fun beforeEachTest() {
+        DBHelper4AndroidTest.justStoreSaltAndMasterKey(
+            initializeMasterKey = fakeEncryptedMasterKey,
+            initializeSalt = fakeSalt,
+        )
         DBHelper4AndroidTest.initializeEverything(context)
         DBHelper4AndroidTest.configureDefaultTestDataModelAndDB()
     }
@@ -98,7 +106,7 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
 //        )
 //        every { BiometricsActivity.getRegistrationIntent(any()) } returns expectedIntent
 
-        MyResultLauncher.registerTestLaunchResult(TestTag.TEST_TAG_LOGIN_BIOMETRICS_REGISTER) {
+        MyResultLauncher.registerTestLaunchResult(TestTag.LOGIN_BIOMETRICS_REGISTER) {
             println("Cancelling biometrics")
             ActivityResult(RESULT_CANCELED, null)
         }
@@ -112,7 +120,7 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
         MyResultLauncher.fetchResults()
 
         val la =
-            MyResultLauncher.getLaunchedIntentsAndCallback(TestTag.TEST_TAG_LOGIN_BIOMETRICS_REGISTER)
+            MyResultLauncher.getLaunchedIntentsAndCallback(TestTag.LOGIN_BIOMETRICS_REGISTER)
         assert(la.second.size == 1) {
             "Only one intent expected, got ${la.second.size}"
         }
@@ -169,12 +177,12 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
         @BeforeClass
         @JvmStatic
         fun initialize() {
+            // At this point APPLICATION onCreate was run, file DB attached
             if (InstrumentationRegistry.getArguments().getString("test") == "true")
                 System.setProperty("test", "true")
 
             mockkObject(Preferences)
             mockkObject(BiometricsActivity)
-            mockIsFirstTimeLogin { true }
             MyResultLauncher.beforeClassJvmStaticSetup()
 
             // initializes keystore, we don't want that!
@@ -183,6 +191,11 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
 
             mockkObject(LoginHandler)
             every { LoginHandler.isLoggedIn() } returns false
+            val context =
+                InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
+            MyBackupAgent.removeRestoreMark(context)
+            // we'll overwrite the DBHelper with in-memory one...
+            DBHelperFactory.initializeDatabase(DBHelper(context, null, false))
         }
 
         @AfterClass

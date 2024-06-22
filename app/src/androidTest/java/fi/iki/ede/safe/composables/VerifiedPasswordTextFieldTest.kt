@@ -43,7 +43,7 @@ class VerifiedPasswordTextFieldTest {
                     showVerification = true,
                     textTip = R.string.login_password_tip,
                     verifyPassword = R.string.login_verify_password_tip,
-                    modifier = Modifier.testTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)
+                    modifier = Modifier.testTag(TestTag.PASSWORD_COMPOSABLE_IN_TESTS)
                 )
             }
         }
@@ -51,17 +51,17 @@ class VerifiedPasswordTextFieldTest {
 
     @Test
     fun ensureVerificationFieldShownTest() {
-        composeTestRule.onAllNodesWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)[0].assertIsEnabled()
+        composeTestRule.onAllNodesWithTag(TestTag.PASSWORD_COMPOSABLE_IN_TESTS)[0].assertIsEnabled()
             .assertIsDisplayed()
-        composeTestRule.onAllNodesWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)[1].assertIsEnabled()
+        composeTestRule.onAllNodesWithTag(TestTag.PASSWORD_COMPOSABLE_IN_TESTS)[1].assertIsEnabled()
             .assertIsDisplayed()
     }
 
     @Test
     fun ensurePasswordIsHiddenTest() {
-        composeTestRule.onAllNodesWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)[0].assertIsEnabled()
+        composeTestRule.onAllNodesWithTag(TestTag.PASSWORD_COMPOSABLE_IN_TESTS)[0].assertIsEnabled()
             .performTextInput("abcd")
-        composeTestRule.onAllNodesWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)[0].assertTextContains(
+        composeTestRule.onAllNodesWithTag(TestTag.PASSWORD_COMPOSABLE_IN_TESTS)[0].assertTextContains(
             "••••"
         )
     }
@@ -69,11 +69,11 @@ class VerifiedPasswordTextFieldTest {
     @Test
     fun ensureShownPasswordIsShownTest() {
         val passwordText = "abcd"
-        composeTestRule.onAllNodesWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)[0].assertIsEnabled()
+        composeTestRule.onAllNodesWithTag(TestTag.PASSWORD_COMPOSABLE_IN_TESTS)[0].assertIsEnabled()
             .performTextInput(passwordText)
-        composeTestRule.onAllNodesWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)[0].onChild()
+        composeTestRule.onAllNodesWithTag(TestTag.PASSWORD_COMPOSABLE_IN_TESTS)[0].onChild()
             .performClick()
-        composeTestRule.onAllNodesWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)[0].assertTextContains(
+        composeTestRule.onAllNodesWithTag(TestTag.PASSWORD_COMPOSABLE_IN_TESTS)[0].assertTextContains(
             passwordText
         )
     }
@@ -81,11 +81,11 @@ class VerifiedPasswordTextFieldTest {
     @Test
     fun ensureShownVerificationPasswordIsShownTest() {
         val passwordText = "abcd"
-        composeTestRule.onAllNodesWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)[1].assertIsEnabled()
+        composeTestRule.onAllNodesWithTag(TestTag.PASSWORD_COMPOSABLE_IN_TESTS)[1].assertIsEnabled()
             .performTextInput(passwordText)
-        composeTestRule.onAllNodesWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)[1].onChild()
+        composeTestRule.onAllNodesWithTag(TestTag.PASSWORD_COMPOSABLE_IN_TESTS)[1].onChild()
             .performClick()
-        composeTestRule.onAllNodesWithTag(TestTag.TEST_TAG_PASSWORD_COMPOSABLE_IN_TESTS)[1].assertTextContains(
+        composeTestRule.onAllNodesWithTag(TestTag.PASSWORD_COMPOSABLE_IN_TESTS)[1].assertTextContains(
             passwordText
         )
     }

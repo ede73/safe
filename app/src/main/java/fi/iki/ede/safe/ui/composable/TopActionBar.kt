@@ -32,7 +32,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -40,7 +39,6 @@ import androidx.compose.ui.unit.dp
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.BackupDatabase
 import fi.iki.ede.safe.backupandrestore.ExportConfig
-import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
 import fi.iki.ede.safe.splits.DropDownMenu
@@ -92,51 +90,58 @@ fun TopActionBar(
 
     val addCompleted = setupActivityResultLauncher {/*  nothing to do anymore (thanks flow!)*/ }
 
-    TopAppBar(
-        title = { Text(stringResource(id = R.string.application_name), color = Color.White) },
-        actions = {
-            if (!loginScreen) {
-                IconButton(onClick = {
-                    onAddRequested(addCompleted)
-                }, modifier = Modifier.testTag(TestTag.TEST_TAG_TOP_ACTION_BAR_ADD)) {
-                    Icon(Icons.Default.Add, stringResource(id = R.string.generic_add))
+    SafeTheme {
+        TopAppBar(
+            title = {
+                Text(
+                    stringResource(id = R.string.application_name),
+                    color = SafeTheme.colorScheme.onSurface
+                )
+            },
+            actions = {
+                if (!loginScreen) {
+                    IconButton(onClick = {
+                        onAddRequested(addCompleted)
+                    }, modifier = Modifier.testTag(TestTag.TOP_ACTION_BAR_ADD)) {
+                        Icon(Icons.Default.Add, stringResource(id = R.string.generic_add))
+                    }
+
+                    IconButton(onClick = {
+                        AutolockingBaseComponentActivity.lockTheApplication(context)
+                        IntentManager.startLoginScreen(
+                            context,
+                            openCategoryScreenAfterLogin = false
+                        )
+                    }) {
+                        Icon(Icons.Default.Lock, stringResource(id = R.string.action_bar_lock))
+                    }
+
+                    IconButton(
+                        onClick = { IntentManager.startSiteEntrySearchScreen(context) },
+                        modifier = Modifier.testTag(TestTag.TOP_ACTION_BAR_SEARCH)
+                    ) {
+                        Icon(Icons.Default.Search, stringResource(id = R.string.action_bar_search))
+                    }
                 }
 
-                IconButton(onClick = {
-                    AutolockingBaseComponentActivity.lockTheApplication(context)
-                    IntentManager.startLoginScreen(
-                        context,
-                        openCategoryScreenAfterLogin = false
-                    )
-                }) {
-                    Icon(Icons.Default.Lock, stringResource(id = R.string.action_bar_lock))
+                IconButton(onClick = { displayMenu.value = !displayMenu.value }) {
+                    Icon(Icons.Default.MoreVert, "")
                 }
 
-                IconButton(
-                    onClick = { IntentManager.startSiteEntrySearchScreen(context) },
-                    modifier = Modifier.testTag(TestTag.TEST_TAG_TOP_ACTION_BAR_SEARCH)
-                ) {
-                    Icon(Icons.Default.Search, stringResource(id = R.string.action_bar_search))
+                MakeDropdownMenu(
+                    loginScreen,
+                    displayMenu,
+                    exportImport,
+                    showChangePasswordDialog,
+                    toast
+                )
+
+                if (showChangePasswordDialog.value) {
+                    EnterNewMasterPassword(showChangePasswordDialog)
                 }
             }
-
-            IconButton(onClick = { displayMenu.value = !displayMenu.value }) {
-                Icon(Icons.Default.MoreVert, "")
-            }
-
-            MakeDropdownMenu(
-                loginScreen,
-                displayMenu,
-                exportImport,
-                showChangePasswordDialog,
-                toast
-            )
-
-            if (showChangePasswordDialog.value) {
-                EnterNewMasterPassword(showChangePasswordDialog)
-            }
-        }
-    )
+        )
+    }
 }
 
 @Composable
@@ -310,19 +315,15 @@ private fun MakeDropdownMenu(
 }
 
 // TODO: Wrong place
-private fun initiateBackup(
+private suspend fun initiateBackup(
     context: Context,
     uri: Uri,
     completed: () -> Unit,
 ) {
-    val n = BackupDatabase()
-    val dbHelper = DBHelperFactory.getDBHelper(context)
-    val (salt, currentEncryptedMasterKey) = dbHelper.fetchSaltAndEncryptedMasterKey()
-    val document = n.generate(dbHelper, salt, currentEncryptedMasterKey)
-    val outputStream = context.contentResolver.openOutputStream(uri, "wt")
-    if (outputStream != null) {
-        outputStream.write(document.toByteArray())
-        outputStream.close()
+    BackupDatabase.backup().let { accumulatedStringBuilder: StringBuilder ->
+        context.contentResolver.openOutputStream(uri, "wt")?.use { outputStream ->
+            outputStream.write(accumulatedStringBuilder.toString().toByteArray())
+        }
     }
     completed()
 }

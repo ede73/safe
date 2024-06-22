@@ -76,7 +76,7 @@ fun ImportControls(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .testTag(TestTag.TEST_TAG_SEARCH_TEXT_FIELD),
+                    .testTag(TestTag.SEARCH_TEXT_FIELD),
                 leadingIcon = {
                     Icon(
                         Icons.Default.Search,

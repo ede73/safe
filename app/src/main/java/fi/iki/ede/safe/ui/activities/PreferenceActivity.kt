@@ -10,7 +10,9 @@ import androidx.preference.MultiSelectListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
-import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.google.firebase.Firebase
+import com.google.firebase.crashlytics.crashlytics
+import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.model.Preferences
@@ -24,8 +26,11 @@ import fi.iki.ede.safe.model.Preferences.getAutoBackupRestoreStarts
 import fi.iki.ede.safe.model.Preferences.getAutoBackupStarts
 import fi.iki.ede.safe.service.AutolockingService
 import fi.iki.ede.safe.splits.PluginName
+import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.models.PluginLoaderViewModel
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseAppCompatActivity
+import fi.iki.ede.safe.ui.utilities.firebaseLog
+import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import fi.iki.ede.safe.ui.utilities.startActivityForResults
 
 
@@ -48,7 +53,7 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
     class PreferenceFragment : PreferenceFragmentCompat(), OnSharedPreferenceChangeListener {
         private val pluginLoaderViewModel: PluginLoaderViewModel by activityViewModels()
         private val backupDocumentSelected =
-            startActivityForResults { result ->
+            startActivityForResults(TestTag.PREFERENCES_SAVE_LOCATION) { result ->
                 if (result.resultCode == RESULT_OK) {
                     Preferences.setBackupDocument(result.data!!.data!!.path)
                 }
@@ -82,6 +87,16 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
 
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             addPreferencesFromResource(R.xml.preferences)
+
+            val versionPreference = Preference(requireContext()).apply {
+                key = "version_preference"
+                title = "App Version"
+                summary =
+                    "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE}) (${BuildConfig.GIT_COMMIT_HASH})"
+                isIconSpaceReserved = false
+            }
+
+            preferenceScreen?.addPreference(versionPreference)
 
             findPreference<MultiSelectListPreference>(Preferences.PREFERENCE_EXPERIMENTAL_FEATURES).let { experimentalFeatures ->
                 experimentalFeatures?.apply {
@@ -118,7 +133,7 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
             }
 
             addPreferenceClickListener<Preference>(Preferences.PREFERENCE_MAKE_CRASH) {
-                FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
+                Firebase.crashlytics.setCrashlyticsCollectionEnabled(true)
                 throw RuntimeException("Crash Test from preferences")
             }
 
@@ -156,12 +171,29 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
         ) {
             when (key) {
                 Preferences.PREFERENCE_EXPERIMENTAL_FEATURES -> {
-                    sharedPreferences?.getStringSet(
+                    val allPlugins = PluginName.entries.toSet()
+                    val enabledPlugins = sharedPreferences?.getStringSet(
                         Preferences.PREFERENCE_EXPERIMENTAL_FEATURES,
                         null
-                    )?.forEach { dfm ->
-                        val pluginName = PluginName.entries.first { it.pluginName == dfm }
-                        pluginLoaderViewModel.getOrInstallPlugin(pluginName)
+                    )?.map { dfmName ->
+                        PluginName.entries.first { it.pluginName == dfmName }
+                    }?.toSet() ?: emptySet()
+
+                    allPlugins.intersect(enabledPlugins).forEach { plugin ->
+                        try {
+                            firebaseLog("Begin loading plugin $plugin")
+                            pluginLoaderViewModel.getOrInstallPlugin(plugin)
+                        } catch (ex: Exception) {
+                            firebaseRecordException(ex)
+                        }
+                    }
+                    allPlugins.subtract(enabledPlugins).forEach { plugin ->
+                        try {
+                            firebaseLog("Begin Uninstalling plugin $plugin")
+                            pluginLoaderViewModel.uninstallPlugin(plugin)
+                        } catch (ex: Exception) {
+                            firebaseRecordException(ex)
+                        }
                     }
                 }
 

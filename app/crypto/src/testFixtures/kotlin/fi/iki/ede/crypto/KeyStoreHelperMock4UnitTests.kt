@@ -7,6 +7,10 @@ import io.mockk.every
 import io.mockk.mockkClass
 import io.mockk.mockkObject
 import io.mockk.slot
+import javax.crypto.Cipher
+import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.SecretKeySpec
+import kotlin.experimental.xor
 
 object KeystoreHelperMock4UnitTests {
     fun mock() {
@@ -18,18 +22,38 @@ object KeystoreHelperMock4UnitTests {
             generateSequence<Byte>(1) { (it + 1).toByte() }
                 .take(CipherUtilities.IV_LENGTH).toList().toByteArray()
 
+        fun xorByteArrays(iv: ByteArray, array1: ByteArray): ByteArray {
+            val result = ByteArray(array1.size)
+            for (i in array1.indices) {
+                result[i] = array1[i] xor iv[i % iv.size]
+            }
+            return result
+        }
+
+
         fun fakeDecrypt(input: IVCipherText): ByteArray {
             // get rid of IV
-            val all = input.combineIVAndCipherText()
-            return all.reversedArray().copyOfRange(fakeIV.size, all.size)
+            return xorByteArrays(input.iv, input.cipherText)
         }
 
         fun fakeEncrypt(input: ByteArray): IVCipherText {
-            val allinput = (fakeIV + input).reversedArray()
-            return IVCipherText(
-                allinput.copyOfRange(0, fakeIV.size),
-                allinput.copyOfRange(fakeIV.size, allinput.size)
-            )
+            return IVCipherText(fakeIV, xorByteArrays(fakeIV, input))
+        }
+
+        val mc = mockkClass(Cipher::class)
+        every { mc.init(any<Int>(), any<SecretKeySpec>(), any<IvParameterSpec>()) } answers {
+        }
+        every { mc.update(any<ByteArray>()) } answers {
+            String(firstArg() as ByteArray).reversed().toByteArray()
+        }
+        every { mc.doFinal() } answers {
+            ByteArray(0)
+        }
+        every { mc.blockSize } answers {
+            16
+        }
+        every { p.getAESCipher() } answers {
+            mc
         }
 
         every { p.encryptByteArray(capture(encryptionInput)) } answers {

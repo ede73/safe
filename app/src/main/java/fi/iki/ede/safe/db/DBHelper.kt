@@ -22,16 +22,19 @@ typealias DBID = Long
 class DBHelper internal constructor(
     context: Context,
     databaseName: String? = DATABASE_NAME,
-    mainApp: Boolean = false
+    regularAppNotATest: Boolean = false
 ) :
     SQLiteOpenHelper(
         context, databaseName, null, DATABASE_VERSION,
         // Alas API 33:OpenParams.Builder().setJournalMode(JOURNAL_MODE_MEMORY).build()
     ) {
     init {
-        if (!mainApp) {
+        if (!regularAppNotATest || System.getProperty("test") == "test") {
             // MUST be a test case
-            require(databaseName == null) { "MUST BE INMEMORY DB" }
+            require(databaseName == null) { "MUST BE InMemory DB" }
+        } else {
+            require(databaseName != null) { "Cannot use InMemory DB in prod" }
+            require(System.getProperty("test") != "test") { "Test cannot use file DB" }
         }
     }
 
