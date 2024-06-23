@@ -45,11 +45,11 @@
             android:exported="false"
             android:label="@string/title_activity_category_screen" />
         <activity
-            android:name=".ui.activities.ImportGooglePasswords"
+            android:name=".gpm.ui.activities.ImportGooglePasswords"
             android:exported="false"
             android:theme="@style/Theme.Safe.AppCompat" />
         <activity
-            android:name=".ui.activities.MergeGooglePasswordsToMine"
+            android:name=".gpm.ui.activities.MergeGooglePasswordsToMine"
             android:exported="false"
             android:theme="@style/Theme.Safe.AppCompat" />
         <activity

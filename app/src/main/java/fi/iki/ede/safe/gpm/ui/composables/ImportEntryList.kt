@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.ui.composable
+package fi.iki.ede.safe.gpm.ui.composables
 
 import android.content.ClipDescription
 import android.util.Log
@@ -32,11 +32,11 @@ import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.model.SavedGPM.Companion.makeFromEncryptedStringFields
 import fi.iki.ede.gpm.model.encrypt
 import fi.iki.ede.gpm.model.encrypter
+import fi.iki.ede.safe.gpm.ui.models.DNDObject
+import fi.iki.ede.safe.gpm.ui.models.ImportGPMViewModel
+import fi.iki.ede.safe.gpm.ui.modifiers.doesItHaveText
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableSiteEntry
-import fi.iki.ede.safe.ui.models.DNDObject
-import fi.iki.ede.safe.ui.models.ImportGPMViewModel
-import fi.iki.ede.safe.ui.modifiers.doesItHaveText
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

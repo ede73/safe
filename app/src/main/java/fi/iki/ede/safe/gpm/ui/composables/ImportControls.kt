@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.ui.composable
+package fi.iki.ede.safe.gpm.ui.composables
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,8 +26,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.gpm.similarity.toLowerCasedTrimmedString
 import fi.iki.ede.safe.R
+import fi.iki.ede.safe.gpm.ui.models.ImportGPMViewModel
 import fi.iki.ede.safe.ui.TestTag
-import fi.iki.ede.safe.ui.models.ImportGPMViewModel
+import fi.iki.ede.safe.ui.composable.TextualCheckbox
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeTheme
 

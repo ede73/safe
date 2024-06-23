@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.ui.modifiers
+package fi.iki.ede.safe.gpm.ui.modifiers
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding

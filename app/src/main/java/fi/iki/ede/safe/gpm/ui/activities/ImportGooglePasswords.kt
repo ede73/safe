@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.ui.activities
+package fi.iki.ede.safe.gpm.ui.activities
 
 import android.app.Activity.RESULT_OK
 import android.content.Context

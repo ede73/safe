@@ -44,7 +44,7 @@ import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
 import fi.iki.ede.safe.splits.DropDownMenu
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.TestTag
-import fi.iki.ede.safe.ui.activities.ImportGooglePasswords
+import fi.iki.ede.safe.gpm.ui.activities.ImportGooglePasswords
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity

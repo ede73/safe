@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.ui.models
+package fi.iki.ede.safe.gpm.ui.models
 
 import android.app.Application
 import android.util.Log

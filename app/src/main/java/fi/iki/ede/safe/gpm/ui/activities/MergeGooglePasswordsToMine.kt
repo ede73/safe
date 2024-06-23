@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.ui.activities
+package fi.iki.ede.safe.gpm.ui.activities
 
 import android.content.Context
 import android.content.Intent
@@ -15,9 +15,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.TextFieldValue
-import fi.iki.ede.safe.ui.composable.ImportControls
-import fi.iki.ede.safe.ui.composable.ImportEntryList
-import fi.iki.ede.safe.ui.models.ImportGPMViewModel
+import fi.iki.ede.safe.gpm.ui.composables.ImportControls
+import fi.iki.ede.safe.gpm.ui.composables.ImportEntryList
+import fi.iki.ede.safe.gpm.ui.models.ImportGPMViewModel
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
 

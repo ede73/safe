@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.ui.modifiers
+package fi.iki.ede.safe.gpm.ui.modifiers
 
 import android.content.ClipData
 import android.content.ClipDescription
@@ -12,7 +12,7 @@ import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
-import fi.iki.ede.safe.ui.models.DNDObject
+import fi.iki.ede.safe.gpm.ui.models.DNDObject
 
 @OptIn(ExperimentalFoundationApi::class)
 fun Modifier.dnd(
