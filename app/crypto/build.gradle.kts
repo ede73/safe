@@ -4,11 +4,10 @@ plugins {
 }
 android {
     namespace = "fi.iki.ede.crypto"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 26
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }

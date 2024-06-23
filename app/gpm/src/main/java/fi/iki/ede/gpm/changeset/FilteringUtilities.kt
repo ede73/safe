@@ -1,11 +1,9 @@
 package fi.iki.ede.gpm.changeset
 
-import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.gpm.debug
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.model.ScoringConfig
-import fi.iki.ede.gpm.model.decrypt
 import fi.iki.ede.gpm.similarity.LowerCaseTrimmedString
 import fi.iki.ede.gpm.similarity.findSimilarity
 import fi.iki.ede.gpm.similarity.toLowerCasedTrimmedString
@@ -46,8 +44,10 @@ fun harmonizePotentialDomainName(input: String): String {
 fun findSimilarNamesWhereUsernameMatchesAndURLDomainLooksTheSame(
     importChangeSet: ImportChangeSet,
     scoringConfig: ScoringConfig,
+    progressReport: (progress: String) -> Unit,
 ): Set<Pair<IncomingGPM, ScoredMatch>> =
     importChangeSet.getUnprocessedIncomingGPMs.flatMap { incomingGPM ->
+        progressReport("Similarity match..")
         importChangeSet.getUnprocessedSavedGPMs.mapNotNull { savedGPM ->
             val score = findSimilarity(
                 harmonizePotentialDomainName(incomingGPM.name).toLowerCasedTrimmedString(),
@@ -83,12 +83,13 @@ fun findSimilarNamesWhereUsernameMatchesAndURLDomainLooksTheSame(
 fun processOneFieldChanges(
     importChangeSet: ImportChangeSet,
     scoringConfig: ScoringConfig,
+    progressReport: (progress: String) -> Unit,
 ) = listOf(
-    Pair(IncomingGPM::name, SavedGPM::encryptedName),
-    Pair(IncomingGPM::password, SavedGPM::encryptedPassword),
-    Pair(IncomingGPM::username, SavedGPM::encryptedUsername),
-    Pair(IncomingGPM::url, SavedGPM::encryptedUrl),
-    Pair(IncomingGPM::note, SavedGPM::encryptedNote),
+    Pair(IncomingGPM::name, SavedGPM::decryptedName/*encryptedName*/),
+    Pair(IncomingGPM::password, SavedGPM::decryptedPassword/*encryptedPassword*/),
+    Pair(IncomingGPM::username, SavedGPM::decryptedUsername/*encryptedUsername*/),
+    Pair(IncomingGPM::url, SavedGPM::decryptedUrl/*encryptedUrl*/),
+    Pair(IncomingGPM::note, SavedGPM::decryptedNote/*encryptedNote*/),
 ).map {
     // for debuggability, this would be nice, but for clarity not
     // we don't care WHICH field it really was...
@@ -98,7 +99,8 @@ fun processOneFieldChanges(
         importChangeSet,
         it.first,
         it.second,
-        scoringConfig
+        scoringConfig,
+        progressReport
     )
 //    )
 }.let {
@@ -247,10 +249,17 @@ private fun doesUserNameOrDomainNameMatch(
 private fun findEntriesWithOnlyChangedPropertyIs(
     importChangeSet: ImportChangeSet,
     firstProperty: KProperty1<IncomingGPM, String>,
-    secondProperty: KProperty1<SavedGPM, IVCipherText>,
-    scoringConfig: ScoringConfig
-): Set<Pair<IncomingGPM, ScoredMatch>> =
-    importChangeSet.getUnprocessedIncomingGPMs.mapNotNull { incomingGPMs ->
+    secondProperty: KProperty1<SavedGPM, String>,//IVCipherText>,
+    scoringConfig: ScoringConfig,
+    progressReport: (progress: String) -> Unit
+): Set<Pair<IncomingGPM, ScoredMatch>> {
+    var start = 0f
+    // runs five times, so gotta pump the progress to upper level!
+    val size = importChangeSet.getUnprocessedIncomingGPMs.size
+    val rsize = importChangeSet.getUnprocessedSavedGPMs.size
+    return importChangeSet.getUnprocessedIncomingGPMs.mapNotNull { incomingGPMs ->
+        start++
+        progressReport("$start / $size (from $rsize encrypted)")
         importChangeSet.getUnprocessedSavedGPMs.firstOrNull { savedGPMs ->
             hasOnlyOneFieldChange(incomingGPMs, savedGPMs, firstProperty, secondProperty)
         }?.let { dbGpmEntry ->
@@ -260,25 +269,27 @@ private fun findEntriesWithOnlyChangedPropertyIs(
             )
         }
     }.toSet()
+}
 
 private fun hasOnlyOneFieldChange(
     first: IncomingGPM,
     second: SavedGPM,
     firstProperty: KProperty1<IncomingGPM, String>,
-    secondProperty: KProperty1<SavedGPM, IVCipherText>
+    secondProperty: KProperty1<SavedGPM, String>,//IVCipherText>
 ): Boolean {
 // List of all comparable properties in GPMEntry and their corresponding encrypted versions in DBGPMEntry
     val properties = listOf(
-        IncomingGPM::name to SavedGPM::encryptedName,
-        IncomingGPM::url to SavedGPM::encryptedUrl,
-        IncomingGPM::username to SavedGPM::encryptedUsername,
-        IncomingGPM::password to SavedGPM::encryptedPassword
+        IncomingGPM::name to SavedGPM::decryptedName, //encryptedName,
+        IncomingGPM::url to SavedGPM::decryptedUrl, // encryptedUrl,
+        IncomingGPM::username to SavedGPM::decryptedUsername,// encryptedUsername,
+        IncomingGPM::password to SavedGPM::decryptedPassword,// encryptedPassword
     )
 
     // Check if the specified properties are different
     // TODO: Could we refer to decrypted properties? we do know the pop name, but makes code more complex
     val isSpecifiedPropertyDifferent =
-        firstProperty.get(first) != secondProperty.get(second).decrypt() // TODO: decrypt
+        firstProperty.get(first).toLowerCasedTrimmedString() != secondProperty.get(second)
+            .toLowerCasedTrimmedString()//.decrypt() // TODO: decrypt
 
     // Check if all other properties are the same
     val areOtherPropertiesSame = properties.all { (gpmProp, dbGpmProp) ->
@@ -286,7 +297,7 @@ private fun hasOnlyOneFieldChange(
         if (gpmProp == firstProperty && dbGpmProp == secondProperty) true
         // TODO: Could we refer to decrypted properties? we do know the pop name, but makes code more complex
         else gpmProp.get(first).toLowerCasedTrimmedString() == dbGpmProp.get(second)
-            .decrypt() // TODO: decrypt
+            //.decrypt() // TODO: decrypt
             .toLowerCasedTrimmedString()
     }
 

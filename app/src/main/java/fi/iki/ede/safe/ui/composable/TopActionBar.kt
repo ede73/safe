@@ -44,7 +44,7 @@ import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
 import fi.iki.ede.safe.splits.DropDownMenu
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.TestTag
-import fi.iki.ede.safe.ui.activities.ImportGooglePasswordManager
+import fi.iki.ede.safe.ui.activities.ImportGooglePasswords
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
@@ -91,94 +91,83 @@ fun TopActionBar(
     val addCompleted = setupActivityResultLauncher {/*  nothing to do anymore (thanks flow!)*/ }
 
     SafeTheme {
-        TopAppBar(
-            title = {
-                Text(
-                    stringResource(id = R.string.application_name),
-                    color = SafeTheme.colorScheme.onSurface
-                )
-            },
-            actions = {
-                if (!loginScreen) {
-                    IconButton(onClick = {
-                        onAddRequested(addCompleted)
-                    }, modifier = Modifier.testTag(TestTag.TOP_ACTION_BAR_ADD)) {
-                        Icon(Icons.Default.Add, stringResource(id = R.string.generic_add))
-                    }
-
-                    IconButton(onClick = {
-                        AutolockingBaseComponentActivity.lockTheApplication(context)
-                        IntentManager.startLoginScreen(
-                            context,
-                            openCategoryScreenAfterLogin = false
-                        )
-                    }) {
-                        Icon(Icons.Default.Lock, stringResource(id = R.string.action_bar_lock))
-                    }
-
-                    IconButton(
-                        onClick = { IntentManager.startSiteEntrySearchScreen(context) },
-                        modifier = Modifier.testTag(TestTag.TOP_ACTION_BAR_SEARCH)
-                    ) {
-                        Icon(Icons.Default.Search, stringResource(id = R.string.action_bar_search))
-                    }
+        TopAppBar(title = {
+            Text(
+                stringResource(id = R.string.application_name),
+                color = SafeTheme.colorScheme.onSurface
+            )
+        }, actions = {
+            if (!loginScreen) {
+                IconButton(onClick = {
+                    onAddRequested(addCompleted)
+                }, modifier = Modifier.testTag(TestTag.TOP_ACTION_BAR_ADD)) {
+                    Icon(Icons.Default.Add, stringResource(id = R.string.generic_add))
                 }
 
-                IconButton(onClick = { displayMenu.value = !displayMenu.value }) {
-                    Icon(Icons.Default.MoreVert, "")
+                IconButton(onClick = {
+                    AutolockingBaseComponentActivity.lockTheApplication(context)
+                    IntentManager.startLoginScreen(
+                        context, openCategoryScreenAfterLogin = false
+                    )
+                }) {
+                    Icon(Icons.Default.Lock, stringResource(id = R.string.action_bar_lock))
                 }
 
-                MakeDropdownMenu(
-                    loginScreen,
-                    displayMenu,
-                    exportImport,
-                    showChangePasswordDialog,
-                    toast
-                )
-
-                if (showChangePasswordDialog.value) {
-                    EnterNewMasterPassword(showChangePasswordDialog)
+                IconButton(
+                    onClick = { IntentManager.startSiteEntrySearchScreen(context) },
+                    modifier = Modifier.testTag(TestTag.TOP_ACTION_BAR_SEARCH)
+                ) {
+                    Icon(Icons.Default.Search, stringResource(id = R.string.action_bar_search))
                 }
             }
-        )
+
+            IconButton(onClick = { displayMenu.value = !displayMenu.value }) {
+                Icon(Icons.Default.MoreVert, "")
+            }
+
+            MakeDropdownMenu(
+                loginScreen, displayMenu, exportImport, showChangePasswordDialog, toast
+            )
+
+            if (showChangePasswordDialog.value) {
+                ShowChangeMasterPasswordDialog(showChangePasswordDialog)
+            }
+        })
     }
 }
 
 @Composable
-private fun EnterNewMasterPassword(
+private fun ShowChangeMasterPasswordDialog(
     showChangePasswordDialog: MutableState<Boolean>
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    val masterPasswordChanged =
-        stringResource(id = R.string.action_bar_password_changed)
-    val masterPasswordChangeFailed =
-        stringResource(id = R.string.action_bar_password_change_failed)
+    val masterPasswordChanged = stringResource(id = R.string.action_bar_password_changed)
+    val masterPasswordChangeFailed = stringResource(id = R.string.action_bar_password_change_failed)
 
     EnterNewMasterPassword {
         val (oldMasterPassword, newMasterPassword) = it
-        ChangeMasterKeyAndPassword.changeMasterPassword(
-            oldMasterPassword,
-            newMasterPassword
-        ) { success ->
-            // NOTICE! This isn't a UI thread!
-            coroutineScope.launch(Dispatchers.Main) {
-                if (success) {
-                    // master password successfully changed
-                    Toast.makeText(
-                        context,
-                        masterPasswordChanged,
-                        Toast.LENGTH_LONG
-                    ).show()
-                } else {
-                    Toast.makeText(
-                        context,
-                        masterPasswordChangeFailed,
-                        Toast.LENGTH_LONG
-                    ).show()
+        if (!oldMasterPassword.isEmpty() && !newMasterPassword.isEmpty()) {
+            ChangeMasterKeyAndPassword.changeMasterPassword(
+                oldMasterPassword, newMasterPassword
+            ) { success ->
+                // NOTICE! This isn't a UI thread!
+                coroutineScope.launch(Dispatchers.Main) {
+                    if (success) {
+                        // master password successfully changed
+                        Toast.makeText(
+                            context, masterPasswordChanged, Toast.LENGTH_LONG
+                        ).show()
+                    } else {
+                        Toast.makeText(
+                            context, masterPasswordChangeFailed, Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
+                showChangePasswordDialog.value = false
             }
+        } else {
             showChangePasswordDialog.value = false
         }
     }
@@ -218,55 +207,44 @@ private fun MakeDropdownMenu(
         }
     }
 
-    DropdownMenu(
-        expanded = displayMenu.value,
-        onDismissRequest = { displayMenu.value = false }
-    ) {
+    DropdownMenu(expanded = displayMenu.value, onDismissRequest = { displayMenu.value = false }) {
         // Creating dropdown menu item, on click
         // would create a Toast message
-        DropdownMenuItem(
-            enabled = !loginScreen,
+        DropdownMenuItem(enabled = !loginScreen,
             text = { Text(text = stringResource(id = R.string.action_bar_settings)) },
             onClick = {
                 displayMenu.value = false
                 IntentManager.startPreferencesActivity(context)
             })
-        DropdownMenuItem(
-            text = { Text(text = stringResource(id = R.string.action_bar_help)) },
+        DropdownMenuItem(text = { Text(text = stringResource(id = R.string.action_bar_help)) },
             onClick = {
                 displayMenu.value = false
                 IntentManager.startHelpScreen(context)
             })
-        DropdownMenuItem(
-            enabled = !loginScreen,
+        DropdownMenuItem(enabled = !loginScreen,
             text = { Text(text = stringResource(id = R.string.action_bar_change_master_password)) },
             onClick = {
                 displayMenu.value = false
                 showChangePasswordDialog.value = true
             })
         IntentManager.getMenuItems(DropDownMenu.TopActionBarMenu).forEach {
-            DropdownMenuItem(text = { Text(text = stringResource(id = it.first)) },
-                onClick = {
-                    displayMenu.value = false
-                    try {
-                        it.second(context)
-                    } catch (ex: Exception) {
-                        Log.e(TAG, "Plugin failed to do the menu", ex)
-                    }
-                })
+            DropdownMenuItem(text = { Text(text = stringResource(id = it.first)) }, onClick = {
+                displayMenu.value = false
+                try {
+                    it.second(context)
+                } catch (ex: Exception) {
+                    Log.e(TAG, "Plugin failed to do the menu", ex)
+                }
+            })
         }
-        DropdownMenuItem(
-            enabled = !loginScreen,
+        DropdownMenuItem(enabled = !loginScreen,
             text = { Text(text = stringResource(id = R.string.action_bar_import_export)) },
             onClick = {
                 exportImport.value = true
             })
-        DropdownMenu(
-            expanded = exportImport.value,
-            onDismissRequest = { exportImport.value = false }
-        ) {
-            DropdownMenuItem(
-                text = { Text(text = stringResource(id = R.string.action_bar_backup)) },
+        DropdownMenu(expanded = exportImport.value,
+            onDismissRequest = { exportImport.value = false }) {
+            DropdownMenuItem(text = { Text(text = stringResource(id = R.string.action_bar_backup)) },
                 onClick = {
                     displayMenu.value = false
                     backupDocumentSelectedResult.launch(
@@ -275,8 +253,7 @@ private fun MakeDropdownMenu(
                 })
             // Currently does not work from login screen
             // TODO: Make work from login screen?
-            DropdownMenuItem(
-                text = { Text(text = stringResource(id = R.string.action_bar_restore)) },
+            DropdownMenuItem(text = { Text(text = stringResource(id = R.string.action_bar_restore)) },
                 onClick = {
                     try {
                         displayMenu.value = false
@@ -287,28 +264,26 @@ private fun MakeDropdownMenu(
                         Log.e(TAG, "Cannot launch ACTION_OPEN_DOCUMENT")
                     }
                 })
-            DropdownMenuItem(
-                text = { Text(text = stringResource(id = R.string.action_bar_import_google_passwordmanager)) },
+            DropdownMenuItem(text = { Text(text = stringResource(id = R.string.action_bar_import_google_passwordmanager)) },
                 onClick = {
                     try {
                         displayMenu.value = false
-                        ImportGooglePasswordManager.startMe(context)
+                        ImportGooglePasswords.startMe(context)
                     } catch (ex: ActivityNotFoundException) {
                         Log.e(TAG, "Cannot launch ImportGooglePasswordManager", ex)
                     }
                 })
             IntentManager.getMenuItems(DropDownMenu.TopActionBarImportExportMenu).forEach {
-                DropdownMenuItem(text = { Text(text = stringResource(id = it.first)) },
-                    onClick = {
-                        displayMenu.value = false
-                        try {
-                            coroutineScope.launch {
-                                it.second(context)
-                            }
-                        } catch (ex: Exception) {
-                            Log.e(TAG, "Plugin failed to do the menu", ex)
+                DropdownMenuItem(text = { Text(text = stringResource(id = it.first)) }, onClick = {
+                    displayMenu.value = false
+                    try {
+                        coroutineScope.launch {
+                            it.second(context)
                         }
-                    })
+                    } catch (ex: Exception) {
+                        Log.e(TAG, "Plugin failed to do the menu", ex)
+                    }
+                })
             }
         }
     }

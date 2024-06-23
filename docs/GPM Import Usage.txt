@@ -1,0 +1,68 @@
+This feature allows you to import Google Password Manager passwords (GPMs) in a continuous manner. This is intended to be used every now and then.
+
+At no point during import or merge will your existing Site Entries(passwords) be overwritten or modified.
+
+This part imports the Google Password Manager CSV file to Password Safe database and encrypts it with AES-256. We also store secure SHA-256 hash of all input fields and store it in database also.
+
+Next time an import is done, we can easily find what has not changed by comparing the hashes. Of changes GPMs we decrypt them, and compare again the changes. If only one field has changed (url, name, password, username, note), we assume it is the same password and we can update it into saved GPMs (that are strongly encrypted!).
+
+Those new incoming GPMs that have more than one field changes, we try other heuristics to match them with existing. At the end, you will have lists or
+- new unseen GPMs (or ones we could not match) - these will be added to saved GPMs
+- 100% matching, or matching but with 1 field change (these will be updated)
+- conflicts where either multiple incoming GPMS match to existing 1 GPM or vice versa
+- Saved GPMs that didn't match anything in incoming GPMS.
+
+You can move/edit the lists, and eventually accept the situation. New list will be saved to database.
+
+This part of the process is intended just be keep your GPM imports clean and easy, without any loss.
+
+Why so complicated? Well in the next phase of import, you can match GPMs to your existing Site Entries, or add them as new Site Entries.
+
+This allows basically you to import passwords from GPM to Password Safe, but also for your on convenience keep the passwords mostly synchronized by LINKING them with Password Safe Site Entries, updating URLs, updating passwords, or just keeping YOU yourself informed if you change password in Password Safe, you should do the same in Google Password Manager too.
+
+You can delete the mapping anytime you like, you can delete GPM imports altogether, and just do fresh new import every time, of course this will not be beneficial since your mapping will be lost.
+
+After you've done with the import, 2nd part starts, that allows you to:
+- link GPMs to existing Site Entries
+- add new GPMs as new Site Entries
+- ignore GPMs
+
+These selections will be remembered, so next time linking will be easier.
+
+
+
+
+
+
+
+
+Tämä ominaisuus mahdollistaa Google Password Managerin salasanojen (GPM) tuonnin jatkuvalla tavalla. Tätä on tarkoitus käyttää silloin tällöin.
+
+Tuonnin tai yhdistämisen aikana olemassa olevia sivustotietueita (salasanoja) ei missään vaiheessa ylikirjoiteta tai muuteta.
+
+Tämä osa tuo Google Password Managerin CSV-tiedoston Password Safe -tietokantaan ja salaa sen AES-256:lla. Tallennamme myös kaikkien syöttökenttien turvallisen SHA-256-tiivisteen ja säilytämme sen myös tietokannassa.
+
+Seuraavan kerran tuonnin yhteydessä voimme helposti löytää, mikä ei ole muuttunut, vertaamalla tiivisteitä. Muuttuneiden GPM:ien osalta puramme niiden salauksen ja vertaamme muutoksia uudelleen. Jos vain yksi kenttä on muuttunut (url, nimi, salasana, käyttäjänimi, huomautus), oletamme, että kyseessä on sama salasana ja voimme päivittää sen tallennettuihin GPM:iin (jotka ovat vahvasti salattuja!).
+
+Uudet saapuvat GPM:t, joissa on muuttunut enemmän kuin yksi kenttä, yritämme sovittaa olemassa oleviin muiden heuristiikkojen avulla. Lopulta sinulla on luettelot tai
+- uudet näkemättömät GPM:t (tai sellaiset, joita emme voineet yhdistää) - nämä lisätään tallennettuihin GPM:iin
+- 100% vastaavat, tai vastaavat, mutta yhden kentän muutoksella (nämä päivitetään)
+- ristiriidat, joissa joko useat saapuvat GPM:t vastaavat olemassa olevaa yhtä GPM:ää tai päinvastoin
+- Tallennetut GPM:t, jotka eivät vastanneet mitään saapuvissa GPM:issä.
+
+Voit siirtää/muokata luetteloita ja lopulta hyväksyä tilanteen. Uusi luettelo tallennetaan tietokantaan.
+
+Tämän prosessin osan on tarkoitus vain pitää GPM-tuontisi puhtaana ja helposti, ilman mitään menetyksiä.
+
+Miksi niin monimutkaista? No, tuonnin seuraavassa vaiheessa voit yhdistää GPM:t olemassa oleviin sivustotietueisiisi tai lisätä ne uusina sivustotietueina.
+
+Tämä mahdollistaa periaatteessa salasanojen tuonnin GPM:stä Password Safeen, mutta myös omaksi mukavuudeksesi pitää salasanat pääosin synkronoituna LINKITETTYNÄ ne Password Safe -sivustotietueiden kanssa, päivittämällä URL-osoitteita, päivittämällä salasanoja tai vain pitämällä SINUT itse informoituna, jos muutat salasanaa Password Safessa, sinun tulisi tehdä sama Google Password Managerissakin.
+
+Voit poistaa kartoituksen milloin tahansa, voit poistaa GPM-tuonnit kokonaan ja tehdä vain uuden tuonnin joka kerta, tietysti tämä ei ole hyödyllistä, koska kartoituksesi menetetään.
+
+Kun olet suorittanut tuonnin, alkaa toinen osa, joka mahdollistaa sinulle:
+- yhdistää GPM:t olemassa oleviin sivustotietueisiin
+- lisätä uudet GPM:t uusina sivustotietueina
+- ohittaa GPM:t
+
+Nämä valinnat muistetaan, joten seuraavan kerran linkitys on helpompaa.

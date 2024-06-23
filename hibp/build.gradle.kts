@@ -6,11 +6,10 @@ plugins {
 
 android {
     namespace = "fi.iki.ede.hibp"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
-        minSdk = 28
-
+        minSdk = 26
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

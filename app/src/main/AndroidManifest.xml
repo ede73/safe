@@ -45,7 +45,11 @@
             android:exported="false"
             android:label="@string/title_activity_category_screen" />
         <activity
-            android:name=".ui.activities.ImportGooglePasswordManager"
+            android:name=".ui.activities.ImportGooglePasswords"
+            android:exported="false"
+            android:theme="@style/Theme.Safe.AppCompat" />
+        <activity
+            android:name=".ui.activities.MergeGooglePasswordsToMine"
             android:exported="false"
             android:theme="@style/Theme.Safe.AppCompat" />
         <activity
@@ -87,5 +91,4 @@
             android:name=".service.AutolockingService"
             android:enabled="true" />
     </application>
-
 </manifest>

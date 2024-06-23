@@ -26,10 +26,14 @@ object ChangeMasterKeyAndPassword {
     ): Boolean {
         val dbHelper = DBHelperFactory.getDBHelper()
         val (salt, ivCipher) = dbHelper.fetchSaltAndEncryptedMasterKey()
-        val existingPBKDF2Key = generatePBKDF2AESKey(
-            salt, KEY_ITERATION_COUNT,
-            oldPass, KEY_LENGTH_BITS
-        )
+        val existingPBKDF2Key = try {
+            generatePBKDF2AESKey(
+                salt, KEY_ITERATION_COUNT,
+                oldPass, KEY_LENGTH_BITS
+            )
+        } catch (e: Exception) {
+            return false
+        }
         val newPBKDF2Key = generatePBKDF2AESKey(salt, KEY_ITERATION_COUNT, newPass, KEY_LENGTH_BITS)
 
         try {

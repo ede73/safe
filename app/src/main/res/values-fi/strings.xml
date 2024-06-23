@@ -35,15 +35,57 @@
     <string name="generic_dont_delete">Älä poista!</string>
     <string name="generic_ok">OK!</string>
     <string name="generic_yes_delete">Poista!</string>
+    <string name="google_password_import_accept">Hyväksy ja mene seuraavaan vaiheeseen!</string>
+    <string name="google_password_import_delete">Tuhoa alkuperäinen CSV</string>
+    <string name="google_password_import_delete_reminder">Muista tuhota tuontidokumentti! Se sisältää salaamattomia salasanoja, on tärkeää ettet jätä sitä talteen mihinkään turvattomaan paikkaan! Tai parempi ettet säilytä sitä missään!</string>
+    <string name="google_password_import_failed">Tuonti epäonnistui!</string>
+    <string name="google_password_import_finish_linking">Viimeistele GPM linkitys edelliseltä kerralta</string>
+    <string name="google_password_import_import">Tuo CSV</string>
+    <string name="google_password_import_matching_names">Samat nimet</string>
+    <string name="google_password_import_matching_passwords">Samat salasanat</string>
     <string name="google_password_import_search">Etsi rajataksesi valintojen määrää</string>
     <string name="google_password_import_search_from_imports">Etsi tuotavista</string>
     <string name="google_password_import_search_from_mine">Etsi salasanoista</string>
+    <string name="google_password_import_select">Valitse GPM CSV</string>
+    <string name="google_password_import_select_doc">Valitse Google Password Manager (GPM) CSV</string>
+    <string name="google_password_import_usage">Tämä ominaisuus mahdollistaa Google Password Managerin salasanojen (GPM) tuonnin jatkuvalla tavalla. Tätä on tarkoitus käyttää silloin tällöin.\n
+\n
+Tuonnin tai yhdistämisen aikana olemassa olevia sivustotietueita (salasanoja) ei missään vaiheessa ylikirjoiteta tai muuteta.\n
+\n
+Tämä osa tuo Google Password Managerin CSV-tiedoston Password Safe -tietokantaan ja salaa sen AES-256:lla. Tallennamme myös kaikkien syöttökenttien turvallisen SHA-256-tiivisteen ja säilytämme sen myös tietokannassa.\n
+\n
+Seuraavan kerran tuonnin yhteydessä voimme helposti löytää, mikä ei ole muuttunut, vertaamalla tiivisteitä. Muuttuneiden GPM:ien osalta puramme niiden salauksen ja vertaamme muutoksia uudelleen. Jos vain yksi kenttä on muuttunut (url, nimi, salasana, käyttäjänimi, huomautus), oletamme, että kyseessä on sama salasana ja voimme päivittää sen tallennettuihin GPM:iin (jotka ovat vahvasti salattuja!).\n
+\n
+Uudet saapuvat GPM:t, joissa on muuttunut enemmän kuin yksi kenttä, yritämme sovittaa olemassa oleviin muiden heuristiikkojen avulla. Lopulta sinulla on luettelot tai\n
+- uudet näkemättömät GPM:t (tai sellaiset, joita emme voineet yhdistää) - nämä lisätään tallennettuihin GPM:iin\n
+- 100% vastaavat, tai vastaavat, mutta yhden kentän muutoksella (nämä päivitetään)\n
+- ristiriidat, joissa joko useat saapuvat GPM:t vastaavat olemassa olevaa yhtä GPM:ää tai päinvastoin\n
+- Tallennetut GPM:t, jotka eivät vastanneet mitään saapuvissa GPM:issä.\n
+\n
+Voit siirtää/muokata luetteloita ja lopulta hyväksyä tilanteen. Uusi luettelo tallennetaan tietokantaan.\n
+\n
+Tämän prosessin osan on tarkoitus vain pitää GPM-tuontisi puhtaana ja helposti, ilman mitään menetyksiä.\n
+\n
+Miksi niin monimutkaista? No, tuonnin seuraavassa vaiheessa voit yhdistää GPM:t olemassa oleviin sivustotietueisiisi tai lisätä ne uusina sivustotietueina.\n
+\n
+Tämä mahdollistaa periaatteessa salasanojen tuonnin GPM:stä Password Safeen, mutta myös omaksi mukavuudeksesi pitää salasanat pääosin synkronoituna LINKITETTYNÄ ne Password Safe -sivustotietueiden kanssa, päivittämällä URL-osoitteita, päivittämällä salasanoja tai vain pitämällä SINUT itse informoituna, jos muutat salasanaa Password Safessa, sinun tulisi tehdä sama Google Password Managerissakin.\n
+\n
+Voit poistaa kartoituksen milloin tahansa, voit poistaa GPM-tuonnit kokonaan ja tehdä vain uuden tuonnin joka kerta, tietysti tämä ei ole hyödyllistä, koska kartoituksesi menetetään.\n
+\n
+Kun olet suorittanut tuonnin, alkaa toinen osa, joka mahdollistaa sinulle:\n
+- yhdistää GPM:t olemassa oleviin sivustotietueisiin\n
+- lisätä uudet GPM:t uusina sivustotietueina\n
+- ohittaa GPM:t\n
+\n
+Nämä valinnat muistetaan, joten seuraavan kerran linkitys on helpompaa.</string>
+    <string name="login_anew_button">Hylkää varmuuskopio, aloita alusta</string>
+    <string name="login_anew_retry_button">Kokeile kuitenkin perussisäänkirjausta</string>
     <string name="login_button">Kirjaudu</string>
     <string name="login_button_clear_db">Kirjaudu/Nollaa tietokanta</string>
     <string name="login_invalid_password">Väärä salasana</string>
-    <string name="login_password_tip">Syötä salana</string>
+    <string name="login_password_tip">Syötä salasana</string>
     <string name="login_screen_restore_mark_message">"Näyttää että Googlen automaattisen varmuuskopion palautus tehtiin noin %1$s"</string>
-    <string name="login_tip">Avaa salanalla tai biometriikalla</string>
+    <string name="login_tip">Avaa salasanalla tai biometriikalla</string>
     <string name="login_verify_password_tip">Syötä sama salasana uudestaan</string>
     <string name="login_with_biometrics">Kirjaudu biometriikalla</string>
     <string name="move_password_cancel">Älä siirrä!</string>
@@ -116,16 +158,12 @@
     <string name="restore_screen_restore_failed">Palautus epäonnistui</string>
     <string name="restore_screen_restored">Palautus valmis %1$d</string>
     <string name="title_activity_category_screen">Kategoriat</string>
-    <string name="title_activity_help_screen">Apunäyttä</string>
-    <string name="title_activity_password_entry_screen">Salanan muokkausnäyttö</string>
+    <string name="title_activity_help_screen">Apunäyttö</string>
+    <string name="title_activity_password_entry_screen">Salasanan muokkausnäyttö</string>
     <string name="title_activity_password_screen">Salasananäyttö</string>
     <string name="title_activity_password_search_screen">Salasanan etsintä</string>
     <string name="title_activity_restore_screen">Palauta salasanat</string>
     <string name="title_categorypager">Sivutettu kategorianäyttö</string>
     <string name="title_hibp">HIBP tuki</string>
     <string name="title_oisafeimport">OISafe salasanojen sisääntuonti</string>
-    <string name="login_anew_button">Hylkää varmuuskopio, aloita alusta</string>
-    <string name="login_anew_retry_button">Kokeile kuitenkin perussisäänkirjausta</string>
-    <string name="google_password_import_matching_passwords">Samat salasanat</string>
-    <string name="google_password_import_matching_names">Samat nimet</string>
 </resources>

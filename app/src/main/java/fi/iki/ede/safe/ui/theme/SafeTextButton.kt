@@ -8,10 +8,12 @@ import androidx.compose.ui.Modifier
 fun SafeTextButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     content: @Composable () -> Unit
 ) {
     TextButton(
         onClick = onClick,
+        enabled = enabled,
         modifier = modifier,
     ) {
         content()

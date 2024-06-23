@@ -19,6 +19,7 @@ data class SavedGPM private constructor(
     val decryptedUsername: String by lazy { encryptedUsername.decrypt() } // ok
     val decryptedUrl: String by lazy { encryptedUrl.decrypt() } // ok
     val decryptedPassword: String by lazy { encryptedPassword.decrypt() } // ok
+    val decryptedNote: String by lazy { encryptedNote.decrypt() } // ok
 
     constructor(id: Long? = null, importing: IncomingGPM) : this(
         id,
