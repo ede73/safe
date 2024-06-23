@@ -2,6 +2,7 @@ package fi.iki.ede.safe.gpm.ui.models
 
 import kotlin.time.TimeSource
 
+// TODO: LOOKS LIKE not used anymore
 class Progress(
     private val maxSize: Long,
     private val reportThresholdMillis: Long = 1000,

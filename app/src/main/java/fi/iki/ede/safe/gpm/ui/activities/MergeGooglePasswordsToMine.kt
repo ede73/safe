@@ -9,12 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.TextFieldValue
 import fi.iki.ede.safe.gpm.ui.composables.ImportControls
 import fi.iki.ede.safe.gpm.ui.composables.ImportEntryList
 import fi.iki.ede.safe.gpm.ui.models.ImportGPMViewModel
@@ -28,17 +23,12 @@ class MergeGooglePasswordsToMine : AutolockingBaseComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            val isLoading by viewModel.isWorking.observeAsState(false to null as Float?)
             SafeTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
-                    val searchText = remember { mutableStateOf(TextFieldValue("")) }
                     Column {
-                        ImportControls(
-                            viewModel,
-                            isLoading,
-                        )
+                        ImportControls(viewModel)
                         ImportEntryList(viewModel)
                     }
                 }

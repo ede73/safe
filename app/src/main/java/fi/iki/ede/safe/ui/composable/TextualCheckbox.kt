@@ -8,6 +8,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.safe.R
@@ -17,7 +18,8 @@ import fi.iki.ede.safe.ui.theme.SafeTheme
 fun TextualCheckbox(
     initiallyChecked: MutableState<Boolean>,
     textResourceId: Int,
-    checkedChanged: (Boolean) -> Unit
+    modifier: Modifier = Modifier,
+    checkedChanged: (Boolean) -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,

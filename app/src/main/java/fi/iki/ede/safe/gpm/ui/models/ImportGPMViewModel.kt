@@ -1,10 +1,9 @@
 package fi.iki.ede.safe.gpm.ui.models
 
-import android.app.Application
 import android.util.Log
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import fi.iki.ede.gpm.changeset.harmonizePotentialDomainName
 import fi.iki.ede.gpm.model.SavedGPM
@@ -21,15 +20,15 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 
-class ImportGPMViewModel(application: Application) : AndroidViewModel(application) {
+class ImportGPMViewModel : ViewModel() {
     // LiveData to signal the UI to show loading
-    private val _isWorking = MutableLiveData(false to null as Float?)
-    val isWorking: LiveData<Pair<Boolean, Float?>> = _isWorking
+    private val _isWorkingAndProgress = MutableLiveData(false to null as Float?)
+    val isWorkingAndProgress: LiveData<Pair<Boolean, Float?>> = _isWorkingAndProgress
 
     val dataRepository = DataRepository()
 
     private val jobManager = JobManager { completed, percentCompleted ->
-        _isWorking.postValue(completed to percentCompleted)
+        _isWorkingAndProgress.postValue(completed to percentCompleted)
     }
 
     init {
@@ -195,6 +194,7 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
         searchText: String,
         searchFromMyOwn: Boolean,
         searchFromBeingImported: Boolean,
+        regex: Regex? = null,
     ) {
         if (searchText.isEmpty()) return
         searchJob?.cancel()
@@ -204,7 +204,8 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
                 similarityThresholdOrSubString,
                 searchText.toLowerCasedTrimmedString(),
                 searchFromMyOwn,
-                searchFromBeingImported
+                searchFromBeingImported,
+                regex
             )
         }
     }
@@ -213,7 +214,8 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
         similarityThresholdOrSubString: Double,
         searchText: LowerCaseTrimmedString,
         searchFromMyOwn: Boolean,
-        searchFromBeingImported: Boolean
+        searchFromBeingImported: Boolean,
+        regex: Regex? = null
     ) {
         CoroutineScope(Dispatchers.Default).launch {
             jobManager.cancelAndAddNewJobs {
@@ -230,9 +232,12 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
                                         searchText
                                     ) > similarityThresholdOrSubString
                                 ) item else null
-                            } else if (item.plainDescription.lowercase()
+                            } else if (regex == null && item.plainDescription.lowercase()
                                     .contains(searchText.lowercasedTrimmed)
-                            ) item else null
+                            ) item
+                            else if (regex != null && regex.containsMatchIn(item.plainDescription.lowercase())
+                            ) item
+                            else null
                         }
                     )
                 else null
@@ -244,6 +249,7 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
                         dataRepository.getList(DataType.GPM) as List<SavedGPM>,
                         start = { },
                         compare = { item ->
+                            println("Searching for ${searchText.lowercasedTrimmed} in ${item.decryptedName}")
                             if (similarityThresholdOrSubString > 0) {
                                 if (findSimilarity(
                                         harmonizePotentialDomainName(item.decryptedName).toLowerCasedTrimmedString(),
@@ -251,9 +257,12 @@ class ImportGPMViewModel(application: Application) : AndroidViewModel(applicatio
                                     ) > similarityThresholdOrSubString
                                 ) item
                                 else null
-                            } else if (item.decryptedName.lowercase()
+                            } else if (regex == null && item.decryptedName.lowercase()
                                     .contains(searchText.lowercasedTrimmed)
-                            ) item else null
+                            ) item
+                            else if (regex != null && regex.containsMatchIn(item.decryptedName.lowercase())
+                            ) item
+                            else null
                         }
                     )
                 else null

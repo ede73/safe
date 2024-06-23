@@ -123,12 +123,24 @@ fun SearchSiteEntryControls(
             shape = RectangleShape
         )
         Row {
-            TextualCheckbox(searchWebsites, R.string.password_search_websites, ::findNow)
-            TextualCheckbox(searchUsernames, R.string.password_search_usernames, ::findNow)
+            TextualCheckbox(
+                searchWebsites,
+                R.string.password_search_websites,
+                checkedChanged = ::findNow
+            )
+            TextualCheckbox(
+                searchUsernames,
+                R.string.password_search_usernames,
+                checkedChanged = ::findNow
+            )
         }
         Row {
-            TextualCheckbox(searchPasswords, R.string.password_search_passwords, ::findNow)
-            TextualCheckbox(searchNotes, R.string.password_search_notes, ::findNow)
+            TextualCheckbox(
+                searchPasswords,
+                R.string.password_search_passwords,
+                checkedChanged = ::findNow
+            )
+            TextualCheckbox(searchNotes, R.string.password_search_notes, checkedChanged = ::findNow)
         }
     }
 

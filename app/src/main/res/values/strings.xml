@@ -53,11 +53,11 @@
     <string name="google_password_import_failed">Import failed!</string>
     <string name="google_password_import_finish_linking">Finish GPM linking from last round</string>
     <string name="google_password_import_import">Import GPMs</string>
-    <string name="google_password_import_matching_names">Matching names</string>
-    <string name="google_password_import_matching_passwords">Matching passwords</string>
+    <string name="google_password_import_locate_matching_names">Locate similar names</string>
+    <string name="google_password_import_locate_matching_passwords">Locate matching passwords</string>
     <string name="google_password_import_search">Search to limit the entries</string>
     <string name="google_password_import_search_from_imports">Search from imports</string>
-    <string name="google_password_import_search_from_mine">Search from your</string>
+    <string name="google_password_import_search_from_passwords">Search from Site Entries</string>
     <string name="google_password_import_select">Select GPM CSV</string>
     <string name="google_password_import_select_doc">Select Google Password Manager (GPM) CSV</string>
     <string name="google_password_import_usage">This feature allows you to import Google Password Manager passwords (GPMs) in a continuous manner. This is intended to be used every now and then.\n
@@ -221,4 +221,5 @@ These selections will be remembered, so next time linking will be easier.</strin
     <string name="login_anew_button">Discard backup, start fresh</string>
     <string name="login_anew_retry_button">Try login after all</string>
     <string name="google_password_launch_gpm"><![CDATA[Open passwords & accounts]]></string>
+    <string name="google_password_import_search_regex">Search using regular expressions</string>
 </resources>

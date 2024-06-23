@@ -230,8 +230,6 @@ fun PasswordEntryScreenPreview() {
         editPassword(entry)
     }
     SafeTheme {
-        //TODO:
-        //SiteEntryView(fakeViewModel)
         SiteEntryEditCompose(
             fakeViewModel,
             1,

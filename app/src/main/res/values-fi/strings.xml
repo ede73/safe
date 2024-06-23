@@ -41,11 +41,11 @@
     <string name="google_password_import_failed">Tuonti epäonnistui!</string>
     <string name="google_password_import_finish_linking">Viimeistele GPM linkitys edelliseltä kerralta</string>
     <string name="google_password_import_import">Tuo CSV</string>
-    <string name="google_password_import_matching_names">Samat nimet</string>
-    <string name="google_password_import_matching_passwords">Samat salasanat</string>
+    <string name="google_password_import_locate_matching_names">Etsi samankaltaiset nimet</string>
+    <string name="google_password_import_locate_matching_passwords">Etsi samat salasanat</string>
     <string name="google_password_import_search">Etsi rajataksesi valintojen määrää</string>
     <string name="google_password_import_search_from_imports">Etsi tuotavista</string>
-    <string name="google_password_import_search_from_mine">Etsi salasanoista</string>
+    <string name="google_password_import_search_from_passwords">Etsi salasanoista</string>
     <string name="google_password_import_select">Valitse GPM CSV</string>
     <string name="google_password_import_select_doc">Valitse Google Password Manager (GPM) CSV</string>
     <string name="google_password_import_usage">Tämä ominaisuus mahdollistaa Google Password Managerin salasanojen (GPM) tuonnin jatkuvalla tavalla. Tätä on tarkoitus käyttää silloin tällöin.\n
@@ -57,7 +57,7 @@ Tämä osa tuo Google Password Managerin CSV-tiedoston Password Safe -tietokanta
 Seuraavan kerran tuonnin yhteydessä voimme helposti löytää, mikä ei ole muuttunut, vertaamalla tiivisteitä. Muuttuneiden GPM:ien osalta puramme niiden salauksen ja vertaamme muutoksia uudelleen. Jos vain yksi kenttä on muuttunut (url, nimi, salasana, käyttäjänimi, huomautus), oletamme, että kyseessä on sama salasana ja voimme päivittää sen tallennettuihin GPM:iin (jotka ovat vahvasti salattuja!).\n
 \n
 Uudet saapuvat GPM:t, joissa on muuttunut enemmän kuin yksi kenttä, yritämme sovittaa olemassa oleviin muiden heuristiikkojen avulla. Lopulta sinulla on luettelot tai\n
-- uudet näkemättömät GPM:t (tai sellaiset, joita emme voineet yhdistää) - nämä lisätään tallennettuihin GPM:iin\n
+- uudet tuodut GPM:t (tai sellaiset, joita emme voineet yhdistää) - nämä lisätään tallennettuihin GPM:iin\n
 - 100% vastaavat, tai vastaavat, mutta yhden kentän muutoksella (nämä päivitetään)\n
 - ristiriidat, joissa joko useat saapuvat GPM:t vastaavat olemassa olevaa yhtä GPM:ää tai päinvastoin\n
 - Tallennetut GPM:t, jotka eivät vastanneet mitään saapuvissa GPM:issä.\n
@@ -167,4 +167,5 @@ Nämä valinnat muistetaan, joten seuraavan kerran linkitys on helpompaa.</strin
     <string name="title_hibp">HIBP tuki</string>
     <string name="title_oisafeimport">OISafe salasanojen sisääntuonti</string>
     <string name="google_password_launch_gpm"><![CDATA[Avaa salasanat & tilit]]></string>
+    <string name="google_password_import_search_regex">Etsi regular expressionsioneilla</string>
 </resources>
