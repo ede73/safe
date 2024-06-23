@@ -44,8 +44,8 @@
     <string name="google_password_import_locate_matching_names">Etsi samankaltaiset nimet</string>
     <string name="google_password_import_locate_matching_passwords">Etsi samat salasanat</string>
     <string name="google_password_import_search">Etsi rajataksesi valintojen määrää</string>
-    <string name="google_password_import_search_from_imports">Etsi tuotavista</string>
-    <string name="google_password_import_search_from_passwords">Etsi salasanoista</string>
+    <string name="google_password_import_search_from_displayed_imports">Etsi näytetyistä tuotavista</string>
+    <string name="google_password_import_search_from_displayed_passwords">Etsi näytetyistä salasanoista</string>
     <string name="google_password_import_select">Valitse GPM CSV</string>
     <string name="google_password_import_select_doc">Valitse Google Password Manager (GPM) CSV</string>
     <string name="google_password_import_usage">Tämä ominaisuus mahdollistaa Google Password Managerin salasanojen (GPM) tuonnin jatkuvalla tavalla. Tätä on tarkoitus käyttää silloin tällöin.\n

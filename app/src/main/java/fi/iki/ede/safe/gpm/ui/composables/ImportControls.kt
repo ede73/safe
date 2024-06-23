@@ -12,7 +12,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -44,16 +43,15 @@ fun ImportControls(
 ) {
     val isWorkingAndProgress by viewModel.isWorkingAndProgress.observeAsState(false to null as Float?)
 
-    val searchFromBeingImported = remember { mutableStateOf(true) }
-    val searchFromMyOwn = remember { mutableStateOf(true) }
+    val searchFromDisplayedGPMs = remember { mutableStateOf(false) }
+    val searchFromDisplayedPasswords = remember { mutableStateOf(false) }
     val showOnlyMatchingNames = remember { mutableStateOf(false) }
     val showOnlyMatchingPasswords = remember { mutableStateOf(false) }
     var hackToInvokeSearchOnlyIfTextValueChanges by remember { mutableStateOf(TextFieldValue("")) }
+    var isRegExError by remember { mutableStateOf(false) }
+    var isRegularExpression by remember { mutableStateOf(false) }
     var searchTextField by remember { mutableStateOf(TextFieldValue("")) }
     var similarityScore by remember { mutableFloatStateOf(0.5f) }
-    var isRegularExpression by remember { mutableStateOf(false) }
-    var isRegExError by remember { mutableStateOf(false) }
-    val errorColor = MaterialTheme.colorScheme.error
 
     fun initiateSearch() {
         if (isRegularExpression && isRegExError) return
@@ -66,8 +64,8 @@ fun ImportControls(
         viewModel.launchSearch(
             if (isRegularExpression) 0.0 else similarityScore.toDouble(),
             searchTextField.text,
-            searchFromMyOwn.value,
-            searchFromBeingImported.value,
+            searchFromDisplayedPasswords.value,
+            searchFromDisplayedGPMs.value,
             regex,
         )
     }
@@ -147,15 +145,15 @@ fun ImportControls(
         }
         Row {
             TextualCheckbox(
-                searchFromMyOwn,
-                R.string.google_password_import_search_from_passwords,
+                searchFromDisplayedPasswords,
+                R.string.google_password_import_search_from_displayed_passwords,
                 modifier = Modifier.weight(0.5f),
             ) {
                 initiateSearch()
             }
             TextualCheckbox(
-                searchFromBeingImported,
-                R.string.google_password_import_search_from_imports,
+                searchFromDisplayedGPMs,
+                R.string.google_password_import_search_from_displayed_imports,
                 modifier = Modifier.weight(0.5f),
             ) {
                 initiateSearch()

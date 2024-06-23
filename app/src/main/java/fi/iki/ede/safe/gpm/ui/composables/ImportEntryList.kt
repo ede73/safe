@@ -69,8 +69,8 @@ fun combineLists(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ImportEntryList(viewModel: ImportGPMViewModel) {
-    val mine = viewModel.dataRepository.displayedSiteEntries.collectAsState()
-    val imports = viewModel.dataRepository.displayedGPMs.collectAsState()
+    val mine = viewModel.importMergeDataRepository.displayedSiteEntries.collectAsState()
+    val imports = viewModel.importMergeDataRepository.displayedGPMs.collectAsState()
     val combinedList = combineLists(mine.value, imports.value)
 
     fun ignoreSavedGPM(clipDescription: ClipDescription, id: Long) {

@@ -25,7 +25,7 @@ class ImportGPMViewModel : ViewModel() {
     private val _isWorkingAndProgress = MutableLiveData(false to null as Float?)
     val isWorkingAndProgress: LiveData<Pair<Boolean, Float?>> = _isWorkingAndProgress
 
-    val dataRepository = DataRepository()
+    val importMergeDataRepository = ImportMergeDataRepository()
 
     private val jobManager = JobManager { completed, percentCompleted ->
         _isWorkingAndProgress.postValue(completed to percentCompleted)
@@ -37,7 +37,7 @@ class ImportGPMViewModel : ViewModel() {
     }
 
     fun removeGPM(id: Long) {
-        dataRepository.removeGPM(id)
+        importMergeDataRepository.removeGPM(id)
     }
 
     private fun loadGPMs() {
@@ -58,12 +58,12 @@ class ImportGPMViewModel : ViewModel() {
                 }
                 emptySet()
             }
-            dataRepository.resetGPMDisplayList(importedGPMs)
+            importMergeDataRepository.resetGPMDisplayList(importedGPMs)
         }
     }
 
     private fun loadSiteEntries() {
-        dataRepository.resetSiteEntryDisplayList(DataModel.getPasswords())
+        importMergeDataRepository.resetSiteEntryDisplayList(DataModel.getPasswords())
     }
 
     // thread safe abstraction allowing implementing easy match algorithms
@@ -81,7 +81,7 @@ class ImportGPMViewModel : ViewModel() {
     ) = viewModelScope.launch(Dispatchers.Default) {
 
         start()
-        dataRepository.emptyDisplayLists()
+        importMergeDataRepository.emptyDisplayLists()
 
         // allow iterating while editing
         val copyOfOuterList = outerList.toList()
@@ -103,7 +103,12 @@ class ImportGPMViewModel : ViewModel() {
                             if (!isActive) return@jobCancelled
                             progress.increment()
                             val (addOuterItem, addInnerItem) = compare(outerEntry, innerEntry)
-                            dataRepository.addDisplayItem(listOfNotNull(addInnerItem, addOuterItem))
+                            importMergeDataRepository.addDisplayItem(
+                                listOfNotNull(
+                                    addInnerItem,
+                                    addOuterItem
+                                )
+                            )
                         }
                     }
                 }
@@ -136,8 +141,8 @@ class ImportGPMViewModel : ViewModel() {
         CoroutineScope(Dispatchers.Default).launch {
             jobManager.cancelAndAddNewJob {
                 launchIterateLists("applyMatchingPasswords",
-                    dataRepository.getList(DataType.DecryptableSiteEntry) as List<DecryptableSiteEntry>,
-                    dataRepository.getList(DataType.GPM) as List<SavedGPM>,
+                    importMergeDataRepository.getList(DataType.DecryptableSiteEntry) as List<DecryptableSiteEntry>,
+                    importMergeDataRepository.getList(DataType.GPM) as List<SavedGPM>,
                     start = { },
                     compare = { outerEntry, innerEntry ->
                         if (outerEntry.plainPassword == innerEntry.decryptedPassword) {
@@ -150,8 +155,8 @@ class ImportGPMViewModel : ViewModel() {
     }
 
     fun clearMatchingPasswords() {
-        dataRepository.resetSiteEntryDisplayList()
-        dataRepository.resetGPMDisplayList()
+        importMergeDataRepository.resetSiteEntryDisplayList()
+        importMergeDataRepository.resetGPMDisplayList()
     }
 
     fun launchSearchMatchingNames() {
@@ -162,8 +167,8 @@ class ImportGPMViewModel : ViewModel() {
                 launchIterateLists("applyMatchingNames",
 //                    dataRepository.giveOriginalListOf<DecryptableSiteEntry>(),
 //                    dataRepository.giveOriginalListOf<SavedGPM>(),
-                    dataRepository.getList(DataType.DecryptableSiteEntry) as List<DecryptableSiteEntry>,
-                    dataRepository.getList(DataType.GPM) as List<SavedGPM>,
+                    importMergeDataRepository.getList(DataType.DecryptableSiteEntry) as List<DecryptableSiteEntry>,
+                    importMergeDataRepository.getList(DataType.GPM) as List<SavedGPM>,
                     start = { },
                     compare = { outerEntry, innerEntry ->
                         val eka =
@@ -192,8 +197,8 @@ class ImportGPMViewModel : ViewModel() {
     fun launchSearch(
         similarityThresholdOrSubString: Double,
         searchText: String,
-        searchFromMyOwn: Boolean,
-        searchFromBeingImported: Boolean,
+        searchFromDisplayedPasswords: Boolean,
+        searchFromDisplayGPMs: Boolean,
         regex: Regex? = null,
     ) {
         if (searchText.isEmpty()) return
@@ -203,8 +208,8 @@ class ImportGPMViewModel : ViewModel() {
             performSearch(
                 similarityThresholdOrSubString,
                 searchText.toLowerCasedTrimmedString(),
-                searchFromMyOwn,
-                searchFromBeingImported,
+                searchFromDisplayedPasswords,
+                searchFromDisplayGPMs,
                 regex
             )
         }
@@ -213,17 +218,17 @@ class ImportGPMViewModel : ViewModel() {
     private fun performSearch(
         similarityThresholdOrSubString: Double,
         searchText: LowerCaseTrimmedString,
-        searchFromMyOwn: Boolean,
-        searchFromBeingImported: Boolean,
+        searchFromDisplayedPasswords: Boolean,
+        searchFromDisplayedGPMs: Boolean,
         regex: Regex? = null
     ) {
         CoroutineScope(Dispatchers.Default).launch {
             jobManager.cancelAndAddNewJobs {
-                val j1 = if (searchFromMyOwn)
+                val j1 = if (searchFromDisplayedPasswords)
                     launchIterateList(
                         "searchSiteEntries",
 //                        dataRepository.giveOriginalListOf<DecryptableSiteEntry>(),
-                        dataRepository.getList(DataType.DecryptableSiteEntry) as List<DecryptableSiteEntry>,
+                        importMergeDataRepository.getList(DataType.DecryptableSiteEntry) as List<DecryptableSiteEntry>,
                         start = { },
                         compare = { item ->
                             if (similarityThresholdOrSubString > 0) {
@@ -242,11 +247,11 @@ class ImportGPMViewModel : ViewModel() {
                     )
                 else null
 
-                val j2 = if (searchFromBeingImported)
+                val j2 = if (searchFromDisplayedGPMs)
                     launchIterateList(
                         "searchGPMs",
 //                        dataRepository.giveOriginalListOf<SavedGPM>(),
-                        dataRepository.getList(DataType.GPM) as List<SavedGPM>,
+                        importMergeDataRepository.getList(DataType.GPM) as List<SavedGPM>,
                         start = { },
                         compare = { item ->
                             println("Searching for ${searchText.lowercasedTrimmed} in ${item.decryptedName}")

@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class DataRepository {
+class ImportMergeDataRepository {
     private val _originalGPMs = mutableListOf<SavedGPM>()
     private val _displayedGPMs = MutableStateFlow<List<SavedGPM>>(emptyList())
     private val _originalSiteEntries = mutableListOf<DecryptableSiteEntry>()
