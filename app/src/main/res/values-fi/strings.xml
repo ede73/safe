@@ -166,4 +166,5 @@ Nämä valinnat muistetaan, joten seuraavan kerran linkitys on helpompaa.</strin
     <string name="title_categorypager">Sivutettu kategorianäyttö</string>
     <string name="title_hibp">HIBP tuki</string>
     <string name="title_oisafeimport">OISafe salasanojen sisääntuonti</string>
+    <string name="google_password_launch_gpm"><![CDATA[Avaa salasanat & tilit]]></string>
 </resources>

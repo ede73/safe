@@ -220,4 +220,5 @@ These selections will be remembered, so next time linking will be easier.</strin
     <string name="preferences_autobackup_restore_finished">Google Automatic backups\' restore finished</string>
     <string name="login_anew_button">Discard backup, start fresh</string>
     <string name="login_anew_retry_button">Try login after all</string>
+    <string name="google_password_launch_gpm"><![CDATA[Open passwords & accounts]]></string>
 </resources>

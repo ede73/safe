@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -186,7 +187,8 @@ fun ImportScreen(
         remember { mutableStateOf(DeleteImportReminder.NO_DOCUMENT_SELECTED) }
     val finishLinking = remember { mutableStateOf(false) }
     val allowAcceptAndMove = remember { mutableStateOf(false) }
-    val importChangeSet = remember { mutableStateOf<ImportChangeSet?>(makeFakeImport()) }
+    //val importChangeSet = remember { mutableStateOf<ImportChangeSet?>(makeFakeImport()) }
+    val importChangeSet = remember { mutableStateOf<ImportChangeSet?>(null) }
     val message = remember { mutableStateOf("") }
     val showDialog = remember { mutableStateOf(false) }
     val showUsage = remember { mutableStateOf(true) }
@@ -288,6 +290,12 @@ fun ImportScreen(
                 }
             }) {
             Text(stringResource(id = R.string.google_password_import_delete))
+        }
+        SafeTextButton(onClick = {
+            val intent = Intent(Settings.ACTION_SYNC_SETTINGS)
+            context.startActivity(intent)
+        }) {
+            Text(stringResource(id = R.string.google_password_launch_gpm))
         }
 
         SafeButton(
