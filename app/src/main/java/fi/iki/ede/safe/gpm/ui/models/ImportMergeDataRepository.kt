@@ -12,9 +12,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class ImportMergeDataRepository {
-    private val _originalGPMs = mutableListOf<SavedGPM>()
+    private val _savedGPMs = mutableListOf<SavedGPM>()
     private val _displayedGPMs = MutableStateFlow<List<SavedGPM>>(emptyList())
-    private val _originalSiteEntries = mutableListOf<DecryptableSiteEntry>()
+    private val _savedSiteEntries = mutableListOf<DecryptableSiteEntry>()
     private val _displayedSiteEntries = MutableStateFlow<List<DecryptableSiteEntry>>(emptyList())
     val displayedGPMs: StateFlow<List<SavedGPM>> = _displayedGPMs
     val displayedSiteEntries: StateFlow<List<DecryptableSiteEntry>> = _displayedSiteEntries
@@ -27,22 +27,22 @@ class ImportMergeDataRepository {
             modificationRequests.collect { request ->
                 when (request) {
                     is ModificationRequest.InitializeSiteEntries -> {
-                        _originalSiteEntries.clear()
-                        _originalSiteEntries.addAll(request.siteEntries)
-                        _displayedSiteEntries.value = _originalSiteEntries.toList()
+                        _savedSiteEntries.clear()
+                        _savedSiteEntries.addAll(request.siteEntries)
+                        _displayedSiteEntries.value = _savedSiteEntries.toList()
                     }
 
                     is ModificationRequest.InitializeGPMs -> {
-                        _originalGPMs.clear()
-                        _originalGPMs.addAll(request.savedGPMs)
-                        _displayedGPMs.value = _originalGPMs.toList()
+                        _savedGPMs.clear()
+                        _savedGPMs.addAll(request.savedGPMs)
+                        _displayedGPMs.value = _savedGPMs.toList()
                     }
 
                     is ModificationRequest.ResetGPMDisplayList ->
-                        _displayedGPMs.value = _originalGPMs.toList()
+                        _displayedGPMs.value = _savedGPMs.toList()
 
                     is ModificationRequest.ResetSiteEntryDisplayList ->
-                        _displayedSiteEntries.value = _originalSiteEntries.toList()
+                        _displayedSiteEntries.value = _savedSiteEntries.toList()
 
                     is ModificationRequest.DisplayGPM ->
                         _displayedGPMs.update { it + request.savedGPM }
@@ -51,7 +51,7 @@ class ImportMergeDataRepository {
                         _displayedSiteEntries.update { it + request.siteEntry }
 
                     is ModificationRequest.RemoveGPM -> {
-                        if (_originalGPMs.removeAll { it.id == request.id } == false) {
+                        if (_savedGPMs.removeAll { it.id == request.id } == false) {
                             println("GPM $request.id not found (wasnt removed from ORIGINAL)")
                         }
                         _displayedGPMs.update {
@@ -115,8 +115,8 @@ class ImportMergeDataRepository {
 
     fun getList(dataType: DataType): List<Any> {
         return when (dataType) {
-            DataType.GPM -> _originalGPMs.toList()
-            DataType.DecryptableSiteEntry -> _originalSiteEntries.toList()
+            DataType.GPM -> _savedGPMs.toList()
+            DataType.DecryptableSiteEntry -> _savedSiteEntries.toList()
             // Handle other data types similarly
         }
     }
