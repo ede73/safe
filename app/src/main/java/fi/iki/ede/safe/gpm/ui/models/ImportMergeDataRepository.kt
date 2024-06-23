@@ -12,11 +12,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class ImportMergeDataRepository {
-    private val _savedGPMs = mutableListOf<SavedGPM>()
-    private val _displayedGPMs = MutableStateFlow<List<SavedGPM>>(emptyList())
+    private val _unprocessedGPMs = mutableListOf<SavedGPM>()
+    private val _displayedUnprocessedGPMs = MutableStateFlow<List<SavedGPM>>(emptyList())
     private val _savedSiteEntries = mutableListOf<DecryptableSiteEntry>()
     private val _displayedSiteEntries = MutableStateFlow<List<DecryptableSiteEntry>>(emptyList())
-    val displayedGPMs: StateFlow<List<SavedGPM>> = _displayedGPMs
+    val displayedUnprocessedGPMs: StateFlow<List<SavedGPM>> = _displayedUnprocessedGPMs
     val displayedSiteEntries: StateFlow<List<DecryptableSiteEntry>> = _displayedSiteEntries
 
     private val modificationRequests = MutableSharedFlow<ModificationRequest>()
@@ -26,42 +26,54 @@ class ImportMergeDataRepository {
         repositoryScope.launch {
             modificationRequests.collect { request ->
                 when (request) {
-                    is ModificationRequest.InitializeSiteEntries -> {
+                    is ModificationRequest.InitializeSiteEntryListAndDisplayListToGivenList -> {
                         _savedSiteEntries.clear()
                         _savedSiteEntries.addAll(request.siteEntries)
                         _displayedSiteEntries.value = _savedSiteEntries.toList()
+                        println("SiteEntry list initialixed to all saved site entries")
                     }
 
-                    is ModificationRequest.InitializeGPMs -> {
-                        _savedGPMs.clear()
-                        _savedGPMs.addAll(request.savedGPMs)
-                        _displayedGPMs.value = _savedGPMs.toList()
+                    is ModificationRequest.InitializeUnprocessedGPMAndDisplayListToGivenList -> {
+                        println("Reinitialize saved GPM list from given list")
+                        _unprocessedGPMs.clear()
+                        _unprocessedGPMs.addAll(request.savedGPMs)
+                        _displayedUnprocessedGPMs.value = _unprocessedGPMs.toList()
+                        println("GPM list initialize dto ALL UN PROCESSED=given list from rquest")
                     }
 
-                    is ModificationRequest.ResetGPMDisplayList ->
-                        _displayedGPMs.value = _savedGPMs.toList()
+                    is ModificationRequest.ResetGPMDisplayListToAllUnprocessed ->
+                        _displayedUnprocessedGPMs.value = _unprocessedGPMs.toList().also {
+                            println("ResetED GPM Display list to all unprocessed")
+                        }
 
-                    is ModificationRequest.ResetSiteEntryDisplayList ->
-                        _displayedSiteEntries.value = _savedSiteEntries.toList()
+                    is ModificationRequest.ResetSiteEntryDisplayListToAllSaved ->
+                        _displayedSiteEntries.value = _savedSiteEntries.toList().also {
+                            println("ResetED Site Etry list to ALL SAVED")
+                        }
 
                     is ModificationRequest.DisplayGPM ->
-                        _displayedGPMs.update { it + request.savedGPM }
+                        _displayedUnprocessedGPMs.update { it + request.savedGPM }
 
                     is ModificationRequest.DisplaySiteEntry ->
                         _displayedSiteEntries.update { it + request.siteEntry }
 
                     is ModificationRequest.RemoveGPM -> {
-                        if (_savedGPMs.removeAll { it.id == request.id } == false) {
+                        if (!_unprocessedGPMs.removeAll { it.id == request.id }) {
                             println("GPM $request.id not found (wasnt removed from ORIGINAL)")
                         }
-                        _displayedGPMs.update {
+                        _displayedUnprocessedGPMs.update {
                             it.filterNot { gpm -> gpm.id == request.id }
                         }
                     }
 
-                    is ModificationRequest.EmptyDisplayLists -> {
-                        _displayedGPMs.value = emptyList()
+                    is ModificationRequest.EmptyGPMDisplayLists -> {
+                        _displayedUnprocessedGPMs.value = emptyList()
+                        println("GPM set to EMPTY")
+                    }
+
+                    is ModificationRequest.EmptySiteEntryDisplayLists -> {
                         _displayedSiteEntries.value = emptyList()
+                        println("SiteEntryList set to EMPTY")
                     }
                 }
             }
@@ -75,13 +87,18 @@ class ImportMergeDataRepository {
     }
 
 
-    fun emptyDisplayLists() {
-        repositoryScope.launch {
-            modificationRequests.emit(ModificationRequest.EmptyDisplayLists)
-        }
+    suspend fun emptyGPMDisplayList() {
+        modificationRequests.emit(ModificationRequest.EmptyGPMDisplayLists)
+    }
+
+    suspend fun emptySiteEntryDisplayList() {
+        modificationRequests.emit(ModificationRequest.EmptySiteEntryDisplayLists)
     }
 
     fun addDisplayItem(items: List<Any>) {
+        items.forEach {
+            println("Add to displsy $it")
+        }
         repositoryScope.launch {
             items.forEach { item ->
                 when (item) {
@@ -95,27 +112,33 @@ class ImportMergeDataRepository {
         }
     }
 
-    fun resetGPMDisplayList(newGPMs: Set<SavedGPM>? = null) {
-        repositoryScope.launch {
-            if (newGPMs != null)
-                modificationRequests.emit(ModificationRequest.InitializeGPMs(newGPMs.toList()))
-            else
-                modificationRequests.emit(ModificationRequest.ResetGPMDisplayList)
-        }
+    suspend fun initializeUnprocessedGPMAndDisplayListToGivenList(newGPMs: Set<SavedGPM>) {
+        modificationRequests.emit(
+            ModificationRequest.InitializeUnprocessedGPMAndDisplayListToGivenList(
+                newGPMs.toList()
+            )
+        )
     }
 
-    fun resetSiteEntryDisplayList(newSiteEntries: List<DecryptableSiteEntry>? = null) {
-        repositoryScope.launch {
-            if (newSiteEntries != null)
-                modificationRequests.emit(ModificationRequest.InitializeSiteEntries(newSiteEntries))
-            else
-                modificationRequests.emit(ModificationRequest.ResetSiteEntryDisplayList)
-        }
+    suspend fun resetGPMDisplayListToAllUnprocessed() {
+        modificationRequests.emit(ModificationRequest.ResetGPMDisplayListToAllUnprocessed)
+    }
+
+    suspend fun initializeSiteEntryListAndDisplayListToGivenList(newSiteEntries: List<DecryptableSiteEntry>) {
+        modificationRequests.emit(
+            ModificationRequest.InitializeSiteEntryListAndDisplayListToGivenList(
+                newSiteEntries
+            )
+        )
+    }
+
+    suspend fun resetSiteEntryDisplayListToAllSaved() {
+        modificationRequests.emit(ModificationRequest.ResetSiteEntryDisplayListToAllSaved)
     }
 
     fun getList(dataType: DataType): List<Any> {
         return when (dataType) {
-            DataType.GPM -> _savedGPMs.toList()
+            DataType.GPM -> _unprocessedGPMs.toList()
             DataType.DecryptableSiteEntry -> _savedSiteEntries.toList()
             // Handle other data types similarly
         }

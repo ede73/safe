@@ -101,13 +101,13 @@ class OISafeBackupRestoreDatabaseTest {
         Assert.assertEquals(2, categories.size)
         Assert.assertEquals(2, passwords.size)
 
-        assertEquals("secret", passwords[0].plainDescription)
+        assertEquals("secret", passwords[0].cachedPlainDescription)
         assertEquals("", passwords[0].plainWebsite)
         assertEquals("piip", passwords[0].plainUsername)
         assertEquals("puup", passwords[0].plainPassword)
         assertEquals("", passwords[0].plainNote)
 
-        assertEquals("abc", passwords[1].plainDescription)
+        assertEquals("abc", passwords[1].cachedPlainDescription)
         assertEquals("", passwords[1].plainWebsite)
         assertEquals("", passwords[1].plainUsername)
         assertEquals("123", passwords[1].plainPassword)

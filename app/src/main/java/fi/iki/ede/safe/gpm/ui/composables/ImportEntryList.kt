@@ -70,7 +70,7 @@ fun combineLists(
 @Composable
 fun ImportEntryList(viewModel: ImportGPMViewModel) {
     val mine = viewModel.importMergeDataRepository.displayedSiteEntries.collectAsState()
-    val imports = viewModel.importMergeDataRepository.displayedGPMs.collectAsState()
+    val imports = viewModel.importMergeDataRepository.displayedUnprocessedGPMs.collectAsState()
     val combinedList = combineLists(mine.value, imports.value)
 
     fun ignoreSavedGPM(clipDescription: ClipDescription, id: Long) {
@@ -80,7 +80,7 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
                 // TODO: who sets flagged ignore here!
                 DataModel.markSavedGPMIgnored(id)
                 // TODO: should autolink(from datamodel)
-                viewModel.removeGPM(id)
+                viewModel.removeGPMFromMergeRepository(id)
                 println("SavedGPM $id ignored and removed from list")
             } catch (ex: Exception) {
                 Log.i("ImportEntryList", "ignoreSavedGPM $id failed", ex)
@@ -93,13 +93,13 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
         siteEntry: DecryptableSiteEntry,
         id: Long
     ) {
-        println("LINK GPM AND ENTRY--> clip=(${clipDescription.label})  ==TO site=(${siteEntry.plainDescription}) gpmid=$id")
+        println("LINK GPM AND ENTRY--> clip=(${clipDescription.label})  ==TO site=(${siteEntry.cachedPlainDescription}) gpmid=$id")
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 // TODO: can link these two soon
-                viewModel.removeGPM(id)
+                viewModel.removeGPMFromMergeRepository(id)
                 DataModel.linkSaveGPMAndSiteEntry(siteEntry, id)
-                println("Link ${siteEntry.id} / ${siteEntry.plainDescription} and SavedGPM $id")
+                println("Link ${siteEntry.id} / ${siteEntry.cachedPlainDescription} and SavedGPM $id")
             } catch (ex: Exception) {
                 Log.i(
                     "ImportEntryList",
@@ -112,7 +112,7 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
 
     fun addSavedGPM(clipDescription: ClipDescription, id: Long) {
         println("Add(import) GPM ${clipDescription.label} $id")
-        viewModel.removeGPM(id)
+        viewModel.removeGPMFromMergeRepository(id)
     }
 
     Row {

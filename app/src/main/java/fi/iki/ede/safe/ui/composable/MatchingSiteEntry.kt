@@ -71,7 +71,7 @@ fun MatchingSiteEntry(
             )
             Row {
                 Text(
-                    text = passwordEntry.plainDescription,
+                    text = passwordEntry.cachedPlainDescription,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
@@ -97,7 +97,7 @@ fun MatchingSiteEntry(
                     Text(
                         text = stringResource(
                             id = R.string.password_list_delete_password,
-                            passwordEntry.plainDescription
+                            passwordEntry.cachedPlainDescription
                         )
                     )
                 }, onClick = {
@@ -108,7 +108,7 @@ fun MatchingSiteEntry(
                     Text(
                         text = stringResource(
                             id = R.string.password_list_move_password,
-                            passwordEntry.plainDescription
+                            passwordEntry.cachedPlainDescription
                         )
                     )
                 }, onClick = {

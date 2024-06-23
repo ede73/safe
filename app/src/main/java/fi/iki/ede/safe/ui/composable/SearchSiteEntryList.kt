@@ -33,7 +33,7 @@ fun SearchSiteEntryList(
     val passwordState = filteredPasswords.collectAsState()
     val sortedPasswords by remember(passwordState) {
         derivedStateOf {
-            passwordState.value.sortedBy { it.plainDescription }
+            passwordState.value.sortedBy { it.cachedPlainDescription }
         }
     }
 

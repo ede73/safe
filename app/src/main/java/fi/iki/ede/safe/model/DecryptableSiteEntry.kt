@@ -53,7 +53,7 @@ class DecryptableSiteEntry(categoryId: Long) {
     // plain description is used A LOT everywhere (listing, sorting, displaying)
     // On a large password DB operating on decrypt-on-demand description is just too slow
     // Hence once description is decrypted, we'll keep it (unless encrypted description changes)
-    val plainDescription: String
+    val cachedPlainDescription: String
         get() {
             if (decryptedCachedPlainDescription == null && description != IVCipherText.getEmpty()) {
                 decryptedCachedPlainDescription = decrypt(description)
@@ -69,7 +69,7 @@ class DecryptableSiteEntry(categoryId: Long) {
         searchNotes: Boolean
     ) =
         // TODO: Might be able to optimize?
-        plainDescription.contains(searchText, true) ||
+        cachedPlainDescription.contains(searchText, true) ||
                 (searchWebsites && plainWebsite.contains(searchText, true)) ||
                 (searchUsernames && plainUsername.contains(searchText, true)) ||
                 (searchPasswords && plainPassword.contains(searchText, true)) ||
@@ -83,7 +83,7 @@ class DecryptableSiteEntry(categoryId: Long) {
         passwordChangedDate: ZonedDateTime?,
         note: IVCipherText,
         photo: Bitmap?
-    ) = !(plainDescription != description ||
+    ) = !(cachedPlainDescription != description ||
             plainWebsite != website ||
             plainUsername != decrypt(username) ||
             !isSamePassword(password) ||

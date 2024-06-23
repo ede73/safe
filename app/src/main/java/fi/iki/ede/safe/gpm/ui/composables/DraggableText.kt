@@ -30,8 +30,8 @@ fun DNDObject.dump(): String =
     "DNDObject:" +
             when (this) {
                 is DNDObject.JustString -> this.string
-                is DNDObject.GPM -> "${this.savedGPM.decryptedName} - ${this.savedGPM.id}"
-                is DNDObject.SiteEntry -> "${this.decryptableSiteEntry.plainDescription} - ${this.decryptableSiteEntry.id}"
+                is DNDObject.GPM -> "${this.savedGPM.cachedDecryptedName} - ${this.savedGPM.id}"
+                is DNDObject.SiteEntry -> "${this.decryptableSiteEntry.cachedPlainDescription} - ${this.decryptableSiteEntry.id}"
                 is DNDObject.Spacer -> "Spacer"
             }
 
@@ -108,8 +108,8 @@ fun DraggableText(
                 Box {
                     when (dragObject) {
                         is DNDObject.JustString -> Text(text = dragObject.string)
-                        is DNDObject.GPM -> Text(text = dragObject.savedGPM.decryptedName)
-                        is DNDObject.SiteEntry -> Text(text = dragObject.decryptableSiteEntry.plainDescription)
+                        is DNDObject.GPM -> Text(text = dragObject.savedGPM.cachedDecryptedName)
+                        is DNDObject.SiteEntry -> Text(text = dragObject.decryptableSiteEntry.cachedPlainDescription)
                         is DNDObject.Spacer -> throw Exception("No spaces allowed")
                     }
                 }

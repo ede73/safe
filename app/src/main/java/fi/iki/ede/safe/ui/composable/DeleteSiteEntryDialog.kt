@@ -34,7 +34,7 @@ fun DeleteSiteEntryDialog(
         }, title = {
             Text(
                 text = stringResource(
-                    id = R.string.password_list_delete, passEntry.plainDescription
+                    id = R.string.password_list_delete, passEntry.cachedPlainDescription
                 )
             )
         })

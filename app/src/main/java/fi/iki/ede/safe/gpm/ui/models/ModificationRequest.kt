@@ -7,11 +7,13 @@ sealed class ModificationRequest {
     data class DisplayGPM(val savedGPM: SavedGPM) : ModificationRequest()
     data class DisplaySiteEntry(val siteEntry: DecryptableSiteEntry) : ModificationRequest()
     data class RemoveGPM(val id: Long) : ModificationRequest()
-    data object ResetSiteEntryDisplayList : ModificationRequest()
-    data object ResetGPMDisplayList : ModificationRequest()
-    data object EmptyDisplayLists : ModificationRequest()
-    data class InitializeSiteEntries(val siteEntries: List<DecryptableSiteEntry>) :
+    data object ResetSiteEntryDisplayListToAllSaved : ModificationRequest()
+    data object ResetGPMDisplayListToAllUnprocessed : ModificationRequest()
+    data object EmptyGPMDisplayLists : ModificationRequest()
+    data object EmptySiteEntryDisplayLists : ModificationRequest()
+    data class InitializeSiteEntryListAndDisplayListToGivenList(val siteEntries: List<DecryptableSiteEntry>) :
         ModificationRequest()
 
-    data class InitializeGPMs(val savedGPMs: List<SavedGPM>) : ModificationRequest()
+    data class InitializeUnprocessedGPMAndDisplayListToGivenList(val savedGPMs: List<SavedGPM>) :
+        ModificationRequest()
 }

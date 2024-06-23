@@ -31,7 +31,7 @@ fun SiteEntryList(passwords: List<DecryptableSiteEntry>) {
         var previousValue = ""
         passwordItems.clear()
         passwords.forEach { password ->
-            val beginning = password.plainDescription.substring(0, 1).uppercase()
+            val beginning = password.cachedPlainDescription.substring(0, 1).uppercase()
             if (previousValue != beginning) {
                 previousValue = beginning
                 passwordItems.add { SiteEntryRowHeader(headerString = beginning) }

@@ -275,7 +275,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
                     assertEquals(null, passwords[i].passwordChangedDate)
                 }
                 assertEquals(f.toLong(), passwords[i].categoryId)
-                assertEquals("enc_desc$f$l", passwords[i].plainDescription)
+                assertEquals("enc_desc$f$l", passwords[i].cachedPlainDescription)
                 assertEquals("enc_web$f$l", passwords[i].plainWebsite)
                 assertEquals("enc_user$f$l", passwords[i].plainUsername)
                 assertEquals("enc_pwd$f$l", passwords[i].plainPassword)

@@ -1,5 +1,7 @@
 package fi.iki.ede.safe.gpm.ui.composables
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,6 +17,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
@@ -25,12 +28,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.gpm.similarity.toLowerCasedTrimmedString
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.gpm.ui.models.ImportGPMViewModel
+import fi.iki.ede.safe.gpm.ui.models.SearchTarget
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.composable.TextualCheckbox
 import fi.iki.ede.safe.ui.testTag
@@ -43,15 +48,22 @@ fun ImportControls(
 ) {
     val isWorkingAndProgress by viewModel.isWorkingAndProgress.observeAsState(false to null as Float?)
 
-    val searchFromDisplayedGPMs = remember { mutableStateOf(false) }
-    val searchFromDisplayedPasswords = remember { mutableStateOf(false) }
-    val showOnlyMatchingNames = remember { mutableStateOf(false) }
-    val showOnlyMatchingPasswords = remember { mutableStateOf(false) }
+    val searchPasswords = remember { mutableStateOf(ToggleableState.Indeterminate) }
+    val searchGPMs = remember { mutableStateOf(ToggleableState.Off) }
+    val startSearchingMatchingNames = remember { mutableStateOf(false) }
+    val startSearchingMatchingPasswords = remember { mutableStateOf(false) }
     var hackToInvokeSearchOnlyIfTextValueChanges by remember { mutableStateOf(TextFieldValue("")) }
     var isRegExError by remember { mutableStateOf(false) }
     var isRegularExpression by remember { mutableStateOf(false) }
     var searchTextField by remember { mutableStateOf(TextFieldValue("")) }
-    var similarityScore by remember { mutableFloatStateOf(0.5f) }
+    var similarityScore by remember { mutableFloatStateOf(0.0f) }
+
+    fun toggleableStateToSearchTarget(input: ToggleableState) =
+        when (input) {
+            ToggleableState.On -> SearchTarget.SEARCH_FROM_DISPLAYED
+            ToggleableState.Off -> SearchTarget.IGNORE
+            ToggleableState.Indeterminate -> SearchTarget.SEARCH_FROM_ALL
+        }
 
     fun initiateSearch() {
         if (isRegularExpression && isRegExError) return
@@ -61,11 +73,13 @@ fun ImportControls(
             searchTerm.lowercasedTrimmed,
             RegexOption.IGNORE_CASE
         ) else null
+
+        // TODO: Reset search lists? WHERE?
         viewModel.launchSearch(
             if (isRegularExpression) 0.0 else similarityScore.toDouble(),
             searchTextField.text,
-            searchFromDisplayedPasswords.value,
-            searchFromDisplayedGPMs.value,
+            toggleableStateToSearchTarget(searchPasswords.value),
+            toggleableStateToSearchTarget(searchGPMs.value),
             regex,
         )
     }
@@ -85,7 +99,7 @@ fun ImportControls(
             .size(24.dp)
         Row {
             if (isWorkingAndProgress.first) {
-                Button(onClick = { viewModel.launchCancelJobs() }) {
+                Button(onClick = { viewModel.cancelAllJobs() }) {
                     Text(text = "Cancel\n(${"%.1f".format(isWorkingAndProgress.second)}%)")
                 }
             }
@@ -143,25 +157,9 @@ fun ImportControls(
                 onCheckedChange = { isRegularExpression = it }
             )
         }
-        Row {
-            TextualCheckbox(
-                searchFromDisplayedPasswords,
-                R.string.google_password_import_search_from_displayed_passwords,
-                modifier = Modifier.weight(0.5f),
-            ) {
-                initiateSearch()
-            }
-            TextualCheckbox(
-                searchFromDisplayedGPMs,
-                R.string.google_password_import_search_from_displayed_imports,
-                modifier = Modifier.weight(0.5f),
-            ) {
-                initiateSearch()
-            }
-        }
 
         Row {
-            Slider(enabled = !isRegularExpression,
+            Slider(
                 modifier = Modifier.weight(0.7f),
                 value = similarityScore,
                 onValueChange = { similarityScore = it }, valueRange = 0.0f..100.0f,
@@ -182,27 +180,66 @@ fun ImportControls(
         }
 
         Row {
+            Box(modifier = Modifier.weight(1f)) {
+                Row {
+                    TriStateCheckbox(
+                        modifier = Modifier.padding(10.dp),
+                        state = searchPasswords.value,
+                        onClick = {
+                            searchPasswords.value =
+                                ToggleableState.entries[(searchPasswords.value.ordinal + 1) % 3]
+                        },
+                    )
+                    when (toggleableStateToSearchTarget(searchPasswords.value)) {
+                        SearchTarget.SEARCH_FROM_DISPLAYED -> Text(stringResource(R.string.google_password_import_search_from_displayed_passwords))
+                        SearchTarget.SEARCH_FROM_ALL -> Text(stringResource(R.string.google_password_import_search_from_all_passwords))
+                        SearchTarget.IGNORE -> Text(stringResource(R.string.google_password_import_dont_search_from_passwords))
+                    }
+                }
+            }
+            Box(modifier = Modifier.weight(1f)) {
+                Row {
+                    TriStateCheckbox(
+                        modifier = Modifier.padding(10.dp),
+                        state = searchGPMs.value,
+                        onClick = {
+                            searchGPMs.value =
+                                ToggleableState.entries[(searchGPMs.value.ordinal + 1) % 3]
+                        },
+                    )
+                    when (toggleableStateToSearchTarget(searchGPMs.value)) {
+                        SearchTarget.SEARCH_FROM_DISPLAYED -> Text(stringResource(R.string.google_password_import_search_from_displayed_imports))
+                        SearchTarget.SEARCH_FROM_ALL -> Text(stringResource(R.string.google_password_import_search_from_all_imports))
+                        SearchTarget.IGNORE -> Text(stringResource(R.string.google_password_import_dont_search_from_imports))
+                    }
+                }
+            }
+        }
+
+        Row(horizontalArrangement = Arrangement.SpaceEvenly) {
             TextualCheckbox(
-                showOnlyMatchingPasswords,
-                R.string.google_password_import_locate_matching_passwords
+                startSearchingMatchingPasswords,
+                R.string.google_password_import_locate_matching_passwords,
+                modifier = Modifier.weight(1f),
             ) { checked ->
                 if (checked) {
-                    viewModel.launchSearchMatchingPasswords()
+                    viewModel.launchMatchingPasswordSearchAndResetDisplayLists()
                 } else {
-                    viewModel.launchCancelJobs {
-                        viewModel.clearMatchingPasswords()
+                    viewModel.cancelAllJobs {
+                        //viewModel.resetDisplayLists()
                     }
                 }
             }
             TextualCheckbox(
-                showOnlyMatchingNames,
-                R.string.google_password_import_locate_matching_names
+                startSearchingMatchingNames,
+                R.string.google_password_import_locate_matching_names,
+                modifier = Modifier.weight(1f),
             ) { checked ->
                 if (checked) {
-                    viewModel.launchSearchMatchingNames()
+                    viewModel.launchMatchingNameSearchAndResetDisplayLists(similarityScore.toDouble())
                 } else {
-                    viewModel.launchCancelJobs {
-                        viewModel.clearMatchingNames()
+                    viewModel.cancelAllJobs {
+                        //viewModel.resetDisplayLists()
                     }
                 }
             }

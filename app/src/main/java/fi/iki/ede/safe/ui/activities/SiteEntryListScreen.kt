@@ -36,7 +36,7 @@ class SiteEntryListScreen : AutolockingBaseComponentActivity() {
             val context = LocalContext.current
             val passwordsState by passwordsStateFlow
                 .map { passwords -> passwords.filter { it.categoryId == categoryId } }
-                .map { passwords -> passwords.sortedBy { it.plainDescription.lowercase() } }
+                .map { passwords -> passwords.sortedBy { it.cachedPlainDescription.lowercase() } }
                 .filterNotNull()
                 .collectAsState(initial = emptyList())
 

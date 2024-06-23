@@ -394,7 +394,7 @@ fun SelectableItem(text: String, showInfo: () -> Unit, leftSpacer: Boolean = fal
 @Composable
 fun ShowInfo(item: SavedGPM, onDismiss: () -> Unit) {
     val dump =
-        "Name: ${item.decryptedName}\nUser: ${item.decryptedUsername}\nUrl: ${item.decryptedUrl}"
+        "Name: ${item.cachedDecryptedName}\nUser: ${item.cachedDecryptedUsername}\nUrl: ${item.cachedDecryptedUrl}"
     UsageInfo(dump, onDismiss = onDismiss)
 }
 
@@ -407,7 +407,7 @@ fun ShowInfo(item: IncomingGPM, onDismiss: () -> Unit) {
 @Composable
 fun ShowInfo(item: ScoredMatch, onDismiss: () -> Unit) {
     val dump =
-        "Match:${item.matchScore}\nHashMatch:${item.hashMatch}\nName: ${item.item.decryptedName}\nUser: ${item.item.decryptedUsername}\nUrl: ${item.item.decryptedUrl}"
+        "Match:${item.matchScore}\nHashMatch:${item.hashMatch}\nName: ${item.item.cachedDecryptedName}\nUser: ${item.item.cachedDecryptedUsername}\nUrl: ${item.item.cachedDecryptedUrl}"
     UsageInfo(dump, onDismiss = onDismiss)
 }
 
@@ -488,7 +488,8 @@ private fun Page3(importChangeSet: MutableState<ImportChangeSet?>) =
                     items(entry.second.toList()) { value ->
                         SafeListItem {
                             SelectableItem(
-                                value.item.item.decryptedName, { showInfo2.value = value.item },
+                                value.item.item.cachedDecryptedName,
+                                { showInfo2.value = value.item },
                                 true
                             )
                         }
@@ -512,7 +513,7 @@ private fun Page4(importChangeSet: MutableState<ImportChangeSet?>) =
         LazyColumn {
             items(wrappedList) { entry ->
                 SafeListItem {
-                    SelectableItem(entry.item.decryptedName, { showInfo.value = entry.item })
+                    SelectableItem(entry.item.cachedDecryptedName, { showInfo.value = entry.item })
                 }
             }
         }

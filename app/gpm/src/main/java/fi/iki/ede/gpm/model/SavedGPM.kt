@@ -15,11 +15,11 @@ data class SavedGPM private constructor(
     val flaggedIgnored: Boolean,
     val hash: String
 ) {
-    val decryptedName: String by lazy { encryptedName.decrypt() } // ok
-    val decryptedUsername: String by lazy { encryptedUsername.decrypt() } // ok
-    val decryptedUrl: String by lazy { encryptedUrl.decrypt() } // ok
-    val decryptedPassword: String by lazy { encryptedPassword.decrypt() } // ok
-    val decryptedNote: String by lazy { encryptedNote.decrypt() } // ok
+    val cachedDecryptedName: String by lazy { encryptedName.decrypt() } // ok
+    val cachedDecryptedUsername: String by lazy { encryptedUsername.decrypt() } // ok
+    val cachedDecryptedUrl: String by lazy { encryptedUrl.decrypt() } // ok
+    val cachedDecryptedPassword: String by lazy { encryptedPassword.decrypt() } // ok
+    val cachedDecryptedNote: String by lazy { encryptedNote.decrypt() } // ok
 
     constructor(id: Long? = null, importing: IncomingGPM) : this(
         id,
@@ -33,7 +33,7 @@ data class SavedGPM private constructor(
     )
 
     override fun toString(): String {
-        return "SavedGPM ( id=$id, name=${decryptedName}, url=${decryptedUrl}, username=${decryptedUsername}, password=${encryptedPassword.decrypt()}, note=${encryptedNote.decrypt()}, flaggedIgnored=$flaggedIgnored, hash=$hash)"
+        return "SavedGPM ( id=$id, name=${cachedDecryptedName}, url=${cachedDecryptedUrl}, username=${cachedDecryptedUsername}, password=${encryptedPassword.decrypt()}, note=${encryptedNote.decrypt()}, flaggedIgnored=$flaggedIgnored, hash=$hash)"
     }
 
     companion object {

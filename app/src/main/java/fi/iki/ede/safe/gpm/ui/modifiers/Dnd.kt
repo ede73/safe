@@ -48,7 +48,7 @@ fun Modifier.dnd(
 
 fun setClipData(dragObject: DNDObject.GPM): ClipData {
     return ClipData.newPlainText(
-        dragObject.savedGPM.decryptedName,
+        dragObject.savedGPM.cachedDecryptedName,
         dragObject.savedGPM.id.toString()
     )
 }

@@ -27,19 +27,15 @@ private fun getLevenshteinDistance(xl: LowerCaseTrimmedString, yl: LowerCaseTrim
     return t[m][n]
 }
 
-class LowerCaseTrimmedString(val lowercasedTrimmed: String) {
-    companion object {
-        fun from(value: String): LowerCaseTrimmedString {
-            return LowerCaseTrimmedString(value.lowercase().trim())
-        }
-    }
+class LowerCaseTrimmedString(private val inputString: String) {
+    val lowercasedTrimmed: String by lazy { inputString.trim().lowercase() } // ok
 }
 
-fun String.toLowerCasedTrimmedString(): LowerCaseTrimmedString = LowerCaseTrimmedString.from(this)
+fun String.toLowerCasedTrimmedString(): LowerCaseTrimmedString = LowerCaseTrimmedString(this)
 
 fun findSimilarity(x: LowerCaseTrimmedString, y: LowerCaseTrimmedString): Double {
-    val maxLength = max(x.lowercasedTrimmed.length, y.lowercasedTrimmed.length)
+    val maxLength = max(x.lowercasedTrimmed.length, y.lowercasedTrimmed.length).toDouble()
     return if (maxLength > 0) {
-        (maxLength - getLevenshteinDistance(x, y)).toDouble() / maxLength
+        (maxLength - getLevenshteinDistance(x, y)) / maxLength
     } else 1.0
 }

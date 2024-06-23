@@ -168,4 +168,8 @@ Nämä valinnat muistetaan, joten seuraavan kerran linkitys on helpompaa.</strin
     <string name="title_oisafeimport">OISafe salasanojen sisääntuonti</string>
     <string name="google_password_launch_gpm"><![CDATA[Avaa salasanat & tilit]]></string>
     <string name="google_password_import_search_regex">Etsi regular expressionsioneilla</string>
+    <string name="google_password_import_search_from_all_imports">Search from all imports</string>
+    <string name="google_password_import_dont_search_from_imports">Don\'t search from imports</string>
+    <string name="google_password_import_dont_search_from_passwords">Don\'t search from passwords</string>
+    <string name="google_password_import_search_from_all_passwords">Search from all passwords</string>
 </resources>

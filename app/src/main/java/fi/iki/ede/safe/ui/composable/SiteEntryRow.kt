@@ -83,7 +83,7 @@ fun SiteEntryRow(
     ) {
         Row {
             Text(
-                text = passEntry.plainDescription,
+                text = passEntry.cachedPlainDescription,
                 maxLines = 1,
                 overflow = TextOverflow.Clip,
                 // Move to bounding box (up)
@@ -107,7 +107,7 @@ fun SiteEntryRow(
                 Text(
                     text = stringResource(
                         id = R.string.password_list_delete_password,
-                        passEntry.plainDescription
+                        passEntry.cachedPlainDescription
                     )
                 )
             }, onClick = {
@@ -118,7 +118,7 @@ fun SiteEntryRow(
                 Text(
                     text = stringResource(
                         id = R.string.password_list_move_password,
-                        passEntry.plainDescription
+                        passEntry.cachedPlainDescription
                     )
                 )
             }, onClick = {

@@ -309,7 +309,7 @@ object DataModel {
                     try {
                         _categories.values.forEach { passwords ->
                             passwords.forEach { encryptedPassword ->
-                                val noop = encryptedPassword.plainDescription
+                                val noop = encryptedPassword.cachedPlainDescription
                             }
                         }
                     } catch (ex: Exception) {
@@ -348,7 +348,7 @@ object DataModel {
                 strayPasswords.forEach {
                     Log.e(
                         "DataModel",
-                        "Stray password id=${it.id}, category=${it.categoryId}, description=${it.plainDescription}"
+                        "Stray password id=${it.id}, category=${it.categoryId}, description=${it.cachedPlainDescription}"
                     )
                 }
             }
@@ -362,7 +362,7 @@ object DataModel {
                     for (category in _categories.keys) {
                         println("Category id=${category.id} plainname=${category.plainName}") // OK: Dump
                         for (password in getCategorysPasswords(category.id!!)) {
-                            println("  Password id=${password.id}, description=${password.plainDescription},changed=${password.passwordChangedDate}") // OK: Dump
+                            println("  Password id=${password.id}, description=${password.cachedPlainDescription},changed=${password.passwordChangedDate}") // OK: Dump
                         }
                     }
                 }

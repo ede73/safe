@@ -22,7 +22,7 @@ open class EditingSiteEntryViewModel : ViewModel() {
         _uiState.value = EditableSiteEntry(
             password.categoryId as DBID,
             password.id as DBID,
-            password.plainDescription,
+            password.cachedPlainDescription,
             password.plainWebsite,
             password.username,
             password.password,

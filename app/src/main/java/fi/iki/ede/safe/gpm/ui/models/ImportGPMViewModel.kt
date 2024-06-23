@@ -32,23 +32,25 @@ class ImportGPMViewModel : ViewModel() {
     }
 
     init {
-        loadGPMs()
-        loadSiteEntries()
+        viewModelScope.launch(Dispatchers.IO) {
+            resetGPMListToAllUnprocessed()
+            resetSiteEntryListToAllSaved()
+        }
     }
 
-    fun removeGPM(id: Long) {
+    fun removeGPMFromMergeRepository(id: Long) {
         importMergeDataRepository.removeGPM(id)
     }
 
-    private fun loadGPMs() {
+    private suspend fun resetGPMListToAllUnprocessed() {
         viewModelScope.launch(Dispatchers.IO) {
-            val importedGPMs = try {
+            val unprocessedGPMsFromDB = try {
                 val imports = DataModel._savedGPMs.filter { savedGPM ->
                     !savedGPM.flaggedIgnored && DataModel._siteEntryToSavedGPM.none { (_, savedGPMList) -> savedGPM in savedGPMList }
                 }.toSet()
                 // IF user restored a database in the MEAN TIME, that means our previous export
                 // is now totally unreadable (since our import / doesn't change gpm imports)
-                val decryptTest = imports.firstOrNull()?.decryptedName
+                val decryptTest = imports.firstOrNull()?.cachedDecryptedName
                 imports
             } catch (ex: javax.crypto.BadPaddingException) {
                 Log.e("ImportTest", "BadPaddingException: delete all GPM imports")
@@ -58,12 +60,14 @@ class ImportGPMViewModel : ViewModel() {
                 }
                 emptySet()
             }
-            importMergeDataRepository.resetGPMDisplayList(importedGPMs)
+            importMergeDataRepository.initializeUnprocessedGPMAndDisplayListToGivenList(
+                unprocessedGPMsFromDB
+            )
         }
     }
 
-    private fun loadSiteEntries() {
-        importMergeDataRepository.resetSiteEntryDisplayList(DataModel.getPasswords())
+    private suspend fun resetSiteEntryListToAllSaved() {
+        importMergeDataRepository.initializeSiteEntryListAndDisplayListToGivenList(DataModel.getPasswords())
     }
 
     // thread safe abstraction allowing implementing easy match algorithms
@@ -81,7 +85,7 @@ class ImportGPMViewModel : ViewModel() {
     ) = viewModelScope.launch(Dispatchers.Default) {
 
         start()
-        importMergeDataRepository.emptyDisplayLists()
+        println("turly starting $name between lists ${outerList.size} and ${innerList.size}")
 
         // allow iterating while editing
         val copyOfOuterList = outerList.toList()
@@ -137,16 +141,20 @@ class ImportGPMViewModel : ViewModel() {
     )
 
     // TODO: PRE-MANGLE! calculate hash of all the PWDs and compare those
-    fun launchSearchMatchingPasswords() {
+    fun launchMatchingPasswordSearchAndResetDisplayLists() {
         CoroutineScope(Dispatchers.Default).launch {
             jobManager.cancelAndAddNewJob {
+                importMergeDataRepository.emptyGPMDisplayList() // TODO: REMOVE, hoist reset control!
+                importMergeDataRepository.emptySiteEntryDisplayList() // TODO: REMOVE, hoist reset control!
                 launchIterateLists("applyMatchingPasswords",
                     importMergeDataRepository.getList(DataType.DecryptableSiteEntry) as List<DecryptableSiteEntry>,
                     importMergeDataRepository.getList(DataType.GPM) as List<SavedGPM>,
                     start = { },
                     compare = { outerEntry, innerEntry ->
-                        if (outerEntry.plainPassword == innerEntry.decryptedPassword) {
-                            outerEntry to innerEntry
+                        if (outerEntry.plainPassword == innerEntry.cachedDecryptedPassword) {
+                            (outerEntry to innerEntry).also {
+                                println("MATCH PASSWORD")
+                            }
                         }
                         null to null
                     })
@@ -154,16 +162,11 @@ class ImportGPMViewModel : ViewModel() {
         }
     }
 
-    fun clearMatchingPasswords() {
-        importMergeDataRepository.resetSiteEntryDisplayList()
-        importMergeDataRepository.resetGPMDisplayList()
-    }
-
-    fun launchSearchMatchingNames() {
+    fun launchMatchingNameSearchAndResetDisplayLists(similarityThreshold: Double) {
         CoroutineScope(Dispatchers.Default).launch {
-            // TODO: ScoreCOnfig!
-            val threshold = 0.55
             jobManager.cancelAndAddNewJob {
+                importMergeDataRepository.emptyGPMDisplayList() // TODO: REMOVE, hoist reset control!
+                importMergeDataRepository.emptySiteEntryDisplayList() // TODO: REMOVE, hoist reset control!
                 launchIterateLists("applyMatchingNames",
 //                    dataRepository.giveOriginalListOf<DecryptableSiteEntry>(),
 //                    dataRepository.giveOriginalListOf<SavedGPM>(),
@@ -172,17 +175,14 @@ class ImportGPMViewModel : ViewModel() {
                     start = { },
                     compare = { outerEntry, innerEntry ->
                         val eka =
-                            harmonizePotentialDomainName(outerEntry.plainDescription).toLowerCasedTrimmedString()
+                            harmonizePotentialDomainName(outerEntry.cachedPlainDescription).toLowerCasedTrimmedString()
                         val toka =
-                            harmonizePotentialDomainName(innerEntry.decryptedName).toLowerCasedTrimmedString()
+                            harmonizePotentialDomainName(innerEntry.cachedDecryptedName).toLowerCasedTrimmedString()
 
-                        val score = findSimilarity(
-                            eka, toka
-                        )
-                        if (score > threshold)
-                            println("$score = ${eka.lowercasedTrimmed} == ${toka.lowercasedTrimmed}")
-                        if (score > threshold
-                        ) outerEntry to innerEntry
+                        val score = findSimilarity(eka, toka)
+                        if (score > similarityThreshold) (outerEntry to innerEntry).also {
+                            println("MATCH $score = ${eka.lowercasedTrimmed} == ${toka.lowercasedTrimmed}")
+                        }
                         null to null
                     }
                 )
@@ -190,26 +190,25 @@ class ImportGPMViewModel : ViewModel() {
         }
     }
 
-    fun clearMatchingNames() = clearMatchingPasswords()
-
     // Assuming 'scope' is your CoroutineScope, e.g., viewModelScope
     private var searchJob: Job? = null
     fun launchSearch(
         similarityThresholdOrSubString: Double,
         searchText: String,
-        searchFromDisplayedPasswords: Boolean,
-        searchFromDisplayGPMs: Boolean,
+        passwordSearchTarget: SearchTarget,
+        gpmSearchTarget: SearchTarget,
         regex: Regex? = null,
     ) {
         if (searchText.isEmpty()) return
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
             delay(500)
+            println("Truly begin search for $searchText / $regex w/ $similarityThresholdOrSubString from pwd $passwordSearchTarget from gpm $gpmSearchTarget")
             performSearch(
                 similarityThresholdOrSubString,
                 searchText.toLowerCasedTrimmedString(),
-                searchFromDisplayedPasswords,
-                searchFromDisplayGPMs,
+                passwordSearchTarget,
+                gpmSearchTarget,
                 regex
             )
         }
@@ -218,65 +217,81 @@ class ImportGPMViewModel : ViewModel() {
     private fun performSearch(
         similarityThresholdOrSubString: Double,
         searchText: LowerCaseTrimmedString,
-        searchFromDisplayedPasswords: Boolean,
-        searchFromDisplayedGPMs: Boolean,
+        passwordSearchTarget: SearchTarget,
+        gpmSearchTarget: SearchTarget,
         regex: Regex? = null
     ) {
+        println("Actually PERFORM SEARCH?? $similarityThresholdOrSubString ${searchText.lowercasedTrimmed} $passwordSearchTarget $gpmSearchTarget")
         CoroutineScope(Dispatchers.Default).launch {
             jobManager.cancelAndAddNewJobs {
-                val j1 = if (searchFromDisplayedPasswords)
+                val passwordSearchThread = if (passwordSearchTarget != SearchTarget.IGNORE)
                     launchIterateList(
                         "searchSiteEntries",
 //                        dataRepository.giveOriginalListOf<DecryptableSiteEntry>(),
-                        importMergeDataRepository.getList(DataType.DecryptableSiteEntry) as List<DecryptableSiteEntry>,
+                        if (passwordSearchTarget == SearchTarget.SEARCH_FROM_DISPLAYED)
+                            importMergeDataRepository.displayedSiteEntries.value.toList()
+                        else
+                            importMergeDataRepository.getList(DataType.DecryptableSiteEntry) as List<DecryptableSiteEntry>,
                         start = { },
                         compare = { item ->
+                            println("compare searchSiteEntries ${item.cachedPlainDescription} with ${searchText.lowercasedTrimmed} when $similarityThresholdOrSubString / $regex")
                             if (similarityThresholdOrSubString > 0) {
                                 if (findSimilarity(
-                                        harmonizePotentialDomainName(item.plainDescription).toLowerCasedTrimmedString(),
+                                        harmonizePotentialDomainName(item.cachedPlainDescription).toLowerCasedTrimmedString(),
                                         searchText
                                     ) > similarityThresholdOrSubString
                                 ) item else null
-                            } else if (regex == null && item.plainDescription.lowercase()
-                                    .contains(searchText.lowercasedTrimmed)
+                            } else if (regex == null && item.cachedPlainDescription.contains(
+                                    searchText.lowercasedTrimmed,
+                                    ignoreCase = true
+                                )
                             ) item
-                            else if (regex != null && regex.containsMatchIn(item.plainDescription.lowercase())
+                            else if (regex != null && regex.containsMatchIn(item.cachedPlainDescription)
                             ) item
                             else null
                         }
-                    )
+                    ).also {
+                        // if we're to SEARCH, need to reset the display
+                        importMergeDataRepository.emptySiteEntryDisplayList()
+                    }
                 else null
 
-                val j2 = if (searchFromDisplayedGPMs)
+                val gpmSearchThread = if (gpmSearchTarget != SearchTarget.IGNORE)
                     launchIterateList(
                         "searchGPMs",
 //                        dataRepository.giveOriginalListOf<SavedGPM>(),
-                        importMergeDataRepository.getList(DataType.GPM) as List<SavedGPM>,
+                        if (gpmSearchTarget == SearchTarget.SEARCH_FROM_DISPLAYED)
+                            importMergeDataRepository.displayedUnprocessedGPMs.value.toList()
+                        else
+                            importMergeDataRepository.getList(DataType.GPM) as List<SavedGPM>,
                         start = { },
                         compare = { item ->
-                            println("Searching for ${searchText.lowercasedTrimmed} in ${item.decryptedName}")
+                            println("compare searchSiteEntries $item with ${searchText.lowercasedTrimmed} from ${item.cachedDecryptedName} when $similarityThresholdOrSubString / $regex")
                             if (similarityThresholdOrSubString > 0) {
                                 if (findSimilarity(
-                                        harmonizePotentialDomainName(item.decryptedName).toLowerCasedTrimmedString(),
+                                        harmonizePotentialDomainName(item.cachedDecryptedName).toLowerCasedTrimmedString(),
                                         searchText
                                     ) > similarityThresholdOrSubString
                                 ) item
                                 else null
-                            } else if (regex == null && item.decryptedName.lowercase()
-                                    .contains(searchText.lowercasedTrimmed)
+                            } else if (regex == null && item.cachedDecryptedName
+                                    .contains(searchText.lowercasedTrimmed, ignoreCase = true)
                             ) item
-                            else if (regex != null && regex.containsMatchIn(item.decryptedName.lowercase())
+                            else if (regex != null && regex.containsMatchIn(item.cachedDecryptedName)
                             ) item
                             else null
                         }
-                    )
+                    ).also {
+                        // if we're to SEARCH, need to reset the display
+                        importMergeDataRepository.emptyGPMDisplayList()
+                    }
                 else null
-                listOfNotNull(j1, j2)
+                listOfNotNull(passwordSearchThread, gpmSearchThread)
             }
         }
     }
 
-    fun launchCancelJobs(atomicBlock: () -> Unit = {}) {
+    fun cancelAllJobs(atomicBlock: () -> Unit = {}) {
         CoroutineScope(Dispatchers.Default).launch {
             jobManager.cancelAllJobs(atomicBlock)
         }
