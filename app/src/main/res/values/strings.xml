@@ -50,16 +50,24 @@
     <string name="google_password_import_accept">Accept! And go to next stage!</string>
     <string name="google_password_import_delete">Delete original CSV</string>
     <string name="google_password_import_delete_reminder">Remember to delete the import document! It contains raw passwords, it is paramount you don\'t leave it hanging in insecure location! Or better yet, don\'t store it anywhere!</string>
+    <string name="google_password_import_dont_search_from_imports">Don\'t search from imports</string>
+    <string name="google_password_import_dont_search_from_passwords">Don\'t search from passwords</string>
     <string name="google_password_import_failed">Import failed!</string>
     <string name="google_password_import_finish_linking">Finish GPM linking from last round</string>
     <string name="google_password_import_import">Import GPMs</string>
     <string name="google_password_import_locate_matching_names">Locate similar names</string>
     <string name="google_password_import_locate_matching_passwords">Locate matching passwords</string>
+    <string name="google_password_import_merge_reset_gpm_list">Reset</string>
+    <string name="google_password_import_merge_reset_password_list">Reset</string>
     <string name="google_password_import_search">Search to limit the entries</string>
+    <string name="google_password_import_search_from_all_imports">Search from all imports</string>
+    <string name="google_password_import_search_from_all_passwords">Search from all passwords</string>
     <string name="google_password_import_search_from_displayed_imports">Search from displayed imports</string>
     <string name="google_password_import_search_from_displayed_passwords">Search from displayed password</string>
+    <string name="google_password_import_search_regex">Search using regular expressions</string>
     <string name="google_password_import_select">Select GPM CSV</string>
     <string name="google_password_import_select_doc">Select Google Password Manager (GPM) CSV</string>
+    <string name="google_password_launch_gpm"><![CDATA[Open passwords & accounts]]></string>
     <string name="google_password_import_usage">This feature allows you to import Google Password Manager passwords (GPMs) in a continuous manner. This is intended to be used every now and then.\n
 \n
 At no point during import or merge will your existing Site Entries(passwords) be overwritten or modified.\n
@@ -220,10 +228,4 @@ These selections will be remembered, so next time linking will be easier.</strin
     <string name="preferences_autobackup_restore_finished">Google Automatic backups\' restore finished</string>
     <string name="login_anew_button">Discard backup, start fresh</string>
     <string name="login_anew_retry_button">Try login after all</string>
-    <string name="google_password_launch_gpm"><![CDATA[Open passwords & accounts]]></string>
-    <string name="google_password_import_search_regex">Search using regular expressions</string>
-    <string name="google_password_import_search_from_all_imports">Search from all imports</string>
-    <string name="google_password_import_dont_search_from_imports">Don\'t search from imports</string>
-    <string name="google_password_import_dont_search_from_passwords">Don\'t search from passwords</string>
-    <string name="google_password_import_search_from_all_passwords">Search from all passwords</string>
 </resources>

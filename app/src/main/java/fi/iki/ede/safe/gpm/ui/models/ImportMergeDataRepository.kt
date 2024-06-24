@@ -30,25 +30,20 @@ class ImportMergeDataRepository {
                         _savedSiteEntries.clear()
                         _savedSiteEntries.addAll(request.siteEntries)
                         _displayedSiteEntries.value = _savedSiteEntries.toList()
-                        println("SiteEntry list initialixed to all saved site entries")
                     }
 
                     is ModificationRequest.InitializeUnprocessedGPMAndDisplayListToGivenList -> {
-                        println("Reinitialize saved GPM list from given list")
                         _unprocessedGPMs.clear()
                         _unprocessedGPMs.addAll(request.savedGPMs)
                         _displayedUnprocessedGPMs.value = _unprocessedGPMs.toList()
-                        println("GPM list initialize dto ALL UN PROCESSED=given list from rquest")
                     }
 
                     is ModificationRequest.ResetGPMDisplayListToAllUnprocessed ->
                         _displayedUnprocessedGPMs.value = _unprocessedGPMs.toList().also {
-                            println("ResetED GPM Display list to all unprocessed")
                         }
 
                     is ModificationRequest.ResetSiteEntryDisplayListToAllSaved ->
                         _displayedSiteEntries.value = _savedSiteEntries.toList().also {
-                            println("ResetED Site Etry list to ALL SAVED")
                         }
 
                     is ModificationRequest.DisplayGPM ->
@@ -59,7 +54,6 @@ class ImportMergeDataRepository {
 
                     is ModificationRequest.RemoveGPM -> {
                         if (!_unprocessedGPMs.removeAll { it.id == request.id }) {
-                            println("GPM $request.id not found (wasnt removed from ORIGINAL)")
                         }
                         _displayedUnprocessedGPMs.update {
                             it.filterNot { gpm -> gpm.id == request.id }
@@ -68,12 +62,10 @@ class ImportMergeDataRepository {
 
                     is ModificationRequest.EmptyGPMDisplayLists -> {
                         _displayedUnprocessedGPMs.value = emptyList()
-                        println("GPM set to EMPTY")
                     }
 
                     is ModificationRequest.EmptySiteEntryDisplayLists -> {
                         _displayedSiteEntries.value = emptyList()
-                        println("SiteEntryList set to EMPTY")
                     }
                 }
             }
@@ -96,9 +88,6 @@ class ImportMergeDataRepository {
     }
 
     fun addDisplayItem(items: List<Any>) {
-        items.forEach {
-            println("Add to displsy $it")
-        }
         repositoryScope.launch {
             items.forEach { item ->
                 when (item) {
@@ -112,7 +101,7 @@ class ImportMergeDataRepository {
         }
     }
 
-    suspend fun initializeUnprocessedGPMAndDisplayListToGivenList(newGPMs: Set<SavedGPM>) {
+    internal suspend fun initializeUnprocessedGPMAndDisplayListToGivenList(newGPMs: Set<SavedGPM>) {
         modificationRequests.emit(
             ModificationRequest.InitializeUnprocessedGPMAndDisplayListToGivenList(
                 newGPMs.toList()
@@ -124,7 +113,7 @@ class ImportMergeDataRepository {
         modificationRequests.emit(ModificationRequest.ResetGPMDisplayListToAllUnprocessed)
     }
 
-    suspend fun initializeSiteEntryListAndDisplayListToGivenList(newSiteEntries: List<DecryptableSiteEntry>) {
+    internal suspend fun initializeSiteEntryListAndDisplayListToGivenList(newSiteEntries: List<DecryptableSiteEntry>) {
         modificationRequests.emit(
             ModificationRequest.InitializeSiteEntryListAndDisplayListToGivenList(
                 newSiteEntries

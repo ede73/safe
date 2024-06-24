@@ -38,16 +38,24 @@
     <string name="google_password_import_accept">Hyväksy ja mene seuraavaan vaiheeseen!</string>
     <string name="google_password_import_delete">Tuhoa alkuperäinen CSV</string>
     <string name="google_password_import_delete_reminder">Muista tuhota tuontidokumentti! Se sisältää salaamattomia salasanoja, on tärkeää ettet jätä sitä talteen mihinkään turvattomaan paikkaan! Tai parempi ettet säilytä sitä missään!</string>
+    <string name="google_password_import_dont_search_from_imports">Älä etsi tuotavista</string>
+    <string name="google_password_import_dont_search_from_passwords">Älä etsi salasanoista</string>
     <string name="google_password_import_failed">Tuonti epäonnistui!</string>
     <string name="google_password_import_finish_linking">Viimeistele GPM linkitys edelliseltä kerralta</string>
     <string name="google_password_import_import">Tuo CSV</string>
     <string name="google_password_import_locate_matching_names">Etsi samankaltaiset nimet</string>
     <string name="google_password_import_locate_matching_passwords">Etsi samat salasanat</string>
+    <string name="google_password_import_merge_reset_gpm_list">Nollaa</string>
+    <string name="google_password_import_merge_reset_password_list">Nollaa</string>
     <string name="google_password_import_search">Etsi rajataksesi valintojen määrää</string>
+    <string name="google_password_import_search_from_all_imports">Etsi kaikista tuotavista</string>
+    <string name="google_password_import_search_from_all_passwords">Etsi kaikista salasanoista</string>
     <string name="google_password_import_search_from_displayed_imports">Etsi näytetyistä tuotavista</string>
     <string name="google_password_import_search_from_displayed_passwords">Etsi näytetyistä salasanoista</string>
+    <string name="google_password_import_search_regex">Etsi regular expressionsioneilla</string>
     <string name="google_password_import_select">Valitse GPM CSV</string>
     <string name="google_password_import_select_doc">Valitse Google Password Manager (GPM) CSV</string>
+    <string name="google_password_launch_gpm"><![CDATA[Avaa salasanat & tilit]]></string>
     <string name="google_password_import_usage">Tämä ominaisuus mahdollistaa Google Password Managerin salasanojen (GPM) tuonnin jatkuvalla tavalla. Tätä on tarkoitus käyttää silloin tällöin.\n
 \n
 Tuonnin tai yhdistämisen aikana olemassa olevia sivustotietueita (salasanoja) ei missään vaiheessa ylikirjoiteta tai muuteta.\n
@@ -166,10 +174,4 @@ Nämä valinnat muistetaan, joten seuraavan kerran linkitys on helpompaa.</strin
     <string name="title_categorypager">Sivutettu kategorianäyttö</string>
     <string name="title_hibp">HIBP tuki</string>
     <string name="title_oisafeimport">OISafe salasanojen sisääntuonti</string>
-    <string name="google_password_launch_gpm"><![CDATA[Avaa salasanat & tilit]]></string>
-    <string name="google_password_import_search_regex">Etsi regular expressionsioneilla</string>
-    <string name="google_password_import_search_from_all_imports">Search from all imports</string>
-    <string name="google_password_import_dont_search_from_imports">Don\'t search from imports</string>
-    <string name="google_password_import_dont_search_from_passwords">Don\'t search from passwords</string>
-    <string name="google_password_import_search_from_all_passwords">Search from all passwords</string>
 </resources>

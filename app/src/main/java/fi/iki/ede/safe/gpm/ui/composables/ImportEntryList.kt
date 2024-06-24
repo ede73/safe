@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -25,18 +27,22 @@ import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.model.SavedGPM.Companion.makeFromEncryptedStringFields
 import fi.iki.ede.gpm.model.encrypt
 import fi.iki.ede.gpm.model.encrypter
+import fi.iki.ede.safe.R
 import fi.iki.ede.safe.gpm.ui.models.DNDObject
 import fi.iki.ede.safe.gpm.ui.models.ImportGPMViewModel
 import fi.iki.ede.safe.gpm.ui.modifiers.doesItHaveText
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableSiteEntry
+import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -69,9 +75,10 @@ fun combineLists(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ImportEntryList(viewModel: ImportGPMViewModel) {
-    val mine = viewModel.importMergeDataRepository.displayedSiteEntries.collectAsState()
     val imports = viewModel.importMergeDataRepository.displayedUnprocessedGPMs.collectAsState()
+    val mine = viewModel.importMergeDataRepository.displayedSiteEntries.collectAsState()
     val combinedList = combineLists(mine.value, imports.value)
+    val coroutineScope = rememberCoroutineScope()
 
     fun ignoreSavedGPM(clipDescription: ClipDescription, id: Long) {
         println("ignoreSavedGPM ${clipDescription.label} $id")
@@ -126,12 +133,32 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
             }
         )
 
+        SafeButton(onClick = {
+            coroutineScope.launch {
+                viewModel.importMergeDataRepository.resetSiteEntryDisplayListToAllSaved()
+            }
+        }) {
+            Text(stringResource(R.string.google_password_import_merge_reset_password_list))
+        }
+
         Spacer(
             modifier = Modifier
-                .fillMaxWidth(0.5f)
+                .fillMaxWidth(0.2f)
             //.visibleSpacer(true, Color.Yellow)
         )
 
+        SafeButton(
+            modifier = Modifier.padding(0.dp),
+            onClick = {
+                coroutineScope.launch {
+                    viewModel.importMergeDataRepository.resetGPMDisplayListToAllUnprocessed()
+                }
+            }) {
+            Text(
+                stringResource(R.string.google_password_import_merge_reset_gpm_list),
+                modifier = Modifier.padding(0.dp),
+            )
+        }
         DraggableText(
             DNDObject.JustString("Ignore"),
             onItemDropped = { (clipDescription, maybeId) ->
@@ -143,7 +170,6 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
         )
     }
     val listState = rememberLazyListState()
-    val coroutineScope = rememberCoroutineScope()
     var lazyColumnTopY by remember { mutableStateOf(0f) }
 
     val dndTarget = remember {

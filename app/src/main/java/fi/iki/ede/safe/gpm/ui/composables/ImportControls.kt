@@ -47,7 +47,6 @@ fun ImportControls(
     viewModel: ImportGPMViewModel,
 ) {
     val isWorkingAndProgress by viewModel.isWorkingAndProgress.observeAsState(false to null as Float?)
-
     val searchPasswords = remember { mutableStateOf(ToggleableState.Indeterminate) }
     val searchGPMs = remember { mutableStateOf(ToggleableState.Off) }
     val startSearchingMatchingNames = remember { mutableStateOf(false) }
@@ -76,7 +75,7 @@ fun ImportControls(
 
         // TODO: Reset search lists? WHERE?
         viewModel.launchSearch(
-            if (isRegularExpression) 0.0 else similarityScore.toDouble(),
+            if (isRegularExpression) 0.0 else similarityScore.toDouble() / 100,
             searchTextField.text,
             toggleableStateToSearchTarget(searchPasswords.value),
             toggleableStateToSearchTarget(searchGPMs.value),
@@ -163,7 +162,7 @@ fun ImportControls(
                 modifier = Modifier.weight(0.7f),
                 value = similarityScore,
                 onValueChange = { similarityScore = it }, valueRange = 0.0f..100.0f,
-                steps = 5, onValueChangeFinished = {
+                steps = 50, onValueChangeFinished = {
                     initiateSearch()
                 })
             if (similarityScore == 0.0f) {
@@ -236,7 +235,7 @@ fun ImportControls(
                 modifier = Modifier.weight(1f),
             ) { checked ->
                 if (checked) {
-                    viewModel.launchMatchingNameSearchAndResetDisplayLists(similarityScore.toDouble())
+                    viewModel.launchMatchingNameSearchAndResetDisplayLists(similarityScore.toDouble() / 100)
                 } else {
                     viewModel.cancelAllJobs {
                         //viewModel.resetDisplayLists()

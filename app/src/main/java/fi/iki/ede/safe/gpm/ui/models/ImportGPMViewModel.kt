@@ -12,13 +12,13 @@ import fi.iki.ede.gpm.similarity.findSimilarity
 import fi.iki.ede.gpm.similarity.toLowerCasedTrimmedString
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableSiteEntry
+import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-
 
 class ImportGPMViewModel : ViewModel() {
     // LiveData to signal the UI to show loading
@@ -85,7 +85,6 @@ class ImportGPMViewModel : ViewModel() {
     ) = viewModelScope.launch(Dispatchers.Default) {
 
         start()
-        println("turly starting $name between lists ${outerList.size} and ${innerList.size}")
 
         // allow iterating while editing
         val copyOfOuterList = outerList.toList()
@@ -118,7 +117,7 @@ class ImportGPMViewModel : ViewModel() {
                 }
             }
         } catch (ex: Exception) {
-            println("Something went wrong in $name, $ex")
+            firebaseRecordException("Something went wrong in $name", ex)
             exceptionHandler(ex)
         } finally {
             jobManager.updateProgress(100.0f)
@@ -152,9 +151,7 @@ class ImportGPMViewModel : ViewModel() {
                     start = { },
                     compare = { outerEntry, innerEntry ->
                         if (outerEntry.plainPassword == innerEntry.cachedDecryptedPassword) {
-                            (outerEntry to innerEntry).also {
-                                println("MATCH PASSWORD")
-                            }
+                            outerEntry to innerEntry
                         }
                         null to null
                     })
@@ -179,10 +176,8 @@ class ImportGPMViewModel : ViewModel() {
                         val toka =
                             harmonizePotentialDomainName(innerEntry.cachedDecryptedName).toLowerCasedTrimmedString()
 
-                        val score = findSimilarity(eka, toka)
-                        if (score > similarityThreshold) (outerEntry to innerEntry).also {
-                            println("MATCH $score = ${eka.lowercasedTrimmed} == ${toka.lowercasedTrimmed}")
-                        }
+                        val simScore = findSimilarity(eka, toka)
+                        if (simScore >= similarityThreshold) (outerEntry to innerEntry)
                         null to null
                     }
                 )
@@ -202,8 +197,7 @@ class ImportGPMViewModel : ViewModel() {
         if (searchText.isEmpty()) return
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
-            delay(500)
-            println("Truly begin search for $searchText / $regex w/ $similarityThresholdOrSubString from pwd $passwordSearchTarget from gpm $gpmSearchTarget")
+            delay(750)
             performSearch(
                 similarityThresholdOrSubString,
                 searchText.toLowerCasedTrimmedString(),
@@ -221,7 +215,6 @@ class ImportGPMViewModel : ViewModel() {
         gpmSearchTarget: SearchTarget,
         regex: Regex? = null
     ) {
-        println("Actually PERFORM SEARCH?? $similarityThresholdOrSubString ${searchText.lowercasedTrimmed} $passwordSearchTarget $gpmSearchTarget")
         CoroutineScope(Dispatchers.Default).launch {
             jobManager.cancelAndAddNewJobs {
                 val passwordSearchThread = if (passwordSearchTarget != SearchTarget.IGNORE)
@@ -234,7 +227,6 @@ class ImportGPMViewModel : ViewModel() {
                             importMergeDataRepository.getList(DataType.DecryptableSiteEntry) as List<DecryptableSiteEntry>,
                         start = { },
                         compare = { item ->
-                            println("compare searchSiteEntries ${item.cachedPlainDescription} with ${searchText.lowercasedTrimmed} when $similarityThresholdOrSubString / $regex")
                             if (similarityThresholdOrSubString > 0) {
                                 if (findSimilarity(
                                         harmonizePotentialDomainName(item.cachedPlainDescription).toLowerCasedTrimmedString(),
@@ -266,7 +258,6 @@ class ImportGPMViewModel : ViewModel() {
                             importMergeDataRepository.getList(DataType.GPM) as List<SavedGPM>,
                         start = { },
                         compare = { item ->
-                            println("compare searchSiteEntries $item with ${searchText.lowercasedTrimmed} from ${item.cachedDecryptedName} when $similarityThresholdOrSubString / $regex")
                             if (similarityThresholdOrSubString > 0) {
                                 if (findSimilarity(
                                         harmonizePotentialDomainName(item.cachedDecryptedName).toLowerCasedTrimmedString(),
