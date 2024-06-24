@@ -29,7 +29,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.crypto.BuildConfig
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.gpm.model.SavedGPM
@@ -38,7 +37,7 @@ import fi.iki.ede.gpm.model.encrypt
 import fi.iki.ede.gpm.model.encrypter
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.db.DBID
-import fi.iki.ede.safe.gpm.ui.activities.UsageInfo
+import fi.iki.ede.safe.gpm.ui.models.CombinedListPairs
 import fi.iki.ede.safe.gpm.ui.models.DNDObject
 import fi.iki.ede.safe.gpm.ui.models.ImportGPMViewModel
 import fi.iki.ede.safe.gpm.ui.modifiers.doesItHaveText
@@ -53,12 +52,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-sealed class CombinedListPairs {
-    data class SiteEntryToGPM(val siteEntry: DecryptableSiteEntry?, val gpm: SavedGPM?) :
-        CombinedListPairs()
-}
-
-fun combineLists(
+private fun combineLists(
     siteEntries: List<DecryptableSiteEntry>,
     gpms: List<SavedGPM>
 ): List<CombinedListPairs> {
@@ -75,17 +69,6 @@ fun combineLists(
     }
 
     return combinedList
-}
-
-@Composable
-fun ShowGPMInfo(item: SavedGPM, onDismiss: () -> Unit) {
-    val dump =
-        "Name4: ${item.cachedDecryptedName}\nUser: ${item.cachedDecryptedUsername}\nUrl: ${item.cachedDecryptedUrl}".let {
-            if (BuildConfig.DEBUG) {
-                it + "\nID=${item.id}"
-            } else it + "poop"
-        }
-    UsageInfo(dump, onDismiss = onDismiss)
 }
 
 
