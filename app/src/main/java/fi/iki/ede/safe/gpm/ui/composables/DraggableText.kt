@@ -1,8 +1,10 @@
 package fi.iki.ede.safe.gpm.ui.composables
 
 import android.content.ClipDescription
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -16,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
@@ -35,11 +38,13 @@ fun DNDObject.dump(): String =
                 is DNDObject.Spacer -> "Spacer"
             }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DraggableText(
     dragObject: DNDObject,
     modifier: Modifier = Modifier,
-    onItemDropped: ((Pair<ClipDescription, String>) -> Boolean)? = null
+    onItemDropped: ((Pair<ClipDescription, String>) -> Boolean)? = null,
+    onTap: (Offset) -> Unit = {}
 ) {
     val defaultColor = Color.Unspecified
     var dndHighlight by remember { mutableStateOf(defaultColor) }
@@ -93,18 +98,25 @@ fun DraggableText(
                     .checkIfVisible(isVisible)
                     .let {
                         if (isVisible.value) {
-                            //println("Add a DND Target ${dragObject.dump()}..we are visible")
-                            // works but doesnt act as DND targe
-                            it.dnd(dragObject, onItemDropped, dndTarget)
-                            //it.dndTargetThatWorksPerfectly(dragObject, dndTarget, isVisible.value)
-                            // literally DOES NOT work
-                            //it.dnd(dragObject, false, dndTarget)
+                            it
+                                .dnd(
+                                    dragObject,
+                                    onItemDropped,
+                                    dndTarget,
+                                    onTap = onTap
+                                )
+                                .let {
+                                    if (dragObject is DNDObject.SiteEntry) {
+                                        it.clickable {
+                                            onTap(Offset(0f, 0f))
+                                        }
+                                    } else it
+
+                                }
                         } else {
-                            //println("Skip a DND Target${dragObject.dump()}..we are NOT visible")
                             it
                         }
-                    }
-            ) {
+                    }) {
                 Box {
                     when (dragObject) {
                         is DNDObject.JustString -> Text(text = dragObject.string)

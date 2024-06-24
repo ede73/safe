@@ -27,9 +27,11 @@ import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import fi.iki.ede.crypto.BuildConfig
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.gpm.model.SavedGPM
@@ -37,11 +39,13 @@ import fi.iki.ede.gpm.model.SavedGPM.Companion.makeFromEncryptedStringFields
 import fi.iki.ede.gpm.model.encrypt
 import fi.iki.ede.gpm.model.encrypter
 import fi.iki.ede.safe.R
+import fi.iki.ede.safe.gpm.ui.activities.UsageInfo
 import fi.iki.ede.safe.gpm.ui.models.DNDObject
 import fi.iki.ede.safe.gpm.ui.models.ImportGPMViewModel
 import fi.iki.ede.safe.gpm.ui.modifiers.doesItHaveText
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableSiteEntry
+import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.CoroutineScope
@@ -72,6 +76,18 @@ fun combineLists(
     return combinedList
 }
 
+@Composable
+fun ShowGPMInfo(item: SavedGPM, onDismiss: () -> Unit) {
+    val dump =
+        "Name4: ${item.cachedDecryptedName}\nUser: ${item.cachedDecryptedUsername}\nUrl: ${item.cachedDecryptedUrl}".let {
+            if (BuildConfig.DEBUG) {
+                it + "\nID=${item.id}"
+            } else it + "poop"
+        }
+    UsageInfo(dump, onDismiss = onDismiss)
+}
+
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ImportEntryList(viewModel: ImportGPMViewModel) {
@@ -79,6 +95,11 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
     val mine = viewModel.importMergeDataRepository.displayedSiteEntries.collectAsState()
     val combinedList = combineLists(mine.value, imports.value)
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val showInfo = remember { mutableStateOf<SavedGPM?>(null) }
+    if (showInfo.value != null) {
+        ShowGPMInfo(showInfo.value!!, onDismiss = { showInfo.value = null })
+    }
 
     fun ignoreSavedGPM(clipDescription: ClipDescription, id: Long) {
         println("ignoreSavedGPM ${clipDescription.label} $id")
@@ -238,6 +259,12 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
                             linkSavedGPMAndDecryptableSiteEntry(clipDescription, siteEntry, it)
                             true
                         } ?: false
+                    },
+                    onTap = {
+                        println("TAP")
+                        if (siteEntry?.id != null) {
+                            IntentManager.startEditPassword(context, siteEntry.id!!)
+                        }
                     }
                 )
 
@@ -248,6 +275,7 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
                         DNDObject.GPM(site.gpm)
                     else DNDObject.Spacer,
                     modifier = mySizeModifier.weight(1f),
+                    onTap = { showInfo.value = site.gpm }
                 )
             }
         }

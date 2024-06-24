@@ -94,6 +94,14 @@ object IntentManager {
             putLong(PASSWORD_ID, passwordId)
         })
 
+    fun startEditPassword(context: Context, passwordId: DBID) =
+        startActivity(
+            context,
+            SiteEntryEditScreen::class.java, extras = Bundle().apply {
+                putLong(PASSWORD_ID, passwordId)
+            }
+        )
+
     fun startCategoryScreen(context: Context) =
         startActivity(
             context,
