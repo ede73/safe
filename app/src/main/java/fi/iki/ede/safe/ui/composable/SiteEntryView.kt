@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.text.TextUtils
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -35,6 +37,7 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.decrypt
 import fi.iki.ede.crypto.support.encrypt
+import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.clipboard.ClipboardUtils
 import fi.iki.ede.safe.model.DataModel
@@ -73,6 +76,7 @@ fun SiteEntryView(
     var passwordWasUpdated by remember { mutableStateOf(false) }
     val decrypter = KeyStoreHelperFactory.getDecrypter()
     val encrypter = KeyStoreHelperFactory.getEncrypter()
+    var showLinkedInfo by remember { mutableStateOf<Set<SavedGPM>?>(null) }
 
     Column(
         modifier = Modifier.verticalScroll(rememberScrollState())
@@ -192,8 +196,13 @@ fun SiteEntryView(
                     viewModel.updatePasswordChangedDate(date)
                 })
             passEntry.id?.let { pid ->
-                DataModel.getLinkedGPMs(pid).ifNotEmpty {
-                    Text(text = "Has ${it.size} linked GPMs")
+                val gpms = DataModel.getLinkedGPMs(pid)
+                gpms.ifNotEmpty {
+                    Box(modifier = Modifier.clickable {
+                        showLinkedInfo = gpms
+                    }) {
+                        Text(text = "Has ${it.size} linked GPMs")
+                    }
                 }
             }
         }
@@ -220,6 +229,9 @@ fun SiteEntryView(
                         viewModel.updatePhoto(it)
                     }
                 })
+        }
+        if (showLinkedInfo != null) {
+            ShowLinkedGPMs(showLinkedInfo!!, onDismiss = { showLinkedInfo = null })
         }
     }
 }
