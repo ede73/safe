@@ -1,7 +1,5 @@
 package fi.iki.ede.safe.gpm.ui.composables
 
-import android.content.ClipDescription
-import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.gestures.scrollBy
@@ -39,15 +37,18 @@ import fi.iki.ede.gpm.model.SavedGPM.Companion.makeFromEncryptedStringFields
 import fi.iki.ede.gpm.model.encrypt
 import fi.iki.ede.gpm.model.encrypter
 import fi.iki.ede.safe.R
+import fi.iki.ede.safe.db.DBID
 import fi.iki.ede.safe.gpm.ui.activities.UsageInfo
 import fi.iki.ede.safe.gpm.ui.models.DNDObject
 import fi.iki.ede.safe.gpm.ui.models.ImportGPMViewModel
 import fi.iki.ede.safe.gpm.ui.modifiers.doesItHaveText
 import fi.iki.ede.safe.model.DataModel
+import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
+import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -101,36 +102,27 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
         ShowGPMInfo(showInfo.value!!, onDismiss = { showInfo.value = null })
     }
 
-    fun ignoreSavedGPM(clipDescription: ClipDescription, id: Long) {
-        println("ignoreSavedGPM ${clipDescription.label} $id")
+    fun ignoreSavedGPM(id: Long) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 // TODO: who sets flagged ignore here!
                 DataModel.markSavedGPMIgnored(id)
                 // TODO: should autolink(from datamodel)
                 viewModel.removeGPMFromMergeRepository(id)
-                println("SavedGPM $id ignored and removed from list")
             } catch (ex: Exception) {
-                Log.i("ImportEntryList", "ignoreSavedGPM $id failed", ex)
+                firebaseRecordException("ignoreSavedGPM $id failed", ex)
             }
         }
     }
 
-    fun linkSavedGPMAndDecryptableSiteEntry(
-        clipDescription: ClipDescription,
-        siteEntry: DecryptableSiteEntry,
-        id: Long
-    ) {
-        println("LINK GPM AND ENTRY--> clip=(${clipDescription.label})  ==TO site=(${siteEntry.cachedPlainDescription}) gpmid=$id")
+    fun linkSavedGPMAndDecryptableSiteEntry(siteEntry: DecryptableSiteEntry, id: Long) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 // TODO: can link these two soon
                 viewModel.removeGPMFromMergeRepository(id)
                 DataModel.linkSaveGPMAndSiteEntry(siteEntry, id)
-                println("Link ${siteEntry.id} / ${siteEntry.cachedPlainDescription} and SavedGPM $id")
             } catch (ex: Exception) {
-                Log.i(
-                    "ImportEntryList",
+                firebaseRecordException(
                     "linkSavedGPMAndDecryptableSiteEntry ${siteEntry.id} to $id failed",
                     ex
                 )
@@ -138,17 +130,40 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
         }
     }
 
-    fun addSavedGPM(clipDescription: ClipDescription, id: Long) {
-        println("Add(import) GPM ${clipDescription.label} $id")
-        viewModel.removeGPMFromMergeRepository(id)
+    fun addSavedGPM(savedGPMId: Long) {
+        // TODO: Adding to first category...
+        // either make import category automatically or ASK user whe
+        val catId =
+            DataModel.getCategories().firstOrNull { it.plainName == "Google Password Manager" }
+
+        fun addNow(catId: DBID) {
+            coroutineScope.launch(Dispatchers.IO) {
+                DataModel.addGPMAsPassword(savedGPMId, categoryId = catId, onAdd = {
+                    linkSavedGPMAndDecryptableSiteEntry(it, savedGPMId)
+                    coroutineScope.launch(Dispatchers.IO) {
+                        viewModel.forceReloadAfterAdd()
+                    }
+                })
+            }
+        }
+
+        if (catId == null) {
+            coroutineScope.launch(Dispatchers.IO) {
+                DataModel.addOrEditCategory(DecryptableCategoryEntry().apply {
+                    encryptedName = "Google Password Manager".encrypt()
+                }, onAdd = {
+                    addNow(it.id!!)
+                })
+            }
+        }
     }
 
     Row {
         DraggableText(
             DNDObject.JustString("Add"),
-            onItemDropped = { (clipDescription, maybeId) ->
+            onItemDropped = { (_, maybeId) ->
                 maybeId.toLongOrNull()?.let {
-                    addSavedGPM(clipDescription, it)
+                    addSavedGPM(it)
                     true
                 } ?: false
             }
@@ -182,9 +197,9 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
         }
         DraggableText(
             DNDObject.JustString("Ignore"),
-            onItemDropped = { (clipDescription, maybeId) ->
+            onItemDropped = { (_, maybeId) ->
                 maybeId.toLongOrNull()?.let {
-                    ignoreSavedGPM(clipDescription, it)
+                    ignoreSavedGPM(it)
                     true
                 } ?: false
             }
@@ -253,15 +268,14 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
                 DraggableText(
                     if (siteEntry != null) DNDObject.SiteEntry(siteEntry) else DNDObject.Spacer,
                     modifier = mySizeModifier.weight(1f),
-                    onItemDropped = { (clipDescription, maybeId) ->
+                    onItemDropped = { (_, maybeId) ->
                         if (siteEntry == null) false
                         else maybeId.toLongOrNull()?.let {
-                            linkSavedGPMAndDecryptableSiteEntry(clipDescription, siteEntry, it)
+                            linkSavedGPMAndDecryptableSiteEntry(siteEntry, it)
                             true
                         } ?: false
                     },
                     onTap = {
-                        println("TAP")
                         if (siteEntry?.id != null) {
                             IntentManager.startEditPassword(context, siteEntry.id!!)
                         }

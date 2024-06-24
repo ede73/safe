@@ -1,7 +1,6 @@
 package fi.iki.ede.safe.gpm.ui.composables
 
 import android.content.ClipDescription
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -38,7 +37,6 @@ fun DNDObject.dump(): String =
                 is DNDObject.Spacer -> "Spacer"
             }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DraggableText(
     dragObject: DNDObject,

@@ -5,6 +5,7 @@ import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.db.DBID
+import fi.iki.ede.safe.ui.utilities.firebaseLog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
@@ -63,7 +64,10 @@ object DataModel {
     }
 
     // TODO: RENAME
-    suspend fun addOrEditCategory(category: DecryptableCategoryEntry) {
+    suspend fun addOrEditCategory(
+        category: DecryptableCategoryEntry,
+        onAdd: (DecryptableCategoryEntry) -> Unit = {}
+    ) {
         CoroutineScope(Dispatchers.IO).launch {
             val db = DBHelperFactory.getDBHelper()
             if (category.id == null) {
@@ -71,6 +75,7 @@ object DataModel {
                 category.id = db.addCategory(category)
                 _categories[category] = mutableListOf()
                 _categoriesSharedFlow.emit(PasswordSafeEvent.CategoryEvent.Added(category))
+                onAdd(category)
             } else {
                 db.updateCategory(category.id!!, category)
 
@@ -109,7 +114,10 @@ object DataModel {
     fun getPassword(passwordId: DBID): DecryptableSiteEntry =
         getPasswords().first { it.id == passwordId }
 
-    suspend fun addOrUpdatePassword(password: DecryptableSiteEntry) {
+    suspend fun addOrUpdatePassword(
+        password: DecryptableSiteEntry,
+        onAdd: (DecryptableSiteEntry) -> Unit = {}
+    ) {
         require(password.categoryId != null) { "Password's category must be known" }
         CoroutineScope(Dispatchers.IO).launch {
             val db = DBHelperFactory.getDBHelper()
@@ -131,6 +139,7 @@ object DataModel {
                         password
                     )
                 )
+                onAdd(password)
             } else {
                 db.updatePassword(password)
 
@@ -373,6 +382,26 @@ object DataModel {
     fun linkSaveGPMAndSiteEntry(siteEntry: DecryptableSiteEntry, savedGPMID: Long) {
         DBHelperFactory.getDBHelper().linkSaveGPMAndSiteEntry(siteEntry.id!!, savedGPMID)
     }
+
+    suspend fun addGPMAsPassword(
+        gpmID: Long,
+        categoryId: DBID,
+        onAdd: (DecryptableSiteEntry) -> Unit
+    ) {
+        val gpm = _savedGPMs.firstOrNull { it.id == gpmID }
+        if (gpm == null) {
+            firebaseLog("Trying to add non existing GPM $gpmID")
+            return
+        }
+        addOrUpdatePassword(DecryptableSiteEntry(categoryId).apply {
+            username = gpm.encryptedUsername
+            password = gpm.encryptedPassword
+            website = gpm.encryptedUrl
+            description = gpm.encryptedName
+            note = gpm.encryptedNote
+        }, onAdd)
+    }
+
 
     fun markSavedGPMIgnored(gpmID: Long) {
         // should set the flag too!

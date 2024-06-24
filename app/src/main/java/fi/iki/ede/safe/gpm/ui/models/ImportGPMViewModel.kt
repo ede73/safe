@@ -33,9 +33,13 @@ class ImportGPMViewModel : ViewModel() {
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            resetGPMListToAllUnprocessed()
-            resetSiteEntryListToAllSaved()
+            forceReloadAfterAdd()
         }
+    }
+
+    suspend fun forceReloadAfterAdd() {
+        resetGPMListToAllUnprocessed()
+        resetSiteEntryListToAllSaved()
     }
 
     fun removeGPMFromMergeRepository(id: Long) {
