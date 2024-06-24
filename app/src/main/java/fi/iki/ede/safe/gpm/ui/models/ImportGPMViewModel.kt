@@ -1,6 +1,5 @@
 package fi.iki.ede.safe.gpm.ui.models
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -17,6 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
@@ -32,46 +32,25 @@ class ImportGPMViewModel : ViewModel() {
     }
 
     init {
-        viewModelScope.launch(Dispatchers.IO) {
-            forceReloadAfterAdd()
+        viewModelScope.launch {
+            launch {
+                DataModel.siteEntryToSavedGPMStateFlow.combine(DataModel.passwordsStateFlow)
+                { link: LinkedHashMap<DecryptableSiteEntry, Set<SavedGPM>>, s: List<DecryptableSiteEntry> ->
+                    s.associateWith { siteEntry -> link.filter { it.key.id == siteEntry.id }.values.flatten() }
+                }.collect { it ->
+                    importMergeDataRepository.initializeUnprocessedGPMAndDisplayListToGivenList(
+                        DataModel._savedGPMs - it.values.flatten()
+                            .filter { gpm -> gpm.flaggedIgnored }
+                            .toSet()
+                    )
+                    importMergeDataRepository.initializeSiteEntryListAndDisplayListToGivenList(it.keys.toList())
+                }
+            }
         }
-    }
-
-    suspend fun forceReloadAfterAdd() {
-        resetGPMListToAllUnprocessed()
-        resetSiteEntryListToAllSaved()
     }
 
     fun removeGPMFromMergeRepository(id: Long) {
         importMergeDataRepository.removeGPM(id)
-    }
-
-    private suspend fun resetGPMListToAllUnprocessed() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val unprocessedGPMsFromDB = try {
-                val imports = DataModel._savedGPMs.filter { savedGPM ->
-                    !savedGPM.flaggedIgnored && DataModel._siteEntryToSavedGPM.none { (_, savedGPMList) -> savedGPM in savedGPMList }
-                }.toSet()
-                // IF user restored a database in the MEAN TIME, that means our previous export
-                // is now totally unreadable (since our import / doesn't change gpm imports)
-                val decryptTest = imports.firstOrNull()?.cachedDecryptedName
-                imports
-            } catch (ex: javax.crypto.BadPaddingException) {
-                Log.e("ImportTest", "BadPaddingException: delete all GPM imports")
-                // sorry dude, no point keeping imports we've NO WAY ever ever reading
-                CoroutineScope(Dispatchers.IO).launch {
-                    DataModel.deleteAllSavedGPMs()
-                }
-                emptySet()
-            }
-            importMergeDataRepository.initializeUnprocessedGPMAndDisplayListToGivenList(
-                unprocessedGPMsFromDB
-            )
-        }
-    }
-
-    private suspend fun resetSiteEntryListToAllSaved() {
-        importMergeDataRepository.initializeSiteEntryListAndDisplayListToGivenList(DataModel.getPasswords())
     }
 
     // thread safe abstraction allowing implementing easy match algorithms

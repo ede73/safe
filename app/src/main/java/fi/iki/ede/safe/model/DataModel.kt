@@ -1,6 +1,7 @@
 package fi.iki.ede.safe.model
 
 import android.util.Log
+import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.db.DBHelperFactory
@@ -19,7 +20,12 @@ import kotlinx.coroutines.launch
 object DataModel {
     // GPM Imports: READ DATA CLASSES BTW. collection may change on new imports
     val _savedGPMs = mutableSetOf<SavedGPM>()
-    val _siteEntryToSavedGPM = LinkedHashMap<DecryptableSiteEntry, MutableList<SavedGPM>>()
+
+    private val _siteEntryToSavedGPM = LinkedHashMap<DecryptableSiteEntry, Set<SavedGPM>>()
+    private val _siteEntryToSavedGPMFlow =
+        MutableStateFlow(LinkedHashMap<DecryptableSiteEntry, Set<SavedGPM>>())
+    val siteEntryToSavedGPMStateFlow: StateFlow<LinkedHashMap<DecryptableSiteEntry, Set<SavedGPM>>>
+        get() = _siteEntryToSavedGPMFlow
 
     // Categories state and events
     val _categories =
@@ -34,9 +40,9 @@ object DataModel {
 
     // Passwords state and events
     private val _passwordsStateFlow = MutableStateFlow<List<DecryptableSiteEntry>>(emptyList())
-    val passwordsStateFlow: StateFlow<List<DecryptableSiteEntry>> get() = _passwordsStateFlow
     private val _passwordsSharedFlow =
         MutableSharedFlow<PasswordSafeEvent.PasswordEvent>(extraBufferCapacity = 10, replay = 10)
+    val passwordsStateFlow: StateFlow<List<DecryptableSiteEntry>> get() = _passwordsStateFlow
 
     // Test only now...
     val passwordsSharedFlow: SharedFlow<PasswordSafeEvent.PasswordEvent> get() = _passwordsSharedFlow
@@ -66,7 +72,7 @@ object DataModel {
     // TODO: RENAME
     suspend fun addOrEditCategory(
         category: DecryptableCategoryEntry,
-        onAdd: (DecryptableCategoryEntry) -> Unit = {}
+        onAdd: suspend (DecryptableCategoryEntry) -> Unit = {}
     ) {
         CoroutineScope(Dispatchers.IO).launch {
             val db = DBHelperFactory.getDBHelper()
@@ -116,7 +122,7 @@ object DataModel {
 
     suspend fun addOrUpdatePassword(
         password: DecryptableSiteEntry,
-        onAdd: (DecryptableSiteEntry) -> Unit = {}
+        onAdd: suspend (DecryptableSiteEntry) -> Unit = {}
     ) {
         require(password.categoryId != null) { "Password's category must be known" }
         CoroutineScope(Dispatchers.IO).launch {
@@ -257,6 +263,11 @@ object DataModel {
         return copyOfCategory
     }
 
+    fun loadGPMsFromDB() {
+        _savedGPMs.clear()
+        _savedGPMs.addAll(DBHelperFactory.getDBHelper().fetchSavedGPMsFromDB())
+    }
+
     suspend fun loadFromDatabase() {
         // TODO:
         // withContext(Dispatchers.IO) {???
@@ -274,11 +285,6 @@ object DataModel {
             _categoriesStateFlow.value = _categories.keys.toList()
         }
 
-        fun loadGPMsFromDB() {
-            _savedGPMs.clear()
-            _savedGPMs.addAll(DBHelperFactory.getDBHelper().fetchSavedGPMsFromDB())
-        }
-
         suspend fun loadSiteEntriesFromDB() {
             // passwords..
             // TODO: This is NOT mocked at the moment
@@ -293,7 +299,7 @@ object DataModel {
                     if (password.id in siteEntryGPMMappings) {
                         val savedGPMIds = siteEntryGPMMappings[password.id]
                         _siteEntryToSavedGPM[password] =
-                            _savedGPMs.filter { it.id in savedGPMIds!! }.toMutableList()
+                            _savedGPMs.filter { it.id in savedGPMIds!! }.toSet()
                     }
                 }
 
@@ -380,13 +386,23 @@ object DataModel {
     }
 
     fun linkSaveGPMAndSiteEntry(siteEntry: DecryptableSiteEntry, savedGPMID: Long) {
+        val gpm = _savedGPMs.firstOrNull { it.id == savedGPMID }
+        require(gpm != null) { "GPM not found" }
+        val idx = _siteEntryToSavedGPM.keys.firstOrNull { it.id == siteEntry.id }
+        if (idx == null) {
+            _siteEntryToSavedGPM[siteEntry] = setOf(gpm)
+        } else {
+            _siteEntryToSavedGPM[idx] = _siteEntryToSavedGPM[idx]!!.toSet() + setOf(gpm)
+        }
+        _siteEntryToSavedGPMFlow.value = _siteEntryToSavedGPM
+
         DBHelperFactory.getDBHelper().linkSaveGPMAndSiteEntry(siteEntry.id!!, savedGPMID)
     }
 
     suspend fun addGPMAsPassword(
         gpmID: Long,
         categoryId: DBID,
-        onAdd: (DecryptableSiteEntry) -> Unit
+        onAdd: suspend (DecryptableSiteEntry) -> Unit
     ) {
         val gpm = _savedGPMs.firstOrNull { it.id == gpmID }
         if (gpm == null) {
@@ -402,14 +418,26 @@ object DataModel {
         }, onAdd)
     }
 
-
     fun markSavedGPMIgnored(gpmID: Long) {
         // should set the flag too!
         DBHelperFactory.getDBHelper().markSavedGPMIgnored(gpmID)
+        _siteEntryToSavedGPMFlow.value = _siteEntryToSavedGPM
     }
 
     fun getLinkedGPMs(siteEntryID: DBID): Set<SavedGPM> =
         _siteEntryToSavedGPM.filterKeys { it.id == siteEntryID }.values.flatten().toSet()
+
+    fun finishGPMImport(
+        delete: Set<SavedGPM>,
+        update: Map<IncomingGPM, SavedGPM>,
+        add: Set<IncomingGPM>
+    ) {
+        DBHelperFactory.getDBHelper().deleteObsoleteSavedGPMs(delete)
+        DBHelperFactory.getDBHelper().updateSavedGPMByIncomingGPM(update)
+        DBHelperFactory.getDBHelper().addNewIncomingGPM(add)
+        loadGPMsFromDB()
+        _siteEntryToSavedGPMFlow.value = _siteEntryToSavedGPM
+    }
 
     private const val TAG = "DataModel"
 }

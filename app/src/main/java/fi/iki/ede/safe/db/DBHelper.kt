@@ -383,44 +383,11 @@ class DBHelper internal constructor(
         }
 
 
-    // TODO: skip IGNORED and also skip ones linked
-    fun fetchUnprocessedSavedGPMsFromDB(): Set<SavedGPM> =
-    //    fetchSavedGPMsFromDB(whereNullOr0(GooglePasswordManager.Columns.STATUS, 0))
-        //fetchSavedGPMsFromDB(whereEq(GooglePasswordManager.Columns.STATUS, 0))
-        readableDatabase.rawQuery(
-            """
-            SELECT A.*
-            FROM googlepasswords A
-            LEFT JOIN password2googlepasswords B ON A.id = B.gpm_id
-            WHERE B.gpm_id IS NULL AND COALESCE(A.status,0)=0;
-            """.trimIndent(), null
-        ).use {
-            it.moveToFirst()
-            ArrayList<SavedGPM>().apply {
-                (0 until it.count).forEach { _ ->
-                    add(
-                        makeFromEncryptedStringFields(
-                            it.getDBID(GooglePasswordManager.Columns.ID),
-                            it.getIVCipher(GooglePasswordManager.Columns.NAME),
-                            it.getIVCipher(GooglePasswordManager.Columns.URL),
-                            it.getIVCipher(GooglePasswordManager.Columns.USERNAME),
-                            it.getIVCipher(GooglePasswordManager.Columns.PASSWORD),
-                            it.getIVCipher(GooglePasswordManager.Columns.NOTE),
-                            it.getDBID(GooglePasswordManager.Columns.STATUS) == 1L,
-                            it.getString(GooglePasswordManager.Columns.HASH),
-                        )
-                    )
-                    it.moveToNext()
-                }
-            }.toSet()
-
-        }
-
     fun fetchAllSiteEntryGPMMappings(): Map<DBID, Set<DBID>> =
         readableDatabase.use { db ->
             db.query(
                 Password2GooglePasswordManager,
-                Password2GooglePasswordManager.Columns.values().toSet(),
+                Password2GooglePasswordManager.Columns.entries.toSet(),
             ).use { c ->
                 (0 until c.count)
                     .map { _ ->
@@ -438,7 +405,7 @@ class DBHelper internal constructor(
         readableDatabase.use { db ->
             db.query(
                 GooglePasswordManager,
-                GooglePasswordManager.Columns.values().toSet(),
+                GooglePasswordManager.Columns.entries.toSet(),
                 where
             ).use {
                 it.moveToFirst()

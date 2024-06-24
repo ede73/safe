@@ -116,17 +116,14 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
     }
 
     fun linkSavedGPMAndDecryptableSiteEntry(siteEntry: DecryptableSiteEntry, id: Long) {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                // TODO: can link these two soon
-                viewModel.removeGPMFromMergeRepository(id)
-                DataModel.linkSaveGPMAndSiteEntry(siteEntry, id)
-            } catch (ex: Exception) {
-                firebaseRecordException(
-                    "linkSavedGPMAndDecryptableSiteEntry ${siteEntry.id} to $id failed",
-                    ex
-                )
-            }
+        try {
+            viewModel.removeGPMFromMergeRepository(id)
+            DataModel.linkSaveGPMAndSiteEntry(siteEntry, id)
+        } catch (ex: Exception) {
+            firebaseRecordException(
+                "linkSavedGPMAndDecryptableSiteEntry ${siteEntry.id} to $id failed",
+                ex
+            )
         }
     }
 
@@ -136,24 +133,21 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
         val catId =
             DataModel.getCategories().firstOrNull { it.plainName == "Google Password Manager" }
 
-        fun addNow(catId: DBID) {
-            coroutineScope.launch(Dispatchers.IO) {
-                DataModel.addGPMAsPassword(savedGPMId, categoryId = catId, onAdd = {
-                    linkSavedGPMAndDecryptableSiteEntry(it, savedGPMId)
-                    coroutineScope.launch(Dispatchers.IO) {
-                        viewModel.forceReloadAfterAdd()
-                    }
-                })
-            }
+        suspend fun addNow(catId: DBID) {
+            DataModel.addGPMAsPassword(savedGPMId, categoryId = catId, onAdd = {
+                linkSavedGPMAndDecryptableSiteEntry(it, savedGPMId)
+            })
         }
 
-        if (catId == null) {
-            coroutineScope.launch(Dispatchers.IO) {
+        coroutineScope.launch(Dispatchers.IO) {
+            if (catId == null) {
                 DataModel.addOrEditCategory(DecryptableCategoryEntry().apply {
                     encryptedName = "Google Password Manager".encrypt()
                 }, onAdd = {
                     addNow(it.id!!)
                 })
+            } else {
+                addNow(catId.id!!)
             }
         }
     }
@@ -271,7 +265,9 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
                     onItemDropped = { (_, maybeId) ->
                         if (siteEntry == null) false
                         else maybeId.toLongOrNull()?.let {
-                            linkSavedGPMAndDecryptableSiteEntry(siteEntry, it)
+                            CoroutineScope(Dispatchers.IO).launch {
+                                linkSavedGPMAndDecryptableSiteEntry(siteEntry, it)
+                            }
                             true
                         } ?: false
                     },

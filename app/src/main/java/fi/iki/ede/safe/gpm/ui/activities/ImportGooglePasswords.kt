@@ -66,7 +66,6 @@ import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.model.ScoringConfig
 import fi.iki.ede.gpm.model.encrypter
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeListItem
@@ -144,7 +143,9 @@ class ImportGooglePasswords : AutolockingBaseComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val hasUnlinkedItemsFromPreviousRound =
-            DBHelperFactory.getDBHelper().fetchUnprocessedSavedGPMsFromDB().isNotEmpty()
+            (DataModel._savedGPMs.filter { !it.flaggedIgnored } -
+                    DataModel.siteEntryToSavedGPMStateFlow.value.values.flatten()
+                        .toSet()).isNotEmpty()
 
         setContent {
             SafeTheme {
@@ -545,9 +546,8 @@ private fun importCSV(
     firebaseLog("Import CSV")
     CoroutineScope(Dispatchers.IO).launch {
         try {
-            val db = DBHelperFactory.getDBHelper()
             progressReport("Fetch last import from Database")
-            val importChangeSet = ImportChangeSet(file, db.fetchSavedGPMsFromDB())
+            val importChangeSet = ImportChangeSet(file, DataModel._savedGPMs)
             val scoringConfig = ScoringConfig()
 
             successImportChangeSet.value = processIncomingGPMs(
@@ -616,7 +616,6 @@ private fun processIncomingGPMs(
 }
 
 private fun doImport(importChangeSet: ImportChangeSet) {
-    val db = DBHelperFactory.getDBHelper()
     val add = importChangeSet.newAddedOrUnmatchedIncomingGPMs
     // there's no point updating HASH Matches (ie. nothing has changed)
     val update =
@@ -634,10 +633,11 @@ private fun doImport(importChangeSet: ImportChangeSet) {
     //assert(delete.intersect(add).size == 0)
     // There must be no overlap between ones we delete/we update!
     assert(update.map { it.value }.toSet().intersect(delete).isEmpty())
-    // TODO: shouldn't access directly
-    db.deleteObsoleteSavedGPMs(delete)
-    db.updateSavedGPMByIncomingGPM(update)
-    db.addNewIncomingGPM(add)
+
+    // Should be fine to run async, next screen will pick up changes when DataModel reloads
+    CoroutineScope(Dispatchers.IO).launch {
+        DataModel.finishGPMImport(delete, update, add)
+    }
 }
 
 fun makeFakeImport(): ImportChangeSet {
