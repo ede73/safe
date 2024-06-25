@@ -216,7 +216,7 @@ object DataModel {
         require(password.categoryId != null) { "Password's category must be known" }
         CoroutineScope(Dispatchers.IO).launch {
             val db = DBHelperFactory.getDBHelper()
-            db.deletePassword(password.id!!)
+            db.markSiteEntryDeleted(password.id!!)
 
             // Update model
             val category = password.getCategory()

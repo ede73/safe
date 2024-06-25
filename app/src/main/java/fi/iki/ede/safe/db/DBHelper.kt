@@ -258,21 +258,24 @@ class DBHelper internal constructor(
                 it.moveToFirst()
                 ArrayList<DecryptableSiteEntry>().apply {
                     (0 until it.count).forEach { _ ->
-                        add(DecryptableSiteEntry(it.getDBID(Password.Columns.CATEGORY_ID)).apply {
-                            id = it.getDBID(Password.Columns.PWD_ID)
-                            password = it.getIVCipher(Password.Columns.PASSWORD)
-                            description = it.getIVCipher(Password.Columns.DESCRIPTION)
-                            username = it.getIVCipher(Password.Columns.USERNAME)
-                            website = it.getIVCipher(Password.Columns.WEBSITE)
-                            note = it.getIVCipher(Password.Columns.NOTE)
-                            photo = it.getIVCipher(Password.Columns.PHOTO)
-                            try {
-                                it.getZonedDateTimeOfPasswordChange()
-                                    ?.let { time -> passwordChangedDate = time }
-                            } catch (ex: Exception) {
-                                Log.d(TAG, "Date parsing issue", ex)
-                            }
-                        })
+                        // TODO: Until we get chainable selects..filter here
+                        if (it.getInt(it.getColumnIndexOrThrow(Password.Columns.DELETED)) == 0) {
+                            add(DecryptableSiteEntry(it.getDBID(Password.Columns.CATEGORY_ID)).apply {
+                                id = it.getDBID(Password.Columns.PWD_ID)
+                                password = it.getIVCipher(Password.Columns.PASSWORD)
+                                description = it.getIVCipher(Password.Columns.DESCRIPTION)
+                                username = it.getIVCipher(Password.Columns.USERNAME)
+                                website = it.getIVCipher(Password.Columns.WEBSITE)
+                                note = it.getIVCipher(Password.Columns.NOTE)
+                                photo = it.getIVCipher(Password.Columns.PHOTO)
+                                try {
+                                    it.getZonedDateTimeOfPasswordChange()
+                                        ?.let { time -> passwordChangedDate = time }
+                                } catch (ex: Exception) {
+                                    Log.d(TAG, "Date parsing issue", ex)
+                                }
+                            })
+                        }
                         it.moveToNext()
                     }
                 }.toList()
@@ -313,9 +316,7 @@ class DBHelper internal constructor(
             }, whereEq(Password.Columns.PWD_ID, id)
         )
 
-
     fun addPassword(entry: DecryptableSiteEntry) =
-        // DONT USE Use{} transaction will die
         writableDatabase.insertOrThrow(Password, ContentValues().apply {
             if (entry.id != null) {
                 put(Password.Columns.PWD_ID, entry.id)
@@ -332,7 +333,16 @@ class DBHelper internal constructor(
             }
         })
 
-    fun deletePassword(id: DBID) =
+    fun markSiteEntryDeleted(id: DBID) =
+        writableDatabase.update(
+            Password,
+            ContentValues().apply {
+                put(Password.Columns.DELETED, 1)
+            },
+            whereEq(Password.Columns.PWD_ID, id)
+        )
+
+    fun hardDeleteSiteEntry(id: DBID) =
         writableDatabase.delete(
             Password,
             whereEq(Password.Columns.PWD_ID, id)
@@ -340,7 +350,6 @@ class DBHelper internal constructor(
 
     // Begin restoration, starts a transaction, if preparation fails, exception is throw and changes have been rolled back
     fun beginRestoration(): SQLiteDatabase =
-        // DONT USE Use{} transaction will die
         writableDatabase.apply {
             beginTransaction()
             // best effort to rid of all the tables
@@ -638,7 +647,7 @@ class DBHelper internal constructor(
             db.beginTransaction()
             try {
                 db.execSQL(
-                    "ALTER TABLE passwords ADD COLUMN photo TEXT;",
+                    "ALTER TABLE ${Password.tableName} ADD COLUMN photo TEXT;",
                 )
             } catch (ex: SQLiteException) {
                 if (ex.message?.contains("duplicate column") != true) {
