@@ -7,7 +7,9 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.safe.ui.theme.SafeTextButton
+import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @Composable
 fun UsageInfo(
@@ -28,3 +30,11 @@ fun UsageInfo(
         }
     }
 )
+
+@Preview(showBackground = true)
+@Composable
+fun UsageInfoPreview() {
+    SafeTheme {
+        UsageInfo("message", {})
+    }
+}
