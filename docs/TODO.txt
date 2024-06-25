@@ -3,12 +3,8 @@ Password safe
 Looks great ! https://developer.android.com/studio/test/other-testing-tools/app-crawler
 
 In progress:
-- soft delete (trash) (db done, datamodel done)
-    - UI Deleted category
-    - backup ?  (i think yes, since we DO retain them)
-    - Preferences? Auto Delete, if SO, then we shall not have deletion time>
 
-
+TODO:
 - Backup codes - messes up notes
 - phone numbers - handy when changing numbers
 - username and password..often same, in some places separate ( banks!)
@@ -38,6 +34,11 @@ In progress:
 - Credentials Manager Api (14+ devices - no one supports)
 DONE:
 - long name/desc + date overflows
+- soft delete (trash) (db done, datamodel done)
+    - UI Deleted category(done)
+    - backup ?  (i think yes, since we DO retain them)(done)
+    - Preferences? Auto Delete, if SO, then we shall not have deletion time>(done)
+    - and auto delete (done) + some test fixes
 
 
 
