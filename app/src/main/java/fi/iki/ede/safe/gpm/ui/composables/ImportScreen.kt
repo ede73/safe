@@ -225,7 +225,6 @@ fun ImportScreenPreview() {
     SafeTheme {
         fun fake(a: Context, b: String) {}
         ImportScreen(::fake, hasUnlinkedItemsFromPreviousRound = false, true){
-
         }
     }
 }

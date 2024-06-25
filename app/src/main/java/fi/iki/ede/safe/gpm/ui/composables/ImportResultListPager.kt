@@ -9,11 +9,17 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import fi.iki.ede.crypto.IVCipherText
+import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.gpm.changeset.ImportChangeSet
+import fi.iki.ede.safe.gpm.ui.activities.makeFakeImport
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -43,5 +49,16 @@ fun ImportResultListPager(importChangeSet: MutableState<ImportChangeSet?>, done:
                 pages[page].invoke()
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ImportResultListPagerPreview() {
+    KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
+    KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
+    SafeTheme {
+        val m = remember { mutableStateOf<ImportChangeSet?>(makeFakeImport()) }
+        ImportResultListPager(m, {})
     }
 }
