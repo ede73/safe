@@ -215,6 +215,14 @@ object DataModel {
         }
     }
 
+    fun emptyAllSoftDeleted(ids: Set<DBID>) {
+        val db = DBHelperFactory.getDBHelper()
+        ids.forEach { id ->
+            db.hardDeleteSiteEntry(id)
+            _softDeletedStateFlow.value -= _softDeletedStateFlow.value.filter { entry -> id == entry.id!! }
+        }
+    }
+
     fun restoreSiteEntry(siteEntry: DecryptableSiteEntry) {
         CoroutineScope(Dispatchers.IO).launch {
             _softDeletedStateFlow.value -= _softDeletedStateFlow.value.filter { it.id == siteEntry.id }

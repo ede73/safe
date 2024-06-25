@@ -59,9 +59,10 @@ fun ShowTrash(
                 SafeButton(
                     onClick = {
                         coroutineScope.launch(Dispatchers.IO) {
-                            //DataModel.emptySoftDeleted()
+                            DataModel.emptyAllSoftDeleted(deletedSiteEntries.map { it.id!! }
+                                .toSet())
                         }
-                        showEmptyConfirmation = false
+                        onDismiss()
                     }
                 ) { Text(stringResource(id = R.string.trash_do_empty)) }
             },
@@ -109,7 +110,9 @@ fun ShowTrash(
                 }
             },
             confirmButton = {
-                SafeButton(onClick = { onDismiss() }) { Text(stringResource(id = R.string.trash_empty_trash)) }
+                SafeButton(onClick = {
+                    showEmptyConfirmation = true
+                }) { Text(stringResource(id = R.string.trash_empty_trash)) }
             },
             dismissButton = {
                 SafeButton(onClick = { onDismiss() }) { Text(stringResource(id = R.string.trash_close)) }
