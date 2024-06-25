@@ -114,6 +114,10 @@ class DBHelper internal constructor(
                     upgradeFromV4ToV5MergeKeys(db, upgrade)
                 }
 
+                5 -> {
+                    upgradeFromV5ToV6AddDeletedColumn(db, upgrade)
+                }
+
                 else -> Log.w(
                     TAG, "onUpgrade() with unknown oldVersion $oldVersion to $newVersion"
                 )
@@ -486,7 +490,7 @@ class DBHelper internal constructor(
         )
 
     companion object {
-        private const val DATABASE_VERSION = 5
+        private const val DATABASE_VERSION = 6
         const val DATABASE_NAME = "safe"
         private const val TAG = "DBHelper"
 
@@ -513,6 +517,17 @@ class DBHelper internal constructor(
                 }
             }
             return 0 // versions are equal
+        }
+
+        fun upgradeFromV5ToV6AddDeletedColumn(db: SQLiteDatabase, upgrade: Int) {
+            db.beginTransaction()
+            try {
+                db.execSQL("ALTER TABLE ${Password.tableName} ADD COLUMN deleted INTEGER DEFAULT 0")
+            } catch (ex: SQLiteException) {
+                Log.i(TAG, "onUpgrade $upgrade: $ex")
+            }
+            db.setTransactionSuccessful()
+            db.endTransaction()
         }
 
         fun upgradeFromV4ToV5MergeKeys(db: SQLiteDatabase, upgrade: Int) {

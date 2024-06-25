@@ -13,7 +13,8 @@ internal object Password : Table {
         WEBSITE("website"),
         NOTE("note"),
         PHOTO("photo"),
-        PASSWORD_CHANGE_DATE("passwordchangeddate")
+        PASSWORD_CHANGE_DATE("passwordchangeddate"),
+        DELETED("deleted")
     }
 
     override fun create() = listOf(
@@ -26,7 +27,8 @@ internal object Password : Table {
     ${Columns.WEBSITE.columnName} TEXT,
     ${Columns.NOTE.columnName} TEXT,
     ${Columns.PHOTO.columnName} TEXT,
-    ${Columns.PASSWORD_CHANGE_DATE.columnName} TEXT);"""
+    ${Columns.PASSWORD_CHANGE_DATE.columnName} TEXT),
+    ${Columns.DELETED.columnName} INTEGER DEFAULT 0;"""
     )
 
     override fun drop() = listOf("DROP TABLE IF EXISTS $tableName;")
