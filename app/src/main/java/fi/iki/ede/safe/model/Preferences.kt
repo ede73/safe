@@ -94,7 +94,7 @@ object Preferences {
     // at screen (ie. from activity)
     fun setNotificationPermissionRequired(value: Boolean) =
         sharedPreferences.edit().putBoolean(NOTIFICATION_PERMISSION_REQUIRED, value).apply()
-    
+
     fun getLastBackupTime() = sharedPreferences.getLong(PREFERENCE_LAST_BACKUP_TIME, 0)
         .takeIf { it != 0L }
         ?.let { DateUtils.unixEpochSecondsToLocalZonedDateTime(it) }

@@ -45,6 +45,6 @@ fun SelectableItem(text: String, showInfo: () -> Unit, leftSpacer: Boolean = fal
 @Composable
 fun SelectableItemPreview() {
     SafeTheme {
-        SelectableItem("item", {},true)
+        SelectableItem("item", {}, true)
     }
 }

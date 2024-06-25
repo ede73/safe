@@ -224,7 +224,7 @@ private fun doImport(importChangeSet: ImportChangeSet) {
 fun ImportScreenPreview() {
     SafeTheme {
         fun fake(a: Context, b: String) {}
-        ImportScreen(::fake, hasUnlinkedItemsFromPreviousRound = false, true){
+        ImportScreen(::fake, hasUnlinkedItemsFromPreviousRound = false, true) {
         }
     }
 }
