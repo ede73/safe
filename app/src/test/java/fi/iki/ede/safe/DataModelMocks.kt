@@ -178,6 +178,7 @@ object DataModelMocks {
         every { db.fetchSavedGPMsFromDB() } returns emptySet()
         every { db.fetchAllSiteEntryGPMMappings() } returns emptyMap()
 
+        DataModel.softDeletedMaxAgeProvider = { 0 }
         runBlocking {
             DataModel.loadFromDatabase()
         }

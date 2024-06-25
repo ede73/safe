@@ -1,6 +1,7 @@
 package fi.iki.ede.safe.model
 
 import android.util.Log
+import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.safe.BuildConfig
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.ZonedDateTime
 
 object DataModel {
     // GPM Imports: READ DATA CLASSES BTW. collection may change on new imports
@@ -306,6 +308,9 @@ object DataModel {
         _savedGPMs.addAll(DBHelperFactory.getDBHelper().fetchSavedGPMsFromDB())
     }
 
+    // contraption just for unit tests
+    var softDeletedMaxAgeProvider: () -> Int = { Preferences.getSoftDeleteDays() }
+
     suspend fun loadFromDatabase() {
         _categories.clear()
 
@@ -348,8 +353,20 @@ object DataModel {
 
         fun loadSoftDeletedSiteEntries() {
             val db = DBHelperFactory.getDBHelper()
-            val softDeletedSiteEntries = db.fetchAllRows(null, true)
-            _softDeletedStateFlow.value = softDeletedSiteEntries.toSet()
+            val softDeletedSiteEntries = db.fetchAllRows(null, true).toSet()
+            // are we past deletion time here?
+            val softDeletedMaxAge = softDeletedMaxAgeProvider()
+            val expiredSoftDeletedSiteEntries = softDeletedSiteEntries.filter {
+                val softDeletedAge = DateUtils.getPeriodBetweenDates(
+                    ZonedDateTime.now(),
+                    DateUtils.unixEpochSecondsToLocalZonedDateTime(it.deleted),
+                )
+                if (softDeletedAge.days > softDeletedMaxAge) {
+                    db.hardDeleteSiteEntry(it.id!!)
+                    true
+                } else false
+            }.toSet()
+            _softDeletedStateFlow.value = softDeletedSiteEntries - expiredSoftDeletedSiteEntries
         }
 
         // NOTE: Made a HUGE difference in display speed for 300+ siteEntries list on galaxy S24, if completed this is instantaneous

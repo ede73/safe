@@ -43,7 +43,8 @@ object Preferences {
     const val PREFERENCE_EXPERIMENTAL_FEATURES = "experiments"
     const val PREFERENCE_MAKE_CRASH = "make_a_crash"
     private val PREFERENCE_BACKUP_PATH_DEFAULT_VALUE =
-        Environment.getExternalStorageDirectory().absolutePath + "/" + PASSWORDSAFE_EXPORT_FILE
+        (Environment.getExternalStorageDirectory()?.absolutePath
+            ?: "") + "/${PASSWORDSAFE_EXPORT_FILE}"
     const val PREFERENCE_BIOMETRICS_ENABLED = "biometrics"
     const val PREFERENCE_LOCK_TIMEOUT_MINUTES = "lock_timeout"
     private const val PREFERENCE_CLIPBOARD_CLEAR_DELAY = "clipboard_clear_delay"

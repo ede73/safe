@@ -76,7 +76,6 @@ class BackupDatabaseAndRestoreDatabaseTest {
         dbHelper.storeSaltAndEncryptedMasterKey(salt, cipheredMasterKey)
         mockkObject(LoginHandler)
         every { LoginHandler.passwordLogin(any(), any()) } returns true
-
         //LoginHandler.passwordLogin(context, userPassword)
     }
 
@@ -162,6 +161,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
                 it
             )
         }
+        every { Preferences.getSoftDeleteDays() } returns 0
     }
 
     @Test
