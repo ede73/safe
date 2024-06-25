@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -103,8 +104,16 @@ fun ImportScreen(
             SafeTextButton(onClick = {
                 selectDocument.launch(
                     Intent(Intent.ACTION_OPEN_DOCUMENT)
-                        .addCategory(Intent.CATEGORY_OPENABLE)
-                        .setType("text/comma-separated-values")
+                        .addCategory(Intent.CATEGORY_OPENABLE).let {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                                // doesn't work on android8(O/24), nor 9(P/26)
+                                // on S24(UPSIDE_DOWN_CAKE/34) this works nice,
+                                it.setType("text/comma-separated-values")
+                            } else {
+                                it.setType("*/*")
+                            }
+                            it
+                        }
                 )
             }) {
                 Text(stringResource(id = R.string.google_password_import_select))
