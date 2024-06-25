@@ -43,8 +43,8 @@ import kotlinx.coroutines.withContext
 fun ImportScreen(
     avertInactivity: ((Context, String) -> Unit)?,
     hasUnlinkedItemsFromPreviousRound: Boolean,
+    skipImportReminder: Boolean = false,
     done: () -> Unit,
-    skipImportReminder: Boolean = false
 ) {
     val context = LocalContext.current
     val myScope = CoroutineScope(Dispatchers.IO)
@@ -73,8 +73,7 @@ fun ImportScreen(
 
     fun isItSafeToExit(): Boolean {
         if (selectedDoc !== null && deleteImportReminder.value != DeleteImportReminder.DOCUMENT_SELECTED_REMINDED_OF_DELETION) {
-            deleteImportReminder.value =
-                DeleteImportReminder.DOCUMENT_SELECTED_REMIND_DELETION
+            deleteImportReminder.value = DeleteImportReminder.DOCUMENT_SELECTED_REMIND_DELETION
             return false
         } else {
             return true
@@ -82,8 +81,7 @@ fun ImportScreen(
     }
 
     if (deleteImportReminder.value == DeleteImportReminder.DOCUMENT_SELECTED_REMIND_DELETION) {
-        UsageInfo(
-            stringResource(id = R.string.google_password_import_delete_reminder),
+        UsageInfo(stringResource(id = R.string.google_password_import_delete_reminder),
             onDismiss = {
                 deleteImportReminder.value =
                     DeleteImportReminder.DOCUMENT_SELECTED_REMINDED_OF_DELETION
@@ -98,72 +96,63 @@ fun ImportScreen(
     }
 
     Column(Modifier.padding(12.dp)) {
-        Text(
-            showDocOrInfo.ifEmpty {
-                stringResource(id = R.string.google_password_import_select_doc)
-            }
-        )
+        Text(showDocOrInfo.ifEmpty {
+            stringResource(id = R.string.google_password_import_select_doc)
+        })
         Row {
             SafeTextButton(onClick = {
-                selectDocument.launch(
-                    Intent(Intent.ACTION_OPEN_DOCUMENT)
-                        .addCategory(Intent.CATEGORY_OPENABLE).let {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                                // doesn't work on android8(O/24), nor 9(P/26)
-                                // on S24(UPSIDE_DOWN_CAKE/34) this works nice,
-                                it.setType("text/comma-separated-values")
-                            } else {
-                                it.setType("*/*")
-                            }
-                            it
+                selectDocument.launch(Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
+                    .let {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                            // doesn't work on android8(O/24), nor 9(P/26)
+                            // on S24(UPSIDE_DOWN_CAKE/34) this works nice,
+                            it.setType("text/comma-separated-values")
+                        } else {
+                            it.setType("*/*")
                         }
-                )
+                        it
+                    })
             }) {
                 Text(stringResource(id = R.string.google_password_import_select))
             }
 
-            SafeTextButton(
-                enabled = selectedDoc != null,
-                onClick = {
-                    showDialog.value = true
-                    allowAcceptAndMove.value = false
-                    context.contentResolver.openInputStream(selectedDoc!!)
-                        ?.let {
-                            myScope.launch {
-                                readAndParseCSV(it, importChangeSet, complete = {
-                                    showDialog.value = false
-                                    allowAcceptAndMove.value = true
-                                }) {
-                                    message.value = it
-                                    println(it)
-                                    if (avertInactivity != null) {
-                                        avertInactivity(context, "GPM Import")
-                                    }
-                                }
+            SafeTextButton(enabled = selectedDoc != null, onClick = {
+                showDialog.value = true
+                allowAcceptAndMove.value = false
+                context.contentResolver.openInputStream(selectedDoc!!)?.let {
+                    myScope.launch {
+                        readAndParseCSV(it, importChangeSet, complete = {
+                            showDialog.value = false
+                            allowAcceptAndMove.value = true
+                        }) {
+                            message.value = it
+                            println(it)
+                            if (avertInactivity != null) {
+                                avertInactivity(context, "GPM Import")
                             }
-                        } ?: run {
-                        selectedDoc = null
-                        showDocOrInfo = importFailed
+                        }
                     }
-                }) {
+                } ?: run {
+                    selectedDoc = null
+                    showDocOrInfo = importFailed
+                }
+            }) {
                 Text(stringResource(id = R.string.google_password_import_import))
             }
         }
 
-        SafeTextButton(
-            enabled = selectedDoc != null,
-            onClick = {
-                firebaseTry("Delete input document") {
-                    val document = DocumentFile.fromSingleUri(context, selectedDoc!!)
-                    document?.delete()
-                    deleteImportReminder.value =
-                        DeleteImportReminder.DOCUMENT_SELECTED_REMINDED_OF_DELETION
-                    selectedDoc = null
-                    showDocOrInfo = ""
-                }.firebaseCatch {
-                    firebaseRecordException("Failed to delete input document", it)
-                }
-            }) {
+        SafeTextButton(enabled = selectedDoc != null, onClick = {
+            firebaseTry("Delete input document") {
+                val document = DocumentFile.fromSingleUri(context, selectedDoc!!)
+                document?.delete()
+                deleteImportReminder.value =
+                    DeleteImportReminder.DOCUMENT_SELECTED_REMINDED_OF_DELETION
+                selectedDoc = null
+                showDocOrInfo = ""
+            }.firebaseCatch {
+                firebaseRecordException("Failed to delete input document", it)
+            }
+        }) {
             Text(stringResource(id = R.string.google_password_import_delete))
         }
         SafeTextButton(onClick = {
@@ -173,40 +162,35 @@ fun ImportScreen(
             Text(stringResource(id = R.string.google_password_launch_gpm))
         }
 
-        SafeButton(
-            enabled = allowAcceptAndMove.value,
-            onClick = {
-                if (isItSafeToExit()) {
-                    myScope.launch {
-                        withContext(Dispatchers.IO) {
-                            if (importChangeSet.value != null) {
-                                doImport(importChangeSet.value!!)
-                                DataModel.loadFromDatabase()
-                            }
+        SafeButton(enabled = allowAcceptAndMove.value, onClick = {
+            if (isItSafeToExit()) {
+                myScope.launch {
+                    withContext(Dispatchers.IO) {
+                        if (importChangeSet.value != null) {
+                            doImport(importChangeSet.value!!)
+                            DataModel.loadFromDatabase()
                         }
-                        done()
                     }
+                    done()
                 }
-            }) {
+            }
+        }) {
             Text(stringResource(id = R.string.google_password_import_accept))
         }
 
         if (finishLinking.value) {
-            SafeButton(
-                onClick = {
-                    if (isItSafeToExit()) {
-                        done()
-                    }
-                }) {
+            SafeButton(onClick = {
+                if (isItSafeToExit()) {
+                    done()
+                }
+            }) {
                 Text(stringResource(id = R.string.google_password_import_finish_linking))
             }
         }
         ImportResultListPager(importChangeSet, done)
         if (!skipImportReminder && showUsage.value) {
-            UsageInfo(
-                stringResource(id = R.string.google_password_import_usage),
-                onDismiss = { showUsage.value = false }
-            )
+            UsageInfo(stringResource(id = R.string.google_password_import_usage),
+                onDismiss = { showUsage.value = false })
         }
     }
 }
@@ -214,10 +198,9 @@ fun ImportScreen(
 private fun doImport(importChangeSet: ImportChangeSet) {
     val add = importChangeSet.newAddedOrUnmatchedIncomingGPMs
     // there's no point updating HASH Matches (ie. nothing has changed)
-    val update =
-        importChangeSet.getNonConflictingGPMs.mapNotNull { (incomingGPM, scoredMatch) ->
-            if (!scoredMatch.hashMatch) incomingGPM to scoredMatch.item else null
-        }.toMap()
+    val update = importChangeSet.getNonConflictingGPMs.mapNotNull { (incomingGPM, scoredMatch) ->
+        if (!scoredMatch.hashMatch) incomingGPM to scoredMatch.item else null
+    }.toMap()
     val delete = importChangeSet.nonMatchingSavedGPMsToDelete
 
     debug {
@@ -241,6 +224,8 @@ private fun doImport(importChangeSet: ImportChangeSet) {
 fun ImportScreenPreview() {
     SafeTheme {
         fun fake(a: Context, b: String) {}
-        ImportScreen(::fake, false, {}, true)
+        ImportScreen(::fake, hasUnlinkedItemsFromPreviousRound = false, true){
+
+        }
     }
 }

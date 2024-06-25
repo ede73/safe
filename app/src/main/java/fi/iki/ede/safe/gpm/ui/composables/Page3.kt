@@ -12,11 +12,16 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import fi.iki.ede.crypto.IVCipherText
+import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.gpm.changeset.ImportChangeSet
 import fi.iki.ede.gpm.changeset.ScoredMatch
 import fi.iki.ede.gpm.model.IncomingGPM
+import fi.iki.ede.safe.gpm.ui.activities.makeFakeImport
 import fi.iki.ede.safe.gpm.ui.models.ItemWrapper
 import fi.iki.ede.safe.ui.theme.SafeListItem
+import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @Composable
 fun Page3(importChangeSet: MutableState<ImportChangeSet?>) =
@@ -67,3 +72,14 @@ fun Page3(importChangeSet: MutableState<ImportChangeSet?>) =
             }
         }
     }
+
+@Preview(showBackground = true)
+@Composable
+fun Page3Preview() {
+    KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
+    KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
+    SafeTheme {
+        val m = remember { mutableStateOf<ImportChangeSet?>(makeFakeImport()) }
+        Page3(m)
+    }
+}
