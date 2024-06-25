@@ -108,7 +108,9 @@ object DataModelMocks {
 
         // TODO: Doesn't handle soft deleted site entries
         every { db.fetchAllRows(any<DBID>(), any<Boolean>()) } answers {
-            if (firstArg<DBID?>() == null) {
+            if (secondArg<Boolean>()) {
+                ArrayList(emptyList())
+            } else if (firstArg<DBID?>() == null) {
                 ArrayList(passwordTable.values.toList())
             } else {
                 ArrayList(passwordTable.values.filter { it.categoryId == firstArg<DBID>() }

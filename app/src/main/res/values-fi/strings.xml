@@ -118,7 +118,7 @@ Nämä valinnat muistetaan, joten seuraavan kerran linkitys on helpompaa.</strin
     <string name="password_entry_note_tip">Muistiinpanoja</string>
     <string name="password_entry_password_label">Kopioi</string>
     <string name="password_entry_password_tip">Syötä salasana</string>
-    <string name="password_entry_save">Tallenna_</string>
+    <string name="password_entry_save">Tallenna</string>
     <string name="password_entry_save_info">Sivulla on tallentamattomia muutoksia.\nHaluatko tallentaa vai hylätä ne?</string>
     <string name="password_entry_username_label">Kopioi</string>
     <string name="password_entry_username_tip">Syötä käyttäjänimi</string>

@@ -346,7 +346,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
             Pair("/PasswordSafe/category[0]/@cipher_name", "foobar"),
         )
 
-        // TODO: missing changed
+        // TODO: missing changed <item id="2" deleted="1234>
         private const val TOP_LAYER_UNENCRYPTED_BACKUP_XML = """
 <?xml version="1.0" encoding="utf-8"?>
 <PasswordSafe version="1">

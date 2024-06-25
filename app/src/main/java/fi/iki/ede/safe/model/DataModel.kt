@@ -233,6 +233,7 @@ object DataModel {
             if (category != null) {
                 val db = DBHelperFactory.getDBHelper()
                 siteEntry.categoryId = category.id
+                siteEntry.deleted = 0
                 db.restoreSoftDeletedSiteEntry(siteEntry.id!!)
                 _categories[category]!!.add(siteEntry)
                 _siteEntriesStateFlow.value += siteEntry
@@ -247,6 +248,7 @@ object DataModel {
             val db = DBHelperFactory.getDBHelper()
             Preferences.getSoftDeleteDays().let {
                 if (it > 0) {
+                    siteEntry.deleted = System.currentTimeMillis()
                     db.markSiteEntryDeleted(siteEntry.id!!)
                     _softDeletedStateFlow.value = _softDeletedStateFlow.value + siteEntry
                 } else {
@@ -347,7 +349,6 @@ object DataModel {
         fun loadSoftDeletedSiteEntries() {
             val db = DBHelperFactory.getDBHelper()
             val softDeletedSiteEntries = db.fetchAllRows(null, true)
-
             _softDeletedStateFlow.value = softDeletedSiteEntries.toSet()
         }
 

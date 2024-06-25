@@ -74,7 +74,11 @@ internal fun XmlSerializer.writePasswordEntry(decryptablePassword: DecryptableSi
     startTag(Elements.CATEGORY_ITEM).attribute(
         Attributes.CATEGORY_ITEM_ID,
         decryptablePassword.id.toString()
-    )
+    ).let {
+        if (decryptablePassword.deleted > 0) {
+            it.attribute(Attributes.CATEGORY_ITEM_DELETED, decryptablePassword.deleted.toString())
+        }
+    }
     addTagAndCData(Elements.CATEGORY_ITEM_DESCRIPTION, decryptablePassword.description)
     addTagAndCData(Elements.CATEGORY_ITEM_WEBSITE, decryptablePassword.website)
     addTagAndCData(Elements.CATEGORY_ITEM_USERNAME, decryptablePassword.username)

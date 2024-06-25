@@ -258,6 +258,7 @@ class DBHelper internal constructor(
                                 website = it.getIVCipher(SiteEntry.Columns.WEBSITE)
                                 note = it.getIVCipher(SiteEntry.Columns.NOTE)
                                 photo = it.getIVCipher(SiteEntry.Columns.PHOTO)
+                                deleted = it.getDBID(SiteEntry.Columns.DELETED)
                                 try {
                                     it.getZonedDateTimeOfPasswordChange()
                                         ?.let { time -> passwordChangedDate = time }
@@ -318,6 +319,7 @@ class DBHelper internal constructor(
             put(SiteEntry.Columns.WEBSITE, entry.website)
             put(SiteEntry.Columns.NOTE, entry.note)
             put(SiteEntry.Columns.PHOTO, entry.photo)
+            put(SiteEntry.Columns.DELETED, entry.deleted)
             entry.passwordChangedDate?.let {
                 put(SiteEntry.Columns.PASSWORD_CHANGE_DATE, it)
             }

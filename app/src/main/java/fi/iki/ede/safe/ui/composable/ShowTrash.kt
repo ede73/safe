@@ -90,7 +90,8 @@ fun ShowTrash(
                         items(deletedSiteEntries.sortedBy { it.cachedPlainDescription }) { entry: DecryptableSiteEntry ->
                             SafeListItem {
                                 Text(
-                                    text = entry.cachedPlainDescription,
+                                    // TODO: translate to days!
+                                    text = "${entry.cachedPlainDescription} (${entry.deleted})",
                                     modifier = Modifier
                                         .clickable { restoreSiteEntry = entry }
                                         .fillMaxWidth()

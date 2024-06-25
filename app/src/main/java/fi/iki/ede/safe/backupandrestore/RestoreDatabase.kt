@@ -215,6 +215,10 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                 .toLongOrNull()?.let {
                                     password!!.id = it
                                 }
+                            myParser.getTrimmedAttributeValue(Attributes.CATEGORY_ITEM_DELETED)
+                                .toLongOrNull()?.let {
+                                    password!!.deleted = it
+                                }
                             passwords++
                         }
 

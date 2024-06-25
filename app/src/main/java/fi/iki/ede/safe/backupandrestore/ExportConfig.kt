@@ -72,6 +72,7 @@ abstract class ExportConfig(currentCodedVersion: ExportVersion) {
             CATEGORY_NAME("name"),
             CATEGORY_ITEM_ID("ID"),
             CATEGORY_ITEM_PASSWORD_CHANGED("changed"),
+            CATEGORY_ITEM_DELETED("deleted"),
             IV("iv"),
             IMPORTS_GPM_ITEM_ID("name"),
             IMPORTS_GPM_ITEM_MAP_TO_PASSWORDS("password_ids"),

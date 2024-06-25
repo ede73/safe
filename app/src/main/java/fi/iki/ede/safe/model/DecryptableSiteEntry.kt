@@ -26,6 +26,9 @@ class DecryptableSiteEntry(categoryId: Long) {
     }
 
     var categoryId: Long? = categoryId
+
+    // soft deletion property, mainly used for backup/restore and Trash Can visuals
+    var deleted: Long = 0
     var id: Long? = null
     var note: IVCipherText = IVCipherText.getEmpty()
     var password: IVCipherText = IVCipherText.getEmpty()
