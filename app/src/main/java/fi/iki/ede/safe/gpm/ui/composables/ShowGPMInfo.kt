@@ -20,7 +20,6 @@ fun ShowGPMInfo(item: SavedGPM, onDismiss: () -> Unit) {
     UsageInfo(dump, onDismiss = onDismiss)
 }
 
-
 @Preview(showBackground = true)
 @Composable
 fun ShowGPMInfoPreview() {
