@@ -62,7 +62,8 @@ inline fun <T, C : Collection<T>> C.ifNotEmpty(block: (C) -> Unit): C {
 @Composable
 fun SiteEntryView(
     viewModel: EditingSiteEntryViewModel,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    skipForPreviewToWork: Boolean = false
 ) {
     val context = LocalContext.current
     val hideFocusLine = TextFieldDefaults.colors(
@@ -187,7 +188,9 @@ fun SiteEntryView(
             passwordWasUpdated = false
         }
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
-            breachCheckButton(PluginName.HIBP, context, passEntry.password)()
+            if (!skipForPreviewToWork) {
+                breachCheckButton(PluginName.HIBP, context, passEntry.password)()
+            }
         }
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             DatePicker(
@@ -274,6 +277,6 @@ fun SiteEntryViewPreview() {
         val sitesFlow = MutableStateFlow(lst.toList())
         DataModel._categories[cat] = lst
         val model = EditingSiteEntryViewModel()
-        SiteEntryView(model)
+        SiteEntryView(model, skipForPreviewToWork = true)
     }
 }
