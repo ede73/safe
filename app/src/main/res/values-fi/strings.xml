@@ -175,4 +175,6 @@ Nämä valinnat muistetaan, joten seuraavan kerran linkitys on helpompaa.</strin
     <string name="title_hibp">HIBP tuki</string>
     <string name="title_oisafeimport">OISafe salasanojen sisääntuonti</string>
     <string name="google_password_links">Linkitetyt GPM:T</string>
+    <string name="preferences_title_soft_delete">Tuhoa poistetut salasanat</string>
+    <string name="preferences_summary_soft_delete"><![CDATA[%s. Voit asettaa poistoajan salasanoille, jotka on merkattu poistettavaksi. Jos 0, salasanat tuhotaan heti, jos > 0, poistettavaksi merkatut salasanat tuhotaan näin monen päivän jälkeen.]]></string>
 </resources>

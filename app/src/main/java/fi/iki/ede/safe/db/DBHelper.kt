@@ -325,7 +325,7 @@ class DBHelper internal constructor(
         writableDatabase.update(
             SiteEntry,
             ContentValues().apply {
-                put(SiteEntry.Columns.DELETED, 1)
+                put(SiteEntry.Columns.DELETED, System.currentTimeMillis())
             },
             whereEq(SiteEntry.Columns.SITEENTRY_ID, id)
         )

@@ -7,6 +7,7 @@ import android.os.Environment
 import androidx.preference.PreferenceManager
 import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.safe.BuildConfig
+import fi.iki.ede.safe.R
 import fi.iki.ede.safe.splits.PluginName
 import java.time.ZonedDateTime
 import kotlin.time.Duration
@@ -22,6 +23,8 @@ object Preferences {
                 "You MUST mock shared preferences in androidTests"
             }
         }
+        // set preferences default values (if not set)
+        PreferenceManager.setDefaultValues(context, R.xml.preferences, false)
         sharedPreferences =
             PreferenceManager.getDefaultSharedPreferences(context.applicationContext)
     }
@@ -55,6 +58,7 @@ object Preferences {
     const val PREFERENCE_AUTOBACKUP_STARTED = "autobackup_started"
     const val PREFERENCE_AUTOBACKUP_RESTORE_STARTED = "autobackup_restore_started"
     const val PREFERENCE_AUTOBACKUP_RESTORE_FINISHED = "autobackup_restore_finished"
+    const val PREFERENCE_SOFT_DELETE_DAYS = "soft_delete_days"
 
     fun getBackupDocument() = if (SUPPORT_EXPORT_LOCATION_MEMORY) {
         sharedPreferences
@@ -155,4 +159,7 @@ object Preferences {
         sharedPreferences.getLong(PREFERENCE_AUTOBACKUP_RESTORE_FINISHED, 0)
             .takeIf { it != 0L }
             ?.let { DateUtils.unixEpochSecondsToLocalZonedDateTime(it) }
+
+    fun getSoftDeleteDays() =
+        sharedPreferences.getInt(PREFERENCE_SOFT_DELETE_DAYS, 30)
 }

@@ -2,6 +2,13 @@ Password safe
 
 Looks great ! https://developer.android.com/studio/test/other-testing-tools/app-crawler
 
+In progress:
+- soft delete (trash) (db done, datamodel done)
+    - UI Deleted category
+    - backup ?  (i think yes, since we DO retain them)
+    - Preferences? Auto Delete, if SO, then we shall not have deletion time>
+
+
 - Backup codes - messes up notes
 - phone numbers - handy when changing numbers
 - username and password..often same, in some places separate ( banks!)
@@ -12,7 +19,6 @@ Looks great ! https://developer.android.com/studio/test/other-testing-tools/app-
 - bonus card etc.number
 - allow locking app ,but showing one field..if you want to hand the phone for someone else
 - payment profile associated (just name,no card details)
-- soft delete (trash)
 - leak check by domain (just general info if site has had security incidents)
 - if passkey??
 - login via fb / google
