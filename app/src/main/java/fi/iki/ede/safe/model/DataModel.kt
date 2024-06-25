@@ -216,7 +216,13 @@ object DataModel {
         require(siteEntry.categoryId != null) { "SiteEntry's category must be known" }
         CoroutineScope(Dispatchers.IO).launch {
             val db = DBHelperFactory.getDBHelper()
-            db.markSiteEntryDeleted(siteEntry.id!!)
+            Preferences.getSoftDeleteDays().let {
+                if (it > 0) {
+                    db.markSiteEntryDeleted(siteEntry.id!!)
+                } else {
+                    db.hardDeleteSiteEntry(siteEntry.id!!)
+                }
+            }
 
             // Update model
             val category = siteEntry.getCategory()
