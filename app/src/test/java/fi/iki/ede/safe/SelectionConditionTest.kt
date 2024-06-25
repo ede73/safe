@@ -12,7 +12,7 @@ import org.junit.Test
 
 class SelectionConditionTest {
 
-    // naive! supports only 1 arg! also no string encapsulation
+    // naive! no string encapsulation
     // but we're testing SelectionCondition functionality, not SQLIte statement forming
     private fun sqlize(query: SelectionCondition) = query.let {
         var queryString = it.query()
@@ -25,30 +25,46 @@ class SelectionConditionTest {
     @Test
     fun alwaysMatchTest() {
         sqlize(SelectionCondition.alwaysMatch())
-        assert(SelectionCondition.alwaysMatch().query() == "(1 = ?)")
+        assertEquals("(1 = ?)", SelectionCondition.alwaysMatch().query())
     }
 
     @Test
     fun whereEqTest() {
-        assertEquals(sqlize(whereEq(TestTable.Columns.STRING, "foo")), "(string = foo)")
-        assertEquals(sqlize(whereEq(TestTable.Columns.INTEGER, "1")), "(integer = 1)")
+        assertEquals("(string = foo)", sqlize(whereEq(TestTable.Columns.STRING, "foo")))
+        assertEquals("(integer = 1)", sqlize(whereEq(TestTable.Columns.INTEGER, "1")))
     }
 
     @Test
     fun whereNotTest() {
-        assertEquals(sqlize(whereNot(TestTable.Columns.STRING, "foo")), "(string <> foo)")
-        assertEquals(sqlize(whereNot(TestTable.Columns.INTEGER, "1")), "(integer <> 1)")
+        assertEquals("(string <> foo)", sqlize(whereNot(TestTable.Columns.STRING, "foo")))
+        assertEquals("(integer <> 1)", sqlize(whereNot(TestTable.Columns.INTEGER, "1")))
     }
 
     @Test
     fun whereNullOr0Test() {
         assertEquals(
+            "(IFNULL(string, '') = foo)",
             sqlize(whereNullOr0(TestTable.Columns.STRING, "foo", "''")),
-            "(IFNULL(string, '') = foo)"
         )
         assertEquals(
+            "(IFNULL(integer, 0) = 1)",
             sqlize(whereNullOr0(TestTable.Columns.INTEGER, "1", "0")),
-            "(IFNULL(integer, 0) = 1)"
+        )
+    }
+
+    @Test
+    fun complexConditions() {
+        val eq = whereEq(TestTable.Columns.STRING, "foo")
+        val ne = whereNot(TestTable.Columns.STRING, "foo")
+        val coalesce = whereNullOr0(TestTable.Columns.STRING, "foo", "''")
+        val query = eq.and(ne).or(coalesce)
+        assertEquals(
+            "(string = foo) AND (string <> foo) OR (IFNULL(string, '') = foo)",
+            sqlize(query),
+        )
+        assertEquals(
+            "(string = ?) AND (string <> ?) OR (IFNULL(string, '') = ?)",
+            query.query(),
         )
     }
 }
