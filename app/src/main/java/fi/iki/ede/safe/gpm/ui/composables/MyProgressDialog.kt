@@ -8,9 +8,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @Composable
 fun MyProgressDialog(
@@ -45,5 +48,16 @@ fun MyProgressDialog(
                 }
             }
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun MyProgressDialogPreview() {
+    SafeTheme {
+        val a = remember { mutableStateOf(true) }
+        val b = remember { mutableStateOf("test1") }
+        val c = remember { mutableStateOf("test2") }
+        MyProgressDialog(a, b, c)
     }
 }
