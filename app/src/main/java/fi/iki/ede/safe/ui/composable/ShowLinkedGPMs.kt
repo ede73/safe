@@ -15,14 +15,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import fi.iki.ede.crypto.IVCipherText
+import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.gpm.model.encrypt
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.gpm.ui.composables.ShowGPMInfo
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeListItem
 import fi.iki.ede.safe.ui.theme.SafeTextButton
+import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @Composable
 fun ShowLinkedGPMs(
@@ -59,3 +64,25 @@ fun ShowLinkedGPMs(
         }
     }
 )
+
+@Preview(showBackground = true)
+@Composable
+fun ShowLinkedGPMsPreview() {
+    KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
+    KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
+    SafeTheme {
+        val gpms = setOf(
+            SavedGPM.makeFromEncryptedStringFields(
+                1,
+                "encryptedName".encrypt(),
+                "url".encrypt(),
+                "username".encrypt(),
+                "password".encrypt(),
+                "note".encrypt(),
+                false,
+                "hash"
+            )
+        )
+        ShowLinkedGPMs(gpms) {}
+    }
+}
