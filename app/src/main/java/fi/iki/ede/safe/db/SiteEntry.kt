@@ -27,8 +27,8 @@ internal object SiteEntry : Table {
     ${Columns.WEBSITE.columnName} TEXT,
     ${Columns.NOTE.columnName} TEXT,
     ${Columns.PHOTO.columnName} TEXT,
-    ${Columns.PASSWORD_CHANGE_DATE.columnName} TEXT),
-    ${Columns.DELETED.columnName} INTEGER DEFAULT 0;"""
+    ${Columns.PASSWORD_CHANGE_DATE.columnName} TEXT,
+    ${Columns.DELETED.columnName} INTEGER DEFAULT 0);"""
     )
 
     override fun drop() = listOf("DROP TABLE IF EXISTS $tableName;")
