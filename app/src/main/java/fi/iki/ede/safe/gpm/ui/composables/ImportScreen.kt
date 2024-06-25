@@ -20,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.documentfile.provider.DocumentFile
 import fi.iki.ede.gpm.changeset.ImportChangeSet
@@ -30,6 +31,7 @@ import fi.iki.ede.safe.gpm.ui.models.DeleteImportReminder
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTextButton
+import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import fi.iki.ede.safe.ui.utilities.firebaseTry
 import kotlinx.coroutines.CoroutineScope
@@ -41,7 +43,8 @@ import kotlinx.coroutines.withContext
 fun ImportScreen(
     avertInactivity: ((Context, String) -> Unit)?,
     hasUnlinkedItemsFromPreviousRound: Boolean,
-    done: () -> Unit
+    done: () -> Unit,
+    skipImportReminder: Boolean = false
 ) {
     val context = LocalContext.current
     val myScope = CoroutineScope(Dispatchers.IO)
@@ -199,7 +202,7 @@ fun ImportScreen(
             }
         }
         ImportResultListPager(importChangeSet, done)
-        if (showUsage.value) {
+        if (!skipImportReminder && showUsage.value) {
             UsageInfo(
                 stringResource(id = R.string.google_password_import_usage),
                 onDismiss = { showUsage.value = false }
@@ -230,5 +233,14 @@ private fun doImport(importChangeSet: ImportChangeSet) {
     // Should be fine to run async, next screen will pick up changes when DataModel reloads
     CoroutineScope(Dispatchers.IO).launch {
         DataModel.finishGPMImport(delete, update, add)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ImportScreenPreview() {
+    SafeTheme {
+        fun fake(a: Context, b: String) {}
+        ImportScreen(::fake, false, {}, true)
     }
 }
