@@ -1,7 +1,9 @@
 package fi.iki.ede.safe.ui.composable
 
 import android.Manifest
+import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Color
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
@@ -76,7 +78,23 @@ fun SafePhoto(
 @Preview(showBackground = true)
 @Composable
 fun SafePhotoPreview() {
+    val mockInactivity = object : AvertInactivityDuringLongTask {
+        override fun avertInactivity(context: Context, why: String) {
+            // Mock implementation
+            println("Averting inactivity because: $why")
+        }
+    }
+
     SafeTheme {
-        //    SafePhoto(null, onBitmapCaptured = {})
+        val width = 100
+        val height = 100
+        val redColor = Color.RED
+        val dummyBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        for (x in 0 until width) {
+            for (y in 0 until height) {
+                dummyBitmap.setPixel(x, y, redColor)
+            }
+        }
+        SafePhoto(mockInactivity, dummyBitmap, onBitmapCaptured = {})
     }
 }

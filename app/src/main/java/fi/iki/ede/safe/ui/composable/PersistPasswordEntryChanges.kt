@@ -2,12 +2,15 @@ package fi.iki.ede.safe.ui.composable
 
 import android.text.TextUtils
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.encrypt
+import fi.iki.ede.gpm.model.encrypt
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.ui.models.EditableSiteEntry
+import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.runBlocking
 import java.time.ZonedDateTime
 
@@ -44,4 +47,26 @@ fun PersistPasswordEntryChanges(
     }
     // TODO: What if failed
     onSaved(true)
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PersistPasswordEntryChangesPreview() {
+    KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
+    KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
+    SafeTheme {
+        PersistPasswordEntryChanges(
+            edits = EditableSiteEntry(
+                1,
+                1,
+                "desc",
+                "web",
+                "user".encrypt(),
+                "pass".encrypt(),
+                "note".encrypt(),
+                null,
+                null
+            ), passwordChanged = false
+        ) { _ -> }
+    }
 }
