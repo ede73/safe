@@ -292,7 +292,7 @@ private fun reconvertDatabase(pwd: String, completed: () -> Unit) {
         db.addCategory(it)
     }
     newPwds.forEach {
-        db.addPassword(it)
+        db.addSiteEntry(it)
     }
     db.storeSaltAndEncryptedMasterKey(salt, cipheredKey)
 

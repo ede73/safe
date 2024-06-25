@@ -29,7 +29,7 @@ import org.junit.runner.RunWith
  * - zoom TODO:
  */
 @RunWith(AndroidJUnit4::class)
-class PasswordTextFieldTest : NodeHelper {
+class SiteEntryTextFieldTest : NodeHelper {
     @get:Rule
     val composeTestRule = createComposeRule()
 

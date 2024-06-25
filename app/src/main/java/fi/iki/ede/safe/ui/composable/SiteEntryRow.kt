@@ -129,7 +129,7 @@ fun SiteEntryRow(
         if (displayDeleteDialog) {
             DeleteSiteEntryDialog(passEntry, onConfirm = {
                 coroutineScope.launch {
-                    DataModel.deletePassword(passEntry)
+                    DataModel.deleteSiteEntry(passEntry)
                 }
                 displayDeleteDialog = false
             }, onDismiss = {
@@ -144,7 +144,7 @@ fun SiteEntryRow(
 
             MoveSiteEntry(filteredCategories, onConfirm = { newCategory ->
                 coroutineScope.launch {
-                    DataModel.movePassword(passEntry, newCategory)
+                    DataModel.moveSiteEntry(passEntry, newCategory)
                 }
                 displayMoveDialog = false
             }, onDismiss = {

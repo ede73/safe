@@ -27,7 +27,7 @@ internal fun Cursor.getColumnIndexOrThrow(column: TableColumns<*>) =
     getColumnIndexOrThrow(column.columnName)
 
 internal fun Cursor.getZonedDateTimeOfPasswordChange(): ZonedDateTime? =
-    getString(getColumnIndexOrThrow(Password.Columns.PASSWORD_CHANGE_DATE))?.let { date ->
+    getString(getColumnIndexOrThrow(SiteEntry.Columns.PASSWORD_CHANGE_DATE))?.let { date ->
         date.toLongOrNull()?.let {
             DateUtils.unixEpochSecondsToLocalZonedDateTime(it)
         } ?: run {

@@ -44,7 +44,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
                 Elements.CATEGORY,
                 makePair(Attributes.CATEGORY_NAME, category.encryptedName)
             )
-            for (encryptedPassword in DataModel.getCategorysPasswords(category.id!!)) {
+            for (encryptedPassword in DataModel.getCategorysSiteEntries(category.id!!)) {
                 serializer.writePasswordEntry(encryptedPassword)
             }
             serializer.endTag(Elements.CATEGORY)

@@ -14,7 +14,7 @@ class DecryptableCategoryEntry {
     fun copy(): DecryptableCategoryEntry = DecryptableCategoryEntry().apply {
         id = this@DecryptableCategoryEntry.id
         encryptedName = this@DecryptableCategoryEntry.encryptedName
-        containedPasswordCount = this@DecryptableCategoryEntry.containedPasswordCount
+        containedSiteEntryCount = this@DecryptableCategoryEntry.containedSiteEntryCount
     }
 
     private val decrypter = KeyStoreHelperFactory.getDecrypter()
@@ -23,6 +23,6 @@ class DecryptableCategoryEntry {
         return String(decrypter(value))
     }
 
-    var containedPasswordCount = 0
+    var containedSiteEntryCount = 0
 
 }

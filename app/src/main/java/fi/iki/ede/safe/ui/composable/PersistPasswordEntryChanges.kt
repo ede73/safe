@@ -43,7 +43,7 @@ fun PersistPasswordEntryChanges(
     // TODO: MAKE ASYNC
     //coroutineScope.launch {
     runBlocking {
-        DataModel.addOrUpdatePassword(passwordEntry)
+        DataModel.addOrUpdateSiteEntry(passwordEntry)
     }
     // TODO: What if failed
     onSaved(true)

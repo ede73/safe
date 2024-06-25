@@ -15,7 +15,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
-import fi.iki.ede.safe.model.DataModel.passwordsStateFlow
+import fi.iki.ede.safe.model.DataModel.siteEntriesStateFlow
 import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.composable.SiteEntryList
@@ -34,7 +34,7 @@ class SiteEntryListScreen : AutolockingBaseComponentActivity() {
 
         setContent {
             val context = LocalContext.current
-            val passwordsState by passwordsStateFlow
+            val passwordsState by siteEntriesStateFlow
                 .map { passwords -> passwords.filter { it.categoryId == categoryId } }
                 .map { passwords -> passwords.sortedBy { it.cachedPlainDescription.lowercase() } }
                 .filterNotNull()

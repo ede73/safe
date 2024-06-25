@@ -8,20 +8,20 @@ sealed class PasswordSafeEvent {
         data class Updated(val category: DecryptableCategoryEntry) : CategoryEvent()
     }
 
-    sealed class PasswordEvent : PasswordSafeEvent() {
+    sealed class SiteEntryEvent : PasswordSafeEvent() {
         data class Added(
             val category: DecryptableCategoryEntry,
             val password: DecryptableSiteEntry
-        ) : PasswordEvent()
+        ) : SiteEntryEvent()
 
         data class Updated(
             val category: DecryptableCategoryEntry,
             val password: DecryptableSiteEntry
-        ) : PasswordEvent()
+        ) : SiteEntryEvent()
 
         data class Removed(
             val category: DecryptableCategoryEntry,
             val password: DecryptableSiteEntry
-        ) : PasswordEvent()
+        ) : SiteEntryEvent()
     }
 }

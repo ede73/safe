@@ -83,7 +83,7 @@ object OISafeRestore {
             totalPasswords++
             val pwdId = totalPasswords.toLong()
             try {
-                dbHelper.addPassword(fromOiSafePwd(pwdId, password))
+                dbHelper.addSiteEntry(fromOiSafePwd(pwdId, password))
             } catch (ex: SQLiteException) {
                 Log.e(TAG, "ERROR adding password $pwdId")
                 db.endTransaction()

@@ -71,7 +71,7 @@ class OISafeBackupRestoreDatabaseTest {
         }
         val pwd = slot<DecryptableSiteEntry>()
         val passwords = mutableListOf<DecryptableSiteEntry>()
-        every { dbHelper.addPassword(capture(pwd)) } answers {
+        every { dbHelper.addSiteEntry(capture(pwd)) } answers {
             passwords.add(pwd.captured)
             (passwords.size + 1).toLong()
         }

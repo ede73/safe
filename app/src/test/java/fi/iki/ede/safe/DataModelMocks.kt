@@ -82,12 +82,12 @@ object DataModelMocks {
         //DataModel.attachDBHelper(db)
         //every { DBHelperFactory.getDBHelper(any()) } returns db
         val password = slot<DecryptableSiteEntry>()
-        every { db.addPassword(capture(password)) } answers {
+        every { db.addSiteEntry(capture(password)) } answers {
             val id: DBID = if (passwordTable.keys.isEmpty()) 1 else passwordTable.keys.max() + 1
             passwordTable[id] = password.captured
             id
         }
-        every { db.updatePassword(capture(password)) } answers {
+        every { db.updateSiteEntry(capture(password)) } answers {
             val id = password.captured.id!!
             check(passwordTable.containsKey(id)) { "Updating password that does not exist" }
             passwordTable[id] = password.captured

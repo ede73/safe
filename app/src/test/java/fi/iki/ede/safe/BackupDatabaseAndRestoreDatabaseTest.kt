@@ -258,7 +258,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
             DataModel.loadFromDatabase()
         }
 
-        val passwords = DataModel.getPasswords()
+        val passwords = DataModel.getSiteEntries()
         val categories = DataModel.getCategories()
         assertEquals(2, categories.size)
         assertEquals(4, passwords.size)

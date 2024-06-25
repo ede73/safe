@@ -67,14 +67,14 @@ class DBHelper internal constructor(
 
     private var onCreateCalled = false
     override fun onCreate(db: SQLiteDatabase?) {
-        require(!onCreateCalled) { "========ON create called TWICE" }
+        require(!onCreateCalled) { "ON create called TWICE" }
         onCreateCalled = true
         listOf(
             Category,
-            Password,
+            SiteEntry,
             Keys,
             GooglePasswordManager,
-            Password2GooglePasswordManager
+            SiteEntry2GooglePasswordManager
         ).forEach {
             try {
                 it.create().forEach { sql ->
@@ -219,7 +219,7 @@ class DBHelper internal constructor(
     fun getCategoryCount(id: DBID) =
         readableDatabase.let { db ->
             db.rawQuery(
-                "SELECT count(*) FROM ${Password.tableName} WHERE category=$id",
+                "SELECT count(*) FROM ${SiteEntry.tableName} WHERE category=$id",
                 null
             ).use {
                 if (it.count > 0) {
@@ -234,40 +234,28 @@ class DBHelper internal constructor(
             put(Category.Columns.NAME, entry.encryptedName)
         }, whereEq(Category.Columns.CAT_ID, id)).toLong()
 
-//    fun joo() {
-//        readableDatabase.let {
-//            val c = it.rawQuery("SELECT * FROM passwords", null)
-//            c.moveToFirst()
-//            println("Got ${c.count} passwords.!.!.")
-//            (0 until c.count).forEach { _ ->
-//                println("Might fech some")
-//                c.moveToNext()
-//            }
-//        }
-//    }
-
     fun fetchAllRows(categoryId: DBID? = null) =
         readableDatabase.let { db ->
             db.query(
-                Password,
-                Password.Columns.entries.toSet(),
+                SiteEntry,
+                SiteEntry.Columns.entries.toSet(),
                 if (categoryId != null) {
-                    whereEq(Password.Columns.CATEGORY_ID, categoryId)
+                    whereEq(SiteEntry.Columns.CATEGORY_ID, categoryId)
                 } else null,
             ).use {
                 it.moveToFirst()
                 ArrayList<DecryptableSiteEntry>().apply {
                     (0 until it.count).forEach { _ ->
                         // TODO: Until we get chainable selects..filter here
-                        if (it.getInt(it.getColumnIndexOrThrow(Password.Columns.DELETED)) == 0) {
-                            add(DecryptableSiteEntry(it.getDBID(Password.Columns.CATEGORY_ID)).apply {
-                                id = it.getDBID(Password.Columns.PWD_ID)
-                                password = it.getIVCipher(Password.Columns.PASSWORD)
-                                description = it.getIVCipher(Password.Columns.DESCRIPTION)
-                                username = it.getIVCipher(Password.Columns.USERNAME)
-                                website = it.getIVCipher(Password.Columns.WEBSITE)
-                                note = it.getIVCipher(Password.Columns.NOTE)
-                                photo = it.getIVCipher(Password.Columns.PHOTO)
+                        if (it.getInt(it.getColumnIndexOrThrow(SiteEntry.Columns.DELETED)) == 0) {
+                            add(DecryptableSiteEntry(it.getDBID(SiteEntry.Columns.CATEGORY_ID)).apply {
+                                id = it.getDBID(SiteEntry.Columns.SITEENTRY_ID)
+                                password = it.getIVCipher(SiteEntry.Columns.PASSWORD)
+                                description = it.getIVCipher(SiteEntry.Columns.DESCRIPTION)
+                                username = it.getIVCipher(SiteEntry.Columns.USERNAME)
+                                website = it.getIVCipher(SiteEntry.Columns.WEBSITE)
+                                note = it.getIVCipher(SiteEntry.Columns.NOTE)
+                                photo = it.getIVCipher(SiteEntry.Columns.PHOTO)
                                 try {
                                     it.getZonedDateTimeOfPasswordChange()
                                         ?.let { time -> passwordChangedDate = time }
@@ -282,70 +270,70 @@ class DBHelper internal constructor(
             }
         }
 
-    fun updatePassword(entry: DecryptableSiteEntry): DBID {
-        require(entry.id != null) { "Cannot update password without ID" }
-        require(entry.categoryId != null) { "Cannot update password without Category ID" }
+    fun updateSiteEntry(entry: DecryptableSiteEntry): DBID {
+        require(entry.id != null) { "Cannot update SiteEntry without ID" }
+        require(entry.categoryId != null) { "Cannot update SiteEntry without Category ID" }
         val args = ContentValues().apply {
-            put(Password.Columns.DESCRIPTION, entry.description)
-            put(Password.Columns.USERNAME, entry.username)
-            put(Password.Columns.PASSWORD, entry.password)
-            put(Password.Columns.WEBSITE, entry.website)
-            put(Password.Columns.NOTE, entry.note)
-            put(Password.Columns.PHOTO, entry.photo)
+            put(SiteEntry.Columns.DESCRIPTION, entry.description)
+            put(SiteEntry.Columns.USERNAME, entry.username)
+            put(SiteEntry.Columns.PASSWORD, entry.password)
+            put(SiteEntry.Columns.WEBSITE, entry.website)
+            put(SiteEntry.Columns.NOTE, entry.note)
+            put(SiteEntry.Columns.PHOTO, entry.photo)
             if (entry.passwordChangedDate != null) {
                 put(
-                    Password.Columns.PASSWORD_CHANGE_DATE,
+                    SiteEntry.Columns.PASSWORD_CHANGE_DATE,
                     entry.passwordChangedDate!!
                 )
             }
         }
         val ret = writableDatabase.update(
-            Password,
+            SiteEntry,
             args,
-            whereEq(Password.Columns.PWD_ID, entry.id!!)
+            whereEq(SiteEntry.Columns.SITEENTRY_ID, entry.id!!)
         )
         assert(ret == 1) { "Oh no...DB update failed to update..." }
         return entry.id as DBID
     }
 
-    fun updatePasswordCategory(id: DBID, newCategoryId: DBID) =
+    fun updateSiteEntryCategory(id: DBID, newCategoryId: DBID) =
         writableDatabase.update(
-            Password,
+            SiteEntry,
             ContentValues().apply {
-                put(Password.Columns.CATEGORY_ID, newCategoryId)
-            }, whereEq(Password.Columns.PWD_ID, id)
+                put(SiteEntry.Columns.CATEGORY_ID, newCategoryId)
+            }, whereEq(SiteEntry.Columns.SITEENTRY_ID, id)
         )
 
-    fun addPassword(entry: DecryptableSiteEntry) =
-        writableDatabase.insertOrThrow(Password, ContentValues().apply {
+    fun addSiteEntry(entry: DecryptableSiteEntry) =
+        writableDatabase.insertOrThrow(SiteEntry, ContentValues().apply {
             if (entry.id != null) {
-                put(Password.Columns.PWD_ID, entry.id)
+                put(SiteEntry.Columns.SITEENTRY_ID, entry.id)
             }
-            put(Password.Columns.CATEGORY_ID, entry.categoryId)
-            put(Password.Columns.PASSWORD, entry.password)
-            put(Password.Columns.DESCRIPTION, entry.description)
-            put(Password.Columns.USERNAME, entry.username)
-            put(Password.Columns.WEBSITE, entry.website)
-            put(Password.Columns.NOTE, entry.note)
-            put(Password.Columns.PHOTO, entry.photo)
+            put(SiteEntry.Columns.CATEGORY_ID, entry.categoryId)
+            put(SiteEntry.Columns.PASSWORD, entry.password)
+            put(SiteEntry.Columns.DESCRIPTION, entry.description)
+            put(SiteEntry.Columns.USERNAME, entry.username)
+            put(SiteEntry.Columns.WEBSITE, entry.website)
+            put(SiteEntry.Columns.NOTE, entry.note)
+            put(SiteEntry.Columns.PHOTO, entry.photo)
             entry.passwordChangedDate?.let {
-                put(Password.Columns.PASSWORD_CHANGE_DATE, it)
+                put(SiteEntry.Columns.PASSWORD_CHANGE_DATE, it)
             }
         })
 
     fun markSiteEntryDeleted(id: DBID) =
         writableDatabase.update(
-            Password,
+            SiteEntry,
             ContentValues().apply {
-                put(Password.Columns.DELETED, 1)
+                put(SiteEntry.Columns.DELETED, 1)
             },
-            whereEq(Password.Columns.PWD_ID, id)
+            whereEq(SiteEntry.Columns.SITEENTRY_ID, id)
         )
 
     fun hardDeleteSiteEntry(id: DBID) =
         writableDatabase.delete(
-            Password,
-            whereEq(Password.Columns.PWD_ID, id)
+            SiteEntry,
+            whereEq(SiteEntry.Columns.SITEENTRY_ID, id)
         )
 
     // Begin restoration, starts a transaction, if preparation fails, exception is throw and changes have been rolled back
@@ -355,10 +343,10 @@ class DBHelper internal constructor(
             // best effort to rid of all the tables
             try {
                 listOf(
-                    Password,
+                    SiteEntry,
                     Category,
                     GooglePasswordManager,
-                    Password2GooglePasswordManager
+                    SiteEntry2GooglePasswordManager
                 ).forEach { tables ->
                     tables.drop().forEach { sql ->
                         execSQL(sql)
@@ -389,9 +377,9 @@ class DBHelper internal constructor(
     fun linkSaveGPMAndSiteEntry(siteEntryID: DBID, savedGPMID: DBID) =
         //writableDatabase.use { db -> //effin transaction dies with ...
         writableDatabase.apply {
-            insert(Password2GooglePasswordManager, ContentValues().apply {
-                put(Password2GooglePasswordManager.Columns.PASSWORD_ID, siteEntryID)
-                put(Password2GooglePasswordManager.Columns.GOOGLE_ID, savedGPMID)
+            insert(SiteEntry2GooglePasswordManager, ContentValues().apply {
+                put(SiteEntry2GooglePasswordManager.Columns.PASSWORD_ID, siteEntryID)
+                put(SiteEntry2GooglePasswordManager.Columns.GOOGLE_ID, savedGPMID)
             })
         }
 
@@ -399,14 +387,14 @@ class DBHelper internal constructor(
     fun fetchAllSiteEntryGPMMappings(): Map<DBID, Set<DBID>> =
         readableDatabase.use { db ->
             db.query(
-                Password2GooglePasswordManager,
-                Password2GooglePasswordManager.Columns.entries.toSet(),
+                SiteEntry2GooglePasswordManager,
+                SiteEntry2GooglePasswordManager.Columns.entries.toSet(),
             ).use { c ->
                 (0 until c.count)
                     .map { _ ->
                         c.moveToNext()
-                        c.getDBID(Password2GooglePasswordManager.Columns.PASSWORD_ID) to
-                                c.getDBID(Password2GooglePasswordManager.Columns.GOOGLE_ID)
+                        c.getDBID(SiteEntry2GooglePasswordManager.Columns.PASSWORD_ID) to
+                                c.getDBID(SiteEntry2GooglePasswordManager.Columns.GOOGLE_ID)
                     }
                     .groupBy({ it.first }, { it.second })
                     .mapValues { (_, values) -> values.toSet() }
@@ -531,7 +519,7 @@ class DBHelper internal constructor(
         fun upgradeFromV5ToV6AddDeletedColumn(db: SQLiteDatabase, upgrade: Int) {
             db.beginTransaction()
             try {
-                db.execSQL("ALTER TABLE ${Password.tableName} ADD COLUMN deleted INTEGER DEFAULT 0")
+                db.execSQL("ALTER TABLE ${SiteEntry.tableName} ADD COLUMN deleted INTEGER DEFAULT 0")
             } catch (ex: SQLiteException) {
                 Log.i(TAG, "onUpgrade $upgrade: $ex")
             }
@@ -545,7 +533,7 @@ class DBHelper internal constructor(
                 GooglePasswordManager.create().forEach {
                     db.execSQL(it)
                 }
-                Password2GooglePasswordManager.create().forEach {
+                SiteEntry2GooglePasswordManager.create().forEach {
                     db.execSQL(it)
                 }
             } catch (ex: SQLiteException) {
@@ -647,7 +635,7 @@ class DBHelper internal constructor(
             db.beginTransaction()
             try {
                 db.execSQL(
-                    "ALTER TABLE ${Password.tableName} ADD COLUMN photo TEXT;",
+                    "ALTER TABLE ${SiteEntry.tableName} ADD COLUMN photo TEXT;",
                 )
             } catch (ex: SQLiteException) {
                 if (ex.message?.contains("duplicate column") != true) {

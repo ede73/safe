@@ -23,7 +23,7 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
-import fi.iki.ede.safe.model.DataModel.passwordsStateFlow
+import fi.iki.ede.safe.model.DataModel.siteEntriesStateFlow
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.ui.composable.AddOrEditCategory
 import fi.iki.ede.safe.ui.composable.CategoryRow
@@ -64,7 +64,7 @@ private fun CategoryListScreenPagedCompose(
         ) {
             HorizontalPager(state = pagerState) { page ->
                 val category = categoriesState[page]
-                val passwordsState by passwordsStateFlow
+                val passwordsState by siteEntriesStateFlow
                     .map { passwords -> passwords.filter { it.categoryId == category.id } }
                     .map { passwords -> passwords.sortedBy { it.cachedPlainDescription.lowercase() } }
                     .filterNotNull()

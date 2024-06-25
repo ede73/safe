@@ -71,7 +71,7 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
             )
             Spacer(modifier = Modifier.weight(1f)) // This will push the Text to the end
             Text(
-                text = "(${category.containedPasswordCount})",
+                text = "(${category.containedSiteEntryCount})",
                 modifier = Modifier.padding(12.dp),
                 style = safeTheme.customFonts.smallNote,
             )
@@ -80,7 +80,7 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
             expanded = displayMenu,
             onDismissRequest = { displayMenu = false }
         ) {
-            if (category.containedPasswordCount == 0) {
+            if (category.containedSiteEntryCount == 0) {
                 DropdownMenuItem(
                     text = {
                         Text(

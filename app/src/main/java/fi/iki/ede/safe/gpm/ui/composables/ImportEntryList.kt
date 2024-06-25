@@ -117,7 +117,7 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
             DataModel.getCategories().firstOrNull { it.plainName == "Google Password Manager" }
 
         suspend fun addNow(catId: DBID) {
-            DataModel.addGPMAsPassword(savedGPMId, categoryId = catId, onAdd = {
+            DataModel.addGPMAsSiteEntry(savedGPMId, categoryId = catId, onAdd = {
                 linkSavedGPMAndDecryptableSiteEntry(it, savedGPMId)
             })
         }

@@ -47,7 +47,7 @@ object DBHelper4AndroidTest {
         assert(2 == DataModel.getCategories().size) {
             "DataModel initialization failure"
         }
-        assert(4 == DataModel.getPasswords().size) {
+        assert(4 == DataModel.getSiteEntries().size) {
             "DataModel initialization failure"
         }
     }
@@ -81,7 +81,7 @@ object DBHelper4AndroidTest {
             id = forceId
             this.description = getKeyStore().encryptByteArray(description.toByteArray())
         }
-        getDBHelper().addPassword(pwd)
+        getDBHelper().addSiteEntry(pwd)
         return this
     }
 

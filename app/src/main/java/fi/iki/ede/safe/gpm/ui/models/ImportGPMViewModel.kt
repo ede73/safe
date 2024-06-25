@@ -34,7 +34,7 @@ class ImportGPMViewModel : ViewModel() {
     init {
         viewModelScope.launch {
             launch {
-                DataModel.siteEntryToSavedGPMStateFlow.combine(DataModel.passwordsStateFlow)
+                DataModel.siteEntryToSavedGPMStateFlow.combine(DataModel.siteEntriesStateFlow)
                 { link: LinkedHashMap<DecryptableSiteEntry, Set<SavedGPM>>, s: List<DecryptableSiteEntry> ->
                     s.associateWith { siteEntry -> link.filter { it.key.id == siteEntry.id }.values.flatten() }
                 }.collect { it ->

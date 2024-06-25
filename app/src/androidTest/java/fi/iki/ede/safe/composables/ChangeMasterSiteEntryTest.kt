@@ -27,7 +27,7 @@ import org.junit.runner.RunWith
  * Actual EnterNewPassword component didn't accept anything ever
  */
 @RunWith(AndroidJUnit4::class)
-class ChangeMasterPasswordTest : NodeHelper {
+class ChangeMasterSiteEntryTest : NodeHelper {
     @get:Rule
     val composeTestRule = createComposeRule()
 

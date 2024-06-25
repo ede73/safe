@@ -119,7 +119,7 @@ fun MatchingSiteEntry(
             if (displayDeleteDialog) {
                 DeleteSiteEntryDialog(passwordEntry, onConfirm = {
                     coroutineScope.launch {
-                        DataModel.deletePassword(passwordEntry)
+                        DataModel.deleteSiteEntry(passwordEntry)
                         onDelete(passwordEntry)
                     }
                     displayDeleteDialog = false
@@ -133,7 +133,7 @@ fun MatchingSiteEntry(
 
                 MoveSiteEntry(filteredCategories, onConfirm = { newCategory ->
                     coroutineScope.launch {
-                        DataModel.movePassword(passwordEntry, newCategory)
+                        DataModel.moveSiteEntry(passwordEntry, newCategory)
                     }
                     displayMoveDialog = false
                     val z = passwordEntry.copy()

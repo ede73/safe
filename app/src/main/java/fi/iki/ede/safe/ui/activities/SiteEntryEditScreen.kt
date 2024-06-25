@@ -54,7 +54,7 @@ class SiteEntryEditScreen : AutolockingBaseComponentActivity() {
                 // Edit a password
                 val passwordId = intent.getLongExtra(PASSWORD_ID, -1L)
                 require(passwordId != -1L) { "Password must be value and exist" }
-                viewModel.editPassword(DataModel.getPassword(passwordId))
+                viewModel.editPassword(DataModel.getSiteEntry(passwordId))
             } else if (intent.hasExtra(CATEGORY_ID)) {
                 // Add a new password
                 val categoryId = intent.getLongExtra(CATEGORY_ID, -1L)
@@ -101,7 +101,7 @@ class SiteEntryEditScreen : AutolockingBaseComponentActivity() {
         editingPasswordId: DBID?,
         edits: EditableSiteEntry,
     ) = if (editingPasswordId != null) {
-        val originalPassword = DataModel.getPassword(editingPasswordId)
+        val originalPassword = DataModel.getSiteEntry(editingPasswordId)
         wasPasswordEntryChanged(
             edits,
             originalPassword

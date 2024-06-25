@@ -341,7 +341,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                         ) -> {
                             require(password != null) { "Must have password entry" }
                             reportProgress(null, passwords, null)
-                            dbHelper.addPassword(password)
+                            dbHelper.addSiteEntry(password)
                             password = null
                         }
 

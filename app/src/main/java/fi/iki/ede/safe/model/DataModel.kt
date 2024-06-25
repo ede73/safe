@@ -38,14 +38,14 @@ object DataModel {
         MutableSharedFlow<PasswordSafeEvent.CategoryEvent>(extraBufferCapacity = 10, replay = 10)
     val categoriesSharedFlow: SharedFlow<PasswordSafeEvent.CategoryEvent> get() = _categoriesSharedFlow
 
-    // Passwords state and events
-    private val _passwordsStateFlow = MutableStateFlow<List<DecryptableSiteEntry>>(emptyList())
-    private val _passwordsSharedFlow =
-        MutableSharedFlow<PasswordSafeEvent.PasswordEvent>(extraBufferCapacity = 10, replay = 10)
-    val passwordsStateFlow: StateFlow<List<DecryptableSiteEntry>> get() = _passwordsStateFlow
+    // SiteEntries state and events
+    private val _siteEntriesStateFlow = MutableStateFlow<List<DecryptableSiteEntry>>(emptyList())
+    private val _siteEntriesSharedFlow =
+        MutableSharedFlow<PasswordSafeEvent.SiteEntryEvent>(extraBufferCapacity = 10, replay = 10)
+    val siteEntriesStateFlow: StateFlow<List<DecryptableSiteEntry>> get() = _siteEntriesStateFlow
 
     // Test only now...
-    val passwordsSharedFlow: SharedFlow<PasswordSafeEvent.PasswordEvent> get() = _passwordsSharedFlow
+    val siteEntriesSharedFlow: SharedFlow<PasswordSafeEvent.SiteEntryEvent> get() = _siteEntriesSharedFlow
 
     fun DecryptableSiteEntry.getCategory(): DecryptableCategoryEntry =
         _categories.keys.first { it.id == categoryId }
@@ -56,11 +56,11 @@ object DataModel {
     // no cost using (gets (encrypted) categories from memory)
     fun getCategories(): List<DecryptableCategoryEntry> = _categories.keys.toList()
 
-    // no cost using (gets (encrypted) passwords from memory)
-    fun getPasswords(): List<DecryptableSiteEntry> = _categories.values.flatten()
+    // no cost using (gets (encrypted) site entries from memory)
+    fun getSiteEntries(): List<DecryptableSiteEntry> = _categories.values.flatten()
 
-    // (almost) no cost using (gets (encrypted) categories' passwords from memory)
-    fun getCategorysPasswords(categoryId: DBID): List<DecryptableSiteEntry> =
+    // (almost) no cost using (gets (encrypted) categories' site entries from memory)
+    fun getCategorysSiteEntries(categoryId: DBID): List<DecryptableSiteEntry> =
         _categories.filter { it.key.id == categoryId }.values.flatten()
 
 
@@ -87,11 +87,11 @@ object DataModel {
 
                 // Update model
                 val existingCategory = category.getCategory()
-                val oldPasswords = _categories[existingCategory]
+                val oldSiteEntries = _categories[existingCategory]
                 val newUpdatedCategory = category.copy()
-                newUpdatedCategory.containedPasswordCount = category.containedPasswordCount
+                newUpdatedCategory.containedSiteEntryCount = category.containedSiteEntryCount
                 _categories.remove(existingCategory)
-                _categories[newUpdatedCategory] = oldPasswords!!
+                _categories[newUpdatedCategory] = oldSiteEntries!!
                 _categoriesSharedFlow.emit(
                     PasswordSafeEvent.CategoryEvent.Updated(
                         newUpdatedCategory
@@ -117,119 +117,119 @@ object DataModel {
         }
     }
 
-    fun getPassword(passwordId: DBID): DecryptableSiteEntry =
-        getPasswords().first { it.id == passwordId }
+    fun getSiteEntry(siteEntryId: DBID): DecryptableSiteEntry =
+        getSiteEntries().first { it.id == siteEntryId }
 
-    suspend fun addOrUpdatePassword(
-        password: DecryptableSiteEntry,
+    suspend fun addOrUpdateSiteEntry(
+        siteEntry: DecryptableSiteEntry,
         onAdd: suspend (DecryptableSiteEntry) -> Unit = {}
     ) {
-        require(password.categoryId != null) { "Password's category must be known" }
+        require(siteEntry.categoryId != null) { "SiteEntry's category must be known" }
         CoroutineScope(Dispatchers.IO).launch {
             val db = DBHelperFactory.getDBHelper()
-            val category = getCategories().first { it.id == password.categoryId }
-            if (password.id == null) {
+            val category = getCategories().first { it.id == siteEntry.categoryId }
+            if (siteEntry.id == null) {
                 // we're adding a new PWD
-                password.id = db.addPassword(password)
+                siteEntry.id = db.addSiteEntry(siteEntry)
 
                 // Update model
-                _categories[category]!!.add(password)
+                _categories[category]!!.add(siteEntry)
                 val newCategory =
-                    updateCategoriesPasswordCount(
+                    updateCategoriesSiteEntryCount(
                         category,
-                        category.containedPasswordCount + 1,
+                        category.containedSiteEntryCount + 1,
                     )
-                _passwordsSharedFlow.emit(
-                    PasswordSafeEvent.PasswordEvent.Added(
+                _siteEntriesSharedFlow.emit(
+                    PasswordSafeEvent.SiteEntryEvent.Added(
                         newCategory,
-                        password
+                        siteEntry
                     )
                 )
-                onAdd(password)
+                onAdd(siteEntry)
             } else {
-                db.updatePassword(password)
+                db.updateSiteEntry(siteEntry)
 
                 // Update model
-                val passwords = _categories[category]
-                val index = passwords!!.indexOfFirst { it.id == password.id }
-                passwords[index] = password
-                _passwordsSharedFlow.emit(
-                    PasswordSafeEvent.PasswordEvent.Updated(
+                val siteEntries = _categories[category]
+                val index = siteEntries!!.indexOfFirst { it.id == siteEntry.id }
+                siteEntries[index] = siteEntry
+                _siteEntriesSharedFlow.emit(
+                    PasswordSafeEvent.SiteEntryEvent.Updated(
                         category,
-                        password
+                        siteEntry
                     )
                 )
             }
-            _passwordsStateFlow.value = _categories.values.flatten()
+            _siteEntriesStateFlow.value = _categories.values.flatten()
         }
     }
 
-    suspend fun movePassword(
-        password: DecryptableSiteEntry,
+    suspend fun moveSiteEntry(
+        siteEntry: DecryptableSiteEntry,
         targetCategory: DecryptableCategoryEntry
     ) {
-        require(password.categoryId != null) { "Password's category must be known" }
+        require(siteEntry.categoryId != null) { "SiteEntry's category must be known" }
         CoroutineScope(Dispatchers.IO).launch {
             val db = DBHelperFactory.getDBHelper()
-            db.updatePasswordCategory(password.id!!, targetCategory.id!!)
+            db.updateSiteEntryCategory(siteEntry.id!!, targetCategory.id!!)
 
             // Update model
-            val oldCategory = password.getCategory()
-            val updatedOldCategory = updateCategoriesPasswordCount(
+            val oldCategory = siteEntry.getCategory()
+            val updatedOldCategory = updateCategoriesSiteEntryCount(
                 oldCategory,
-                oldCategory.containedPasswordCount - 1,
+                oldCategory.containedSiteEntryCount - 1,
             )
 
             // We might be called from different context with different copy
             // Lets find correct instance
-            val pwdToRemove = _categories[updatedOldCategory]!!.first { it.id == password.id }
+            val pwdToRemove = _categories[updatedOldCategory]!!.first { it.id == siteEntry.id }
             _categories[updatedOldCategory]!!.remove(pwdToRemove)
 
-            val copyOfPassword = pwdToRemove.copy().apply {
+            val copyOfSiteEntry = pwdToRemove.copy().apply {
                 categoryId = targetCategory.id
             }
 
-            val updatedTargetCategory = updateCategoriesPasswordCount(
+            val updatedTargetCategory = updateCategoriesSiteEntryCount(
                 targetCategory,
-                targetCategory.containedPasswordCount + 1,
+                targetCategory.containedSiteEntryCount + 1,
             )
 
-            _categories[updatedTargetCategory]!!.add(copyOfPassword)
+            _categories[updatedTargetCategory]!!.add(copyOfSiteEntry)
             _categoriesStateFlow.value = _categories.keys.toList()
-            _passwordsStateFlow.value = _categories.values.flatten()
-            _passwordsSharedFlow.emit(
-                PasswordSafeEvent.PasswordEvent.Removed(
+            _siteEntriesStateFlow.value = _categories.values.flatten()
+            _siteEntriesSharedFlow.emit(
+                PasswordSafeEvent.SiteEntryEvent.Removed(
                     updatedTargetCategory,
-                    copyOfPassword
+                    copyOfSiteEntry
                 )
             )
-            _passwordsSharedFlow.emit(
-                PasswordSafeEvent.PasswordEvent.Added(
+            _siteEntriesSharedFlow.emit(
+                PasswordSafeEvent.SiteEntryEvent.Added(
                     updatedTargetCategory,
-                    copyOfPassword
+                    copyOfSiteEntry
                 )
             )
         }
     }
 
-    suspend fun deletePassword(password: DecryptableSiteEntry) {
-        require(password.categoryId != null) { "Password's category must be known" }
+    suspend fun deleteSiteEntry(siteEntry: DecryptableSiteEntry) {
+        require(siteEntry.categoryId != null) { "SiteEntry's category must be known" }
         CoroutineScope(Dispatchers.IO).launch {
             val db = DBHelperFactory.getDBHelper()
-            db.markSiteEntryDeleted(password.id!!)
+            db.markSiteEntryDeleted(siteEntry.id!!)
 
             // Update model
-            val category = password.getCategory()
+            val category = siteEntry.getCategory()
             val updatedCategory =
-                updateCategoriesPasswordCount(
+                updateCategoriesSiteEntryCount(
                     category,
-                    category.containedPasswordCount - 1,
+                    category.containedSiteEntryCount - 1,
                 )
-            val pwdToDelete = _categories[updatedCategory]!!.first { it.id == password.id }
+            val pwdToDelete = _categories[updatedCategory]!!.first { it.id == siteEntry.id }
             _categories[updatedCategory]!!.remove(pwdToDelete)
-            _passwordsStateFlow.value = _categories.values.flatten()
-            _passwordsSharedFlow.emit(
-                PasswordSafeEvent.PasswordEvent.Removed(
+            _siteEntriesStateFlow.value = _categories.values.flatten()
+            _siteEntriesSharedFlow.emit(
+                PasswordSafeEvent.SiteEntryEvent.Removed(
                     updatedCategory,
                     pwdToDelete
                 )
@@ -239,17 +239,17 @@ object DataModel {
 
     // horrible hack required as Flow objects need to be immutable
     // changing property is not reflected in the UI, NEW object is required
-    private suspend fun updateCategoriesPasswordCount(
+    private suspend fun updateCategoriesSiteEntryCount(
         category: DecryptableCategoryEntry,
-        newPasswordCount: Int,
+        newSiteEntryCount: Int,
     ): DecryptableCategoryEntry {
         val copyOfCategory = category.copy().apply {
-            containedPasswordCount = newPasswordCount
+            containedSiteEntryCount = newSiteEntryCount
         }
 
-        val oldPasswords = _categories[category]
+        val oldSiteEntries = _categories[category]
         _categories.remove(category)
-        _categories[copyOfCategory] = oldPasswords!!
+        _categories[copyOfCategory] = oldSiteEntries!!
 
         // TODO: Remove! Use THE stateflow? This is in search,THis provides CALMER updates than .value= rump'em all
         _categoriesStateFlow.update {
@@ -278,7 +278,7 @@ object DataModel {
             val categories = db.fetchAllCategoryRows()
 
             // Update model
-            // Quickly update all categories first and then the slow one..all the passwords of all the categories...
+            // Quickly update all categories first and then the slow one..all the siteentries of all the categories...
             categories.forEach { category ->
                 _categories[category] = mutableListOf()
             }
@@ -286,45 +286,42 @@ object DataModel {
         }
 
         suspend fun loadSiteEntriesFromDB() {
-            // passwords..
-            // TODO: This is NOT mocked at the moment
-            //val passwords = db!!.fetchAllRows()
             val db = DBHelperFactory.getDBHelper()
             val catKeys = _categories.keys.toList()
             catKeys.forEach { category ->
                 val siteEntryGPMMappings = db.fetchAllSiteEntryGPMMappings()
-                val categoriesPasswords = db.fetchAllRows(categoryId = category.id as DBID)
+                val categoriesSiteEntries = db.fetchAllRows(categoryId = category.id as DBID)
 
-                categoriesPasswords.forEach { password ->
-                    if (password.id in siteEntryGPMMappings) {
-                        val savedGPMIds = siteEntryGPMMappings[password.id]
-                        _siteEntryToSavedGPM[password] =
+                categoriesSiteEntries.forEach { siteEntry ->
+                    if (siteEntry.id in siteEntryGPMMappings) {
+                        val savedGPMIds = siteEntryGPMMappings[siteEntry.id]
+                        _siteEntryToSavedGPM[siteEntry] =
                             _savedGPMs.filter { it.id in savedGPMIds!! }.toSet()
                     }
                 }
 
                 // Update model
-                _categories[category]!!.addAll(categoriesPasswords)
-                val newCategory = updateCategoriesPasswordCount(
+                _categories[category]!!.addAll(categoriesSiteEntries)
+                val newCategory = updateCategoriesSiteEntryCount(
                     category,
-                    categoriesPasswords.count(),
+                    categoriesSiteEntries.count(),
                 )
             }
-            _passwordsStateFlow.value = _categories.values.flatten()
+            _siteEntriesStateFlow.value = _categories.values.flatten()
         }
 
-        // NOTE: Made a HUGE difference in display speed for 300+ password list on galaxy S24, if completed this is instantaneous
+        // NOTE: Made a HUGE difference in display speed for 300+ siteEntries list on galaxy S24, if completed this is instantaneous
         // NOTE: This can ONLY succeed if user has logged in - as it sits now, this is the case, we load the data model only after login
-        // Even if descriptions of password entries aren't very sensitive
+        // Even if descriptions of site entries aren't very sensitive
         // all external access is kept encrypted, this though slows down UI visuals
         // In memory copy of the description is plain text, let's just decrypt them
         suspend fun launchDecryptDescriptions() {
             coroutineScope {
                 launch(Dispatchers.Default) {
                     try {
-                        _categories.values.forEach { passwords ->
-                            passwords.forEach { encryptedPassword ->
-                                val noop = encryptedPassword.cachedPlainDescription
+                        _categories.values.forEach { siteEntries ->
+                            siteEntries.forEach { encryptedSiteEntry ->
+                                val noop = encryptedSiteEntry.cachedPlainDescription
                             }
                         }
                     } catch (ex: Exception) {
@@ -347,7 +344,7 @@ object DataModel {
     private suspend fun dumpStrays() {
         coroutineScope {
             launch {
-                // now kinda interesting integrity verification, do we have stray passwords?
+                // now kinda interesting integrity verification, do we have stray siteentries?
                 // ie. belonging to categories nonexistent
                 fun filterAList(
                     aList: List<DecryptableSiteEntry>,
@@ -357,13 +354,13 @@ object DataModel {
                     return aList.filter { it.categoryId !in bIds }
                 }
 
-                val strayPasswords =
+                val straySiteEntries =
                     filterAList(_categories.values.flatten(), _categories.keys.toList())
 
-                strayPasswords.forEach {
+                straySiteEntries.forEach {
                     Log.e(
                         "DataModel",
-                        "Stray password id=${it.id}, category=${it.categoryId}, description=${it.cachedPlainDescription}"
+                        "Stray SiteEntry id=${it.id}, category=${it.categoryId}, description=${it.cachedPlainDescription}"
                     )
                 }
             }
@@ -376,8 +373,8 @@ object DataModel {
                 launch {
                     for (category in _categories.keys) {
                         println("Category id=${category.id} plainname=${category.plainName}") // OK: Dump
-                        for (password in getCategorysPasswords(category.id!!)) {
-                            println("  Password id=${password.id}, description=${password.cachedPlainDescription},changed=${password.passwordChangedDate}") // OK: Dump
+                        for (siteEntry in getCategorysSiteEntries(category.id!!)) {
+                            println("  SiteEntry id=${siteEntry.id}, description=${siteEntry.cachedPlainDescription},changed=${siteEntry.passwordChangedDate}") // OK: Dump
                         }
                     }
                 }
@@ -399,7 +396,7 @@ object DataModel {
         DBHelperFactory.getDBHelper().linkSaveGPMAndSiteEntry(siteEntry.id!!, savedGPMID)
     }
 
-    suspend fun addGPMAsPassword(
+    suspend fun addGPMAsSiteEntry(
         gpmID: Long,
         categoryId: DBID,
         onAdd: suspend (DecryptableSiteEntry) -> Unit
@@ -409,7 +406,7 @@ object DataModel {
             firebaseLog("Trying to add non existing GPM $gpmID")
             return
         }
-        addOrUpdatePassword(DecryptableSiteEntry(categoryId).apply {
+        addOrUpdateSiteEntry(DecryptableSiteEntry(categoryId).apply {
             username = gpm.encryptedUsername
             password = gpm.encryptedPassword
             website = gpm.encryptedUrl

@@ -1,11 +1,11 @@
 package fi.iki.ede.safe.db
 
-internal object Password : Table {
+internal object SiteEntry : Table {
     override val tableName: String
         get() = "passwords"
 
-    enum class Columns(override val columnName: String) : TableColumns<Password> {
-        PWD_ID("id"),
+    enum class Columns(override val columnName: String) : TableColumns<SiteEntry> {
+        SITEENTRY_ID("id"),
         CATEGORY_ID("category"),
         PASSWORD("password"),
         DESCRIPTION("description"),
@@ -19,7 +19,7 @@ internal object Password : Table {
 
     override fun create() = listOf(
         """CREATE TABLE IF NOT EXISTS $tableName (
-    ${Columns.PWD_ID.columnName} INTEGER PRIMARY KEY AUTOINCREMENT,
+    ${Columns.SITEENTRY_ID.columnName} INTEGER PRIMARY KEY AUTOINCREMENT,
     ${Columns.CATEGORY_ID.columnName} INTEGER NOT NULL,
     ${Columns.PASSWORD.columnName} TEXT NOT NULL,
     ${Columns.DESCRIPTION.columnName} TEXT NOT NULL,
