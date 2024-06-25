@@ -207,7 +207,6 @@ private fun SiteEntryEditCompose(
     }
 }
 
-
 @Preview(showBackground = true)
 @Composable
 fun PasswordEntryScreenPreview() {
