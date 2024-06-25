@@ -101,5 +101,6 @@ internal fun <T : Table, C : TableColumns<T>> whereNot(
 // something broken here..
 internal fun <T : Table, C : TableColumns<T>> whereNullOr0(
     column: TableColumns<T>,
-    whereArg: Any
-) = SelectionCondition(column, whereArg, "=", coalesce = 0)
+    whereArg: Any,
+    coalesce: Any
+) = SelectionCondition(column, whereArg, "=", coalesce = coalesce)

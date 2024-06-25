@@ -4,7 +4,7 @@ class SelectionCondition(
     private val column: TableColumns<*>,
     private val singleArg: Any,
     private val comparison: String = "=",
-    private val coalesce: Int? = null
+    private val coalesce: Any? = null
 ) {
     fun query() =
         if (coalesce != null)
@@ -15,7 +15,6 @@ class SelectionCondition(
     fun args() = arrayOf(singleArg.toString())
 
     companion object {
-
         fun alwaysMatch() = SelectionCondition(
             column = object : TableColumns<Nothing> {
                 override val columnName = "1"
