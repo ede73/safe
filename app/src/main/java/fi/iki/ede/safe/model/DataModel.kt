@@ -275,8 +275,6 @@ object DataModel {
     }
 
     suspend fun loadFromDatabase() {
-        // TODO:
-        // withContext(Dispatchers.IO) {???
         _categories.clear()
 
         fun loadCategoriesFromDB() {
