@@ -231,4 +231,12 @@ These selections will be remembered, so next time linking will be easier.</strin
     <string name="google_password_links">Linked GPMs</string>
     <string name="preferences_title_soft_delete">Purge deleted passwords</string>
     <string name="preferences_summary_soft_delete"><![CDATA[%s. You can set a soft deletion time for passwords. If 0, they will be deleted immediately, if > 0, passwords marked deleted will be purged after this many days.]]></string>
+    <string name="action_bar_show_trash">Show trashcan</string>
+    <string name="trash_title">Trashcan</string>
+    <string name="trash_empty_now">Really empty trash? It will be gone forever.</string>
+    <string name="trash_do_empty">Good riddance!</string>
+    <string name="trash_close">Close</string>
+    <string name="trash_cancel">Don\'t empty!</string>
+    <string name="trash_empty_trash">Empty!</string>
+    <string name="trash_restore">Restore!</string>
 </resources>

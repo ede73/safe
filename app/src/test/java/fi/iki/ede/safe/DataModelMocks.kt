@@ -13,7 +13,6 @@ import fi.iki.ede.safe.model.DecryptableSiteEntry
 import io.mockk.every
 import io.mockk.isMockKMock
 import io.mockk.mockkClass
-import io.mockk.slot
 import kotlinx.coroutines.runBlocking
 import java.time.ZonedDateTime
 
@@ -62,7 +61,6 @@ object DataModelMocks {
     fun mockDataModelFor_UNIT_TESTS_ONLY(
         fakeModel: LinkedHashMap<DecryptableCategoryEntry, List<DecryptableSiteEntry>>
     ): DBHelper {
-
         val passwordTable = linkedMapOf<DBID, DecryptableSiteEntry>()
         val categoryTable = linkedMapOf<DBID, DecryptableCategoryEntry>()
         for (categoryAndPasswords in fakeModel.entries) {
@@ -81,46 +79,47 @@ object DataModelMocks {
         // FULL DB mock
         //DataModel.attachDBHelper(db)
         //every { DBHelperFactory.getDBHelper(any()) } returns db
-        val password = slot<DecryptableSiteEntry>()
-        every { db.addSiteEntry(capture(password)) } answers {
+        every { db.addSiteEntry(any<DecryptableSiteEntry>()) } answers {
             val id: DBID = if (passwordTable.keys.isEmpty()) 1 else passwordTable.keys.max() + 1
-            passwordTable[id] = password.captured
+            passwordTable[id] = firstArg()
             id
         }
-        every { db.updateSiteEntry(capture(password)) } answers {
-            val id = password.captured.id!!
+
+        every { db.updateSiteEntry(any<DecryptableSiteEntry>()) } answers {
+            val id = firstArg<DecryptableSiteEntry>().id!!
             check(passwordTable.containsKey(id)) { "Updating password that does not exist" }
-            passwordTable[id] = password.captured
+            passwordTable[id] = firstArg()
             id
         }
-        val category = slot<DecryptableCategoryEntry>()
-        every { db.addCategory(capture(category)) } answers {
+
+        every { db.addCategory(any<DecryptableCategoryEntry>()) } answers {
             val id: DBID = if (categoryTable.keys.isEmpty()) 1 else categoryTable.keys.max() + 1
-            categoryTable[id] = category.captured
+            categoryTable[id] = firstArg()
             id
         }
-        val catid = slot<DBID>()
-        every { db.updateCategory(capture(catid), capture(category)) } answers {
-            check(categoryTable.containsKey(catid.captured)) { "Updating category that does not exist" }
-            categoryTable[catid.captured] = category.captured
-            catid.captured
+
+        every { db.updateCategory(any<DBID>(), any<DecryptableCategoryEntry>()) } answers {
+            check(categoryTable.containsKey(firstArg())) { "Updating category that does not exist" }
+            categoryTable[firstArg()] = secondArg()
+            firstArg()
         }
+
         every { db.fetchAllCategoryRows() } answers { categoryTable.values.toList() }
-        val maybeCatId = slot<DBID>()
-        every { db.fetchAllRows(capture(maybeCatId)) } answers {
-            if (maybeCatId.isNull) {
+
+        // TODO: Doesn't handle soft deleted site entries
+        every { db.fetchAllRows(any<DBID>(), any<Boolean>()) } answers {
+            if (firstArg<DBID?>() == null) {
                 ArrayList(passwordTable.values.toList())
             } else {
-                ArrayList(passwordTable.values.filter { it.categoryId == maybeCatId.captured }
+                ArrayList(passwordTable.values.filter { it.categoryId == firstArg<DBID>() }
                     .toList())
             }
         }
 
-        val salt = slot<Salt>()
-        val cipher = slot<IVCipherText>()
-        every { db.storeSaltAndEncryptedMasterKey(capture(salt), capture(cipher)) } answers {
-            masterKeyStore = Pair(salt.captured, cipher.captured)
+        every { db.storeSaltAndEncryptedMasterKey(any<Salt>(), any<IVCipherText>()) } answers {
+            masterKeyStore = Pair(firstArg(), secondArg())
         }
+
         every { db.fetchSaltAndEncryptedMasterKey() } answers {
             require(masterKeyStore != null) { "Master key MUST have been set in the DataModelMocks" }
             masterKeyStore!!

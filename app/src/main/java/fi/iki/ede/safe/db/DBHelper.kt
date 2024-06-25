@@ -213,41 +213,43 @@ class DBHelper internal constructor(
             }
         }
 
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    // TODO: DELETE, no one uses!
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    fun getCategoryCount(id: DBID) =
-        readableDatabase.let { db ->
-            db.rawQuery(
-                "SELECT count(*) FROM ${SiteEntry.tableName} WHERE category=$id",
-                null
-            ).use {
-                if (it.count > 0) {
-                    it.moveToFirst()
-                    it.getInt(0)
-                } else 0
-            }
-        }
+//    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//    // TODO: DELETE, no one uses!
+//    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//    fun getCategoryCount(id: DBID) =
+//        readableDatabase.let { db ->
+//            db.rawQuery(
+//                "SELECT count(*) FROM ${SiteEntry.tableName} WHERE category=$id",
+//                null
+//            ).use {
+//                if (it.count > 0) {
+//                    it.moveToFirst()
+//                    it.getInt(0)
+//                } else 0
+//            }
+//        }
 
     fun updateCategory(id: DBID, entry: DecryptableCategoryEntry) =
         writableDatabase.update(Category, ContentValues().apply {
             put(Category.Columns.NAME, entry.encryptedName)
         }, whereEq(Category.Columns.CAT_ID, id)).toLong()
 
-    fun fetchAllRows(categoryId: DBID? = null) =
+    fun fetchAllRows(categoryId: DBID? = null, softDeletedOnly: Boolean = false) =
         readableDatabase.let { db ->
             db.query(
                 SiteEntry,
                 SiteEntry.Columns.entries.toSet(),
                 if (categoryId != null) {
                     whereEq(SiteEntry.Columns.CATEGORY_ID, categoryId)
+                } else if (softDeletedOnly) {
+                    whereNot(SiteEntry.Columns.DELETED, 0)
                 } else null,
             ).use {
                 it.moveToFirst()
                 ArrayList<DecryptableSiteEntry>().apply {
                     (0 until it.count).forEach { _ ->
                         // TODO: Until we get chainable selects..filter here
-                        if (it.getInt(it.getColumnIndexOrThrow(SiteEntry.Columns.DELETED)) == 0) {
+                        if (softDeletedOnly || it.getInt(it.getColumnIndexOrThrow(SiteEntry.Columns.DELETED)) == 0) {
                             add(DecryptableSiteEntry(it.getDBID(SiteEntry.Columns.CATEGORY_ID)).apply {
                                 id = it.getDBID(SiteEntry.Columns.SITEENTRY_ID)
                                 password = it.getIVCipher(SiteEntry.Columns.PASSWORD)
@@ -320,6 +322,15 @@ class DBHelper internal constructor(
                 put(SiteEntry.Columns.PASSWORD_CHANGE_DATE, it)
             }
         })
+
+    fun restoreSoftDeletedSiteEntry(id: DBID) =
+        writableDatabase.update(
+            SiteEntry,
+            ContentValues().apply {
+                put(SiteEntry.Columns.DELETED, 0)
+            },
+            whereEq(SiteEntry.Columns.SITEENTRY_ID, id)
+        )
 
     fun markSiteEntryDeleted(id: DBID) =
         writableDatabase.update(

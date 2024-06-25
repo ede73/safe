@@ -40,12 +40,15 @@ object DataModel {
 
     // SiteEntries state and events
     private val _siteEntriesStateFlow = MutableStateFlow<List<DecryptableSiteEntry>>(emptyList())
-    private val _siteEntriesSharedFlow =
-        MutableSharedFlow<PasswordSafeEvent.SiteEntryEvent>(extraBufferCapacity = 10, replay = 10)
     val siteEntriesStateFlow: StateFlow<List<DecryptableSiteEntry>> get() = _siteEntriesStateFlow
 
     // Test only now...
+    private val _siteEntriesSharedFlow =
+        MutableSharedFlow<PasswordSafeEvent.SiteEntryEvent>(extraBufferCapacity = 10, replay = 10)
     val siteEntriesSharedFlow: SharedFlow<PasswordSafeEvent.SiteEntryEvent> get() = _siteEntriesSharedFlow
+
+    private val _softDeletedStateFlow = MutableStateFlow<Set<DecryptableSiteEntry>>(emptySet())
+    val softDeletedStateFlow: StateFlow<Set<DecryptableSiteEntry>> get() = _softDeletedStateFlow
 
     fun DecryptableSiteEntry.getCategory(): DecryptableCategoryEntry =
         _categories.keys.first { it.id == categoryId }
@@ -212,6 +215,24 @@ object DataModel {
         }
     }
 
+    fun restoreSiteEntry(siteEntry: DecryptableSiteEntry) {
+        CoroutineScope(Dispatchers.IO).launch {
+            _softDeletedStateFlow.value -= _softDeletedStateFlow.value.filter { it.id == siteEntry.id }
+            // Find category this password belong to, or first category if it doesn't exist
+            val category = getCategories().firstOrNull { it.id == siteEntry.categoryId }
+                ?: getCategories().firstOrNull()
+            // or at worst, we have no categories..in which case restoration is impossible
+            if (category != null) {
+                val db = DBHelperFactory.getDBHelper()
+                siteEntry.categoryId = category.id
+                db.restoreSoftDeletedSiteEntry(siteEntry.id!!)
+                _categories[category]!!.add(siteEntry)
+                _siteEntriesStateFlow.value += siteEntry
+                //.value = _categories.values.flatten()
+            }
+        }
+    }
+
     suspend fun deleteSiteEntry(siteEntry: DecryptableSiteEntry) {
         require(siteEntry.categoryId != null) { "SiteEntry's category must be known" }
         CoroutineScope(Dispatchers.IO).launch {
@@ -219,6 +240,7 @@ object DataModel {
             Preferences.getSoftDeleteDays().let {
                 if (it > 0) {
                     db.markSiteEntryDeleted(siteEntry.id!!)
+                    _softDeletedStateFlow.value = _softDeletedStateFlow.value + siteEntry
                 } else {
                     db.hardDeleteSiteEntry(siteEntry.id!!)
                 }
@@ -314,6 +336,13 @@ object DataModel {
             _siteEntriesStateFlow.value = _categories.values.flatten()
         }
 
+        fun loadSoftDeletedSiteEntries() {
+            val db = DBHelperFactory.getDBHelper()
+            val softDeletedSiteEntries = db.fetchAllRows(null, true)
+
+            _softDeletedStateFlow.value = softDeletedSiteEntries.toSet()
+        }
+
         // NOTE: Made a HUGE difference in display speed for 300+ siteEntries list on galaxy S24, if completed this is instantaneous
         // NOTE: This can ONLY succeed if user has logged in - as it sits now, this is the case, we load the data model only after login
         // Even if descriptions of site entries aren't very sensitive
@@ -338,6 +367,7 @@ object DataModel {
         loadCategoriesFromDB()
         loadGPMsFromDB()
         loadSiteEntriesFromDB()
+        loadSoftDeletedSiteEntries()
         launchDecryptDescriptions()
 
         if (BuildConfig.DEBUG) {
@@ -348,7 +378,7 @@ object DataModel {
     private suspend fun dumpStrays() {
         coroutineScope {
             launch {
-                // now kinda interesting integrity verification, do we have stray siteentries?
+                // now kinda interesting integrity verification, do we have stray site entries?
                 // ie. belonging to categories nonexistent
                 fun filterAList(
                     aList: List<DecryptableSiteEntry>,

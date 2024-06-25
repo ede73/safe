@@ -79,6 +79,7 @@ fun TopActionBar(
     val displayMenu = remember { mutableStateOf(false) }
     val exportImport = remember { mutableStateOf(false) }
     val showChangePasswordDialog = remember { mutableStateOf(false) }
+    val showTrashDialog = remember { mutableStateOf(false) }
     val toast = remember { mutableStateOf("") }
 
     val context = LocalContext.current
@@ -126,11 +127,19 @@ fun TopActionBar(
             }
 
             MakeDropdownMenu(
-                loginScreen, displayMenu, exportImport, showChangePasswordDialog, toast
+                loginScreen,
+                displayMenu,
+                exportImport,
+                showChangePasswordDialog,
+                toast,
+                showTrashDialog
             )
 
             if (showChangePasswordDialog.value) {
                 ShowChangeMasterPasswordDialog(showChangePasswordDialog)
+            }
+            if (showTrashDialog.value) {
+                ShowTrash(onDismiss = { showTrashDialog.value = false })
             }
         })
     }
@@ -180,6 +189,7 @@ private fun MakeDropdownMenu(
     exportImport: MutableState<Boolean>,
     showChangePasswordDialog: MutableState<Boolean>,
     toast: MutableState<String>,
+    showTrashDialog: MutableState<Boolean>,
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -226,6 +236,12 @@ private fun MakeDropdownMenu(
             onClick = {
                 displayMenu.value = false
                 showChangePasswordDialog.value = true
+            })
+        DropdownMenuItem(enabled = !loginScreen,
+            text = { Text(text = stringResource(id = R.string.action_bar_show_trash)) },
+            onClick = {
+                displayMenu.value = false
+                showTrashDialog.value = true
             })
         IntentManager.getMenuItems(DropDownMenu.TopActionBarMenu).forEach {
             DropdownMenuItem(text = { Text(text = stringResource(id = it.first)) }, onClick = {
