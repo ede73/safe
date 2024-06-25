@@ -15,6 +15,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -36,5 +38,13 @@ fun SelectableItem(text: String, showInfo: () -> Unit, leftSpacer: Boolean = fal
         Text(
             text = text,
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun SelectableItemPreview() {
+    SafeTheme {
+        SelectableItem("item", {},true)
     }
 }
