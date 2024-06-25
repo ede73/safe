@@ -298,6 +298,10 @@ fun ImportEntryListPreview() {
                 "hash"
             )
         }
-        //TODO:   ImportEntryList(mine, imports)
+        // would require datamodel mocks to complete
+        val fakeViewModel = ImportGPMViewModel().apply {
+
+        }
+        ImportEntryList(fakeViewModel)
     }
 }
