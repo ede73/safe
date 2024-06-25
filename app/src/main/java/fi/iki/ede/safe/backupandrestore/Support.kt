@@ -69,36 +69,36 @@ internal fun XmlSerializer.startTagWithIVCipherAttribute(
         this
     }
 
-internal fun XmlSerializer.writePasswordEntry(decryptablePassword: DecryptableSiteEntry) {
+internal fun XmlSerializer.writeSiteEntry(siteEntry: DecryptableSiteEntry) {
     // needed for GPM mapping, won't break bank nor backwards compatibility
-    startTag(Elements.CATEGORY_ITEM).attribute(
-        Attributes.CATEGORY_ITEM_ID,
-        decryptablePassword.id.toString()
+    startTag(Elements.SITE_ENTRY).attribute(
+        Attributes.SITE_ENTRY_ID,
+        siteEntry.id.toString()
     ).let {
-        if (decryptablePassword.deleted > 0) {
-            it.attribute(Attributes.CATEGORY_ITEM_DELETED, decryptablePassword.deleted.toString())
+        if (siteEntry.deleted > 0) {
+            it.attribute(Attributes.SITE_ENTRY_DELETED, siteEntry.deleted.toString())
         }
     }
-    addTagAndCData(Elements.CATEGORY_ITEM_DESCRIPTION, decryptablePassword.description)
-    addTagAndCData(Elements.CATEGORY_ITEM_WEBSITE, decryptablePassword.website)
-    addTagAndCData(Elements.CATEGORY_ITEM_USERNAME, decryptablePassword.username)
+    addTagAndCData(Elements.SITE_ENTRY_DESCRIPTION, siteEntry.description)
+    addTagAndCData(Elements.SITE_ENTRY_WEBSITE, siteEntry.website)
+    addTagAndCData(Elements.SITE_ENTRY_USERNAME, siteEntry.username)
 
     addTagAndCData(
-        Elements.CATEGORY_ITEM_PASSWORD, decryptablePassword.password,
-        decryptablePassword.passwordChangedDate?.let {
+        Elements.SITE_ENTRY_PASSWORD, siteEntry.password,
+        siteEntry.passwordChangedDate?.let {
             Pair(
-                Attributes.CATEGORY_ITEM_PASSWORD_CHANGED,
+                Attributes.SITE_ENTRY_PASSWORD_CHANGED,
                 it.withZoneSameInstant(ZoneOffset.UTC).toEpochSecond().toString()
             )
         }
     )
 
-    addTagAndCData(Elements.CATEGORY_ITEM_NOTE, decryptablePassword.note)
+    addTagAndCData(Elements.SITE_ENTRY_NOTE, siteEntry.note)
 
-    if (decryptablePassword.photo != IVCipherText.getEmpty()) {
-        addTagAndCData(Elements.CATEGORY_ITEM_PHOTO, decryptablePassword.photo)
+    if (siteEntry.photo != IVCipherText.getEmpty()) {
+        addTagAndCData(Elements.SITE_ENTRY_PHOTO, siteEntry.photo)
     }
-    endTag(Elements.CATEGORY_ITEM)
+    endTag(Elements.SITE_ENTRY)
 }
 
 internal fun XmlPullParser.getAttributeValue(
@@ -147,7 +147,7 @@ internal fun XmlSerializer.writeGPMEntry(savedGPM: SavedGPM, gpmToPasswords: Set
         .attribute(Attributes.IMPORTS_GPM_ITEM_HASH, savedGPM.hash)
         .attribute(Attributes.IMPORTS_GPM_ITEM_ID, savedGPM.id.toString())
         .attribute(
-            Attributes.IMPORTS_GPM_ITEM_MAP_TO_PASSWORDS,
+            Attributes.IMPORTS_GPM_ITEM_MAP_TO_SITE_ENTRY,
             gpmToPasswords.joinToString(",")
         )
         .attribute(Attributes.IMPORTS_GPM_ITEM_NAME, savedGPM.encryptedName)

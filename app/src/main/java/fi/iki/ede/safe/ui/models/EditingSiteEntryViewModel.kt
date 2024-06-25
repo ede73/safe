@@ -15,25 +15,25 @@ import java.time.ZonedDateTime
 // If device is rotated or paused/restarted, killed/restarted
 // We want to KEEP EDITING what ever we were editing until discarded or saved
 open class EditingSiteEntryViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow(EditableSiteEntry(-1))
-    val uiState: StateFlow<EditableSiteEntry> = _uiState.asStateFlow()
+    private val _editableSiteEntryState = MutableStateFlow(EditableSiteEntry(-1))
+    val uiState: StateFlow<EditableSiteEntry> = _editableSiteEntryState.asStateFlow()
 
-    fun editPassword(password: DecryptableSiteEntry) {
-        _uiState.value = EditableSiteEntry(
-            password.categoryId as DBID,
-            password.id as DBID,
-            password.cachedPlainDescription,
-            password.plainWebsite,
-            password.username,
-            password.password,
-            password.note,
-            password.plainPhoto,
-            password.passwordChangedDate
+    fun editSiteEntry(siteEntry: DecryptableSiteEntry) {
+        _editableSiteEntryState.value = EditableSiteEntry(
+            siteEntry.categoryId as DBID,
+            siteEntry.id as DBID,
+            siteEntry.cachedPlainDescription,
+            siteEntry.plainWebsite,
+            siteEntry.username,
+            siteEntry.password,
+            siteEntry.note,
+            siteEntry.plainPhoto,
+            siteEntry.passwordChangedDate
         )
     }
 
     fun addPassword(newPassword: IVCipherText, categoryId: DBID, defaultUsername: IVCipherText) {
-        _uiState.value = EditableSiteEntry(
+        _editableSiteEntryState.value = EditableSiteEntry(
             categoryId,
             password = newPassword,
         )
@@ -41,40 +41,40 @@ open class EditingSiteEntryViewModel : ViewModel() {
     }
 
     fun updateDescription(value: String) {
-        val updatedState = _uiState.value.copy(description = value)
-        _uiState.value = updatedState
+        val updatedState = _editableSiteEntryState.value.copy(description = value)
+        _editableSiteEntryState.value = updatedState
     }
 
     fun updateWebSite(value: String) {
-        val updatedState = _uiState.value.copy(website = value)
-        _uiState.value = updatedState
+        val updatedState = _editableSiteEntryState.value.copy(website = value)
+        _editableSiteEntryState.value = updatedState
     }
 
     fun updateUsername(value: IVCipherText) {
-        val updatedState = _uiState.value.copy(username = value)
-        _uiState.value = updatedState
+        val updatedState = _editableSiteEntryState.value.copy(username = value)
+        _editableSiteEntryState.value = updatedState
     }
 
     fun updatePassword(value: IVCipherText) {
-        val updatedState = _uiState.value.copy(password = value)
-        _uiState.value = updatedState
+        val updatedState = _editableSiteEntryState.value.copy(password = value)
+        _editableSiteEntryState.value = updatedState
     }
 
     fun updateNote(value: IVCipherText) {
         // TODO: Changed
-        val updatedState = _uiState.value.copy(note = value)
-        _uiState.value = updatedState
+        val updatedState = _editableSiteEntryState.value.copy(note = value)
+        _editableSiteEntryState.value = updatedState
     }
 
     fun updatePasswordChangedDate(value: ZonedDateTime?) {
         // TODO: Changed
-        val updatedState = _uiState.value.copy(passwordChangedDate = value)
-        _uiState.value = updatedState
+        val updatedState = _editableSiteEntryState.value.copy(passwordChangedDate = value)
+        _editableSiteEntryState.value = updatedState
     }
 
     fun updatePhoto(value: Bitmap?) {
         // TODO: Changed
-        val updatedState = _uiState.value.copy(plainPhoto = value)
-        _uiState.value = updatedState
+        val updatedState = _editableSiteEntryState.value.copy(plainPhoto = value)
+        _editableSiteEntryState.value = updatedState
     }
 }

@@ -11,17 +11,17 @@ sealed class PasswordSafeEvent {
     sealed class SiteEntryEvent : PasswordSafeEvent() {
         data class Added(
             val category: DecryptableCategoryEntry,
-            val password: DecryptableSiteEntry
+            val siteEntry: DecryptableSiteEntry
         ) : SiteEntryEvent()
 
         data class Updated(
             val category: DecryptableCategoryEntry,
-            val password: DecryptableSiteEntry
+            val siteEntry: DecryptableSiteEntry
         ) : SiteEntryEvent()
 
         data class Removed(
             val category: DecryptableCategoryEntry,
-            val password: DecryptableSiteEntry
+            val siteEntry: DecryptableSiteEntry
         ) : SiteEntryEvent()
     }
 }

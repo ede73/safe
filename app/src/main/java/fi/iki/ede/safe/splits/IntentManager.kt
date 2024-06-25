@@ -14,7 +14,7 @@ import fi.iki.ede.safe.ui.activities.PreferenceActivity
 import fi.iki.ede.safe.ui.activities.PrepareDataBaseRestorationScreen
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen.Companion.CATEGORY_ID
-import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen.Companion.PASSWORD_ID
+import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen.Companion.SITE_ENTRY_ID
 import fi.iki.ede.safe.ui.activities.SiteEntryListScreen
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
 
@@ -91,14 +91,14 @@ object IntentManager {
 
     fun getEditPassword(context: Context, passwordId: DBID) =
         getActivityIntent(context, SiteEntryEditScreen::class.java, extras = Bundle().apply {
-            putLong(PASSWORD_ID, passwordId)
+            putLong(SITE_ENTRY_ID, passwordId)
         })
 
     fun startEditPassword(context: Context, passwordId: DBID) =
         startActivity(
             context,
             SiteEntryEditScreen::class.java, extras = Bundle().apply {
-                putLong(PASSWORD_ID, passwordId)
+                putLong(SITE_ENTRY_ID, passwordId)
             }
         )
 

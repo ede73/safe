@@ -27,24 +27,24 @@ import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
 fun SearchSiteEntryList(
-    filteredPasswords: MutableStateFlow<List<DecryptableSiteEntry>>
+    filteredSiteEntries: MutableStateFlow<List<DecryptableSiteEntry>>
 ) {
     val context = LocalContext.current
-    val passwordState = filteredPasswords.collectAsState()
-    val sortedPasswords by remember(passwordState) {
+    val siteEntryState = filteredSiteEntries.collectAsState()
+    val sortedPasswords by remember(siteEntryState) {
         derivedStateOf {
-            passwordState.value.sortedBy { it.cachedPlainDescription }
+            siteEntryState.value.sortedBy { it.cachedPlainDescription }
         }
     }
 
-    fun updateEntry(entryToUpdate: DecryptableSiteEntry) {
-        val updatedList = filteredPasswords.value.map { entry ->
-            if (entry.id == entryToUpdate.id)
-                entryToUpdate.copy()
+    fun updateEntry(siteEntryToUpdate: DecryptableSiteEntry) {
+        val updatedList = filteredSiteEntries.value.map { entry ->
+            if (entry.id == siteEntryToUpdate.id)
+                siteEntryToUpdate.copy()
             else
                 entry
         }
-        filteredPasswords.value = updatedList
+        filteredSiteEntries.value = updatedList
     }
 
     val launcher =
@@ -53,7 +53,7 @@ fun SearchSiteEntryList(
                 // Handle the result here
                 val resultIntent = result.data
                 if (resultIntent != null) {
-                    val passwordId = resultIntent.getLongExtra(SiteEntryEditScreen.PASSWORD_ID, -1L)
+                    val passwordId = resultIntent.getLongExtra(SiteEntryEditScreen.SITE_ENTRY_ID, -1L)
                     updateEntry(DataModel.getSiteEntry(passwordId))
                 }
             }
@@ -63,16 +63,16 @@ fun SearchSiteEntryList(
         items(items = sortedPasswords, itemContent = { filteredItem ->
             // Merge with PasswordRow
             MatchingSiteEntry(
-                passwordEntry = filteredItem,
-                categoryEntry = filteredItem.getCategory(), onEntryClick = {
+                siteEntry = filteredItem,
+                categoryEntry = filteredItem.getCategory(), onSiteEntryClick = {
                     launcher.launch(
                         IntentManager.getEditPassword(context, it.id!!)
                     )
-                }, onDelete = { deletedEntry ->
+                }, onDeleteSiteEntry = { deletedEntry ->
                     // it is gone already
-                    val newList = filteredPasswords.value.filter { it != deletedEntry }
-                    filteredPasswords.value = newList
-                }, onUpdate = { entryToUpdate ->
+                    val newList = filteredSiteEntries.value.filter { it != deletedEntry }
+                    filteredSiteEntries.value = newList
+                }, onUpdateSiteEntry = { entryToUpdate ->
                     updateEntry(entryToUpdate)
                 })
         })

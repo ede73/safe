@@ -42,7 +42,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SiteEntryRow(
-    passEntry: DecryptableSiteEntry,
+    siteEntry: DecryptableSiteEntry,
     categoriesState: List<DecryptableCategoryEntry>,
 ) {
     val context = LocalContext.current
@@ -75,7 +75,7 @@ fun SiteEntryRow(
             .fillMaxWidth()
             .combinedClickable(onClick = {
                 editCompleted.launch(
-                    IntentManager.getEditPassword(context, passEntry.id!!)
+                    IntentManager.getEditPassword(context, siteEntry.id!!)
                 )
             }, onLongClick = {
                 displayMenu = true
@@ -83,7 +83,7 @@ fun SiteEntryRow(
     ) {
         Row {
             Text(
-                text = passEntry.cachedPlainDescription,
+                text = siteEntry.cachedPlainDescription,
                 maxLines = 1,
                 overflow = TextOverflow.Clip,
                 // Move to bounding box (up)
@@ -92,11 +92,11 @@ fun SiteEntryRow(
                     .weight(2f)
             )
 
-            if (passEntry.passwordChangedDate != null) {
+            if (siteEntry.passwordChangedDate != null) {
                 Spacer(modifier = Modifier.weight(1f)) // This will push the Text to the end
 
                 Text(
-                    text = getPasswordAgePlurality(DateUtils.getPeriodBetweenDates(passEntry.passwordChangedDate!!)),
+                    text = getPasswordAgePlurality(DateUtils.getPeriodBetweenDates(siteEntry.passwordChangedDate!!)),
                     modifier = Modifier.padding(12.dp),
                     style = safeTheme.customFonts.smallNote
                 )
@@ -107,7 +107,7 @@ fun SiteEntryRow(
                 Text(
                     text = stringResource(
                         id = R.string.password_list_delete_password,
-                        passEntry.cachedPlainDescription
+                        siteEntry.cachedPlainDescription
                     )
                 )
             }, onClick = {
@@ -118,7 +118,7 @@ fun SiteEntryRow(
                 Text(
                     text = stringResource(
                         id = R.string.password_list_move_password,
-                        passEntry.cachedPlainDescription
+                        siteEntry.cachedPlainDescription
                     )
                 )
             }, onClick = {
@@ -127,9 +127,9 @@ fun SiteEntryRow(
             })
         }
         if (displayDeleteDialog) {
-            DeleteSiteEntryDialog(passEntry, onConfirm = {
+            DeleteSiteEntryDialog(siteEntry, onConfirm = {
                 coroutineScope.launch {
-                    DataModel.deleteSiteEntry(passEntry)
+                    DataModel.deleteSiteEntry(siteEntry)
                 }
                 displayDeleteDialog = false
             }, onDismiss = {
@@ -138,13 +138,13 @@ fun SiteEntryRow(
         }
         if (displayMoveDialog) {
             val currentCategory =
-                DataModel.getCategories().first { it.id == passEntry.categoryId }
+                DataModel.getCategories().first { it.id == siteEntry.categoryId }
             val filteredCategories = categoriesState.filter { it != currentCategory }
                 .sortedBy { it.plainName.lowercase() }
 
             MoveSiteEntry(filteredCategories, onConfirm = { newCategory ->
                 coroutineScope.launch {
-                    DataModel.moveSiteEntry(passEntry, newCategory)
+                    DataModel.moveSiteEntry(siteEntry, newCategory)
                 }
                 displayMoveDialog = false
             }, onDismiss = {

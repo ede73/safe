@@ -14,7 +14,7 @@ import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @Composable
 fun DeleteSiteEntryDialog(
-    passEntry: DecryptableSiteEntry,
+    siteEntry: DecryptableSiteEntry,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -34,7 +34,7 @@ fun DeleteSiteEntryDialog(
         }, title = {
             Text(
                 text = stringResource(
-                    id = R.string.password_list_delete, passEntry.cachedPlainDescription
+                    id = R.string.password_list_delete, siteEntry.cachedPlainDescription
                 )
             )
         })

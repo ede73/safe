@@ -16,24 +16,24 @@ import java.time.ZonedDateTime
 
 @Composable
 fun PersistPasswordEntryChanges(
-    edits: EditableSiteEntry,
+    editedSiteEntry: EditableSiteEntry,
     passwordChanged: Boolean,
     onSaved: (Boolean) -> Unit
 ) {
-    require(!TextUtils.isEmpty(edits.description)) { "Description must be set" }
+    require(!TextUtils.isEmpty(editedSiteEntry.description)) { "Description must be set" }
     val encrypter = KeyStoreHelperFactory.getEncrypter()
-    val passwordEntry = DecryptableSiteEntry(edits.categoryId)
-    passwordEntry.apply {
-        id = edits.id
-        description = edits.description.encrypt(encrypter)
-        website = edits.website.encrypt(encrypter)
-        username = edits.username
-        password = edits.password
-        passwordChangedDate = edits.passwordChangedDate
-        note = edits.note
+    val siteEntry = DecryptableSiteEntry(editedSiteEntry.categoryId)
+    siteEntry.apply {
+        id = editedSiteEntry.id
+        description = editedSiteEntry.description.encrypt(encrypter)
+        website = editedSiteEntry.website.encrypt(encrypter)
+        username = editedSiteEntry.username
+        password = editedSiteEntry.password
+        passwordChangedDate = editedSiteEntry.passwordChangedDate
+        note = editedSiteEntry.note
         photo =
-            if (edits.plainPhoto == null) IVCipherText.getEmpty()
-            else edits.plainPhoto.encrypt(encrypter)
+            if (editedSiteEntry.plainPhoto == null) IVCipherText.getEmpty()
+            else editedSiteEntry.plainPhoto.encrypt(encrypter)
 
         if (passwordChanged) {
             passwordChangedDate = ZonedDateTime.now()
@@ -43,7 +43,7 @@ fun PersistPasswordEntryChanges(
     // TODO: MAKE ASYNC
     //coroutineScope.launch {
     runBlocking {
-        DataModel.addOrUpdateSiteEntry(passwordEntry)
+        DataModel.addOrUpdateSiteEntry(siteEntry)
     }
     // TODO: What if failed
     onSaved(true)
@@ -56,7 +56,7 @@ fun PersistPasswordEntryChangesPreview() {
     KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
     SafeTheme {
         PersistPasswordEntryChanges(
-            edits = EditableSiteEntry(
+            editedSiteEntry = EditableSiteEntry(
                 1,
                 1,
                 "desc",

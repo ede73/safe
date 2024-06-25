@@ -30,9 +30,9 @@ import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.password.PasswordGenerator
-import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen.Companion.PASSWORD_ID
+import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen.Companion.SITE_ENTRY_ID
 import fi.iki.ede.safe.ui.composable.SiteEntryView
-import fi.iki.ede.safe.ui.composable.TryPersistPasswordEntryChanges
+import fi.iki.ede.safe.ui.composable.TryPersistSiteEntryChanges
 import fi.iki.ede.safe.ui.models.EditableSiteEntry
 import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.theme.SafeButton
@@ -50,13 +50,13 @@ class SiteEntryEditScreen : AutolockingBaseComponentActivity() {
         val viewModel: EditingSiteEntryViewModel by viewModels()
 
         if (savedInstanceState == null) {
-            if (intent.hasExtra(PASSWORD_ID)) {
+            if (intent.hasExtra(SITE_ENTRY_ID)) {
                 // Edit a password
-                val passwordId = intent.getLongExtra(PASSWORD_ID, -1L)
-                require(passwordId != -1L) { "Password must be value and exist" }
-                viewModel.editPassword(DataModel.getSiteEntry(passwordId))
+                val siteEntryId = intent.getLongExtra(SITE_ENTRY_ID, -1L)
+                require(siteEntryId != -1L) { "Password must be value and exist" }
+                viewModel.editSiteEntry(DataModel.getSiteEntry(siteEntryId))
             } else if (intent.hasExtra(CATEGORY_ID)) {
-                // Add a new password
+                // Add a new siteentry
                 val categoryId = intent.getLongExtra(CATEGORY_ID, -1L)
                 require(categoryId != -1L) { "Category must be a value and exist" }
 
@@ -76,17 +76,17 @@ class SiteEntryEditScreen : AutolockingBaseComponentActivity() {
                     Preferences.getDefaultUserName().encrypt(encrypter)
                 )
             } else {
-                require(true) { "Must have password or category ID" }
+                require(true) { "Must have siteEntry or category ID" }
             }
         }
 
-        val editingPasswordId = intent.getLongExtra(PASSWORD_ID, -1L)
+        val editingSiteEntryId = intent.getLongExtra(SITE_ENTRY_ID, -1L)
 
         setContent {
             SiteEntryEditCompose(
                 viewModel,
-                editingPasswordId.takeIf { it != -1L },
-                ::resolveEditsAndChangedPassword,
+                editingSiteEntryId.takeIf { it != -1L },
+                ::resolveEditsAndChangedSiteEntry,
                 ::setResult,
                 ::finishActivity
             )
@@ -97,25 +97,25 @@ class SiteEntryEditScreen : AutolockingBaseComponentActivity() {
         finish()
     }
 
-    private fun resolveEditsAndChangedPassword(
+    private fun resolveEditsAndChangedSiteEntry(
         editingPasswordId: DBID?,
         edits: EditableSiteEntry,
     ) = if (editingPasswordId != null) {
-        val originalPassword = DataModel.getSiteEntry(editingPasswordId)
-        wasPasswordEntryChanged(
+        val originalSiteEntry = DataModel.getSiteEntry(editingPasswordId)
+        wasSiteEntryChanged(
             edits,
-            originalPassword
-        ) to !originalPassword.isSamePassword(edits.password)
+            originalSiteEntry
+        ) to !originalSiteEntry.isSamePassword(edits.password)
     } else {
         // We're adding new password, so consider changed
         true to true
     }
 
-    private fun wasPasswordEntryChanged(
+    private fun wasSiteEntryChanged(
         edits: EditableSiteEntry,
-        originalPassword: DecryptableSiteEntry
+        originalSiteEntry: DecryptableSiteEntry
     ) =
-        !originalPassword.isSame(
+        !originalSiteEntry.isSame(
             edits.description,
             edits.website,
             edits.username,
@@ -126,7 +126,7 @@ class SiteEntryEditScreen : AutolockingBaseComponentActivity() {
         )
 
     companion object {
-        const val PASSWORD_ID = "password_id"
+        const val SITE_ENTRY_ID = "password_id"
         const val CATEGORY_ID = "category_id"
         const val TAG = "PasswordEntryScreen"
     }
@@ -135,8 +135,8 @@ class SiteEntryEditScreen : AutolockingBaseComponentActivity() {
 @Composable
 private fun SiteEntryEditCompose(
     viewModel: EditingSiteEntryViewModel,
-    editingPasswordId: DBID?,
-    resolveEditsAndChangedPassword: (DBID?, EditableSiteEntry) -> Pair<Boolean, Boolean>,
+    editingSiteEntryId: DBID?,
+    resolveEditsAndChangedSiteEntry: (DBID?, EditableSiteEntry) -> Pair<Boolean, Boolean>,
     setResult: (Int, Intent?) -> Unit,
     finishActivity: () -> Unit,
 ) {
@@ -153,11 +153,11 @@ private fun SiteEntryEditCompose(
             val edits = viewModel.uiState.collectAsState().value
             var somethingChanged by remember { mutableStateOf(false) }
 
-            val (passwordEntryChanged, passwordChanged) = resolveEditsAndChangedPassword(
-                editingPasswordId,
+            val (siteEntryChanged, passwordChanged) = resolveEditsAndChangedSiteEntry(
+                editingSiteEntryId,
                 edits,
             )
-            somethingChanged = passwordEntryChanged
+            somethingChanged = siteEntryChanged
 
             // If we've some edits AND back button is pressed, show dialog
             BackHandler(enabled = somethingChanged) {
@@ -182,7 +182,7 @@ private fun SiteEntryEditCompose(
                     Text(text = stringResource(id = R.string.password_entry_save_info))
                 })
             } else if (saveEntryRequested) {
-                TryPersistPasswordEntryChanges(
+                TryPersistSiteEntryChanges(
                     edits,
                     passwordChanged,
                     onDismiss = {
@@ -191,7 +191,7 @@ private fun SiteEntryEditCompose(
                     onSaved = {
                         // TODO: what if failed?
                         val resultIntent = Intent()
-                        resultIntent.putExtra(PASSWORD_ID, edits.id)
+                        resultIntent.putExtra(SITE_ENTRY_ID, edits.id)
                         setResult(RESULT_OK, resultIntent)
                         saveEntryRequested = false
                         finnishTheActivity = true
@@ -209,7 +209,7 @@ private fun SiteEntryEditCompose(
 
 @Preview(showBackground = true)
 @Composable
-fun PasswordEntryScreenPreview() {
+fun SiteEntryScreenPreview() {
     KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
     KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
     val entry = DecryptableSiteEntry(1)
@@ -222,11 +222,11 @@ fun PasswordEntryScreenPreview() {
     entry.username = IVCipherText(byteArrayOf(), "username".toByteArray())
     entry.website = IVCipherText(byteArrayOf(), "website".toByteArray())
     //entry.photo=
-    class FakeEditingPasswordViewModel : EditingSiteEntryViewModel()
+    class FakeEditingSiteViewModel : EditingSiteEntryViewModel()
 
-    val fakeViewModel = FakeEditingPasswordViewModel().apply {
+    val fakeViewModel = FakeEditingSiteViewModel().apply {
         // Set up the ViewModel with test data as needed
-        editPassword(entry)
+        editSiteEntry(entry)
     }
     SafeTheme {
         SiteEntryEditCompose(

@@ -20,23 +20,23 @@ import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @Composable
-fun SiteEntryList(passwords: List<DecryptableSiteEntry>) {
+fun SiteEntryList(siteEntries: List<DecryptableSiteEntry>) {
 
-    val passwordItems = remember { mutableStateListOf<@Composable () -> Unit>() }
-    val passwordListHash = remember(passwords) { passwords.hashCode() }
+    val siteEntryItems = remember { mutableStateListOf<@Composable () -> Unit>() }
+    val siteEntryListHash = remember(siteEntries) { siteEntries.hashCode() }
     val categoriesState by DataModel.categoriesStateFlow
         .collectAsState(initial = emptyList())
 
-    LaunchedEffect(passwordListHash) {
+    LaunchedEffect(siteEntryListHash) {
         var previousValue = ""
-        passwordItems.clear()
-        passwords.forEach { password ->
-            val beginning = password.cachedPlainDescription.substring(0, 1).uppercase()
+        siteEntryItems.clear()
+        siteEntries.forEach { siteEntry ->
+            val beginning = siteEntry.cachedPlainDescription.substring(0, 1).uppercase()
             if (previousValue != beginning) {
                 previousValue = beginning
-                passwordItems.add { SiteEntryRowHeader(headerString = beginning) }
+                siteEntryItems.add { SiteEntryRowHeader(headerString = beginning) }
             }
-            passwordItems.add { SiteEntryRow(password, categoriesState) }
+            siteEntryItems.add { SiteEntryRow(siteEntry, categoriesState) }
         }
     }
 
@@ -45,7 +45,7 @@ fun SiteEntryList(passwords: List<DecryptableSiteEntry>) {
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        passwordItems.forEach { composable ->
+        siteEntryItems.forEach { composable ->
             composable()
         }
     }

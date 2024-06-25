@@ -14,7 +14,7 @@ import fi.iki.ede.safe.ui.models.EditableSiteEntry
 import fi.iki.ede.safe.ui.theme.SafeButton
 
 @Composable
-fun TryPersistPasswordEntryChanges(
+fun TryPersistSiteEntryChanges(
     edits: EditableSiteEntry,
     passwordChanged: Boolean,
     onDismiss: () -> Unit,

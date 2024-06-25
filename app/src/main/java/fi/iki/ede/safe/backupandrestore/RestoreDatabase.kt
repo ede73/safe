@@ -114,7 +114,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
     ): Int {
         val path = mutableListOf<Elements?>()
         var category: DecryptableCategoryEntry? = null
-        var password: DecryptableSiteEntry? = null
+        var siteEntry: DecryptableSiteEntry? = null
         var readGPM: SavedGPM? = null
         val readGPMMapsToPasswords: MutableMap<Long, Set<Long>> = mutableMapOf()
         var passwords = 0
@@ -184,7 +184,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             )
 
                             val mapsToPasswords =
-                                myParser.getTrimmedAttributeValue(Attributes.IMPORTS_GPM_ITEM_MAP_TO_PASSWORDS)
+                                myParser.getTrimmedAttributeValue(Attributes.IMPORTS_GPM_ITEM_MAP_TO_SITE_ENTRY)
                                     .takeIf { it.isNotBlank() }?.split(",")
                                     ?.mapNotNull { it.toLongOrNull() }?.toSet() ?: emptySet<Long>()
                             if (mapsToPasswords.isNotEmpty()) {
@@ -206,18 +206,18 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                         listOf(
                             Elements.ROOT_PASSWORD_SAFE,
                             Elements.CATEGORY,
-                            Elements.CATEGORY_ITEM
+                            Elements.SITE_ENTRY
                         ) -> {
                             require(category != null) { "Must have category" }
-                            require(password == null) { "Must not have password" }
-                            password = DecryptableSiteEntry(category.id!!)
-                            myParser.getTrimmedAttributeValue(Attributes.CATEGORY_ITEM_ID)
+                            require(siteEntry == null) { "Must not have siteEntry" }
+                            siteEntry = DecryptableSiteEntry(category.id!!)
+                            myParser.getTrimmedAttributeValue(Attributes.SITE_ENTRY_ID)
                                 .toLongOrNull()?.let {
-                                    password!!.id = it
+                                    siteEntry!!.id = it
                                 }
-                            myParser.getTrimmedAttributeValue(Attributes.CATEGORY_ITEM_DELETED)
+                            myParser.getTrimmedAttributeValue(Attributes.SITE_ENTRY_DELETED)
                                 .toLongOrNull()?.let {
-                                    password!!.deleted = it
+                                    siteEntry!!.deleted = it
                                 }
                             passwords++
                         }
@@ -225,52 +225,52 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                         listOf(
                             Elements.ROOT_PASSWORD_SAFE,
                             Elements.CATEGORY,
-                            Elements.CATEGORY_ITEM,
-                            Elements.CATEGORY_ITEM_DESCRIPTION
+                            Elements.SITE_ENTRY,
+                            Elements.SITE_ENTRY_DESCRIPTION
                         ) -> {
-                            require(password != null) { "Must have password entry" }
+                            require(siteEntry != null) { "Must have siteEntry" }
                             myParser.maybeGetText {
-                                password!!.description = it
+                                siteEntry!!.description = it
                             }
                         }
 
                         listOf(
                             Elements.ROOT_PASSWORD_SAFE,
                             Elements.CATEGORY,
-                            Elements.CATEGORY_ITEM,
-                            Elements.CATEGORY_ITEM_WEBSITE
+                            Elements.SITE_ENTRY,
+                            Elements.SITE_ENTRY_WEBSITE
                         ) -> {
-                            require(password != null) { "Must have password entry" }
+                            require(siteEntry != null) { "Must have siteEntry" }
                             myParser.maybeGetText {
-                                password!!.website = it
+                                siteEntry!!.website = it
                             }
                         }
 
                         listOf(
                             Elements.ROOT_PASSWORD_SAFE,
                             Elements.CATEGORY,
-                            Elements.CATEGORY_ITEM,
-                            Elements.CATEGORY_ITEM_USERNAME
+                            Elements.SITE_ENTRY,
+                            Elements.SITE_ENTRY_USERNAME
                         ) -> {
-                            require(password != null) { "Must have password entry" }
+                            require(siteEntry != null) { "Must have siteEntry" }
                             myParser.maybeGetText {
-                                password!!.username = it
+                                siteEntry!!.username = it
                             }
                         }
 
                         listOf(
                             Elements.ROOT_PASSWORD_SAFE,
                             Elements.CATEGORY,
-                            Elements.CATEGORY_ITEM,
-                            Elements.CATEGORY_ITEM_PASSWORD
+                            Elements.SITE_ENTRY,
+                            Elements.SITE_ENTRY_PASSWORD
                         ) -> {
-                            require(password != null) { "Must have password entry" }
+                            require(siteEntry != null) { "Must have siteEntry" }
 
                             val changed =
-                                myParser.getTrimmedAttributeValue(Attributes.CATEGORY_ITEM_PASSWORD_CHANGED)
+                                myParser.getTrimmedAttributeValue(Attributes.SITE_ENTRY_PASSWORD_CHANGED)
                             if (changed.isNotBlank()) {
                                 try {
-                                    password.passwordChangedDate =
+                                    siteEntry.passwordChangedDate =
                                         changed.toLongOrNull()?.let {
                                             DateUtils.unixEpochSecondsToLocalZonedDateTime(it)
                                         } ?: DateUtils.newParse(changed)
@@ -283,31 +283,31 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                 }
                             }
                             myParser.maybeGetText {
-                                password!!.password = it
+                                siteEntry!!.password = it
                             }
                         }
 
                         listOf(
                             Elements.ROOT_PASSWORD_SAFE,
                             Elements.CATEGORY,
-                            Elements.CATEGORY_ITEM,
-                            Elements.CATEGORY_ITEM_NOTE
+                            Elements.SITE_ENTRY,
+                            Elements.SITE_ENTRY_NOTE
                         ) -> {
-                            require(password != null) { "Must have password entry" }
+                            require(siteEntry != null) { "Must have password entry" }
                             myParser.maybeGetText {
-                                password!!.note = it
+                                siteEntry!!.note = it
                             }
                         }
 
                         listOf(
                             Elements.ROOT_PASSWORD_SAFE,
                             Elements.CATEGORY,
-                            Elements.CATEGORY_ITEM,
-                            Elements.CATEGORY_ITEM_PHOTO
+                            Elements.SITE_ENTRY,
+                            Elements.SITE_ENTRY_PHOTO
                         ) -> {
-                            require(password != null) { "Must have password entry" }
+                            require(siteEntry != null) { "Must have password entry" }
                             myParser.maybeGetText {
-                                password!!.photo = it
+                                siteEntry!!.photo = it
                             }
                         }
                     }
@@ -341,12 +341,12 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                         listOf(
                             Elements.ROOT_PASSWORD_SAFE,
                             Elements.CATEGORY,
-                            Elements.CATEGORY_ITEM
+                            Elements.SITE_ENTRY
                         ) -> {
-                            require(password != null) { "Must have password entry" }
+                            require(siteEntry != null) { "Must have password entry" }
                             reportProgress(null, passwords, null)
-                            dbHelper.addSiteEntry(password)
-                            password = null
+                            dbHelper.addSiteEntry(siteEntry)
+                            siteEntry = null
                         }
 
                         listOf(

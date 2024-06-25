@@ -41,18 +41,18 @@ object DataModelMocks {
         note: String = "enc_note${id}",
         changedDate: ZonedDateTime? = null
     ): DecryptableSiteEntry {
-        val passwordEntry = DecryptableSiteEntry(categoryId)
-        passwordEntry.id = id
-        passwordEntry.description = ks.encryptByteArray(description.toByteArray())
-        passwordEntry.username = ks.encryptByteArray(username.toByteArray())
-        passwordEntry.website = ks.encryptByteArray(website.toByteArray())
-        passwordEntry.note = ks.encryptByteArray(note.toByteArray())
-        passwordEntry.password = ks.encryptByteArray(password.toByteArray())
+        val siteEntry = DecryptableSiteEntry(categoryId)
+        siteEntry.id = id
+        siteEntry.description = ks.encryptByteArray(description.toByteArray())
+        siteEntry.username = ks.encryptByteArray(username.toByteArray())
+        siteEntry.website = ks.encryptByteArray(website.toByteArray())
+        siteEntry.note = ks.encryptByteArray(note.toByteArray())
+        siteEntry.password = ks.encryptByteArray(password.toByteArray())
         if (changedDate != null) {
-            passwordEntry.passwordChangedDate = changedDate
+            siteEntry.passwordChangedDate = changedDate
             //ZonedDateTime.of(2023, 6, 17, 2, 3, 4, 0, ZoneId.of("UTC"))
         }
-        return passwordEntry
+        return siteEntry
     }
 
     /**
@@ -61,14 +61,14 @@ object DataModelMocks {
     fun mockDataModelFor_UNIT_TESTS_ONLY(
         fakeModel: LinkedHashMap<DecryptableCategoryEntry, List<DecryptableSiteEntry>>
     ): DBHelper {
-        val passwordTable = linkedMapOf<DBID, DecryptableSiteEntry>()
+        val siteEntryTable = linkedMapOf<DBID, DecryptableSiteEntry>()
         val categoryTable = linkedMapOf<DBID, DecryptableCategoryEntry>()
-        for (categoryAndPasswords in fakeModel.entries) {
-            require(categoryAndPasswords.key.id != null) { "When initializing, category ID must be preset" }
-            categoryTable[categoryAndPasswords.key.id!!] = categoryAndPasswords.key
-            for (password in categoryAndPasswords.value) {
-                require(password.id != null) { "When initializing, password ID must be preset" }
-                passwordTable[password.id!!] = password
+        for (categoryAndSiteEntries in fakeModel.entries) {
+            require(categoryAndSiteEntries.key.id != null) { "When initializing, category ID must be preset" }
+            categoryTable[categoryAndSiteEntries.key.id!!] = categoryAndSiteEntries.key
+            for (siteEntry in categoryAndSiteEntries.value) {
+                require(siteEntry.id != null) { "When initializing, siteEntry ID must be preset" }
+                siteEntryTable[siteEntry.id!!] = siteEntry
             }
         }
 
@@ -80,15 +80,15 @@ object DataModelMocks {
         //DataModel.attachDBHelper(db)
         //every { DBHelperFactory.getDBHelper(any()) } returns db
         every { db.addSiteEntry(any<DecryptableSiteEntry>()) } answers {
-            val id: DBID = if (passwordTable.keys.isEmpty()) 1 else passwordTable.keys.max() + 1
-            passwordTable[id] = firstArg()
+            val id: DBID = if (siteEntryTable.keys.isEmpty()) 1 else siteEntryTable.keys.max() + 1
+            siteEntryTable[id] = firstArg()
             id
         }
 
         every { db.updateSiteEntry(any<DecryptableSiteEntry>()) } answers {
             val id = firstArg<DecryptableSiteEntry>().id!!
-            check(passwordTable.containsKey(id)) { "Updating password that does not exist" }
-            passwordTable[id] = firstArg()
+            check(siteEntryTable.containsKey(id)) { "Updating siteEntry that does not exist" }
+            siteEntryTable[id] = firstArg()
             id
         }
 
@@ -111,9 +111,9 @@ object DataModelMocks {
             if (secondArg<Boolean>()) {
                 ArrayList(emptyList())
             } else if (firstArg<DBID?>() == null) {
-                ArrayList(passwordTable.values.toList())
+                ArrayList(siteEntryTable.values.toList())
             } else {
-                ArrayList(passwordTable.values.filter { it.categoryId == firstArg<DBID>() }
+                ArrayList(siteEntryTable.values.filter { it.categoryId == firstArg<DBID>() }
                     .toList())
             }
         }
@@ -128,7 +128,7 @@ object DataModelMocks {
         }
 
         // transaction support
-        val passwordTableBackup = linkedMapOf<DBID, DecryptableSiteEntry>()
+        val siteEntriesTableBackup = linkedMapOf<DBID, DecryptableSiteEntry>()
         val categoryTableBackup = linkedMapOf<DBID, DecryptableCategoryEntry>()
         var masterKeyStoreBackup: Pair<Salt, IVCipherText>? = null
         val sql = mockkClass(SQLiteDatabase::class)
@@ -137,9 +137,9 @@ object DataModelMocks {
         every { db.beginRestoration() } answers {
             transactionSuccess = false
             inTransaction = true
-            passwordTableBackup.clear()
-            passwordTableBackup.putAll(passwordTable)
-            passwordTable.clear()
+            siteEntriesTableBackup.clear()
+            siteEntriesTableBackup.putAll(siteEntryTable)
+            siteEntryTable.clear()
             categoryTableBackup.clear()
             categoryTableBackup.putAll(categoryTable)
             categoryTable.clear()
@@ -157,14 +157,14 @@ object DataModelMocks {
             inTransaction = false
             if (transactionSuccess) {
                 // retain current tables
-                passwordTableBackup.clear()
+                siteEntriesTableBackup.clear()
                 categoryTableBackup.clear()
                 masterKeyStoreBackup = null
             } else {
                 // we're rolling back!
-                passwordTable.clear()
-                passwordTable.putAll(passwordTableBackup)
-                passwordTableBackup.clear()
+                siteEntryTable.clear()
+                siteEntryTable.putAll(siteEntriesTableBackup)
+                siteEntriesTableBackup.clear()
                 categoryTable.clear()
                 categoryTable.putAll(categoryTableBackup)
                 categoryTableBackup.clear()

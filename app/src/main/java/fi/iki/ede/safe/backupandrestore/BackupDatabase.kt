@@ -45,10 +45,10 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
                 makePair(Attributes.CATEGORY_NAME, category.encryptedName)
             )
             for (encryptedPassword in DataModel.getCategorysSiteEntries(category.id!!)) {
-                serializer.writePasswordEntry(encryptedPassword)
+                serializer.writeSiteEntry(encryptedPassword)
             }
             DataModel.softDeletedStateFlow.value.toSet().forEach { deletedPassword ->
-                serializer.writePasswordEntry(deletedPassword)
+                serializer.writeSiteEntry(deletedPassword)
             }
             serializer.endTag(Elements.CATEGORY)
         }
@@ -58,7 +58,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
         val gpms = DataModel._savedGPMs
         if (gpms.isNotEmpty()) {
             serializer.startTag(Elements.IMPORTS)
-            val gpmIdToPasswords =
+            val gpmIdToSiteEntry =
                 // TODO: use datamodel!
                 DBHelperFactory.getDBHelper().fetchAllSiteEntryGPMMappings()
                     .flatMap { (a, bSet) -> bSet.map { b -> b to a } }
@@ -68,7 +68,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
             gpms.forEach { savedGPM ->
                 serializer.writeGPMEntry(
                     savedGPM,
-                    gpmIdToPasswords.getOrDefault(savedGPM.id!!, emptySet())
+                    gpmIdToSiteEntry.getOrDefault(savedGPM.id!!, emptySet())
                 )
             }
             serializer.endTag(Elements.IMPORTS_GPM)

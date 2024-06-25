@@ -34,13 +34,13 @@ class SiteEntryListScreen : AutolockingBaseComponentActivity() {
 
         setContent {
             val context = LocalContext.current
-            val passwordsState by siteEntriesStateFlow
+            val siteEntriesState by siteEntriesStateFlow
                 .map { passwords -> passwords.filter { it.categoryId == categoryId } }
                 .map { passwords -> passwords.sortedBy { it.cachedPlainDescription.lowercase() } }
                 .filterNotNull()
                 .collectAsState(initial = emptyList())
 
-            SiteEntryListCompose(context, categoryId, passwordsState)
+            SiteEntryListCompose(context, categoryId, siteEntriesState)
         }
     }
 
@@ -53,7 +53,7 @@ class SiteEntryListScreen : AutolockingBaseComponentActivity() {
 private fun SiteEntryListCompose(
     context: Context?,
     categoryId: Long,
-    passwordsState: List<DecryptableSiteEntry>
+    siteEntriesState: List<DecryptableSiteEntry>
 ) {
     SafeTheme {
         Surface(
@@ -69,7 +69,7 @@ private fun SiteEntryListCompose(
                         )
                     }
                 })
-                SiteEntryList(passwordsState)
+                SiteEntryList(siteEntriesState)
                 // last row
             }
         }

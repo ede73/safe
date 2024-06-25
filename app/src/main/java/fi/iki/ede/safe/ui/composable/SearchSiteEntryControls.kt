@@ -56,7 +56,7 @@ import kotlin.math.abs
  */
 @Composable
 fun SearchSiteEntryControls(
-    matchingPasswordEntries: MutableStateFlow<List<DecryptableSiteEntry>>,
+    matchingSiteEntries: MutableStateFlow<List<DecryptableSiteEntry>>,
     searchTextField: MutableState<TextFieldValue>,
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -67,10 +67,10 @@ fun SearchSiteEntryControls(
 
     // just small gather up for use in UI code below
     fun findNow(checked: Boolean) {
-        matchingPasswordEntries.value = emptyList()
+        matchingSiteEntries.value = emptyList()
         beginSearch(
             DataModel.getSiteEntries(), // ugly but too many recomposes
-            matchingPasswordEntries,
+            matchingSiteEntries,
             searchTextField.value,
             searchWebsites.value,
             searchUsernames.value,
@@ -154,8 +154,8 @@ private const val TAG = "SearchPasswordAndControls"
 
 @OptIn(DelicateCoroutinesApi::class)
 fun beginSearch(
-    allPasswordEntries: List<DecryptableSiteEntry>,
-    matchingPasswordEntries: MutableStateFlow<List<DecryptableSiteEntry>>,
+    allSiteEntries: List<DecryptableSiteEntry>,
+    matchingSiteEntries: MutableStateFlow<List<DecryptableSiteEntry>>,
     searchTextField: TextFieldValue,
     searchWebsites: Boolean,
     searchUsernames: Boolean,
@@ -163,7 +163,7 @@ fun beginSearch(
     searchNotes: Boolean
 ) {
     try {
-        synchronized(allPasswordEntries) {
+        synchronized(allSiteEntries) {
             // IF (and only if) new search term starts with old search term, we could
             // optimize the search by searching the only what was previously found and unsearched entries
             // E.g. user types "a", search begins, user types "b", we could start new search for "ab"
@@ -180,14 +180,14 @@ fun beginSearch(
             }
 
             // no point searching for something we will never find
-            if (searchTextField.text.isEmpty() || allPasswordEntries.isEmpty()) {
-                matchingPasswordEntries.value = emptyList()
+            if (searchTextField.text.isEmpty() || allSiteEntries.isEmpty()) {
+                matchingSiteEntries.value = emptyList()
                 return
             }
 
             // Recreate search progresses to the size of the CPUs
             val cpus =
-                if (allPasswordEntries.size < SiteEntrySearchScreen.MIN_PASSWORDS_FOR_THREADED_SEARCH) {
+                if (allSiteEntries.size < SiteEntrySearchScreen.MIN_PASSWORDS_FOR_THREADED_SEARCH) {
                     1
                 } else Runtime.getRuntime().availableProcessors()
             searchProgressPerThread.clear()
@@ -212,25 +212,25 @@ fun beginSearch(
                     // TODO: PULL UP. no point chunking on every key stroke!!
                     // make sure password entry list is split to chunks of number of CPUs
                     // make sure the nor matter how non-even the CPU count is, all passwords are included
-                    val chunkedPasswordEntries =
-                        allPasswordEntries.chunked((allPasswordEntries.size + cpus) / cpus)
-                    require(chunkedPasswordEntries.size <= cpus) { "Logic error too many chunks" }
+                    val chunkedSiteEntries =
+                        allSiteEntries.chunked((allSiteEntries.size + cpus) / cpus)
+                    require(chunkedSiteEntries.size <= cpus) { "Logic error too many chunks" }
 
                     val routines = mutableListOf<Deferred<Unit>>()
-                    for ((chunkIndex, passwordEntryChunk) in chunkedPasswordEntries.withIndex()) {
+                    for ((chunkIndex, siteEntryChunk) in chunkedSiteEntries.withIndex()) {
                         routines.add(
                             async {
                                 withContext(Dispatchers.Default) {
-                                    asyncFilterChunkOfPasswords(
+                                    asyncFilterChunkOfSiteEntries(
                                         chunkIndex,
                                         ::localIsActive,
                                         searchTextField.text,
-                                        passwordEntryChunk,
+                                        siteEntryChunk,
                                         searchWebsites,
                                         searchUsernames,
                                         searchPasswords,
                                         searchNotes,
-                                        matchingPasswordEntries
+                                        matchingSiteEntries
                                     )
                                 }
                             })
@@ -254,24 +254,24 @@ private fun skippingProgressUpdate(threadIndex: Int, progress: Float) {
     }
 }
 
-private fun asyncFilterChunkOfPasswords(
+private fun asyncFilterChunkOfSiteEntries(
     chunk: Int,
     isActive: () -> Boolean,
     searchText: String,
-    chunkOfPasswordEntries: List<DecryptableSiteEntry>,
+    chunkOfSiteEntries: List<DecryptableSiteEntry>,
     searchWebsites: Boolean,
     searchUsernames: Boolean,
     searchPasswords: Boolean,
     searchNotes: Boolean,
-    matchingPasswordEntries: MutableStateFlow<List<DecryptableSiteEntry>>,
+    matchingSiteEntries: MutableStateFlow<List<DecryptableSiteEntry>>,
 ) {
-    var searchedPasswordCount = 0.0f
-    val amountOfPasswords = chunkOfPasswordEntries.size * 1.0f
+    var searchedSiteEntryCount = 0.0f
+    val amountOfSiteEntries = chunkOfSiteEntries.size * 1.0f
 
-    chunkOfPasswordEntries.forEach {
+    chunkOfSiteEntries.forEach {
         if (isActive()) {
-            searchedPasswordCount++
-            skippingProgressUpdate(chunk, searchedPasswordCount / amountOfPasswords)
+            searchedSiteEntryCount++
+            skippingProgressUpdate(chunk, searchedSiteEntryCount / amountOfSiteEntries)
 
             if (it.contains(
                     searchText,
@@ -281,7 +281,7 @@ private fun asyncFilterChunkOfPasswords(
                     searchNotes
                 )
             ) {
-                matchingPasswordEntries.update { currentList -> currentList + it }
+                matchingSiteEntries.update { currentList -> currentList + it }
             }
         }
     }

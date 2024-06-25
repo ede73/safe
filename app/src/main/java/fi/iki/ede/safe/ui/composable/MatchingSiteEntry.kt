@@ -40,11 +40,11 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MatchingSiteEntry(
-    passwordEntry: DecryptableSiteEntry,
+    siteEntry: DecryptableSiteEntry,
     categoryEntry: DecryptableCategoryEntry,
-    onEntryClick: (DecryptableSiteEntry) -> Unit,
-    onDelete: (DecryptableSiteEntry) -> Unit,
-    onUpdate: (DecryptableSiteEntry) -> Unit
+    onSiteEntryClick: (DecryptableSiteEntry) -> Unit,
+    onDeleteSiteEntry: (DecryptableSiteEntry) -> Unit,
+    onUpdateSiteEntry: (DecryptableSiteEntry) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     val safeTheme = LocalSafeTheme.current
@@ -54,7 +54,7 @@ fun MatchingSiteEntry(
 
     Column(
         modifier = Modifier
-            .combinedClickable(onClick = { onEntryClick(passwordEntry) }, onLongClick = {
+            .combinedClickable(onClick = { onSiteEntryClick(siteEntry) }, onLongClick = {
                 displayMenu = true
             })
             .fillMaxWidth()
@@ -71,7 +71,7 @@ fun MatchingSiteEntry(
             )
             Row {
                 Text(
-                    text = passwordEntry.cachedPlainDescription,
+                    text = siteEntry.cachedPlainDescription,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
@@ -79,12 +79,12 @@ fun MatchingSiteEntry(
                         .weight(2f)
                         .testTag(TestTag.SEARCH_MATCH)
                 )
-                if (passwordEntry.passwordChangedDate != null) {
+                if (siteEntry.passwordChangedDate != null) {
                     Spacer(modifier = Modifier.weight(1f)) // This will push the Text to the end
                     Text(
                         text = getPasswordAgePlurality(
                             duration = DateUtils.getPeriodBetweenDates(
-                                passwordEntry.passwordChangedDate!!
+                                siteEntry.passwordChangedDate!!
                             )
                         ),
                         style = safeTheme.customFonts.smallNote,
@@ -97,7 +97,7 @@ fun MatchingSiteEntry(
                     Text(
                         text = stringResource(
                             id = R.string.password_list_delete_password,
-                            passwordEntry.cachedPlainDescription
+                            siteEntry.cachedPlainDescription
                         )
                     )
                 }, onClick = {
@@ -108,7 +108,7 @@ fun MatchingSiteEntry(
                     Text(
                         text = stringResource(
                             id = R.string.password_list_move_password,
-                            passwordEntry.cachedPlainDescription
+                            siteEntry.cachedPlainDescription
                         )
                     )
                 }, onClick = {
@@ -117,10 +117,10 @@ fun MatchingSiteEntry(
                 })
             }
             if (displayDeleteDialog) {
-                DeleteSiteEntryDialog(passwordEntry, onConfirm = {
+                DeleteSiteEntryDialog(siteEntry, onConfirm = {
                     coroutineScope.launch {
-                        DataModel.deleteSiteEntry(passwordEntry)
-                        onDelete(passwordEntry)
+                        DataModel.deleteSiteEntry(siteEntry)
+                        onDeleteSiteEntry(siteEntry)
                     }
                     displayDeleteDialog = false
                 }, onDismiss = {
@@ -128,17 +128,17 @@ fun MatchingSiteEntry(
                 })
             }
             if (displayMoveDialog) {
-                val currentCategory = passwordEntry.getCategory()
+                val currentCategory = siteEntry.getCategory()
                 val filteredCategories = DataModel.getCategories().filter { it != currentCategory }
 
                 MoveSiteEntry(filteredCategories, onConfirm = { newCategory ->
                     coroutineScope.launch {
-                        DataModel.moveSiteEntry(passwordEntry, newCategory)
+                        DataModel.moveSiteEntry(siteEntry, newCategory)
                     }
                     displayMoveDialog = false
-                    val z = passwordEntry.copy()
+                    val z = siteEntry.copy()
                     z.categoryId = newCategory.id
-                    onUpdate(z)
+                    onUpdateSiteEntry(z)
                 }, onDismiss = {
                     displayMoveDialog = false
                 })

@@ -70,10 +70,10 @@ class OISafeBackupRestoreDatabaseTest {
             (categories.size + 1).toLong()
         }
         val pwd = slot<DecryptableSiteEntry>()
-        val passwords = mutableListOf<DecryptableSiteEntry>()
+        val siteEntries = mutableListOf<DecryptableSiteEntry>()
         every { dbHelper.addSiteEntry(capture(pwd)) } answers {
-            passwords.add(pwd.captured)
-            (passwords.size + 1).toLong()
+            siteEntries.add(pwd.captured)
+            (siteEntries.size + 1).toLong()
         }
         every { db.setTransactionSuccessful() } answers {}
         every { db.endTransaction() } answers { inTransaction = false }
@@ -99,19 +99,19 @@ class OISafeBackupRestoreDatabaseTest {
         )
         Assert.assertEquals(2, totalPasswords)
         Assert.assertEquals(2, categories.size)
-        Assert.assertEquals(2, passwords.size)
+        Assert.assertEquals(2, siteEntries.size)
 
-        assertEquals("secret", passwords[0].cachedPlainDescription)
-        assertEquals("", passwords[0].plainWebsite)
-        assertEquals("piip", passwords[0].plainUsername)
-        assertEquals("puup", passwords[0].plainPassword)
-        assertEquals("", passwords[0].plainNote)
+        assertEquals("secret", siteEntries[0].cachedPlainDescription)
+        assertEquals("", siteEntries[0].plainWebsite)
+        assertEquals("piip", siteEntries[0].plainUsername)
+        assertEquals("puup", siteEntries[0].plainPassword)
+        assertEquals("", siteEntries[0].plainNote)
 
-        assertEquals("abc", passwords[1].cachedPlainDescription)
-        assertEquals("", passwords[1].plainWebsite)
-        assertEquals("", passwords[1].plainUsername)
-        assertEquals("123", passwords[1].plainPassword)
-        assertEquals("note notes and more notes", passwords[1].plainNote)
+        assertEquals("abc", siteEntries[1].cachedPlainDescription)
+        assertEquals("", siteEntries[1].plainWebsite)
+        assertEquals("", siteEntries[1].plainUsername)
+        assertEquals("123", siteEntries[1].plainPassword)
+        assertEquals("note notes and more notes", siteEntries[1].plainNote)
 
         assertEquals("cat1", categories[0].plainName)
         assertEquals("cat2", categories[1].plainName)
