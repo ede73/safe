@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -61,6 +62,10 @@ fun PasswordTextField(
     val splitAt = 6
     var password by remember { mutableStateOf(TextFieldValue(text = inputValue)) }
     val revealPassword = remember { mutableStateOf(false) }
+
+    LaunchedEffect(inputValue) {
+        password = password.copy(text = inputValue)
+    }
 
     TextField(
         value = password,
@@ -125,10 +130,9 @@ fun PasswordTextField(
 //                .fillMaxHeight(fraction = 1f) else it
 //        }
     )
-    //return Password(joinPassword(password).text.toByteArray())
 }
 
-fun isLinefeedLeft(newValue: TextFieldValue): Boolean {
+private fun isLinefeedLeft(newValue: TextFieldValue): Boolean {
     val s = (newValue.selection.start - 1).coerceIn(0, newValue.text.length)
     val e = (s + 1).coerceIn(s, newValue.text.length)
     return newValue.text.substring(s, e) == "\n"
@@ -145,11 +149,11 @@ private fun ShowOrHidePassword(revealPassword: MutableState<Boolean>) =
         )
     }
 
-fun splitPassword(isPasswordZoomed: Boolean, password: TextFieldValue, size: Int = 6) =
+private fun splitPassword(isPasswordZoomed: Boolean, password: TextFieldValue, size: Int = 6) =
     if (!isPasswordZoomed) password else
         password.copy(text = joinPassword(password).text.chunked(size).joinToString("\n"))
 
-fun joinPassword(password: TextFieldValue) =
+private fun joinPassword(password: TextFieldValue) =
     password.copy(text = password.text.filter { it != '\n' })
 
 @Composable
