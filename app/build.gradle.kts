@@ -23,6 +23,7 @@ plugins {
     alias(libs.plugins.org.jetbrains.kotlin.android)
     id("com.google.gms.google-services") // Firebase crashlytics
     id("com.google.firebase.crashlytics") // Firebase crashlytics
+    kotlin("plugin.serialization")
 }
 
 /**
@@ -252,6 +253,7 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:33.1.1")) // firebase crashlytics
     implementation("com.google.firebase:firebase-analytics") // firebase crashlytics (breadcrumbs)
     implementation("com.google.firebase:firebase-crashlytics")
+    implementation(libs.kotlinx.serialization.json)
 
     // Bring bouncy castle to unit tests
     testImplementation("org.bouncycastle:bcprov-jdk16:1.46")

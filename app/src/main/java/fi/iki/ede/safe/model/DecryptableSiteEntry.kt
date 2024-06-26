@@ -1,8 +1,13 @@
 package fi.iki.ede.safe.model
 
 import android.graphics.Bitmap
+import android.util.Log
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.gpm.model.decrypt
+import fi.iki.ede.gpm.model.encrypt
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.time.ZonedDateTime
 
 /**
@@ -33,6 +38,19 @@ class DecryptableSiteEntry(categoryId: Long) {
     var note: IVCipherText = IVCipherText.getEmpty()
     var password: IVCipherText = IVCipherText.getEmpty()
     val extensions = mutableMapOf<SiteEntryExtensionType, MutableSet<String>>()
+    fun exportExtensionsToDB() = Json.encodeToString(extensions).encrypt()
+    fun importExtensionsFromDB(encryptedJson: IVCipherText) {
+        try {
+            val serializedExtension = encryptedJson.decrypt().trim()
+            val decodedExtension =
+                Json.decodeFromString<MutableMap<SiteEntryExtensionType, MutableSet<String>>>(
+                    serializedExtension
+                )
+            extensions.putAll(decodedExtension)
+        } catch (e: Exception) {
+            Log.d("DecryptableSiteEntry", "Failed to import extensions", e)
+        }
+    }
 
     // Password changed date(time) is not privacy critical (hence unencrypted)
     // TODO: LocalDateTime will suffice...
@@ -87,19 +105,19 @@ class DecryptableSiteEntry(categoryId: Long) {
         passwordChangedDate: ZonedDateTime?,
         note: IVCipherText,
         photo: Bitmap?,
-        extensions: MutableMap<SiteEntryExtensionType, MutableSet<String>>
-    ) = !(cachedPlainDescription != description ||
-            plainWebsite != website ||
-            plainUsername != decrypt(username) ||
-            !isSamePassword(password) ||
-            this.passwordChangedDate != passwordChangedDate ||
-            plainNote != decrypt(note) ||
-            !(photo?.sameAs(plainPhoto) ?: (plainPhoto == null))) ||
+        extensions: Map<SiteEntryExtensionType, Set<String>>
+    ) = cachedPlainDescription == description &&
+            plainWebsite == website &&
+            plainUsername == decrypt(username) &&
+            isSamePassword(password) &&
+            this.passwordChangedDate == passwordChangedDate &&
+            plainNote == decrypt(note) &&
+            (photo?.sameAs(plainPhoto) ?: (plainPhoto == null)) &&
             !areMapsDifferent(extensions, this.extensions)
 
     private fun areMapsDifferent(
-        map1: MutableMap<SiteEntryExtensionType, MutableSet<String>>,
-        map2: MutableMap<SiteEntryExtensionType, MutableSet<String>>
+        map1: Map<SiteEntryExtensionType, Set<String>>,
+        map2: Map<SiteEntryExtensionType, Set<String>>
     ): Boolean {
         // Clean maps from empty strings and empty sets
         val cleanMap1 = map1.mapValues { (_, value) -> value.filterNot { it.isBlank() }.toSet() }

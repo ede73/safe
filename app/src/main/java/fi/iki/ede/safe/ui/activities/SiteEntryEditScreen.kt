@@ -114,17 +114,16 @@ class SiteEntryEditScreen : AutolockingBaseComponentActivity() {
     private fun wasSiteEntryChanged(
         edits: EditableSiteEntry,
         originalSiteEntry: DecryptableSiteEntry
-    ) =
-        !originalSiteEntry.isSame(
-            edits.description,
-            edits.website,
-            edits.username,
-            edits.password,
-            edits.passwordChangedDate,
-            edits.note,
-            edits.plainPhoto,
-            edits.extensions
-        )
+    ) = !originalSiteEntry.isSame(
+        edits.description,
+        edits.website,
+        edits.username,
+        edits.password,
+        edits.passwordChangedDate,
+        edits.note,
+        edits.plainPhoto,
+        edits.extensions
+    )
 
     companion object {
         const val SITE_ENTRY_ID = "password_id"
@@ -147,11 +146,10 @@ private fun SiteEntryEditCompose(
             modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
         ) {
             // TODO: Not sure! AlertDialogs are both closed, anyway this solves the issue
-            var finnishTheActivity by remember { mutableStateOf(false) }
-            var showSaveOrDiscardDialog by remember { mutableStateOf(false) }
-            var saveEntryRequested by remember { mutableStateOf(false) }
-
             val edits = viewModel.editableSiteEntryState.collectAsState().value
+            var finnishTheActivity by remember { mutableStateOf(false) }
+            var saveEntryRequested by remember { mutableStateOf(false) }
+            var showSaveOrDiscardDialog by remember { mutableStateOf(false) }
             var somethingChanged by remember { mutableStateOf(false) }
 
             val (siteEntryChanged, passwordChanged) = resolveEditsAndChangedSiteEntry(
@@ -180,7 +178,7 @@ private fun SiteEntryEditCompose(
                         finnishTheActivity = true
                     }) { Text(text = stringResource(id = R.string.password_entry_discard)) }
                 }, title = {
-                    Text(text = stringResource(id = R.string.password_entry_save_info))
+                    Text(text = stringResource(id = R.string.password_entry_unsaved_changes_info))
                 })
             } else if (saveEntryRequested) {
                 TryPersistSiteEntryChanges(

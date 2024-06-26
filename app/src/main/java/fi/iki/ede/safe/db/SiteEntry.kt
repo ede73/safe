@@ -14,7 +14,8 @@ internal object SiteEntry : Table {
         NOTE("note"),
         PHOTO("photo"),
         PASSWORD_CHANGE_DATE("passwordchangeddate"),
-        DELETED("deleted")
+        DELETED("deleted"),
+        EXTENSIONS("extensions"),
     }
 
     override fun create() = listOf(
@@ -28,7 +29,8 @@ internal object SiteEntry : Table {
     ${Columns.NOTE.columnName} TEXT,
     ${Columns.PHOTO.columnName} TEXT,
     ${Columns.PASSWORD_CHANGE_DATE.columnName} TEXT,
-    ${Columns.DELETED.columnName} INTEGER DEFAULT 0);"""
+    ${Columns.DELETED.columnName} INTEGER DEFAULT 0,
+    ${Columns.EXTENSIONS.columnName} TEXT);"""
     )
 
     override fun drop() = listOf("DROP TABLE IF EXISTS $tableName;")

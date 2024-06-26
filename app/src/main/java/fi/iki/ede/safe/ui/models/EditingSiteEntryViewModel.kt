@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.safe.db.DBID
 import fi.iki.ede.safe.model.DecryptableSiteEntry
+import fi.iki.ede.safe.model.SiteEntryExtensionType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -77,5 +78,11 @@ open class EditingSiteEntryViewModel : ViewModel() {
         // TODO: Changed
         val updatedState = _editableSiteEntryState.value.copy(plainPhoto = value)
         _editableSiteEntryState.value = updatedState
+    }
+
+    fun updateExtensions(map: Map<SiteEntryExtensionType, Set<String>>) {
+        val currentState = _editableSiteEntryState.value
+        val updateState = currentState.copy(extensions = map)
+        _editableSiteEntryState.value = updateState
     }
 }

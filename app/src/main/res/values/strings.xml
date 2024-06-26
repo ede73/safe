@@ -137,7 +137,7 @@ These selections will be remembered, so next time linking will be easier.</strin
     <string name="password_entry_password_label">Copy</string>
     <string name="password_entry_password_tip">Enter password</string>
     <string name="password_entry_save">Save?</string>
-    <string name="password_entry_save_info">You have unsaved changes.\nWould you like to save or discard them?</string>
+    <string name="password_entry_unsaved_changes_info">You have unsaved changes.\nWould you like to save or discard them?</string>
     <string name="password_entry_username_label">Copy</string>
     <string name="password_entry_username_tip">Enter username</string>
     <string name="password_entry_visit">Visit</string>

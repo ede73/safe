@@ -24,5 +24,4 @@ class DecryptableCategoryEntry {
     }
 
     var containedSiteEntryCount = 0
-
 }

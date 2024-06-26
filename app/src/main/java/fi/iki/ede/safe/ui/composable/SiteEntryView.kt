@@ -49,7 +49,6 @@ import fi.iki.ede.safe.model.SiteEntryExtensionType
 import fi.iki.ede.safe.password.PasswordGenerator
 import fi.iki.ede.safe.splits.PluginManager
 import fi.iki.ede.safe.splits.PluginName
-import fi.iki.ede.safe.ui.models.EditableSiteEntry
 import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import fi.iki.ede.safe.ui.theme.SafeButton
@@ -214,15 +213,13 @@ fun SiteEntryView(
             }
         }
 
-        SiteEntryExtensionList(passEntry)
+        SiteEntryExtensionList(viewModel)
 
         PasswordTextField(
             textTip = R.string.password_entry_note_tip,
             modifier = Modifier.fillMaxWidth(),
             inputValue = passEntry.note.decrypt(decrypter),
-            onValueChange = {
-                viewModel.updateNote(it.encrypt(encrypter))
-            },
+            onValueChange = { viewModel.updateNote(it.encrypt(encrypter)) },
             singleLine = false,
             maxLines = 22,
             highlight = false,
@@ -248,7 +245,7 @@ fun SiteEntryView(
 
 @Composable
 fun SiteEntryExtensionList(
-    editableSiteEntry: EditableSiteEntry
+    viewModel: EditingSiteEntryViewModel,
 ) {
     // TODO: NONO..flow!
     val allExtensions = DataModel.getAllSiteEntryExtensions()
@@ -256,7 +253,7 @@ fun SiteEntryExtensionList(
     SiteEntryExtensionType.entries.sortedBy { it.name }.forEach {
         Column {
             SiteEntryExtensionSelector(
-                editableSiteEntry,
+                viewModel,
                 allExtensions.getOrDefault(it, emptySet()),
                 it
             )
@@ -266,19 +263,43 @@ fun SiteEntryExtensionList(
 
 @Composable
 fun SiteEntryExtensionSelector(
-    siteEntry: EditableSiteEntry,
+    viewModel: EditingSiteEntryViewModel,
     allKnownValues: Set<String>,
     extensionType: SiteEntryExtensionType,
 ) {
+    val entry by viewModel.editableSiteEntryState.collectAsState()
+
+    fun addToMap(
+        map: Map<SiteEntryExtensionType, Set<String>>,
+        type: SiteEntryExtensionType,
+        value: String
+    ): Map<SiteEntryExtensionType, Set<String>> {
+        val mutableMap = map.toMutableMap()
+        mutableMap[type] = mutableMap[type]?.plus(value) ?: setOf(value)
+        return mutableMap.toMap()
+    }
+
+    fun removeFromMap(
+        map: Map<SiteEntryExtensionType, Set<String>>,
+        type: SiteEntryExtensionType,
+        value: String
+    ): Map<SiteEntryExtensionType, Set<String>> {
+        val mutableMap = map.toMutableMap()
+        mutableMap[type] = mutableMap[type]?.minus(value) ?: emptySet()
+        return mutableMap
+    }
+
     val allKnownEntries =
         remember { mutableStateListOf<String>().also { it.addAll(allKnownValues) } }
     var checked by remember { mutableStateOf(false) }
-    if (!siteEntry.extensions.containsKey(extensionType)) {
-        siteEntry.extensions[extensionType] = mutableSetOf()
+    if (!entry.extensions.containsKey(extensionType)) {
+        entry.extensions = entry.extensions.toMutableMap().apply {
+            this[extensionType] = setOf()
+        }
     }
     var selectedEntry by remember { mutableStateOf("") }
 
-    if (siteEntry.extensions[extensionType]!!.size == 0 && !checked) {
+    if (entry.extensions[extensionType]!!.isEmpty() && !checked) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Checkbox(checked = checked, onCheckedChange = { checked = !checked })
             Text(text = extensionType.name)
@@ -286,35 +307,56 @@ fun SiteEntryExtensionSelector(
     } else {
         Text(text = extensionType.name)
         EditableComboBox(
-            selectedItems = siteEntry.extensions[extensionType]!!.toSet(),
+            selectedItems = entry.extensions[extensionType]!!.toSet(),
             allItems = allKnownEntries.toSet(),
             onItemSelected = { selectedItem ->
-                siteEntry.extensions.getOrPut(extensionType) { mutableSetOf() }.let { currentSet ->
-                    if (selectedItem in currentSet) {
-                        currentSet.remove(selectedItem)
-                        ""
-                    } else {
-                        currentSet.add(selectedItem)
-                        selectedItem
-                    }
+                val currentExtension = entry.extensions
+                val currentSet = currentExtension[extensionType] ?: emptySet()
+                if (selectedItem in currentSet) {
+                    viewModel.updateExtensions(
+                        removeFromMap(
+                            currentExtension,
+                            extensionType,
+                            selectedItem
+                        )
+                    )
+                    ""
+                } else {
+                    viewModel.updateExtensions(
+                        addToMap(
+                            currentExtension,
+                            extensionType,
+                            selectedItem
+                        )
+                    )
+                    selectedItem
                 }
             },
             onItemEdited = { editedItem ->
-                siteEntry.extensions[extensionType].let { extensions ->
-                    extensions!!.remove(selectedEntry)
-                    extensions.add(editedItem)
-                }
+                val rem = removeFromMap(
+                    entry.extensions,
+                    extensionType,
+                    selectedEntry
+                )
+                val add = addToMap(rem, extensionType, editedItem)
+                viewModel.updateExtensions(add)
                 selectedEntry = editedItem
             },
             onItemRequestedToDelete = { itemToDelete ->
                 // ONLY can delete if NOT used anywhere else
-                if (!DataModel.getAllSiteEntryExtensions().flatMap { it.value }.toSet()
+                if (!DataModel.getAllSiteEntryExtensions(entry.id).flatMap { it.value }.toSet()
                         .contains(itemToDelete)
                 ) {
                     // deletion allowed, not used anywhere else..will "autodelete" from full collection on save
-                    siteEntry.extensions[extensionType].let { currentSet ->
+                    entry.extensions[extensionType].let { currentSet ->
                         if (itemToDelete in currentSet!!) {
-                            currentSet.remove(itemToDelete)
+                            viewModel.updateExtensions(
+                                removeFromMap(
+                                    entry.extensions,
+                                    extensionType,
+                                    itemToDelete
+                                ),
+                            )
                         }
                     }
                     allKnownEntries.remove(itemToDelete)

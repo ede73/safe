@@ -21,5 +21,5 @@ data class EditableSiteEntry(
     val plainPhoto: Bitmap? = null,
     val passwordChangedDate: ZonedDateTime? = null,
     // TODO: Map/Set should suffice!
-    val extensions: MutableMap<SiteEntryExtensionType, MutableSet<String>> = mutableMapOf()
+    var extensions: Map<SiteEntryExtensionType, Set<String>> = mapOf(),
 )

@@ -118,6 +118,10 @@ class DBHelper internal constructor(
                     upgradeFromV5ToV6AddDeletedColumn(db, upgrade)
                 }
 
+                6 -> {
+                    upgradeFromV6ToV7AddExtensionsColumn(db, upgrade)
+                }
+
                 else -> Log.w(
                     TAG, "onUpgrade() with unknown oldVersion $oldVersion to $newVersion"
                 )
@@ -265,6 +269,9 @@ class DBHelper internal constructor(
                                 } catch (ex: Exception) {
                                     Log.d(TAG, "Date parsing issue", ex)
                                 }
+                                importExtensionsFromDB(
+                                    it.getIVCipher(SiteEntry.Columns.EXTENSIONS)
+                                )
                             })
                         }
                         it.moveToNext()
@@ -289,6 +296,7 @@ class DBHelper internal constructor(
                     entry.passwordChangedDate!!
                 )
             }
+            put(SiteEntry.Columns.EXTENSIONS, entry.exportExtensionsToDB())
         }
         val ret = writableDatabase.update(
             SiteEntry,
@@ -323,6 +331,7 @@ class DBHelper internal constructor(
             entry.passwordChangedDate?.let {
                 put(SiteEntry.Columns.PASSWORD_CHANGE_DATE, it)
             }
+            put(SiteEntry.Columns.EXTENSIONS, entry.exportExtensionsToDB())
         })
 
     fun restoreSoftDeletedSiteEntry(id: DBID) =
@@ -500,7 +509,7 @@ class DBHelper internal constructor(
         )
 
     companion object {
-        private const val DATABASE_VERSION = 6
+        private const val DATABASE_VERSION = 7
         const val DATABASE_NAME = "safe"
         private const val TAG = "DBHelper"
 
@@ -527,6 +536,17 @@ class DBHelper internal constructor(
                 }
             }
             return 0 // versions are equal
+        }
+
+        fun upgradeFromV6ToV7AddExtensionsColumn(db: SQLiteDatabase, upgrade: Int) {
+            db.beginTransaction()
+            try {
+                db.execSQL("ALTER TABLE ${SiteEntry.tableName} ADD COLUMN extensions TEXT")
+            } catch (ex: SQLiteException) {
+                Log.i(TAG, "onUpgrade $upgrade: $ex")
+            }
+            db.setTransactionSuccessful()
+            db.endTransaction()
         }
 
         fun upgradeFromV5ToV6AddDeletedColumn(db: SQLiteDatabase, upgrade: Int) {
