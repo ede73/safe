@@ -14,6 +14,7 @@ import fi.iki.ede.crypto.keystore.KeyManagement.generatePBKDF2AESKey
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.hexToByteArray
 import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.gpm.model.decrypt
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Attributes
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Elements
@@ -22,6 +23,7 @@ import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.model.Preferences
+import fi.iki.ede.safe.model.SiteEntryExtensionType
 import kotlinx.coroutines.CancellationException
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
@@ -119,6 +121,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         val readGPMMapsToPasswords: MutableMap<Long, Set<Long>> = mutableMapOf()
         var passwords = 0
         var categories = 0
+        var lastExtensionName: SiteEntryExtensionType? = null
         while (myParser.eventType != XmlPullParser.END_DOCUMENT) {
             when (myParser.eventType) {
                 XmlPullParser.START_TAG -> {
@@ -310,6 +313,38 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                 siteEntry!!.photo = it
                             }
                         }
+
+                        listOf(
+                            Elements.ROOT_PASSWORD_SAFE,
+                            Elements.CATEGORY,
+                            Elements.SITE_ENTRY,
+                            Elements.SITE_ENTRY_EXTENSIONS,
+                            Elements.SITE_ENTRY_EXTENSIONS_EXTENSION,
+                        ) -> {
+                            require(siteEntry != null) { "Must have siteEntry" }
+                            val extensionName =
+                                myParser.getEncryptedAttribute(Attributes.SITE_ENTRY_EXTENSION_NAME)
+                            if (extensionName.isNotEmpty()) {
+                                lastExtensionName =
+                                    SiteEntryExtensionType.entries.first { it.extensionName == extensionName.decrypt() }
+                                siteEntry.extensions[lastExtensionName] = mutableSetOf()
+                            }
+                        }
+
+                        listOf(
+                            Elements.ROOT_PASSWORD_SAFE,
+                            Elements.CATEGORY,
+                            Elements.SITE_ENTRY,
+                            Elements.SITE_ENTRY_EXTENSIONS,
+                            Elements.SITE_ENTRY_EXTENSIONS_EXTENSION,
+                            Elements.SITE_ENTRY_EXTENSIONS_EXTENSION_VALUE,
+                        ) -> {
+                            require(siteEntry != null) { "Must have siteEntry" }
+                            require(lastExtensionName != null) { "Must have lastExtensionName" }
+                            myParser.maybeGetText {
+                                siteEntry!!.extensions[lastExtensionName]!!.add(it.decrypt())
+                            }
+                        }
                     }
                 }
             }
@@ -358,6 +393,16 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             require(readGPM != null) { "Must have GPM entry" }
                             dbHelper.addSavedGPM(readGPM)
                             readGPM = null
+                        }
+
+                        listOf(
+                            Elements.ROOT_PASSWORD_SAFE,
+                            Elements.CATEGORY,
+                            Elements.SITE_ENTRY,
+                            Elements.SITE_ENTRY_EXTENSIONS,
+                            Elements.SITE_ENTRY_EXTENSIONS_EXTENSION,
+                        ) -> {
+                            lastExtensionName = null
                         }
                     }
                     // removeLast() broken on build tools 35

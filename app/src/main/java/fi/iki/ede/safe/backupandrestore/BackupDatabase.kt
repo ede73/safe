@@ -78,7 +78,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
         serializer.endTag(Elements.ROOT_PASSWORD_SAFE)
         serializer.endDocument()
         val makeThisStreaming = xmlStringWriter.toString()
-
+        println(makeThisStreaming)
         if (makeThisStreaming.contains(" ")) {
             Log.e(TAG, "Oh no, XML export has non breakable spaces")
         }

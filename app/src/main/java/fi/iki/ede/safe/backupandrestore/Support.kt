@@ -4,6 +4,7 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.support.hexToByteArray
 import fi.iki.ede.crypto.support.toHexString
 import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.gpm.model.encrypt
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.ATTRIBUTE_PREFIX_CIPHER
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.ATTRIBUTE_PREFIX_IV
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Attributes
@@ -97,6 +98,28 @@ internal fun XmlSerializer.writeSiteEntry(siteEntry: DecryptableSiteEntry) {
 
     if (siteEntry.photo != IVCipherText.getEmpty()) {
         addTagAndCData(Elements.SITE_ENTRY_PHOTO, siteEntry.photo)
+    }
+
+    // only write extensions we we REALLY have them
+    if (siteEntry.extensions.values.flatten().isNotEmpty()) {
+        startTag(Elements.SITE_ENTRY_EXTENSIONS)
+        siteEntry.extensions.forEach { extension ->
+            if (extension.value.isNotEmpty()) {
+                startTag(Elements.SITE_ENTRY_EXTENSIONS_EXTENSION)
+                    .attribute(
+                        Attributes.SITE_ENTRY_EXTENSION_NAME,
+                        extension.key.extensionName.encrypt()
+                    )
+                extension.value.forEach {
+                    addTagAndCData(
+                        Elements.SITE_ENTRY_EXTENSIONS_EXTENSION_VALUE,
+                        it.trim().encrypt()
+                    )
+                }
+                endTag(Elements.SITE_ENTRY_EXTENSIONS_EXTENSION)
+            }
+        }
+        endTag(Elements.SITE_ENTRY_EXTENSIONS)
     }
     endTag(Elements.SITE_ENTRY)
 }
