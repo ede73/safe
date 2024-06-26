@@ -4,6 +4,7 @@ import android.database.sqlite.SQLiteDatabase
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
+import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.db.DBID
@@ -63,6 +64,9 @@ object DataModelMocks {
     ): DBHelper {
         val siteEntryTable = linkedMapOf<DBID, DecryptableSiteEntry>()
         val categoryTable = linkedMapOf<DBID, DecryptableCategoryEntry>()
+        val gpmTable = linkedMapOf<DBID, Set<SavedGPM>>()
+        val gpmTable2SiteEntryLink = linkedMapOf<DBID, Set<DBID>>()
+
         for (categoryAndSiteEntries in fakeModel.entries) {
             require(categoryAndSiteEntries.key.id != null) { "When initializing, category ID must be preset" }
             categoryTable[categoryAndSiteEntries.key.id!!] = categoryAndSiteEntries.key
@@ -76,11 +80,11 @@ object DataModelMocks {
         require(isMockKMock(db)) { "Mocking failed somehow" }
         DBHelperFactory.initializeDatabase(db)
 
-        // FULL DB mock
-        //DataModel.attachDBHelper(db)
-        //every { DBHelperFactory.getDBHelper(any()) } returns db
         every { db.addSiteEntry(any<DecryptableSiteEntry>()) } answers {
-            val id: DBID = if (siteEntryTable.keys.isEmpty()) 1 else siteEntryTable.keys.max() + 1
+            val id: DBID =
+                if (firstArg<DecryptableSiteEntry>().id != null) firstArg<DecryptableSiteEntry>().id!!
+                else if (siteEntryTable.keys.isEmpty()) 1
+                else siteEntryTable.keys.max() + 1
             siteEntryTable[id] = firstArg()
             id
         }
@@ -174,9 +178,28 @@ object DataModelMocks {
             transactionSuccess = false
         }
 
+        every { db.addSavedGPM(any<SavedGPM>()) } answers {
+            val id: DBID =
+                if (firstArg<SavedGPM>().id != null) firstArg<SavedGPM>().id!!
+                else if (gpmTable.keys.isEmpty()) 1
+                else gpmTable.keys.max() + 1
+            // TODO: allows saving just one per site-entry unlike real model!
+            gpmTable[id] = setOf(firstArg<SavedGPM>())
+            id
+        }
         // GPMs (partial TODO:)
-        every { db.fetchSavedGPMsFromDB() } returns emptySet()
-        every { db.fetchAllSiteEntryGPMMappings() } returns emptyMap()
+        every { db.fetchSavedGPMsFromDB(any()) } answers {
+            // TODO: weak model, should filter per SiteEntry in firstArg
+            gpmTable.values.flatten().toSet()
+        }
+        every { db.linkSaveGPMAndSiteEntry(any<DBID>(), any<DBID>()) } answers {
+            gpmTable2SiteEntryLink.put(firstArg<DBID>(), setOf(secondArg<DBID>()))
+            mockkClass(SQLiteDatabase::class)
+        }
+
+        every { db.fetchAllSiteEntryGPMMappings() } answers {
+            gpmTable2SiteEntryLink.toMap()
+        }
 
         DataModel.softDeletedMaxAgeProvider = { 0 }
         runBlocking {

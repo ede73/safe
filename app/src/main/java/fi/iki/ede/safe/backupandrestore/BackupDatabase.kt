@@ -26,7 +26,7 @@ import java.time.ZonedDateTime
  * Make sure to increase the version code. Linter will highlight places to fix
  */
 class BackupDatabase : ExportConfig(ExportVersion.V1) {
-    private fun generateXMLExport(): String {
+    fun generateXMLExport(): String {
         val serializer = XmlPullParserFactory.newInstance().newSerializer()
         val xmlStringWriter = StringWriter()
         serializer.setOutput(xmlStringWriter)
@@ -78,7 +78,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
         serializer.endTag(Elements.ROOT_PASSWORD_SAFE)
         serializer.endDocument()
         val makeThisStreaming = xmlStringWriter.toString()
-        println(makeThisStreaming)
+
         if (makeThisStreaming.contains(" ")) {
             Log.e(TAG, "Oh no, XML export has non breakable spaces")
         }

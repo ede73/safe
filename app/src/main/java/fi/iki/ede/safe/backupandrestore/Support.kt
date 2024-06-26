@@ -158,8 +158,8 @@ internal fun XmlPullParser.maybeGetText(gotTextNode: (encryptedText: IVCipherTex
     if (eventType == XmlPullParser.TEXT && text != null && iv.isNotBlank()) {
         gotTextNode.invoke(
             IVCipherText(
-                iv.hexToByteArray(),
-                text.hexToByteArray()
+                iv.trim().hexToByteArray(),
+                text.trim().hexToByteArray()
             )
         )
     }

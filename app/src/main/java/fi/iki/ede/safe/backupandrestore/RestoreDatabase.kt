@@ -91,6 +91,9 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
             backupEncryptionKeys.getEncryptedBackup(),
             decryptMasterKey(backupEncryptionKeys, userPassword)
         )
+//        .also { // dump for tests
+//            println("(${String(it)})")
+//        }
     )
 
 

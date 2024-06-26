@@ -22,9 +22,11 @@ import io.mockk.every
 import io.mockk.isMockKMock
 import io.mockk.mockk
 import io.mockk.mockkClass
+import io.mockk.mockkConstructor
 import io.mockk.mockkObject
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
+import io.mockk.unmockkConstructor
 import io.mockk.unmockkObject
 import io.mockk.unmockkStatic
 import junit.framework.TestCase.assertEquals
@@ -63,12 +65,6 @@ class BackupDatabaseAndRestoreDatabaseTest {
         KeystoreHelperMock4UnitTests.mock()
         ks = KeyStoreHelperFactory.getKeyStoreHelper()
 
-        // TODO: FIX mocking?? Still Valid?
-//        KeyStoreHelper.importExistingEncryptedMasterKey(
-//            SaltedPassword(salt, secret),
-//            cipheredMasterKey
-//        )
-
         // not really needed for restore, but here it is...
         dbHelper = mockPasswordObjectForBackup()
         require(dbHelper != null) { "DBHelper initializing failed" }
@@ -76,7 +72,6 @@ class BackupDatabaseAndRestoreDatabaseTest {
         dbHelper.storeSaltAndEncryptedMasterKey(salt, cipheredMasterKey)
         mockkObject(LoginHandler)
         every { LoginHandler.passwordLogin(any(), any()) } returns true
-        //LoginHandler.passwordLogin(context, userPassword)
     }
 
     @After
@@ -302,11 +297,87 @@ class BackupDatabaseAndRestoreDatabaseTest {
             )
         )
 
-//        mockDb(
-//            salt,
-//            cipheredMasterKey // iv+cipher
-//        )
-//    }
+    @Test
+    fun restoreBackupImmediateTest() {
+        // the purpose of ready made encrypted backup below is to capture backwards/forwards
+        // breaking changes, let's have one more - more precise just ensuring the current
+        // backup can fully be restored in the exact condition it is described in XML
+        mockkConstructor(BackupDatabase::class)
+        every { anyConstructed<BackupDatabase>().generateXMLExport() } returns TOP_LAYER_UNENCRYPTED_BACKUP_XML.trim()
+        val finalOutput = runBlocking { BackupDatabase.backup().toString() }
+        unmockkConstructor(BackupDatabase::class)
+
+        val r = RestoreDatabase()
+        mockZonedDateTimeNow(2000)
+        mockGetLastBackupTime(1234)
+        r.doRestore(
+            mockk<Context>(),
+            finalOutput,
+            backupPassword,
+            dbHelper,
+            { _, _, _ -> }
+        ) { thisBackupCreationTime, lastBackupDone ->
+            throw Exception("We should not ask user anything, valid backup!")
+        }
+        runBlocking {
+            DataModel.loadFromDatabase()
+        }
+
+        val categories = DataModel.getCategories()
+        assertEquals(2, categories.size)
+        assertEquals("encryptedcat1", categories[0].plainName)
+        assertEquals(1L, categories[0].id)
+        assertEquals("encryptedcat2", categories[1].plainName)
+        assertEquals(2L, categories[1].id)
+
+        val gpms = DataModel._savedGPMs
+        assertEquals(1, gpms.size)
+        assertEquals("hash", gpms.first().hash)
+        assertEquals(1L, gpms.first().id)
+        assertEquals(false, gpms.first().flaggedIgnored)
+        assertEquals("web", gpms.first().cachedDecryptedUrl)
+        assertEquals("user", gpms.first().cachedDecryptedUsername)
+        assertEquals("name", gpms.first().cachedDecryptedName)
+        assertEquals("note", gpms.first().cachedDecryptedNote)
+        assertEquals("password", gpms.first().cachedDecryptedPassword)
+        assertEquals(1L, DataModel.getLinkedGPMs(102L).first().id)
+
+        val passwords = DataModel.getSiteEntries()
+        (1..2).forEach { f ->
+            (1..2).forEach { l ->
+                val i = (f - 1) * 2 + (l - 1)
+                if (i == 0) {
+                    assertEquals(fakeChangedDateTime, passwords[i].passwordChangedDate)
+                } else {
+                    assertEquals(null, passwords[i].passwordChangedDate)
+                }
+                assertEquals(f.toLong(), passwords[i].categoryId)
+                assertEquals((f * 100 + l).toLong(), passwords[i].id)
+                assertEquals("enc_desc$f$l", passwords[i].cachedPlainDescription)
+                assertEquals("enc_web$f$l", passwords[i].plainWebsite)
+                assertEquals("enc_user$f$l", passwords[i].plainUsername)
+                assertEquals("enc_pwd$f$l", passwords[i].plainPassword)
+                assertEquals("enc_note$f$l", passwords[i].plainNote)
+                // TODO: Actually mock is bit lacking, in REAL data model this password would never
+                // pass since it was soft deleted so long ago...
+                if (passwords[i].id == 102L) {
+                    assertEquals(666, passwords[i].deleted)
+                    assertEquals(
+                        "[payments:visa,mastercard, phones:123-456-7890]",
+                        passwords[i].extensions.map { m ->
+                            m.key.extensionName + ":" + m.value.joinToString(
+                                ","
+                            )
+                        }.toString()
+                    )
+                } else {
+                    assertEquals(0, passwords[i].deleted)
+                    assertEquals(0, passwords[i].extensions.size)
+                }
+                assertEquals(null, passwords[i].plainPhoto)
+            }
+        }
+    }
 
     companion object {
         private val salt = Salt("9b90e143578bdbe7".hexToByteArray())
@@ -348,42 +419,54 @@ class BackupDatabaseAndRestoreDatabaseTest {
 
         // TODO: missing changed <item id="2" deleted="1234>
         private const val TOP_LAYER_UNENCRYPTED_BACKUP_XML = """
-<?xml version="1.0" encoding="utf-8"?>
-<PasswordSafe version="1">
-    <category cipher_name="0d0c0b0a090807060504030201" iv_name="31746163646574707972636e65100f0e">
-        <item>
-            <description iv="3131637365645f636e65100f0e0d0c0b">0a090807060504030201</description>
-            <website iv="31316265775f636e65100f0e0d0c0b0a">090807060504030201</website>
-            <username iv="3131726573755f636e65100f0e0d0c0b">0a090807060504030201</username>
-            <password changed="946630923" iv="31316477705f636e65100f0e0d0c0b0a">090807060504030201
-            </password>
-            <note iv="313165746f6e5f636e65100f0e0d0c0b">0a090807060504030201</note>
-        </item>
-        <item>
-            <description iv="3231637365645f636e65100f0e0d0c0b">0a090807060504030201</description>
-            <website iv="32316265775f636e65100f0e0d0c0b0a">090807060504030201</website>
-            <username iv="3231726573755f636e65100f0e0d0c0b">0a090807060504030201</username>
-            <password iv="32316477705f636e65100f0e0d0c0b0a">090807060504030201</password>
-            <note iv="323165746f6e5f636e65100f0e0d0c0b">0a090807060504030201</note>
-        </item>
-    </category>
-    <category cipher_name="0d0c0b0a090807060504030201" iv_name="32746163646574707972636e65100f0e">
-        <item>
-            <description iv="3132637365645f636e65100f0e0d0c0b">0a090807060504030201</description>
-            <website iv="31326265775f636e65100f0e0d0c0b0a">090807060504030201</website>
-            <username iv="3132726573755f636e65100f0e0d0c0b">0a090807060504030201</username>
-            <password iv="31326477705f636e65100f0e0d0c0b0a">090807060504030201</password>
-            <note iv="313265746f6e5f636e65100f0e0d0c0b">0a090807060504030201</note>
-        </item>
-        <item>
-            <description iv="3232637365645f636e65100f0e0d0c0b">0a090807060504030201</description>
-            <website iv="32326265775f636e65100f0e0d0c0b0a">090807060504030201</website>
-            <username iv="3232726573755f636e65100f0e0d0c0b">0a090807060504030201</username>
-            <password iv="32326477705f636e65100f0e0d0c0b0a">090807060504030201</password>
-            <note iv="323265746f6e5f636e65100f0e0d0c0b">0a090807060504030201</note>
+<PasswordSafe version="1" created="1234">
+    <category iv_name="0102030405060708090a0b0c0d0e0f10" cipher_name="646c60767c76736d6d696a783c">
+        <item ID="101">
+            <description iv="0102030405060708090a0b0c0d0e0f10">646c605b6163746b383b</description>
+            <website iv="0102030405060708090a0b0c0d0e0f10">646c605b7263653938</website>
+            <username iv="0102030405060708090a0b0c0d0e0f10">646c605b7075627a383b</username>
+            <password changed="946630923" iv="0102030405060708090a0b0c0d0e0f10">646c605b7571633938</password>
+            <note iv="0102030405060708090a0b0c0d0e0f10">646c605b6b69736d383b</note>
+            </item>
+        <item ID="102" deleted="666">
+            <description iv="0102030405060708090a0b0c0d0e0f10">646c605b6163746b3838</description>
+            <website iv="0102030405060708090a0b0c0d0e0f10">646c605b726365393b</website>
+            <username iv="0102030405060708090a0b0c0d0e0f10">646c605b7075627a3838</username>
+            <password iv="0102030405060708090a0b0c0d0e0f10">646c605b757163393b</password>
+            <note iv="0102030405060708090a0b0c0d0e0f10">646c605b6b69736d3838</note>
+            <extensions>
+                <extension iv_extensionname="0102030405060708090a0b0c0d0e0f10" cipher_extensionname="71637a696068737b">
+                    <value iv="0102030405060708090a0b0c0d0e0f10">776b7065</value>
+                    <value iv="0102030405060708090a0b0c0d0e0f10">6c637070607464697b6e</value>
+                </extension>
+                <extension iv_extensionname="0102030405060708090a0b0c0d0e0f10" cipher_extensionname="716a6c6a6075">
+                    <value iv="0102030405060708090a0b0c0d0e0f10">30303029313331253e32323c</value>
+                </extension>            
+            </extensions>
         </item>
     </category>
-</PasswordSafe>
+    <category iv_name="0102030405060708090a0b0c0d0e0f10" cipher_name="646c60767c76736d6d696a783f">
+        <item ID="201">
+            <description iv="0102030405060708090a0b0c0d0e0f10">646c605b6163746b3b3b</description>
+            <website iv="0102030405060708090a0b0c0d0e0f10">646c605b7263653a38</website>
+            <username iv="0102030405060708090a0b0c0d0e0f10">646c605b7075627a3b3b</username>
+            <password iv="0102030405060708090a0b0c0d0e0f10">646c605b7571633a38</password>
+            <note iv="0102030405060708090a0b0c0d0e0f10">646c605b6b69736d3b3b</note>
+        </item>
+        <item ID="202">
+            <description iv="0102030405060708090a0b0c0d0e0f10">646c605b6163746b3b38</description>
+            <website iv="0102030405060708090a0b0c0d0e0f10">646c605b7263653a3b</website>
+            <username iv="0102030405060708090a0b0c0d0e0f10">646c605b7075627a3b38</username>
+            <password iv="0102030405060708090a0b0c0d0e0f10">646c605b7571633a3b</password>
+            <note iv="0102030405060708090a0b0c0d0e0f10">646c605b6b69736d3b38</note>
+        </item>
+    </category>
+    <imports>
+        <gpm>
+            <gpmitem hash="hash" name="1" password_ids="102" iv_name="0102030405060708090a0b0c0d0e0f10" cipher_name="6f636e61" iv_note="0102030405060708090a0b0c0d0e0f10" cipher_note="6f6d7761" iv_password="0102030405060708090a0b0c0d0e0f10" cipher_password="716370777269756c" status="0" iv_url="0102030405060708090a0b0c0d0e0f10" cipher_url="766761" iv_username="0102030405060708090a0b0c0d0e0f10" cipher_username="74716676" />
+        </gpm>
+    </imports>
+    </PasswordSafe>
         """
         private val PASSWORD_ENCRYPTED_BACKUP_AT_1234 = """
 ${salt.toHex()}
