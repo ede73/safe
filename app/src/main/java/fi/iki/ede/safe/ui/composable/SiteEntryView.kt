@@ -309,7 +309,11 @@ fun SiteEntryExtensionSelector(
 
     if (entry.extensions[extensionType]!!.isEmpty() && !checked) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(checked = checked, onCheckedChange = { checked = !checked })
+            Checkbox(
+                checked = checked,
+                onCheckedChange = { checked = !checked },
+                modifier = Modifier.testTag(TestTag.SITE_ENTRY_EXTENSION_ENTRY_CHECKBOX)
+            )
             Text(text = extensionType.name)
         }
     } else {
