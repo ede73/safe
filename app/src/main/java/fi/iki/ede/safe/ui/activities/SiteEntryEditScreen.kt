@@ -139,6 +139,7 @@ private fun SiteEntryEditCompose(
     resolveEditsAndChangedSiteEntry: (DBID?, EditableSiteEntry) -> Pair<Boolean, Boolean>,
     setResult: (Int, Intent?) -> Unit,
     finishActivity: () -> Unit,
+    skipForPreviewToWork: Boolean = false
 ) {
     SafeTheme {
         Surface(
@@ -201,7 +202,7 @@ private fun SiteEntryEditCompose(
             if (finnishTheActivity) {
                 finishActivity()
             } else {
-                SiteEntryView(viewModel)
+                SiteEntryView(viewModel, skipForPreviewToWork = skipForPreviewToWork)
             }
         }
     }
@@ -234,7 +235,8 @@ fun SiteEntryScreenPreview() {
             1,
             { _, _ -> true to true },
             { _, _ -> },
-            {})
+            {},
+            skipForPreviewToWork = true)
     }
 }
 
