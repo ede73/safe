@@ -30,11 +30,13 @@ import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.password.PasswordGenerator
+import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen.Companion.SITE_ENTRY_ID
 import fi.iki.ede.safe.ui.composable.SiteEntryView
 import fi.iki.ede.safe.ui.composable.TryPersistSiteEntryChanges
 import fi.iki.ede.safe.ui.models.EditableSiteEntry
 import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
+import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
@@ -151,7 +153,6 @@ private fun SiteEntryEditCompose(
             var saveEntryRequested by remember { mutableStateOf(false) }
             var showSaveOrDiscardDialog by remember { mutableStateOf(false) }
             var somethingChanged by remember { mutableStateOf(false) }
-
             val (siteEntryChanged, passwordChanged) = resolveEditsAndChangedSiteEntry(
                 editingSiteEntryId,
                 edits,
@@ -179,7 +180,7 @@ private fun SiteEntryEditCompose(
                     }) { Text(text = stringResource(id = R.string.password_entry_discard)) }
                 }, title = {
                     Text(text = stringResource(id = R.string.password_entry_unsaved_changes_info))
-                })
+                }, modifier = Modifier.testTag(TestTag.SITE_ENTRY_SAVE_DIALOG))
             } else if (saveEntryRequested) {
                 TryPersistSiteEntryChanges(
                     edits,
