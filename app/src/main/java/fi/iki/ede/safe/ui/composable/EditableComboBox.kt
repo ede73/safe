@@ -29,6 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.safe.R
+import fi.iki.ede.safe.ui.TestTag
+import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
@@ -52,7 +54,9 @@ fun EditableComboBox(
         onExpandedChange = {},
     ) {
         TextField(
-            modifier = Modifier.menuAnchor(),
+            modifier = Modifier
+                .menuAnchor()
+                .testTag(TestTag.SITE_ENTRY_EXTENSION_ENTRY),
             value = selectedText,
             onValueChange = {
                 selectedText = it
