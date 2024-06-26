@@ -32,6 +32,7 @@ class DecryptableSiteEntry(categoryId: Long) {
     var id: Long? = null
     var note: IVCipherText = IVCipherText.getEmpty()
     var password: IVCipherText = IVCipherText.getEmpty()
+    val extensions = mutableMapOf<SiteEntryExtensionType, MutableSet<String>>()
 
     // Password changed date(time) is not privacy critical (hence unencrypted)
     // TODO: LocalDateTime will suffice...
@@ -85,14 +86,35 @@ class DecryptableSiteEntry(categoryId: Long) {
         password: IVCipherText,
         passwordChangedDate: ZonedDateTime?,
         note: IVCipherText,
-        photo: Bitmap?
+        photo: Bitmap?,
+        extensions: MutableMap<SiteEntryExtensionType, MutableSet<String>>
     ) = !(cachedPlainDescription != description ||
             plainWebsite != website ||
             plainUsername != decrypt(username) ||
             !isSamePassword(password) ||
             this.passwordChangedDate != passwordChangedDate ||
             plainNote != decrypt(note) ||
-            !(photo?.sameAs(plainPhoto) ?: (plainPhoto == null)))
+            !(photo?.sameAs(plainPhoto) ?: (plainPhoto == null))) ||
+            !areMapsDifferent(extensions, this.extensions)
+
+    private fun areMapsDifferent(
+        map1: MutableMap<SiteEntryExtensionType, MutableSet<String>>,
+        map2: MutableMap<SiteEntryExtensionType, MutableSet<String>>
+    ): Boolean {
+        // Clean maps from empty strings and empty sets
+        val cleanMap1 = map1.mapValues { (_, value) -> value.filterNot { it.isBlank() }.toSet() }
+            .filterNot { it.value.isEmpty() }
+        val cleanMap2 = map2.mapValues { (_, value) -> value.filterNot { it.isBlank() }.toSet() }
+            .filterNot { it.value.isEmpty() }
+
+        // Check if keys are the same after cleaning
+        if (cleanMap1.keys != cleanMap2.keys) return true
+
+        // Check if values are the same for each key
+        return cleanMap1.any { (key, value) ->
+            value != cleanMap2[key]
+        }
+    }
 
     fun isSamePassword(comparePassword: IVCipherText) = plainPassword == decrypt(comparePassword)
 

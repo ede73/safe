@@ -13,12 +13,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -43,15 +45,16 @@ import fi.iki.ede.safe.clipboard.ClipboardUtils
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
+import fi.iki.ede.safe.model.SiteEntryExtensionType
 import fi.iki.ede.safe.password.PasswordGenerator
 import fi.iki.ede.safe.splits.PluginManager
 import fi.iki.ede.safe.splits.PluginName
+import fi.iki.ede.safe.ui.models.EditableSiteEntry
 import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.AvertInactivityDuringLongTask
-import kotlinx.coroutines.flow.MutableStateFlow
 import java.time.ZonedDateTime
 
 inline fun <T, C : Collection<T>> C.ifNotEmpty(block: (C) -> Unit): C {
@@ -70,13 +73,13 @@ fun SiteEntryView(
         focusedIndicatorColor = Color.Transparent,
         unfocusedIndicatorColor = Color.Transparent,
     )
+    val decrypter = KeyStoreHelperFactory.getDecrypter()
+    val encrypter = KeyStoreHelperFactory.getEncrypter()
     val padding = Modifier.padding(6.dp)
-    val passEntry by viewModel.uiState.collectAsState()
+    val passEntry by viewModel.editableSiteEntryState.collectAsState()
     val passwordLength = integerResource(id = R.integer.password_default_length)
     val safeTheme = LocalSafeTheme.current
     var passwordWasUpdated by remember { mutableStateOf(false) }
-    val decrypter = KeyStoreHelperFactory.getDecrypter()
-    val encrypter = KeyStoreHelperFactory.getEncrypter()
     var showLinkedInfo by remember { mutableStateOf<Set<SavedGPM>?>(null) }
 
     Column(
@@ -192,6 +195,7 @@ fun SiteEntryView(
                 breachCheckButton(PluginName.HIBP, context, passEntry.password)()
             }
         }
+
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             DatePicker(
                 zonedDateTime = passEntry.passwordChangedDate,
@@ -209,6 +213,9 @@ fun SiteEntryView(
                 }
             }
         }
+
+        SiteEntryExtensionList(passEntry)
+
         PasswordTextField(
             textTip = R.string.password_entry_note_tip,
             modifier = Modifier.fillMaxWidth(),
@@ -240,6 +247,83 @@ fun SiteEntryView(
 }
 
 @Composable
+fun SiteEntryExtensionList(
+    editableSiteEntry: EditableSiteEntry
+) {
+    // TODO: NONO..flow!
+    val allExtensions = DataModel.getAllSiteEntryExtensions()
+
+    SiteEntryExtensionType.entries.sortedBy { it.name }.forEach {
+        Column {
+            SiteEntryExtensionSelector(
+                editableSiteEntry,
+                allExtensions.getOrDefault(it, emptySet()),
+                it
+            )
+        }
+    }
+}
+
+@Composable
+fun SiteEntryExtensionSelector(
+    siteEntry: EditableSiteEntry,
+    allKnownValues: Set<String>,
+    extensionType: SiteEntryExtensionType,
+) {
+    val allKnownEntries =
+        remember { mutableStateListOf<String>().also { it.addAll(allKnownValues) } }
+    var checked by remember { mutableStateOf(false) }
+    if (!siteEntry.extensions.containsKey(extensionType)) {
+        siteEntry.extensions[extensionType] = mutableSetOf()
+    }
+    var selectedEntry by remember { mutableStateOf("") }
+
+    if (siteEntry.extensions[extensionType]!!.size == 0 && !checked) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(checked = checked, onCheckedChange = { checked = !checked })
+            Text(text = extensionType.name)
+        }
+    } else {
+        Text(text = extensionType.name)
+        EditableComboBox(
+            selectedItems = siteEntry.extensions[extensionType]!!.toSet(),
+            allItems = allKnownEntries.toSet(),
+            onItemSelected = { selectedItem ->
+                siteEntry.extensions.getOrPut(extensionType) { mutableSetOf() }.let { currentSet ->
+                    if (selectedItem in currentSet) {
+                        currentSet.remove(selectedItem)
+                        ""
+                    } else {
+                        currentSet.add(selectedItem)
+                        selectedItem
+                    }
+                }
+            },
+            onItemEdited = { editedItem ->
+                siteEntry.extensions[extensionType].let { extensions ->
+                    extensions!!.remove(selectedEntry)
+                    extensions.add(editedItem)
+                }
+                selectedEntry = editedItem
+            },
+            onItemRequestedToDelete = { itemToDelete ->
+                // ONLY can delete if NOT used anywhere else
+                if (!DataModel.getAllSiteEntryExtensions().flatMap { it.value }.toSet()
+                        .contains(itemToDelete)
+                ) {
+                    // deletion allowed, not used anywhere else..will "autodelete" from full collection on save
+                    siteEntry.extensions[extensionType].let { currentSet ->
+                        if (itemToDelete in currentSet!!) {
+                            currentSet.remove(itemToDelete)
+                        }
+                    }
+                    allKnownEntries.remove(itemToDelete)
+                }
+            })
+    }
+}
+
+@Composable
 fun breachCheckButton(
     plugin: PluginName,
     context: Context,
@@ -265,18 +349,39 @@ fun SiteEntryViewPreview() {
         val encrypter = KeyStoreHelperFactory.getEncrypter()
         val site1 = DecryptableSiteEntry(1).apply {
             description = encrypter("Description1".toByteArray())
+            id = 1
+            website = encrypter("Website".toByteArray())
+            username = encrypter("Username".toByteArray())
+            password = encrypter("Password".toByteArray())
+            note = encrypter("Note".toByteArray())
+            extensions.getOrPut(SiteEntryExtensionType.PAYMENTS) { mutableSetOf() }.add("Some card")
+            extensions.getOrPut(SiteEntryExtensionType.PHONE_NUMBERS) { mutableSetOf() }
+                .add("+12345678")
+//            extensions.getOrPut(SiteEntryExtensionType.EMAILS) { mutableSetOf() }.add("a&b")
         }
         val site2 = DecryptableSiteEntry(1).apply {
             description = encrypter("Description2".toByteArray())
+            id = 2
+            website = encrypter("Website".toByteArray())
+            username = encrypter("Username".toByteArray())
+            password = encrypter("Password".toByteArray())
+            note = encrypter("Note".toByteArray())
+            extensions.getOrDefault(SiteEntryExtensionType.PAYMENTS, mutableSetOf())
+                .add("Some card2")
+            extensions.getOrDefault(SiteEntryExtensionType.PHONE_NUMBERS, mutableSetOf())
+                .add("+123456780")
+            extensions.getOrDefault(SiteEntryExtensionType.EMAILS, mutableSetOf())
+                .add("a@b2")
         }
         val cat = DecryptableCategoryEntry().apply {
             id = 1
             encryptedName = encrypter("Category".toByteArray())
         }
         val lst = mutableListOf(site1, site2)
-        val sitesFlow = MutableStateFlow(lst.toList())
         DataModel._categories[cat] = lst
+
         val model = EditingSiteEntryViewModel()
+        model.editSiteEntry(site1)
         SiteEntryView(model, skipForPreviewToWork = true)
     }
 }

@@ -185,4 +185,8 @@ Nämä valinnat muistetaan, joten seuraavan kerran linkitys on helpompaa.</strin
     <string name="trash_cancel">Älä tyhjennä!</string>
     <string name="trash_empty_trash">Tyhjennä!</string>
     <string name="trash_restore">Palauta!</string>
+    <string name="site_entry_extension_entry_label">Syötä tai valitse</string>
+    <string name="site_entry_extension_delete_message">Haluatko varmasti poistaa tämän?</string>
+    <string name="site_entry_extension_delete">Poista</string>
+    <string name="site_entry_extension_cancel">Peru</string>
 </resources>

@@ -16,7 +16,7 @@ import java.time.ZonedDateTime
 // We want to KEEP EDITING what ever we were editing until discarded or saved
 open class EditingSiteEntryViewModel : ViewModel() {
     private val _editableSiteEntryState = MutableStateFlow(EditableSiteEntry(-1))
-    val uiState: StateFlow<EditableSiteEntry> = _editableSiteEntryState.asStateFlow()
+    val editableSiteEntryState: StateFlow<EditableSiteEntry> = _editableSiteEntryState.asStateFlow()
 
     fun editSiteEntry(siteEntry: DecryptableSiteEntry) {
         _editableSiteEntryState.value = EditableSiteEntry(
@@ -28,7 +28,8 @@ open class EditingSiteEntryViewModel : ViewModel() {
             siteEntry.password,
             siteEntry.note,
             siteEntry.plainPhoto,
-            siteEntry.passwordChangedDate
+            siteEntry.passwordChangedDate,
+            siteEntry.extensions
         )
     }
 

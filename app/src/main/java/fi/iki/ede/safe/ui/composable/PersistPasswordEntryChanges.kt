@@ -38,6 +38,12 @@ fun PersistPasswordEntryChanges(
         if (passwordChanged) {
             passwordChangedDate = ZonedDateTime.now()
         }
+
+        editedSiteEntry.extensions.forEach { extensionType ->
+            // TODO: MULTISELECT
+            val extensionValues=extensionType.value.filter { it.trim().isNotEmpty() }
+            siteEntry.extensions.getOrPut(extensionType.key) { mutableSetOf() }.addAll(extensionValues)
+        }
     }
 
     // TODO: MAKE ASYNC
@@ -65,7 +71,8 @@ fun PersistPasswordEntryChangesPreview() {
                 "pass".encrypt(),
                 "note".encrypt(),
                 null,
-                null
+                null,
+                mutableMapOf()
             ), passwordChanged = false
         ) { _ -> }
     }

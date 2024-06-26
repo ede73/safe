@@ -484,6 +484,11 @@ object DataModel {
     fun getLinkedGPMs(siteEntryID: DBID): Set<SavedGPM> =
         _siteEntryToSavedGPM.filterKeys { it.id == siteEntryID }.values.flatten().toSet()
 
+    fun getAllSiteEntryExtensions(): Map<SiteEntryExtensionType, Set<String>> =
+        getSiteEntries().flatMap { it.extensions.entries }
+            .groupBy({ it.key }, { it.value })
+            .mapValues { (_, values) -> values.flatten().filterNot(String::isBlank).toSet() }
+
     fun finishGPMImport(
         delete: Set<SavedGPM>,
         update: Map<IncomingGPM, SavedGPM>,

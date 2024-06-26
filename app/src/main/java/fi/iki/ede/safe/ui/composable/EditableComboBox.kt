@@ -3,11 +3,12 @@ package fi.iki.ede.safe.ui.composable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
@@ -25,24 +26,26 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun EditableComboBox(
-    items: MutableList<String>,
-    onItemSelect: (String) -> Unit,
-    onItemEdit: (String) -> Unit,
-    onItemDelete: (String) -> Unit
+    selectedItems: Set<String>, // SET should suffice! Hoist to top side(.remove)
+    allItems: Set<String>,
+    onItemSelected: (String) -> String,
+    onItemEdited: (String) -> Unit,
+    onItemRequestedToDelete: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     var selectedText by remember { mutableStateOf("") }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var itemToDelete by remember { mutableStateOf("") }
 
-    LaunchedEffect(items) {
+    LaunchedEffect(selectedItems) {
     }
     ExposedDropdownMenuBox(
         expanded = expanded,
@@ -53,11 +56,11 @@ fun EditableComboBox(
             value = selectedText,
             onValueChange = {
                 selectedText = it
-                onItemEdit(it)
+                onItemEdited(it)
             },
             readOnly = expanded,
             singleLine = true,
-            label = { Text("Enter or select an item") },
+            label = { Text(stringResource(id = R.string.site_entry_extension_entry_label)) },
             trailingIcon = {
                 Icon(
                     imageVector = Icons.Filled.ArrowDropDown,
@@ -71,19 +74,29 @@ fun EditableComboBox(
             expanded = expanded,
             onDismissRequest = { expanded = false },
         ) {
-            items.forEach { menuItemText ->
+            allItems.forEach { menuItemText ->
                 DropdownMenuItem(
                     text = {
-                        Row(modifier = Modifier
-                            .pointerInput(Unit) {
-                                detectTapGestures(
-                                    onLongPress = {
+                        Row(
+                            modifier = Modifier
+                                .combinedClickable(
+                                    onClick = {
+                                        selectedText = onItemSelected(menuItemText)
+                                        expanded = false
+                                    },
+                                    onLongClick = {
                                         itemToDelete = menuItemText
                                         showDeleteDialog = true
-                                    }
+                                    },
+                                )
+                                .fillMaxWidth()
+                        ) {
+                            if (selectedItems.contains(menuItemText)) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = "Check Mark"
                                 )
                             }
-                            .fillMaxWidth()) {
                             Text(
                                 menuItemText,
                                 color = MaterialTheme.colorScheme.onSurface,
@@ -93,7 +106,7 @@ fun EditableComboBox(
                     },
                     onClick = {
                         selectedText = menuItemText
-                        onItemSelect(menuItemText)
+                        onItemSelected(menuItemText)
                         expanded = false
                     },
                     modifier = Modifier
@@ -110,23 +123,21 @@ fun EditableComboBox(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete Item") },
-            text = { Text("Are you sure you want to delete this item?") },
+            title = { Text(stringResource(id = R.string.site_entry_extension_delete)) },
+            text = { Text(stringResource(id = R.string.site_entry_extension_delete_message)) },
             confirmButton = {
                 Button(
                     onClick = {
-                        items.remove(itemToDelete)
-                        // force recompose
-                        onItemDelete(itemToDelete)
+                        onItemRequestedToDelete(itemToDelete)
                         showDeleteDialog = false
                     }
                 ) {
-                    Text("Delete")
+                    Text(stringResource(id = R.string.site_entry_extension_delete))
                 }
             },
             dismissButton = {
                 Button(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(id = R.string.site_entry_extension_cancel))
                 }
             }
         )
@@ -139,9 +150,12 @@ fun EditableComboBox(
 fun EditableComboBoxPreview() {
     SafeTheme {
         EditableComboBox(
-            items = mutableListOf("previous1", "previous2"),
-            onItemSelect = {},
-            onItemEdit = { _ -> }) {
-        }
+            selectedItems = setOf("previous1"),
+            allItems = setOf("previous1", "previous2"),
+            onItemSelected = { "" },
+            onItemEdited = { _ -> },
+            {
+            },
+        )
     }
 }

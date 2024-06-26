@@ -239,4 +239,8 @@ These selections will be remembered, so next time linking will be easier.</strin
     <string name="trash_cancel">Don\'t empty!</string>
     <string name="trash_empty_trash">Empty!</string>
     <string name="trash_restore">Restore!</string>
+    <string name="site_entry_extension_entry_label">Enter or select an item</string>
+    <string name="site_entry_extension_delete_message">Are you sure you want to delete this item?</string>
+    <string name="site_entry_extension_delete">Delete</string>
+    <string name="site_entry_extension_cancel">Cancel</string>
 </resources>

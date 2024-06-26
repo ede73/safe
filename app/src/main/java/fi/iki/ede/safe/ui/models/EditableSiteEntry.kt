@@ -3,12 +3,13 @@ package fi.iki.ede.safe.ui.models
 import android.graphics.Bitmap
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.safe.db.DBID
+import fi.iki.ede.safe.model.SiteEntryExtensionType
 import java.time.ZonedDateTime
 
 data class EditableSiteEntry(
     val categoryId: DBID,
     val id: DBID? = null,
-    // For purposes of editing fields, description and website probably aren't super sensitie
+    // For purposes of editing fields, description and website probably aren't super sensitive
     val description: String = "",
     val website: String = "",
     // Trying to keep these as secure as possible all the time
@@ -18,5 +19,7 @@ data class EditableSiteEntry(
     // Since we're actually displaying the photo in UI unconditionally
     // it doesn't lessen security having it as bitmap here
     val plainPhoto: Bitmap? = null,
-    val passwordChangedDate: ZonedDateTime? = null
+    val passwordChangedDate: ZonedDateTime? = null,
+    // TODO: Map/Set should suffice!
+    val extensions: MutableMap<SiteEntryExtensionType, MutableSet<String>> = mutableMapOf()
 )

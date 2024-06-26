@@ -122,7 +122,8 @@ class SiteEntryEditScreen : AutolockingBaseComponentActivity() {
             edits.password,
             edits.passwordChangedDate,
             edits.note,
-            edits.plainPhoto
+            edits.plainPhoto,
+            edits.extensions
         )
 
     companion object {
@@ -145,13 +146,12 @@ private fun SiteEntryEditCompose(
         Surface(
             modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
         ) {
-            // Something return this activity, despite calling finish()
             // TODO: Not sure! AlertDialogs are both closed, anyway this solves the issue
             var finnishTheActivity by remember { mutableStateOf(false) }
             var showSaveOrDiscardDialog by remember { mutableStateOf(false) }
             var saveEntryRequested by remember { mutableStateOf(false) }
 
-            val edits = viewModel.uiState.collectAsState().value
+            val edits = viewModel.editableSiteEntryState.collectAsState().value
             var somethingChanged by remember { mutableStateOf(false) }
 
             val (siteEntryChanged, passwordChanged) = resolveEditsAndChangedSiteEntry(
@@ -236,7 +236,8 @@ fun SiteEntryScreenPreview() {
             { _, _ -> true to true },
             { _, _ -> },
             {},
-            skipForPreviewToWork = true)
+            skipForPreviewToWork = true
+        )
     }
 }
 
