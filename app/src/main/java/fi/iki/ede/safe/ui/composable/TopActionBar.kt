@@ -110,7 +110,7 @@ fun TopActionBar(
                     IntentManager.startLoginScreen(
                         context, openCategoryScreenAfterLogin = false
                     )
-                }) {
+                }, modifier = Modifier.testTag(TestTag.TOP_ACTION_BAR_LOCK)) {
                     Icon(Icons.Default.Lock, stringResource(id = R.string.action_bar_lock))
                 }
 

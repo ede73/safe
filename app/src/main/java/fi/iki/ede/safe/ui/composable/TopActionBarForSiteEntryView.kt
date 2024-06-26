@@ -15,10 +15,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.safe.R
+import fi.iki.ede.safe.ui.TestTag
+import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
 
@@ -44,25 +47,29 @@ fun TopActionBarForSiteEntryView(
             actions = {
                 IconButton(onClick = {
                     AutolockingBaseComponentActivity.lockTheApplication(context)
-                }) {
+                }, modifier = Modifier.testTag(TestTag.TOP_ACTION_BAR_LOCK)) {
                     Icon(Icons.Default.Lock, stringResource(id = R.string.action_bar_lock))
                 }
 
                 // Creating Icon button for dropdown menu
-                IconButton(onClick = { displayMenu = !displayMenu }) {
+                IconButton(
+                    onClick = { displayMenu = !displayMenu },
+                    modifier = Modifier.testTag(TestTag.TOP_ACTION_BAR_MENU)
+                ) {
                     Icon(Icons.Default.MoreVert, "")
                 }
 
                 DropdownMenu(
                     expanded = displayMenu,
-                    onDismissRequest = { displayMenu = false }
+                    onDismissRequest = { displayMenu = false },
                 ) {
                     DropdownMenuItem(
                         text = { Text(text = stringResource(id = R.string.action_bar_generate_password)) },
                         onClick = {
                             displayMenu = false
                             onGeneratePassword()
-                        }
+                        },
+                        modifier = Modifier.testTag(TestTag.TOP_ACTION_BAR_GENERATE_PASSWORD)
                     )
                 }
             }
