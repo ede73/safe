@@ -49,7 +49,9 @@ import fi.iki.ede.safe.model.SiteEntryExtensionType
 import fi.iki.ede.safe.password.PasswordGenerator
 import fi.iki.ede.safe.splits.PluginManager
 import fi.iki.ede.safe.splits.PluginName
+import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
+import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
@@ -106,7 +108,8 @@ fun SiteEntryView(
                 label = { Text(stringResource(id = R.string.password_entry_description_tip)) },
                 modifier = modifier
                     .padding(horizontal = 8.dp)
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .testTag(TestTag.SITE_ENTRY_DESCRIPTION),
                 colors = hideFocusLine,
             )
         }
@@ -129,7 +132,8 @@ fun SiteEntryView(
                 label = { Text(stringResource(id = R.string.password_entry_website_tip)) },
                 modifier = modifier
                     .padding(horizontal = 8.dp)
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .testTag(TestTag.SITE_ENTRY_WEBSITE),
                 colors = hideFocusLine,
             )
         }
@@ -142,7 +146,8 @@ fun SiteEntryView(
                 textTip = R.string.password_entry_username_tip,
                 modifier = modifier
                     .padding(horizontal = 8.dp)
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .testTag(TestTag.SITE_ENTRY_USERNAME),
                 inputValue = passEntry.username.decrypt(decrypter),
                 onValueChange = {
                     viewModel.updateUsername(it.encrypt(encrypter))
@@ -179,7 +184,8 @@ fun SiteEntryView(
                 textTip = R.string.password_entry_password_tip,
                 modifier = modifier
                     .padding(horizontal = 8.dp)
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .testTag(TestTag.SITE_ENTRY_PASSWORD),
                 inputValue = passEntry.password.decrypt(decrypter),
                 onValueChange = {
                     viewModel.updatePassword(it.encrypt(encrypter))
@@ -217,7 +223,9 @@ fun SiteEntryView(
 
         PasswordTextField(
             textTip = R.string.password_entry_note_tip,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(TestTag.SITE_ENTRY_NOTE),
             inputValue = passEntry.note.decrypt(decrypter),
             onValueChange = { viewModel.updateNote(it.encrypt(encrypter)) },
             singleLine = false,
