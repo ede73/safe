@@ -19,6 +19,14 @@ import fi.iki.ede.safe.model.DecryptableSiteEntry
 
 typealias DBID = Long
 
+/**
+ * Bug!? in SQLite? Do not use readableDatabase or writeableDatabase.use!
+ * It will close the instrumentation test in-memory database unconditionally.
+ * Even if you hold the database reference, you specifically increase reference
+ * count by acquiring reference, you open a transaction and dont close it (yet).
+ * What ever I tried, the WHOLE database gets close. And is with in-memory DBs
+ * once closed, all data is lost :)
+ */
 class DBHelper internal constructor(
     context: Context,
     databaseName: String? = DATABASE_NAME,
@@ -385,12 +393,12 @@ class DBHelper internal constructor(
 
     // if user imports new DB , encryption changes and
     // we dont currently convert GPMs too..all data in the table is irrevocably lost
-    fun deleteAllSavedGPMs() = writableDatabase.use { db ->
+    fun deleteAllSavedGPMs() = writableDatabase.let { db ->
         db.execSQL("DELETE FROM ${GooglePasswordManager.tableName};")
     }
 
     fun markSavedGPMIgnored(savedGPMID: DBID) =
-        writableDatabase.use { db ->
+        writableDatabase.let { db ->
             db.update(GooglePasswordManager, ContentValues().apply {
                 put(GooglePasswordManager.Columns.STATUS, 1)
             }, whereEq(GooglePasswordManager.Columns.ID, savedGPMID)).toLong()
@@ -407,7 +415,7 @@ class DBHelper internal constructor(
 
 
     fun fetchAllSiteEntryGPMMappings(): Map<DBID, Set<DBID>> =
-        readableDatabase.use { db ->
+        readableDatabase.let { db ->
             db.query(
                 SiteEntry2GooglePasswordManager,
                 SiteEntry2GooglePasswordManager.Columns.entries.toSet(),
@@ -425,7 +433,7 @@ class DBHelper internal constructor(
 
 
     fun fetchSavedGPMsFromDB(where: SelectionCondition? = null): Set<SavedGPM> =
-        readableDatabase.use { db ->
+        readableDatabase.let { db ->
             db.query(
                 GooglePasswordManager,
                 GooglePasswordManager.Columns.entries.toSet(),
@@ -454,7 +462,7 @@ class DBHelper internal constructor(
 
     fun deleteObsoleteSavedGPMs(delete: Set<SavedGPM>) =
         delete.forEach { savedGPM ->
-            writableDatabase.use { db ->
+            writableDatabase.let { db ->
                 db.delete(
                     GooglePasswordManager,
                     whereEq(GooglePasswordManager.Columns.ID, savedGPM.id!!)
