@@ -5,6 +5,9 @@ Looks great ! https://developer.android.com/studio/test/other-testing-tools/app-
 In progress:
 
 TODO:
+- Enhance search to span extensions!
+- Implement better GPM view
+- Visualize GPM linkage
 - Extension: make completely user definable (categories)
     - bonus card etc.number
     - or could security questions (which shouldn't exist!) Be more generic..anything..routing number,checking acct.with copy btn
