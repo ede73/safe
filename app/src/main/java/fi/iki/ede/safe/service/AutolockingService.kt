@@ -85,6 +85,7 @@ class AutolockingService : Service() {
                     millisecondsTillAutoLock = millisUntilFinished
                     if (LoginHandler.isLoggedIn()) {
                         autoLockNotification.updateProgress(
+                            context = this@AutolockingService,
                             timeoutUntilStop.toInt(),
                             millisecondsTillAutoLock.toInt()
                         )

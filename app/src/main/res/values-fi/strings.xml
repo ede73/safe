@@ -189,4 +189,10 @@ Nämä valinnat muistetaan, joten seuraavan kerran linkitys on helpompaa.</strin
     <string name="site_entry_extension_delete_message">Haluatko varmasti poistaa tämän?</string>
     <string name="site_entry_extension_delete">Poista</string>
     <string name="site_entry_extension_cancel">Peru</string>
+    <string name="notification_backup_reminder_title">Muista varmuuskopio!</string>
+    <string name="notification_backup_reminder_description">Sinulla on varmuuskopioimattomia muutoksia! Edellinen varmuuskopio tehty %s. On suositeltavaa tehdä varmuuskopio pian. Varmuuskopioinnin ja palautuksen löydät PasswordSafen oikeassa ylänurkassa olevasta valikosta.</string>
+    <string name="notification_google_autobackup_title">Googlen automaattinen varmuuskopio!</string>
+    <string name="notification_google_autobackup_description">Googlen automaattinen varmuuskopiointi suoritettu %s. Jos poistat sovelluksen, ja asennat uudestaan nämä salasanat palautetaan automaattisesti. Voit kytkeä toiminnon pois asetuksista.</string>
+    <string name="notification_google_autobackup_quota_exceeded_title">Googlen automaattisen varmuuskopioinnin tila on loppu!</string>
+    <string name="notification_google_autobackup_quota_exceeded_description">Automaattisen varmuuskopioinnin tila on loppunut %s. Voit poistaa Google Driven asetuksista sovelluksia, tai niiden varmuuskopoita, jotta tilanne korjaantuu. Tavalliset itsetehdyt varmuuskopiot onnistuu aina.</string>
 </resources>

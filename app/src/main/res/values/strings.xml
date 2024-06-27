@@ -243,4 +243,10 @@ These selections will be remembered, so next time linking will be easier.</strin
     <string name="site_entry_extension_delete_message">Are you sure you want to delete this item?</string>
     <string name="site_entry_extension_delete">Delete</string>
     <string name="site_entry_extension_cancel">Cancel</string>
+    <string name="notification_backup_reminder_title">Remember backup!</string>
+    <string name="notification_backup_reminder_description">You have some changes not backed up recently. Last backup was done %s. For your data safety, recommend doing backup soon. You can find backup and restore from top right corner menu in the PasswordSafe.</string>
+    <string name="notification_google_autobackup_title">Google autobackup done!</string>
+    <string name="notification_google_autobackup_description">Google automatic backup was done %s. If you uninstall and reinstall, your passwords are still safe. If you don\'t want this feature, you can turn it off from settings.</string>
+    <string name="notification_google_autobackup_quota_exceeded_title">Google Automatic Backup Quota Exceeded!</string>
+    <string name="notification_google_autobackup_quota_exceeded_description">Automatic backup quota exceeded %s. You can delete apps or their data from you Google Drive. You can continue making regular backups.</string>
 </resources>

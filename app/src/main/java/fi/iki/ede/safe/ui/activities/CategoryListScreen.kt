@@ -21,6 +21,7 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
+import fi.iki.ede.safe.notifications.SetupNotifications
 import fi.iki.ede.safe.ui.composable.AddOrEditCategory
 import fi.iki.ede.safe.ui.composable.CategoryList
 import fi.iki.ede.safe.ui.composable.TopActionBar
@@ -35,6 +36,7 @@ import kotlinx.coroutines.launch
 class CategoryListScreen : AutolockingBaseComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        SetupNotifications.setup(this)
         setContent { CategoryListScreenCompose(DataModel.categoriesStateFlow) }
     }
 }
