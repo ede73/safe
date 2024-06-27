@@ -10,6 +10,7 @@ TODO:
     - Implement better GPM view
     - Visualize GPM linkage
     - Show ignored
+- All sorts of dialogs fill the app, merge, generalize (house keeping)
 - Restore soft-deleted password WHEN no categories
 - Restore soft-deleted password WHEN original category lost
 - Add edited-aspect to CRUD password/category. SQlite has no autom.modified, and feels too much to track that way, just bump preferences
