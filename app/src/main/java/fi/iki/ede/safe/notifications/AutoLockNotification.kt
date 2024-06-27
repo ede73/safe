@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.service
+package fi.iki.ede.safe.notifications
 
 import android.Manifest
 import android.app.Notification
@@ -15,7 +15,7 @@ import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.ui.activities.CategoryListScreen
 
-class ServiceNotification(val context: Context) {
+class AutoLockNotification(val context: Context) {
     private val mNotifyManager: NotificationManagerCompat = NotificationManagerCompat.from(context)
     private lateinit var notificationBuilder: NotificationCompat.Builder
 

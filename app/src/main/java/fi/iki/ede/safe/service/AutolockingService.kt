@@ -12,6 +12,7 @@ import android.os.IBinder
 import androidx.annotation.RequiresApi
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.model.Preferences
+import fi.iki.ede.safe.notifications.AutoLockNotification
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity.Companion.lockTheApplication
 import java.time.Duration
 
@@ -20,7 +21,7 @@ import java.time.Duration
 class AutolockingService : Service() {
     private var autoLockCountdownNotifier: CountDownTimer? = null
     private lateinit var mIntentReceiver: BroadcastReceiver
-    private lateinit var serviceNotification: ServiceNotification
+    private lateinit var autoLockNotification: AutoLockNotification
 
     override fun onBind(intent: Intent): IBinder? {
         return null
@@ -46,7 +47,7 @@ class AutolockingService : Service() {
         } else {
             oldRegisterReceiver()
         }
-        serviceNotification = ServiceNotification(this)
+        autoLockNotification = AutoLockNotification(this)
     }
 
     override fun onDestroy() {
@@ -54,7 +55,7 @@ class AutolockingService : Service() {
         if (LoginHandler.isLoggedIn()) {
             lockOut()
         }
-        serviceNotification.clearNotification()
+        autoLockNotification.clearNotification()
         autoLockCountdownNotifier?.cancel()
     }
 
@@ -67,13 +68,13 @@ class AutolockingService : Service() {
 
     private fun initializeAutolockCountdownTimer() {
         if (!LoginHandler.isLoggedIn()) {
-            serviceNotification.clearNotification()
+            autoLockNotification.clearNotification()
             autoLockCountdownNotifier?.cancel()
             return
         }
         autoLockCountdownNotifier?.cancel()
         autoLockCountdownNotifier = null
-        serviceNotification.setNotification(this@AutolockingService)
+        autoLockNotification.setNotification(this@AutolockingService)
 
         val timeoutUntilStop = Preferences.getLockTimeoutDuration().inWholeMilliseconds
 
@@ -83,7 +84,7 @@ class AutolockingService : Service() {
                     // doing nothing.
                     millisecondsTillAutoLock = millisUntilFinished
                     if (LoginHandler.isLoggedIn()) {
-                        serviceNotification.updateProgress(
+                        autoLockNotification.updateProgress(
                             timeoutUntilStop.toInt(),
                             millisecondsTillAutoLock.toInt()
                         )
@@ -107,7 +108,7 @@ class AutolockingService : Service() {
     }
 
     private fun lockOut() {
-        serviceNotification.clearNotification()
+        autoLockNotification.clearNotification()
         autoLockCountdownNotifier?.cancel()
         sendRestartTimer(this)
         lockTheApplication(this)
