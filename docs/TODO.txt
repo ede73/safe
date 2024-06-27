@@ -8,6 +8,8 @@ TODO:
 - Enhance search to span extensions!
 - Implement better GPM view
 - Visualize GPM linkage
+- Restore soft-deleted password WHEN no categories
+- Restore soft-deleted password WHEN original category lost
 - Extension: make completely user definable (categories)
     - bonus card etc.number
     - or could security questions (which shouldn't exist!) Be more generic..anything..routing number,checking acct.with copy btn
