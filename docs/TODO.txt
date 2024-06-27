@@ -6,10 +6,13 @@ In progress:
 
 TODO:
 - Enhance search to span extensions!
-- Implement better GPM view
-- Visualize GPM linkage
+- GPM:
+    - Implement better GPM view
+    - Visualize GPM linkage
+    - Show ignored
 - Restore soft-deleted password WHEN no categories
 - Restore soft-deleted password WHEN original category lost
+- Add edited-aspect to CRUD password/category. SQlite has no autom.modified, and feels too much to track that way, just bump preferences
 - Extension: make completely user definable (categories)
     - bonus card etc.number
     - or could security questions (which shouldn't exist!) Be more generic..anything..routing number,checking acct.with copy btn
