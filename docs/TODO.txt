@@ -5,25 +5,20 @@ Looks great ! https://developer.android.com/studio/test/other-testing-tools/app-
 In progress:
 
 TODO:
+- Extension: make completely user definable (categories)
+    - bonus card etc.number
+    - or could security questions (which shouldn't exist!) Be more generic..anything..routing number,checking acct.with copy btn
+    - separate entity for security questions (treated like passwords)
 - Backup codes - messes up notes
-- phone numbers - handy when changing numbers
 - username and password..often same, in some places separate ( banks!)
     - make a expandable box, where u can enter one detail (shared) or separately the both..
 - dynamic folder for old passwords
-- notify of old passwords
 - not a password checkmark
-- bonus card etc.number
 - allow locking app ,but showing one field..if you want to hand the phone for someone else
-- payment profile associated (just name,no card details)
 - leak check by domain (just general info if site has had security incidents)
 - if passkey??
-- login via fb / google
-- 2fa? Authenticator app?
-- separate entity for security questions (treated like passwords)
-- separate field for credit card details?
 - generic expiration field(+notification x days before)
 - add delete photo confirmation 
-- or could security questions (which shouldn't exist!) Be more generic..anything..routing number,checking acct.with copy btn
 - Family Passwords / shared passwords
 - ellipsis cuts text too eagerly (password list left hand side)
 
@@ -34,11 +29,19 @@ TODO:
 - Credentials Manager Api (14+ devices - no one supports)
 DONE:
 - long name/desc + date overflows
-- soft delete (trash) (db done, datamodel done)
+- soft delete (trash) (db done, data model done)
     - UI Deleted category(done)
     - backup ?  (i think yes, since we DO retain them)(done)
     - Preferences? Auto Delete, if SO, then we shall not have deletion time>(done)
     - and auto delete (done) + some test fixes
+- implemented with extension mechanism(almost free style):
+    - phone numbers - handy when changing numbers
+    - payment profile associated (just name,no card details)
+        - merged to above: separate field for credit card details?
+    - 2fa? Authenticator app? (authenticators)
+        - merged to above: login via fb / google
+
+- notify of old passwords
 
 
 
