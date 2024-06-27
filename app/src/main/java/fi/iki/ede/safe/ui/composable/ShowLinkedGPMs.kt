@@ -22,7 +22,7 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.model.encrypt
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.gpm.ui.composables.ShowGPMInfo
+import fi.iki.ede.safe.gpm.ui.composables.ShowInfo
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeListItem
@@ -44,7 +44,7 @@ fun ShowLinkedGPMs(
     text = {
         var showGpm by remember { mutableStateOf<SavedGPM?>(null) }
         if (showGpm != null) {
-            ShowGPMInfo(showGpm!!, onDismiss = { showGpm = null })
+            ShowInfo(showGpm!!, onDismiss = { showGpm = null })
         }
         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
             gpms.forEach {

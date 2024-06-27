@@ -82,7 +82,7 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
     val context = LocalContext.current
     val showInfo = remember { mutableStateOf<SavedGPM?>(null) }
     if (showInfo.value != null) {
-        ShowGPMInfo(showInfo.value!!, onDismiss = { showInfo.value = null })
+        ShowInfo(showInfo.value!!, onDismiss = { showInfo.value = null })
     }
 
     fun ignoreSavedGPM(id: Long) {
