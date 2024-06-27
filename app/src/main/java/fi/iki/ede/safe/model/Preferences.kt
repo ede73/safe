@@ -50,6 +50,7 @@ object Preferences {
     private const val PREFERENCE_CLIPBOARD_CLEAR_DELAY = "clipboard_clear_delay"
     private const val PREFERENCE_DEFAULT_USER_NAME = "default_user_name"
     private const val NOTIFICATION_PERMISSION_REQUIRED = "notification_permission_required"
+    private const val NOTIFICATION_PERMISSION_DENIED = "notification_permission_denied"
     const val PREFERENCE_BIO_CIPHER = "bio_cipher"
     private const val PREFERENCE_LOCK_ON_SCREEN_LOCK = "lock_on_screen_lock"
     private const val PREFERENCE_LOCK_TIMEOUT_DEFAULT_VALUE_MINUTES = "5"
@@ -99,6 +100,15 @@ object Preferences {
     // at screen (ie. from activity)
     fun setNotificationPermissionRequired(value: Boolean) =
         sharedPreferences.edit().putBoolean(NOTIFICATION_PERMISSION_REQUIRED, value).apply()
+
+    fun getNotificationPermissionRequired() =
+        sharedPreferences.getBoolean(NOTIFICATION_PERMISSION_REQUIRED, false)
+
+    fun setNotificationPermissionDenied(value: Boolean) =
+        sharedPreferences.edit().putBoolean(NOTIFICATION_PERMISSION_DENIED, value).apply()
+
+    fun getNotificationPermissionDenied() =
+        sharedPreferences.getBoolean(NOTIFICATION_PERMISSION_DENIED, false)
 
     fun getLastBackupTime() = sharedPreferences.getLong(PREFERENCE_LAST_BACKUP_TIME, 0)
         .takeIf { it != 0L }
