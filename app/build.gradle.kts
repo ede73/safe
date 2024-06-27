@@ -285,10 +285,10 @@ tasks.configureEach {
     // When ever doing release(Generate Signed App Bundle), run also all the tests...
     when (name) {
         "connectedDebugAndroidTest" -> dependsOn("unlockEmulator")
-//        "bundleRelease" -> {
-//            dependsOn("testReleaseUnitTest")
-//            dependsOn("connectedAndroidTest")
-//        }
+        "bundleRelease" -> {
+            dependsOn("testReleaseUnitTest")
+            dependsOn("connectedAndroidTest")
+        }
 
         "assembleDebug" -> {
             // UNIT TESTS
