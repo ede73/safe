@@ -18,8 +18,8 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.gpm.changeset.ImportChangeSet
 import fi.iki.ede.gpm.changeset.ScoredMatch
 import fi.iki.ede.gpm.model.IncomingGPM
-import fi.iki.ede.safe.gpm.ui.activities.makeFakeImport
 import fi.iki.ede.safe.gpm.ui.models.ItemWrapper
+import fi.iki.ede.safe.gpm.ui.utilities.makeFakeImportForTesting
 import fi.iki.ede.safe.ui.theme.SafeListItem
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
@@ -79,7 +79,7 @@ fun Page3Preview() {
     KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
     KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
     SafeTheme {
-        val m = remember { mutableStateOf<ImportChangeSet?>(makeFakeImport()) }
+        val m = remember { mutableStateOf<ImportChangeSet?>(makeFakeImportForTesting()) }
         Page3(m)
     }
 }

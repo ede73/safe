@@ -37,10 +37,11 @@ import fi.iki.ede.gpm.model.encrypt
 import fi.iki.ede.gpm.model.encrypter
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.db.DBID
-import fi.iki.ede.safe.gpm.ui.models.CombinedListPairs
 import fi.iki.ede.safe.gpm.ui.models.DNDObject
 import fi.iki.ede.safe.gpm.ui.models.ImportGPMViewModel
 import fi.iki.ede.safe.gpm.ui.modifiers.doesItHaveText
+import fi.iki.ede.safe.gpm.ui.utilities.CombinedListPairs
+import fi.iki.ede.safe.gpm.ui.utilities.combineLists
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
@@ -51,26 +52,6 @@ import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-
-private fun combineLists(
-    siteEntries: List<DecryptableSiteEntry>,
-    gpms: List<SavedGPM>
-): List<CombinedListPairs> {
-    val maxSize = maxOf(siteEntries.size, gpms.size)
-    val combinedList = mutableListOf<CombinedListPairs>()
-
-    for (i in 0 until maxSize) {
-        combinedList.add(
-            CombinedListPairs.SiteEntryToGPM(
-                siteEntries.getOrNull(i),
-                gpms.getOrNull(i)
-            )
-        )
-    }
-
-    return combinedList
-}
-
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

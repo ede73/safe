@@ -28,15 +28,6 @@ import fi.iki.ede.safe.gpm.ui.modifiers.dnd
 import fi.iki.ede.safe.gpm.ui.modifiers.getClipData
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
-fun DNDObject.dump(): String =
-    "DNDObject:" +
-            when (this) {
-                is DNDObject.JustString -> this.string
-                is DNDObject.GPM -> "${this.savedGPM.cachedDecryptedName} - ${this.savedGPM.id}"
-                is DNDObject.SiteEntry -> "${this.decryptableSiteEntry.cachedPlainDescription} - ${this.decryptableSiteEntry.id}"
-                is DNDObject.Spacer -> "Spacer"
-            }
-
 @Composable
 fun DraggableText(
     dragObject: DNDObject,

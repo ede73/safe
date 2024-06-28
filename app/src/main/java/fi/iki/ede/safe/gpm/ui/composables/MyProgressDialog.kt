@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 object ProgressStateHolder {
     val progressMessageFlow = MutableStateFlow<List<String>>(emptyList())
 
-    // make sure you are in main thread (withContect)
+    // make sure you are in main thread (withContext)
     fun addMessage(message: String) {
         progressMessageFlow.value = (progressMessageFlow.value + message).takeLast(7)
     }
