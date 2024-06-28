@@ -41,6 +41,7 @@ class DecryptableSiteEntry(categoryId: Long) {
     fun exportExtensionsToDB() = Json.encodeToString(extensions).encrypt()
     fun importExtensionsFromDB(encryptedJson: IVCipherText) {
         try {
+            if (encryptedJson.isEmpty()) return
             val serializedExtension = encryptedJson.decrypt().trim()
             val decodedExtension =
                 Json.decodeFromString<MutableMap<SiteEntryExtensionType, MutableSet<String>>>(
