@@ -8,6 +8,7 @@ import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.db.DBID
 import fi.iki.ede.safe.ui.utilities.firebaseLog
+import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
@@ -303,9 +304,18 @@ object DataModel {
         return copyOfCategory
     }
 
-    fun loadGPMsFromDB() {
+    private fun loadGPMsFromDB() {
         _savedGPMs.clear()
         _savedGPMs.addAll(DBHelperFactory.getDBHelper().fetchSavedGPMsFromDB())
+    }
+
+    fun markSavedGPMIgnored(savedGpmId: Long) {
+        DBHelperFactory.getDBHelper().markSavedGPMIgnored(savedGpmId)
+        val ignoreGpm = _savedGPMs.firstOrNull { it.id == savedGpmId }
+        if (ignoreGpm != null) {
+            _savedGPMs.remove(ignoreGpm)
+            _savedGPMs.add(ignoreGpm.copy(flaggedIgnored = true))
+        }
     }
 
     // contraption just for unit tests
@@ -442,28 +452,36 @@ object DataModel {
         }
     }
 
-    fun linkSaveGPMAndSiteEntry(siteEntry: DecryptableSiteEntry, savedGPMID: Long) {
-        val gpm = _savedGPMs.firstOrNull { it.id == savedGPMID }
-        require(gpm != null) { "GPM not found" }
-        val idx = _siteEntryToSavedGPM.keys.firstOrNull { it.id == siteEntry.id }
-        if (idx == null) {
+    fun linkSaveGPMAndSiteEntry(siteEntry: DecryptableSiteEntry, savedGpmId: Long) {
+        val gpm = _savedGPMs.firstOrNull { it.id == savedGpmId }
+        require(gpm != null) { "GPM not found by id $savedGpmId" }
+        val siteEntryIndex = _siteEntryToSavedGPM.keys.firstOrNull { it.id == siteEntry.id }
+        if (siteEntryIndex == null) {
             _siteEntryToSavedGPM[siteEntry] = setOf(gpm)
         } else {
-            _siteEntryToSavedGPM[idx] = _siteEntryToSavedGPM[idx]!!.toSet() + setOf(gpm)
+            _siteEntryToSavedGPM[siteEntryIndex] =
+                _siteEntryToSavedGPM[siteEntryIndex]!!.toSet() + setOf(gpm)
         }
         _siteEntryToSavedGPMFlow.value = _siteEntryToSavedGPM
 
-        DBHelperFactory.getDBHelper().linkSaveGPMAndSiteEntry(siteEntry.id!!, savedGPMID)
+        try {
+            DBHelperFactory.getDBHelper().linkSaveGPMAndSiteEntry(siteEntry.id!!, savedGpmId)
+        } catch (ex: Exception) {
+            firebaseRecordException(
+                "Linking SE=${siteEntry.id} and GPM=${savedGpmId} failed (exists already?) should never happend",
+                ex
+            )
+        }
     }
 
-    suspend fun addGPMAsSiteEntry(
-        gpmID: Long,
+    suspend fun addGpmAsSiteEntry(
+        savedGpmId: Long,
         categoryId: DBID,
         onAdd: suspend (DecryptableSiteEntry) -> Unit
     ) {
-        val gpm = _savedGPMs.firstOrNull { it.id == gpmID }
+        val gpm = _savedGPMs.firstOrNull { it.id == savedGpmId }
         if (gpm == null) {
-            firebaseLog("Trying to add non existing GPM $gpmID")
+            firebaseLog("Trying to add non existing GPM $savedGpmId")
             return
         }
         addOrUpdateSiteEntry(DecryptableSiteEntry(categoryId).apply {
@@ -473,12 +491,6 @@ object DataModel {
             description = gpm.encryptedName
             note = gpm.encryptedNote
         }, onAdd)
-    }
-
-    fun markSavedGPMIgnored(gpmID: Long) {
-        // should set the flag too!
-        DBHelperFactory.getDBHelper().markSavedGPMIgnored(gpmID)
-        _siteEntryToSavedGPMFlow.value = _siteEntryToSavedGPM
     }
 
     fun getLinkedGPMs(siteEntryID: DBID): Set<SavedGPM> =

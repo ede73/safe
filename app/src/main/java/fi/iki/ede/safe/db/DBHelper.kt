@@ -405,8 +405,7 @@ class DBHelper internal constructor(
             }, whereEq(GooglePasswordManager.Columns.ID, savedGPMID)).toLong()
         }
 
-    fun linkSaveGPMAndSiteEntry(siteEntryID: DBID, savedGPMID: DBID) =
-        //writableDatabase.use { db -> //effin transaction dies with ...
+    fun linkSaveGPMAndSiteEntry(siteEntryID: DBID, savedGPMID: DBID): SQLiteDatabase =
         writableDatabase.apply {
             insert(SiteEntry2GooglePasswordManager, ContentValues().apply {
                 put(SiteEntry2GooglePasswordManager.Columns.PASSWORD_ID, siteEntryID)
@@ -463,12 +462,10 @@ class DBHelper internal constructor(
 
     fun deleteObsoleteSavedGPMs(delete: Set<SavedGPM>) =
         delete.forEach { savedGPM ->
-            writableDatabase.let { db ->
-                db.delete(
-                    GooglePasswordManager,
-                    whereEq(GooglePasswordManager.Columns.ID, savedGPM.id!!)
-                )
-            }
+            writableDatabase.delete(
+                GooglePasswordManager,
+                whereEq(GooglePasswordManager.Columns.ID, savedGPM.id!!)
+            )
         }
 
     fun updateSavedGPMByIncomingGPM(update: Map<IncomingGPM, SavedGPM>) =
