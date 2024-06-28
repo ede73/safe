@@ -41,7 +41,10 @@ import fi.iki.ede.safe.gpm.ui.utilities.getInternalDocumentInputStream
 import fi.iki.ede.safe.gpm.ui.utilities.readAndParseCSV
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.Preferences
-import fi.iki.ede.safe.ui.composable.YesNoDialog
+import fi.iki.ede.safe.ui.dialogs.YesNoDialog
+import fi.iki.ede.safe.ui.dialogs.MyProgressDialog
+import fi.iki.ede.safe.ui.dialogs.ProgressStateHolder
+import fi.iki.ede.safe.ui.dialogs.UsageInfoDialog
 import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTextButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
@@ -284,7 +287,7 @@ fun ImportScreen(
         ImportResultListPager(importChangeSet, _done)
 
         if (!skipImportReminder && showUsage.value) {
-            UsageInfo(stringResource(id = R.string.google_password_import_usage),
+            UsageInfoDialog(stringResource(id = R.string.google_password_import_usage),
                 onDismiss = {
                     Preferences.gpmImportUsageShown()
                     showUsage.value = false

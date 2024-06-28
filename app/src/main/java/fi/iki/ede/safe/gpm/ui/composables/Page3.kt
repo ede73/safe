@@ -20,6 +20,7 @@ import fi.iki.ede.gpm.changeset.ScoredMatch
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.safe.gpm.ui.models.ItemWrapper
 import fi.iki.ede.safe.gpm.ui.utilities.makeFakeImportForTesting
+import fi.iki.ede.safe.ui.dialogs.ShowInfoDialog
 import fi.iki.ede.safe.ui.theme.SafeListItem
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
@@ -45,11 +46,11 @@ fun Page3(importChangeSet: MutableState<ImportChangeSet?>) =
             }
             val showInfo1 = remember { mutableStateOf<IncomingGPM?>(null) }
             if (showInfo1.value != null) {
-                ShowInfo(showInfo1.value!!, onDismiss = { showInfo1.value = null })
+                ShowInfoDialog(showInfo1.value!!, onDismiss = { showInfo1.value = null })
             }
             val showInfo2 = remember { mutableStateOf<ScoredMatch?>(null) }
             if (showInfo2.value != null) {
-                ShowInfo(showInfo2.value!!, onDismiss = { showInfo2.value = null })
+                ShowInfoDialog(showInfo2.value!!, onDismiss = { showInfo2.value = null })
             }
             LazyColumn {
                 wrappedList.forEach { entry ->

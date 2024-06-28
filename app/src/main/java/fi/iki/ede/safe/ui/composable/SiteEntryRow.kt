@@ -34,6 +34,8 @@ import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.splits.IntentManager
+import fi.iki.ede.safe.ui.dialogs.DeleteSiteEntryDialog
+import fi.iki.ede.safe.ui.dialogs.MoveSiteEntryDialog
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import fi.iki.ede.safe.ui.theme.SafeListItem
 import fi.iki.ede.safe.ui.theme.SafeTheme
@@ -142,7 +144,7 @@ fun SiteEntryRow(
             val filteredCategories = categoriesState.filter { it != currentCategory }
                 .sortedBy { it.plainName.lowercase() }
 
-            MoveSiteEntry(filteredCategories, onConfirm = { newCategory ->
+            MoveSiteEntryDialog(filteredCategories, onConfirm = { newCategory ->
                 coroutineScope.launch {
                     DataModel.moveSiteEntry(siteEntry, newCategory)
                 }

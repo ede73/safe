@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.ui.composable
+package fi.iki.ede.safe.ui.dialogs
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -22,7 +22,6 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.model.encrypt
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.gpm.ui.composables.ShowInfo
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeListItem
@@ -30,7 +29,7 @@ import fi.iki.ede.safe.ui.theme.SafeTextButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @Composable
-fun ShowLinkedGPMs(
+fun ShowLinkedGpmsDialog(
     gpms: Set<SavedGPM>, onDismiss: () -> Unit
 ) = AlertDialog(
     onDismissRequest = { onDismiss() },
@@ -44,7 +43,7 @@ fun ShowLinkedGPMs(
     text = {
         var showGpm by remember { mutableStateOf<SavedGPM?>(null) }
         if (showGpm != null) {
-            ShowInfo(showGpm!!, onDismiss = { showGpm = null })
+            ShowInfoDialog(showGpm!!, onDismiss = { showGpm = null })
         }
         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
             gpms.forEach {
@@ -83,6 +82,6 @@ fun ShowLinkedGPMsPreview() {
                 "hash"
             )
         )
-        ShowLinkedGPMs(gpms) {}
+        ShowLinkedGpmsDialog(gpms) {}
     }
 }

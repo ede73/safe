@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.gpm.ui.composables
+package fi.iki.ede.safe.ui.dialogs
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding

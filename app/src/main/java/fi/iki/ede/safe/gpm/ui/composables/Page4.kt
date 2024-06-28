@@ -15,6 +15,7 @@ import fi.iki.ede.gpm.changeset.ImportChangeSet
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.safe.gpm.ui.models.ItemWrapper
 import fi.iki.ede.safe.gpm.ui.utilities.makeFakeImportForTesting
+import fi.iki.ede.safe.ui.dialogs.ShowInfoDialog
 import fi.iki.ede.safe.ui.theme.SafeListItem
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
@@ -27,7 +28,7 @@ fun Page4(importChangeSet: MutableState<ImportChangeSet?>) =
         val wrappedList = selectableList.map { ItemWrapper(it) }
         val showInfo = remember { mutableStateOf<SavedGPM?>(null) }
         if (showInfo.value != null) {
-            ShowInfo(showInfo.value!!, onDismiss = { showInfo.value = null })
+            ShowInfoDialog(showInfo.value!!, onDismiss = { showInfo.value = null })
         }
         LazyColumn {
             items(wrappedList) { entry ->

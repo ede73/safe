@@ -50,6 +50,7 @@ import fi.iki.ede.safe.password.PasswordGenerator
 import fi.iki.ede.safe.splits.PluginManager
 import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.ui.TestTag
+import fi.iki.ede.safe.ui.dialogs.ShowLinkedGpmsDialog
 import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
@@ -246,7 +247,7 @@ fun SiteEntryView(
                 })
         }
         if (showLinkedInfo != null) {
-            ShowLinkedGPMs(showLinkedInfo!!, onDismiss = { showLinkedInfo = null })
+            ShowLinkedGpmsDialog(showLinkedInfo!!, onDismiss = { showLinkedInfo = null })
         }
     }
 }

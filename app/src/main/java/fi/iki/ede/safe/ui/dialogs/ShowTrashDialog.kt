@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.ui.composable
+package fi.iki.ede.safe.ui.dialogs
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -38,7 +38,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
-fun ShowTrash(
+fun ShowTrashDialog(
     onDismiss: () -> Unit,
 ) {
     val deletedSiteEntries by DataModel.softDeletedStateFlow.collectAsState(initial = emptyList())
@@ -135,6 +135,6 @@ fun ShowTrashPreview() {
         val site = DecryptableSiteEntry(1).apply {
             description = encrypter("Description".toByteArray())
         }
-        ShowTrash({})
+        ShowTrashDialog({})
     }
 }

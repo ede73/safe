@@ -1,7 +1,6 @@
 package fi.iki.ede.safe.ui.composable
 
 import android.net.Uri
-import androidx.appcompat.app.AlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableIntState
@@ -15,6 +14,7 @@ import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.RestoreDatabase
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.ui.activities.PrepareDataBaseRestorationScreen
+import fi.iki.ede.safe.ui.dialogs.restoreOldBackupDialog
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -55,20 +55,14 @@ fun RestoreDatabaseComponent(
             lastBackupDone.toLocalDateTime().toString()
         )
         coroutineScope.launch(Dispatchers.Main) {
-            AlertDialog.Builder(context)
-                .setTitle(restoringOldBackupTitle)
-                .setMessage(restoreOldBackupMessage)
-                .setPositiveButton(restoreAnywayText) { _, _ ->
-                    result.complete(true)
-                }
-                .setNegativeButton(cancelRestoration) { _, _ ->
-                    result.complete(false)
-                }
-                .setOnDismissListener {
-                    // Handle the case where the dialog is dismissed without an explicit action
-                    result.complete(false)
-                }
-                .show()
+            restoreOldBackupDialog(
+                context,
+                restoringOldBackupTitle,
+                restoreOldBackupMessage,
+                restoreAnywayText,
+                cancelRestoration,
+                result
+            )
         }
 
         // Wait for the result to be set by the dialog actions

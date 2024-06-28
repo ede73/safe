@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.gpm.ui.composables
+package fi.iki.ede.safe.ui.dialogs
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
@@ -11,35 +11,35 @@ import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @Composable
-fun ShowInfo(item: SavedGPM, onDismiss: () -> Unit) {
+fun ShowInfoDialog(item: SavedGPM, onDismiss: () -> Unit) {
     val dump =
         "Name: ${item.cachedDecryptedName}\nUser: ${item.cachedDecryptedUsername}\nUrl: ${item.cachedDecryptedUrl}".let {
             if (BuildConfig.DEBUG) {
                 it + "\nID=${item.id}\nPassword=${item.cachedDecryptedPassword}"
             } else it
         }
-    UsageInfo(dump, onDismiss = onDismiss)
+    UsageInfoDialog(dump, onDismiss = onDismiss)
 }
 
 @Composable
-fun ShowInfo(item: IncomingGPM, onDismiss: () -> Unit) {
+fun ShowInfoDialog(item: IncomingGPM, onDismiss: () -> Unit) {
     val dump = "Name: ${item.name}\nUser: ${item.username}\nUrl: ${item.url}".let {
         if (BuildConfig.DEBUG) {
             it + "\nNote: ${item.note}\nPassword: ${item.password}"
         } else it
     }
-    UsageInfo(dump, onDismiss = onDismiss)
+    UsageInfoDialog(dump, onDismiss = onDismiss)
 }
 
 @Composable
-fun ShowInfo(item: ScoredMatch, onDismiss: () -> Unit) {
+fun ShowInfoDialog(item: ScoredMatch, onDismiss: () -> Unit) {
     val dump =
         "Match: ${item.matchScore}\nHashMatch: ${item.hashMatch}\nName: ${item.item.cachedDecryptedName}\nUser: ${item.item.cachedDecryptedUsername}\nUrl: ${item.item.cachedDecryptedUrl}".let {
             if (BuildConfig.DEBUG) {
                 it + "\nNote: ${item.item.cachedDecryptedNote}\nPassword: ${item.item.cachedDecryptedPassword}"
             } else it
         }
-    UsageInfo(dump, onDismiss = onDismiss)
+    UsageInfoDialog(dump, onDismiss = onDismiss)
 }
 
 @Preview(showBackground = true)
@@ -50,6 +50,6 @@ fun ShowInfoPreview() {
     val fakeSavedGPM =
         SavedGPM(0, IncomingGPM.makeFromCSVImport("name", "http://acme", "user", "pwd", "note"))
     SafeTheme {
-        ShowInfo(fakeSavedGPM, {})
+        ShowInfoDialog(fakeSavedGPM, {})
     }
 }

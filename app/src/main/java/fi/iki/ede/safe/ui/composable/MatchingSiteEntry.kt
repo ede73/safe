@@ -30,6 +30,8 @@ import fi.iki.ede.safe.model.DataModel.getCategory
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.ui.TestTag
+import fi.iki.ede.safe.ui.dialogs.DeleteSiteEntryDialog
+import fi.iki.ede.safe.ui.dialogs.MoveSiteEntryDialog
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import fi.iki.ede.safe.ui.theme.SafeListItem
@@ -131,7 +133,7 @@ fun MatchingSiteEntry(
                 val currentCategory = siteEntry.getCategory()
                 val filteredCategories = DataModel.getCategories().filter { it != currentCategory }
 
-                MoveSiteEntry(filteredCategories, onConfirm = { newCategory ->
+                MoveSiteEntryDialog(filteredCategories, onConfirm = { newCategory ->
                     coroutineScope.launch {
                         DataModel.moveSiteEntry(siteEntry, newCategory)
                     }

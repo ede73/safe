@@ -46,6 +46,7 @@ import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.splits.IntentManager
+import fi.iki.ede.safe.ui.dialogs.ShowInfoDialog
 import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.firebaseRecordException
@@ -63,7 +64,7 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
     val context = LocalContext.current
     val showInfo = remember { mutableStateOf<SavedGPM?>(null) }
     if (showInfo.value != null) {
-        ShowInfo(showInfo.value!!, onDismiss = { showInfo.value = null })
+        ShowInfoDialog(showInfo.value!!, onDismiss = { showInfo.value = null })
     }
 
     fun ignoreSavedGPM(id: Long) {

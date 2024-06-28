@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.ui.composable
+package fi.iki.ede.safe.ui.dialogs
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text

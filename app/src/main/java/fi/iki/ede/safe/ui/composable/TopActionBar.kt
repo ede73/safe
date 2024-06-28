@@ -45,6 +45,7 @@ import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
 import fi.iki.ede.safe.splits.DropDownMenu
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.TestTag
+import fi.iki.ede.safe.ui.dialogs.ShowTrashDialog
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
@@ -139,7 +140,7 @@ fun TopActionBar(
                 ShowChangeMasterPasswordDialog(showChangePasswordDialog)
             }
             if (showTrashDialog.value) {
-                ShowTrash(onDismiss = { showTrashDialog.value = false })
+                ShowTrashDialog(onDismiss = { showTrashDialog.value = false })
             }
         })
     }

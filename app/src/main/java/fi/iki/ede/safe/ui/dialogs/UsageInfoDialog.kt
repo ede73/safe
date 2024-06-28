@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.gpm.ui.composables
+package fi.iki.ede.safe.ui.dialogs
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.rememberScrollState
@@ -12,7 +12,7 @@ import fi.iki.ede.safe.ui.theme.SafeTextButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @Composable
-fun UsageInfo(
+fun UsageInfoDialog(
     message: String,
     onDismiss: () -> Unit
 ) = AlertDialog(
@@ -35,6 +35,6 @@ fun UsageInfo(
 @Composable
 fun UsageInfoPreview() {
     SafeTheme {
-        UsageInfo("message", {})
+        UsageInfoDialog("message", {})
     }
 }

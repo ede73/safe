@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.ui.composable
+package fi.iki.ede.safe.ui.dialogs
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,7 +28,7 @@ import fi.iki.ede.safe.ui.theme.SafeListItem
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @Composable
-fun MoveSiteEntry(
+fun MoveSiteEntryDialog(
     targetCategories: List<DecryptableCategoryEntry>,
     onConfirm: (newCategory: DecryptableCategoryEntry) -> Unit,
     onDismiss: () -> Unit,
@@ -114,6 +114,6 @@ fun MoveSiteEtryPreview() {
         val site = DecryptableSiteEntry(1).apply {
             description = encrypter("Description".toByteArray())
         }
-        MoveSiteEntry(listOf(cat, cat, cat), {}, {})
+        MoveSiteEntryDialog(listOf(cat, cat, cat), {}, {})
     }
 }
