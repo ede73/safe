@@ -392,9 +392,10 @@ class DBHelper internal constructor(
         }
 
     // if user imports new DB , encryption changes and
-    // we dont currently convert GPMs too..all data in the table is irrevocably lost
+    // we don't currently convert GPMs too..all data in the table is irrevocably lost
     fun deleteAllSavedGPMs() = writableDatabase.let { db ->
         db.execSQL("DELETE FROM ${GooglePasswordManager.tableName};")
+        db.execSQL("DELETE FROM ${SiteEntry2GooglePasswordManager.tableName};")
     }
 
     fun markSavedGPMIgnored(savedGPMID: DBID) =

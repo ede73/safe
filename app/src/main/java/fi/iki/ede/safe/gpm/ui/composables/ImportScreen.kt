@@ -175,7 +175,10 @@ fun ImportScreen(
             modifier = Modifier.clickable {
                 deleteAllCounter++
                 if (deleteAllCounter > 7) {
-                    myScope.launch { DataModel.deleteAllSavedGPMs() }
+                    myScope.launch {
+
+                        DataModel.deleteAllSavedGPMs()
+                    }
                 }
             }
         )
