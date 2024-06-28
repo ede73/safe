@@ -1,11 +1,11 @@
 package fi.iki.ede.safe.model
 
 import android.graphics.Bitmap
-import android.util.Log
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.gpm.model.decrypt
 import fi.iki.ede.gpm.model.encrypt
+import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.time.ZonedDateTime
@@ -49,7 +49,7 @@ class DecryptableSiteEntry(categoryId: Long) {
                 )
             extensions.putAll(decodedExtension)
         } catch (e: Exception) {
-            Log.d("DecryptableSiteEntry", "Failed to import extensions", e)
+            firebaseRecordException("Failed to import extension", e)
         }
     }
 

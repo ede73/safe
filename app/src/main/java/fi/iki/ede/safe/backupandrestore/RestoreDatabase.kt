@@ -24,6 +24,7 @@ import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.model.SiteEntryExtensionType
+import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import kotlinx.coroutines.CancellationException
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
@@ -77,6 +78,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
             reportProgress(null, null, "Finished with backup")
             return passwords
         } catch (ex: Exception) {
+            firebaseRecordException("Failed to restore", ex)
             db.endTransaction()
             reportProgress(null, null, "Something failed, rollback")
             throw ex
@@ -281,6 +283,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                             DateUtils.unixEpochSecondsToLocalZonedDateTime(it)
                                         } ?: DateUtils.newParse(changed)
                                 } catch (ex: DateTimeParseException) {
+                                    firebaseRecordException("Failed to parse date ($changed)", ex)
                                     // silently fail, parse failure ain't critical
                                     // and no corrective measure here, passwords are more important
                                     if (BuildConfig.DEBUG) {
@@ -328,9 +331,23 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             val extensionName =
                                 myParser.getEncryptedAttribute(Attributes.SITE_ENTRY_EXTENSION_NAME)
                             if (extensionName.isNotEmpty()) {
-                                lastExtensionName =
-                                    SiteEntryExtensionType.entries.first { it.extensionName == extensionName.decrypt() }
-                                siteEntry.extensions[lastExtensionName] = mutableSetOf()
+                                try {
+                                    lastExtensionName =
+                                        SiteEntryExtensionType.entries.first { it.extensionName == extensionName.decrypt() }
+                                    siteEntry.extensions[lastExtensionName] = mutableSetOf()
+                                } catch (ex: Exception) {
+                                    firebaseRecordException(
+                                        "Failed to parse extension name ($extensionName)",
+                                        ex
+                                    )
+                                    // TODO: FIX
+                                    lastExtensionName = SiteEntryExtensionType.AUTHENTICATORS
+                                    if (!siteEntry.extensions.containsKey(lastExtensionName)) {
+                                        siteEntry.extensions[lastExtensionName] = mutableSetOf()
+                                    }
+                                    // silently fail, parse failure ain't critical
+                                    // and no corrective measure here, passwords are more important
+                                }
                             }
                         }
 
@@ -344,8 +361,13 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                         ) -> {
                             require(siteEntry != null) { "Must have siteEntry" }
                             require(lastExtensionName != null) { "Must have lastExtensionName" }
-                            myParser.maybeGetText {
-                                siteEntry!!.extensions[lastExtensionName]!!.add(it.decrypt())
+                            try {
+                                myParser.maybeGetText {
+                                    siteEntry!!.extensions[lastExtensionName]!!.add(it.decrypt())
+                                }
+                            } catch (ex: Exception) {
+                                firebaseRecordException("Failed decrypting extension value", ex)
+                                // also non critical, TODO: Figure out why(just old bad export?)
                             }
                         }
                     }
