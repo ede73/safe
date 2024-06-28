@@ -4,7 +4,7 @@ import android.util.Log
 import com.google.firebase.Firebase
 import com.google.firebase.crashlytics.crashlytics
 
-internal val TAG = "FirebaseTry"
+internal const val TAG = "fireebasehandler"
 
 class FirebaseTry<T>(private val message: String? = null, val block: () -> T) {
     fun firebaseCatch(catchBlock: (Throwable) -> T): T {
@@ -50,11 +50,11 @@ fun firebaseLog(tag: String, message: String) {
 }
 
 fun firebaseRecordException(t: Throwable) {
+    Log.i(TAG, "Caught exception", t)
     Firebase.crashlytics.recordException(t)
-    Log.i(TAG, t.toString())
 }
 
 fun firebaseRecordException(message: String, t: Throwable) {
     firebaseLog(message)
-    Firebase.crashlytics.recordException(t)
+    firebaseRecordException(t)
 }
