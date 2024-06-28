@@ -1,6 +1,5 @@
 package fi.iki.ede.gpm.changeset
 
-import fi.iki.ede.gpm.debug
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.model.ScoringConfig
@@ -66,7 +65,6 @@ fun findSimilarNamesWhereUsernameMatchesAndURLDomainLooksTheSame(
                     scoringConfig
                 )
             if (domainAndOrUsernameMatch != null) {
-                debug { println("  --Similarity >=${domainAndOrUsernameMatch.matchScore * 100}% match between $incomingGPM and $scoredSavedGPMNameMatch") }
                 incomingGPM to domainAndOrUsernameMatch
             } else {
                 null

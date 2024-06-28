@@ -51,6 +51,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.time.ZonedDateTime
+import kotlin.reflect.KFunction1
 
 @Composable
 fun ImportScreen(
@@ -69,7 +70,8 @@ fun ImportScreen(
     val allowAcceptAndMove = remember { mutableStateOf(false) }
     val finishLinking = remember { mutableStateOf(false) }
     val importChangeSet = remember { mutableStateOf<ImportChangeSet?>(null) }
-    val progressMessageDequeue = ArrayDeque<String>()
+
+
     val showImportProgress = remember { mutableStateOf(false) }
     val showUsage = remember {
         mutableStateOf(
@@ -80,6 +82,14 @@ fun ImportScreen(
         )
     }
     val allowContinuingLastImport = remember { mutableStateOf(true) }
+
+    fun addMessageToFlow(message: String) {
+        myScope.launch {
+            withContext(Dispatchers.Main) {
+                ProgressStateHolder.addMessage(message)
+            }
+        }
+    }
 
     val selectGpmCsvExport =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -95,7 +105,7 @@ fun ImportScreen(
                         context,
                         inputStream,
                         myScope,
-                        progressMessageDequeue,
+                        ::addMessageToFlow,
                         importChangeSet,
                         avertInactivity,
                         complete = { success ->
@@ -103,7 +113,7 @@ fun ImportScreen(
                                 allowAcceptAndMove.value = true
                             } else {
                                 allowAcceptAndMove.value = false
-                                progressMessageDequeue.add(importFailed)
+                                addMessageToFlow(importFailed)
                             }
                         }
                     )
@@ -128,7 +138,7 @@ fun ImportScreen(
                     context,
                     inputStream,
                     myScope,
-                    progressMessageDequeue,
+                    ::addMessageToFlow,
                     importChangeSet,
                     avertInactivity,
                     complete = { success ->
@@ -136,7 +146,7 @@ fun ImportScreen(
                             allowAcceptAndMove.value = true
                         } else {
                             allowAcceptAndMove.value = false
-                            progressMessageDequeue.add(importFailed)
+                            addMessageToFlow(importFailed)
                         }
                     }
                 )
@@ -167,7 +177,11 @@ fun ImportScreen(
 
     // move to import!
     if (showImportProgress.value) {
-        MyProgressDialog(showImportProgress, "Import", progressMessageDequeue, allowAcceptAndMove)
+        MyProgressDialog(
+            showImportProgress,
+            "Import",
+            allowAcceptAndMove
+        )
     }
 
     Column(Modifier.padding(12.dp)) {
@@ -176,7 +190,6 @@ fun ImportScreen(
                 deleteAllCounter++
                 if (deleteAllCounter > 7) {
                     myScope.launch {
-
                         DataModel.deleteAllSavedGPMs()
                     }
                 }
@@ -225,9 +238,9 @@ fun ImportScreen(
                 withContext(Dispatchers.IO) {
                     if (importChangeSet.value != null) {
                         showImportProgress.value = true
-                        progressMessageDequeue.add("Import to DB...")
+                        addMessageToFlow("Import to DB...")
                         doImport(importChangeSet.value!!)
-                        progressMessageDequeue.add("Reload datamodel...")
+                        addMessageToFlow("Reload datamodel...")
                         DataModel.loadFromDatabase()
                         showImportProgress.value = false
                     }
@@ -280,15 +293,14 @@ fun actuallyImport(
     context: Context,
     inputStream: InputStream,
     myScope: CoroutineScope,
-    progressMessageDequeue: ArrayDeque<String>,
+    addMessageToFlow: KFunction1<String, Unit>,
     importChangeSet: MutableState<ImportChangeSet?>,
     avertInactivity: ((Context, String) -> Unit)?,
     complete: (Boolean) -> Unit
 ) {
     myScope.launch {
         readAndParseCSV(inputStream, importChangeSet, complete = complete) {
-            progressMessageDequeue.add(it)
-            println(it)
+            addMessageToFlow(it)
             if (avertInactivity != null) {
                 avertInactivity(context, "GPM Import")
             }
