@@ -177,40 +177,44 @@ private fun processIncomingGPMs(
 
 fun makeFakeImport(): ImportChangeSet {
     val incoming = setOf<IncomingGPM>(
-        makeIncoming("Incoming1"),
-        makeIncoming("Incoming2"),
-        makeIncoming("Incoming3"),
-        makeIncoming("Incoming4"),
-        makeIncoming("Incoming5"),
-        makeIncoming("Incoming6"),
-        makeIncoming("Incoming7"),
-        makeIncoming("Incoming8"),
-        makeIncoming("Incoming9"),
-        makeIncoming("Incoming10"),
-        makeIncoming("Incoming11"),
-        makeIncoming("Incoming12"),
-        makeIncoming("Incoming13"),
-        makeIncoming("Incoming14"),
-        makeIncoming("Incoming15"),
+        makeIncomingForTesting("Incoming1"),
+        makeIncomingForTesting("Incoming2"),
+        makeIncomingForTesting("Incoming3"),
+        makeIncomingForTesting("Incoming4"),
+        makeIncomingForTesting("Incoming5"),
+        makeIncomingForTesting("Incoming6"),
+        makeIncomingForTesting("Incoming7"),
+        makeIncomingForTesting("Incoming8"),
+        makeIncomingForTesting("Incoming9"),
+        makeIncomingForTesting("Incoming10"),
+        makeIncomingForTesting("Incoming11"),
+        makeIncomingForTesting("Incoming12"),
+        makeIncomingForTesting("Incoming13"),
+        makeIncomingForTesting("Incoming14"),
+        makeIncomingForTesting("Incoming15"),
     )
     val saved = setOf<SavedGPM>(
-        makeSaved(1, "Saved1"),
-        makeSaved(2, "Saved2"),
-        makeSaved(2, "Saved3"),
-        makeSaved(2, "Saved4"),
-        makeSaved(2, "Saved5"),
-        makeSaved(2, "Saved6"),
-        makeSaved(2, "Saved7"),
-        makeSaved(2, "Saved8"),
-        makeSaved(2, "Saved9"),
-        makeSaved(2, "Saved10"),
-        makeSaved(2, "Saved11"),
-        makeSaved(2, "Saved12"),
+        makeSavedForTesting(1, "Saved1"),
+        makeSavedForTesting(2, "Saved2"),
+        makeSavedForTesting(2, "Saved3"),
+        makeSavedForTesting(2, "Saved4"),
+        makeSavedForTesting(2, "Saved5"),
+        makeSavedForTesting(2, "Saved6"),
+        makeSavedForTesting(2, "Saved7"),
+        makeSavedForTesting(2, "Saved8"),
+        makeSavedForTesting(2, "Saved9"),
+        makeSavedForTesting(2, "Saved10"),
+        makeSavedForTesting(2, "Saved11"),
+        makeSavedForTesting(2, "Saved12"),
     )
-    val incomingAndConflict = makeIncoming("Incoming3")
-    val a = incomingAndConflict to ScoredMatch(0.5, makeSaved(3, "Saved3"), true)
-    val b = makeIncoming("Incoming4") to ScoredMatch(0.7, makeSaved(4, "Saved4"), false)
-    val c = incomingAndConflict to ScoredMatch(0.7, makeSaved(4, "Saved5"), false)
+    val incomingAndConflict = makeIncomingForTesting("Incoming3")
+    val a = incomingAndConflict to ScoredMatch(0.5, makeSavedForTesting(3, "Saved3"), true)
+    val b = makeIncomingForTesting("Incoming4") to ScoredMatch(
+        0.7,
+        makeSavedForTesting(4, "Saved4"),
+        false
+    )
+    val c = incomingAndConflict to ScoredMatch(0.7, makeSavedForTesting(4, "Saved5"), false)
     val matches = mutableSetOf<Pair<IncomingGPM, ScoredMatch>>(a, b, c)
     // iterate ALL matchingGPMs ie.  overlap (passwords whose hash match perfectly or there's 1 field change)
     // and add them to map Map<IncomingGPM, Set<ScoredMatch>>
@@ -219,7 +223,7 @@ fun makeFakeImport(): ImportChangeSet {
 
 }
 
-fun makeSaved(id: Long, name: String): SavedGPM {
+fun makeSavedForTesting(id: Long, name: String): SavedGPM {
     return SavedGPM.makeFromEncryptedStringFields(
         id,
         encrypter(name.toByteArray()),
@@ -232,7 +236,7 @@ fun makeSaved(id: Long, name: String): SavedGPM {
     )
 }
 
-private fun makeIncoming(name: String): IncomingGPM {
+private fun makeIncomingForTesting(name: String): IncomingGPM {
     return IncomingGPM.makeFromCSVImport(name, "", "", "", "")
 }
 
@@ -248,15 +252,23 @@ fun ImportGooglePasswordsPreview() {
             HorizontalDivider(modifier = Modifier.padding(20.dp))
 
             val incoming = setOf<IncomingGPM>(
-                makeIncoming("Incoming1"),
-                makeIncoming("Incoming2"),
+                makeIncomingForTesting("Incoming1"),
+                makeIncomingForTesting("Incoming2"),
             )
             val saved = setOf<SavedGPM>(
-                makeSaved(1, "Saved1"),
-                makeSaved(2, "Saved2")
+                makeSavedForTesting(1, "Saved1"),
+                makeSavedForTesting(2, "Saved2")
             )
-            val a = makeIncoming("Incoming3") to ScoredMatch(0.5, makeSaved(3, "Saved3"), true)
-            val b = makeIncoming("Incoming4") to ScoredMatch(0.7, makeSaved(4, "Saved4"), false)
+            val a = makeIncomingForTesting("Incoming3") to ScoredMatch(
+                0.5,
+                makeSavedForTesting(3, "Saved3"),
+                true
+            )
+            val b = makeIncomingForTesting("Incoming4") to ScoredMatch(
+                0.7,
+                makeSavedForTesting(4, "Saved4"),
+                false
+            )
             val matches = mutableSetOf<Pair<IncomingGPM, ScoredMatch>>(a, b)
             val import: ImportChangeSet = ImportChangeSet(incoming, saved, matches)
             val importChangeSet = remember { mutableStateOf<ImportChangeSet?>(import) }
