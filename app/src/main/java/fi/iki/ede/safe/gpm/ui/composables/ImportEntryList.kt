@@ -57,11 +57,8 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ImportEntryList(viewModel: ImportGPMViewModel) {
-    val imports = viewModel.importMergeDataRepository.displayedUnprocessedGPMs.collectAsState()
-    val mine = viewModel.importMergeDataRepository.displayedSiteEntries.collectAsState()
-    val combinedList = combineLists(mine.value, imports.value)
-    val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val showInfo = remember { mutableStateOf<SavedGPM?>(null) }
     if (showInfo.value != null) {
         ShowInfoDialog(showInfo.value!!, onDismiss = { showInfo.value = null })
@@ -164,9 +161,13 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
             }
         )
     }
-    val listState = rememberLazyListState()
     var lazyColumnTopY by remember { mutableStateOf(0f) }
 
+    val mySizeModifier = Modifier
+        .fillMaxWidth(0.4f)
+        .fillMaxHeight(0.2f)
+
+    val listState = rememberLazyListState()
     val dndTarget = remember {
         object : DragAndDropTarget {
             override fun onMoved(event: DragAndDropEvent) {
@@ -199,9 +200,16 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
         }
     }
 
-    val mySizeModifier = Modifier
-        .fillMaxWidth(0.4f)
-        .fillMaxHeight(0.2f)
+    val imports = viewModel.importMergeDataRepository.displayedUnprocessedGPMs.collectAsState()
+    val mine = viewModel.importMergeDataRepository.displayedSiteEntries.collectAsState()
+    val combinedList = mutableListOf<CombinedListPairs>().apply {
+        addAll(
+            combineLists(
+                mine.value,
+                imports.value
+            )
+        )
+    }.toList()
     LazyColumn(
         state = listState,
         modifier = Modifier
@@ -218,7 +226,10 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
             combinedList,
             key = { item ->
                 val site = item as CombinedListPairs.SiteEntryToGPM
-                "site=${site.siteEntry?.id} gpmid=${site.gpm?.id}"
+                // some how lazycolumn super-anally retains the list order by the KEYs!
+                // Since I'm providing sorted list (and sort order ain't maintained)..
+                // let's pass list instance ID, YES, forces full refresh, but at least we're sorted!
+                "${combinedList.hashCode()},site=${site.siteEntry?.id} gpmid=${site.gpm?.id}"
             }
         ) { x ->
             val site = x as CombinedListPairs.SiteEntryToGPM

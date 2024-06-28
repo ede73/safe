@@ -453,6 +453,7 @@ object DataModel {
     }
 
     fun linkSaveGPMAndSiteEntry(siteEntry: DecryptableSiteEntry, savedGpmId: Long) {
+        println("LINK ${siteEntry.id} to $savedGpmId")
         val gpm = _savedGPMs.firstOrNull { it.id == savedGpmId }
         require(gpm != null) { "GPM not found by id $savedGpmId" }
         val siteEntryIndex = _siteEntryToSavedGPM.keys.firstOrNull { it.id == siteEntry.id }

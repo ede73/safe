@@ -23,6 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.InputStream
 
+// Combine two lists, siteEntries and gpms
 internal fun combineLists(
     siteEntries: List<DecryptableSiteEntry>,
     gpms: List<SavedGPM>
@@ -39,7 +40,36 @@ internal fun combineLists(
         )
     }
 
-    return combinedList
+    // The matching password list is built such that every matching site entry and SavedGPM
+    // will pair up. So this leads to multiple site entries -> GPMs. As matching process continues
+    // we remove the matched GPMS. Evidently this leads to situation as follows:
+    // SiteEntry(1) -> GPM
+    // SiteEntry(1) -> null (ie. matched GPM)
+    // SiteEntry(1) -> null (ie. another matched GPM)
+    // And this leads the LazyColumn to throw up, as we have a non-unique row here!
+    // I don't see the opposite possible, since every GPM is unique, even if we had uneven lists
+    // null -> GPM(1)
+    // null -> GPM(2) (another one, not the same0
+    // SO let's filter out those buggy ones
+//    val z:CombinedListPairs.SiteEntryToGPM? = null
+
+    // Since the search already goes SiteEntries to GPMs, we should be sorted, but to protect against changes
+    val sortedPairs = combinedList.sortedWith(compareBy<CombinedListPairs> {
+        (it as CombinedListPairs.SiteEntryToGPM).siteEntry?.id
+    }.thenBy {
+        (it as CombinedListPairs.SiteEntryToGPM).gpm == null
+    })
+    return sortedPairs.filterIndexed { index, pair ->
+        val currentPair = pair as? CombinedListPairs.SiteEntryToGPM
+        if (currentPair?.gpm == null) {
+            val prevPair = sortedPairs.getOrNull(index - 1) as? CombinedListPairs.SiteEntryToGPM
+            prevPair?.siteEntry != currentPair?.siteEntry
+        } else {
+            true
+        }
+    }.sortedBy {
+        (it as CombinedListPairs.SiteEntryToGPM).siteEntry?.cachedPlainDescription?.lowercase()
+    }
 }
 
 internal fun readAndParseCSV(
