@@ -8,7 +8,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.MotionEvent
 import androidx.activity.ComponentActivity
 import fi.iki.ede.safe.BuildConfig
@@ -60,7 +59,7 @@ interface ScreenOffLocker : AvertInactivityDuringLongTask {
 
     fun restartInactivityTimer(context: Context, why: String) {
         if (BuildConfig.DEBUG) {
-            Log.w(TAG, "Restart inactivity timer because $why")
+            //Log.w(TAG, "Restart inactivity timer because $why")
         }
         AutolockingService.sendRestartTimer(context)
     }
