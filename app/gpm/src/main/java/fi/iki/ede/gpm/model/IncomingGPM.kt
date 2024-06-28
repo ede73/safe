@@ -28,7 +28,16 @@ data class IncomingGPM private constructor(
                 username,
                 password,
                 note,
-                calculateSha128(listOf(name, url, username, password, note), "makeFromCSVImport")
+                calculateSha128(
+                    // consider position and emptiness :)
+                    listOf(
+                        "name=$name",
+                        "url=$url",
+                        "username=$username",
+                        "password=$password",
+                        "note=$note"
+                    ), "makeFromCSVImport"
+                )
             )
     }
 }
