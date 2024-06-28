@@ -2,6 +2,8 @@ package fi.iki.ede.safe
 
 import android.content.Context
 import android.os.Environment
+import com.google.firebase.Firebase
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.KeystoreHelperMock4UnitTests
 import fi.iki.ede.crypto.Password
@@ -62,6 +64,10 @@ class BackupDatabaseAndRestoreDatabaseTest {
 
     @Before
     fun initializeMocks() {
+        mockkObject(Firebase)
+        mockkStatic(FirebaseCrashlytics::class)
+        every { FirebaseCrashlytics.getInstance() } returns mockk(relaxed = true)
+
         KeystoreHelperMock4UnitTests.mock()
         ks = KeyStoreHelperFactory.getKeyStoreHelper()
 
@@ -76,6 +82,8 @@ class BackupDatabaseAndRestoreDatabaseTest {
 
     @After
     fun deinitMocks() {
+        unmockkObject(Firebase)
+        unmockkStatic(FirebaseCrashlytics::class)
         unmockkAll()
     }
 
