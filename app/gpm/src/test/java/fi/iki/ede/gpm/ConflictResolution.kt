@@ -13,7 +13,7 @@ import org.junit.Before
 import org.junit.Test
 
 class ConflictResolution {
-    val importChangeSet = ImportChangeSet(emptySet(), emptySet())
+    private val importChangeSet = ImportChangeSet(emptySet(), emptySet())
 
     @After
     fun afterTests() {
@@ -32,7 +32,7 @@ class ConflictResolution {
             makeScoredConflictMap("A", 0.95 to "x", 0.95 to "y", 0.95 to "z")
         )
 
-        resolveMatchConflicts(importChangeSet)
+        resolveMatchConflicts(importChangeSet, { })
         val resolved = importChangeSet.matchingGPMsAsMap
         assert(resolved.keys.size == 1)
         assert(resolved.getScoredMatches("A").size == 3)
@@ -50,7 +50,7 @@ class ConflictResolution {
 //        IncomingGPM (name=B, url=, username=, password=, node=, hash=))=[ScoredMatch(matchScore=0.9, item=SavedGPM ( id=null, name=z, url=, username=, password=, note=, flaggedIgnored=false, hash=)), ScoredMatch(matchScore=0.9, item=SavedGPM ( id=null, name=y, url=, username=, password=, note=, flaggedIgnored=false, hash=))]
 //        , IncomingGPM (name=C, url=, usern))=[ScoredMatch(matchScore=0.91, item=SavedGPM ( id=null, name=x, url=, username=, password=, note=, flaggedIgnored=false, hash=))]}
 
-        resolveMatchConflicts(importChangeSet)
+        resolveMatchConflicts(importChangeSet, {})
         val resolved = importChangeSet.matchingGPMsAsMap
         print(resolved)
         assert(resolved.keys.size == 3) { "Expected 3, got ${resolved.keys.size}" }
@@ -67,7 +67,7 @@ class ConflictResolution {
                     makeScoredConflictMap("C", 0.95 to "x", 0.95 to "z"),
         )
 
-        resolveMatchConflicts(importChangeSet)
+        resolveMatchConflicts(importChangeSet, {})
         val resolved = importChangeSet.matchingGPMsAsMap
         assert(resolved.keys.size == 3)
         assert(resolved.getScoredMatches("A").size == 3)

@@ -19,7 +19,9 @@ fun YesNoDialog(
 ) {
     if (openDialog.value) {
         AlertDialog(
-            onDismissRequest = { dismissed() },
+            onDismissRequest = {
+                dismissed()
+            },
             confirmButton = {
                 SafeButton(onClick = {
                     positive()

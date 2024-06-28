@@ -191,17 +191,22 @@ though that is fine, we want THE BEST candidate ALWAYS
 // B->y (0.91)
 // that leaves B with z and y equal, but since z was mapped with higher score to C, then gotta be y
 //fun findBestCandidates(conflicts: Map<IncomingGPM, Set<ScoredMatch>>): Map<IncomingGPM, ScoredMatch> {
-fun resolveMatchConflicts(importChangeSet: ImportChangeSet) {
+fun resolveMatchConflicts(
+    importChangeSet: ImportChangeSet,
+    progressReport: (progress: String) -> Unit
+) {
+    progressReport("Get matching conflicts")
     val bestEffortConflictResolution =
         importChangeSet.getMatchingConflicts.mapValues { (_, matches) ->
             val highestScore = matches.maxByOrNull { it.matchScore }?.matchScore
             matches.filter { it.matchScore == highestScore }.toSet()
         }
-    // remove all IncomingGPMs from the matching GPMs
+    progressReport("Remove all IncomingGPMs from the matching GPMs")
     importChangeSet.matchingGPMs.removeAll { (incomingGPM, scoredMatch) ->
         incomingGPM in bestEffortConflictResolution
     }
 
+    progressReport("BestEffortConflictResolution")
     bestEffortConflictResolution.forEach { (t, u) ->
         u.forEach {
             importChangeSet.matchingGPMs.add(t to it)

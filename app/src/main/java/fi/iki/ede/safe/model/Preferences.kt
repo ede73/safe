@@ -61,6 +61,7 @@ object Preferences {
     const val PREFERENCE_AUTOBACKUP_RESTORE_STARTED = "autobackup_restore_started"
     const val PREFERENCE_AUTOBACKUP_RESTORE_FINISHED = "autobackup_restore_finished"
     const val PREFERENCE_SOFT_DELETE_DAYS = "soft_delete_days"
+    private const val PREFERENCE_GPM_IMPORT_USAGE_SHOWN = "gpm_import_usage_shown"
 
     fun getBackupDocument() = if (SUPPORT_EXPORT_LOCATION_MEMORY) {
         sharedPreferences
@@ -173,4 +174,16 @@ object Preferences {
 
     fun getSoftDeleteDays() =
         sharedPreferences.getInt(PREFERENCE_SOFT_DELETE_DAYS, 30)
+
+    fun gpmImportUsageShown() {
+        sharedPreferences.edit().putLong(
+            PREFERENCE_GPM_IMPORT_USAGE_SHOWN, DateUtils.toUnixSeconds(
+                ZonedDateTime.now()
+            )
+        )
+            .apply()
+    }
+
+    fun getGpmImportUsageShown() =
+        sharedPreferences.getLong(PREFERENCE_GPM_IMPORT_USAGE_SHOWN, 0L)
 }

@@ -25,7 +25,7 @@ fun ShowInfo(item: SavedGPM, onDismiss: () -> Unit) {
 fun ShowInfo(item: IncomingGPM, onDismiss: () -> Unit) {
     val dump = "Name: ${item.name}\nUser: ${item.username}\nUrl: ${item.url}".let {
         if (BuildConfig.DEBUG) {
-            it + "\nnote=${item.note}\nPassword=${item.password}"
+            it + "\nNote: ${item.note}\nPassword: ${item.password}"
         } else it
     }
     UsageInfo(dump, onDismiss = onDismiss)
@@ -34,9 +34,9 @@ fun ShowInfo(item: IncomingGPM, onDismiss: () -> Unit) {
 @Composable
 fun ShowInfo(item: ScoredMatch, onDismiss: () -> Unit) {
     val dump =
-        "Match:${item.matchScore}\nHashMatch:${item.hashMatch}\nName: ${item.item.cachedDecryptedName}\nUser: ${item.item.cachedDecryptedUsername}\nUrl: ${item.item.cachedDecryptedUrl}".let {
+        "Match: ${item.matchScore}\nHashMatch: ${item.hashMatch}\nName: ${item.item.cachedDecryptedName}\nUser: ${item.item.cachedDecryptedUsername}\nUrl: ${item.item.cachedDecryptedUrl}".let {
             if (BuildConfig.DEBUG) {
-                it + "\nnote=${item.item.cachedDecryptedNote}\nPassword=${item.item.cachedDecryptedPassword}"
+                it + "\nNote: ${item.item.cachedDecryptedNote}\nPassword: ${item.item.cachedDecryptedPassword}"
             } else it
         }
     UsageInfo(dump, onDismiss = onDismiss)

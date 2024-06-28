@@ -36,13 +36,10 @@
     <string name="generic_ok">OK!</string>
     <string name="generic_yes_delete">Poista!</string>
     <string name="google_password_import_accept">Hyväksy ja mene seuraavaan vaiheeseen!</string>
-    <string name="google_password_import_delete">Tuhoa alkuperäinen CSV</string>
-    <string name="google_password_import_delete_reminder">Muista tuhota tuontidokumentti! Se sisältää salaamattomia salasanoja, on tärkeää ettet jätä sitä talteen mihinkään turvattomaan paikkaan! Tai parempi ettet säilytä sitä missään!</string>
     <string name="google_password_import_dont_search_from_imports">Älä etsi tuotavista</string>
     <string name="google_password_import_dont_search_from_passwords">Älä etsi salasanoista</string>
     <string name="google_password_import_failed">Tuonti epäonnistui!</string>
     <string name="google_password_import_finish_linking">Viimeistele GPM linkitys edelliseltä kerralta</string>
-    <string name="google_password_import_import">Tuo CSV</string>
     <string name="google_password_import_locate_matching_names">Etsi samankaltaiset nimet</string>
     <string name="google_password_import_locate_matching_passwords">Etsi samat salasanat</string>
     <string name="google_password_import_merge_reset_gpm_list">Nollaa</string>
@@ -54,8 +51,8 @@
     <string name="google_password_import_search_from_displayed_passwords">Etsi näytetyistä salasanoista</string>
     <string name="google_password_import_search_regex">Etsi regular expressionsioneilla</string>
     <string name="google_password_import_select">Valitse GPM CSV</string>
-    <string name="google_password_import_select_doc">Valitse Google Password Manager (GPM) CSV</string>
-    <string name="google_password_launch_gpm"><![CDATA[Avaa salasanat & tilit]]></string>
+    <string name="google_password_import_select_doc">Tallenna salasanat Google Password Managerista (GPM), valitse CSV tiedosto</string>
+    <string name="google_password_launch_gpm"><![CDATA[Avaa GPM]]></string>
     <string name="google_password_import_usage">Tämä ominaisuus mahdollistaa Google Password Managerin salasanojen (GPM) tuonnin jatkuvalla tavalla. Tätä on tarkoitus käyttää silloin tällöin.\n
 \n
 Tuonnin tai yhdistämisen aikana olemassa olevia sivustotietueita (salasanoja) ei missään vaiheessa ylikirjoiteta tai muuteta.\n

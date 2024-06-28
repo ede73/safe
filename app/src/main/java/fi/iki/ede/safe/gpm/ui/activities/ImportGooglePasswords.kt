@@ -84,8 +84,9 @@ fun readAndParseCSV(
 ) {
     firebaseLog("Read CSV")
     try {
-        progressReport("Parse CSV")
+        progressReport("Read and parse CSV")
         val incomingGPMs = readCsv(inputStream)
+        progressReport("Import CSV")
         return importCSV(incomingGPMs, importChangeSet, complete, progressReport)
     } catch (ex: Exception) {
         firebaseRecordException("Failed to import", ex)
@@ -105,15 +106,18 @@ private fun importCSV(
             val importChangeSet = ImportChangeSet(file, DataModel._savedGPMs)
             val scoringConfig = ScoringConfig()
 
+            progressReport("Process incoming GPMs")
             successImportChangeSet.value = processIncomingGPMs(
                 importChangeSet,
                 scoringConfig,
                 progressReport
             )
+
             progressReport("Complete!")
             complete(true)
         } catch (ex: Exception) {
             Log.e("ImportTest", "Import failed", ex)
+            progressReport("Import failed! $ex")
             successImportChangeSet.value = null
             complete(false)
         }
@@ -127,9 +131,9 @@ private fun processIncomingGPMs(
 ): ImportChangeSet {
 
     debug {
-        println("We have previous ${importChangeSet.getUnprocessedSavedGPMs.size} imports")
+        progressReport("We have previous ${importChangeSet.getUnprocessedSavedGPMs.size} imports")
         //importChangeSet.getUnprocessedSavedGPMs.forEach { println("$it") }
-        println("We have incoming ${importChangeSet.getUnprocessedIncomingGPMs.size} imports")
+        progressReport("We have incoming ${importChangeSet.getUnprocessedIncomingGPMs.size} imports")
         //importChangeSet.getUnprocessedIncomingGPMs.forEach { println("$it") }
     }
 
@@ -137,7 +141,7 @@ private fun processIncomingGPMs(
     importChangeSet.matchingGPMs.addAll(fetchMatchingHashes(importChangeSet))
 
     if (importChangeSet.matchingGPMs.size > 0) {
-        println("# filtered some(${importChangeSet.matchingGPMs.size}) away by existing hash..")
+        progressReport("# filtered some(${importChangeSet.matchingGPMs.size}) away by existing hash..")
     }
 
     // TAKES FOR EVER
@@ -145,8 +149,8 @@ private fun processIncomingGPMs(
     val sizeBeforeOneFields = importChangeSet.matchingGPMs.size
     processOneFieldChanges(importChangeSet, scoringConfig, progressReport)
 
-    println("We have incoming ${importChangeSet.getUnprocessedIncomingGPMs.size} new unknown passwords")
-    println("We have incoming ${importChangeSet.matchingGPMs.size - sizeBeforeOneFields} 1-field-changes")
+    progressReport("We have incoming ${importChangeSet.getUnprocessedIncomingGPMs.size} new unknown passwords")
+    progressReport("We have incoming ${importChangeSet.matchingGPMs.size - sizeBeforeOneFields} 1-field-changes")
 
     progressReport("Do similarity match")
     val similarityMatchTrack = importChangeSet.matchingGPMs.size
@@ -159,12 +163,12 @@ private fun processIncomingGPMs(
     )
     debug {
         if (importChangeSet.matchingGPMs.size - similarityMatchTrack == 0) {
-            println("Similarity match yielded no result")
+            progressReport("Similarity match yielded no result")
         }
     }
 
     progressReport("Resolve(try to) all conflicts")
-    resolveMatchConflicts(importChangeSet)
+    resolveMatchConflicts(importChangeSet, progressReport)
 
     printImportReport(importChangeSet)
     return importChangeSet

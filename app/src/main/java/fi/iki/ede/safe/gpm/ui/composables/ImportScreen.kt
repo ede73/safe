@@ -5,103 +5,188 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
+import android.provider.DocumentsContract
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.documentfile.provider.DocumentFile
+import fi.iki.ede.crypto.BuildConfig
+import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.gpm.changeset.ImportChangeSet
 import fi.iki.ede.gpm.debug
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.gpm.ui.activities.readAndParseCSV
-import fi.iki.ede.safe.gpm.ui.models.DeleteImportReminder
 import fi.iki.ede.safe.model.DataModel
+import fi.iki.ede.safe.model.Preferences
+import fi.iki.ede.safe.ui.composable.YesNoDialog
 import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTextButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
-import fi.iki.ede.safe.ui.utilities.firebaseRecordException
-import fi.iki.ede.safe.ui.utilities.firebaseTry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.ByteArrayInputStream
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
+import java.time.ZonedDateTime
 
 @Composable
 fun ImportScreen(
     avertInactivity: ((Context, String) -> Unit)?,
     hasUnlinkedItemsFromPreviousRound: Boolean,
     skipImportReminder: Boolean = false,
-    done: () -> Unit,
+    _done: () -> Unit,
 ) {
+
     val context = LocalContext.current
     val myScope = CoroutineScope(Dispatchers.IO)
     val importFailed = stringResource(id = R.string.google_password_import_failed)
 
-    val deleteImportReminder =
-        remember { mutableStateOf(DeleteImportReminder.NO_DOCUMENT_SELECTED) }
-    val finishLinking = remember { mutableStateOf(false) }
+    var deleteAllCounter = 0
+    val askToDelete = remember { mutableStateOf(false) }
     val allowAcceptAndMove = remember { mutableStateOf(false) }
-    //val importChangeSet = remember { mutableStateOf<ImportChangeSet?>(makeFakeImport()) }
+    val finishLinking = remember { mutableStateOf(false) }
     val importChangeSet = remember { mutableStateOf<ImportChangeSet?>(null) }
-    val message = remember { mutableStateOf("") }
-    val showDialog = remember { mutableStateOf(false) }
-    val showUsage = remember { mutableStateOf(true) }
-    val title = remember { mutableStateOf("Import") }
-    var selectedDoc by remember { mutableStateOf<Uri?>(null) }
-    var showDocOrInfo by remember { mutableStateOf("") }
+    val progressMessageDequeue = ArrayDeque<String>()
+    val showImportProgress = remember { mutableStateOf(false) }
+    val showUsage = remember {
+        mutableStateOf(
+            DateUtils.getPeriodBetweenDates(
+                ZonedDateTime.now(),
+                DateUtils.unixEpochSecondsToLocalZonedDateTime(Preferences.getGpmImportUsageShown())
+            ).days > 10
+        )
+    }
+    val allowContinuingLastImport = remember { mutableStateOf(true) }
 
-    val selectDocument =
+    val selectGpmCsvExport =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
-                selectedDoc = result.data!!.data!!
-                showDocOrInfo = result.data!!.data!!.toString()
+                getImportStreamAndMoveOrDeleteOriginal(
+                    context,
+                    result.data!!.data!!,
+                )?.let { inputStream ->
+                    allowContinuingLastImport.value = false
+                    showImportProgress.value = true
+                    allowAcceptAndMove.value = false
+                    actuallyImport(
+                        context,
+                        inputStream,
+                        myScope,
+                        progressMessageDequeue,
+                        importChangeSet,
+                        avertInactivity,
+                        complete = { success ->
+                            if (success) {
+                                allowAcceptAndMove.value = true
+                            } else {
+                                allowAcceptAndMove.value = false
+                                progressMessageDequeue.add(importFailed)
+                            }
+                        }
+                    )
+                }
             }
         }
 
-    fun isItSafeToExit(): Boolean {
-        if (selectedDoc !== null && deleteImportReminder.value != DeleteImportReminder.DOCUMENT_SELECTED_REMINDED_OF_DELETION) {
-            deleteImportReminder.value = DeleteImportReminder.DOCUMENT_SELECTED_REMIND_DELETION
-            return false
-        } else {
-            return true
-        }
+    fun done() {
+        if (doesInternalDocumentExist(context)) {
+            askToDelete.value = true
+        } else
+            _done()
     }
 
-    if (deleteImportReminder.value == DeleteImportReminder.DOCUMENT_SELECTED_REMIND_DELETION) {
-        UsageInfo(stringResource(id = R.string.google_password_import_delete_reminder),
-            onDismiss = {
-                deleteImportReminder.value =
-                    DeleteImportReminder.DOCUMENT_SELECTED_REMINDED_OF_DELETION
-            })
+    if (BuildConfig.DEBUG && allowContinuingLastImport.value) {
+        fun cont() {
+            getInternalDocumentInputStream(context)?.let { inputStream ->
+                allowContinuingLastImport.value = false
+                showImportProgress.value = true
+                allowAcceptAndMove.value = false
+                actuallyImport(
+                    context,
+                    inputStream,
+                    myScope,
+                    progressMessageDequeue,
+                    importChangeSet,
+                    avertInactivity,
+                    complete = { success ->
+                        if (success) {
+                            allowAcceptAndMove.value = true
+                        } else {
+                            allowAcceptAndMove.value = false
+                            progressMessageDequeue.add(importFailed)
+                        }
+                    }
+                )
+            }
+        }
+        YesNoDialog(
+            allowContinuingLastImport,
+            title = "Internal copy found, continue import?",
+            positiveText = "Continue",
+            positive = { cont() },
+            negativeText = "Don't continue"
+        )
     }
+
+    if (askToDelete.value) {
+        YesNoDialog(
+            askToDelete,
+            title = "Delete internal copy?",
+            positiveText = "Delete",
+            positive = { deleteInternalCopy(context) },
+            negativeText = "Keep", dismissed = { _done() }
+        )
+    }
+
     if (hasUnlinkedItemsFromPreviousRound) {
         finishLinking.value = true
     }
 
-    if (showDialog.value) {
-        MyProgressDialog(showDialog, title, message)
+    // move to import!
+    if (showImportProgress.value) {
+        MyProgressDialog(showImportProgress, "Import", progressMessageDequeue, allowAcceptAndMove)
     }
 
     Column(Modifier.padding(12.dp)) {
-        Text(showDocOrInfo.ifEmpty {
-            stringResource(id = R.string.google_password_import_select_doc)
-        })
+        Text(stringResource(id = R.string.google_password_import_select_doc),
+            modifier = Modifier.clickable {
+                deleteAllCounter++
+                if (deleteAllCounter > 7) {
+                    myScope.launch { DataModel.deleteAllSavedGPMs() }
+                }
+            }
+        )
         Row {
             SafeTextButton(onClick = {
-                selectDocument.launch(Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
+                val downloadsUri: Uri = Uri.parse(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                        .toString()
+                )
+                selectGpmCsvExport.launch(Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
+                    .putExtra(DocumentsContract.EXTRA_INITIAL_URI, downloadsUri)
                     .let {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                             // doesn't work on android8(O/24), nor 9(P/26)
@@ -114,86 +199,156 @@ fun ImportScreen(
                     })
             }) {
                 Text(stringResource(id = R.string.google_password_import_select))
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                    contentDescription = "Open File"
+                )
             }
 
-            SafeTextButton(enabled = selectedDoc != null, onClick = {
-                showDialog.value = true
-                allowAcceptAndMove.value = false
-                context.contentResolver.openInputStream(selectedDoc!!)?.let {
-                    myScope.launch {
-                        readAndParseCSV(it, importChangeSet, complete = {
-                            showDialog.value = false
-                            allowAcceptAndMove.value = true
-                        }) {
-                            message.value = it
-                            println(it)
-                            if (avertInactivity != null) {
-                                avertInactivity(context, "GPM Import")
-                            }
-                        }
-                    }
-                } ?: run {
-                    selectedDoc = null
-                    showDocOrInfo = importFailed
-                }
+            SafeTextButton(onClick = {
+                val intent = Intent(Settings.ACTION_SYNC_SETTINGS)
+                context.startActivity(intent)
             }) {
-                Text(stringResource(id = R.string.google_password_import_import))
+                Text(stringResource(id = R.string.google_password_launch_gpm))
+                Icon(
+                    imageVector = Icons.Filled.Settings,
+                    contentDescription = "Settings",
+                )
             }
-        }
-
-        SafeTextButton(enabled = selectedDoc != null, onClick = {
-            firebaseTry("Delete input document") {
-                val document = DocumentFile.fromSingleUri(context, selectedDoc!!)
-                document?.delete()
-                deleteImportReminder.value =
-                    DeleteImportReminder.DOCUMENT_SELECTED_REMINDED_OF_DELETION
-                selectedDoc = null
-                showDocOrInfo = ""
-            }.firebaseCatch {
-                firebaseRecordException("Failed to delete input document", it)
-            }
-        }) {
-            Text(stringResource(id = R.string.google_password_import_delete))
-        }
-        SafeTextButton(onClick = {
-            val intent = Intent(Settings.ACTION_SYNC_SETTINGS)
-            context.startActivity(intent)
-        }) {
-            Text(stringResource(id = R.string.google_password_launch_gpm))
         }
 
         SafeButton(enabled = allowAcceptAndMove.value, onClick = {
-            if (isItSafeToExit()) {
-                myScope.launch {
-                    withContext(Dispatchers.IO) {
-                        if (importChangeSet.value != null) {
-                            doImport(importChangeSet.value!!)
-                            DataModel.loadFromDatabase()
-                        }
+            myScope.launch {
+                withContext(Dispatchers.IO) {
+                    if (importChangeSet.value != null) {
+                        showImportProgress.value = true
+                        progressMessageDequeue.add("Import to DB...")
+                        doImport(importChangeSet.value!!)
+                        progressMessageDequeue.add("Reload datamodel...")
+                        DataModel.loadFromDatabase()
+                        showImportProgress.value = false
                     }
-                    done()
                 }
+                done()
             }
         }) {
-            Text(stringResource(id = R.string.google_password_import_accept))
+            Row {
+                Text(
+                    stringResource(id = R.string.google_password_import_accept),
+                    modifier = Modifier.weight(1f)
+                )
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = "Next Section",
+                    modifier = Modifier.weight(0.1f)
+                )
+            }
         }
 
         if (finishLinking.value) {
-            SafeButton(onClick = {
-                if (isItSafeToExit()) {
-                    done()
+            SafeButton(onClick = { _done() }) {
+                Row {
+                    Text(
+                        stringResource(id = R.string.google_password_import_finish_linking),
+                        modifier = Modifier.weight(1f)
+                    )
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = "Next Section",
+                        modifier = Modifier.weight(0.1f)
+                    )
                 }
-            }) {
-                Text(stringResource(id = R.string.google_password_import_finish_linking))
             }
         }
-        ImportResultListPager(importChangeSet, done)
+
+        ImportResultListPager(importChangeSet, _done)
+
         if (!skipImportReminder && showUsage.value) {
             UsageInfo(stringResource(id = R.string.google_password_import_usage),
-                onDismiss = { showUsage.value = false })
+                onDismiss = {
+                    Preferences.gpmImportUsageShown()
+                    showUsage.value = false
+                })
         }
     }
 }
+
+fun actuallyImport(
+    context: Context,
+    inputStream: InputStream,
+    myScope: CoroutineScope,
+    progressMessageDequeue: ArrayDeque<String>,
+    importChangeSet: MutableState<ImportChangeSet?>,
+    avertInactivity: ((Context, String) -> Unit)?,
+    complete: (Boolean) -> Unit
+) {
+    myScope.launch {
+        readAndParseCSV(inputStream, importChangeSet, complete = complete) {
+            progressMessageDequeue.add(it)
+            println(it)
+            if (avertInactivity != null) {
+                avertInactivity(context, "GPM Import")
+            }
+        }
+    }
+}
+
+// Google Password Manager exports stuff in plain text (*puke*)
+// let's give user a chance to delete the export immediately
+// or move to our app folder (which android OS keeps quite safe)
+fun getImportStreamAndMoveOrDeleteOriginal(
+    context: Context,
+    selectedDoc: Uri
+): InputStream? = copyImportToMyAppFolder(context, selectedDoc) ?: run {
+    // oh, we failed to copy..not much we can do here anymore?
+    // Read the INPUT and ask to delete
+    val i = context.contentResolver.openInputStream(selectedDoc)
+    i?.let { ByteArrayInputStream(it.readBytes()) }
+}.apply {
+    val document = DocumentFile.fromSingleUri(context, selectedDoc)
+    document?.delete()
+}
+
+private const val importedDocFile = "import.csv"
+private fun doesInternalDocumentExist(context: Context) =
+    File(context.filesDir, importedDocFile).exists()
+
+private fun deleteInternalCopy(context: Context) =
+    File(context.filesDir, importedDocFile).let {
+        if (it.exists()) {
+            it.delete()
+        }
+    }
+
+private fun getInternalDocumentInputStream(context: Context): InputStream? {
+    val file = File(context.filesDir, importedDocFile)
+    if (file.exists()) {
+        return file.inputStream()
+    } else {
+        return null
+    }
+}
+
+private fun copyImportToMyAppFolder(context: Context, sourceUri: Uri): InputStream? =
+    try {
+        val resolver = context.contentResolver
+        val destinationFile = File(context.filesDir, importedDocFile)
+        resolver.openInputStream(sourceUri)?.use { inputStream ->
+            FileOutputStream(destinationFile).use { outputStream ->
+                inputStream.copyTo(outputStream)
+            }
+        }
+        val copiedFiled = File(context.filesDir, importedDocFile)
+        // in emulator we will keep this file in app folder
+        if (!BuildConfig.DEBUG) {
+            copiedFiled.deleteOnExit()
+        }
+        copiedFiled.inputStream()
+    } catch (ex: Exception) {
+        val i = context.contentResolver.openInputStream(sourceUri)
+        i?.let { ByteArrayInputStream(it.readBytes()) }
+    }
+
 
 private fun doImport(importChangeSet: ImportChangeSet) {
     val add = importChangeSet.newAddedOrUnmatchedIncomingGPMs

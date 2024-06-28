@@ -11,7 +11,7 @@ data class IncomingGPM private constructor(
     val hash: String
 ) {
     override fun toString(): String {
-        return "IncomingGPM (name=${name}, url=${url}, username=${username}, password=${password}, node=$note, hash=$hash))"
+        return "IncomingGPM (name=${name}, url=${url}, username=${username}, password=${password}, note=$note, hash=$hash))"
     }
 
     companion object {

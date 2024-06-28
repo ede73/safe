@@ -13,22 +13,32 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
+import kotlinx.coroutines.delay
 
 @Composable
 fun MyProgressDialog(
     showDialog: MutableState<Boolean>,
-    message: MutableState<String>,
-    text: MutableState<String>
+    title: String,
+    messageQueue: ArrayDeque<String>,
+    showCloseButton: MutableState<Boolean>
 ) {
     if (showDialog.value) {
         val messages = remember { mutableStateListOf<String>() }
 
-        LaunchedEffect(text.value) {
-            if (messages.size >= 5) {
-                messages.removeAt(0)
+        LaunchedEffect(messageQueue) {
+            // Consume messages from the queue
+            while (!showCloseButton.value) {
+                if (messageQueue.isNotEmpty()) {
+                    val message = messageQueue.removeFirst()
+                    if (messages.size >= 5) {
+                        messages.removeAt(0)
+                    }
+                    messages.add("- $message")
+                }
+                delay(1000) // Delay to allow the UI to catch up
             }
-            messages.add("- ${text.value}")
         }
 
         AlertDialog(
@@ -36,9 +46,16 @@ fun MyProgressDialog(
             confirmButton = {
             },
             dismissButton = {
+                if (showCloseButton.value) {
+                    SafeButton(onClick = {
+                        showDialog.value = false
+                    }) {
+                        Text("Close")
+                    }
+                }
             },
             title = {
-                Text(message.value)
+                Text(title)
             },
             text = {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -55,9 +72,16 @@ fun MyProgressDialog(
 @Composable
 fun MyProgressDialogPreview() {
     SafeTheme {
-        val a = remember { mutableStateOf(true) }
-        val b = remember { mutableStateOf("test1") }
-        val c = remember { mutableStateOf("test2") }
-        MyProgressDialog(a, b, c)
+        val showDialog = remember { mutableStateOf(true) }
+        val showClose = remember { mutableStateOf(true) }
+        MyProgressDialog(
+            showDialog,
+            "title",
+            ArrayDeque<String>().apply {
+                add("x")
+                add("Y")
+            },
+            showClose
+        )
     }
 }
