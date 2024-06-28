@@ -91,6 +91,9 @@ class ImportMergeDataRepository {
         repositoryScope.launch {
             items.forEach { item ->
                 when (item) {
+                    is WrappedDecryptableSiteEntry ->
+                        modificationRequests.emit(ModificationRequest.DisplaySiteEntry(item.siteEntry))
+
                     is DecryptableSiteEntry ->
                         modificationRequests.emit(ModificationRequest.DisplaySiteEntry(item))
 
@@ -129,6 +132,11 @@ class ImportMergeDataRepository {
         return when (dataType) {
             DataType.GPM -> _unprocessedGPMs.toList()
             DataType.DecryptableSiteEntry -> _savedSiteEntries.toList()
+            DataType.WrappedDecryptableSiteEntry -> _savedSiteEntries.map {
+                WrappedDecryptableSiteEntry(
+                    it
+                )
+            }.toList()
             // Handle other data types similarly
         }
     }

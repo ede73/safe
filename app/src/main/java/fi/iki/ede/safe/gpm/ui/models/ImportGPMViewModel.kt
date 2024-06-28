@@ -97,6 +97,9 @@ class ImportGPMViewModel : ViewModel() {
                             )
                         }
                     }
+//                    l.intersect(r).forEach {
+//                        println("Matched $it")
+//                    }
                 }
             }
         } catch (ex: Exception) {
@@ -122,6 +125,9 @@ class ImportGPMViewModel : ViewModel() {
         exceptionHandler
     )
 
+//    val l = mutableSetOf<String>()
+//    val r = mutableSetOf<String>()
+
     // TODO: PRE-MANGLE! calculate hash of all the PWDs and compare those
     fun launchMatchingPasswordSearchAndResetDisplayLists() {
         CoroutineScope(Dispatchers.Default).launch {
@@ -129,14 +135,19 @@ class ImportGPMViewModel : ViewModel() {
                 importMergeDataRepository.emptyGPMDisplayList() // TODO: REMOVE, hoist reset control!
                 importMergeDataRepository.emptySiteEntryDisplayList() // TODO: REMOVE, hoist reset control!
                 launchIterateLists("applyMatchingPasswords",
-                    importMergeDataRepository.getList(DataType.DecryptableSiteEntry) as List<DecryptableSiteEntry>,
+                    importMergeDataRepository.getList(DataType.WrappedDecryptableSiteEntry) as List<WrappedDecryptableSiteEntry>,
                     importMergeDataRepository.getList(DataType.GPM) as List<SavedGPM>,
                     start = { },
                     compare = { outerEntry, innerEntry ->
-                        if (outerEntry.plainPassword == innerEntry.cachedDecryptedPassword) {
+//                        if (outerEntry.cachedDecryptedPassword.isNotBlank()) {
+//                            l.add(outerEntry.cachedDecryptedPassword)
+//                            r.add(innerEntry.cachedDecryptedPassword)
+//                        }
+                        if (outerEntry.cachedDecryptedPassword.isNotBlank() &&
+                            outerEntry.cachedDecryptedPassword == innerEntry.cachedDecryptedPassword
+                        ) {
                             outerEntry to innerEntry
-                        }
-                        null to null
+                        } else null to null
                     })
             }
         }
@@ -161,7 +172,7 @@ class ImportGPMViewModel : ViewModel() {
 
                         val simScore = findSimilarity(eka, toka)
                         if (simScore >= similarityThreshold) (outerEntry to innerEntry)
-                        null to null
+                        else null to null
                     }
                 )
             }
