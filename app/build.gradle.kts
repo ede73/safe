@@ -24,6 +24,7 @@ plugins {
     id("com.google.gms.google-services") // Firebase crashlytics
     id("com.google.firebase.crashlytics") // Firebase crashlytics
     kotlin("plugin.serialization")
+    //id("fi.iki.ede.safe.SafeLinter")
 }
 
 /**
@@ -74,6 +75,11 @@ abstract class GitRevListCountValueSource : ValueSource<String, ValueSourceParam
 
 
 android {
+//    lint {
+//        // Only check for issues from your custom linter
+//        checkOnly.add("AvoidPrintln") // Replace with your issue ID
+//    }
+
     val localProperties = Properties().apply {
         load(FileInputStream(rootProject.file("local.properties")))
     }
@@ -230,6 +236,7 @@ composeCompiler {
 }
 
 dependencies {
+    lintChecks(project(":app:SafeLinter"))
     implementation(project(":app:crypto"))
     // cant dynamically filter these out as imports would fail and making stub is too much work..
     implementation(project(":app:gpm"))

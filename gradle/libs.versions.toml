@@ -14,6 +14,7 @@ kotlinStdlib = "2.0.0"
 kotlinxCoroutinesCore = "1.9.0-RC"
 kotlinxSerializationJson = "1.7.1"
 kxml2 = "2.3.0"
+lintApi = "30.0.0"
 material = "1.12.0"
 material3Android = "1.2.1"
 materialIconsExtendedAndroid = "1.6.8"
@@ -29,6 +30,8 @@ uiTooling = "1.6.8"
 uiToolingPreviewAndroid = "1.6.8"
 uiautomator = "2.3.0"
 volley = "1.2.1"
+jetbrainsKotlinJvm = "2.0.0"
+lintTests = "31.5.0"
 
 [libraries]
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
@@ -56,11 +59,14 @@ kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 kxml2 = { group = "net.sf.kxml", name = "kxml2", version.ref = "kxml2" }
+lint-api = { module = "com.android.tools.lint:lint-api", version.ref = "lintApi" }
+lint-checks = { module = "com.android.tools.lint:lint-checks", version.ref = "lintApi" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 mockk-agent = { group = "io.mockk", name = "mockk-agent", version.ref = "mockkAgent" }
 mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockkAndroid" }
 volley = { module = "com.android.volley:volley", version.ref = "volley" }
+lint-tests = { group = "com.android.tools.lint", name = "lint-tests", version.ref = "lintTests" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -68,3 +74,5 @@ android-dynamic-feature = { id = "com.android.dynamic-feature", version.ref = "a
 android-library = { id = "com.android.library", version.ref = "agp" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 org-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }
+android-lint = { id = "com.android.lint", version.ref = "agp" }
