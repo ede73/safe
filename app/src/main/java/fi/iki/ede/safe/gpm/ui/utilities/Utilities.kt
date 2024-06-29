@@ -59,13 +59,18 @@ internal fun combineLists(
         (it as CombinedListPairs.SiteEntryToGPM).gpm == null
     })
 
+    // also other issue, (some bug immediate or rate) causes duplicate entries when DnDing items
+    // (happened once!)
     return sortedPairs.filterIndexed { index, pair ->
         val currentPair = pair as? CombinedListPairs.SiteEntryToGPM
+        val prevPair = sortedPairs.getOrNull(index - 1) as? CombinedListPairs.SiteEntryToGPM
         if (currentPair?.gpm == null) {
-            val prevPair = sortedPairs.getOrNull(index - 1) as? CombinedListPairs.SiteEntryToGPM
             prevPair?.siteEntry != currentPair?.siteEntry
         } else {
-            true
+            // also filter duplicates
+            (prevPair?.siteEntry != currentPair.siteEntry && prevPair?.gpm != currentPair.gpm).also {
+                firebaseLog("Duplicate siteEntry&GPM in list siteEntryId=${currentPair.siteEntry!!.id} / gpmid=${currentPair.gpm.id}")
+            }
         }
     }.sortedWith(compareBy<CombinedListPairs, String?>(nullsLast()) {
         (it as CombinedListPairs.SiteEntryToGPM).siteEntry?.cachedPlainDescription?.lowercase()
