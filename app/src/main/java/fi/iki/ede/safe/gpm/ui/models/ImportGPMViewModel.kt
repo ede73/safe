@@ -104,7 +104,7 @@ class ImportGPMViewModel : ViewModel() {
                         }
                     }
 //                    l.intersect(r).forEach {
-//                        println("Matched $it")
+//                        Log.d(TAG,"Matched $it")
 //                    }
                 }
             }

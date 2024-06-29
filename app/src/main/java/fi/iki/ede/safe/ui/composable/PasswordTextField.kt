@@ -41,6 +41,8 @@ import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
+private const val TAG = "PasswordTextField"
+
 @Composable
 fun PasswordTextField(
     textTip: Int,
@@ -185,17 +187,13 @@ fun PasswordTextFieldPreview() {
             PasswordTextField(
                 textTip = R.string.login_password_tip,
                 inputValue = "1234567890",
-                onValueChange = {
-                    println(it)
-                }
+                onValueChange = {}
             )
             HorizontalDivider(modifier = Modifier.padding(10.dp))
             PasswordTextField(
                 textTip = R.string.login_password_tip,
                 inputValue = "1234567890",
-                onValueChange = {
-                    println(it)
-                },
+                onValueChange = {},
                 enableZoom = true
             )
         }

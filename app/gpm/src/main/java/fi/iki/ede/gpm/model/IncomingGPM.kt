@@ -1,5 +1,6 @@
 package fi.iki.ede.gpm.model
 
+import fi.iki.ede.crypto.support.DisallowedFunctions
 import fi.iki.ede.gpm.changeset.calculateSha128
 
 data class IncomingGPM private constructor(
@@ -9,9 +10,9 @@ data class IncomingGPM private constructor(
     val password: String,
     val note: String,
     val hash: String
-) {
-    override fun toString(): String {
-        return "IncomingGPM (name=${name}, url=${url}, username=${username}, password=${password}, note=$note, hash=$hash))"
+) : DisallowedFunctions() {
+    fun toStringRedacted(): String {
+        return "IncomingGPM (name=${name}, url=${url}, username=${username}, password=REDACTED, note=$note, hash=$hash))"
     }
 
     companion object {

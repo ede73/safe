@@ -13,7 +13,7 @@ import java.util.Properties
 //    override fun afterExecute(task: Task, taskState: TaskState) {
 //        val endTime = System.currentTimeMillis()
 //        val duration = endTime - startTime
-//        println("Task ${task.path} took ${duration}ms to execute")
+//        Log.d(TAG,("Task ${task.path} took ${duration}ms to execute")
 //    }
 //})
 

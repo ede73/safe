@@ -3,6 +3,7 @@ package fi.iki.ede.safe.login
 import android.app.Activity.RESULT_CANCELED
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import androidx.activity.result.ActivityResult
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
@@ -43,6 +44,8 @@ import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+
+private const val TAG = "DeepLoginFirstInstallTest"
 
 /**
  * Test scenario when app is fresh installed, all defaults apply
@@ -107,7 +110,7 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
 //        every { BiometricsActivity.getRegistrationIntent(any()) } returns expectedIntent
 
         MyResultLauncher.registerTestLaunchResult(TestTag.LOGIN_BIOMETRICS_REGISTER) {
-            println("Cancelling biometrics")
+            Log.d(TAG, "Cancelling biometrics")
             ActivityResult(RESULT_CANCELED, null)
         }
         // login and pop biometric prompt (the mock intent)
@@ -155,13 +158,13 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
 
         if (biometricsRegister) {
             if (biometricsChecked == androidx.compose.ui.state.ToggleableState.Off) {
-                println("Turn on biometrics checkbox")
+                Log.d(TAG, "Turn on biometrics checkbox")
                 getBiometricsCheckbox(loginActivityTestRule).performClick()
                 getBiometricsCheckbox(loginActivityTestRule).assertIsChecked()
             }
         } else {
             if (biometricsChecked == androidx.compose.ui.state.ToggleableState.On) {
-                println("Turn off biometrics checkbox")
+                Log.d(TAG, "Turn off biometrics checkbox")
                 getBiometricsCheckbox(loginActivityTestRule).performClick()
                 getBiometricsCheckbox(loginActivityTestRule).assertIsNotChecked()
             }

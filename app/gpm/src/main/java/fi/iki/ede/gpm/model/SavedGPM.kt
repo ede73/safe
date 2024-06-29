@@ -1,6 +1,7 @@
 package fi.iki.ede.gpm.model
 
 import fi.iki.ede.crypto.IVCipherText
+import fi.iki.ede.crypto.support.DisallowedFunctions
 
 data class SavedGPM private constructor(
     val id: Long? = null,
@@ -14,7 +15,7 @@ data class SavedGPM private constructor(
     val encryptedNote: IVCipherText,
     val flaggedIgnored: Boolean,
     val hash: String
-) {
+) : DisallowedFunctions() {
     val cachedDecryptedName: String by lazy { encryptedName.decrypt() } // ok
     val cachedDecryptedUsername: String by lazy { encryptedUsername.decrypt() } // ok
     val cachedDecryptedUrl: String by lazy { encryptedUrl.decrypt() } // ok
@@ -32,8 +33,8 @@ data class SavedGPM private constructor(
         importing.hash // assert?check?
     )
 
-    override fun toString(): String {
-        return "SavedGPM ( id=$id, name=${cachedDecryptedName}, url=${cachedDecryptedUrl}, username=${cachedDecryptedUsername}, password=${encryptedPassword.decrypt()}, note=${encryptedNote.decrypt()}, flaggedIgnored=$flaggedIgnored, hash=$hash)"
+    fun toStringRedacted(): String {
+        return "SavedGPM ( id=$id, name=${cachedDecryptedName}, url=${cachedDecryptedUrl}, username=${cachedDecryptedUsername}, password=REDACTED, note=${encryptedNote.decrypt()}, flaggedIgnored=$flaggedIgnored, hash=$hash)"
     }
 
     companion object {

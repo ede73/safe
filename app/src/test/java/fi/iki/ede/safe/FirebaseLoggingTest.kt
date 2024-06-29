@@ -1,5 +1,6 @@
 package fi.iki.ede.safe
 
+import android.util.Log
 import com.google.firebase.Firebase
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import fi.iki.ede.safe.ui.utilities.firebaseJustTry
@@ -13,6 +14,8 @@ import io.mockk.unmockkStatic
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+
+private const val TAG = "FirebaseLoggingTest"
 
 class FirebaseLoggingTest {
 
@@ -46,7 +49,7 @@ class FirebaseLoggingTest {
         val q = firebaseTry("test") {
             throwException()
         }.firebaseCatch {
-            println("Must see this! $it")
+            Log.d(TAG, "Must see this! $it")
             2
         }
         assert(q == 2) { "Didn't go thru catch block" }
@@ -65,10 +68,10 @@ class FirebaseLoggingTest {
     @Test
     fun testThatReturnTypeIsCorrectWhenTryDoesntThrow() {
         val t = firebaseTry {
-            println("Must see this too")
+            Log.d(TAG, "Must see this too")
             2.2f
         }.firebaseCatch {
-            println(this)
+            Log.d(TAG, this.toString())
             assert(false) { "This line must never execute" }
             1.1f
         }

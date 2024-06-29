@@ -2,6 +2,7 @@ package fi.iki.ede.safe
 
 import android.content.Context
 import android.os.Environment
+import android.util.Log
 import com.google.firebase.Firebase
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import fi.iki.ede.crypto.IVCipherText
@@ -46,6 +47,8 @@ import java.util.concurrent.CancellationException
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.system.measureTimeMillis
+
+private const val TAG = "BackupDatabaseAndRestoreDatabaseTest"
 
 // TODO: Missing actual encryption/decryption (due to use of bouncy castle, will be gotten rid of and fixed eventually)
 // Though as long as we have static mock, we can test certain aspects of back/restore process
@@ -97,7 +100,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         // flow1 Restore: 1.219ms ms
         // flow2 Restore: 13.03ms // chunks size from 16 to 25600 doesnt much vary!
         val count = 1000.0
-        println("Restore: " + (measureTimeMillis {
+        Log.d(TAG, "Restore: " + (measureTimeMillis {
             (1..count.toInt()).forEach {
                 r.doRestore(
                     mockk<Context>(),
@@ -120,7 +123,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         // flow1 Backup: 1.712 ms
         // flow2 Backup: 1.346 ms
         val count = 1000.0
-        println("Restore: " + (measureTimeMillis {
+        Log.d(TAG, "Restore: " + (measureTimeMillis {
             (1..count.toInt()).forEach {
                 val out = runBlocking { BackupDatabase.backup().toString() }
             }
@@ -143,7 +146,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
 
         val out = runBlocking { BackupDatabase.backup().toString() }
         unmockkStatic(ZonedDateTime::class)
-        println(out)
+        Log.d(TAG, out)
         Assert.assertEquals(
             PASSWORD_ENCRYPTED_BACKUP_AT_1234.trimIndent().trim(),
             out.trimIndent().trim(),
@@ -232,7 +235,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
                     succeed
                 )
             } catch (c: CancellationException) {
-                println("Failed as expected...$c")
+                Log.d(TAG, "Failed as expected...$c")
                 assertFalse(
                     "Expected failure, but succeeded now=${it.first}, last backup=${it.second}, backup=1234",
                     succeed

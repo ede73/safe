@@ -81,7 +81,6 @@ fun SafePhotoPreview() {
     val mockInactivity = object : AvertInactivityDuringLongTask {
         override fun avertInactivity(context: Context, why: String) {
             // Mock implementation
-            println("Averting inactivity because: $why")
         }
     }
 

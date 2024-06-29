@@ -2,6 +2,7 @@ package fi.iki.ede.safe
 
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
@@ -33,6 +34,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.time.Duration.Companion.milliseconds
 
+private const val TAG = "AutoLogOutTest"
+
 @RunWith(AndroidJUnit4::class)
 class AutoLogOutTest {
 //    @get:Rule(order = 0)
@@ -56,7 +59,7 @@ class AutoLogOutTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun testAutoLogoutService() = runTest {
-        println("=========assert displays category ")
+        Log.d(TAG, "=========assert displays category ")
         activityTestRule.onAllNodesWithTag(TestTag.CATEGORY_ROW)[0].assertIsDisplayed()
 
         val serviceIntent = Intent(
@@ -65,7 +68,7 @@ class AutoLogOutTest {
         )
 
         InstrumentationRegistry.getInstrumentation().targetContext.startService(serviceIntent)
-        println("========= service started")
+        Log.d(TAG, "========= service started")
         advanceUntilIdle()
 
         // Alas, you can advance time, but it won't affect outside running CountdownTimer
@@ -77,10 +80,10 @@ class AutoLogOutTest {
             Thread.sleep(100)
             advanceUntilIdle()
         }
-        println("========= waited...")
+        Log.d(TAG, "========= waited...")
         activityTestRule.onAllNodesWithTag(TestTag.PASSWORD_PROMPT)[0]
             .assertIsDisplayed()
-        println("========= stop service...")
+        Log.d(TAG, "========= stop service...")
         InstrumentationRegistry.getInstrumentation().targetContext.stopService(serviceIntent)
     }
 

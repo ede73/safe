@@ -1,9 +1,12 @@
 package fi.iki.ede.gpm.changeset
 
+import android.util.Log
 import fi.iki.ede.gpm.debug
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
 import java.security.MessageDigest
+
+private const val TAG = "ImportChangeSet"
 
 // Record the 3 way (?4 way?) mutation of incoming data and existing data
 data class ImportChangeSet(
@@ -56,28 +59,28 @@ data class ImportChangeSet(
 fun printImportReport(
     importChangeSet: ImportChangeSet
 ) {
-    println("=======================")
-    println("====== IMPORT REPORT ==")
-    println("=======================")
+    Log.d(TAG, "=======================")
+    Log.d(TAG, "====== IMPORT REPORT ==")
+    Log.d(TAG, "=======================")
 
-    println()
-    println("New unseen entries(or no match found):")
+    Log.d(TAG, "New unseen entries(or no match found):")
 //    importChangeSet.getUnprocessedIncomingGPMs.forEach {
-//        println("\t$it")
+//        Log.d(TAG,"\t$it")
 //    }
 
-    println()
-    println("Known entries with only hash or 1-field-changed against identifiable existing DB entry:")
+    Log.d(
+        TAG,
+        "Known entries with only hash or 1-field-changed against identifiable existing DB entry:"
+    )
 //    importChangeSet.matchingGPMs.forEach {
-//        println("\t${it.first} matches ${it.second}")
+//        Log.d(TAG,"\t${it.first} matches ${it.second}")
 //    }
 
-    println()
-    println("Conflicts: input line matches MORE than 1 entry:")
+    Log.d(TAG, "Conflicts: input line matches MORE than 1 entry:")
 //    importChangeSet.getMatchingConflicts.forEach { it ->
-//        println("\t${it.key} matches:")
+//        Log.d(TAG,"\t${it.key} matches:")
 //        it.value.forEach { scoredSavedGPM ->
-//            println("\t\t${scoredSavedGPM.matchScore * 100}% $scoredSavedGPM.item")
+//            Log.d(TAG,"\t\t${scoredSavedGPM.matchScore * 100}% $scoredSavedGPM.item")
 //        }
 //    }
 }
@@ -90,7 +93,7 @@ fun calculateSha128(fields: List<String>, s: String): String {
         MessageDigest.getInstance("SHA-1").digest(fields.joinToString(separator = "").toByteArray())
             .joinToString("") { "%02x".format(it) }
     debug {
-        // println(hash)
+        // Log.d(TAG,hash)
     }
     return hash
 }

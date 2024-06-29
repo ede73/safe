@@ -454,9 +454,15 @@ object DataModel {
             coroutineScope {
                 launch {
                     for (category in _categories.keys) {
-                        println("Category id=${category.id} plainname=${category.plainName}") // OK: Dump
+                        Log.d(
+                            TAG,
+                            "Category id=${category.id} plainname=${category.plainName}"
+                        ) // OK: Dump
                         for (siteEntry in getCategorysSiteEntries(category.id!!)) {
-                            println("  SiteEntry id=${siteEntry.id}, description=${siteEntry.cachedPlainDescription},changed=${siteEntry.passwordChangedDate}") // OK: Dump
+                            Log.d(
+                                TAG,
+                                "  SiteEntry id=${siteEntry.id}, description=${siteEntry.cachedPlainDescription},changed=${siteEntry.passwordChangedDate}"
+                            ) // OK: Dump
                         }
                     }
                 }

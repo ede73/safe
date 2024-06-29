@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -41,10 +42,10 @@ import fi.iki.ede.safe.gpm.ui.utilities.getInternalDocumentInputStream
 import fi.iki.ede.safe.gpm.ui.utilities.readAndParseCSV
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.Preferences
-import fi.iki.ede.safe.ui.dialogs.YesNoDialog
 import fi.iki.ede.safe.ui.dialogs.MyProgressDialog
 import fi.iki.ede.safe.ui.dialogs.ProgressStateHolder
 import fi.iki.ede.safe.ui.dialogs.UsageInfoDialog
+import fi.iki.ede.safe.ui.dialogs.YesNoDialog
 import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTextButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
@@ -56,6 +57,7 @@ import java.io.InputStream
 import java.time.ZonedDateTime
 import kotlin.reflect.KFunction1
 
+private const val TAG = "ImportScreen"
 @Composable
 fun ImportScreen(
     avertInactivity: ((Context, String) -> Unit)?,
@@ -325,9 +327,9 @@ private fun doImport(importChangeSet: ImportChangeSet) {
     val delete = importChangeSet.nonMatchingSavedGPMsToDelete
 
     debug {
-        println("ADD ${add.size} entries")
-        println("UPDATE ${update.size} entries")
-        println("DELETE ${delete.size} entries")
+        Log.d(TAG,"ADD ${add.size} entries")
+        Log.d(TAG,"UPDATE ${update.size} entries")
+        Log.d(TAG,"DELETE ${delete.size} entries")
     }
     // There must be no overlap between ones we delete/once we get in - of course we can't test this
     //assert(delete.intersect(add).size == 0)

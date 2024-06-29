@@ -2,6 +2,7 @@ package fi.iki.ede.safe.login
 
 import android.app.Activity.RESULT_CANCELED
 import android.content.Context
+import android.util.Log
 import androidx.activity.result.ActivityResult
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -43,6 +44,8 @@ import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+
+private const val TAG = "LoginScreenAfterFirstInstallTest"
 
 /**
  * Test scenario when app user has already logged in once
@@ -126,7 +129,7 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
         mockIsBiometricsInitialized { true }
 
         MyResultLauncher.registerTestLaunchResult(TestTag.LOGIN_BIOMETRICS_VERIFY) {
-            println("Cancelling biometrics")
+            Log.d(TAG, "Cancelling biometrics")
             ActivityResult(RESULT_CANCELED, null)
         }
 
@@ -163,7 +166,7 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
         mockIsBiometricsInitialized { true }
 
         MyResultLauncher.registerTestLaunchResult(TestTag.LOGIN_BIOMETRICS_VERIFY) {
-            println("Cancelling biometrics")
+            Log.d(TAG, "Cancelling biometrics")
             ActivityResult(RESULT_CANCELED, null)
         }
 
@@ -205,7 +208,7 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
         mockIsBiometricsInitialized { true }
 
         MyResultLauncher.registerTestLaunchResult(TestTag.LOGIN_BIOMETRICS_VERIFY) {
-            println("Cancelling biometrics")
+            Log.d(TAG, "Cancelling biometrics")
             ActivityResult(BiometricsActivity.RESULT_FAILED, null)
         }
 

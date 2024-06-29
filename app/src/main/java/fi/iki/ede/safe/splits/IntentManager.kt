@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import fi.iki.ede.safe.db.DBID
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.ui.activities.CategoryListScreen
@@ -17,6 +18,8 @@ import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen.Companion.CATEGORY_ID
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen.Companion.SITE_ENTRY_ID
 import fi.iki.ede.safe.ui.activities.SiteEntryListScreen
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
+
+private const val TAG = "IntentManager"
 
 // Every intent retrieved/launched in the app go thru IntentManager
 // If a plugin wants to tap into the intent, they can modify or even replace it
@@ -136,7 +139,7 @@ object IntentManager {
             })
 
     fun removePluginIntegrations(pluginName: PluginName) {
-        println("Plugin ${pluginName.pluginName} is being disabled")
+        Log.d(TAG, "Plugin ${pluginName.pluginName} is being disabled")
         // not perfect, category pager ..is uninstalled/disabled YES, but app
         // requires restart to get the original category screen established
         intentReplacements.remove(pluginName)

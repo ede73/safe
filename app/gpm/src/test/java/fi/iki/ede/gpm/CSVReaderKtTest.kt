@@ -1,11 +1,14 @@
 package fi.iki.ede.gpm
 
+import android.util.Log
 import fi.iki.ede.gpm.csv.processInputLine
 import fi.iki.ede.gpm.csv.readCsv
 import fi.iki.ede.gpm.model.IncomingGPM.Companion.makeFromCSVImport
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Test
+
+private const val TAG = "CSVReaderKtTest"
 
 class CSVReaderKtTest {
 
@@ -14,7 +17,7 @@ class CSVReaderKtTest {
         val x = "            d,b,\"c,a\","
         val q = processInputLine(x, 5)
         q.forEach {
-            println(it)
+            Log.d(TAG, it)
         }
     }
 
@@ -38,16 +41,16 @@ class CSVReaderKtTest {
         val results = readCsv(input.byteInputStream())
         // yes 2, identical lines compressed
         results.forEach { result ->
-            println(result)
+            Log.d(TAG, result.toString())
         }
-        println("-----")
+        Log.d(TAG, "-----")
         assertEquals(4, results.size)
         assertEquals("b,,/", results.elementAt(2).url)
         assertEquals("d\"", results.elementAt(3).password)
         assertEquals("c,", results.elementAt(1).username)
 
         results.forEach { result ->
-            println(result)
+            Log.d(TAG, result.toString())
             assertEquals("a", result.name)
             assertEquals("b", result.url.replace(",,/", "")) // naive, should be positional
             assertEquals("c", result.username.replace(",", "")) // naive, should be positional
@@ -65,7 +68,6 @@ class CSVReaderKtTest {
             d,b,"c,a",
         """.trimIndent()
         val results = readCsv(input.byteInputStream())
-        println(results)
         assert(results.elementAt(0) == makeFromCSVImport("a", "", "c", "d", ""))
         assert(results.elementAt(1) == makeFromCSVImport("a", "b", "\"c\"", "d", ""))
         // TODO: STUPID but documenting

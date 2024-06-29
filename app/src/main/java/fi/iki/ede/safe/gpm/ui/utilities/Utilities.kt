@@ -133,9 +133,9 @@ internal fun processIncomingGPMs(
 
     debug {
         progressReport("We have previous ${importChangeSet.getUnprocessedSavedGPMs.size} imports")
-        //importChangeSet.getUnprocessedSavedGPMs.forEach { println("$it") }
+        //importChangeSet.getUnprocessedSavedGPMs.forEach { Log.d(TAG,"$it") }
         progressReport("We have incoming ${importChangeSet.getUnprocessedIncomingGPMs.size} imports")
-        //importChangeSet.getUnprocessedIncomingGPMs.forEach { println("$it") }
+        //importChangeSet.getUnprocessedIncomingGPMs.forEach { Log.d(TAG,"$it") }
     }
 
     progressReport("Add all matching passwords by hashes")

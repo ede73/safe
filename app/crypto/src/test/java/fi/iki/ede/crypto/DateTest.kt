@@ -1,5 +1,6 @@
 package fi.iki.ede.crypto
 
+import android.util.Log
 import fi.iki.ede.crypto.date.DateUtils
 import org.junit.Assert
 import org.junit.Test
@@ -7,6 +8,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
+private const val TAG = "DateTest"
 
 class DateTest {
 
@@ -22,7 +24,7 @@ class DateTest {
     fun assertNewProgramCanConvertNonZonedDates() {
         val unixDate = unixTimestampToZonedDateTime(UNIX_STAMP_MILLIS, ZoneId.of("UTC"))
         formats.forEach {
-            println(it)
+            Log.d(TAG, it)
             Assert.assertEquals(
                 unixDate.toLocalDate(),
                 DateUtils.newParse(it).toLocalDate()

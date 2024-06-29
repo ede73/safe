@@ -1,6 +1,7 @@
 package fi.iki.ede.safe.gpm.ui.composables
 
 import android.content.ClipDescription
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -28,6 +29,8 @@ import fi.iki.ede.safe.gpm.ui.models.DNDObject
 import fi.iki.ede.safe.gpm.ui.modifiers.dnd
 import fi.iki.ede.safe.gpm.ui.modifiers.getClipData
 import fi.iki.ede.safe.ui.theme.SafeTheme
+
+private const val TAG = "DraggableText"
 
 @Composable
 fun DraggableText(
@@ -135,7 +138,7 @@ fun DraggableText(
 fun DraggableTextPreview() {
     SafeTheme {
         DraggableText(DNDObject.JustString("Hello"), onItemDropped = {
-            println("item dropped")
+            Log.d(TAG, "item dropped")
             false
         })
     }

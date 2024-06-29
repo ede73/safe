@@ -53,7 +53,7 @@ class DBHelper internal constructor(
 //        val cursor = database.rawQuery("SELECT name FROM sqlite_master WHERE type='table'", null)
 //        while (cursor.moveToNext()) {
 //            val tableName = cursor.getString(0)
-//            println("Table: $tableName")
+//            Log.d(TAG,"Table: $tableName")
 //            val tableCursor = database.rawQuery(
 //                "SELECT * FROM $tableName", null,
 //            )
@@ -66,7 +66,7 @@ class DBHelper internal constructor(
 //                        print(tableCursor.getString(i) + " | ")
 //                    }
 //                }
-//                println()
+//                Log.d(TAG,)
 //            }
 //            tableCursor.close()
 //        }

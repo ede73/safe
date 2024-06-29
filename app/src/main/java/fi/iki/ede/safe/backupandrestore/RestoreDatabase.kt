@@ -94,7 +94,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
             decryptMasterKey(backupEncryptionKeys, userPassword)
         )
 //        .also { // dump for tests
-//            println("(${String(it)})")
+//            Log.d(TAG,"(${String(it)})")
 //        }
     )
 
