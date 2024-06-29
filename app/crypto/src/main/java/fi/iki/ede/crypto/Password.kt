@@ -18,7 +18,7 @@ import fi.iki.ede.crypto.support.DisallowedFunctions
 data class Password internal constructor(
     // TODO: make private and only allow getting EncryptedPassword out of it(or salted password)
     val utf8password: CharArray
-) : DisallowedFunctions() {
+) : DisallowedFunctions {
     val length: Int
         get() {
             return utf8password.size
@@ -49,6 +49,10 @@ data class Password internal constructor(
                 utf8password[i] = 0.toChar()
             }
         }
+    }
+
+    override fun toString(): String {
+        return "Password(REDACTED)"
     }
 
     companion object {

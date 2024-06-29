@@ -9,7 +9,7 @@ import fi.iki.ede.crypto.support.toHexString
  *
  * DisallowedFunctions try to limit unintentional exposure
  */
-data class Salt(val salt: ByteArray) : DisallowedFunctions() {
+data class Salt(val salt: ByteArray) : DisallowedFunctions {
     fun isEmpty(): Boolean = salt.isEmpty()
     fun toHex() = salt.toHexString()
     override fun hashCode() = salt.contentHashCode()

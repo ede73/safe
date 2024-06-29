@@ -10,8 +10,9 @@ data class IncomingGPM private constructor(
     val password: String,
     val note: String,
     val hash: String
-) : DisallowedFunctions() {
-    fun toStringRedacted(): String {
+) : DisallowedFunctions {
+
+    override fun toString(): String {
         return "IncomingGPM (name=${name}, url=${url}, username=${username}, password=REDACTED, note=$note, hash=$hash))"
     }
 

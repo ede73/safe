@@ -15,7 +15,7 @@ data class SavedGPM private constructor(
     val encryptedNote: IVCipherText,
     val flaggedIgnored: Boolean,
     val hash: String
-) : DisallowedFunctions() {
+) : DisallowedFunctions {
     val cachedDecryptedName: String by lazy { encryptedName.decrypt() } // ok
     val cachedDecryptedUsername: String by lazy { encryptedUsername.decrypt() } // ok
     val cachedDecryptedUrl: String by lazy { encryptedUrl.decrypt() } // ok
