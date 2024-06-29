@@ -51,7 +51,6 @@ internal fun combineLists(
     // null -> GPM(1)
     // null -> GPM(2) (another one, not the same0
     // SO let's filter out those buggy ones
-//    val z:CombinedListPairs.SiteEntryToGPM? = null
 
     // Since the search already goes SiteEntries to GPMs, we should be sorted, but to protect against changes
     val sortedPairs = combinedList.sortedWith(compareBy<CombinedListPairs> {
@@ -59,6 +58,7 @@ internal fun combineLists(
     }.thenBy {
         (it as CombinedListPairs.SiteEntryToGPM).gpm == null
     })
+
     return sortedPairs.filterIndexed { index, pair ->
         val currentPair = pair as? CombinedListPairs.SiteEntryToGPM
         if (currentPair?.gpm == null) {
@@ -67,8 +67,13 @@ internal fun combineLists(
         } else {
             true
         }
-    }.sortedBy {
+    }.sortedWith(compareBy<CombinedListPairs, String?>(nullsLast()) {
         (it as CombinedListPairs.SiteEntryToGPM).siteEntry?.cachedPlainDescription?.lowercase()
+    }.thenBy {
+        (it as CombinedListPairs.SiteEntryToGPM).gpm?.cachedDecryptedName ?: ""
+    }).also {
+        val s = it.map { (it as CombinedListPairs.SiteEntryToGPM).siteEntry }.toSet()
+        val g = it.map { (it as CombinedListPairs.SiteEntryToGPM).gpm }.toSet()
     }
 }
 
@@ -99,7 +104,7 @@ internal fun importCSV(
     CoroutineScope(Dispatchers.IO).launch {
         try {
             progressReport("Fetch last import from Database")
-            val importChangeSet = ImportChangeSet(file, DataModel._savedGPMs)
+            val importChangeSet = ImportChangeSet(file, DataModel.savedGPMsFlow.value)
             val scoringConfig = ScoringConfig()
 
             progressReport("Process incoming GPMs")

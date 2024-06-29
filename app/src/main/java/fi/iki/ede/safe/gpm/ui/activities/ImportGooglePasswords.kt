@@ -35,7 +35,7 @@ class ImportGooglePasswords : AutolockingBaseComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val hasUnlinkedItemsFromPreviousRound =
-            (DataModel._savedGPMs.filter { !it.flaggedIgnored } -
+            (DataModel.savedGPMsFlow.value.filter { !it.flaggedIgnored } -
                     DataModel.siteEntryToSavedGPMStateFlow.value.values.flatten()
                         .toSet()).isNotEmpty()
 

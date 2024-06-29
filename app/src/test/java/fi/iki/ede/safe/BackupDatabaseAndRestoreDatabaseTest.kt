@@ -338,7 +338,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         assertEquals("encryptedcat2", categories[1].plainName)
         assertEquals(2L, categories[1].id)
 
-        val gpms = DataModel._savedGPMs
+        val gpms = DataModel.savedGPMsFlow.value
         assertEquals(1, gpms.size)
         assertEquals("hash", gpms.first().hash)
         assertEquals(1L, gpms.first().id)

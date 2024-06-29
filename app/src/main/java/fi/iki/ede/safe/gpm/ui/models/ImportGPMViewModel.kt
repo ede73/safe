@@ -31,26 +31,32 @@ class ImportGPMViewModel : ViewModel() {
         _isWorkingAndProgress.postValue(completed to percentCompleted)
     }
 
-    init {
-        viewModelScope.launch {
-            launch {
-                DataModel.siteEntryToSavedGPMStateFlow.combine(DataModel.siteEntriesStateFlow)
-                { link: LinkedHashMap<DecryptableSiteEntry, Set<SavedGPM>>, s: List<DecryptableSiteEntry> ->
-                    s.associateWith { siteEntry -> link.filter { it.key.id == siteEntry.id }.values.flatten() }
-                }.collect { it ->
-                    importMergeDataRepository.initializeUnprocessedGPMAndDisplayListToGivenList(
-                        DataModel._savedGPMs - it.values.flatten()
-                            .filter { gpm -> gpm.flaggedIgnored }
-                            .toSet()
-                    )
-                    importMergeDataRepository.initializeSiteEntryListAndDisplayListToGivenList(it.keys.toList())
-                }
-            }
+    private val collectFlowJob = viewModelScope.launch {
+        DataModel.siteEntryToSavedGPMStateFlow.combine(DataModel.siteEntriesStateFlow)
+        { link: LinkedHashMap<DecryptableSiteEntry, Set<SavedGPM>>, siteEntries: List<DecryptableSiteEntry> ->
+            siteEntries.associateWith { siteEntry -> link.filter { it.key.id == siteEntry.id }.values.flatten() }
+        }.combine(DataModel.savedGPMsFlow) { allSiteEntriesAndTheirLinkedGpms, allSavedGpms ->
+            // Pair the combined map with the current list of SavedGPMs
+            allSiteEntriesAndTheirLinkedGpms to allSavedGpms
+        }.collect { (allSiteEntriesAndTheirLinkedGpms, allSavedGpms) ->
+            val alreadyLinkedGpms = allSiteEntriesAndTheirLinkedGpms.values.flatten().toSet()
+            val notIgnoredGPMs = allSavedGpms.filter { gpm -> !gpm.flaggedIgnored }.toSet()
+            importMergeDataRepository.initializeUnprocessedGPMAndDisplayListToGivenList(
+                notIgnoredGPMs - alreadyLinkedGpms
+            )
+            importMergeDataRepository.initializeSiteEntryListAndDisplayListToGivenList(
+                allSiteEntriesAndTheirLinkedGpms.keys.toList()
+            )
         }
     }
 
-    fun removeGPMFromMergeRepository(id: Long) {
-        importMergeDataRepository.removeGPM(id)
+    override fun onCleared() {
+        super.onCleared()
+        collectFlowJob.cancel()
+    }
+
+    fun removeAllMatchingGpmsFromDisplayAndUnprocessedLists(id: Long) {
+        importMergeDataRepository.removeAllMatchingGpmsFromDisplayAndUnprocessedLists(id)
     }
 
     // thread safe abstraction allowing implementing easy match algorithms

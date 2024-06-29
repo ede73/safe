@@ -11,6 +11,7 @@ junitVersion = "1.1.5"
 junitVersionKtx = "1.1.5"
 kotlin = "2.0.0"
 kotlinStdlib = "2.0.0"
+kotlinxCoroutinesCore = "1.9.0-RC"
 kotlinxSerializationJson = "1.7.1"
 kxml2 = "2.3.0"
 material = "1.12.0"
@@ -52,6 +53,7 @@ bcprov-jdk16 = { module = "org.bouncycastle:bcprov-jdk16", version.ref = "bcprov
 feature-delivery-ktx = { group = "com.google.android.play", name = "feature-delivery-ktx", version.ref = "featureDeliveryKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlinStdlib" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 kxml2 = { group = "net.sf.kxml", name = "kxml2", version.ref = "kxml2" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }

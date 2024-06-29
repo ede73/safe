@@ -70,7 +70,7 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
                 // TODO: who sets flagged ignore here!
                 DataModel.markSavedGPMIgnored(id)
                 // TODO: should autolink(from datamodel)
-                viewModel.removeGPMFromMergeRepository(id)
+                viewModel.removeAllMatchingGpmsFromDisplayAndUnprocessedLists(id)
             } catch (ex: Exception) {
                 firebaseRecordException("ignoreSavedGPM $id failed", ex)
             }
@@ -79,7 +79,7 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
 
     fun linkSavedGPMAndDecryptableSiteEntry(siteEntry: DecryptableSiteEntry, id: Long) {
         try {
-            viewModel.removeGPMFromMergeRepository(id)
+            viewModel.removeAllMatchingGpmsFromDisplayAndUnprocessedLists(id)
             DataModel.linkSaveGPMAndSiteEntry(siteEntry, id)
         } catch (ex: Exception) {
             firebaseRecordException(
@@ -202,14 +202,11 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
 
     val imports = viewModel.importMergeDataRepository.displayedUnprocessedGPMs.collectAsState()
     val mine = viewModel.importMergeDataRepository.displayedSiteEntries.collectAsState()
-    val combinedList = mutableListOf<CombinedListPairs>().apply {
-        addAll(
-            combineLists(
-                mine.value,
-                imports.value
-            )
-        )
-    }.toList()
+    val combinedList = combineLists(mine.value, imports.value)
+    val s = combinedList.map { (it as CombinedListPairs.SiteEntryToGPM).siteEntry }.toSet()
+    val g = combinedList.map { (it as CombinedListPairs.SiteEntryToGPM).gpm }.toSet()
+    val listHash = "${s.hashCode()}-${g.hashCode()}-${combinedList.hashCode()}"
+
     LazyColumn(
         state = listState,
         modifier = Modifier
@@ -229,7 +226,7 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
                 // some how lazycolumn super-anally retains the list order by the KEYs!
                 // Since I'm providing sorted list (and sort order ain't maintained)..
                 // let's pass list instance ID, YES, forces full refresh, but at least we're sorted!
-                "${combinedList.hashCode()},site=${site.siteEntry?.id} gpmid=${site.gpm?.id}"
+                "$listHash,site=${site.siteEntry?.id} gpmid=${site.gpm?.id}"
             }
         ) { x ->
             val site = x as CombinedListPairs.SiteEntryToGPM

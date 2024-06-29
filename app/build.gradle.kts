@@ -243,6 +243,8 @@ dependencies {
     implementation(libs.androidx.material3.android)
     implementation(libs.androidx.preference.ktx)
     implementation(libs.androidx.runtime.livedata)
+    implementation(libs.kotlinx.coroutines.core)
+
     // TODO: WHY IS THIS HERE?
     implementation(libs.androidx.ui.test.junit4.android)
     implementation(libs.androidx.ui.tooling.preview.android)
