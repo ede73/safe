@@ -4,13 +4,29 @@ import android.util.Log
 import fi.iki.ede.gpm.csv.processInputLine
 import fi.iki.ede.gpm.csv.readCsv
 import fi.iki.ede.gpm.model.IncomingGPM.Companion.makeFromCSVImport
+import io.mockk.every
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
+import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Before
 import org.junit.Test
 
 private const val TAG = "CSVReaderKtTest"
 
 class CSVReaderKtTest {
+
+    @Before
+    fun before() {
+        mockkStatic(android.util.Log::class)
+        every { Log.d(any(), any()) } returns 0
+    }
+
+    @After
+    fun after() {
+        unmockkStatic(android.util.Log::class)
+    }
 
     @Test
     fun a() {
