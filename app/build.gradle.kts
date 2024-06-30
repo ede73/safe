@@ -77,7 +77,7 @@ abstract class GitRevListCountValueSource : ValueSource<String, ValueSourceParam
 android {
 //    lint {
 //        // Only check for issues from your custom linter
-//        checkOnly.add("AvoidPrintln") // Replace with your issue ID
+//        checkOnly.add("DisallowedImplicitToString") // Replace with your issue ID
 //    }
 
     val localProperties = Properties().apply {

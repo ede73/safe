@@ -5,7 +5,12 @@ import com.android.tools.lint.detector.api.CURRENT_API
 import com.android.tools.lint.detector.api.Issue
 
 class SafeIssueRegistry : IssueRegistry() {
-    override val issues: List<Issue> get() = listOf(SafeDetector.ISSUE)
+    override val issues: List<Issue>
+        get() = listOf(
+            SafeDetector.ISSUE,
+            SafeDisallowedFunctionsDetector.ISSUE,
+            SafeImplicitDisallowedFunctionsDetector.ISSUE
+        )
 
     override val api: Int get() = CURRENT_API
 

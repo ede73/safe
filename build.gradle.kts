@@ -20,3 +20,16 @@ plugins {
 powerAssert {
     functions = listOf("kotlin.assert", "kotlin.test.assertTrue")
 }
+
+// force all kotlin to be 2.0.0 some dependencies pull 1.9, some even 1.8
+// even with this..
+// e: C:/Users/ede/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-reflect/2.0.0/9c3d75110945233bf77d2e1a90604b100884db94/kotlin-reflect-2.0.0.jar!/META-INF/deserialization.common.jvm.kotlin_module: Module was compiled with an incompatible version of Kotlin. The binary version of its metadata is 1.9.0, expected version is 1.5.1.
+//allprojects {
+//    configurations.all {
+//        resolutionStrategy.eachDependency {
+//            if (requested.group == "org.jetbrains.kotlin") {
+//                useVersion("2.0.0")
+//            }
+//        }
+//    }
+//}
