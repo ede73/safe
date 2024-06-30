@@ -13,6 +13,7 @@ TODO:
 - Enhance linter
     - linter test case provides different AST from prod (doesn't use k2?)
     - AndroidStudio integration is iffy
+- Add hard coded colors to linter, should use material colors
 - Enhance search to span extensions!
 - GPM:
     - Implement better GPM view
