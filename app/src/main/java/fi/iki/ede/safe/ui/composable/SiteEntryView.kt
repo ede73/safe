@@ -259,13 +259,15 @@ fun SiteEntryExtensionList(
     // TODO: NONO..flow!
     val allExtensions = DataModel.getAllSiteEntryExtensions()
 
-    SiteEntryExtensionType.entries.sortedBy { it.name }.forEach {
-        Column {
-            SiteEntryExtensionSelector(
-                viewModel,
-                allExtensions.getOrDefault(it, emptySet()),
-                it
-            )
+    VerticalCollapsible(stringResource(id = R.string.site_entry_extension_collapsible)) {
+        SiteEntryExtensionType.entries.sortedBy { it.name }.forEach {
+            Column {
+                SiteEntryExtensionSelector(
+                    viewModel,
+                    allExtensions.getOrDefault(it, emptySet()),
+                    it
+                )
+            }
         }
     }
 }

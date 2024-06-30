@@ -192,4 +192,5 @@ Nämä valinnat muistetaan, joten seuraavan kerran linkitys on helpompaa.</strin
     <string name="notification_google_autobackup_description">Googlen automaattinen varmuuskopiointi suoritettu %s. Jos poistat sovelluksen, ja asennat uudestaan nämä salasanat palautetaan automaattisesti. Voit kytkeä toiminnon pois asetuksista.</string>
     <string name="notification_google_autobackup_quota_exceeded_title">Googlen automaattisen varmuuskopioinnin tila on loppu!</string>
     <string name="notification_google_autobackup_quota_exceeded_description">Automaattisen varmuuskopioinnin tila on loppunut %s. Voit poistaa Google Driven asetuksista sovelluksia, tai niiden varmuuskopoita, jotta tilanne korjaantuu. Tavalliset itsetehdyt varmuuskopiot onnistuu aina.</string>
+    <string name="site_entry_extension_collapsible">Laajennukset</string>
 </resources>

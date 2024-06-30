@@ -246,4 +246,5 @@ These selections will be remembered, so next time linking will be easier.</strin
     <string name="notification_google_autobackup_description">Google automatic backup was done %s. If you uninstall and reinstall, your passwords are still safe. If you don\'t want this feature, you can turn it off from settings.</string>
     <string name="notification_google_autobackup_quota_exceeded_title">Google Automatic Backup Quota Exceeded!</string>
     <string name="notification_google_autobackup_quota_exceeded_description">Automatic backup quota exceeded %s. You can delete apps or their data from you Google Drive. You can continue making regular backups.</string>
+    <string name="site_entry_extension_collapsible">Extensions</string>
 </resources>
