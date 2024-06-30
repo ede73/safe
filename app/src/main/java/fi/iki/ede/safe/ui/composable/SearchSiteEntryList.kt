@@ -53,7 +53,8 @@ fun SearchSiteEntryList(
                 // Handle the result here
                 val resultIntent = result.data
                 if (resultIntent != null) {
-                    val passwordId = resultIntent.getLongExtra(SiteEntryEditScreen.SITE_ENTRY_ID, -1L)
+                    val passwordId =
+                        resultIntent.getLongExtra(SiteEntryEditScreen.SITE_ENTRY_ID, -1L)
                     updateEntry(DataModel.getSiteEntry(passwordId))
                 }
             }

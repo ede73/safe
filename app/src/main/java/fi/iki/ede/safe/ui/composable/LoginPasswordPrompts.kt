@@ -31,6 +31,7 @@ import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.delay
 
 private const val TAG = "LoginPasswordPrompts"
+
 @Composable
 fun LoginPasswordPrompts(
     loginPrecondition: LoginPrecondition,
@@ -147,17 +148,17 @@ fun PasswordPromptPreview() {
         Column {
             Text(text = "------ First time init")
             LoginPasswordPrompts(LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE) { _, _ ->
-                Log.d(TAG,"Got a good password")
+                Log.d(TAG, "Got a good password")
                 true
             }
             Text(text = "------ First time init")
             LoginPasswordPrompts(LoginPrecondition.NORMAL_LOGIN) { _, _ ->
-                Log.d(TAG,"Got a good password")
+                Log.d(TAG, "Got a good password")
                 true
             }
             Text(text = "------ Normal login")
             LoginPasswordPrompts(LoginPrecondition.FIRST_TIME_LOGIN_RESTORED_DATABASE) { _, _ ->
-                Log.d(TAG,"Got a good password")
+                Log.d(TAG, "Got a good password")
                 true
             }
         }

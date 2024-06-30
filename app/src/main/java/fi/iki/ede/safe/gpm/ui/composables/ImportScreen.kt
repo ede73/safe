@@ -58,6 +58,7 @@ import java.time.ZonedDateTime
 import kotlin.reflect.KFunction1
 
 private const val TAG = "ImportScreen"
+
 @Composable
 fun ImportScreen(
     avertInactivity: ((Context, String) -> Unit)?,
@@ -327,9 +328,9 @@ private fun doImport(importChangeSet: ImportChangeSet) {
     val delete = importChangeSet.nonMatchingSavedGPMsToDelete
 
     debug {
-        Log.d(TAG,"ADD ${add.size} entries")
-        Log.d(TAG,"UPDATE ${update.size} entries")
-        Log.d(TAG,"DELETE ${delete.size} entries")
+        Log.d(TAG, "ADD ${add.size} entries")
+        Log.d(TAG, "UPDATE ${update.size} entries")
+        Log.d(TAG, "DELETE ${delete.size} entries")
     }
     // There must be no overlap between ones we delete/once we get in - of course we can't test this
     //assert(delete.intersect(add).size == 0)

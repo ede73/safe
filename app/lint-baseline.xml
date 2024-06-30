@@ -1,212 +1,130 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="5" by="lint Koala | 2024.1.1 Beta 2">
+<issues by="lint Koala | 2024.1.1 Beta 2" format="5">
 
-    <issue
-        id="UnusedAttribute"
+    <issue id="UnusedAttribute"
         message="Attribute `enableOnBackInvokedCallback` is only used in API level 33 and higher (current min is 31)">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="31"/>
+        <location file="src/main/AndroidManifest.xml" line="31" />
     </issue>
 
-    <issue
-        id="AndroidGradlePluginVersion"
+    <issue id="AndroidGradlePluginVersion"
         message="A newer version of com.android.application than 8.5.0-beta02 is available: 8.5.0">
-        <location
-            file="$HOME/src/safe/gradle/libs.versions.toml"
-            line="3"/>
+        <location file="$HOME/src/safe/gradle/libs.versions.toml" line="3" />
     </issue>
 
-    <issue
-        id="AndroidGradlePluginVersion"
+    <issue id="AndroidGradlePluginVersion"
         message="A newer version of com.android.dynamic-feature than 8.5.0-beta02 is available: 8.5.0">
-        <location
-            file="$HOME/src/safe/gradle/libs.versions.toml"
-            line="3"/>
+        <location file="$HOME/src/safe/gradle/libs.versions.toml" line="3" />
     </issue>
 
-    <issue
-        id="AndroidGradlePluginVersion"
+    <issue id="AndroidGradlePluginVersion"
         message="A newer version of com.android.library than 8.5.0-beta02 is available: 8.5.0">
-        <location
-            file="$HOME/src/safe/gradle/libs.versions.toml"
-            line="3"/>
+        <location file="$HOME/src/safe/gradle/libs.versions.toml" line="3" />
     </issue>
 
-    <issue
-        id="GradleDependency"
+    <issue id="GradleDependency"
         message="A newer version of androidx.test.ext:junit than 1.1.5 is available: 1.2.1">
-        <location
-            file="$HOME/src/safe/gradle/libs.versions.toml"
-            line="10"/>
+        <location file="$HOME/src/safe/gradle/libs.versions.toml" line="10" />
     </issue>
 
-    <issue
-        id="GradleDependency"
+    <issue id="GradleDependency"
         message="A newer version of androidx.test.ext:junit-ktx than 1.1.5 is available: 1.2.1">
-        <location
-            file="$HOME/src/safe/gradle/libs.versions.toml"
-            line="11"/>
+        <location file="$HOME/src/safe/gradle/libs.versions.toml" line="11" />
     </issue>
 
-    <issue
-        id="GradleDependency"
+    <issue id="GradleDependency"
         message="A newer version of androidx.test:rules than 1.5.0 is available: 1.6.1">
-        <location
-            file="$HOME/src/safe/gradle/libs.versions.toml"
-            line="25"/>
+        <location file="$HOME/src/safe/gradle/libs.versions.toml" line="25" />
     </issue>
 
-    <issue
-        id="GradleDependency"
+    <issue id="GradleDependency"
         message="A newer version of androidx.test:runner than 1.5.0 is available: 1.6.1">
-        <location
-            file="$HOME/src/safe/gradle/libs.versions.toml"
-            line="26"/>
+        <location file="$HOME/src/safe/gradle/libs.versions.toml" line="26" />
     </issue>
 
-    <issue
-        id="PluralsCandidate"
+    <issue id="PluralsCandidate"
         message="Formatting %d followed by words (&quot;days&quot;): This should probably be a plural rather than a string">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="176"/>
+        <location file="src/main/res/values/strings.xml" line="176" />
     </issue>
 
-    <issue
-        id="ObsoleteSdkInt"
-        message="Unnecessary; SDK_INT is always >= 31">
-        <location
-            file="src/main/AndroidManifest.xml"
-            line="37"/>
+    <issue id="ObsoleteSdkInt" message="Unnecessary; SDK_INT is always >= 31">
+        <location file="src/main/AndroidManifest.xml" line="37" />
     </issue>
 
-    <issue
-        id="ObsoleteSdkInt"
-        message="Unnecessary; SDK_INT is always >= 33">
-        <location
-            file="src/main/java/fi/iki/ede/safe/service/AutolockingService.kt"
-            line="119"/>
+    <issue id="ObsoleteSdkInt" message="Unnecessary; SDK_INT is always >= 33">
+        <location file="src/main/java/fi/iki/ede/safe/service/AutolockingService.kt" line="119" />
     </issue>
 
-    <issue
-        id="ObsoleteSdkInt"
-        message="Unnecessary; SDK_INT is always >= 33">
-        <location
-            file="src/main/java/fi/iki/ede/safe/ui/activities/CategoryListScreen.kt"
-            line="74"/>
+    <issue id="ObsoleteSdkInt" message="Unnecessary; SDK_INT is always >= 33">
+        <location file="src/main/java/fi/iki/ede/safe/ui/activities/CategoryListScreen.kt"
+            line="74" />
     </issue>
 
-    <issue
-        id="ObsoleteSdkInt"
-        message="Unnecessary; SDK_INT is always >= 28">
-        <location
-            file="src/main/java/fi/iki/ede/safe/clipboard/ClipboardUtils.kt"
-            line="46"/>
+    <issue id="ObsoleteSdkInt" message="Unnecessary; SDK_INT is always >= 28">
+        <location file="src/main/java/fi/iki/ede/safe/clipboard/ClipboardUtils.kt" line="46" />
     </issue>
 
-    <issue
-        id="ObsoleteSdkInt"
-        message="Unnecessary; SDK_INT is always >= 33">
-        <location
-            file="src/main/java/fi/iki/ede/safe/notifications/MainNotification.kt"
-            line="85"/>
+    <issue id="ObsoleteSdkInt" message="Unnecessary; SDK_INT is always >= 33">
+        <location file="src/main/java/fi/iki/ede/safe/notifications/MainNotification.kt"
+            line="85" />
     </issue>
 
-    <issue
-        id="AutoboxingStateCreation"
+    <issue id="AutoboxingStateCreation"
         message="Prefer `mutableFloatStateOf` instead of `mutableStateOf`">
-        <location
-            file="src/main/java/fi/iki/ede/safe/gpm/ui/composables/ImportEntryList.kt"
-            line="164"/>
+        <location file="src/main/java/fi/iki/ede/safe/gpm/ui/composables/ImportEntryList.kt"
+            line="164" />
     </issue>
 
-    <issue
-        id="UseTomlInstead"
-        message="Use version catalog instead">
-        <location
-            file="build.gradle.kts"
-            line="259"/>
+    <issue id="UseTomlInstead" message="Use version catalog instead">
+        <location file="build.gradle.kts" line="259" />
     </issue>
 
-    <issue
-        id="UseTomlInstead"
-        message="Use version catalog instead">
-        <location
-            file="build.gradle.kts"
-            line="260"/>
+    <issue id="UseTomlInstead" message="Use version catalog instead">
+        <location file="build.gradle.kts" line="260" />
     </issue>
 
-    <issue
-        id="UseTomlInstead"
-        message="Use version catalog instead">
-        <location
-            file="build.gradle.kts"
-            line="261"/>
+    <issue id="UseTomlInstead" message="Use version catalog instead">
+        <location file="build.gradle.kts" line="261" />
     </issue>
 
-    <issue
-        id="UseTomlInstead"
+    <issue id="UseTomlInstead"
         message="Use the existing version catalog reference (`libs.bcprov.jdk16`) instead">
-        <location
-            file="build.gradle.kts"
-            line="265"/>
+        <location file="build.gradle.kts" line="265" />
     </issue>
 
-    <issue
-        id="UseTomlInstead"
-        message="Use version catalog instead">
-        <location
-            file="build.gradle.kts"
-            line="280"/>
+    <issue id="UseTomlInstead" message="Use version catalog instead">
+        <location file="build.gradle.kts" line="280" />
     </issue>
 
-    <issue
-        id="IgnoreWithoutReason"
-        message="Test is ignored without giving any explanation">
-        <location
-            file="src/androidTest/java/fi/iki/ede/safe/noui/ApplicationSuffixTest.kt"
-            line="16"/>
+    <issue id="IgnoreWithoutReason" message="Test is ignored without giving any explanation">
+        <location file="src/androidTest/java/fi/iki/ede/safe/noui/ApplicationSuffixTest.kt"
+            line="16" />
     </issue>
 
-    <issue
-        id="IgnoreWithoutReason"
-        message="Test is ignored without giving any explanation">
-        <location
-            file="src/test/java/fi/iki/ede/safe/ApplicationSuffixTest.kt"
-            line="23"/>
+    <issue id="IgnoreWithoutReason" message="Test is ignored without giving any explanation">
+        <location file="src/test/java/fi/iki/ede/safe/ApplicationSuffixTest.kt" line="23" />
     </issue>
 
-    <issue
-        id="IgnoreWithoutReason"
-        message="Test is ignored without giving any explanation">
-        <location
-            file="src/androidTest/java/fi/iki/ede/safe/noui/ApplicationSuffixTest.kt"
-            line="54"/>
+    <issue id="IgnoreWithoutReason" message="Test is ignored without giving any explanation">
+        <location file="src/androidTest/java/fi/iki/ede/safe/noui/ApplicationSuffixTest.kt"
+            line="54" />
     </issue>
 
-    <issue
-        id="IgnoreWithoutReason"
-        message="Test is ignored without giving any explanation">
+    <issue id="IgnoreWithoutReason" message="Test is ignored without giving any explanation">
         <location
             file="src/androidTest/java/fi/iki/ede/safe/login/LoginScreenAfterFirstInstallTest.kt"
-            line="126"/>
+            line="126" />
     </issue>
 
-    <issue
-        id="IgnoreWithoutReason"
-        message="Test is ignored without giving any explanation">
+    <issue id="IgnoreWithoutReason" message="Test is ignored without giving any explanation">
         <location
             file="src/androidTest/java/fi/iki/ede/safe/login/LoginScreenAfterFirstInstallTest.kt"
-            line="163"/>
+            line="163" />
     </issue>
 
-    <issue
-        id="IgnoreWithoutReason"
-        message="Test is ignored without giving any explanation">
+    <issue id="IgnoreWithoutReason" message="Test is ignored without giving any explanation">
         <location
             file="src/androidTest/java/fi/iki/ede/safe/login/LoginScreenAfterFirstInstallTest.kt"
-            line="205"/>
+            line="205" />
     </issue>
 
 </issues>

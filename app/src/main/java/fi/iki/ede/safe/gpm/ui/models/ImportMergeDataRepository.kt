@@ -27,7 +27,7 @@ class ImportMergeDataRepository {
 
     fun debug(message: String) {
         if (false) {
-            Log.d(TAG,message)
+            Log.d(TAG, message)
         }
     }
 

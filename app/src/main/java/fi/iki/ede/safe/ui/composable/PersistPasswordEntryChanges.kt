@@ -41,8 +41,9 @@ fun PersistPasswordEntryChanges(
 
         editedSiteEntry.extensions.forEach { extensionType ->
             // TODO: MULTISELECT
-            val extensionValues=extensionType.value.filter { it.trim().isNotEmpty() }
-            siteEntry.extensions.getOrPut(extensionType.key) { mutableSetOf() }.addAll(extensionValues)
+            val extensionValues = extensionType.value.filter { it.trim().isNotEmpty() }
+            siteEntry.extensions.getOrPut(extensionType.key) { mutableSetOf() }
+                .addAll(extensionValues)
         }
     }
 

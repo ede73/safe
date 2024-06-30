@@ -37,12 +37,12 @@
             android:summary="@string/preferences_summary_default_user_name"
             android:title="@string/preferences_title_default_user_name" />
         <SeekBarPreference
-            android:key="soft_delete_days"
-            android:title="@string/preferences_title_soft_delete"
-            android:summary="@string/preferences_summary_soft_delete"
-            app:showSeekBarValue="true"
             android:defaultValue="30"
-            android:max="365" />
+            android:key="soft_delete_days"
+            android:max="365"
+            android:summary="@string/preferences_summary_soft_delete"
+            android:title="@string/preferences_title_soft_delete"
+            app:showSeekBarValue="true" />
         <Preference
             android:key="backup_document"
             android:title="@string/preferences_title_default_backup_path" />
