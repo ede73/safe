@@ -3,18 +3,23 @@ Password safe
 Looks great ! https://developer.android.com/studio/test/other-testing-tools/app-crawler
 
 In progress:
+- All sorts of dialogs fill the app, merge, generalize (house keeping)
+    - collected all (well all that were easy to pull out..95%) under same package
+- Restore soft-deleted password WHEN no categories
+- Restore soft-deleted password WHEN original category lost
+    - for now, both go under 1st category found or not possible to restore if no categories
 
 TODO:
+- Enhance linter
+    - linter test case provides different AST from prod (doesn't use k2?)
+    - AndroidStudio integration is iffy
 - Enhance search to span extensions!
 - GPM:
     - Implement better GPM view
     - Visualize GPM linkage
     - Show ignored
-- All sorts of dialogs fill the app, merge, generalize (house keeping)
-- Restore soft-deleted password WHEN no categories
-- Restore soft-deleted password WHEN original category lost
 - Add edited-aspect to CRUD password/category. SQlite has no autom.modified, and feels too much to track that way, just bump preferences
-- Extension: make completely user definable (categories)
+- Extension: convert 'hard coded' pre-selected extensions to  completely user definable (categories)
     - bonus card etc.number
     - or could security questions (which shouldn't exist!) Be more generic..anything..routing number,checking acct.with copy btn
     - separate entity for security questions (treated like passwords)
@@ -30,13 +35,16 @@ TODO:
 - add delete photo confirmation 
 - Family Passwords / shared passwords
 - ellipsis cuts text too eagerly (password list left hand side)
+- something wrong with Notes textfield, linefeeds are all effed up occasionaly when editing! propbably the 2-3way password split?
 
 - AutoFill - some support
 - Accessibility - everything supports - but it is my responsibility to parse
 - Keyboard integration v1 Pre Android 11
 - Keyboard integration v2 Post Android 11
 - Credentials Manager Api (14+ devices - no one supports)
+
 DONE:
+- linter for detecting DisallowedFunctions implicit/explicit printing
 - long name/desc + date overflows
 - soft delete (trash) (db done, data model done)
     - UI Deleted category(done)
