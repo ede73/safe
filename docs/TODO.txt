@@ -12,7 +12,6 @@ In progress:
 TODO:
 - Enhance linter
     - linter test case provides different AST from prod (doesn't use k2?)
-    - AndroidStudio integration is iffy
 - Add hard coded colors to linter, should use material colors
 - Enhance search to span extensions!
 - GPM:
@@ -43,8 +42,10 @@ TODO:
 - Keyboard integration v1 Pre Android 11
 - Keyboard integration v2 Post Android 11
 - Credentials Manager Api (14+ devices - no one supports)
+- notify of old passwords
 
 DONE:
+- notification now nags every time you have unbacked up changes
 - linter for detecting DisallowedFunctions implicit/explicit printing
 - long name/desc + date overflows
 - soft delete (trash) (db done, data model done)
@@ -58,9 +59,6 @@ DONE:
         - merged to above: separate field for credit card details?
     - 2fa? Authenticator app? (authenticators)
         - merged to above: login via fb / google
-
-- notify of old passwords
-
 
 
 XML
