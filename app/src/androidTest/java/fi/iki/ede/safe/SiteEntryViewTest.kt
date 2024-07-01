@@ -187,6 +187,10 @@ class SiteEntryViewTest : NodeHelper {
 
     @Test
     fun backOnEditedExtensionPopSaveDialog() {
+        val expandExtensions =
+            testRule.onAllNodesWithTag(TestTag.SITE_ENTRY_EXTENSION_EXPANSION).onFirst()
+        expandExtensions.performClick()
+
         val check =
             testRule.onAllNodesWithTag(TestTag.SITE_ENTRY_EXTENSION_ENTRY_CHECKBOX).onFirst()
         check.performClick()

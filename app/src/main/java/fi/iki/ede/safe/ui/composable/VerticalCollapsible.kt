@@ -16,6 +16,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import fi.iki.ede.safe.ui.TestTag
+import fi.iki.ede.safe.ui.testTag
 
 @Composable
 fun VerticalCollapsible(
@@ -24,7 +26,9 @@ fun VerticalCollapsible(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .testTag(TestTag.SITE_ENTRY_EXTENSION_EXPANSION)) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
