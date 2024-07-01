@@ -203,12 +203,14 @@ class CategoryListScreenTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun deleteCategory() = runTest {
+    fun deleteCategory() = runTest(testDispatcher, timeout = 10.seconds) {
         val newCategory = "newCategory"
         DBHelper4AndroidTest.addCategory(newCategory)
         runBlocking {
             DataModel.loadFromDatabase()
         }
+
+        advanceUntilIdle()
 
         val categoriesEmitted = mutableListOf<List<DecryptableCategoryEntry>>()
         val collectionJob = launch {
@@ -231,21 +233,22 @@ class CategoryListScreenTest {
         categoryActivityTestRule.waitForIdle()
         advanceUntilIdle()
 
+        val categoryStillExists = categoriesEmitted.any { categoriesList ->
+            categoriesList.any { it.plainName == newCategory }
+        }
+        assertFalse("The category was deleted.", categoryStillExists)
+        collectionJob.cancel()
+        advanceUntilIdle()
+
+        assert(DataModel.categoriesStateFlow.value.find { it.plainName == newCategory } == null)
+        { "Found deleted category from the DB" }
+
         categoryActivityTestRule.waitUntil(3000) {
             advanceUntilIdle()
             // wait until one category disappears
             categoryActivityTestRule.onAllNodesWithTag(TestTag.CATEGORY_ROW)
                 .fetchSemanticsNodes().size == 2
         }
-        advanceUntilIdle()
-        val categoryStillExists = categoriesEmitted.any { categoriesList ->
-            categoriesList.any { it.plainName == newCategory }
-        }
-        assertFalse("The category was deleted.", categoryStillExists)
-        collectionJob.cancel()
-
-        assert(DataModel.categoriesStateFlow.value.find { it.plainName == newCategory } == null)
-        { "Found deleted category from the DB" }
     }
 
     companion object {
