@@ -146,6 +146,6 @@ object PluginManager {
 
     private fun getBundleTestMode() = if (BuildConfig.DEBUG) _bundleTestMode else false
 
-    private fun isPluginEnabled(plugin: PluginName) =
+    fun isPluginEnabled(plugin: PluginName) =
         plugin in Preferences.getEnabledExperiments()
 }

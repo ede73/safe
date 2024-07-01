@@ -198,7 +198,7 @@ fun SiteEntryView(
         }
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             if (!skipForPreviewToWork) {
-                breachCheckButton(PluginName.HIBP, context, passEntry.password)()
+                breachCheckButton(context, passEntry.password)()
             }
         }
 
@@ -382,12 +382,13 @@ fun SiteEntryExtensionSelector(
 
 @Composable
 fun breachCheckButton(
-    plugin: PluginName,
     context: Context,
     encryptedPassword: IVCipherText
 ): @Composable () -> Unit = {
-    PluginManager.getComposableInterface(plugin)?.getComposable(context, encryptedPassword)
-        ?.invoke()
+    if (PluginManager.isPluginEnabled(PluginName.HIBP))
+        PluginManager.getComposableInterface(PluginName.HIBP)
+            ?.getComposable(context, encryptedPassword)
+            ?.invoke()
 }
 
 private fun tryParseUri(website: String): Uri =
