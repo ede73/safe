@@ -16,6 +16,7 @@ import fi.iki.ede.gpm.model.SavedGPM.Companion.makeFromEncryptedStringFields
 import fi.iki.ede.gpm.model.encrypt
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
+import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import kotlinx.coroutines.flow.MutableStateFlow
 
 typealias DBID = Long
@@ -279,15 +280,13 @@ class DBHelper internal constructor(
                                 note = it.getIVCipher(SiteEntry.Columns.NOTE)
                                 photo = it.getIVCipher(SiteEntry.Columns.PHOTO)
                                 deleted = it.getDBID(SiteEntry.Columns.DELETED)
+                                extensions = it.getIVCipher(SiteEntry.Columns.EXTENSIONS)
                                 try {
                                     it.getZonedDateTimeOfPasswordChange()
                                         ?.let { time -> passwordChangedDate = time }
                                 } catch (ex: Exception) {
-                                    Log.d(TAG, "Date parsing issue", ex)
+                                    firebaseRecordException("Date parsing issue", ex)
                                 }
-                                importExtensionsFromDB(
-                                    it.getIVCipher(SiteEntry.Columns.EXTENSIONS)
-                                )
                             }
                         add(siteEntry)
                         if (siteEntriesFlow != null)
@@ -315,7 +314,7 @@ class DBHelper internal constructor(
                     entry.passwordChangedDate!!
                 )
             }
-            put(SiteEntry.Columns.EXTENSIONS, entry.exportExtensionsToDB())
+            put(SiteEntry.Columns.EXTENSIONS, entry.extensions)
         }
         val ret = writableDatabase.update(
             SiteEntry,
@@ -350,7 +349,7 @@ class DBHelper internal constructor(
             entry.passwordChangedDate?.let {
                 put(SiteEntry.Columns.PASSWORD_CHANGE_DATE, it)
             }
-            put(SiteEntry.Columns.EXTENSIONS, entry.exportExtensionsToDB())
+            put(SiteEntry.Columns.EXTENSIONS, entry.extensions)
         })
 
     fun restoreSoftDeletedSiteEntry(id: DBID) =

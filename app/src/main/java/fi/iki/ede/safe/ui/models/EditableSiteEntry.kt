@@ -20,6 +20,5 @@ data class EditableSiteEntry(
     // it doesn't lessen security having it as bitmap here
     val plainPhoto: Bitmap? = null,
     val passwordChangedDate: ZonedDateTime? = null,
-    // TODO: Map/Set should suffice!
-    var extensions: Map<SiteEntryExtensionType, Set<String>> = mapOf(),
+    var plainExtension: Map<SiteEntryExtensionType, Set<String>> = mapOf(),
 )

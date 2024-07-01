@@ -303,14 +303,14 @@ fun SiteEntryExtensionSelector(
     val allKnownEntries =
         remember { mutableStateListOf<String>().also { it.addAll(allKnownValues) } }
     var checked by remember { mutableStateOf(false) }
-    if (!entry.extensions.containsKey(extensionType)) {
-        entry.extensions = entry.extensions.toMutableMap().apply {
+    if (!entry.plainExtension.containsKey(extensionType)) {
+        entry.plainExtension = entry.plainExtension.toMutableMap().apply {
             this[extensionType] = setOf()
         }
     }
     var selectedEntry by remember { mutableStateOf("") }
 
-    if (entry.extensions[extensionType]!!.isEmpty() && !checked) {
+    if (entry.plainExtension[extensionType]!!.isEmpty() && !checked) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Checkbox(
                 checked = checked,
@@ -322,10 +322,10 @@ fun SiteEntryExtensionSelector(
     } else {
         Text(text = extensionType.name)
         EditableComboBox(
-            selectedItems = entry.extensions[extensionType]!!.toSet(),
+            selectedItems = entry.plainExtension[extensionType]!!.toSet(),
             allItems = allKnownEntries.toSet(),
             onItemSelected = { selectedItem ->
-                val currentExtension = entry.extensions
+                val currentExtension = entry.plainExtension
                 val currentSet = currentExtension[extensionType] ?: emptySet()
                 if (selectedItem in currentSet) {
                     viewModel.updateExtensions(
@@ -349,7 +349,7 @@ fun SiteEntryExtensionSelector(
             },
             onItemEdited = { editedItem ->
                 val rem = removeFromMap(
-                    entry.extensions,
+                    entry.plainExtension,
                     extensionType,
                     selectedEntry
                 )
@@ -363,11 +363,11 @@ fun SiteEntryExtensionSelector(
                         .contains(itemToDelete)
                 ) {
                     // deletion allowed, not used anywhere else..will "autodelete" from full collection on save
-                    entry.extensions[extensionType].let { currentSet ->
+                    entry.plainExtension[extensionType].let { currentSet ->
                         if (itemToDelete in currentSet!!) {
                             viewModel.updateExtensions(
                                 removeFromMap(
-                                    entry.extensions,
+                                    entry.plainExtension,
                                     extensionType,
                                     itemToDelete
                                 ),
@@ -411,10 +411,12 @@ fun SiteEntryViewPreview() {
             username = encrypter("Username".toByteArray())
             password = encrypter("Password".toByteArray())
             note = encrypter("Note".toByteArray())
-            extensions.getOrPut(SiteEntryExtensionType.PAYMENTS) { mutableSetOf() }.add("Some card")
-            extensions.getOrPut(SiteEntryExtensionType.PHONE_NUMBERS) { mutableSetOf() }
-                .add("+12345678")
-//            extensions.getOrPut(SiteEntryExtensionType.EMAILS) { mutableSetOf() }.add("a&b")
+            extensions = encryptExtension(
+                mapOf(
+                    SiteEntryExtensionType.PAYMENTS to setOf("Some card"),
+                    SiteEntryExtensionType.PHONE_NUMBERS to setOf("+12345678")
+                )
+            )
         }
         val site2 = DecryptableSiteEntry(1).apply {
             description = encrypter("Description2".toByteArray())
@@ -423,12 +425,13 @@ fun SiteEntryViewPreview() {
             username = encrypter("Username".toByteArray())
             password = encrypter("Password".toByteArray())
             note = encrypter("Note".toByteArray())
-            extensions.getOrDefault(SiteEntryExtensionType.PAYMENTS, mutableSetOf())
-                .add("Some card2")
-            extensions.getOrDefault(SiteEntryExtensionType.PHONE_NUMBERS, mutableSetOf())
-                .add("+123456780")
-            extensions.getOrDefault(SiteEntryExtensionType.EMAILS, mutableSetOf())
-                .add("a@b2")
+            extensions = encryptExtension(
+                mapOf(
+                    SiteEntryExtensionType.PAYMENTS to setOf("Some card2"),
+                    SiteEntryExtensionType.PHONE_NUMBERS to setOf("+123456780"),
+                    SiteEntryExtensionType.EMAILS to setOf("a@b")
+                )
+            )
         }
         val cat = DecryptableCategoryEntry().apply {
             id = 1

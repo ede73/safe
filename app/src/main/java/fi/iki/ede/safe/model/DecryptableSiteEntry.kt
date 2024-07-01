@@ -37,21 +37,17 @@ class DecryptableSiteEntry(categoryId: Long) {
     var id: Long? = null
     var note: IVCipherText = IVCipherText.getEmpty()
     var password: IVCipherText = IVCipherText.getEmpty()
-    val extensions = mutableMapOf<SiteEntryExtensionType, MutableSet<String>>()
-    fun exportExtensionsToDB() = Json.encodeToString(extensions).encrypt()
-    fun importExtensionsFromDB(encryptedJson: IVCipherText) {
-        try {
-            if (encryptedJson.isEmpty()) return
-            val serializedExtension = encryptedJson.decrypt().trim()
-            val decodedExtension =
-                Json.decodeFromString<MutableMap<SiteEntryExtensionType, MutableSet<String>>>(
-                    serializedExtension
-                )
-            extensions.putAll(decodedExtension)
+    val plainExtensions: Map<SiteEntryExtensionType, Set<String>>
+        get() = try {
+            if (extensions.isEmpty()) mapOf<SiteEntryExtensionType, Set<String>>()
+            Json.decodeFromString<Map<SiteEntryExtensionType, Set<String>>>(
+                extensions.decrypt().trim()
+            )
         } catch (e: Exception) {
             firebaseRecordException("Failed to import extension", e)
+            mutableMapOf()
         }
-    }
+    var extensions: IVCipherText = IVCipherText.getEmpty()
 
     // Password changed date(time) is not privacy critical (hence unencrypted)
     // TODO: LocalDateTime will suffice...
@@ -90,8 +86,7 @@ class DecryptableSiteEntry(categoryId: Long) {
         searchUsernames: Boolean,
         searchPasswords: Boolean,
         searchNotes: Boolean
-    ) =
-        // TODO: Might be able to optimize?
+    ) = // TODO: Might be able to optimize?
         cachedPlainDescription.contains(searchText, true) ||
                 (searchWebsites && plainWebsite.contains(searchText, true)) ||
                 (searchUsernames && plainUsername.contains(searchText, true)) ||
@@ -114,7 +109,7 @@ class DecryptableSiteEntry(categoryId: Long) {
             this.passwordChangedDate == passwordChangedDate &&
             plainNote == decrypt(note) &&
             (photo?.sameAs(plainPhoto) ?: (plainPhoto == null)) &&
-            !areMapsDifferent(extensions, this.extensions)
+            !areMapsDifferent(extensions, this.plainExtensions)
 
     private fun areMapsDifferent(
         map1: Map<SiteEntryExtensionType, Set<String>>,
@@ -158,4 +153,7 @@ class DecryptableSiteEntry(categoryId: Long) {
     } catch (e: Exception) {
         "Failed decr $e"
     }
+
+    fun encryptExtension(plainExtensions: Map<SiteEntryExtensionType, Set<String>>): IVCipherText =
+        Json.encodeToString(plainExtensions).encrypt()
 }

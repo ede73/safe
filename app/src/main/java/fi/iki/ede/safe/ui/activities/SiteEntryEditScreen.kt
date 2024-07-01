@@ -124,7 +124,7 @@ class SiteEntryEditScreen : AutolockingBaseComponentActivity() {
         edits.passwordChangedDate,
         edits.note,
         edits.plainPhoto,
-        edits.extensions
+        edits.plainExtension
     )
 
     companion object {

@@ -373,7 +373,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
                     assertEquals(666, passwords[i].deleted)
                     assertEquals(
                         "[payments:visa,mastercard, phones:123-456-7890]",
-                        passwords[i].extensions.map { m ->
+                        passwords[i].plainExtensions.map { m ->
                             m.key.extensionName + ":" + m.value.joinToString(
                                 ","
                             )
@@ -381,7 +381,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
                     )
                 } else {
                     assertEquals(0, passwords[i].deleted)
-                    assertEquals(0, passwords[i].extensions.size)
+                    assertEquals(0, passwords[i].plainExtensions.size)
                 }
                 assertEquals(null, passwords[i].plainPhoto)
             }
@@ -443,15 +443,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
             <username iv="0102030405060708090a0b0c0d0e0f10">646c605b7075627a3838</username>
             <password iv="0102030405060708090a0b0c0d0e0f10">646c605b757163393b</password>
             <note iv="0102030405060708090a0b0c0d0e0f10">646c605b6b69736d3838</note>
-            <extensions>
-                <extension iv_extensionname="0102030405060708090a0b0c0d0e0f10" cipher_extensionname="71637a696068737b">
-                    <value iv="0102030405060708090a0b0c0d0e0f10">776b7065</value>
-                    <value iv="0102030405060708090a0b0c0d0e0f10">6c637070607464697b6e</value>
-                </extension>
-                <extension iv_extensionname="0102030405060708090a0b0c0d0e0f10" cipher_extensionname="716a6c6a6075">
-                    <value iv="0102030405060708090a0b0c0d0e0f10">30303029313331253e32323c</value>
-                </extension>            
-            </extensions>
+            <extension iv="0102030405060708090a0b0c0d0e0f10">7a2073657c6b62667d792936562c797972632128276b667b7d6f796f6c7c6b325c2e21746d69696d7a2831572f3f3d232c36363228313f3139285671</extension>
         </item>
     </category>
     <category iv_name="0102030405060708090a0b0c0d0e0f10" cipher_name="646c60767c76736d6d696a783f">

@@ -30,7 +30,7 @@ open class EditingSiteEntryViewModel : ViewModel() {
             siteEntry.note,
             siteEntry.plainPhoto,
             siteEntry.passwordChangedDate,
-            siteEntry.extensions
+            siteEntry.plainExtensions
         )
     }
 
@@ -82,7 +82,7 @@ open class EditingSiteEntryViewModel : ViewModel() {
 
     fun updateExtensions(map: Map<SiteEntryExtensionType, Set<String>>) {
         val currentState = _editableSiteEntryState.value
-        val updateState = currentState.copy(extensions = map)
+        val updateState = currentState.copy(plainExtension = map)
         _editableSiteEntryState.value = updateState
     }
 }

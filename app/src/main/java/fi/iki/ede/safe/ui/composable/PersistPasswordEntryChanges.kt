@@ -31,20 +31,14 @@ fun PersistPasswordEntryChanges(
         password = editedSiteEntry.password
         passwordChangedDate = editedSiteEntry.passwordChangedDate
         note = editedSiteEntry.note
-        photo =
-            if (editedSiteEntry.plainPhoto == null) IVCipherText.getEmpty()
-            else editedSiteEntry.plainPhoto.encrypt(encrypter)
+        photo = if (editedSiteEntry.plainPhoto == null) IVCipherText.getEmpty()
+        else editedSiteEntry.plainPhoto.encrypt(encrypter)
 
         if (passwordChanged) {
             passwordChangedDate = ZonedDateTime.now()
         }
 
-        editedSiteEntry.extensions.forEach { extensionType ->
-            // TODO: MULTISELECT
-            val extensionValues = extensionType.value.filter { it.trim().isNotEmpty() }
-            siteEntry.extensions.getOrPut(extensionType.key) { mutableSetOf() }
-                .addAll(extensionValues)
-        }
+        siteEntry.extensions = siteEntry.encryptExtension(editedSiteEntry.plainExtension)
     }
 
     // TODO: MAKE ASYNC

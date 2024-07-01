@@ -440,7 +440,8 @@ object DataModel {
         _siteEntryToSavedGPMFlow.value.filterKeys { it.id == siteEntryID }.values.flatten().toSet()
 
     fun getAllSiteEntryExtensions(ignoreId: DBID? = null): Map<SiteEntryExtensionType, Set<String>> =
-        _siteEntriesStateFlow.value.filter { it.id != ignoreId }.flatMap { it.extensions.entries }
+        _siteEntriesStateFlow.value.filter { it.id != ignoreId }
+            .flatMap { it.plainExtensions.entries }
             .groupBy({ it.key }, { it.value })
             .mapValues { (_, values) -> values.flatten().filterNot(String::isBlank).toSet() }
 
