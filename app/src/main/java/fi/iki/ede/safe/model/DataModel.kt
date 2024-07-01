@@ -28,22 +28,26 @@ object DataModel {
         if (BuildConfig.DEBUG) {
             val thisClass = this
             GlobalScope.launch {
+                val TAG = "DataModel(observer)"
                 _siteEntriesStateFlow.collect { list ->
-                    println(
+                    Log.d(
+                        TAG,
                         "Debug observer: $thisClass _siteEntriesStateFlow:  (${
                             list.map { it.id }.joinToString(",")
                         })"
                     )
                 }
                 _categoriesStateFlow.collect { list ->
-                    println(
+                    Log.d(
+                        TAG,
                         "Debug observer: $thisClass _categoriesStateFlow:  (${
                             list.map { it.id }.joinToString(",")
                         })"
                     )
                 }
                 _savedGPMsFlow.collect { list ->
-                    println(
+                    Log.d(
+                        TAG,
                         "Debug observer: $thisClass _savedGPMsFlow: (${
                             list.map { it.id }.joinToString(",")
                         })"
