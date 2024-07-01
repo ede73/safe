@@ -98,6 +98,7 @@ object DataModel {
         category: DecryptableCategoryEntry,
         onAdd: suspend (DecryptableCategoryEntry) -> Unit = {}
     ) {
+        Preferences.setLastModified()
         CoroutineScope(Dispatchers.IO).launch {
             val db = DBHelperFactory.getDBHelper()
             if (category.id == null) {
@@ -123,6 +124,7 @@ object DataModel {
         require(category.getCategory() == category) {
             "Alas category OBJECTS THEMSELVES are different, and SEARCH is needed"
         }
+        Preferences.setLastModified()
         CoroutineScope(Dispatchers.IO).launch {
             DBHelperFactory.getDBHelper().deleteCategory(category.id!!)
             _categoriesStateFlow.update { oldMap -> oldMap.filterNot { it.id == category.id } }
@@ -137,6 +139,7 @@ object DataModel {
         onAdd: suspend (DecryptableSiteEntry) -> Unit = {}
     ) {
         require(siteEntry.categoryId != null) { "SiteEntry's category must be known" }
+        Preferences.setLastModified()
         CoroutineScope(Dispatchers.IO).launch {
             val db = DBHelperFactory.getDBHelper()
             if (siteEntry.id == null) {
@@ -157,6 +160,7 @@ object DataModel {
         targetCategory: DecryptableCategoryEntry
     ) {
         require(siteEntry.categoryId != null) { "SiteEntry's category must be known" }
+        Preferences.setLastModified()
         CoroutineScope(Dispatchers.IO).launch {
             DBHelperFactory.getDBHelper()
                 .updateSiteEntryCategory(siteEntry.id!!, targetCategory.id!!)
@@ -183,6 +187,7 @@ object DataModel {
     }
 
     fun emptyAllSoftDeleted(ids: Set<DBID>) {
+        Preferences.setLastModified()
         val db = DBHelperFactory.getDBHelper()
         ids.forEach { id ->
             db.hardDeleteSiteEntry(id)
@@ -191,6 +196,7 @@ object DataModel {
     }
 
     fun restoreSiteEntry(siteEntry: DecryptableSiteEntry) {
+        Preferences.setLastModified()
         CoroutineScope(Dispatchers.IO).launch {
             _softDeletedStateFlow.value -= _softDeletedStateFlow.value.filter { it.id == siteEntry.id }
             // Find category this password belonged to, or first category if it doesn't exist
@@ -218,6 +224,7 @@ object DataModel {
 
     fun deleteSiteEntry(siteEntry: DecryptableSiteEntry) {
         require(siteEntry.categoryId != null) { "SiteEntry's category must be known" }
+        Preferences.setLastModified()
         CoroutineScope(Dispatchers.IO).launch {
             val db = DBHelperFactory.getDBHelper()
             Preferences.getSoftDeleteDays().let {
@@ -261,6 +268,7 @@ object DataModel {
     }
 
     fun markSavedGPMIgnored(savedGpmId: Long) {
+        Preferences.setLastModified()
         DBHelperFactory.getDBHelper().markSavedGPMIgnored(savedGpmId)
         _savedGPMsFlow.update { currentList ->
             currentList.map { savedGPM ->
@@ -294,6 +302,7 @@ object DataModel {
                     DateUtils.unixEpochSecondsToLocalZonedDateTime(it.deleted),
                 )
                 if (softDeletedAge.days > softDeletedMaxAge) {
+                    Preferences.setLastModified()
                     db.hardDeleteSiteEntry(it.id!!)
                     true
                 } else false
@@ -392,6 +401,7 @@ object DataModel {
     fun linkSaveGPMAndSiteEntry(siteEntry: DecryptableSiteEntry, savedGpmId: Long) {
         val gpm = _savedGPMsFlow.value.firstOrNull { it.id == savedGpmId }
         require(gpm != null) { "GPM not found by id $savedGpmId" }
+        Preferences.setLastModified()
         val siteEntryIndex =
             _siteEntryToSavedGPMFlow.value.keys.firstOrNull { it.id == siteEntry.id }
         if (siteEntryIndex == null) {
@@ -427,6 +437,7 @@ object DataModel {
             firebaseLog("Trying to add non existing GPM $savedGpmId")
             return
         }
+        Preferences.setLastModified()
         addOrUpdateSiteEntry(DecryptableSiteEntry(categoryId).apply {
             username = gpm.encryptedUsername
             password = gpm.encryptedPassword
@@ -455,6 +466,7 @@ object DataModel {
         DBHelperFactory.getDBHelper().addNewIncomingGPM(add)
         syncLoadGPMsFromDB()
         syncLoadLinkedGPMs()
+        Preferences.setLastModified()
     }
 
     private const val TAG = "DataModel"

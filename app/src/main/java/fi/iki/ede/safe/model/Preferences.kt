@@ -60,6 +60,7 @@ object Preferences {
     private const val PREFERENCE_CLIPBOARD_CLEAR_DELAY_DEFAULT_VALUE = "45"
     private const val PREFERENCE_DEFAULT_USER_NAME = "default_user_name"
     private const val PREFERENCE_GPM_IMPORT_USAGE_SHOWN = "gpm_import_usage_shown"
+    private const val PREFERENCE_LAST_MODIFIED = "last_modified"
     private const val PREFERENCE_LOCK_ON_SCREEN_LOCK = "lock_on_screen_lock"
     private const val PREFERENCE_LOCK_TIMEOUT_DEFAULT_VALUE_MINUTES = "5"
 
@@ -73,13 +74,11 @@ object Preferences {
         PREFERENCE_BACKUP_PATH_DEFAULT_VALUE
     }
 
-    fun setBackupDocument(uriString: String?) =
-        sharedPreferences.edit()
-            .putString(PREFERENCE_BACKUP_DOCUMENT, uriString)
-            .apply()
+    fun setBackupDocument(uriString: String?) = sharedPreferences.edit()
+        .putString(PREFERENCE_BACKUP_DOCUMENT, uriString)
+        .apply()
 
-    fun getDefaultUserName() =
-        sharedPreferences.getString(PREFERENCE_DEFAULT_USER_NAME, "") ?: ""
+    fun getDefaultUserName() = sharedPreferences.getString(PREFERENCE_DEFAULT_USER_NAME, "") ?: ""
 
     fun getLockOnScreenLock(default: Boolean) =
         sharedPreferences.getBoolean(PREFERENCE_LOCK_ON_SCREEN_LOCK, default)
@@ -111,15 +110,16 @@ object Preferences {
     fun getNotificationPermissionDenied() =
         sharedPreferences.getBoolean(NOTIFICATION_PERMISSION_DENIED, false)
 
-    fun getLastBackupTime() = sharedPreferences.getLong(PREFERENCE_LAST_BACKUP_TIME, 0)
-        .takeIf { it != 0L }
-        ?.let { DateUtils.unixEpochSecondsToLocalZonedDateTime(it) }
 
-    fun setLastBackupTime() = sharedPreferences.edit().putLong(
-        PREFERENCE_LAST_BACKUP_TIME, DateUtils.toUnixSeconds(
-            ZonedDateTime.now()
-        )
+    private fun storeTimestamp(key: String) = sharedPreferences.edit().putLong(
+        key, DateUtils.toUnixSeconds(ZonedDateTime.now())
     ).apply()
+
+    private fun getStoredTimestamp(key: String) = sharedPreferences.getLong(key, 0)
+        .takeIf { it != 0L }?.let { DateUtils.unixEpochSecondsToLocalZonedDateTime(it) }
+    
+    fun setLastBackupTime() = storeTimestamp(PREFERENCE_LAST_BACKUP_TIME)
+    fun getLastBackupTime() = getStoredTimestamp(PREFERENCE_LAST_BACKUP_TIME)
 
     fun getEnabledExperiments(): Set<PluginName> =
         sharedPreferences.getStringSet(PREFERENCE_EXPERIMENTAL_FEATURES, emptySet())
@@ -132,58 +132,23 @@ object Preferences {
         sharedPreferences.edit().putStringSet(PREFERENCE_EXPERIMENTAL_FEATURES, emptySet()).commit()
     }
 
-    fun autoBackupQuotaExceeded() =
-        sharedPreferences.edit().putLong(
-            PREFERENCE_AUTOBACKUP_QUOTA_EXCEEDED, DateUtils.toUnixSeconds(ZonedDateTime.now())
-        ).apply()
+    fun autoBackupQuotaExceeded() = storeTimestamp(PREFERENCE_AUTOBACKUP_QUOTA_EXCEEDED)
+    fun getAutoBackupQuotaExceeded() = getStoredTimestamp(PREFERENCE_AUTOBACKUP_QUOTA_EXCEEDED)
 
-    fun getAutoBackupQuotaExceeded() =
-        sharedPreferences.getLong(PREFERENCE_AUTOBACKUP_QUOTA_EXCEEDED, 0)
-            .takeIf { it != 0L }
-            ?.let { DateUtils.unixEpochSecondsToLocalZonedDateTime(it) }
+    fun autoBackupRestoreStarts() = storeTimestamp(PREFERENCE_AUTOBACKUP_RESTORE_STARTED)
+    fun getAutoBackupRestoreStarts() = getStoredTimestamp(PREFERENCE_AUTOBACKUP_RESTORE_STARTED)
 
-    fun autoBackupRestoreStarts() =
-        sharedPreferences.edit().putLong(
-            PREFERENCE_AUTOBACKUP_RESTORE_STARTED, DateUtils.toUnixSeconds(ZonedDateTime.now())
-        ).apply()
+    fun autoBackupStarts() = storeTimestamp(PREFERENCE_AUTOBACKUP_STARTED)
+    fun getAutoBackupStarts() = getStoredTimestamp(PREFERENCE_AUTOBACKUP_STARTED)
 
-    fun getAutoBackupRestoreStarts() =
-        sharedPreferences.getLong(PREFERENCE_AUTOBACKUP_RESTORE_STARTED, 0)
-            .takeIf { it != 0L }
-            ?.let { DateUtils.unixEpochSecondsToLocalZonedDateTime(it) }
+    fun autoBackupRestoreFinished() = storeTimestamp(PREFERENCE_AUTOBACKUP_RESTORE_FINISHED)
+    fun getAutoBackupRestoreFinished() = getStoredTimestamp(PREFERENCE_AUTOBACKUP_RESTORE_FINISHED)
 
-    fun autoBackupStarts() =
-        sharedPreferences.edit().putLong(
-            PREFERENCE_AUTOBACKUP_STARTED, DateUtils.toUnixSeconds(ZonedDateTime.now())
-        ).apply()
+    fun getSoftDeleteDays() = sharedPreferences.getInt(PREFERENCE_SOFT_DELETE_DAYS, 30)
 
-    fun getAutoBackupStarts() =
-        sharedPreferences.getLong(PREFERENCE_AUTOBACKUP_STARTED, 0)
-            .takeIf { it != 0L }
-            ?.let { DateUtils.unixEpochSecondsToLocalZonedDateTime(it) }
+    fun gpmImportUsageShown() = storeTimestamp(PREFERENCE_GPM_IMPORT_USAGE_SHOWN)
+    fun getGpmImportUsageShown() = sharedPreferences.getLong(PREFERENCE_GPM_IMPORT_USAGE_SHOWN, 0L)
 
-    fun autoBackupRestoreFinished() =
-        sharedPreferences.edit().putLong(
-            PREFERENCE_AUTOBACKUP_RESTORE_FINISHED, DateUtils.toUnixSeconds(ZonedDateTime.now())
-        ).apply()
-
-    fun getAutoBackupRestoreFinished() =
-        sharedPreferences.getLong(PREFERENCE_AUTOBACKUP_RESTORE_FINISHED, 0)
-            .takeIf { it != 0L }
-            ?.let { DateUtils.unixEpochSecondsToLocalZonedDateTime(it) }
-
-    fun getSoftDeleteDays() =
-        sharedPreferences.getInt(PREFERENCE_SOFT_DELETE_DAYS, 30)
-
-    fun gpmImportUsageShown() {
-        sharedPreferences.edit().putLong(
-            PREFERENCE_GPM_IMPORT_USAGE_SHOWN, DateUtils.toUnixSeconds(
-                ZonedDateTime.now()
-            )
-        )
-            .apply()
-    }
-
-    fun getGpmImportUsageShown() =
-        sharedPreferences.getLong(PREFERENCE_GPM_IMPORT_USAGE_SHOWN, 0L)
+    fun setLastModified() = storeTimestamp(PREFERENCE_LAST_MODIFIED)
+    fun getLastModified() = getStoredTimestamp(PREFERENCE_LAST_MODIFIED)
 }
