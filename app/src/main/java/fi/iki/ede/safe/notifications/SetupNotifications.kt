@@ -1,9 +1,7 @@
 package fi.iki.ede.safe.notifications
 
 import android.content.Context
-import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.safe.model.Preferences
-import java.time.ZonedDateTime
 
 object SetupNotifications {
     fun setup(context: Context) {
@@ -21,26 +19,14 @@ object SetupNotifications {
                 .apply { setNotification(context) }
         }
 
+        // keep nagging if there are local changes newer than backup!
         val lastBackup = Preferences.getLastBackupTime()
-        if (lastBackup != null && 5 > DateUtils.getPeriodBetweenDates(
-                ZonedDateTime.now(),
-                lastBackup
-            ).days
-        ) {
-            compareAndSetPreferenceWithCallback(
-                "notification.getLastBackupTime",
+        val lastModified = Preferences.getLastModified()
+        if (lastModified != null && lastModified > lastBackup) {
+            BackupNotification(
+                context,
                 Preferences.getLastBackupTime()?.toLocalDate().toString()
-            ) {
-                BackupNotification(context, it).apply { setNotification(context) }
-            }
-        } else if (lastBackup == null) {
-            compareAndSetPreferenceWithCallback(
-                "notification.getLastBackupTime",
-                // TODO: translate NEVER
-                "???!"
-            ) {
-                BackupNotification(context, it).apply { setNotification(context) }
-            }
+            ).apply { setNotification(context) }
         }
     }
 
