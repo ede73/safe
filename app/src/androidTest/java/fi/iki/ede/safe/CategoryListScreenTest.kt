@@ -116,7 +116,7 @@ class CategoryListScreenTest {
         )
         val categoriesEmitted = DataModel.categoriesStateFlow.value
         val wasCategoryAdded = categoriesEmitted.any { it.plainName == newCategory }
-        assert(DataModel.getCategories().find { it.plainName == newCategory } != null)
+        assert(DataModel.categoriesStateFlow.value.find { it.plainName == newCategory } != null)
         //assert(MockDBHelper.categories.find { it.plainName == newCategory } != null)
         { "Failed to find added category from the DB" }
 
@@ -151,7 +151,7 @@ class CategoryListScreenTest {
             .assertIsDisplayed()
         categoryActivityTestRule.onNodeWithTag(TestTag.CATEGORY_ROW_DELETE)
             .assertIsNotDisplayed()
-        assert(DataModel.getCategories()
+        assert(DataModel.categoriesStateFlow.value
             .find { it.plainName == DBHelper4AndroidTest.DEFAULT_1ST_CATEGORY } != null)
         { "Failed to find cancelled deleted category from the DB" }
     }
@@ -195,7 +195,7 @@ class CategoryListScreenTest {
             }
             assertTrue("The category was deleted.", categoryStillExists)
             collectionJob.cancel()
-            assert(DataModel.getCategories().find { it.plainName == newCategory } != null)
+            assert(DataModel.categoriesStateFlow.value.find { it.plainName == newCategory } != null)
             //assert(MockDBHelper.categories.find { it.plainName == newCategory } != null)
             { "Failed to find cancelled deletion-cancelled category from the DB" }
         }
@@ -244,7 +244,7 @@ class CategoryListScreenTest {
         assertFalse("The category was deleted.", categoryStillExists)
         collectionJob.cancel()
 
-        assert(DataModel.getCategories().find { it.plainName == newCategory } == null)
+        assert(DataModel.categoriesStateFlow.value.find { it.plainName == newCategory } == null)
         { "Found deleted category from the DB" }
     }
 

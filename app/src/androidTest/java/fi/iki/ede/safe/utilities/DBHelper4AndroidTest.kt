@@ -44,14 +44,13 @@ object DBHelper4AndroidTest {
         // Also handle initializing the data model
         runBlocking { DataModel.loadFromDatabase() }
 
-        assert(2 == DataModel.getCategories().size) {
-            "DataModel initialization failure"
+        assert(2 == DataModel.categoriesStateFlow.value.size) {
+            "DataModel initialization failure, <> 2 categories"
         }
-        assert(4 == DataModel.getSiteEntries().size) {
-            "DataModel initialization failure"
+        assert(4 == DataModel.siteEntriesStateFlow.value.size) {
+            "DataModel initialization failure, <> 4 site entries"
         }
     }
-
 
     fun addCategory(
         name: String,
