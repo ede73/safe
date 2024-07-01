@@ -1,5 +1,7 @@
 package fi.iki.ede.crypto
 
+import fi.iki.ede.crypto.support.toHexString
+
 /**
  * Convenience class representing encrypted cipher text with exact knowledge of the IV used
  * Typically in a backup for instance IV is prefixed to cipher and one assumes knowledge of its size
@@ -38,6 +40,9 @@ data class IVCipherText(val iv: ByteArray, val cipherText: ByteArray) {
     }
 
     override fun hashCode() = 31 * iv.contentHashCode() + cipherText.contentHashCode()
+
+    override fun toString(): String =
+        "IVCipherText(iv=${iv.toHexString()},cipherText=${cipherText.toHexString()})"
 
     companion object {
         fun getEmpty(): IVCipherText =
