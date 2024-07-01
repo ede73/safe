@@ -16,6 +16,7 @@ import fi.iki.ede.gpm.model.SavedGPM.Companion.makeFromEncryptedStringFields
 import fi.iki.ede.gpm.model.encrypt
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
+import kotlinx.coroutines.flow.MutableStateFlow
 
 typealias DBID = Long
 
@@ -206,7 +207,7 @@ class DBHelper internal constructor(
             whereEq(Category.Columns.CAT_ID, id)
         )
 
-    fun fetchAllCategoryRows(): List<DecryptableCategoryEntry> =
+    fun fetchAllCategoryRows(categoriesFlow: MutableStateFlow<List<DecryptableCategoryEntry>>? = null): List<DecryptableCategoryEntry> =
         readableDatabase.let { db ->
             db.query(
                 Category,
@@ -215,10 +216,13 @@ class DBHelper internal constructor(
                 ArrayList<DecryptableCategoryEntry>().apply {
                     it.moveToFirst()
                     (0 until it.count).forEach { _ ->
-                        add(DecryptableCategoryEntry().apply {
+                        val category = DecryptableCategoryEntry().apply {
                             id = it.getDBID(Category.Columns.CAT_ID)
                             encryptedName = it.getIVCipher(Category.Columns.NAME)
-                        })
+                        }
+                        add(category)
+                        if (categoriesFlow != null)
+                            categoriesFlow.value += category
                         it.moveToNext()
                     }
                 }.toList()
@@ -246,23 +250,27 @@ class DBHelper internal constructor(
             put(Category.Columns.NAME, entry.encryptedName)
         }, whereEq(Category.Columns.CAT_ID, id)).toLong()
 
-    fun fetchAllRows(categoryId: DBID? = null, softDeletedOnly: Boolean = false) =
-        readableDatabase.let { db ->
-            db.query(
-                SiteEntry,
-                SiteEntry.Columns.entries.toSet(),
-                if (categoryId != null) {
-                    whereEq(SiteEntry.Columns.CATEGORY_ID, categoryId)
-                } else if (softDeletedOnly) {
-                    whereNot(SiteEntry.Columns.DELETED, 0)
-                } else null,
-            ).use {
-                it.moveToFirst()
-                ArrayList<DecryptableSiteEntry>().apply {
-                    (0 until it.count).forEach { _ ->
-                        // TODO: Until we get chainable selects..filter here
-                        if (softDeletedOnly || it.getInt(it.getColumnIndexOrThrow(SiteEntry.Columns.DELETED)) == 0) {
-                            add(DecryptableSiteEntry(it.getDBID(SiteEntry.Columns.CATEGORY_ID)).apply {
+    fun fetchAllRows(
+        categoryId: DBID? = null,
+        softDeletedOnly: Boolean = false,
+        siteEntriesFlow: MutableStateFlow<List<DecryptableSiteEntry>>? = null
+    ) = readableDatabase.let { db ->
+        db.query(
+            SiteEntry,
+            SiteEntry.Columns.entries.toSet(),
+            if (categoryId != null) {
+                whereEq(SiteEntry.Columns.CATEGORY_ID, categoryId)
+            } else if (softDeletedOnly) {
+                whereNot(SiteEntry.Columns.DELETED, 0)
+            } else null,
+        ).use {
+            it.moveToFirst()
+            ArrayList<DecryptableSiteEntry>().apply {
+                (0 until it.count).forEach { _ ->
+                    // TODO: Until we get chainable selects..filter here
+                    if (softDeletedOnly || it.getInt(it.getColumnIndexOrThrow(SiteEntry.Columns.DELETED)) == 0) {
+                        val siteEntry =
+                            DecryptableSiteEntry(it.getDBID(SiteEntry.Columns.CATEGORY_ID)).apply {
                                 id = it.getDBID(SiteEntry.Columns.SITEENTRY_ID)
                                 password = it.getIVCipher(SiteEntry.Columns.PASSWORD)
                                 description = it.getIVCipher(SiteEntry.Columns.DESCRIPTION)
@@ -280,13 +288,16 @@ class DBHelper internal constructor(
                                 importExtensionsFromDB(
                                     it.getIVCipher(SiteEntry.Columns.EXTENSIONS)
                                 )
-                            })
-                        }
-                        it.moveToNext()
+                            }
+                        add(siteEntry)
+                        if (siteEntriesFlow != null)
+                            siteEntriesFlow.value += siteEntry
                     }
-                }.toList()
-            }
+                    it.moveToNext()
+                }
+            }.toList()
         }
+    }
 
     fun updateSiteEntry(entry: DecryptableSiteEntry): DBID {
         require(entry.id != null) { "Cannot update SiteEntry without ID" }
@@ -432,7 +443,10 @@ class DBHelper internal constructor(
         }
 
 
-    fun fetchSavedGPMsFromDB(where: SelectionCondition? = null): Set<SavedGPM> =
+    fun fetchSavedGPMsFromDB(
+        where: SelectionCondition? = null,
+        gpmsFlow: MutableStateFlow<Set<SavedGPM>>? = null
+    ): Set<SavedGPM> =
         readableDatabase.let { db ->
             db.query(
                 GooglePasswordManager,
@@ -442,18 +456,19 @@ class DBHelper internal constructor(
                 it.moveToFirst()
                 ArrayList<SavedGPM>().apply {
                     (0 until it.count).forEach { _ ->
-                        add(
-                            makeFromEncryptedStringFields(
-                                it.getDBID(GooglePasswordManager.Columns.ID),
-                                it.getIVCipher(GooglePasswordManager.Columns.NAME),
-                                it.getIVCipher(GooglePasswordManager.Columns.URL),
-                                it.getIVCipher(GooglePasswordManager.Columns.USERNAME),
-                                it.getIVCipher(GooglePasswordManager.Columns.PASSWORD),
-                                it.getIVCipher(GooglePasswordManager.Columns.NOTE),
-                                it.getDBID(GooglePasswordManager.Columns.STATUS) == 1L,
-                                it.getString(GooglePasswordManager.Columns.HASH),
-                            )
+                        val gpm = makeFromEncryptedStringFields(
+                            it.getDBID(GooglePasswordManager.Columns.ID),
+                            it.getIVCipher(GooglePasswordManager.Columns.NAME),
+                            it.getIVCipher(GooglePasswordManager.Columns.URL),
+                            it.getIVCipher(GooglePasswordManager.Columns.USERNAME),
+                            it.getIVCipher(GooglePasswordManager.Columns.PASSWORD),
+                            it.getIVCipher(GooglePasswordManager.Columns.NOTE),
+                            it.getDBID(GooglePasswordManager.Columns.STATUS) == 1L,
+                            it.getString(GooglePasswordManager.Columns.HASH),
                         )
+                        add(gpm)
+                        if (gpmsFlow != null)
+                            gpmsFlow.value += gpm
                         it.moveToNext()
                     }
                 }.toSet()

@@ -69,7 +69,7 @@ fun SearchSiteEntryControls(
     fun findNow(checked: Boolean) {
         matchingSiteEntries.value = emptyList()
         beginSearch(
-            DataModel.getSiteEntries(), // ugly but too many recomposes
+            DataModel.siteEntriesStateFlow.value, // ugly but too many recomposes
             matchingSiteEntries,
             searchTextField.value,
             searchWebsites.value,

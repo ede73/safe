@@ -14,6 +14,7 @@ import fi.iki.ede.safe.model.DecryptableSiteEntry
 import io.mockk.every
 import io.mockk.isMockKMock
 import io.mockk.mockkClass
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import java.time.ZonedDateTime
 
@@ -108,17 +109,32 @@ object DataModelMocks {
             firstArg()
         }
 
-        every { db.fetchAllCategoryRows() } answers { categoryTable.values.toList() }
+        every { db.fetchAllCategoryRows(any<MutableStateFlow<List<DecryptableCategoryEntry>>>()) } answers {
+            val flow = firstArg<MutableStateFlow<List<DecryptableCategoryEntry>>?>()
+            flow?.value = categoryTable.values.toList()
+            categoryTable.values.toList()
+        }
 
         // TODO: Doesn't handle soft deleted site entries
-        every { db.fetchAllRows(any<DBID>(), any<Boolean>()) } answers {
+        every {
+            db.fetchAllRows(
+                any<DBID>(),
+                any<Boolean>(),
+                any<MutableStateFlow<List<DecryptableSiteEntry>>>()
+            )
+        } answers {
+            val flow = thirdArg<MutableStateFlow<List<DecryptableSiteEntry>>?>()
             if (secondArg<Boolean>()) {
+                flow?.value = emptyList()
                 ArrayList(emptyList())
             } else if (firstArg<DBID?>() == null) {
+                flow?.value = siteEntryTable.values.toList()
                 ArrayList(siteEntryTable.values.toList())
             } else {
-                ArrayList(siteEntryTable.values.filter { it.categoryId == firstArg<DBID>() }
-                    .toList())
+                val filtered = siteEntryTable.values.filter { it.categoryId == firstArg<DBID>() }
+                    .toList()
+                flow?.value = filtered
+                ArrayList(filtered)
             }
         }
 
@@ -188,12 +204,14 @@ object DataModelMocks {
             id
         }
         // GPMs (partial TODO:)
-        every { db.fetchSavedGPMsFromDB(any()) } answers {
+        every { db.fetchSavedGPMsFromDB(any(), any<MutableStateFlow<Set<SavedGPM>>>()) } answers {
+            val flow = secondArg<MutableStateFlow<Set<SavedGPM>>?>()
+            flow?.value = gpmTable.values.flatten().toSet()
             // TODO: weak model, should filter per SiteEntry in firstArg
             gpmTable.values.flatten().toSet()
         }
         every { db.linkSaveGPMAndSiteEntry(any<DBID>(), any<DBID>()) } answers {
-            gpmTable2SiteEntryLink.put(firstArg<DBID>(), setOf(secondArg<DBID>()))
+            gpmTable2SiteEntryLink[firstArg<DBID>()] = setOf(secondArg<DBID>())
             mockkClass(SQLiteDatabase::class)
         }
 

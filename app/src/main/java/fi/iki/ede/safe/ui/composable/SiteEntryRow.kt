@@ -139,9 +139,7 @@ fun SiteEntryRow(
             })
         }
         if (displayMoveDialog) {
-            val currentCategory =
-                DataModel.getCategories().first { it.id == siteEntry.categoryId }
-            val filteredCategories = categoriesState.filter { it != currentCategory }
+            val filteredCategories = categoriesState.filterNot { it.id == siteEntry.categoryId!! }
                 .sortedBy { it.plainName.lowercase() }
 
             MoveSiteEntryDialog(filteredCategories, onConfirm = { newCategory ->

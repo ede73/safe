@@ -99,7 +99,8 @@ fun SearchSiteEntryListPreview() {
         }
         val lst = mutableListOf(site1, site2)
         val sitesFlow = MutableStateFlow(lst.toList())
-        DataModel._categories[cat] = lst
+        // TODO: No mock..
+        //DataModel._categories[cat] = lst
         SearchSiteEntryList(sitesFlow)
     }
 }

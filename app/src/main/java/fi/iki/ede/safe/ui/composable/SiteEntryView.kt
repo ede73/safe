@@ -435,7 +435,9 @@ fun SiteEntryViewPreview() {
             encryptedName = encrypter("Category".toByteArray())
         }
         val lst = mutableListOf(site1, site2)
-        DataModel._categories[cat] = lst
+
+        // TODO: NO MOCK HERE :(
+        //DataModel._categories[cat] = lst
 
         val model = EditingSiteEntryViewModel()
         model.editSiteEntry(site1)

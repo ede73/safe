@@ -11,6 +11,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -131,7 +132,7 @@ fun MatchingSiteEntry(
             }
             if (displayMoveDialog) {
                 val currentCategory = siteEntry.getCategory()
-                val filteredCategories = DataModel.getCategories().filter { it != currentCategory }
+                val filteredCategories = DataModel.categoriesStateFlow.collectAsState().value.filter { it != currentCategory }
 
                 MoveSiteEntryDialog(filteredCategories, onConfirm = { newCategory ->
                     coroutineScope.launch {

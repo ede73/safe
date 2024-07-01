@@ -29,7 +29,7 @@ class DataModelDBTest {
             DataModel.dump()
         }
 
-        TestCase.assertEquals(1, DataModel.getCategories().size)
+        TestCase.assertEquals(1, DataModel.categoriesStateFlow.value.size)
         runBlocking {
             // ADD a password..this goes to FLOW
             DataModel.addOrUpdateSiteEntry(DataModelMocks.makePwd(1, null, ks))
@@ -37,7 +37,7 @@ class DataModelDBTest {
         // Ah interesting, runBlocking isn't actually blocking that all since INSIDE the function
         // there's .launch(io thread)
         // we should wait for the emit
-        DataModel.siteEntriesSharedFlow.take(1)
-        TestCase.assertEquals(3, DataModel.getSiteEntries().size)
+        DataModel.siteEntriesStateFlow.take(1)
+        TestCase.assertEquals(3, DataModel.siteEntriesStateFlow.value.size)
     }
 }

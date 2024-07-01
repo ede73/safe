@@ -14,8 +14,7 @@ import java.io.File
 const val TAG = "MyBackupAgent"
 
 class MyBackupAgent : BackupAgentHelper() {
-
-
+    
     override fun onCreate() {
         super.onCreate()
         Preferences.initialize(this.applicationContext)

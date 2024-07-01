@@ -141,9 +141,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
 
     @Test
     fun backupTest() {
-
         mockZonedDateTimeNow(1234)
-
         val out = runBlocking { BackupDatabase.backup().toString() }
         unmockkStatic(ZonedDateTime::class)
         Log.d(TAG, out)
@@ -264,8 +262,8 @@ class BackupDatabaseAndRestoreDatabaseTest {
             DataModel.loadFromDatabase()
         }
 
-        val passwords = DataModel.getSiteEntries()
-        val categories = DataModel.getCategories()
+        val passwords = DataModel.siteEntriesStateFlow.value
+        val categories = DataModel.categoriesStateFlow.value
         assertEquals(2, categories.size)
         assertEquals(4, passwords.size)
 
@@ -334,7 +332,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
             DataModel.loadFromDatabase()
         }
 
-        val categories = DataModel.getCategories()
+        val categories = DataModel.categoriesStateFlow.value
         assertEquals(2, categories.size)
         assertEquals("encryptedcat1", categories[0].plainName)
         assertEquals(1L, categories[0].id)
@@ -353,7 +351,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         assertEquals("password", gpms.first().cachedDecryptedPassword)
         assertEquals(1L, DataModel.getLinkedGPMs(102L).first().id)
 
-        val passwords = DataModel.getSiteEntries()
+        val passwords = DataModel.siteEntriesStateFlow.value
         (1..2).forEach { f ->
             (1..2).forEach { l ->
                 val i = (f - 1) * 2 + (l - 1)

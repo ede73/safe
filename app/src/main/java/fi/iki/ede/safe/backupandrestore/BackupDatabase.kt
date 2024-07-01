@@ -39,7 +39,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
                 ).toString()
             )
 
-        for (category in DataModel.getCategories()) {
+        for (category in DataModel.categoriesStateFlow.value) {
             serializer.startTagWithIVCipherAttribute(
                 Elements.CATEGORY,
                 makePair(Attributes.CATEGORY_NAME, category.encryptedName)

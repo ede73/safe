@@ -247,7 +247,6 @@ private fun reconvertDatabase(pwd: String, completed: () -> Unit) {
 //    }
 
 //    encryptWithNewMasterKey("".toByteArray(), secretKeySpec)
-
     //val z = ks.encryptByteArray("".toByteArray(), unencryptedKey)
 
     val db = DBHelperFactory.getDBHelper()

@@ -93,7 +93,7 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
         // TODO: Adding to first category...
         // either make import category automatically or ASK user whe
         val catId =
-            DataModel.getCategories().firstOrNull { it.plainName == "Google Password Manager" }
+            DataModel.categoriesStateFlow.value.firstOrNull { it.plainName == "Google Password Manager" }
 
         suspend fun addNow(catId: DBID) {
             DataModel.addGpmAsSiteEntry(savedGPMId, categoryId = catId, onAdd = {
