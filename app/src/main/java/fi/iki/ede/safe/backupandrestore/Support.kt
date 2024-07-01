@@ -15,7 +15,7 @@ import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlSerializer
 import java.time.ZoneOffset
 
-internal fun XmlSerializer.attribute(
+internal fun XmlSerializer.encryptedAttribute(
     name: Attributes,
     encryptedValue: IVCipherText,
 ): XmlSerializer {
@@ -35,16 +35,17 @@ internal fun XmlSerializer.attribute(
 internal fun XmlSerializer.addTagAndCData(
     name: Elements,
     encryptedValue: IVCipherText,
-    attr: Pair<Attributes, String>? = null
+    plainTextAttribute: Pair<Attributes, String>? = null
 ) = startTag(name)
     .let {
-        if (attr?.first != null) {
-            it.attribute(attr.first, attr.second)
+        if (plainTextAttribute?.first != null) {
+            it.plainTextAttribute(plainTextAttribute.first, plainTextAttribute.second)
         }
         this
     }
     .let {
-        it.attribute(Attributes.IV, encryptedValue.iv.toHexString())
+        // cipher text goes to CData, IV to the attribute..
+        it.plainTextAttribute(Attributes.IV, encryptedValue.iv.toHexString())
         it.text(encryptedValue.cipherText.toHexString())
         this
     }
@@ -53,10 +54,14 @@ internal fun XmlSerializer.addTagAndCData(
 
 internal fun XmlSerializer.endTag(name: Elements) = endTag(null, name.value)
 internal fun XmlSerializer.startTag(name: Elements) = startTag(null, name.value)
-internal fun XmlSerializer.attribute(name: Attributes, value: String) =
+internal fun XmlSerializer.plainTextAttribute(name: Attributes, value: String) =
     attribute(null, name.value, value)
 
-internal fun XmlSerializer.attribute(name: Attributes, prefix: String, value: String) =
+internal fun XmlSerializer.prefixedPlainTextAttribute(
+    name: Attributes,
+    prefix: String,
+    value: String
+) =
     attribute(null, "${prefix}${name.value}", value)
 
 internal fun XmlSerializer.startTagWithIVCipherAttribute(
@@ -65,19 +70,22 @@ internal fun XmlSerializer.startTagWithIVCipherAttribute(
 ) = startTag(name)
     .let {
         if (attr?.first != null) {
-            it.attribute(attr.first, attr.second)
+            it.encryptedAttribute(attr.first, attr.second)
         }
         this
     }
 
 internal fun XmlSerializer.writeSiteEntry(siteEntry: DecryptableSiteEntry) {
     // needed for GPM mapping, won't break bank nor backwards compatibility
-    startTag(Elements.SITE_ENTRY).attribute(
+    startTag(Elements.SITE_ENTRY).plainTextAttribute(
         Attributes.SITE_ENTRY_ID,
         siteEntry.id.toString()
     ).let {
         if (siteEntry.deleted > 0) {
-            it.attribute(Attributes.SITE_ENTRY_DELETED, siteEntry.deleted.toString())
+            it.plainTextAttribute(
+                Attributes.SITE_ENTRY_DELETED,
+                siteEntry.deleted.toString()
+            )
         }
     }
     addTagAndCData(Elements.SITE_ENTRY_DESCRIPTION, siteEntry.description)
@@ -100,13 +108,13 @@ internal fun XmlSerializer.writeSiteEntry(siteEntry: DecryptableSiteEntry) {
         addTagAndCData(Elements.SITE_ENTRY_PHOTO, siteEntry.photo)
     }
 
-    // only write extensions we we REALLY have them
+    // only write extensions that REALLY have them
     if (siteEntry.extensions.values.flatten().isNotEmpty()) {
         startTag(Elements.SITE_ENTRY_EXTENSIONS)
         siteEntry.extensions.forEach { extension ->
             if (extension.value.isNotEmpty()) {
                 startTag(Elements.SITE_ENTRY_EXTENSIONS_EXTENSION)
-                    .attribute(
+                    .encryptedAttribute(
                         Attributes.SITE_ENTRY_EXTENSION_NAME,
                         extension.key.extensionName.encrypt()
                     )
@@ -167,20 +175,26 @@ internal fun XmlPullParser.maybeGetText(gotTextNode: (encryptedText: IVCipherTex
 
 internal fun XmlSerializer.writeGPMEntry(savedGPM: SavedGPM, gpmToPasswords: Set<DBID>) {
     startTag(Elements.IMPORTS_GPM_ITEM)
-        .attribute(Attributes.IMPORTS_GPM_ITEM_HASH, savedGPM.hash)
-        .attribute(Attributes.IMPORTS_GPM_ITEM_ID, savedGPM.id.toString())
-        .attribute(
+        .plainTextAttribute(Attributes.IMPORTS_GPM_ITEM_HASH, savedGPM.hash)
+        .plainTextAttribute(Attributes.IMPORTS_GPM_ITEM_ID, savedGPM.id.toString())
+        .plainTextAttribute(
             Attributes.IMPORTS_GPM_ITEM_MAP_TO_SITE_ENTRY,
             gpmToPasswords.joinToString(",")
         )
-        .attribute(Attributes.IMPORTS_GPM_ITEM_NAME, savedGPM.encryptedName)
-        .attribute(Attributes.IMPORTS_GPM_ITEM_NOTE, savedGPM.encryptedNote)
-        .attribute(Attributes.IMPORTS_GPM_ITEM_PASSWORD, savedGPM.encryptedPassword)
-        .attribute(
+        .encryptedAttribute(Attributes.IMPORTS_GPM_ITEM_NAME, savedGPM.encryptedName)
+        .encryptedAttribute(Attributes.IMPORTS_GPM_ITEM_NOTE, savedGPM.encryptedNote)
+        .encryptedAttribute(
+            Attributes.IMPORTS_GPM_ITEM_PASSWORD,
+            savedGPM.encryptedPassword
+        )
+        .plainTextAttribute(
             Attributes.IMPORTS_GPM_ITEM_STATUS,
             if (savedGPM.flaggedIgnored) "1" else "0"
         )
-        .attribute(Attributes.IMPORTS_GPM_ITEM_URL, savedGPM.encryptedUrl)
-        .attribute(Attributes.IMPORTS_GPM_ITEM_USERNAME, savedGPM.encryptedUsername)
+        .encryptedAttribute(Attributes.IMPORTS_GPM_ITEM_URL, savedGPM.encryptedUrl)
+        .encryptedAttribute(
+            Attributes.IMPORTS_GPM_ITEM_USERNAME,
+            savedGPM.encryptedUsername
+        )
     endTag(Elements.IMPORTS_GPM_ITEM)
 }

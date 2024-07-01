@@ -14,7 +14,6 @@ import fi.iki.ede.crypto.keystore.KeyManagement.generatePBKDF2AESKey
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.hexToByteArray
 import fi.iki.ede.gpm.model.SavedGPM
-import fi.iki.ede.gpm.model.decrypt
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Attributes
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Elements
@@ -73,7 +72,23 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
 
             reportProgress(null, null, "Process backup")
             val passwords =
-                parseXML(dbHelper, db, myParser, verifyUserWantForOldBackup, reportProgress)
+                parseXML(
+                    dbHelper,
+                    db,
+                    myParser,
+                    verifyUserWantForOldBackup,
+                    reportProgress,
+                    { decrypt ->
+                        println("Decrypt $decrypt")
+                        // TODO: I hate this, redesign the backup so we can restore without decrypting
+                        String(
+                            KeyStoreHelperFactory.getKeyStoreHelper()
+                                .decryptByteArray( // Keystore needed (new key)
+                                    decrypt,
+                                    decryptMasterKey(backupEncryptionKeys, userPassword)
+                                )
+                        )
+                    })
             LoginHandler.passwordLogin(context, userPassword)
             reportProgress(null, null, "Finished with backup")
             return passwords
@@ -118,6 +133,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         myParser: XmlPullParser,
         verifyOldBackupRestoration: (backupCreated: ZonedDateTime, lastBackupDone: ZonedDateTime) -> Boolean,
         reportProgress: (categories: Int?, passwords: Int?, message: String?) -> Unit,
+        backupDecrypt: (IVCipherText) -> String
     ): Int {
         val path = mutableListOf<Elements?>()
         var category: DecryptableCategoryEntry? = null
@@ -126,7 +142,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         val readGPMMapsToPasswords: MutableMap<Long, Set<Long>> = mutableMapOf()
         var passwords = 0
         var categories = 0
-        var lastExtensionName: SiteEntryExtensionType? = null
+        var lastExtensionType: SiteEntryExtensionType? = null
         while (myParser.eventType != XmlPullParser.END_DOCUMENT) {
             when (myParser.eventType) {
                 XmlPullParser.START_TAG -> {
@@ -208,7 +224,6 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             category.id = dbHelper.addCategory(category)
                             categories++
                             reportProgress(categories, null, null)
-
                         }
 
                         listOf(
@@ -328,23 +343,19 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             Elements.SITE_ENTRY_EXTENSIONS_EXTENSION,
                         ) -> {
                             require(siteEntry != null) { "Must have siteEntry" }
-                            val extensionName =
+                            val encryptedExtensionName =
                                 myParser.getEncryptedAttribute(Attributes.SITE_ENTRY_EXTENSION_NAME)
-                            if (extensionName.isNotEmpty()) {
+                            if (encryptedExtensionName.isNotEmpty()) {
                                 try {
-                                    lastExtensionName =
-                                        SiteEntryExtensionType.entries.first { it.extensionName == extensionName.decrypt() }
-                                    siteEntry.extensions[lastExtensionName] = mutableSetOf()
+                                    // TODO: uh, hate this, redesign so we can restore without decrypting!
+                                    lastExtensionType =
+                                        SiteEntryExtensionType.entries.first {
+                                            it.extensionName == backupDecrypt(
+                                                encryptedExtensionName
+                                            )
+                                        }
+                                    siteEntry.extensions[lastExtensionType] = mutableSetOf()
                                 } catch (ex: Exception) {
-                                    firebaseRecordException(
-                                        "Failed to parse extension name ($extensionName)",
-                                        ex
-                                    )
-                                    // TODO: FIX
-                                    lastExtensionName = SiteEntryExtensionType.AUTHENTICATORS
-                                    if (!siteEntry.extensions.containsKey(lastExtensionName)) {
-                                        siteEntry.extensions[lastExtensionName] = mutableSetOf()
-                                    }
                                     // silently fail, parse failure ain't critical
                                     // and no corrective measure here, passwords are more important
                                 }
@@ -360,10 +371,11 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             Elements.SITE_ENTRY_EXTENSIONS_EXTENSION_VALUE,
                         ) -> {
                             require(siteEntry != null) { "Must have siteEntry" }
-                            require(lastExtensionName != null) { "Must have lastExtensionName" }
+                            require(lastExtensionType != null) { "Must have lastExtensionName" }
                             try {
+                                // TODO: uh, hate this, redesign so we can restore without decrypting!
                                 myParser.maybeGetText {
-                                    siteEntry!!.extensions[lastExtensionName]!!.add(it.decrypt())
+                                    siteEntry!!.extensions[lastExtensionType]!!.add(backupDecrypt(it))
                                 }
                             } catch (ex: Exception) {
                                 firebaseRecordException("Failed decrypting extension value", ex)
@@ -427,7 +439,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             Elements.SITE_ENTRY_EXTENSIONS,
                             Elements.SITE_ENTRY_EXTENSIONS_EXTENSION,
                         ) -> {
-                            lastExtensionName = null
+                            lastExtensionType = null
                         }
                     }
                     // removeLast() broken on build tools 35

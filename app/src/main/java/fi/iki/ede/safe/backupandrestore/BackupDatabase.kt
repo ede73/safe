@@ -6,6 +6,7 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.toHexString
+import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Attributes
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Elements
 import fi.iki.ede.safe.db.DBHelperFactory
@@ -32,8 +33,11 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
         serializer.setOutput(xmlStringWriter)
 
         serializer.startTag(Elements.ROOT_PASSWORD_SAFE)
-            .attribute(Attributes.ROOT_PASSWORD_SAFE_VERSION, currentVersion.version)
-            .attribute(
+            .plainTextAttribute(
+                Attributes.ROOT_PASSWORD_SAFE_VERSION,
+                currentVersion.version
+            )
+            .plainTextAttribute(
                 Attributes.ROOT_PASSWORD_SAFE_CREATION_TIME, DateUtils.toUnixSeconds(
                     ZonedDateTime.now()
                 ).toString()
@@ -78,7 +82,9 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
         serializer.endTag(Elements.ROOT_PASSWORD_SAFE)
         serializer.endDocument()
         val makeThisStreaming = xmlStringWriter.toString()
-
+        if (BuildConfig.DEBUG) {
+            println(makeThisStreaming)
+        }
         if (makeThisStreaming.contains(" ")) {
             Log.e(TAG, "Oh no, XML export has non breakable spaces")
         }
