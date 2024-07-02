@@ -40,9 +40,10 @@ class DecryptableSiteEntry(categoryId: Long) {
     val plainExtensions: Map<SiteEntryExtensionType, Set<String>>
         get() = try {
             if (extensions.isEmpty()) mapOf<SiteEntryExtensionType, Set<String>>()
-            Json.decodeFromString<Map<SiteEntryExtensionType, Set<String>>>(
-                extensions.decrypt().trim()
-            )
+            else
+                Json.decodeFromString<Map<SiteEntryExtensionType, Set<String>>>(
+                    extensions.decrypt().trim()
+                )
         } catch (e: Exception) {
             firebaseRecordException("Failed to import extension", e)
             mutableMapOf()
