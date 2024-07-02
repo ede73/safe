@@ -303,7 +303,12 @@ tasks.configureEach {
 
         "assembleDebug" -> {
             // UNIT TESTS
-            dependsOn("testDebugUnitTest")
+            dependsOn(
+                "testDebugUnitTest",
+                ":app:crypto:testDebugUnitTest",
+                ":app:gpm:testDebugUnitTest",
+                ":oisaferestore:testDebugUnitTest"
+            )
             // INSTRUMENTED TESTS, takes long time
             //task.dependsOn("connectedAndroidTest")
         }
