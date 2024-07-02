@@ -72,5 +72,8 @@
         <Preference
             android:key="autobackup_restore_finished"
             android:title="@string/preferences_autobackup_restore_finished" />
+        <Preference
+            android:key="extensions_edit"
+            android:title="@string/preferences_edit_extensions" />
     </PreferenceCategory>
 </PreferenceScreen>

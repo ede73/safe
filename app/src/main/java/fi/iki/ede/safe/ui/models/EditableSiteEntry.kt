@@ -3,7 +3,6 @@ package fi.iki.ede.safe.ui.models
 import android.graphics.Bitmap
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.safe.db.DBID
-import fi.iki.ede.safe.model.SiteEntryExtensionType
 import java.time.ZonedDateTime
 
 data class EditableSiteEntry(
@@ -20,5 +19,5 @@ data class EditableSiteEntry(
     // it doesn't lessen security having it as bitmap here
     val plainPhoto: Bitmap? = null,
     val passwordChangedDate: ZonedDateTime? = null,
-    var plainExtension: Map<SiteEntryExtensionType, Set<String>> = mapOf(),
+    var plainExtension: Map<String, Set<String>> = mapOf(),
 )

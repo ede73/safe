@@ -45,7 +45,7 @@ import fi.iki.ede.safe.clipboard.ClipboardUtils
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
-import fi.iki.ede.safe.model.SiteEntryExtensionType
+import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.password.PasswordGenerator
 import fi.iki.ede.safe.splits.PluginManager
 import fi.iki.ede.safe.splits.PluginName
@@ -260,7 +260,7 @@ fun SiteEntryExtensionList(
     val allExtensions = DataModel.getAllSiteEntryExtensions()
 
     VerticalCollapsible(stringResource(id = R.string.site_entry_extension_collapsible)) {
-        SiteEntryExtensionType.entries.sortedBy { it.name }.forEach {
+        Preferences.getAllExtensions().sortedBy { it }.forEach {
             Column {
                 SiteEntryExtensionSelector(
                     viewModel,
@@ -276,25 +276,25 @@ fun SiteEntryExtensionList(
 fun SiteEntryExtensionSelector(
     viewModel: EditingSiteEntryViewModel,
     allKnownValues: Set<String>,
-    extensionType: SiteEntryExtensionType,
+    extensionType: String,
 ) {
     val entry by viewModel.editableSiteEntryState.collectAsState()
 
     fun addToMap(
-        map: Map<SiteEntryExtensionType, Set<String>>,
-        type: SiteEntryExtensionType,
+        map: Map<String, Set<String>>,
+        type: String,
         value: String
-    ): Map<SiteEntryExtensionType, Set<String>> {
+    ): Map<String, Set<String>> {
         val mutableMap = map.toMutableMap()
         mutableMap[type] = mutableMap[type]?.plus(value) ?: setOf(value)
         return mutableMap.toMap()
     }
 
     fun removeFromMap(
-        map: Map<SiteEntryExtensionType, Set<String>>,
-        type: SiteEntryExtensionType,
+        map: Map<String, Set<String>>,
+        type: String,
         value: String
-    ): Map<SiteEntryExtensionType, Set<String>> {
+    ): Map<String, Set<String>> {
         val mutableMap = map.toMutableMap()
         mutableMap[type] = mutableMap[type]?.minus(value) ?: emptySet()
         return mutableMap
@@ -317,10 +317,10 @@ fun SiteEntryExtensionSelector(
                 onCheckedChange = { checked = !checked },
                 modifier = Modifier.testTag(TestTag.SITE_ENTRY_EXTENSION_ENTRY_CHECKBOX)
             )
-            Text(text = extensionType.name)
+            Text(text = extensionType)
         }
     } else {
-        Text(text = extensionType.name)
+        Text(text = extensionType)
         EditableComboBox(
             selectedItems = entry.plainExtension[extensionType]!!.toSet(),
             allItems = allKnownEntries.toSet(),
@@ -414,8 +414,8 @@ fun SiteEntryViewPreview() {
             note = encrypter("Note".toByteArray())
             extensions = encryptExtension(
                 mapOf(
-                    SiteEntryExtensionType.PAYMENTS to setOf("Some card"),
-                    SiteEntryExtensionType.PHONE_NUMBERS to setOf("+12345678")
+                    "whatever " to setOf("Some card"),
+                    "you like" to setOf("+12345678")
                 )
             )
         }
@@ -428,9 +428,9 @@ fun SiteEntryViewPreview() {
             note = encrypter("Note".toByteArray())
             extensions = encryptExtension(
                 mapOf(
-                    SiteEntryExtensionType.PAYMENTS to setOf("Some card2"),
-                    SiteEntryExtensionType.PHONE_NUMBERS to setOf("+123456780"),
-                    SiteEntryExtensionType.EMAILS to setOf("a@b")
+                    "what" to setOf("Some card2"),
+                    "ever" to setOf("+123456780"),
+                    "goes" to setOf("a@b")
                 )
             )
         }

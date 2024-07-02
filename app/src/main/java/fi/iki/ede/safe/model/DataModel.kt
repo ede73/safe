@@ -152,6 +152,7 @@ object DataModel {
                 db.updateSiteEntry(siteEntry)
                 _siteEntriesStateFlow.updateListItemById(siteEntry, keySelector = { it.id!! })
             }
+            storeAllExtensionsToPreferences()
         }
     }
 
@@ -284,6 +285,10 @@ object DataModel {
     // contraption just for unit tests
     var softDeletedMaxAgeProvider: () -> Int = { Preferences.getSoftDeleteDays() }
 
+    private fun storeAllExtensionsToPreferences() {
+        Preferences.storeAllExtensions(getAllSiteEntryExtensions().keys)
+    }
+
     suspend fun loadFromDatabase() {
         _categoriesStateFlow.value = emptyList()
         _siteEntriesStateFlow.value = emptyList()
@@ -329,6 +334,7 @@ object DataModel {
                                 }.copy()
                             }
                         }
+                    storeAllExtensionsToPreferences()
                 }
                 val gpms = async {
                     syncLoadGPMsFromDB()
@@ -450,7 +456,7 @@ object DataModel {
     fun getLinkedGPMs(siteEntryID: DBID): Set<SavedGPM> =
         _siteEntryToSavedGPMFlow.value.filterKeys { it.id == siteEntryID }.values.flatten().toSet()
 
-    fun getAllSiteEntryExtensions(ignoreId: DBID? = null): Map<SiteEntryExtensionType, Set<String>> =
+    fun getAllSiteEntryExtensions(ignoreId: DBID? = null): Map<String, Set<String>> =
         _siteEntriesStateFlow.value.filter { it.id != ignoreId }
             .flatMap { it.plainExtensions.entries }
             .groupBy({ it.key }, { it.value })

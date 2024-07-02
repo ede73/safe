@@ -247,4 +247,11 @@ These selections will be remembered, so next time linking will be easier.</strin
     <string name="notification_google_autobackup_quota_exceeded_title">Google Automatic Backup Quota Exceeded!</string>
     <string name="notification_google_autobackup_quota_exceeded_description">Automatic backup quota exceeded %s. You can delete apps or their data from you Google Drive. You can continue making regular backups.</string>
     <string name="site_entry_extension_collapsible">Extensions</string>
+    <string name="extension_preferences_add_extension">Add Extension</string>
+    <string name="extension_preferences_add">Add</string>
+    <string name="extension_preferences_delete">Delete</string>
+    <string name="extension_preferences_cancel">Cancel</string>
+    <string name="extension_preferences_apply">Apply</string>
+    <string name="extension_preferences_rename">Rename</string>
+    <string name="preferences_edit_extensions">Edit Extensions</string>
 </resources>

@@ -5,6 +5,12 @@ import android.content.SharedPreferences
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.os.Bundle
 import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.activityViewModels
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.Preference
@@ -15,6 +21,8 @@ import com.google.firebase.crashlytics.crashlytics
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.ExportConfig
+import fi.iki.ede.safe.model.DataModel
+import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.model.Preferences.PREFERENCE_AUTOBACKUP_QUOTA_EXCEEDED
 import fi.iki.ede.safe.model.Preferences.PREFERENCE_AUTOBACKUP_RESTORE_FINISHED
@@ -27,11 +35,13 @@ import fi.iki.ede.safe.model.Preferences.getAutoBackupStarts
 import fi.iki.ede.safe.service.AutolockingService
 import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.ui.TestTag
+import fi.iki.ede.safe.ui.composable.ExtensionsEditor
 import fi.iki.ede.safe.ui.models.PluginLoaderViewModel
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseAppCompatActivity
 import fi.iki.ede.safe.ui.utilities.firebaseLog
 import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import fi.iki.ede.safe.ui.utilities.startActivityForResults
+import kotlinx.coroutines.launch
 
 
 class PreferenceActivity : AutolockingBaseAppCompatActivity() {
@@ -152,6 +162,94 @@ class PreferenceActivity : AutolockingBaseAppCompatActivity() {
                 findPreference<Preference>(prefKey)?.summary =
                     getTime()?.toLocalDateTime()?.toString()
                         ?: "N/A"
+            }
+        }
+
+        val showDialog = mutableStateOf(false)
+
+        fun combineLists(list1: List<String>, list2: List<String?>): List<Pair<String?, String?>> {
+            val maxSize = maxOf(list1.size, list2.size)
+            val extendedList1 = list1 + List(maxSize - list1.size) { null }
+            val extendedList2 = list2 + List(maxSize - list2.size) { null }
+
+            return extendedList1.zip(extendedList2)
+        }
+
+        override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+            super.onViewCreated(view, savedInstanceState)
+
+            val composeView = ComposeView(requireContext()).apply {
+                setContent {
+                    val coroutineScope = rememberCoroutineScope()
+                    if (showDialog.value) {
+                        // Collect all extensions from prod, merge with prefs
+                        val allUsedExtensionsAndOnesInPreferences =
+                            (DataModel.siteEntriesStateFlow.collectAsState().value.map {
+                                it.plainExtensions.keys
+                            }.flatten().toSet() + Preferences.getAllExtensions()).toList()
+                        ExtensionsEditor(allUsedExtensionsAndOnesInPreferences) {
+                            // we should have two lists, original and modifications
+                            // empty items represent DELETIONS
+                            // new items represent ADDITIONS
+                            // any changes should be RENAMES
+
+                            val newList = mutableListOf<String>()
+                            val editedEntries = mutableSetOf<DecryptableSiteEntry>()
+                            combineLists(
+                                allUsedExtensionsAndOnesInPreferences,
+                                it
+                            ).forEach { (old, new) ->
+                                if (old != null && new != null && old != new) {
+                                    // renamed
+                                    newList.add(new)
+                                    // scan all site entries for RENAMES
+                                    val list = DataModel.siteEntriesStateFlow.value
+                                    list.forEach { siteEntry ->
+                                        val map = siteEntry.plainExtensions.toMutableMap()
+                                        if (map.containsKey(old)) {
+                                            val values = map[old] ?: emptySet()
+                                            map[new] = values
+                                            map.remove(old)
+                                            siteEntry.extensions =
+                                                siteEntry.encryptExtension(map.toMap())
+                                            editedEntries.add(siteEntry)
+                                        }
+                                    }
+                                } else if (new == null) {
+                                    // delete
+                                    // scan all site entries and DELETE the items
+                                    val list = DataModel.siteEntriesStateFlow.value
+                                    list.forEach { siteEntry ->
+                                        val map = siteEntry.plainExtensions.toMutableMap()
+                                        if (map.containsKey(old)) {
+                                            map.remove(old)
+                                            siteEntry.extensions =
+                                                siteEntry.encryptExtension(map.toMap())
+                                            editedEntries.add(siteEntry)
+                                        }
+                                    }
+                                } else if (old == null) {
+                                    // add
+                                    newList.add(new)
+                                }
+                            }
+                            Preferences.storeAllExtensions(newList.toSet())
+                            coroutineScope.launch {
+                                editedEntries.forEach { siteEntry ->
+                                    DataModel.addOrUpdateSiteEntry(siteEntry) {}
+                                }
+                            }
+                            showDialog.value = false
+                        }
+                    }
+                }
+            }
+
+            (view as? ViewGroup)?.addView(composeView)
+
+            addPreferenceClickListener<Preference>(Preferences.PREFERENCE_EXTENSIONS_KEY) {
+                showDialog.value = true
+                true
             }
         }
 

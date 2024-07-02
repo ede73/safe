@@ -37,11 +37,11 @@ class DecryptableSiteEntry(categoryId: Long) {
     var id: Long? = null
     var note: IVCipherText = IVCipherText.getEmpty()
     var password: IVCipherText = IVCipherText.getEmpty()
-    val plainExtensions: Map<SiteEntryExtensionType, Set<String>>
+    val plainExtensions: Map<String, Set<String>>
         get() = try {
-            if (extensions.isEmpty()) mapOf<SiteEntryExtensionType, Set<String>>()
+            if (extensions.isEmpty()) mapOf<String, Set<String>>()
             else
-                Json.decodeFromString<Map<SiteEntryExtensionType, Set<String>>>(
+                Json.decodeFromString<Map<String, Set<String>>>(
                     extensions.decrypt().trim()
                 )
         } catch (e: Exception) {
@@ -102,7 +102,7 @@ class DecryptableSiteEntry(categoryId: Long) {
         passwordChangedDate: ZonedDateTime?,
         note: IVCipherText,
         photo: Bitmap?,
-        extensions: Map<SiteEntryExtensionType, Set<String>>
+        extensions: Map<String, Set<String>>
     ) = cachedPlainDescription == description &&
             plainWebsite == website &&
             plainUsername == decrypt(username) &&
@@ -113,8 +113,8 @@ class DecryptableSiteEntry(categoryId: Long) {
             !areMapsDifferent(extensions, this.plainExtensions)
 
     private fun areMapsDifferent(
-        map1: Map<SiteEntryExtensionType, Set<String>>,
-        map2: Map<SiteEntryExtensionType, Set<String>>
+        map1: Map<String, Set<String>>,
+        map2: Map<String, Set<String>>
     ): Boolean {
         // Clean maps from empty strings and empty sets
         val cleanMap1 = map1.mapValues { (_, value) -> value.filterNot { it.isBlank() }.toSet() }
@@ -155,6 +155,6 @@ class DecryptableSiteEntry(categoryId: Long) {
         "Failed decr $e"
     }
 
-    fun encryptExtension(plainExtensions: Map<SiteEntryExtensionType, Set<String>>): IVCipherText =
+    fun encryptExtension(plainExtensions: Map<String, Set<String>>): IVCipherText =
         Json.encodeToString(plainExtensions).encrypt()
 }

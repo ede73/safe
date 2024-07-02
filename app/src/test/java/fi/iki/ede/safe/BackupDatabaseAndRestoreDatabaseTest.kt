@@ -66,10 +66,14 @@ class BackupDatabaseAndRestoreDatabaseTest {
     private lateinit var dbHelper: DBHelper
 
     @Before
-    fun initializeMocks() {
+    fun before() {
         mockkObject(Firebase)
         mockkStatic(FirebaseCrashlytics::class)
         every { FirebaseCrashlytics.getInstance() } returns mockk(relaxed = true)
+
+        mockkObject(Preferences)
+        every { Preferences.storeAllExtensions(any()) } returns Unit
+        every { Preferences.getAllExtensions() } returns emptySet<String>()
 
         KeystoreHelperMock4UnitTests.mock()
         ks = KeyStoreHelperFactory.getKeyStoreHelper()
@@ -84,7 +88,8 @@ class BackupDatabaseAndRestoreDatabaseTest {
     }
 
     @After
-    fun deinitMocks() {
+    fun after() {
+        unmockkObject(Preferences)
         unmockkObject(Firebase)
         unmockkStatic(FirebaseCrashlytics::class)
         unmockkAll()
@@ -160,6 +165,8 @@ class BackupDatabaseAndRestoreDatabaseTest {
         every { Environment.getExternalStorageDirectory() } returns File("path/to/fake/directory")
 
         mockkObject(Preferences)
+        every { Preferences.storeAllExtensions(any()) } returns Unit
+        every { Preferences.getAllExtensions() } returns emptySet<String>()
         every { Preferences.getLastBackupTime() } returns unixEpochSeconds?.let {
             DateUtils.unixEpochSecondsToLocalZonedDateTime(
                 it
@@ -374,7 +381,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
                     assertEquals(
                         "[payments:visa,mastercard, phones:123-456-7890]",
                         passwords[i].plainExtensions.map { m ->
-                            m.key.extensionName + ":" + m.value.joinToString(
+                            m.key + ":" + m.value.joinToString(
                                 ","
                             )
                         }.toString()

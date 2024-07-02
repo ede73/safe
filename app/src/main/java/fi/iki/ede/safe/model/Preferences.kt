@@ -50,6 +50,7 @@ object Preferences {
     const val PREFERENCE_BIOMETRICS_ENABLED = "biometrics"
     const val PREFERENCE_BIO_CIPHER = "bio_cipher"
     const val PREFERENCE_EXPERIMENTAL_FEATURES = "experiments"
+    const val PREFERENCE_EXTENSIONS_KEY = "extensions_edit"
     const val PREFERENCE_LAST_BACKUP_TIME = "time_of_last_backup"
     const val PREFERENCE_LOCK_TIMEOUT_MINUTES = "lock_timeout"
     const val PREFERENCE_MAKE_CRASH = "make_a_crash"
@@ -117,7 +118,7 @@ object Preferences {
 
     private fun getStoredTimestamp(key: String) = sharedPreferences.getLong(key, 0)
         .takeIf { it != 0L }?.let { DateUtils.unixEpochSecondsToLocalZonedDateTime(it) }
-    
+
     fun setLastBackupTime() = storeTimestamp(PREFERENCE_LAST_BACKUP_TIME)
     fun getLastBackupTime() = getStoredTimestamp(PREFERENCE_LAST_BACKUP_TIME)
 
@@ -151,4 +152,10 @@ object Preferences {
 
     fun setLastModified() = storeTimestamp(PREFERENCE_LAST_MODIFIED)
     fun getLastModified() = getStoredTimestamp(PREFERENCE_LAST_MODIFIED)
+
+    fun getAllExtensions(): Set<String> =
+        sharedPreferences.getStringSet(PREFERENCE_EXTENSIONS_KEY, emptySet())?.toSet() ?: emptySet()
+
+    fun storeAllExtensions(extensions: Set<String>) =
+        sharedPreferences.edit().putStringSet(PREFERENCE_EXTENSIONS_KEY, extensions).apply()
 }

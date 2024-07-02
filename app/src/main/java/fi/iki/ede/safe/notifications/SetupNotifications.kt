@@ -22,7 +22,7 @@ object SetupNotifications {
         // keep nagging if there are local changes newer than backup!
         val lastBackup = Preferences.getLastBackupTime()
         val lastModified = Preferences.getLastModified()
-        if (lastModified != null && lastModified > lastBackup) {
+        if (lastBackup == null || lastModified != null && lastModified > lastBackup) {
             BackupNotification(
                 context,
                 Preferences.getLastBackupTime()?.toLocalDate().toString()
