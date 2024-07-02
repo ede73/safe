@@ -29,12 +29,15 @@ while [ -z "$boot_completed" ]; do
         sleep 5
     fi
 done
-git pull
+
+touch .failed
 [[ $(./gradlew connectedAndroidTest 2> >(sed 's,file:///,file://wsl.localhost/Ubuntu/,g' 1>&2)) ]] || {
   echo $after_pull >$REVPARSE
+  rm .failed
 }
 
 adb -s $emulator_serial emu kill
 
 wait $emulatorpid
 
+[[ -f .failed ]] && exit 10
