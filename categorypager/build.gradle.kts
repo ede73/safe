@@ -20,13 +20,14 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
-
-    // this should have been deprecated in Kotlin 2.0 but some why AndroidStudio wants it
-    kotlinOptions {
-        jvmTarget = "1.8"
+    kotlinOptions { jvmTarget = "21" }
+    kotlin { jvmToolchain(21) }
+    java {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     buildFeatures {

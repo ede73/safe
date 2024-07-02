@@ -3,10 +3,17 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.jvm)
 }
 
+//compileOptions {
+//    sourceCompatibility = JavaVersion.VERSION_21
+//    targetCompatibility = JavaVersion.VERSION_21
+//}
+//kotlinOptions { jvmTarget = JavaVersion.VERSION_21 }
+kotlin { jvmToolchain(21) }
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
+
 
 dependencies {
 //    compileOnly(libs.lint.api)
@@ -29,10 +36,6 @@ dependencies {
     }
     testImplementation(libs.lint.tests.v3000)
     testImplementation(kotlin("reflect"))
-}
-
-kotlin {
-    jvmToolchain(8) // Set Kotlin to target JVM 1.8
 }
 
 tasks {

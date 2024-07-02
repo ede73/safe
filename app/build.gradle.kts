@@ -199,11 +199,6 @@ android {
 //        }
     }
 
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-
     buildFeatures {
         compose = true
         buildConfig = true
@@ -222,10 +217,17 @@ android {
         }
     }
 
-    // this should have been deprecated in Kotlin 2.0 but some why AndroidStudio wants it
-    kotlinOptions {
-        jvmTarget = "1.8"
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
+    kotlinOptions { jvmTarget = "21" }
+    kotlin { jvmToolchain(21) }
+    java {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+
     testFixtures {
         enable = true
     }
