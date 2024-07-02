@@ -11,7 +11,6 @@ import fi.iki.ede.crypto.keystore.KeyManagement
 import fi.iki.ede.crypto.support.hexToByteArray
 import fi.iki.ede.crypto.support.toHex
 import fi.iki.ede.safe.db.DBHelper
-import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
 import io.mockk.every
@@ -78,7 +77,7 @@ class OISafeBackupRestoreDatabaseTest {
         }
         every { db.setTransactionSuccessful() } answers {}
         every { db.endTransaction() } answers { inTransaction = false }
-        every { dbHelper.fetchAllCategoryRows(DataModel._categoriesStateFlow) } answers { listOf() }
+        every { dbHelper.fetchAllCategoryRows(any()) } answers { listOf() }
 
         // this is not a real renewed key against backup password, this is fake
         val fakeAESMasterKey =
