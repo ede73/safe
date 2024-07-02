@@ -1,3 +1,4 @@
+ci() {
 REVPARSE=.last_rev_parse
 
 # Get the current commit hash
@@ -10,7 +11,7 @@ git pull
 after_pull=$(git rev-parse HEAD)
 
 [[ "$before_pull" == "$after_pull" ]] && {
-  exit 0
+  return 0
 }
 
 adb devices
@@ -40,4 +41,12 @@ adb -s $emulator_serial emu kill
 
 wait $emulatorpid
 
-[[ -f .failed ]] && exit 10
+[[ -f .failed ]] && return 10
+}
+
+[[ -f .failed ]] && {
+  echo "Sorry, there is a previous unresolved failure, fix that or remove .failed"
+  exit 10
+}
+
+while ci;do sleep 60;done
