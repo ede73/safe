@@ -2,6 +2,8 @@ package fi.iki.ede.safe
 
 import android.content.SharedPreferences
 import android.util.Log
+import androidx.camera.camera2.Camera2Config
+import androidx.camera.core.CameraXConfig
 import androidx.preference.PreferenceManager
 import com.google.android.play.core.splitcompat.SplitCompatApplication
 import com.google.firebase.Firebase
@@ -17,7 +19,7 @@ import fi.iki.ede.safe.splits.PluginName
 
 private val TAG = "SafeApplication"
 
-class SafeApplication : SplitCompatApplication(),
+class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
     SharedPreferences.OnSharedPreferenceChangeListener {
     init {
         instance = this
@@ -73,5 +75,9 @@ class SafeApplication : SplitCompatApplication(),
                 }
             }
         }
+    }
+
+    override fun getCameraXConfig(): CameraXConfig {
+        return Camera2Config.defaultConfig()
     }
 }

@@ -6,6 +6,11 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.ImageProxy
+import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Text
@@ -16,12 +21,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.content.ContextCompat
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.theme.SafeTextButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.AvertInactivityDuringLongTask
+import fi.iki.ede.safe.ui.utilities.firebaseLog
+import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 
 @Composable
 fun SafePhoto(
@@ -30,22 +39,58 @@ fun SafePhoto(
     onBitmapCaptured: (Bitmap?) -> Unit
 ) {
     val context = LocalContext.current
-    val takePictureLauncher =
-        rememberLauncherForActivityResult(contract = ActivityResultContracts.TakePicturePreview(),
-            onResult = { bitmap: Bitmap? ->
-                // User might have spent quite some time with photo permission, so try to refresh
-                inactivity.avertInactivity(context, "SafePhoto got bitmap")
-                onBitmapCaptured(bitmap)
-            })
+    val lifecycleOwner = LocalLifecycleOwner.current
     val requestPermissionLauncher =
         rememberLauncherForActivityResult(contract = ActivityResultContracts.RequestPermission(),
             onResult = { isGranted: Boolean ->
-                // User might have spent quite some time with photo permission, so try to refresh
-                inactivity.avertInactivity(context, "SafePhoto permission")
                 if (isGranted) {
-                    takePictureLauncher.launch(null)
+                    // Initialize ProcessCameraProvider
+                    val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+
+                    cameraProviderFuture.addListener({
+                        // CameraProvider is used to bind the lifecycle of cameras to the lifecycle owner
+                        val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+
+                        // Define the camera selector
+                        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+                        // User might have spent quite some time with photo permission, so try to refresh
+                        inactivity.avertInactivity(context, "SafePhoto permission")
+
+                        val imageCapture = ImageCapture.Builder()
+                            .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
+                            .setFlashMode(ImageCapture.FLASH_MODE_AUTO)
+                            .setJpegQuality(50)
+                            .build()
+
+                        // Unbind all use cases before rebinding
+                        cameraProvider.unbindAll()
+
+                        // Bind use cases to camera
+                        cameraProvider.bindToLifecycle(
+                            lifecycleOwner,
+                            cameraSelector,
+                            imageCapture
+                        )
+
+                        imageCapture.takePicture(
+                            ContextCompat.getMainExecutor(context),
+                            object : ImageCapture.OnImageCapturedCallback() {
+                                override fun onCaptureSuccess(image: ImageProxy) {
+                                    onBitmapCaptured(image.toBitmap())
+                                    image.close()
+                                }
+
+                                override fun onError(exception: ImageCaptureException) {
+                                    // Handle any errors during capture here
+                                    firebaseRecordException("Photo failed", exception)
+                                }
+                            }
+                        )
+                    }, ContextCompat.getMainExecutor(context))
                 } else {
                     // TODO: Handle permission denial
+                    firebaseLog("Photo permission not granted")
                 }
             })
 

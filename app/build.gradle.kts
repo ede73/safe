@@ -238,6 +238,11 @@ composeCompiler {
 }
 
 dependencies {
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.view)
+
     lintChecks(project(":app:SafeLinter"))
     implementation(project(":app:crypto"))
     // cant dynamically filter these out as imports would fail and making stub is too much work..
@@ -281,6 +286,9 @@ dependencies {
     androidTestImplementation(libs.androidx.uiautomator)
     androidTestImplementation(libs.mockk.agent)
     androidTestImplementation(libs.mockk.android)
+
+    // camera
+
     // Firebase testlab screenshot ability
     androidTestImplementation("com.google.firebase:testlab-instr-lib:0.2")
     // needed for val composeTestRule = createComposeRule() but not createComposeRule()<Activity>
