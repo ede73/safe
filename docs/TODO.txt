@@ -3,6 +3,8 @@ Password safe
 Looks great ! https://developer.android.com/studio/test/other-testing-tools/app-crawler
 
 In progress:
+
+Paused: not important
 - All sorts of dialogs fill the app, merge, generalize (house keeping)
     - collected all (well all that were easy to pull out..95%) under same package
 - Restore soft-deleted password WHEN no categories
@@ -19,10 +21,6 @@ TODO:
     - Visualize GPM linkage
     - Show ignored
 - Add edited-aspect to CRUD password/category. SQlite has no autom.modified, and feels too much to track that way, just bump preferences
-- Extension: convert 'hard coded' pre-selected extensions to  completely user definable (categories)
-    - bonus card etc.number
-    - or could security questions (which shouldn't exist!) Be more generic..anything..routing number,checking acct.with copy btn
-    - separate entity for security questions (treated like passwords)
 - Backup codes - messes up notes
 - username and password..often same, in some places separate ( banks!)
     - make a expandable box, where u can enter one detail (shared) or separately the both..
@@ -45,6 +43,11 @@ TODO:
 - notify of old passwords
 
 DONE:
+- replace old photo preview with proper photo
+- Extension: convert 'hard coded' pre-selected extensions to  completely user definable (categories)
+    - bonus card etc.number
+    - or could security questions (which shouldn't exist!) Be more generic..anything..routing number,checking acct.with copy btn
+    - separate entity for security questions (treated like passwords)
 - notification now nags every time you have unbacked up changes
 - linter for detecting DisallowedFunctions implicit/explicit printing
 - long name/desc + date overflows

@@ -11,8 +11,12 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,10 +24,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.theme.SafeTextButton
@@ -31,6 +38,7 @@ import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.AvertInactivityDuringLongTask
 import fi.iki.ede.safe.ui.utilities.firebaseLog
 import fi.iki.ede.safe.ui.utilities.firebaseRecordException
+import androidx.camera.core.Preview as CameraXPreview
 
 @Composable
 fun SafePhoto(
@@ -40,21 +48,33 @@ fun SafePhoto(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+    val preview = remember { CameraXPreview.Builder().build() }
+    val previewView = remember { PreviewView(context) }
+    val imageCapture = remember { ImageCapture.Builder().build() }
+    var capturePhoto by remember { mutableStateOf(false) }
+    var showPreview by remember { mutableStateOf(false) }
+
+    LaunchedEffect(preview) {
+        val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+        val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+        preview.setSurfaceProvider(previewView.surfaceProvider)
+        cameraProvider.unbindAll()
+        cameraProvider.bindToLifecycle(
+            lifecycleOwner, cameraSelector, preview, imageCapture
+        )
+    }
+
     val requestPermissionLauncher =
         rememberLauncherForActivityResult(contract = ActivityResultContracts.RequestPermission(),
             onResult = { isGranted: Boolean ->
                 if (isGranted) {
-                    // Initialize ProcessCameraProvider
-                    val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
-
                     cameraProviderFuture.addListener({
                         // CameraProvider is used to bind the lifecycle of cameras to the lifecycle owner
                         val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
-
-                        // Define the camera selector
                         val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
-                        // User might have spent quite some time with photo permission, so try to refresh
                         inactivity.avertInactivity(context, "SafePhoto permission")
 
                         val imageCapture = ImageCapture.Builder()
@@ -94,17 +114,37 @@ fun SafePhoto(
                 }
             })
 
-    var capturePhoto by remember { mutableStateOf(false) }
-
     Column {
-        Row {
-            SafeTextButton(onClick = {
-                capturePhoto = true
-            }) { Text(text = stringResource(id = R.string.password_entry_capture_photo)) }
-
-            SafeTextButton(onClick = {
-                onBitmapCaptured(null)
-            }) { Text(text = stringResource(id = R.string.password_entry_delete_photo)) }
+        if (showPreview) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                AndroidView(
+                    factory = { previewView },
+                    modifier = Modifier.fillMaxSize()
+//                        .fillMaxWidth()
+//                        .aspectRatio(4f / 3f)
+                )
+                SafeTextButton(
+                    modifier = Modifier
+                        .align(androidx.compose.ui.Alignment.TopCenter)
+                        .padding(16.dp),
+                    onClick = {
+                        capturePhoto = true
+                        showPreview = false
+                    }) { Text(text = stringResource(id = R.string.password_entry_capture_photo)) }
+            }
+        } else {
+            Row {
+                SafeTextButton(
+                    onClick = {
+                        showPreview = true
+                    }) { Text(text = stringResource(id = R.string.password_entry_capture_photo)) }
+                if (photo != null) {
+                    SafeTextButton(
+                        onClick = {
+                            onBitmapCaptured(null)
+                        }) { Text(text = stringResource(id = R.string.password_entry_delete_photo)) }
+                }
+            }
         }
         if (photo != null) {
             ZoomableImageViewer(photo)
