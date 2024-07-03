@@ -29,7 +29,6 @@ import kotlinx.coroutines.test.runTest
 import org.junit.AfterClass
 import org.junit.Before
 import org.junit.BeforeClass
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -37,7 +36,6 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private const val TAG = "AutoLogOutTest"
 
-@Ignore
 @RunWith(AndroidJUnit4::class)
 class AutoLogOutTest {
 //    @get:Rule(order = 0)
