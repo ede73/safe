@@ -1,5 +1,9 @@
-git clone /mnt/c/users/ede/src/safe
-cd safe
+#git clone /mnt/c/users/ede/src/safe
+#cd safe
+[[  $(basename $(pwd)) != "safe" ]] && {
+  echo "Need to run this on base safe folder!"
+  exit 10
+}
 cat <<EOF
 # Remember to add something along these lines to .bashrc(or your fav) (and relogin or bash -)
 # Android SDK
@@ -11,7 +15,6 @@ EOF
 cp /mnt/c/users/ede/src/safe/app/google-services.json app
 cat /mnt/c/users/ede/src/safe/local.properties | sed "s,^sdk.dir.*,sdk.dir=${ANDROID_HOME},g" >local.properties
 # sid sdk.dir to point to $ANDROID_HOME
-chmod +x gradlew
 
 cat << EOF
 # Also if you dont yet have android SDK nor java

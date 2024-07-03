@@ -4,8 +4,9 @@ have_new_commits() {
   # Get the current commit hash
   before_pull=$(cat $REVPARSE)
 
-  # Perform git pull
-  git pull
+  # Perform git pull (or rather..fetch from remote as such
+  git fetch origin
+  git reset --hard origin/main
 
   # Get the new commit hash
   after_pull=$(git rev-parse HEAD)
