@@ -1,4 +1,6 @@
 REVPARSE=.last_rev_parse
+# Trying to ensure WSL adb doesn't clash with windows one...
+export ADB_SERVER_SOCKET=tcp:localhost:6600
 
 have_new_commits() {
   # Get the current commit hash
