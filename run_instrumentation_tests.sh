@@ -27,7 +27,7 @@ ci() {
       boot_completed=$(adb -s "$emulator_serial" shell getprop sys.boot_completed 2>&1 | tr -d '\r')
       if [ "$boot_completed" != "1" ]; then
           echo "Waiting for emulator to boot..."
-          sleep 5
+          sleep 2
       fi
   done
 
