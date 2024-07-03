@@ -3,7 +3,7 @@ REVPARSE=.last_rev_parse
 export ADB_SERVER_SOCKET=tcp:localhost:6600
 
 run_adb_command() {
-  ADB_SERVER_SOCKET=tcp:localhost:6600 $*
+  ADB_SERVER_SOCKET=tcp:localhost:6600 adb -L tcp:localhost:6600 $@
 }
 
 run_adb_command start-server
