@@ -18,6 +18,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.safe.model.LoginHandler
+import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen.Companion.SITE_ENTRY_ID
@@ -32,11 +33,13 @@ import fi.iki.ede.safe.utilities.NodeHelper
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
+import io.mockk.unmockkObject
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestCoroutineDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.AfterClass
 import org.junit.Before
 import org.junit.BeforeClass
@@ -101,6 +104,8 @@ class SiteEntryViewTest : NodeHelper {
         DBHelper4AndroidTest.initializeEverything(context)
         DBHelper4AndroidTest.configureDefaultTestDataModelAndDB()
 
+        mockkObject(Preferences)
+        every { Preferences.getAllExtensions() } returns setOf("extension1", "extension2")
         val intent = Intent(context, SiteEntryEditScreen::class.java).apply {
             putExtra(SITE_ENTRY_ID, 1L)
         }
@@ -109,6 +114,11 @@ class SiteEntryViewTest : NodeHelper {
         scenario.onActivity { activity ->
             viewModel = ViewModelProvider(activity)[EditingSiteEntryViewModel::class.java]
         }
+    }
+
+    @After
+    fun after() {
+        unmockkObject(Preferences)
     }
 
     private fun goBack() {
