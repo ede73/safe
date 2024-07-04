@@ -20,3 +20,5 @@ local.properties
 /app/*/build
 /app/.idea
 /in
+.failed
+.last_rev_parse
