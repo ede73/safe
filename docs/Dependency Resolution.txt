@@ -1,0 +1,3 @@
+./gradlew dependencyInsight --dependency kotlin-reflect --configuration compileClasspath 
+./gradlew app:SafeLinter:dependencies
+./gradlew :app:dependencies --configuration debugAndroidTestRuntimeClasspath
