@@ -38,6 +38,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.google.common.util.concurrent.ListenableFuture
 import fi.iki.ede.safe.R
+import fi.iki.ede.safe.model.AllowedEvents
 import fi.iki.ede.safe.model.MainStateMachine.Companion.INITIAL
 import fi.iki.ede.safe.model.StateMachine
 import fi.iki.ede.safe.ui.theme.SafeTextButton
@@ -65,7 +66,11 @@ fun SafePhoto(
 
     Column {
         StateMachine.Create("beforePhotoPreview") {
-            StateEvent("beforePhotoPreview", INITIAL, setOf("VerifyPermissionBeforePreview")) {
+            StateEvent(
+                "beforePhotoPreview",
+                INITIAL,
+                AllowedEvents("VerifyPermissionBeforePreview")
+            ) {
                 ShowPermissionRequestButton(
                     photo,
                     onBitmapCaptured,
@@ -78,7 +83,11 @@ fun SafePhoto(
             ) {
                 TransitionTo("verifyingPermissionBeforePreview")
             }
-            StateEvent("verifyingPermissionBeforePreview", INITIAL, setOf("DidNotGetPermission")) {
+            StateEvent(
+                "verifyingPermissionBeforePreview",
+                INITIAL,
+                AllowedEvents("DidNotGetPermission")
+            ) {
                 var transitionToShowPhotoPreview by remember { mutableStateOf(false) }
                 var handleNoPermissionGranted by remember { mutableStateOf(false) }
                 if (transitionToShowPhotoPreview) {
@@ -108,7 +117,7 @@ fun SafePhoto(
                     }
                 }
             }
-            StateEvent("beforePhotoPreview", "DidNotGetPermission", setOf(INITIAL)) {
+            StateEvent("beforePhotoPreview", "DidNotGetPermission", AllowedEvents(INITIAL)) {
                 // explain to user why permission is required!
                 // TODO:
                 Log.e(TAG, "Explain to user why permission is required")
@@ -137,7 +146,7 @@ fun SafePhoto(
             StateEvent("showingPhotoPreview", "TakePhoto") {
                 TransitionTo("takingPhoto")
             }
-            StateEvent("showingTakeDeletePhoto", INITIAL, setOf("VerifyPermission")) {
+            StateEvent("showingTakeDeletePhoto", INITIAL, AllowedEvents("VerifyPermission")) {
                 ShowTakeDeletePhoto(
                     photo,
                     onBitmapCaptured,

@@ -1,5 +1,6 @@
 package fi.iki.ede.safe
 
+import fi.iki.ede.safe.model.AllowedEvents
 import fi.iki.ede.safe.model.MainStateMachine.Companion.INITIAL
 import fi.iki.ede.safe.model.StateMachine
 import io.mockk.every
@@ -15,12 +16,12 @@ import org.junit.rules.ExpectedException
 class StateMachineTest {
 
     private fun getStateMachine() = StateMachine.create("solid") {
-        stateEvent("solid", "melted", setOf("liquid")) { transitionTo("liquid") }
-        stateEvent("solid", "sublimed", setOf("gas")) { transitionTo("gas") }
-        stateEvent("liquid", "frozen", setOf("solid")) { transitionTo("solid") }
-        stateEvent("liquid", "vaporized", setOf("gas")) { transitionTo("gas") }
-        stateEvent("gas", "condensed", setOf("liquid")) { transitionTo("liquid") }
-        stateEvent("gas", "deposited", setOf("solid")) { transitionTo("solid") }
+        stateEvent("solid", "melted") { transitionTo("liquid") }
+        stateEvent("solid", "sublimed") { transitionTo("gas") }
+        stateEvent("liquid", "frozen") { transitionTo("solid") }
+        stateEvent("liquid", "vaporized") { transitionTo("gas") }
+        stateEvent("gas", "condensed") { transitionTo("liquid") }
+        stateEvent("gas", "deposited") { transitionTo("solid") }
     }
 
     @Test
@@ -52,7 +53,7 @@ class StateMachineTest {
                 transitionTo("unknown")
                 counter++
             }
-            stateEvent("unknown", "not_run_by_transition", setOf("not_run_by_transition")) {
+            stateEvent("unknown", "not_run_by_transition", AllowedEvents("not_run_by_transition")) {
                 transitionTo("solid")
                 counter++
             }
@@ -79,7 +80,7 @@ class StateMachineTest {
     @Test
     fun testBrokenStateMachine() {
         val s = StateMachine.create("solid") {
-            stateEvent("solid", "melted", setOf("nonExistentState")) {
+            stateEvent("solid", "melted", AllowedEvents("nonExistentState")) {
                 transitionTo("nonExistentState")
             }
         }

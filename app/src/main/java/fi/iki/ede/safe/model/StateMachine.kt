@@ -10,6 +10,8 @@ typealias NonComposableStateInit = StateEvent.() -> Unit
 typealias State = String
 typealias Event = String
 
+class AllowedEvents(private vararg val eventList: Event, val events: Set<Event> = eventList.toSet())
+
 private const val TAG = "StateMachine"
 
 abstract class MainStateMachine(private var currentState: State) {
@@ -47,28 +49,27 @@ abstract class MainStateMachine(private var currentState: State) {
     }
 }
 
-
 class StateMachine(currentState: State) : MainStateMachine(currentState) {
     fun StateEvent(
         state: State,
         event: Event,
-        allowedEvents: Set<Event> = emptySet<Event>(),
+        allowedEvents: AllowedEvents? = null,
         init: ComposableStateInit
     ) {
         putState(state, event, StateEvent().apply {
             composable = init
-            this.allowedEvents += allowedEvents + setOf(event)
+            this.allowedEvents += (allowedEvents?.events ?: emptySet()) + setOf(event)
         })
     }
 
     fun stateEvent(
         state: State, event: Event,
-        allowedEvents: Set<Event> = emptySet<Event>(),
+        allowedEvents: AllowedEvents? = null,
         init: NonComposableStateInit
     ) {
         putState(state, event, StateEvent().apply {
             nonComposable = init
-            this.allowedEvents += allowedEvents + setOf(event)
+            this.allowedEvents += (allowedEvents?.events ?: emptySet()) + setOf(event)
         })
     }
 
