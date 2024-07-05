@@ -12,9 +12,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExpectedException
 
-
 class StateMachineTest {
-
     private fun getStateMachine() = StateMachine.create("solid") {
         stateEvent("solid", "melted") { transitionTo("liquid") }
         stateEvent("solid", "sublimed") { transitionTo("gas") }
@@ -32,11 +30,11 @@ class StateMachineTest {
 
         val stateMachine = getStateMachine()
 
-        stateMachine.handleEvent("sublimed")
+        stateMachine.injectEvent("sublimed")
         assertEquals("gas", state.captured)
         verify(exactly = 1) { anyConstructed<StateMachine.StateEvent>().transitionTo(any()) }
 
-        stateMachine.handleEvent("deposited")
+        stateMachine.injectEvent("deposited")
         assertEquals("solid", state.captured)
         verify(exactly = 2) { anyConstructed<StateMachine.StateEvent>().transitionTo(any()) }
     }
@@ -63,7 +61,7 @@ class StateMachineTest {
         assertEquals(2, counter)
 
         // states with named events need specifically run via events
-        stateMachine.handleEvent("not_run_by_transition")
+        stateMachine.injectEvent("not_run_by_transition")
         assertEquals(5, counter)
     }
 
@@ -74,15 +72,53 @@ class StateMachineTest {
     @Test
     fun testInvalidState() {
         thrown.expect(IllegalStateException::class.java)
-        getStateMachine().handleEvent("non_existent")
+        getStateMachine().injectEvent("non_existent")
     }
 
     @Test
     fun testBrokenStateMachine() {
+        thrown.expect(IllegalStateException::class.java)
         val s = StateMachine.create("solid") {
-            stateEvent("solid", "melted", AllowedEvents("nonExistentState")) {
+            stateEvent("solid", "melted") {
                 transitionTo("nonExistentState")
             }
         }
+        s.injectEvent("melted")
+    }
+
+    @Test
+    fun testNonAllowedUnknownEventMachine() {
+        thrown.expect(IllegalStateException::class.java)
+        val s = StateMachine.create("solid") {
+            stateEvent("solid", "melted") {
+                dispatchEvent("unknown")
+            }
+        }
+        s.injectEvent("melted")
+    }
+
+    @Test
+    fun testNonAllowedKnownEventMachine() {
+        thrown.expect(IllegalStateException::class.java)
+        val s = StateMachine.create("solid") {
+            stateEvent("solid", "melted") {
+                dispatchEvent("unknown")
+            }
+            stateEvent("solid", "unknown") {
+            }
+        }
+        s.injectEvent("melted")
+    }
+
+    @Test
+    fun testAllowedKnownEventMachine() {
+        val s = StateMachine.create("solid") {
+            stateEvent("solid", "melted", AllowedEvents("unknown")) {
+                dispatchEvent("unknown")
+            }
+            stateEvent("solid", "unknown") {
+            }
+        }
+        s.injectEvent("melted")
     }
 }

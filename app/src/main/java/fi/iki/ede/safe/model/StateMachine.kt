@@ -17,17 +17,6 @@ private const val TAG = "StateMachine"
 abstract class MainStateMachine(private var currentState: State) {
     internal val states = mutableMapOf<State, MutableMap<Event, StateEvent>>()
 
-    private fun getEventIfAllowed(event: Event): StateEvent {
-        val e = states[currentState]!![event]
-            ?: throw IllegalStateException("Event $event not found in state $currentState")
-        if (event !in e.allowedEvents)
-            throw IllegalStateException("Event $event is not allowed in state $currentState")
-        return e
-    }
-
-    internal fun _handleEvent(event: Event): StateEvent =
-        getEventIfAllowed(event).also { Log.w(TAG, "Handling event $event in $currentState") }
-
     internal fun putState(
         state: State,
         event: Event,
@@ -36,12 +25,59 @@ abstract class MainStateMachine(private var currentState: State) {
         states.getOrPut(state) { mutableMapOf() }[event] = stateEvent
     }
 
+    private fun getEventOrThrow(event: Event): StateEvent = states[currentState]!![event]
+        ?: throw IllegalStateException("Event $event not found in state $currentState")
+
+    internal fun _injectEvent(event: Event): StateEvent =
+        getEventOrThrow(event).also { Log.w(TAG, "Handling event $event in $currentState") }
+
+    fun dumpStateMachine(currentEventName: Event) = states.map { (stateName, events) ->
+        "State(${if (currentState == stateName) "*" else ""}${stateName})\n" +
+                events.map { (eventName, events) ->
+                    "\twhen handling event (${if (currentEventName == eventName) "*" else ""}${eventName})" +
+                            events.allowedDispatchEvents.map {
+                                "($it)"
+                            }.joinToString(",").let { dispatchEventList ->
+                                if (dispatchEventList.isEmpty()) "" else ", can dispatch: $dispatchEventList"
+                            }
+                }.joinToString("\n")
+    }.joinToString("\n")
+
     open inner class MainStateEvent {
-        internal val allowedEvents = mutableSetOf<Event>()
+        internal val allowedDispatchEvents = mutableSetOf<Event>()
+        var name: Event = ""
+
+        private fun getEventIfAllowed(event: Event): StateEvent {
+            Log.e(TAG, dumpStateMachine(name))
+            println(dumpStateMachine(name))
+
+            val e = states[currentState]!![event]
+                ?: throw IllegalStateException("Event ($event) not found in state/event ($currentState/$name")
+            if (event !in allowedDispatchEvents)
+                throw IllegalStateException(
+                    "Event ($event) is not allowed in state/event ($currentState/$name) (${
+                        allowedDispatchEvents.joinToString(
+                            ","
+                        )
+                    })"
+                )
+            return e
+        }
+
+        internal fun _dispatchEvent(event: Event): StateEvent =
+            getEventIfAllowed(event).also {
+                Log.w(
+                    TAG,
+                    "Handling event $event in $currentState/$name"
+                )
+            }
 
         internal fun _transitionTo(state: State): StateMachine.StateEvent? =
             state.also { Log.w(TAG, "State from $currentState to $state") }
-                .let { currentState = it; states[it]!![INITIAL] }
+                .let {
+                    if (it !in states.keys) throw IllegalStateException("No such state as $it")
+                    currentState = it; states[it]!![INITIAL]
+                }
     }
 
     companion object {
@@ -53,35 +89,41 @@ class StateMachine(currentState: State) : MainStateMachine(currentState) {
     fun StateEvent(
         state: State,
         event: Event,
-        allowedEvents: AllowedEvents? = null,
+        allowedDispatchEvents: AllowedEvents? = null,
         init: ComposableStateInit
     ) {
         putState(state, event, StateEvent().apply {
             composable = init
-            this.allowedEvents += (allowedEvents?.events ?: emptySet()) + setOf(event)
+            name = event
+            this.allowedDispatchEvents += (allowedDispatchEvents?.events ?: emptySet())
         })
     }
 
     fun stateEvent(
         state: State, event: Event,
-        allowedEvents: AllowedEvents? = null,
+        allowedDispatchEvents: AllowedEvents? = null,
         init: NonComposableStateInit
     ) {
         putState(state, event, StateEvent().apply {
             nonComposable = init
-            this.allowedEvents += (allowedEvents?.events ?: emptySet()) + setOf(event)
+            name = event
+            this.allowedDispatchEvents += (allowedDispatchEvents?.events ?: emptySet())
         })
     }
 
     @Composable
-    fun HandleEvent(event: Event) = _handleEvent(event).run { composable!!.invoke(this) }
-    fun handleEvent(event: Event) = _handleEvent(event).run { nonComposable!!.invoke(this) }
+    fun InjectEvent(event: Event) = _injectEvent(event).run { composable!!.invoke(this) }
+    fun injectEvent(event: Event) = _injectEvent(event).run { nonComposable!!.invoke(this) }
 
     inner class StateEvent : MainStateMachine.MainStateEvent() {
         val state: StateMachine
             get() = this@StateMachine
         var composable: (@Composable StateEvent.() -> Unit)? = null
         var nonComposable: (StateEvent.() -> Unit)? = null
+
+        @Composable
+        fun DispatchEvent(event: Event) = _dispatchEvent(event).run { composable!!.invoke(this) }
+        fun dispatchEvent(event: Event) = _dispatchEvent(event).run { nonComposable!!.invoke(this) }
 
         /**
          * State transition, currently always goes to the default state

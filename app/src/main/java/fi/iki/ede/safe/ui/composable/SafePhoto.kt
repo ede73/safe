@@ -74,7 +74,7 @@ fun SafePhoto(
                 ShowPermissionRequestButton(
                     photo,
                     onBitmapCaptured,
-                    this.state
+                    this
                 )
             }
             StateEvent(
@@ -93,7 +93,7 @@ fun SafePhoto(
                 if (transitionToShowPhotoPreview) {
                     TransitionTo("showingPhotoPreview")
                 } else if (handleNoPermissionGranted) {
-                    HandleEvent("DidNotGetPermission")
+                    DispatchEvent("DidNotGetPermission")
                 } else {
                     if (hasPhotoPermission()) {
                         TransitionTo("showingPhotoPreview")
@@ -121,7 +121,7 @@ fun SafePhoto(
                 // explain to user why permission is required!
                 // TODO:
                 Log.e(TAG, "Explain to user why permission is required")
-                HandleEvent(INITIAL)
+                DispatchEvent(INITIAL)
             }
             StateEvent(
                 "showingPhotoPreview",
@@ -150,7 +150,7 @@ fun SafePhoto(
                 ShowTakeDeletePhoto(
                     photo,
                     onBitmapCaptured,
-                    this.state
+                    this
                 )
             }
             StateEvent(
@@ -170,11 +170,11 @@ fun SafePhoto(
 private fun ShowPermissionRequestButton(
     photo: Bitmap?,
     onBitmapCaptured: (Bitmap?) -> Unit,
-    state: StateMachine
+    state: StateMachine.StateEvent
 ) {
     var askPermission by remember { mutableStateOf(false) }
     if (askPermission) {
-        state.HandleEvent("VerifyPermissionBeforePreview")
+        state.DispatchEvent("VerifyPermissionBeforePreview")
     } else {
         Row {
             SafeTextButton(onClick = {
@@ -240,11 +240,11 @@ private fun ShowPhotoPreview(
 private fun ShowTakeDeletePhoto(
     photo: Bitmap?,
     onBitmapCaptured: (Bitmap?) -> Unit,
-    state: StateMachine
+    state: StateMachine.StateEvent
 ) {
     var takePhoto by remember { mutableStateOf(false) }
     if (takePhoto) {
-        state.HandleEvent("VerifyPermission")
+        state.DispatchEvent("VerifyPermission")
     } else {
         Row {
             SafeTextButton(onClick = {
