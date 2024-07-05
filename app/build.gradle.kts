@@ -280,17 +280,19 @@ dependencies {
     testImplementation(testFixtures(project(":app:crypto")))
     testImplementation(project(":app"))
 
-    androidTestImplementation(libs.androidx.junit.ktx)
-    androidTestImplementation(libs.androidx.rules)
-    androidTestImplementation(libs.androidx.runner)
-    androidTestImplementation(libs.androidx.uiautomator)
+    //androidTestImplementation(libs.androidx.test.junit.ktx)
+    androidTestImplementation(libs.androidx.test.rules)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.uiautomator)
     androidTestImplementation(libs.mockk.agent)
     androidTestImplementation(libs.mockk.android)
-
+    androidTestRuntimeOnly("org.jetbrains.kotlin:kotlin-stdlib:2.0.0")
+    androidTestImplementation("androidx.test:monitor:1.7.1")
     // camera
 
     // Firebase testlab screenshot ability
-    androidTestImplementation("com.google.firebase:testlab-instr-lib:0.2")
+    //androidTestImplementation("com.google.firebase:testlab-instr-lib:0.2")
     // needed for val composeTestRule = createComposeRule() but not createComposeRule()<Activity>
     debugImplementation(libs.androidx.ui.test.manifest)
     debugImplementation(libs.androidx.ui.tooling)
@@ -298,7 +300,8 @@ dependencies {
     //androidTestImplementation("androidx.compose.ui:ui-test-junit4:$compose_version")
     implementation(kotlin("reflect"))
     testFixturesImplementation(libs.kotlin.stdlib)
-    debugImplementation(libs.androidx.runner) // fixed 1.6.1 test runner problem
+    debugRuntimeOnly(libs.androidx.test.runner)
+    debugImplementation(libs.androidx.test.runner) // fixed 1.6.1 test runner problem
 }
 
 tasks.configureEach {
@@ -378,5 +381,11 @@ tasks.register("unlockEmulator") {
 tasks.withType<Test> {
     testLogging {
         //showStandardStreams = true
+    }
+}
+
+configurations.all {
+    resolutionStrategy {
+        force("androidx.test:core:1.6.1")
     }
 }

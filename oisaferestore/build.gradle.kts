@@ -58,7 +58,7 @@ dependencies {
     testImplementation(project(":app:crypto"))
 
     //androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.androidx.junit.ktx)
+    androidTestImplementation(libs.androidx.test.junit.ktx)
 }
 
 tasks.withType<Test> {

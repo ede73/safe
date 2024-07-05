@@ -1,3 +1,5 @@
 ./gradlew dependencyInsight --dependency kotlin-reflect --configuration compileClasspath 
 ./gradlew app:SafeLinter:dependencies
 ./gradlew :app:dependencies --configuration debugAndroidTestRuntimeClasspath
+./gradlew :app:dependencyInsight --configuration debugAndroidTestRuntimeClasspath --dependency
+ androidx.test:core --scan

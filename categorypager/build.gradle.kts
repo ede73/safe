@@ -52,7 +52,6 @@ android {
 dependencies {
     implementation(project(":app"))
     implementation(project(":app:crypto"))
-
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
@@ -65,14 +64,17 @@ dependencies {
 
     testImplementation(libs.junit)
 
-    androidTestImplementation(libs.androidx.junit.ktx)
-    androidTestImplementation(libs.androidx.rules)
-    androidTestImplementation(libs.androidx.runner)
-    androidTestImplementation(libs.androidx.uiautomator)
+    androidTestImplementation(libs.androidx.test.junit.ktx)
+    androidTestImplementation(libs.androidx.test.rules)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.uiautomator)
     androidTestImplementation(libs.mockk.agent)
     androidTestImplementation(libs.mockk.android)
 
     debugImplementation(libs.androidx.ui.test.manifest)
     debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.runner) // fixed 1.6.1 test runner problem
+    debugImplementation(libs.androidx.test.runner) // fixed 1.6.1 test runner problem
+    debugImplementation(libs.androidx.test.core) // fixed 1.6.1 test runner problem
+    debugImplementation(libs.androidx.test.rules) // fixed 1.6.1 test runner problem
 }
