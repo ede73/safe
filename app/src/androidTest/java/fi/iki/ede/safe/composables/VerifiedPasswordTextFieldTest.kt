@@ -31,7 +31,7 @@ import org.junit.runner.RunWith
  * - zoom TODO:
  */
 @RunWith(AndroidJUnit4::class)
-class VerifiedSiteEntryTextFieldTest {
+class VerifiedPasswordTextFieldTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
