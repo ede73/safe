@@ -6,33 +6,77 @@ import fi.iki.ede.safe.model.StateMachine.StateEvent
 
 typealias ComposableStateInit = @Composable StateEvent.() -> Unit
 typealias NonComposableStateInit = StateEvent.() -> Unit
+
 typealias State = String
 typealias Event = String
 
 private const val TAG = "StateMachine"
 
-class StateMachine(private var currentState: String) {
-    private val states = mutableMapOf<State, MutableMap<Event, StateEvent>>()
+abstract class MainStateMachine(private var currentState: State) {
+    internal val states = mutableMapOf<State, MutableMap<Event, StateEvent>>()
 
-    fun StateEvent(state: State, event: Event, init: ComposableStateInit) {
-        states.getOrPut(state) { mutableMapOf() }[event] = StateEvent().apply { composable = init }
+    private fun getEventIfAllowed(event: Event): StateEvent {
+        val e = states[currentState]!![event]
+            ?: throw IllegalStateException("Event $event not found in state $currentState")
+        if (event !in e.allowedEvents)
+            throw IllegalStateException("Event $event is not allowed in state $currentState")
+        return e
     }
 
-    fun stateEvent(state: State, event: Event, init: NonComposableStateInit) {
-        states.getOrPut(state) { mutableMapOf() }[event] =
-            StateEvent().apply { nonComposable = init }
+    internal fun _handleEvent(event: Event): StateEvent =
+        getEventIfAllowed(event).also { Log.w(TAG, "Handling event $event in $currentState") }
+
+    internal fun putState(
+        state: State,
+        event: Event,
+        stateEvent: StateEvent
+    ) {
+        states.getOrPut(state) { mutableMapOf() }[event] = stateEvent
     }
 
+    open inner class MainStateEvent {
+        internal val allowedEvents = mutableSetOf<Event>()
+
+        internal fun _transitionTo(state: State): StateMachine.StateEvent? =
+            state.also { Log.w(TAG, "State from $currentState to $state") }
+                .let { currentState = it; states[it]!![INITIAL] }
+    }
+
+    companion object {
+        const val INITIAL = ""
+    }
+}
+
+
+class StateMachine(currentState: State) : MainStateMachine(currentState) {
+    fun StateEvent(
+        state: State,
+        event: Event,
+        allowedEvents: Set<Event> = emptySet<Event>(),
+        init: ComposableStateInit
+    ) {
+        putState(state, event, StateEvent().apply {
+            composable = init
+            this.allowedEvents += allowedEvents + setOf(event)
+        })
+    }
+
+    fun stateEvent(
+        state: State, event: Event,
+        allowedEvents: Set<Event> = emptySet<Event>(),
+        init: NonComposableStateInit
+    ) {
+        putState(state, event, StateEvent().apply {
+            nonComposable = init
+            this.allowedEvents += allowedEvents + setOf(event)
+        })
+    }
 
     @Composable
     fun HandleEvent(event: Event) = _handleEvent(event).run { composable!!.invoke(this) }
     fun handleEvent(event: Event) = _handleEvent(event).run { nonComposable!!.invoke(this) }
 
-    private fun _handleEvent(event: Event): StateEvent =
-        states[currentState]!![event].also { Log.w(TAG, "Handling event $event in $currentState") }
-            ?: throw IllegalStateException("Event $event not declared in current state$currentState")
-
-    inner class StateEvent {
+    inner class StateEvent : MainStateMachine.MainStateEvent() {
         val state: StateMachine
             get() = this@StateMachine
         var composable: (@Composable StateEvent.() -> Unit)? = null
@@ -46,22 +90,16 @@ class StateMachine(private var currentState: String) {
         @Composable
         fun TransitionTo(state: State) = _transitionTo(state)?.run { composable?.invoke(this) }
         fun transitionTo(state: State) = _transitionTo(state)?.run { nonComposable?.invoke(this) }
-
-        private fun _transitionTo(state: State): StateMachine.StateEvent? =
-            state.also { Log.w(TAG, "State from $currentState to $state") }
-                .let { currentState = it; states[it]!![INITIAL] }
     }
 
     companion object {
-        const val INITIAL = ""
-
         @Composable
         fun Create(initialState: State, init: StateMachine.() -> Unit): StateMachine =
             StateMachine(initialState).apply(init).also {
                 it.states[initialState]!!.get(INITIAL)?.run { composable?.invoke(this) }
             }
 
-        fun create(initialState: String, init: StateMachine.() -> Unit): StateMachine =
+        fun create(initialState: State, init: StateMachine.() -> Unit): StateMachine =
             StateMachine(initialState).apply(init).also {
                 it.states[initialState]!!.get(INITIAL)?.run { nonComposable?.invoke(this) }
             }
