@@ -74,4 +74,5 @@ dependencies {
 
     debugImplementation(libs.androidx.ui.test.manifest)
     debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.runner) // fixed 1.6.1 test runner problem
 }

@@ -20,20 +20,14 @@ powerAssert {
     functions = listOf("kotlin.assert", "kotlin.test.assertTrue")
 }
 
-// constant problems with androidx.test.runner (or rules, but usualy runner) being pulled
-// by other libraries is old ancient conflicting version!
-subprojects {
-    dependencies {
-        configurations.all {
-            exclude(group = "androidx.test", module = "runner")
-        }
-    }
-}
-
-//configurations.all {
-//    resolutionStrategy.eachDependency {
+configurations.all {
+    resolutionStrategy.eachDependency {
+//        println("requested.group=${requested.group}")
+//        if (requested.id.namespace == "androidx.test") {
+//            useVersion("1.6.1")
+//        }
 //        if (requested.group == "androidx.test" && requested.name == "runner") {
 //            useVersion("1.6.1")
 //        }
-//    }
-//}
+    }
+}
