@@ -47,6 +47,7 @@ class PasswordTextFieldAsNoteTest : NodeHelper {
                         .testTag(TestTag.PASSWORD_COMPOSABLE_IN_TESTS),
                     inputValue = "line1\nline2",
                     onValueChange = { },
+                    enableZoom = false,
                     singleLine = false,
                     maxLines = 22,
                     highlight = false,

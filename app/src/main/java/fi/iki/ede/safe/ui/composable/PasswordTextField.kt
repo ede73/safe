@@ -72,7 +72,7 @@ fun PasswordTextField(
     TextField(
         value = password,
         onValueChange = {
-            password = splitPassword(isPasswordZoomed.value, it, splitAt)
+            password = if (isPasswordZoomed.value) splitPassword(it, splitAt) else it
 
             if (false) {
                 // kinda works if you type slow
@@ -83,7 +83,7 @@ fun PasswordTextField(
                 // we know EXACTLY where we are instead of automation below...
 
                 val backwards = password.text.length >= it.text.length
-                val newValue = splitPassword(isPasswordZoomed.value, it, splitAt)
+                val newValue = splitPassword(it, splitAt)
                 if (!backwards && isLinefeedLeft(newValue)) {
                     val s = newValue.selection.start + 1
                     password = TextFieldValue(
@@ -94,7 +94,8 @@ fun PasswordTextField(
                     password = newValue
                 }
             }
-            onValueChange(Password(joinPassword(password).text.toByteArray()))
+            val joined = if (isPasswordZoomed.value) joinPassword(password) else password
+            onValueChange(Password(joined.text.toByteArray()))
         },
         label = { Text(stringResource(id = textTip)) },
         visualTransformation = showOrObfuscatePassword(
@@ -107,7 +108,8 @@ fun PasswordTextField(
             if (enableZoom)
                 IconButton(onClick = {
                     isPasswordZoomed.value = !isPasswordZoomed.value
-                    password = splitPassword(isPasswordZoomed.value, password, splitAt)
+                    password =
+                        if (isPasswordZoomed.value) splitPassword(password, splitAt) else password
                 }) {
                     Icon(
                         imageVector = if (isPasswordZoomed.value) Icons.Filled.Search else Icons.Filled.SearchOff,
@@ -124,7 +126,6 @@ fun PasswordTextField(
         textStyle = if (isPasswordZoomed.value) safeTheme.customFonts.zoomedPassword
         else textStyle ?: safeTheme.customFonts.regularPassword,
         modifier = modifier
-            //.semantics { contentDescription = "salasanan textfield" }
             .testTag(TestTag.PASSWORD_TEXT_FIELD)
 //        modifier = modifier.let {
 //            if (isExpanded.value) modifier
@@ -151,9 +152,8 @@ private fun ShowOrHidePassword(revealPassword: MutableState<Boolean>) =
         )
     }
 
-private fun splitPassword(isPasswordZoomed: Boolean, password: TextFieldValue, size: Int = 6) =
-    if (!isPasswordZoomed) password else
-        password.copy(text = joinPassword(password).text.chunked(size).joinToString("\n"))
+private fun splitPassword(password: TextFieldValue, size: Int = 6) =
+    password.copy(text = joinPassword(password).text.chunked(size).joinToString("\n"))
 
 private fun joinPassword(password: TextFieldValue) =
     password.copy(text = password.text.filter { it != '\n' })

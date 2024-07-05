@@ -5,7 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onChild
+import androidx.compose.ui.test.onChildAt
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -39,6 +39,7 @@ class PasswordTextFieldTest : NodeHelper {
             Column {
                 PasswordTextField(
                     textTip = R.string.login_password_tip,
+                    enableZoom = true,
                     modifier = Modifier.testTag(TestTag.PASSWORD_COMPOSABLE_IN_TESTS)
                 )
             }
@@ -65,7 +66,7 @@ class PasswordTextFieldTest : NodeHelper {
         composeTestRule.onNodeWithTag(
             TestTag.PASSWORD_COMPOSABLE_IN_TESTS,
             useUnmergedTree = false
-        ).onChild().performClick()
+        ).onChildAt(1).performClick()
         composeTestRule.onNodeWithTag(TestTag.PASSWORD_COMPOSABLE_IN_TESTS)
             .assertTextContains(passwordText)
     }
