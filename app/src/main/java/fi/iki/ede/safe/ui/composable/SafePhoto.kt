@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
-import androidx.activity.compose.ManagedActivityResultLauncher
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -21,9 +21,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -36,11 +38,15 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.google.common.util.concurrent.ListenableFuture
 import fi.iki.ede.safe.R
+import fi.iki.ede.safe.model.StateMachine
+import fi.iki.ede.safe.model.StateMachine.Companion.INITIAL
 import fi.iki.ede.safe.ui.theme.SafeTextButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.AvertInactivityDuringLongTask
 import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import androidx.camera.core.Preview as CameraXPreview
+
+private const val TAG = "SafePhoto"
 
 @Composable
 fun SafePhoto(
@@ -50,54 +56,91 @@ fun SafePhoto(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
-    val preview = remember { CameraXPreview.Builder().build() }
-    val previewView = remember { PreviewView(context) }
-    val imageCapture = remember { ImageCapture.Builder().build() }
-    val showPreview = remember { mutableStateOf(false) }
-    val hasPhotoPermission = remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.CAMERA
-            ) == PackageManager.PERMISSION_GRANTED
-        )
-    }
 
-    if (hasPhotoPermission.value &&
+    fun hasPhotoPermission(): Boolean =
         ContextCompat.checkSelfPermission(
-            context, Manifest.permission.CAMERA
-        ) != PackageManager.PERMISSION_GRANTED
-    ) {
-        hasPhotoPermission.value = false
-    }
-
-    val requestPermissionLauncher =
-        rememberLauncherForActivityResult(contract = ActivityResultContracts.RequestPermission(),
-            onResult = { isGranted: Boolean ->
-                hasPhotoPermission.value = isGranted
-            })
+            context,
+            Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
 
     Column {
-        if (hasPhotoPermission.value && showPreview.value) {
-            ShowPhotoPreview(
-                context,
-                lifecycleOwner,
-                cameraProviderFuture,
-                preview,
-                imageCapture,
-                previewView,
-                showPreview,
-                onBitmapCaptured
-            )
-        } else {
-            ShowTakeDeletePhoto(
-                requestPermissionLauncher,
-                hasPhotoPermission,
-                showPreview,
-                photo,
-                onBitmapCaptured
-            )
+        StateMachine.Create("beforePhotoPreview") {
+            StateEvent("beforePhotoPreview", INITIAL) {
+                ShowPermissionRequestButton(
+                    photo,
+                    onBitmapCaptured,
+                    this.state
+                )
+            }
+            StateEvent("beforePhotoPreview", "VerifyPermissionBeforePreview") {
+                TransitionTo("verifyingPermissionBeforePreview")
+            }
+            StateEvent("verifyingPermissionBeforePreview", INITIAL) {
+                var transitionToShowPhotoPreview by remember { mutableStateOf(false) }
+                var handleNoPermissionGranted by remember { mutableStateOf(false) }
+                if (transitionToShowPhotoPreview) {
+                    TransitionTo("showingPhotoPreview")
+                } else if (handleNoPermissionGranted) {
+                    HandleEvent("DidNotGetPermission")
+                } else {
+                    if (hasPhotoPermission()) {
+                        TransitionTo("showingPhotoPreview")
+                    } else {
+                        val requestPermissionLauncher =
+                            rememberLauncherForActivityResult(contract = ActivityResultContracts.RequestPermission(),
+                                onResult = { isGranted: Boolean ->
+                                    if (isGranted) {
+                                        transitionToShowPhotoPreview = true
+                                    } else {
+                                        handleNoPermissionGranted = true
+                                    }
+                                })
+                        LaunchedEffect(Unit) {
+                            try {
+                                requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+                            } catch (e: Exception) {
+                                firebaseRecordException("failed to request permission", e)
+                            }
+                        }
+                    }
+                }
+            }
+            StateEvent("beforePhotoPreview", "DidNotGetPermission") {
+                // explain to user why permission is required!
+                // TODO:
+                Log.e(TAG, "Explain to user why permission is required")
+                HandleEvent("")
+            }
+            StateEvent("showingPhotoPreview", INITIAL) {
+                var tookThePicture by remember { mutableStateOf(false) }
+                var failedTakingThePicture by remember { mutableStateOf(false) }
+                if (tookThePicture) {
+                    TransitionTo("showingTakeDeletePhoto")
+                } else if (failedTakingThePicture) {
+                    TransitionTo("beforePhotoPreview")
+                } else {
+                    ShowPhotoPreview(
+                        context,
+                        lifecycleOwner,
+                        onBitmapCaptured,
+                        pictureSuccess = { tookThePicture = true },
+                        pictureFailure = { failedTakingThePicture = true }
+                    )
+                }
+            }
+            StateEvent("showingPhotoPreview", "TakePhoto") {
+                TransitionTo("takingPhoto")
+            }
+            StateEvent("showingTakeDeletePhoto", INITIAL) {
+                ShowTakeDeletePhoto(
+                    photo,
+                    onBitmapCaptured,
+                    this.state
+                )
+            }
+            StateEvent("showingTakeDeletePhoto", "VerifyPermission") {
+                TransitionTo("verifyingPermissionBeforePreview")
+            }
         }
         if (photo != null) {
             ZoomableImageViewer(photo)
@@ -106,30 +149,24 @@ fun SafePhoto(
 }
 
 @Composable
-private fun ShowTakeDeletePhoto(
-    requestPermissionLauncher: ManagedActivityResultLauncher<String, Boolean>,
-    havePhotoPermission: MutableState<Boolean>,
-    showPreview: MutableState<Boolean>,
+private fun ShowPermissionRequestButton(
     photo: Bitmap?,
-    onBitmapCaptured: (Bitmap?) -> Unit
+    onBitmapCaptured: (Bitmap?) -> Unit,
+    state: StateMachine
 ) {
-    Row {
-        if (!havePhotoPermission.value) {
-            SafeTextButton(
-                onClick = {
-                    requestPermissionLauncher.launch(Manifest.permission.CAMERA)
-                }) { Text(text = stringResource(id = R.string.password_entry_capture_photo)) }
-        } else {
-            SafeTextButton(
-                onClick = {
-                    showPreview.value = true
-                }) { Text(text = stringResource(id = R.string.password_entry_capture_photo)) }
-        }
-        if (photo != null) {
-            SafeTextButton(
-                onClick = {
+    var askPermission by remember { mutableStateOf(false) }
+    if (askPermission) {
+        state.HandleEvent("VerifyPermissionBeforePreview")
+    } else {
+        Row {
+            SafeTextButton(onClick = {
+                askPermission = true
+            }) { Text(text = stringResource(id = R.string.password_entry_capture_photo)) }
+            if (photo != null) {
+                SafeTextButton(onClick = {
                     onBitmapCaptured(null)
                 }) { Text(text = stringResource(id = R.string.password_entry_delete_photo)) }
+            }
         }
     }
 }
@@ -138,13 +175,15 @@ private fun ShowTakeDeletePhoto(
 private fun ShowPhotoPreview(
     context: Context,
     lifecycleOwner: LifecycleOwner,
-    cameraProviderFuture: ListenableFuture<ProcessCameraProvider>,
-    preview: androidx.camera.core.Preview,
-    imageCapture: ImageCapture,
-    previewView: PreviewView,
-    showPreview: MutableState<Boolean>,
-    onBitmapCaptured: (Bitmap?) -> Unit
+    onBitmapCaptured: (Bitmap?) -> Unit,
+    pictureSuccess: () -> Unit,
+    pictureFailure: () -> Unit
 ) {
+    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+    val preview = remember { CameraXPreview.Builder().build() }
+    val previewView = remember { PreviewView(context) }
+    val imageCapture = remember { ImageCapture.Builder().build() }
+
     cameraProviderFuture.get().let { cameraProvider ->
         val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
         preview.setSurfaceProvider(previewView.surfaceProvider)
@@ -169,13 +208,36 @@ private fun ShowPhotoPreview(
                         context,
                         lifecycleOwner,
                         cameraProviderFuture,
-                        onBitmapCaptured
+                        onBitmapCaptured,
+                        pictureSuccess,
+                        pictureFailure
                     ),
                     ContextCompat.getMainExecutor(context)
                 )
-
-                showPreview.value = false
             }) { Text(text = stringResource(id = R.string.password_entry_capture_photo)) }
+    }
+}
+
+@Composable
+private fun ShowTakeDeletePhoto(
+    photo: Bitmap?,
+    onBitmapCaptured: (Bitmap?) -> Unit,
+    state: StateMachine
+) {
+    var takePhoto by remember { mutableStateOf(false) }
+    if (takePhoto) {
+        state.HandleEvent("VerifyPermission")
+    } else {
+        Row {
+            SafeTextButton(onClick = {
+                takePhoto = true
+            }) { Text(text = stringResource(id = R.string.password_entry_capture_photo)) }
+            if (photo != null) {
+                SafeTextButton(onClick = {
+                    onBitmapCaptured(null)
+                }) { Text(text = stringResource(id = R.string.password_entry_delete_photo)) }
+            }
+        }
     }
 }
 
@@ -183,7 +245,9 @@ private fun takePhoto(
     context: Context,
     lifecycleOwner: LifecycleOwner,
     cameraProviderFuture: ListenableFuture<ProcessCameraProvider>,
-    onBitmapCaptured: (Bitmap?) -> Unit
+    onBitmapCaptured: (Bitmap?) -> Unit,
+    pictureSuccess: () -> Unit,
+    pictureFailure: () -> Unit
 ): Runnable {
     return Runnable {
         // CameraProvider is used to bind the lifecycle of cameras to the lifecycle owner
@@ -212,11 +276,13 @@ private fun takePhoto(
                 override fun onCaptureSuccess(image: ImageProxy) {
                     onBitmapCaptured(image.toBitmap())
                     image.close()
+                    pictureSuccess()
                 }
 
                 override fun onError(exception: ImageCaptureException) {
                     // Handle any errors during capture here
                     firebaseRecordException("Photo failed", exception)
+                    pictureFailure()
                 }
             }
         )
