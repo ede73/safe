@@ -77,7 +77,8 @@ abstract class MainStateMachine(private var currentState: State) {
             state.also { Log.w(TAG, "State from $currentState to $state") }
                 .let {
                     if (it !in states.keys) throw IllegalStateException("No such state as $it")
-                    currentState = it; states[it]!![INITIAL]
+                    currentState = it
+                    states[it]!![INITIAL]
                 }
     }
 
