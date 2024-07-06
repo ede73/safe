@@ -8,8 +8,10 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.MotionEvent
 import androidx.activity.ComponentActivity
+import androidx.annotation.Discouraged
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.clipboard.ClipboardUtils
 import fi.iki.ede.safe.model.LoginHandler
@@ -23,7 +25,10 @@ import fi.iki.ede.safe.ui.activities.LoginScreen
 // like browsing google drive/taking a photo/lingering in permission dialog
 // TODO: Make a proper inactivity pause/resume
 interface AvertInactivityDuringLongTask {
+    @Discouraged("Use pause/ResumeInactivity instead")
     fun avertInactivity(context: Context, why: String)
+    fun pauseInactivity(context: Context, why: String)
+    fun resumeInactivity(context: Context, why: String)
 }
 
 interface ScreenOffLocker : AvertInactivityDuringLongTask {
@@ -40,7 +45,24 @@ interface ScreenOffLocker : AvertInactivityDuringLongTask {
     // used during long tasks - to keep timer from going off
     // not perfect, just resets, doesn't actually pause(and resume)
     override fun avertInactivity(context: Context, why: String) {
-        restartInactivityTimer(context, why)
+        if (BuildConfig.DEBUG) {
+            Log.w(TAG, "Try to restart inactivity timer because $why")
+        }
+        AutolockingService.sendRestartTimer(context)
+    }
+
+    override fun pauseInactivity(context: Context, why: String) {
+        if (BuildConfig.DEBUG) {
+            Log.w(TAG, "Pause inactivity timer because $why")
+        }
+        AutolockingService.sendPauseTimer(context)
+    }
+
+    override fun resumeInactivity(context: Context, why: String) {
+        if (BuildConfig.DEBUG) {
+            Log.w(TAG, "Resume inactivity timer because $why")
+        }
+        AutolockingService.sendResumeTimer(context)
     }
 
     private fun checkScreenOff(context: Context, intent: Intent) {
@@ -55,13 +77,6 @@ interface ScreenOffLocker : AvertInactivityDuringLongTask {
                 IntentManager.startLoginScreen(context, openCategoryScreenAfterLogin = false)
             }
         }
-    }
-
-    fun restartInactivityTimer(context: Context, why: String) {
-        if (BuildConfig.DEBUG) {
-            //Log.w(TAG, "Restart inactivity timer because $why")
-        }
-        AutolockingService.sendRestartTimer(context)
     }
 
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
@@ -100,12 +115,12 @@ interface ScreenOffLocker : AvertInactivityDuringLongTask {
 
     fun maybeRestartInactivityOnTouch(context: Context, event: MotionEvent) {
         if (event.action == MotionEvent.ACTION_DOWN) {
-            restartInactivityTimer(context, "Touch down")
+            avertInactivity(context, "Touch down")
         }
     }
 
     fun Activity.doOnCreate(why: String) {
-        restartInactivityTimer(this, why)
+        avertInactivity(this, why)
     }
 
     fun Activity.doOnResume() {
@@ -156,7 +171,6 @@ open class AutolockingBaseComponentActivity : ComponentActivity(), ScreenOffLock
     override fun dispatchTouchEvent(event: MotionEvent): Boolean =
         super.dispatchTouchEvent(doOnDispatchTouchEvent(event))
 
-
     companion object {
         fun lockTheApplication(context: Context) {
             // Clear the clipboard, if it contains the last password used
@@ -164,13 +178,6 @@ open class AutolockingBaseComponentActivity : ComponentActivity(), ScreenOffLock
             // Basically sign out
             LoginHandler.logout()
             context.stopService(Intent(context, AutolockingService::class.java))
-            // TODO:
-            //context.stopService(Intent(context, AutoLockService::class.java))
-            // Can't start from service,
-            //LoginScreen.startMe(context)
-            // Now the problem though is if activity is OPEN
-            // it's onResume (nor anything) will be called, so there's no way to
-            // navigate out...
         }
     }
 }

@@ -9,19 +9,24 @@ import android.content.IntentFilter
 import android.os.Build
 import android.os.CountDownTimer
 import android.os.IBinder
+import android.util.Log
 import androidx.annotation.RequiresApi
+import fi.iki.ede.crypto.BuildConfig
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.notifications.AutoLockNotification
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity.Companion.lockTheApplication
 import java.time.Duration
+import java.util.concurrent.atomic.AtomicBoolean
 
+private const val TAG = "AutolockingService"
 
 // TODO: BUG: (minor) If you change the lockout time in prefs, it updates only after app restart
 class AutolockingService : Service() {
     private var autoLockCountdownNotifier: CountDownTimer? = null
     private lateinit var mIntentReceiver: BroadcastReceiver
     private lateinit var autoLockNotification: AutoLockNotification
+    private val paused: AtomicBoolean = AtomicBoolean(false)
 
     override fun onBind(intent: Intent): IBinder? {
         return null
@@ -38,6 +43,8 @@ class AutolockingService : Service() {
                     }
 
                     ACTION_RESTART_TIMER -> restartTimer()
+                    ACTION_PAUSE_TIMER -> pauseTimer()
+                    ACTION_RESUME_TIMER -> resumeTimer()
                 }
             }
         }
@@ -70,7 +77,20 @@ class AutolockingService : Service() {
         if (!LoginHandler.isLoggedIn()) {
             autoLockNotification.clearNotification()
             autoLockCountdownNotifier?.cancel()
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "Inactivity timer pause reset - no longer logger in")
+            }
+            paused.set(false)
             return
+        }
+        if (paused.get()) {
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, "Inactivity timer paused, wont restart")
+            }
+            return
+        }
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "Restart inactivity timer")
         }
         autoLockCountdownNotifier?.cancel()
         autoLockCountdownNotifier = null
@@ -116,27 +136,27 @@ class AutolockingService : Service() {
         launchLoginScreen(this)
     }
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    private fun newRegisterReceiver() {
-        registerReceiver(
-            mIntentReceiver,
-            IntentFilter(ACTION_RESTART_TIMER).let {
-                it.addAction(Intent.ACTION_SCREEN_OFF)
-                it
-            }, RECEIVER_NOT_EXPORTED
-        )
+    private fun getBCastIntentFilter() = IntentFilter(ACTION_RESTART_TIMER).let {
+        it.addAction(Intent.ACTION_SCREEN_OFF)
+        it.addAction(ACTION_PAUSE_TIMER)
+        it.addAction(ACTION_RESUME_TIMER)
+        it
     }
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun newRegisterReceiver() = registerReceiver(
+        mIntentReceiver,
+        getBCastIntentFilter(),
+        RECEIVER_NOT_EXPORTED
+    )
+
+
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
-    private fun oldRegisterReceiver() {
-        registerReceiver(
-            mIntentReceiver,
-            IntentFilter(ACTION_RESTART_TIMER).let {
-                it.addAction(Intent.ACTION_SCREEN_OFF)
-                it
-            }
-        )
-    }
+    private fun oldRegisterReceiver() = registerReceiver(
+        mIntentReceiver,
+        getBCastIntentFilter(),
+    )
+
 
     /**
      * Restart the CountDownTimer()
@@ -147,14 +167,43 @@ class AutolockingService : Service() {
         initializeAutolockCountdownTimer()
     }
 
+    private fun pauseTimer() {
+        // must be started with startTimer first.
+        paused.set(true)
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "Pause inactivity timer")
+        }
+        autoLockCountdownNotifier?.cancel()
+    }
+
+    private fun resumeTimer() {
+        paused.set(false)
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, "Resume inactivity timer")
+        }
+        restartTimer()
+    }
+
     companion object {
-        fun sendRestartTimer(context: Context) {
+        fun sendRestartTimer(context: Context) =
             context.sendBroadcast(Intent(ACTION_RESTART_TIMER).apply {
                 setPackage(context.packageName)
             })
-        }
+
+        fun sendPauseTimer(context: Context) =
+            context.sendBroadcast(Intent(ACTION_PAUSE_TIMER).apply {
+                setPackage(context.packageName)
+            })
+
+        fun sendResumeTimer(context: Context) =
+            context.sendBroadcast(Intent(ACTION_RESUME_TIMER).apply {
+                setPackage(context.packageName)
+            })
+
 
         private const val ACTION_RESTART_TIMER = "fi.iki.ede.action.RESTART_TIMER"
+        private const val ACTION_PAUSE_TIMER = "fi.iki.ede.action.PAUSE_TIMER"
+        private const val ACTION_RESUME_TIMER = "fi.iki.ede.action.RESUME_TIMER"
 
         // Service cannot start activities on modern android, so to solve the lock -> login screen
         // transition problem, we'll send launch login screen intent that will be listened

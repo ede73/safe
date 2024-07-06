@@ -71,6 +71,7 @@ fun SafePhoto(
                 INITIAL,
                 AllowedEvents("VerifyPermissionBeforePreview")
             ) {
+                inactivity.resumeInactivity(context, "Before photo preview")
                 ShowPermissionRequestButton(
                     photo,
                     onBitmapCaptured,
@@ -127,6 +128,7 @@ fun SafePhoto(
                 "showingPhotoPreview",
                 INITIAL,
             ) {
+                inactivity.pauseInactivity(context, "Showing preview")
                 var tookThePicture by remember { mutableStateOf(false) }
                 var failedTakingThePicture by remember { mutableStateOf(false) }
                 if (tookThePicture) {
@@ -143,10 +145,8 @@ fun SafePhoto(
                     )
                 }
             }
-            StateEvent("showingPhotoPreview", "TakePhoto") {
-                TransitionTo("takingPhoto")
-            }
             StateEvent("showingTakeDeletePhoto", INITIAL, AllowedEvents("VerifyPermission")) {
+                inactivity.resumeInactivity(context, "Photo taken")
                 ShowTakeDeletePhoto(
                     photo,
                     onBitmapCaptured,
@@ -313,6 +313,14 @@ fun SafePhotoPreview() {
     val mockInactivity = object : AvertInactivityDuringLongTask {
         override fun avertInactivity(context: Context, why: String) {
             // Mock implementation
+        }
+
+        override fun pauseInactivity(context: Context, why: String) {
+            TODO("Not yet implemented")
+        }
+
+        override fun resumeInactivity(context: Context, why: String) {
+            TODO("Not yet implemented")
         }
     }
 
