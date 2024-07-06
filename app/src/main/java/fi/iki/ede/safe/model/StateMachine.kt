@@ -2,6 +2,7 @@ package fi.iki.ede.safe.model
 
 import android.util.Log
 import androidx.compose.runtime.Composable
+import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.model.StateMachine.StateEvent
 
 typealias ComposableStateInit = @Composable StateEvent.() -> Unit
@@ -48,9 +49,9 @@ abstract class MainStateMachine(private var currentState: State) {
         var name: Event = ""
 
         private fun getEventIfAllowed(event: Event): StateEvent {
-            Log.e(TAG, dumpStateMachine(name))
-            println(dumpStateMachine(name))
-
+            if (BuildConfig.DEBUG) {
+                Log.d(TAG, dumpStateMachine(name))
+            }
             val e = states[currentState]!![event]
                 ?: throw IllegalStateException("Event ($event) not found in state/event ($currentState/$name")
             if (event !in allowedDispatchEvents)
