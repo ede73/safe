@@ -1,5 +1,6 @@
 package fi.iki.ede.safe.ui.composable
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.HorizontalDivider
@@ -25,7 +26,9 @@ import kotlinx.coroutines.job
 @Composable
 fun VerifiedPasswordTextField(
     showVerification: Boolean,
+    @StringRes
     textTip: Int,
+    @StringRes
     verifyPassword: Int,
     modifier: Modifier = Modifier,
     onMatchingPasswords: (Password) -> Unit = {},

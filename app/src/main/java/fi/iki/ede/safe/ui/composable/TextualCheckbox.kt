@@ -1,5 +1,6 @@
 package fi.iki.ede.safe.ui.composable
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Text
@@ -17,6 +18,7 @@ import fi.iki.ede.safe.ui.theme.SafeTheme
 @Composable
 fun TextualCheckbox(
     initiallyChecked: MutableState<Boolean>,
+    @StringRes
     textResourceId: Int,
     modifier: Modifier = Modifier,
     checkedChanged: (Boolean) -> Unit,

@@ -1,5 +1,6 @@
 package fi.iki.ede.safe.ui.composable
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -45,6 +46,7 @@ private const val TAG = "PasswordTextField"
 
 @Composable
 fun PasswordTextField(
+    @StringRes
     textTip: Int,
     modifier: Modifier = Modifier,
     inputValue: String = "",

@@ -1,5 +1,6 @@
 package fi.iki.ede.safe.ui.composable
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Text
@@ -27,6 +28,7 @@ import kotlinx.coroutines.job
 @Composable
 fun AddOrEditCategory(
     categoryName: String,
+    @StringRes
     textId: Int,
     onSubmit: (text: String) -> Unit
 ) {
