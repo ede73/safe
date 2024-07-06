@@ -34,3 +34,9 @@ configurations.all {
 //        force("androidx.test:core:1.6.1")
 //    }
 }
+
+subprojects {
+    tasks.withType<Test> {
+        jvmArgs("-XX:+EnableDynamicAgentLoading")
+    }
+}
