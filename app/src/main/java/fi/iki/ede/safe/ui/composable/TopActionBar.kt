@@ -273,6 +273,7 @@ private fun MakeDropdownMenu(
             DropdownMenuItem(text = { Text(text = stringResource(id = R.string.action_bar_restore)) },
                 onClick = {
                     try {
+                        // TODO: Move outta here, so we can pause the time for duration of file selection
                         displayMenu.value = false
                         selectRestoreDocumentLauncher.launch(
                             ExportConfig.getOpenDocumentIntent()
