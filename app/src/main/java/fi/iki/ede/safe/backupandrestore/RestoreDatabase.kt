@@ -18,6 +18,7 @@ import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Attributes
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Elements
 import fi.iki.ede.safe.db.DBHelper
+import fi.iki.ede.safe.db.DBID
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.model.LoginHandler
@@ -126,6 +127,8 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         var category: DecryptableCategoryEntry? = null
         var siteEntry: DecryptableSiteEntry? = null
         val deletedSiteEntriesToRestore = mutableSetOf<DecryptableSiteEntry>()
+        val gpmLinkedToDeletedSiteEntries = mutableMapOf<DBID, MutableSet<DBID>>()
+        val categoryIDs = mutableSetOf<DBID>()
         var readGPM: SavedGPM? = null
         val readGPMMapsToPasswords: MutableMap<Long, Set<Long>> = mutableMapOf()
         var passwords = 0
@@ -209,6 +212,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             category.encryptedName =
                                 myParser.getEncryptedAttribute(Attributes.CATEGORY_NAME)
                             category.id = dbHelper.addCategory(category)
+                            categoryIDs.add(category.id!!)
                             categories++
                             reportProgress(categories, null, null)
                         }
@@ -344,13 +348,40 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                     when (path) {
                         listOf(Elements.ROOT_PASSWORD_SAFE) -> {
                             if (readGPMMapsToPasswords.isNotEmpty()) {
-                                readGPMMapsToPasswords.forEach { (gpmid, passwords) ->
-                                    passwords.forEach { password ->
-                                        dbHelper.linkSaveGPMAndSiteEntry(password, gpmid)
+                                readGPMMapsToPasswords.forEach { (gpmId, passwords) ->
+                                    passwords.forEach { passwordId ->
+                                        if (passwordId in deletedSiteEntriesToRestore.map { it.id }) {
+                                            // this GPM is linked to a deleted site entry!
+                                            // we don't know the ID yet!
+                                            gpmLinkedToDeletedSiteEntries.getOrPut(gpmId) { mutableSetOf() }
+                                                .add(passwordId)
+                                        } else {
+                                            dbHelper.linkSaveGPMAndSiteEntry(passwordId, gpmId)
+                                        }
                                     }
                                 }
                                 readGPMMapsToPasswords.clear()
                             }
+                            deletedSiteEntriesToRestore.forEach { deletedSiteEntry ->
+                                try {
+                                    // Deleted password always belong to category (in the back up file)
+                                    // since they are contained in the category element
+                                    val oldId = deletedSiteEntry.id!!
+                                    deletedSiteEntry.id = null
+                                    val newId = dbHelper.addSiteEntry(deletedSiteEntry)
+                                    gpmLinkedToDeletedSiteEntries.forEach { gpmId, deletedSiteEntryIds ->
+                                        if (oldId in deletedSiteEntryIds) {
+                                            dbHelper.linkSaveGPMAndSiteEntry(newId, gpmId)
+                                        }
+                                    }
+                                } catch (ex: Exception) {
+                                    firebaseRecordException(
+                                        "Failed to store deleted site entry",
+                                        ex
+                                    )
+                                }
+                            }
+
                             // All should be finished now
                             db.setTransactionSuccessful()
                             db.endTransaction()
@@ -373,11 +404,6 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                 // due to potential ID conflicts, we'll gotta do it after
                                 // all live site entries have been restored
                                 // (and just assign next available ID)
-                                // TODO: make test case!
-                                //<item ID="396" deleted="1720051497812">
-                                //<item ID="396" deleted="1720051497812">
-                                //<item ID="396">
-                                siteEntry.id = null
                                 deletedSiteEntriesToRestore.add(siteEntry)
                             } else {
                                 dbHelper.addSiteEntry(siteEntry)
@@ -392,6 +418,9 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             Elements.IMPORTS_GPM_ITEM
                         ) -> {
                             require(readGPM != null) { "Must have GPM entry" }
+                            // if GPM is linked to a deleted site entry,
+                            // we don't know yet the ID, since link is done in affiliation table
+                            // the code resilience code is in linkSaveGPMAndSiteEntry above
                             dbHelper.addSavedGPM(readGPM)
                             readGPM = null
                         }
@@ -401,14 +430,6 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                 }
             }
             myParser.next()
-        }
-        deletedSiteEntriesToRestore.forEach { deletedSiteEntry ->
-            // TODO: Add a test case what happens if category is missing!
-            try {
-                dbHelper.addSiteEntry(deletedSiteEntry)
-            } catch (ex: Exception) {
-                firebaseRecordException("Failed to store deleted site entry", ex)
-            }
         }
         // sorry linter, you are mistaken, ain't 0 all the time
         return passwords

@@ -86,7 +86,9 @@ object DataModelMocks {
                 if (firstArg<DecryptableSiteEntry>().id != null) firstArg<DecryptableSiteEntry>().id!!
                 else if (siteEntryTable.keys.isEmpty()) 1
                 else siteEntryTable.keys.max() + 1
-            siteEntryTable[id] = firstArg()
+            val se = firstArg<DecryptableSiteEntry>()
+            se.id = id
+            siteEntryTable[id] = se
             id
         }
 
@@ -99,7 +101,9 @@ object DataModelMocks {
 
         every { db.addCategory(any<DecryptableCategoryEntry>()) } answers {
             val id: DBID = if (categoryTable.keys.isEmpty()) 1 else categoryTable.keys.max() + 1
-            categoryTable[id] = firstArg()
+            val c = firstArg<DecryptableCategoryEntry>()
+            c.id = id
+            categoryTable[id] = c
             id
         }
 
@@ -199,8 +203,9 @@ object DataModelMocks {
                 if (firstArg<SavedGPM>().id != null) firstArg<SavedGPM>().id!!
                 else if (gpmTable.keys.isEmpty()) 1
                 else gpmTable.keys.max() + 1
-            // TODO: allows saving just one per site-entry unlike real model!
-            gpmTable[id] = setOf(firstArg<SavedGPM>())
+            val s = firstArg<SavedGPM>()
+            gpmTable[id] =
+                gpmTable.getOrPut(id) { mutableSetOf() }.toMutableSet() + s.copy(id = id)
             id
         }
         // GPMs (partial TODO:)
@@ -211,7 +216,10 @@ object DataModelMocks {
             gpmTable.values.flatten().toSet()
         }
         every { db.linkSaveGPMAndSiteEntry(any<DBID>(), any<DBID>()) } answers {
-            gpmTable2SiteEntryLink[firstArg<DBID>()] = setOf(secondArg<DBID>())
+            val seid = firstArg<DBID>()
+            val gpmId = secondArg<DBID>()
+            gpmTable2SiteEntryLink[seid] =
+                gpmTable2SiteEntryLink.getOrDefault(seid, emptySet()).toMutableSet() + gpmId
             mockkClass(SQLiteDatabase::class)
         }
 

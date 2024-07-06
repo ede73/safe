@@ -335,10 +335,33 @@ class BackupDatabaseAndRestoreDatabaseTest {
         ) { thisBackupCreationTime, lastBackupDone ->
             throw Exception("We should not ask user anything, valid backup!")
         }
+
         runBlocking {
             DataModel.loadFromDatabase()
         }
 
+        println(
+            "Categories: ${
+                DataModel.categoriesStateFlow.value.map { it.id }.joinToString(",")
+            }"
+        )
+        println(
+            "SiteEntries: ${
+                DataModel.siteEntriesStateFlow.value.map { it.id }.joinToString(",")
+            }"
+        )
+        println(
+            "GPMs: ${
+                DataModel.savedGPMsFlow.value.map { it.id }.joinToString(",")
+            }"
+        )
+        println("GPM linked to SiteEntry:" + DataModel.siteEntryToSavedGPMStateFlow.value.entries.joinToString { (key, value) ->
+            "Key: $key, Values: ${
+                value.joinToString(
+                    ", "
+                )
+            }"
+        })
         val categories = DataModel.categoriesStateFlow.value
         assertEquals(2, categories.size)
         assertEquals("encryptedcat1", categories[0].plainName)
@@ -347,7 +370,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         assertEquals(2L, categories[1].id)
 
         val gpms = DataModel.savedGPMsFlow.value
-        assertEquals(1, gpms.size)
+        assertEquals(2, gpms.size)
         assertEquals("hash", gpms.first().hash)
         assertEquals(1L, gpms.first().id)
         assertEquals(false, gpms.first().flaggedIgnored)
@@ -356,42 +379,44 @@ class BackupDatabaseAndRestoreDatabaseTest {
         assertEquals("name", gpms.first().cachedDecryptedName)
         assertEquals("note", gpms.first().cachedDecryptedNote)
         assertEquals("password", gpms.first().cachedDecryptedPassword)
-        assertEquals(1L, DataModel.getLinkedGPMs(102L).first().id)
+        assertEquals(2L, DataModel.getLinkedGPMs(202L).first().id)
 
         val passwords = DataModel.siteEntriesStateFlow.value
-        (1..2).forEach { f ->
-            (1..2).forEach { l ->
-                val i = (f - 1) * 2 + (l - 1)
-                if (i == 0) {
-                    assertEquals(fakeChangedDateTime, passwords[i].passwordChangedDate)
-                } else {
-                    assertEquals(null, passwords[i].passwordChangedDate)
-                }
-                assertEquals(f.toLong(), passwords[i].categoryId)
-                assertEquals((f * 100 + l).toLong(), passwords[i].id)
-                assertEquals("enc_desc$f$l", passwords[i].cachedPlainDescription)
-                assertEquals("enc_web$f$l", passwords[i].plainWebsite)
-                assertEquals("enc_user$f$l", passwords[i].plainUsername)
-                assertEquals("enc_pwd$f$l", passwords[i].plainPassword)
-                assertEquals("enc_note$f$l", passwords[i].plainNote)
-                // TODO: Actually mock is bit lacking, in REAL data model this password would never
-                // pass since it was soft deleted so long ago...
-                if (passwords[i].id == 102L) {
-                    assertEquals(666, passwords[i].deleted)
-                    assertEquals(
-                        "[payments:visa,mastercard, phones:123-456-7890]",
-                        passwords[i].plainExtensions.map { m ->
-                            m.key + ":" + m.value.joinToString(
-                                ","
-                            )
-                        }.toString()
-                    )
-                } else {
-                    assertEquals(0, passwords[i].deleted)
-                    assertEquals(0, passwords[i].plainExtensions.size)
-                }
-                assertEquals(null, passwords[i].plainPhoto)
+        val categoryIds = listOf(1L, 2L, 2L, 1L)
+        val siteEntryIds = listOf(101L, 201L, 202L, 203L)
+        val mockIds = listOf(11L, 21L, 22L, 12L)
+        (0..3).forEach { id ->
+            val categoryId = categoryIds[id]
+            if (id == 0) {
+                assertEquals(fakeChangedDateTime, passwords[id].passwordChangedDate)
+            } else {
+                assertEquals(null, passwords[id].passwordChangedDate)
             }
+            assertEquals(categoryId, passwords[id].categoryId)
+            val mockId = mockIds[id]
+            assertEquals(siteEntryIds[id], passwords[id].id)
+            assertEquals("enc_desc$mockId", passwords[id].cachedPlainDescription)
+            assertEquals("enc_web$mockId", passwords[id].plainWebsite)
+            assertEquals("enc_user$mockId", passwords[id].plainUsername)
+            assertEquals("enc_pwd$mockId", passwords[id].plainPassword)
+            assertEquals("enc_note$mockId", passwords[id].plainNote)
+            // TODO: Actually mock is bit lacking, in REAL data model this password would never
+            // pass since it was soft deleted so long ago...
+            if (passwords[id].id !in setOf(101L, 201L, 202L)) {
+                assertEquals(666, passwords[id].deleted)
+                assertEquals(
+                    "[payments:visa,mastercard, phones:123-456-7890]",
+                    passwords[id].plainExtensions.map { m ->
+                        m.key + ":" + m.value.joinToString(
+                            ","
+                        )
+                    }.toString()
+                )
+            } else {
+                assertEquals(0, passwords[id].deleted)
+                assertEquals(0, passwords[id].plainExtensions.size)
+            }
+            assertEquals(null, passwords[id].plainPhoto)
         }
     }
 
@@ -472,6 +497,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
     <imports>
         <gpm>
             <gpmitem hash="hash" name="1" password_ids="102" iv_name="0102030405060708090a0b0c0d0e0f10" cipher_name="6f636e61" iv_note="0102030405060708090a0b0c0d0e0f10" cipher_note="6f6d7761" iv_password="0102030405060708090a0b0c0d0e0f10" cipher_password="716370777269756c" status="0" iv_url="0102030405060708090a0b0c0d0e0f10" cipher_url="766761" iv_username="0102030405060708090a0b0c0d0e0f10" cipher_username="74716676" />
+            <gpmitem hash="hash" name="2" password_ids="202" iv_name="0102030405060708090a0b0c0d0e0f10" cipher_name="6f636e61" iv_note="0102030405060708090a0b0c0d0e0f10" cipher_note="6f6d7761" iv_password="0102030405060708090a0b0c0d0e0f10" cipher_password="716370777269756c" status="0" iv_url="0102030405060708090a0b0c0d0e0f10" cipher_url="766761" iv_username="0102030405060708090a0b0c0d0e0f10" cipher_username="74716676" />
         </gpm>
     </imports>
     </PasswordSafe>
