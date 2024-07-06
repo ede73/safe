@@ -1,5 +1,6 @@
 package fi.iki.ede.safe.gpm.ui.models
 
+import androidx.annotation.GuardedBy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -11,9 +12,13 @@ import java.util.concurrent.atomic.AtomicReference
 
 class JobManager(private val onWorkingStateChange: (Boolean, percentCompleted: Float?) -> Unit) {
     private val control = Mutex(false)
+
+    @GuardedBy("control")
     private val jobs = mutableSetOf<Job>()
 
     private val jobStateControl = Mutex(false)
+
+    @GuardedBy("jobStateControl")
     private val masterJob = AtomicReference<Job?>(null)
 
     private suspend fun maybeChangeWorkingState(
