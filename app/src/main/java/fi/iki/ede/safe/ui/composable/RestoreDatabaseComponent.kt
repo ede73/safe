@@ -1,5 +1,6 @@
 package fi.iki.ede.safe.ui.composable
 
+import android.content.Context
 import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -13,7 +14,6 @@ import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.RestoreDatabase
 import fi.iki.ede.safe.db.DBHelperFactory
-import fi.iki.ede.safe.ui.activities.PrepareDataBaseRestorationScreen
 import fi.iki.ede.safe.ui.dialogs.restoreOldBackupDialog
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
@@ -28,7 +28,7 @@ fun RestoreDatabaseComponent(
     processedPasswords: MutableIntState,
     processedCategories: MutableIntState,
     processedMessage: MutableState<String>,
-    context: PrepareDataBaseRestorationScreen,
+    context: Context,
     backupPassword: Password,
     selectedDoc: Uri,
     onFinished: (passwords: Int, ex: Exception?) -> Unit

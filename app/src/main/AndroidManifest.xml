@@ -83,7 +83,7 @@
             android:label="@string/title_activity_password_search_screen"
             android:windowSoftInputMode="stateVisible" />
         <activity
-            android:name=".ui.activities.PrepareDataBaseRestorationScreen"
+            android:name=".ui.activities.RestoreDatabaseScreen"
             android:exported="false"
             android:label="@string/title_activity_restore_screen" />
 

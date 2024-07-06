@@ -42,6 +42,7 @@ import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.gpm.ui.activities.ImportGooglePasswords
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
+import fi.iki.ede.safe.service.AutolockingService
 import fi.iki.ede.safe.splits.DropDownMenu
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.TestTag
@@ -56,13 +57,22 @@ import kotlinx.coroutines.withContext
 private const val TAG = "TopActionBar"
 
 @Composable
-fun setupActivityResultLauncher(resultOk: (ActivityResult) -> Unit): ManagedActivityResultLauncher<Intent, ActivityResult> {
+fun setupActivityResultLauncher(
+    cancelled: ((ActivityResult) -> Unit)? = null,
+    resultOk: (ActivityResult) -> Unit
+)
+        : ManagedActivityResultLauncher<Intent, ActivityResult> {
     return rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult(),
     ) {
         when (it.resultCode) {
             Activity.RESULT_OK -> {
                 resultOk(it)
+            }
+
+            Activity.RESULT_CANCELED -> {
+                if (cancelled != null)
+                    cancelled(it)
             }
         }
     }
@@ -194,16 +204,6 @@ private fun MakeDropdownMenu(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-
-    val restoreCompleted =
-        setupActivityResultLauncher {/* don't case, success->get new ones, fail->got old ones */ }
-
-    val selectRestoreDocumentLauncher = setupActivityResultLauncher {
-        restoreCompleted.launch(
-            IntentManager.getDatabaseRestorationScreenIntent(context, it.data!!.data!!)
-        )
-    }
-
     val backupCompleted = stringResource(id = R.string.action_bar_backup_completed)
 
     val backupDocumentSelectedResult = setupActivityResultLauncher {
@@ -265,6 +265,7 @@ private fun MakeDropdownMenu(
                 onClick = {
                     // TODO: Move outta here, so we can pause the time for duration of file selection
                     displayMenu.value = false
+                    AutolockingService.sendRestartTimer(context)
                     backupDocumentSelectedResult.launch(
                         ExportConfig.getCreateDocumentIntent()
                     )
@@ -276,9 +277,7 @@ private fun MakeDropdownMenu(
                     try {
                         // TODO: Move outta here, so we can pause the time for duration of file selection
                         displayMenu.value = false
-                        selectRestoreDocumentLauncher.launch(
-                            ExportConfig.getOpenDocumentIntent()
-                        )
+                        IntentManager.startRestoreDatabaseScreen(context)
                     } catch (ex: ActivityNotFoundException) {
                         Log.e(TAG, "Cannot launch ACTION_OPEN_DOCUMENT")
                     }

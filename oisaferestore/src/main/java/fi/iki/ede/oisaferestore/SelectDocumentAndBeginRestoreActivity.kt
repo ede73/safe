@@ -19,7 +19,7 @@ import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.splits.IntentManager
-import fi.iki.ede.safe.ui.activities.AskBackupPasswordAndCommence
+import fi.iki.ede.safe.ui.composable.AskBackupPasswordAndCommence
 import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
 import kotlinx.coroutines.runBlocking
 
@@ -54,7 +54,6 @@ class SelectDocumentAndBeginRestoreActivity : AutolockingBaseComponentActivity()
                     processedMessage,
                     selectedDoc!!,
                     this,
-                    ::avertInactivity
                 ) { backupPassword ->
                     RestoreOISafeBackup(
                         context,

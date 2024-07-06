@@ -2,7 +2,6 @@ package fi.iki.ede.safe.splits
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import fi.iki.ede.safe.db.DBID
@@ -12,7 +11,7 @@ import fi.iki.ede.safe.ui.activities.HelpScreen
 import fi.iki.ede.safe.ui.activities.LoginScreen
 import fi.iki.ede.safe.ui.activities.LoginScreen.Companion.OPEN_CATEGORY_SCREEN_AFTER_LOGIN
 import fi.iki.ede.safe.ui.activities.PreferenceActivity
-import fi.iki.ede.safe.ui.activities.PrepareDataBaseRestorationScreen
+import fi.iki.ede.safe.ui.activities.RestoreDatabaseScreen
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen.Companion.CATEGORY_ID
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen.Companion.SITE_ENTRY_ID
@@ -39,13 +38,6 @@ object IntentManager {
 
     fun getMenuItems(menu: DropDownMenu) =
         menuAdditions.flatMap { (_, menuMap) -> menuMap[menu]?.toList() ?: listOf() }
-
-    fun getDatabaseRestorationScreenIntent(
-        context: Context,
-        uri: Uri
-    ) = Intent(
-        context, PrepareDataBaseRestorationScreen::class.java
-    ).apply { data = uri }
 
     private inline fun <reified T> getActivityIntent(
         context: Context,
@@ -104,6 +96,9 @@ object IntentManager {
                 putLong(SITE_ENTRY_ID, passwordId)
             }
         )
+
+    fun startRestoreDatabaseScreen(context: Context) =
+        startActivity(context, RestoreDatabaseScreen::class.java)
 
     fun startCategoryScreen(context: Context) =
         startActivity(
