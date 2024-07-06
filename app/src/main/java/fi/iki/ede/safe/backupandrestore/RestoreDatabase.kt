@@ -125,6 +125,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         val path = mutableListOf<Elements?>()
         var category: DecryptableCategoryEntry? = null
         var siteEntry: DecryptableSiteEntry? = null
+        val deletedSiteEntriesToRestore = mutableSetOf<DecryptableSiteEntry>()
         var readGPM: SavedGPM? = null
         val readGPMMapsToPasswords: MutableMap<Long, Set<Long>> = mutableMapOf()
         var passwords = 0
@@ -367,7 +368,20 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                         ) -> {
                             require(siteEntry != null) { "Must have password entry" }
                             reportProgress(null, passwords, null)
-                            dbHelper.addSiteEntry(siteEntry)
+                            if (siteEntry.deleted > 0) {
+                                // we can't restore deleted site entries AHEAD of time
+                                // due to potential ID conflicts, we'll gotta do it after
+                                // all live site entries have been restored
+                                // (and just assign next available ID)
+                                // TODO: make test case!
+                                //<item ID="396" deleted="1720051497812">
+                                //<item ID="396" deleted="1720051497812">
+                                //<item ID="396">
+                                siteEntry.id = null
+                                deletedSiteEntriesToRestore.add(siteEntry)
+                            } else {
+                                dbHelper.addSiteEntry(siteEntry)
+                            }
                             siteEntry = null
                         }
 
@@ -387,6 +401,14 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                 }
             }
             myParser.next()
+        }
+        deletedSiteEntriesToRestore.forEach { deletedSiteEntry ->
+            // TODO: Add a test case what happens if category is missing!
+            try {
+                dbHelper.addSiteEntry(deletedSiteEntry)
+            } catch (ex: Exception) {
+                firebaseRecordException("Failed to store deleted site entry", ex)
+            }
         }
         // sorry linter, you are mistaken, ain't 0 all the time
         return passwords
