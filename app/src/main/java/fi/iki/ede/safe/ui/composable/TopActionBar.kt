@@ -263,6 +263,7 @@ private fun MakeDropdownMenu(
             onDismissRequest = { exportImport.value = false }) {
             DropdownMenuItem(text = { Text(text = stringResource(id = R.string.action_bar_backup)) },
                 onClick = {
+                    // TODO: Move outta here, so we can pause the time for duration of file selection
                     displayMenu.value = false
                     backupDocumentSelectedResult.launch(
                         ExportConfig.getCreateDocumentIntent()
