@@ -43,6 +43,7 @@ TODO:
 - notify of old passwords
 
 DONE:
+- proper state machine
 - replace old photo preview with proper photo
 - Extension: convert 'hard coded' pre-selected extensions to  completely user definable (categories)
     - bonus card etc.number
