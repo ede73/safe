@@ -1,9 +1,11 @@
 [versions]
 # libraries
 activityCompose = "1.9.0"
+androidXTest = "1.6.1"
 appcompat = "1.7.0"
 bcprovJdk16 = "1.46"
 biometricKtx = "1.2.0-alpha05"
+cameraCore = "1.3.4"
 coreKtx = "1.13.1"
 featureDeliveryKtx = "2.1.0"
 junit = "4.13.2"
@@ -18,21 +20,16 @@ material3Android = "1.2.1"
 materialIconsExtendedAndroid = "1.6.8"
 mockk = "1.13.11"
 preferenceKtx = "1.2.1"
-# 1.6.1 doesn't work, runner errors, it CLEARLY is there https://maven.google.com/web/index.html?q=androidx.test#androidx.test:runner:1.6.1
-androidXTest = "1.6.1"
 runtimeLivedataVersion = "1.6.8"
 uiTestJunit4Android = "1.6.8"
 uiTooling = "1.6.8"
 uiToolingPreviewAndroid = "1.6.8"
 uiautomator = "2.3.0"
 volley = "1.2.1"
-cameraCore = "1.3.4"
 #plugins
-agp = "8.5.0-beta02"
-kotlin = "2.0.0"
-jetbrainsKotlinJvm = "2.0.0"
 
 [libraries]
+agp = "8.5.0-beta02"
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 androidx-biometric-ktx = { group = "androidx.biometric", name = "biometric-ktx", version.ref = "biometricKtx" }
@@ -44,21 +41,23 @@ androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = 
 androidx-material-icons-extended-android = { group = "androidx.compose.material", name = "material-icons-extended-android", version.ref = "materialIconsExtendedAndroid" }
 androidx-material3-android = { group = "androidx.compose.material3", name = "material3-android", version.ref = "material3Android" }
 androidx-preference-ktx = { group = "androidx.preference", name = "preference-ktx", version.ref = "preferenceKtx" }
+androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedataVersion" }
+androidx-test-core = { group = "androidx.test", name = "core", version = "androidXTest" }
 androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-test-junit-ktx = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "junitVersion" }
 androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "androidXTest" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidXTest" }
-androidx-test-core = { group = "androidx.test", name = "core", version = "androidXTest" }
-androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedataVersion" }
+androidx-test-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "uiautomator" }
 androidx-ui-test-junit4-android = { group = "androidx.compose.ui", name = "ui-test-junit4-android", version.ref = "uiTestJunit4Android" }
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest", version.ref = "uiTestJunit4Android" }
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref = "uiTooling" }
 androidx-ui-tooling-preview-android = { group = "androidx.compose.ui", name = "ui-tooling-preview-android", version.ref = "uiToolingPreviewAndroid" }
-androidx-test-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "uiautomator" }
 app-update-ktx = { module = "com.google.android.play:app-update-ktx", version.ref = "featureDeliveryKtx" }
 bcprov-jdk16 = { module = "org.bouncycastle:bcprov-jdk16", version.ref = "bcprovJdk16" }
 feature-delivery-ktx = { group = "com.google.android.play", name = "feature-delivery-ktx", version.ref = "featureDeliveryKtx" }
+jetbrainsKotlinJvm = "2.0.0"
 junit = { group = "junit", name = "junit", version.ref = "junit" }
+kotlin = "2.0.0"
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlinStdlib" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
