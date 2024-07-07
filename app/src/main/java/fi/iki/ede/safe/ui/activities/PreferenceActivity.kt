@@ -37,14 +37,14 @@ import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.composable.ExtensionsEditor
 import fi.iki.ede.safe.ui.models.PluginLoaderViewModel
-import fi.iki.ede.safe.ui.utilities.AutolockingBaseAppCompatActivity
+import fi.iki.ede.safe.ui.utilities.AutoLockingBaseAppCompatActivity
 import fi.iki.ede.safe.ui.utilities.firebaseLog
 import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import fi.iki.ede.safe.ui.utilities.startActivityForResults
 import kotlinx.coroutines.launch
 
 
-class PreferenceActivity : AutolockingBaseAppCompatActivity() {
+class PreferenceActivity : AutoLockingBaseAppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.preferences)

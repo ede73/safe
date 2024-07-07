@@ -14,9 +14,9 @@ import fi.iki.ede.safe.gpm.ui.composables.ImportControls
 import fi.iki.ede.safe.gpm.ui.composables.ImportEntryList
 import fi.iki.ede.safe.gpm.ui.models.ImportGPMViewModel
 import fi.iki.ede.safe.ui.theme.SafeTheme
-import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
+import fi.iki.ede.safe.ui.utilities.AutoLockingBaseComponentActivity
 
-class MergeGooglePasswordsToMine : AutolockingBaseComponentActivity() {
+class MergeGooglePasswordsToMine : AutoLockingBaseComponentActivity() {
     private val viewModel: ImportGPMViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {

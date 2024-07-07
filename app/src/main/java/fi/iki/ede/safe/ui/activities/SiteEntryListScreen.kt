@@ -21,11 +21,11 @@ import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.composable.SiteEntryList
 import fi.iki.ede.safe.ui.composable.TopActionBar
 import fi.iki.ede.safe.ui.theme.SafeTheme
-import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
+import fi.iki.ede.safe.ui.utilities.AutoLockingBaseComponentActivity
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 
-class SiteEntryListScreen : AutolockingBaseComponentActivity() {
+class SiteEntryListScreen : AutoLockingBaseComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

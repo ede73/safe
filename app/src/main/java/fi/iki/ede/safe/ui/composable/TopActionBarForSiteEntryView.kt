@@ -23,7 +23,7 @@ import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeTheme
-import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
+import fi.iki.ede.safe.ui.utilities.AutoLockingBaseComponentActivity
 
 /**
  * Used in password views
@@ -46,7 +46,7 @@ fun TopActionBarForSiteEntryView(
             },
             actions = {
                 IconButton(onClick = {
-                    AutolockingBaseComponentActivity.lockTheApplication(context)
+                    AutoLockingBaseComponentActivity.lockTheApplication(context)
                 }, modifier = Modifier.testTag(TestTag.TOP_ACTION_BAR_LOCK)) {
                     Icon(Icons.Default.Lock, stringResource(id = R.string.action_bar_lock))
                 }

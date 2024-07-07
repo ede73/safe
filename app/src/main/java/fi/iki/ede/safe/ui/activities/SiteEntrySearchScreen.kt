@@ -25,10 +25,10 @@ import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen.Companion.searchProgr
 import fi.iki.ede.safe.ui.composable.SearchSiteEntryControls
 import fi.iki.ede.safe.ui.composable.SearchSiteEntryList
 import fi.iki.ede.safe.ui.theme.SafeTheme
-import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
+import fi.iki.ede.safe.ui.utilities.AutoLockingBaseComponentActivity
 import kotlinx.coroutines.flow.MutableStateFlow
 
-class SiteEntrySearchScreen : AutolockingBaseComponentActivity() {
+class SiteEntrySearchScreen : AutoLockingBaseComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

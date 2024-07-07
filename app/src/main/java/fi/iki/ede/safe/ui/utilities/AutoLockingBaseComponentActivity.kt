@@ -69,7 +69,7 @@ interface ScreenOffLocker : AvertInactivityDuringLongTask {
         when (intent.action) {
             Intent.ACTION_SCREEN_OFF -> {
                 if (Preferences.getLockOnScreenLock(true)) {
-                    AutolockingBaseComponentActivity.lockTheApplication(context)
+                    AutoLockingBaseComponentActivity.lockTheApplication(context)
                 }
             }
 
@@ -149,7 +149,7 @@ interface ScreenOffLocker : AvertInactivityDuringLongTask {
 }
 
 @Suppress("LeakingThis")
-open class AutolockingBaseComponentActivity : ComponentActivity(), ScreenOffLocker {
+open class AutoLockingBaseComponentActivity : ComponentActivity(), ScreenOffLocker {
 
     override val mIntentReceiver = screenOffIntentReceiver
 

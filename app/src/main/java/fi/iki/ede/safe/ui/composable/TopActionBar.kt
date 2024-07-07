@@ -49,7 +49,7 @@ import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.dialogs.ShowTrashDialog
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeTheme
-import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
+import fi.iki.ede.safe.ui.utilities.AutoLockingBaseComponentActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -117,7 +117,7 @@ fun TopActionBar(
                 }
 
                 IconButton(onClick = {
-                    AutolockingBaseComponentActivity.lockTheApplication(context)
+                    AutoLockingBaseComponentActivity.lockTheApplication(context)
                     IntentManager.startLoginScreen(
                         context, openCategoryScreenAfterLogin = false
                     )

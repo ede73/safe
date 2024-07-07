@@ -28,9 +28,9 @@ import fi.iki.ede.safe.gpm.ui.utilities.makeIncomingForTesting
 import fi.iki.ede.safe.gpm.ui.utilities.makeSavedForTesting
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.ui.theme.SafeTheme
-import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity
+import fi.iki.ede.safe.ui.utilities.AutoLockingBaseComponentActivity
 
-class ImportGooglePasswords : AutolockingBaseComponentActivity() {
+class ImportGooglePasswords : AutoLockingBaseComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 

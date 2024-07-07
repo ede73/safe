@@ -15,7 +15,7 @@ import fi.iki.ede.crypto.BuildConfig
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.notifications.AutoLockNotification
-import fi.iki.ede.safe.ui.utilities.AutolockingBaseComponentActivity.Companion.lockTheApplication
+import fi.iki.ede.safe.ui.utilities.AutoLockingBaseComponentActivity.Companion.lockTheApplication
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean
 
