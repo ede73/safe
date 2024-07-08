@@ -29,23 +29,23 @@ private const val TAG = "Utilities"
 internal fun combineLists(
     siteEntries: List<DecryptableSiteEntry>,
     gpms: List<SavedGPM>
-): List<CombinedListPairs> {
+): List<SiteEntryToGPM> {
     val maxSize = maxOf(siteEntries.size, gpms.size)
-    val combinedSet = mutableSetOf<CombinedListPairs>()
+    val combinedSet = mutableSetOf<SiteEntryToGPM>()
 
     for (i in 0 until maxSize) {
         combinedSet.add(
-            CombinedListPairs.SiteEntryToGPM(
+            SiteEntryToGPM(
                 siteEntries.getOrNull(i),
                 gpms.getOrNull(i)
             )
         )
     }
 
-    return combinedSet.sortedWith(compareBy<CombinedListPairs, String?>(nullsLast()) {
-        (it as CombinedListPairs.SiteEntryToGPM).siteEntry?.cachedPlainDescription?.lowercase()
+    return combinedSet.sortedWith(compareBy<SiteEntryToGPM, String?>(nullsLast()) {
+        it.siteEntry?.cachedPlainDescription?.lowercase()
     }.thenBy {
-        (it as CombinedListPairs.SiteEntryToGPM).gpm?.cachedDecryptedName ?: ""
+        it.gpm?.cachedDecryptedName ?: ""
     })
 }
 
@@ -154,8 +154,3 @@ fun DNDObject.dump(): String =
                 is DNDObject.SiteEntry -> "${this.decryptableSiteEntry.cachedPlainDescription} - ${this.decryptableSiteEntry.id}"
                 is DNDObject.Spacer -> "Spacer"
             }
-
-sealed class CombinedListPairs {
-    data class SiteEntryToGPM(val siteEntry: DecryptableSiteEntry?, val gpm: SavedGPM?) :
-        CombinedListPairs()
-}
