@@ -48,7 +48,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
                 Elements.CATEGORY,
                 makePair(Attributes.CATEGORY_NAME, category.encryptedName)
             )
-            for (encryptedPassword in DataModel.getCategorysSiteEntries(category.id!!)) {
+            for (encryptedPassword in DataModel.getSiteEntriesOfCategory(category.id!!)) {
                 serializer.writeSiteEntry(encryptedPassword)
             }
             DataModel.softDeletedStateFlow.value.toSet().forEach { deletedPassword ->

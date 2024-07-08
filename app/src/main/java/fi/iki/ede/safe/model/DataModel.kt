@@ -84,7 +84,7 @@ object DataModel {
         _categoriesStateFlow.value.first { it.id == id }
 
     // (almost) no cost using (gets (encrypted) categories' site entries from memory)
-    fun getCategorysSiteEntries(categoryId: DBID): List<DecryptableSiteEntry> =
+    fun getSiteEntriesOfCategory(categoryId: DBID): List<DecryptableSiteEntry> =
         _siteEntriesStateFlow.value.filter { it.categoryId == categoryId }
 
     // TODO: used only while developing? or fixing broken imports?
@@ -393,7 +393,7 @@ object DataModel {
                             TAG,
                             "Category id=${category.id} plainname=${category.plainName}"
                         ) // OK: Dump
-                        for (siteEntry in getCategorysSiteEntries(category.id!!)) {
+                        for (siteEntry in getSiteEntriesOfCategory(category.id!!)) {
                             Log.d(
                                 TAG,
                                 "  SiteEntry id=${siteEntry.id}, description=${siteEntry.cachedPlainDescription},changed=${siteEntry.passwordChangedDate}"
