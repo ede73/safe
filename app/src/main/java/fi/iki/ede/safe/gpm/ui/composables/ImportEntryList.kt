@@ -1,13 +1,17 @@
 package fi.iki.ede.safe.gpm.ui.composables
 
+import android.util.Log
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -18,6 +22,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -26,7 +32,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -56,6 +65,8 @@ import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+
+private const val TAG = "ImportEntryList"
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -169,7 +180,7 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
             }
         )
     }
-    var lazyColumnTopY by remember { mutableStateOf(0f) }
+    var lazyColumnTopY by remember { mutableFloatStateOf(0f) }
 
     val mySizeModifier = Modifier
         .fillMaxWidth(0.4f)
@@ -214,63 +225,80 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
     val s = combinedList.map { (it as CombinedListPairs.SiteEntryToGPM).siteEntry }.toSet()
     val g = combinedList.map { (it as CombinedListPairs.SiteEntryToGPM).gpm }.toSet()
     val listHash = "${s.hashCode()}-${g.hashCode()}-${combinedList.hashCode()}"
+    val itemPositions = remember(combinedList) { mutableStateMapOf<String, Pair<Float, Float>>() }
 
-    LazyColumn(
-        state = listState,
-        modifier = Modifier
-            .dragAndDropTarget(
-                shouldStartDragAndDrop = { event ->
-                    doesItHaveText(event)
-                }, target = dndTarget
-            )
-            .onGloballyPositioned { coordinates ->
-                lazyColumnTopY = coordinates.positionInWindow().y
-            }
-    ) {
-        items(
-            combinedList,
-            key = { item ->
-                val site = item as CombinedListPairs.SiteEntryToGPM
-                // some how lazycolumn super-anally retains the list order by the KEYs!
-                // Since I'm providing sorted list (and sort order ain't maintained)..
-                // let's pass list instance ID, YES, forces full refresh, but at least we're sorted!
-                "$listHash,site=${site.siteEntry?.id} gpmid=${site.gpm?.id}"
-            }
-        ) { x ->
-            val site = x as CombinedListPairs.SiteEntryToGPM
-            Row(modifier = Modifier.padding(vertical = 4.dp)) {
-                val siteEntry = site.siteEntry
-                DraggableText(
-                    if (siteEntry != null) DNDObject.SiteEntry(siteEntry) else DNDObject.Spacer,
-                    modifier = mySizeModifier
-                        .weight(1f),
-                    onItemDropped = { (_, maybeId) ->
-                        if (siteEntry == null) false
-                        else maybeId.toLongOrNull()?.let {
-                            CoroutineScope(Dispatchers.IO).launch {
-                                linkSavedGPMAndDecryptableSiteEntry(siteEntry, it)
-                            }
-                            true
-                        } ?: false
-                    },
-                    onTap = {
-                        if (siteEntry?.id != null) {
-                            IntentManager.startEditPassword(context, siteEntry.id!!)
+    Box(modifier = Modifier.fillMaxSize()) {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .dragAndDropTarget(
+                    shouldStartDragAndDrop = { event ->
+                        doesItHaveText(event)
+                    }, target = dndTarget
+                )
+                .onGloballyPositioned { coordinates ->
+                    lazyColumnTopY = coordinates.positionInWindow().y
+                }
+        ) {
+            items(
+                combinedList,
+                key = { item ->
+                    val site = item as CombinedListPairs.SiteEntryToGPM
+                    // some how lazycolumn super-anally retains the list order by the KEYs!
+                    // Since I'm providing sorted list (and sort order ain't maintained)..
+                    // let's pass list instance ID, YES, forces full refresh, but at least we're sorted!
+                    "$listHash,site=${site.siteEntry?.id} gpmid=${site.gpm?.id}"
+                }
+            ) { x ->
+                val site = x as CombinedListPairs.SiteEntryToGPM
+                Row(modifier = Modifier
+                    .padding(vertical = 4.dp)
+                    .onGloballyPositioned { coordinates ->
+                        val position = coordinates.positionInParent()
+                        val key = "${site.siteEntry?.id}-${site.gpm?.id}"
+                        if (site.gpm != null) {
+                            itemPositions[key] =
+                                Pair(position.y, position.y + coordinates.size.height)
                         }
-                    }
-                )
+                        Log.d(
+                            TAG,
+                            "Add position ${position.y}-${position.y + coordinates.size.height} to $key"
+                        )
+                    }) {
+                    val siteEntry = site.siteEntry
+                    DraggableText(
+                        if (siteEntry != null) DNDObject.SiteEntry(siteEntry) else DNDObject.Spacer,
+                        modifier = mySizeModifier
+                            .weight(1f),
+                        onItemDropped = { (_, maybeId) ->
+                            if (siteEntry == null) false
+                            else maybeId.toLongOrNull()?.let {
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    linkSavedGPMAndDecryptableSiteEntry(siteEntry, it)
+                                }
+                                true
+                            } ?: false
+                        },
+                        onTap = {
+                            if (siteEntry?.id != null) {
+                                IntentManager.startEditPassword(context, siteEntry.id!!)
+                            }
+                        }
+                    )
 
-                Spacer(modifier = Modifier.fillMaxWidth(0.1f))
+                    Spacer(modifier = Modifier.fillMaxWidth(0.1f))
 
-                DraggableText(
-                    if (site.gpm != null)
-                        DNDObject.GPM(site.gpm)
-                    else DNDObject.Spacer,
-                    modifier = mySizeModifier.weight(1f),
-                    onTap = { showInfo.value = site.gpm }
-                )
+                    DraggableText(
+                        if (site.gpm != null)
+                            DNDObject.GPM(site.gpm)
+                        else DNDObject.Spacer,
+                        modifier = mySizeModifier.weight(1f),
+                        onTap = { showInfo.value = site.gpm }
+                    )
+                }
             }
         }
+        //DrawConnectingLines(itemPositions, Modifier.matchParentSize())
     }
 }
 
@@ -302,5 +330,24 @@ fun ImportEntryListPreview() {
 
         }
         ImportEntryList(fakeViewModel)
+    }
+}
+
+@Composable
+fun DrawConnectingLines(itemPositions: Map<String, Pair<Float, Float>>, modifier: Modifier) {
+    Canvas(modifier = modifier) {
+        val lineColor = Color.Black
+        val lineWidth = 2.dp.toPx()
+
+        itemPositions.forEach { (_, positions) ->
+            val (startY, endY) = positions
+            drawLine(
+                color = lineColor,
+                start = androidx.compose.ui.geometry.Offset(size.width / 4, startY),
+                end = androidx.compose.ui.geometry.Offset(3 * size.width / 4, endY),
+                strokeWidth = lineWidth,
+                cap = Stroke.DefaultCap
+            )
+        }
     }
 }
