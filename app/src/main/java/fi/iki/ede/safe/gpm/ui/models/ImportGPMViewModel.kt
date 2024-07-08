@@ -32,21 +32,14 @@ class ImportGPMViewModel : ViewModel() {
     }
 
     private val collectFlowJob = viewModelScope.launch {
-        DataModel.siteEntryToSavedGPMStateFlow.combine(DataModel.siteEntriesStateFlow)
-        { link: LinkedHashMap<DecryptableSiteEntry, Set<SavedGPM>>, siteEntries: List<DecryptableSiteEntry> ->
-            siteEntries.associateWith { siteEntry -> link.filter { it.key.id == siteEntry.id }.values.flatten() }
-        }
-            .combine(DataModel.savedNotIgnoredGPMsFlow) { allSiteEntriesAndTheirLinkedGpms, allSavedGpms ->
-                // Pair the combined map with the current list of SavedGPMs
-                allSiteEntriesAndTheirLinkedGpms to allSavedGpms
-            }.collect { (allSiteEntriesAndTheirLinkedGpms, allSavedGpms) ->
-            val alreadyLinkedGpms = allSiteEntriesAndTheirLinkedGpms.values.flatten().toSet()
-            val notIgnoredGPMs = allSavedGpms.filter { gpm -> !gpm.flaggedIgnored }.toSet()
+        DataModel.siteEntriesStateFlow.combine(DataModel.unprocessedGPMsFlow) { allSiteEntries, allUnprocessedGPMs ->
+            allSiteEntries to allUnprocessedGPMs
+        }.collect { (allSiteEntries, allUnprocessedGPMs) ->
             importMergeDataRepository.initializeUnprocessedGPMAndDisplayListToGivenList(
-                notIgnoredGPMs - alreadyLinkedGpms
+                allUnprocessedGPMs.toSet()
             )
             importMergeDataRepository.initializeSiteEntryListAndDisplayListToGivenList(
-                allSiteEntriesAndTheirLinkedGpms.keys.toList()
+                allSiteEntries.toList()
             )
         }
     }

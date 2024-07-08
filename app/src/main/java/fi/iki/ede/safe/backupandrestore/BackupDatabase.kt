@@ -59,7 +59,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
 
         // dump all imported passwords!
         // TODO: use datamodel! (proper channels)
-        val gpms = DataModel.savedNotIgnoredGPMsFlow.value.toSet()
+        val gpms = DataModel.allSavedGPMsFlow.value.toSet()
         if (gpms.isNotEmpty()) {
             serializer.startTag(Elements.IMPORTS)
             val gpmIdToSiteEntry =

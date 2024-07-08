@@ -7,22 +7,26 @@ import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.db.DBID
-import fi.iki.ede.safe.ui.utilities.firebaseLog
 import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.ZonedDateTime
 
 object DataModel {
+    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     init {
         if (BuildConfig.DEBUG) {
@@ -45,7 +49,7 @@ object DataModel {
                         })"
                     )
                 }
-                _savedNotIgnoredGPMsFlow.collect { list ->
+                _allSavedGPMsFlow.collect { list ->
                     Log.d(
                         TAG,
                         "Debug observer: $thisClass _savedGPMsFlow: (${
@@ -58,13 +62,30 @@ object DataModel {
     }
 
     // GPM Imports: READ DATA CLASSES BTW. collection may change on new imports
-    private val _savedNotIgnoredGPMsFlow = MutableStateFlow<Set<SavedGPM>>(emptySet())
-    val savedNotIgnoredGPMsFlow: StateFlow<Set<SavedGPM>> = _savedNotIgnoredGPMsFlow.asStateFlow()
+    private val _allSavedGPMsFlow = MutableStateFlow<Set<SavedGPM>>(emptySet())
+    val allSavedGPMsFlow: StateFlow<Set<SavedGPM>> = _allSavedGPMsFlow.asStateFlow()
 
     private val _siteEntryToSavedGPMFlow =
         MutableStateFlow(LinkedHashMap<DecryptableSiteEntry, Set<SavedGPM>>())
     val siteEntryToSavedGPMStateFlow: StateFlow<LinkedHashMap<DecryptableSiteEntry, Set<SavedGPM>>>
         get() = _siteEntryToSavedGPMFlow
+
+    // combines all saved GPMs excluding ignored ones as well as those linked
+    val unprocessedGPMsFlow: StateFlow<Set<SavedGPM>> =
+        combine(
+            _allSavedGPMsFlow,
+            _siteEntryToSavedGPMFlow
+        ) { setOfSavedGPMs, siteEntryToGpmsLink ->
+            setOfSavedGPMs.filterNot { savedGPM ->
+                // ignore ignore + linked
+                savedGPM.flaggedIgnored ||
+                        savedGPM.id !in siteEntryToGpmsLink.values.flatten().map { it.id }.toSet()
+            }.toSet()
+        }.stateIn(
+            scope = scope,
+            started = SharingStarted.Eagerly,
+            initialValue = emptySet()
+        )
 
     // Categories state and events
     private val _categoriesStateFlow = MutableStateFlow<List<DecryptableCategoryEntry>>(emptyList())
@@ -87,10 +108,13 @@ object DataModel {
     fun getSiteEntriesOfCategory(categoryId: DBID): List<DecryptableSiteEntry> =
         _siteEntriesStateFlow.value.filter { it.categoryId == categoryId }
 
+    fun getSavedGPM(savedGPMId: DBID): SavedGPM =
+        _allSavedGPMsFlow.value.first { it.id == savedGPMId }
+
     // TODO: used only while developing? or fixing broken imports?
     fun deleteAllSavedGPMs() {
         DBHelperFactory.getDBHelper().deleteAllSavedGPMs()
-        _savedNotIgnoredGPMsFlow.value = emptySet()
+        _allSavedGPMsFlow.value = emptySet()
     }
 
     // TODO: RENAME
@@ -251,19 +275,18 @@ object DataModel {
         }
     }
 
-    private fun syncLoadNotIgnoredGPMsFromDB() {
-        DBHelperFactory.getDBHelper()
-            .fetchNotIgnoredSavedGPMsFromDB(gpmsFlow = _savedNotIgnoredGPMsFlow)
+    private fun syncLoadAllSavedGPMs() {
+        DBHelperFactory.getDBHelper().fetchAllSavedGPMsFromDB(gpmsFlow = _allSavedGPMsFlow)
     }
 
     private fun syncLoadLinkedGPMs() {
         val siteEntryIdGpmIdMappings = DBHelperFactory.getDBHelper().fetchAllSiteEntryGPMMappings()
-        val savedNotIgnoredGPMs = _savedNotIgnoredGPMsFlow.value
+        val allSavedGPMs = _allSavedGPMsFlow.value
 
         _siteEntryToSavedGPMFlow.value = siteEntryIdGpmIdMappings.map { it ->
-            getSiteEntry(it.key) to it.value.map { linkedGpmId ->
-                savedNotIgnoredGPMs.firstOrNull { savedGpm -> linkedGpmId == savedGpm.id }
-            }.filterNotNull().toSet()
+            getSiteEntry(it.key) to it.value.mapNotNull { linkedGpmId ->
+                allSavedGPMs.firstOrNull { savedGpm -> linkedGpmId == savedGpm.id }
+            }.toSet()
         }.toMap().let {
             LinkedHashMap(it)
         }
@@ -272,7 +295,7 @@ object DataModel {
     fun markSavedGPMIgnored(savedGpmId: Long) {
         Preferences.setLastModified()
         DBHelperFactory.getDBHelper().markSavedGPMIgnored(savedGpmId)
-        _savedNotIgnoredGPMsFlow.update { currentList ->
+        _allSavedGPMsFlow.update { currentList ->
             currentList.map { savedGPM ->
                 if (savedGPM.id == savedGpmId) {
                     savedGPM.copy(flaggedIgnored = true)
@@ -293,7 +316,7 @@ object DataModel {
     suspend fun loadFromDatabase() {
         _categoriesStateFlow.value = emptyList()
         _siteEntriesStateFlow.value = emptyList()
-        _savedNotIgnoredGPMsFlow.value = emptySet()
+        _allSavedGPMsFlow.value = emptySet()
         _siteEntryToSavedGPMFlow.value = LinkedHashMap()
         _softDeletedStateFlow.value = emptySet()
 
@@ -338,7 +361,7 @@ object DataModel {
                     storeAllExtensionsToPreferences()
                 }
                 val gpms = async {
-                    syncLoadNotIgnoredGPMsFromDB()
+                    syncLoadAllSavedGPMs()
                 }
                 launch { syncLoadSoftDeletedSiteEntries() }
                 awaitAll(cats, sites)
@@ -406,8 +429,7 @@ object DataModel {
     }
 
     fun linkSaveGPMAndSiteEntry(siteEntry: DecryptableSiteEntry, savedGpmId: Long) {
-        val gpm = _savedNotIgnoredGPMsFlow.value.firstOrNull { it.id == savedGpmId }
-        require(gpm != null) { "GPM not found by id $savedGpmId" }
+        val gpm = getSavedGPM(savedGpmId)
         Preferences.setLastModified()
         val siteEntryIndex =
             _siteEntryToSavedGPMFlow.value.keys.firstOrNull { it.id == siteEntry.id }
@@ -435,15 +457,11 @@ object DataModel {
     }
 
     suspend fun addGpmAsSiteEntry(
-        savedGpmId: Long,
+        savedGpmId: DBID,
         categoryId: DBID,
         onAdd: suspend (DecryptableSiteEntry) -> Unit
     ) {
-        val gpm = _savedNotIgnoredGPMsFlow.value.firstOrNull { it.id == savedGpmId }
-        if (gpm == null) {
-            firebaseLog("Trying to add non existing GPM $savedGpmId")
-            return
-        }
+        val gpm = getSavedGPM(savedGpmId)
         Preferences.setLastModified()
         addOrUpdateSiteEntry(DecryptableSiteEntry(categoryId).apply {
             username = gpm.encryptedUsername
@@ -471,7 +489,7 @@ object DataModel {
         DBHelperFactory.getDBHelper().deleteObsoleteSavedGPMs(delete)
         DBHelperFactory.getDBHelper().updateSavedGPMByIncomingGPM(update)
         DBHelperFactory.getDBHelper().addNewIncomingGPM(add)
-        syncLoadNotIgnoredGPMsFromDB()
+        syncLoadAllSavedGPMs()
         syncLoadLinkedGPMs()
         Preferences.setLastModified()
     }

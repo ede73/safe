@@ -442,15 +442,13 @@ class DBHelper internal constructor(
         }
 
 
-    fun fetchNotIgnoredSavedGPMsFromDB(
-        where: SelectionCondition? = null,
+    fun fetchAllSavedGPMsFromDB(
         gpmsFlow: MutableStateFlow<Set<SavedGPM>>? = null
     ): Set<SavedGPM> =
         readableDatabase.let { db ->
             db.query(
                 GooglePasswordManager,
                 GooglePasswordManager.Columns.entries.toSet(),
-                where
             ).use {
                 it.moveToFirst()
                 ArrayList<SavedGPM>().apply {
