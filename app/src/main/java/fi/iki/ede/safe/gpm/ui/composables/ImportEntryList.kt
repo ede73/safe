@@ -3,10 +3,13 @@ package fi.iki.ede.safe.gpm.ui.composables
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -114,9 +117,16 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
         }
     }
 
-    Row {
+    Row(
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        modifier = Modifier.height(intrinsicSize = IntrinsicSize.Max)
+    ) {
+        val mod = Modifier
+            .weight(1f)
+            .fillMaxHeight()
         DraggableText(
             DNDObject.JustString("Add"),
+            modifier = mod,
             onItemDropped = { (_, maybeId) ->
                 maybeId.toLongOrNull()?.let {
                     addSavedGPM(it)
@@ -125,22 +135,18 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
             }
         )
 
-        SafeButton(onClick = {
-            coroutineScope.launch {
-                viewModel.importMergeDataRepository.resetSiteEntryDisplayListToAllSaved()
-            }
-        }) {
+        SafeButton(
+            modifier = mod,
+            onClick = {
+                coroutineScope.launch {
+                    viewModel.importMergeDataRepository.resetSiteEntryDisplayListToAllSaved()
+                }
+            }) {
             Text(stringResource(R.string.google_password_import_merge_reset_password_list))
         }
 
-        Spacer(
-            modifier = Modifier
-                .fillMaxWidth(0.2f)
-            //.visibleSpacer(true, Color.Yellow)
-        )
-
         SafeButton(
-            modifier = Modifier.padding(0.dp),
+            modifier = mod,
             onClick = {
                 coroutineScope.launch {
                     viewModel.importMergeDataRepository.resetGPMDisplayListToAllUnprocessed()
@@ -148,11 +154,13 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
             }) {
             Text(
                 stringResource(R.string.google_password_import_merge_reset_gpm_list),
-                modifier = Modifier.padding(0.dp),
+                modifier = Modifier
+                    .padding(0.dp),
             )
         }
         DraggableText(
             DNDObject.JustString("Ignore"),
+            modifier = mod,
             onItemDropped = { (_, maybeId) ->
                 maybeId.toLongOrNull()?.let {
                     ignoreSavedGPM(it)
@@ -230,11 +238,12 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
             }
         ) { x ->
             val site = x as CombinedListPairs.SiteEntryToGPM
-            Row {
+            Row(modifier = Modifier.padding(vertical = 4.dp)) {
                 val siteEntry = site.siteEntry
                 DraggableText(
                     if (siteEntry != null) DNDObject.SiteEntry(siteEntry) else DNDObject.Spacer,
-                    modifier = mySizeModifier.weight(1f),
+                    modifier = mySizeModifier
+                        .weight(1f),
                     onItemDropped = { (_, maybeId) ->
                         if (siteEntry == null) false
                         else maybeId.toLongOrNull()?.let {

@@ -7,7 +7,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -15,9 +17,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -85,9 +89,16 @@ fun DraggableText(
         else ->
             Box(
                 modifier = modifier
-                    .border(1.dp, if (onItemDropped == null) Color.Red else Color.Green)
+                    .clip(RoundedCornerShape(12.dp))
+                    .fillMaxWidth()
+                    .border(
+                        4.dp,
+                        if (onItemDropped == null) Color.Red.copy(alpha = 0.2f) else Color.Green.copy(
+                            alpha = 0.2f
+                        )
+                    )
                     .background(dndHighlight)
-                    .padding(10.dp)
+                    .padding(vertical = 2.dp)
                     .checkIfVisible(isVisible)
                     .let {
                         if (isVisible.value) {
@@ -110,7 +121,11 @@ fun DraggableText(
                             it
                         }
                     }) {
-                Box {
+                Box(
+                    modifier = Modifier
+                        .padding(2.dp)
+                        .align(Alignment.Center)
+                ) {
                     when (dragObject) {
                         is DNDObject.JustString -> Text(text = dragObject.string)
                         is DNDObject.GPM -> Text(text = dragObject.savedGPM.cachedDecryptedName.let {
