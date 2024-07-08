@@ -76,7 +76,7 @@ internal fun importCSV(
     CoroutineScope(Dispatchers.IO).launch {
         try {
             progressReport("Fetch last import from Database")
-            val importChangeSet = ImportChangeSet(file, DataModel.savedGPMsFlow.value)
+            val importChangeSet = ImportChangeSet(file, DataModel.savedNotIgnoredGPMsFlow.value)
             val scoringConfig = ScoringConfig()
 
             progressReport("Process incoming GPMs")

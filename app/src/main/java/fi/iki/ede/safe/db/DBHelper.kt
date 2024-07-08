@@ -442,7 +442,7 @@ class DBHelper internal constructor(
         }
 
 
-    fun fetchSavedGPMsFromDB(
+    fun fetchNotIgnoredSavedGPMsFromDB(
         where: SelectionCondition? = null,
         gpmsFlow: MutableStateFlow<Set<SavedGPM>>? = null
     ): Set<SavedGPM> =

@@ -352,7 +352,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         )
         println(
             "GPMs: ${
-                DataModel.savedGPMsFlow.value.map { it.id }.joinToString(",")
+                DataModel.savedNotIgnoredGPMsFlow.value.map { it.id }.joinToString(",")
             }"
         )
         println("GPM linked to SiteEntry:" + DataModel.siteEntryToSavedGPMStateFlow.value.entries.joinToString { (key, value) ->
@@ -369,7 +369,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         assertEquals("encryptedcat2", categories[1].plainName)
         assertEquals(2L, categories[1].id)
 
-        val gpms = DataModel.savedGPMsFlow.value
+        val gpms = DataModel.savedNotIgnoredGPMsFlow.value
         assertEquals(2, gpms.size)
         assertEquals("hash", gpms.first().hash)
         assertEquals(1L, gpms.first().id)

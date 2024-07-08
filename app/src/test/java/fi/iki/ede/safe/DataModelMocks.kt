@@ -209,7 +209,12 @@ object DataModelMocks {
             id
         }
         // GPMs (partial TODO:)
-        every { db.fetchSavedGPMsFromDB(any(), any<MutableStateFlow<Set<SavedGPM>>>()) } answers {
+        every {
+            db.fetchNotIgnoredSavedGPMsFromDB(
+                any(),
+                any<MutableStateFlow<Set<SavedGPM>>>()
+            )
+        } answers {
             val flow = secondArg<MutableStateFlow<Set<SavedGPM>>?>()
             flow?.value = gpmTable.values.flatten().toSet()
             // TODO: weak model, should filter per SiteEntry in firstArg

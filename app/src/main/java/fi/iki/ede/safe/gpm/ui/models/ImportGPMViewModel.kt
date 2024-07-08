@@ -35,10 +35,11 @@ class ImportGPMViewModel : ViewModel() {
         DataModel.siteEntryToSavedGPMStateFlow.combine(DataModel.siteEntriesStateFlow)
         { link: LinkedHashMap<DecryptableSiteEntry, Set<SavedGPM>>, siteEntries: List<DecryptableSiteEntry> ->
             siteEntries.associateWith { siteEntry -> link.filter { it.key.id == siteEntry.id }.values.flatten() }
-        }.combine(DataModel.savedGPMsFlow) { allSiteEntriesAndTheirLinkedGpms, allSavedGpms ->
-            // Pair the combined map with the current list of SavedGPMs
-            allSiteEntriesAndTheirLinkedGpms to allSavedGpms
-        }.collect { (allSiteEntriesAndTheirLinkedGpms, allSavedGpms) ->
+        }
+            .combine(DataModel.savedNotIgnoredGPMsFlow) { allSiteEntriesAndTheirLinkedGpms, allSavedGpms ->
+                // Pair the combined map with the current list of SavedGPMs
+                allSiteEntriesAndTheirLinkedGpms to allSavedGpms
+            }.collect { (allSiteEntriesAndTheirLinkedGpms, allSavedGpms) ->
             val alreadyLinkedGpms = allSiteEntriesAndTheirLinkedGpms.values.flatten().toSet()
             val notIgnoredGPMs = allSavedGpms.filter { gpm -> !gpm.flaggedIgnored }.toSet()
             importMergeDataRepository.initializeUnprocessedGPMAndDisplayListToGivenList(
