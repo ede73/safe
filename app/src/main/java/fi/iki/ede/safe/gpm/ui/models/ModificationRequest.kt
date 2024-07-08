@@ -15,9 +15,4 @@ sealed class ModificationRequest {
     data object ResetGPMDisplayListToAllUnprocessed : ModificationRequest()
     data object EmptyGpmDisplayLists : ModificationRequest()
     data object EmptySiteEntryDisplayLists : ModificationRequest()
-    data class InitializeSiteEntryListAndDisplayListToGivenList(val siteEntries: List<DecryptableSiteEntry>) :
-        ModificationRequest()
-
-    data class InitializeUnprocessedGPMAndDisplayListToGivenList(val savedGPMs: List<SavedGPM>) :
-        ModificationRequest()
 }

@@ -79,7 +79,7 @@ object DataModel {
             setOfSavedGPMs.filterNot { savedGPM ->
                 // ignore ignore + linked
                 savedGPM.flaggedIgnored ||
-                        savedGPM.id !in siteEntryToGpmsLink.values.flatten().map { it.id }.toSet()
+                        savedGPM.id in siteEntryToGpmsLink.values.flatten().map { it.id }.toSet()
             }.toSet()
         }.stateIn(
             scope = scope,
@@ -282,7 +282,6 @@ object DataModel {
     private fun syncLoadLinkedGPMs() {
         val siteEntryIdGpmIdMappings = DBHelperFactory.getDBHelper().fetchAllSiteEntryGPMMappings()
         val allSavedGPMs = _allSavedGPMsFlow.value
-
         _siteEntryToSavedGPMFlow.value = siteEntryIdGpmIdMappings.map { it ->
             getSiteEntry(it.key) to it.value.mapNotNull { linkedGpmId ->
                 allSavedGPMs.firstOrNull { savedGpm -> linkedGpmId == savedGpm.id }

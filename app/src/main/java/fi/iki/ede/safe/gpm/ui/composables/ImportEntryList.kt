@@ -1,6 +1,5 @@
 package fi.iki.ede.safe.gpm.ui.composables
 
-import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
@@ -52,7 +51,6 @@ import fi.iki.ede.safe.db.DBID
 import fi.iki.ede.safe.gpm.ui.models.DNDObject
 import fi.iki.ede.safe.gpm.ui.models.ImportGPMViewModel
 import fi.iki.ede.safe.gpm.ui.modifiers.doesItHaveText
-import fi.iki.ede.safe.gpm.ui.utilities.SiteEntryToGPM
 import fi.iki.ede.safe.gpm.ui.utilities.combineLists
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
@@ -94,6 +92,7 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
     fun linkSavedGPMAndDecryptableSiteEntry(siteEntry: DecryptableSiteEntry, id: Long) {
         try {
             viewModel.removeAllMatchingGpmsFromDisplayAndUnprocessedLists(id)
+            // TODO: should remove the MATCHING SiteEntry too - IF we're doing matching lists
             DataModel.linkSaveGPMAndSiteEntry(siteEntry, id)
         } catch (ex: Exception) {
             firebaseRecordException(
@@ -222,8 +221,8 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
     val imports = viewModel.importMergeDataRepository.displayedUnprocessedGPMs.collectAsState()
     val mine = viewModel.importMergeDataRepository.displayedSiteEntries.collectAsState()
     val combinedList = combineLists(mine.value, imports.value)
-    val s = combinedList.map { (it as SiteEntryToGPM).siteEntry }.toSet()
-    val g = combinedList.map { (it as SiteEntryToGPM).gpm }.toSet()
+    val s = combinedList.map { it.siteEntry }.toSet()
+    val g = combinedList.map { it.gpm }.toSet()
     val listHash = "${s.hashCode()}-${g.hashCode()}-${combinedList.hashCode()}"
     val itemPositions = remember(combinedList) { mutableStateMapOf<String, Pair<Float, Float>>() }
 
@@ -243,14 +242,14 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
             items(
                 combinedList,
                 key = { item ->
-                    val site = item as SiteEntryToGPM
+                    val site = item
                     // some how lazycolumn super-anally retains the list order by the KEYs!
                     // Since I'm providing sorted list (and sort order ain't maintained)..
                     // let's pass list instance ID, YES, forces full refresh, but at least we're sorted!
                     "$listHash,site=${site.siteEntry?.id} gpmid=${site.gpm?.id}"
                 }
             ) { x ->
-                val site = x as SiteEntryToGPM
+                val site = x
                 Row(modifier = Modifier
                     .padding(vertical = 4.dp)
                     .onGloballyPositioned { coordinates ->
@@ -260,10 +259,10 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
                             itemPositions[key] =
                                 Pair(position.y, position.y + coordinates.size.height)
                         }
-                        Log.d(
-                            TAG,
-                            "Add position ${position.y}-${position.y + coordinates.size.height} to $key"
-                        )
+//                        Log.d(
+//                            TAG,
+//                            "Add position ${position.y}-${position.y + coordinates.size.height} to $key"
+//                        )
                     }) {
                     val siteEntry = site.siteEntry
                     DraggableText(

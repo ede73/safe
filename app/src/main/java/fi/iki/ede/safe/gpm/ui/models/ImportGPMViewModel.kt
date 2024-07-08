@@ -5,18 +5,15 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import fi.iki.ede.gpm.changeset.harmonizePotentialDomainName
-import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.similarity.LowerCaseTrimmedString
 import fi.iki.ede.gpm.similarity.findSimilarity
 import fi.iki.ede.gpm.similarity.toLowerCasedTrimmedString
 import fi.iki.ede.safe.model.DataModel
-import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
@@ -31,22 +28,18 @@ class ImportGPMViewModel : ViewModel() {
         _isWorkingAndProgress.postValue(completed to percentCompleted)
     }
 
-    private val collectFlowJob = viewModelScope.launch {
-        DataModel.siteEntriesStateFlow.combine(DataModel.unprocessedGPMsFlow) { allSiteEntries, allUnprocessedGPMs ->
-            allSiteEntries to allUnprocessedGPMs
-        }.collect { (allSiteEntries, allUnprocessedGPMs) ->
-            importMergeDataRepository.initializeUnprocessedGPMAndDisplayListToGivenList(
-                allUnprocessedGPMs.toSet()
-            )
-            importMergeDataRepository.initializeSiteEntryListAndDisplayListToGivenList(
-                allSiteEntries.toList()
-            )
+    init {
+        viewModelScope.launch {
+            importMergeDataRepository.resetGPMDisplayListToAllUnprocessed()
+        }
+        viewModelScope.launch {
+            importMergeDataRepository.resetSiteEntryDisplayListToAllSaved()
         }
     }
 
     override fun onCleared() {
         super.onCleared()
-        collectFlowJob.cancel()
+        importMergeDataRepository.onCleared()
     }
 
     fun removeAllMatchingGpmsFromDisplayAndUnprocessedLists(id: Long) {
@@ -135,8 +128,8 @@ class ImportGPMViewModel : ViewModel() {
                 importMergeDataRepository.emptyGPMDisplayList() // TODO: REMOVE, hoist reset control!
                 importMergeDataRepository.emptySiteEntryDisplayList() // TODO: REMOVE, hoist reset control!
                 launchIterateLists("applyMatchingPasswords",
-                    importMergeDataRepository.getList(DataType.WrappedDecryptableSiteEntry) as List<WrappedDecryptableSiteEntry>,
-                    importMergeDataRepository.getList(DataType.GPM) as List<SavedGPM>,
+                    DataModel.siteEntriesStateFlow.value.map { WrappedDecryptableSiteEntry(it) },
+                    DataModel.unprocessedGPMsFlow.value.toList(),
                     start = { },
                     compare = { outerEntry, innerEntry ->
 //                        if (outerEntry.cachedDecryptedPassword.isNotBlank()) {
@@ -159,10 +152,8 @@ class ImportGPMViewModel : ViewModel() {
                 importMergeDataRepository.emptyGPMDisplayList() // TODO: REMOVE, hoist reset control!
                 importMergeDataRepository.emptySiteEntryDisplayList() // TODO: REMOVE, hoist reset control!
                 launchIterateLists("applyMatchingNames",
-//                    dataRepository.giveOriginalListOf<DecryptableSiteEntry>(),
-//                    dataRepository.giveOriginalListOf<SavedGPM>(),
-                    importMergeDataRepository.getList(DataType.DecryptableSiteEntry) as List<DecryptableSiteEntry>,
-                    importMergeDataRepository.getList(DataType.GPM) as List<SavedGPM>,
+                    DataModel.siteEntriesStateFlow.value,
+                    DataModel.unprocessedGPMsFlow.value.toList(),
                     start = { },
                     compare = { outerEntry, innerEntry ->
                         val eka =
@@ -214,11 +205,10 @@ class ImportGPMViewModel : ViewModel() {
                 val passwordSearchThread = if (passwordSearchTarget != SearchTarget.IGNORE)
                     launchIterateList(
                         "searchSiteEntries",
-//                        dataRepository.giveOriginalListOf<DecryptableSiteEntry>(),
                         if (passwordSearchTarget == SearchTarget.SEARCH_FROM_DISPLAYED)
                             importMergeDataRepository.displayedSiteEntries.value.toList()
                         else
-                            importMergeDataRepository.getList(DataType.DecryptableSiteEntry) as List<DecryptableSiteEntry>,
+                            DataModel.siteEntriesStateFlow.value,
                         start = { },
                         compare = { item ->
                             if (similarityThresholdOrSubString > 0) {
@@ -245,11 +235,10 @@ class ImportGPMViewModel : ViewModel() {
                 val gpmSearchThread = if (gpmSearchTarget != SearchTarget.IGNORE)
                     launchIterateList(
                         "searchGPMs",
-//                        dataRepository.giveOriginalListOf<SavedGPM>(),
                         if (gpmSearchTarget == SearchTarget.SEARCH_FROM_DISPLAYED)
                             importMergeDataRepository.displayedUnprocessedGPMs.value.toList()
                         else
-                            importMergeDataRepository.getList(DataType.GPM) as List<SavedGPM>,
+                            DataModel.unprocessedGPMsFlow.value.toList(),
                         start = { },
                         compare = { item ->
                             if (similarityThresholdOrSubString > 0) {

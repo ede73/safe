@@ -2,9 +2,11 @@ package fi.iki.ede.safe.gpm.ui.models
 
 import android.util.Log
 import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableSiteEntry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,15 +17,15 @@ import kotlinx.coroutines.launch
 private const val TAG = "ImportMergeDataRepository"
 
 class ImportMergeDataRepository {
-    private val _unprocessedGPMs = mutableListOf<SavedGPM>()
     private val _displayedUnprocessedGPMs = MutableStateFlow<List<SavedGPM>>(emptyList())
-    private val _savedSiteEntries = mutableListOf<DecryptableSiteEntry>()
     private val _displayedSiteEntries = MutableStateFlow<List<DecryptableSiteEntry>>(emptyList())
     val displayedUnprocessedGPMs: StateFlow<List<SavedGPM>> = _displayedUnprocessedGPMs
     val displayedSiteEntries: StateFlow<List<DecryptableSiteEntry>> = _displayedSiteEntries
 
     private val modificationRequests = MutableSharedFlow<ModificationRequest>()
     private val repositoryScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
+    private val collector: Job
 
     fun debug(message: String) {
         if (false) {
@@ -32,32 +34,20 @@ class ImportMergeDataRepository {
     }
 
     init {
-        repositoryScope.launch {
+        collector = repositoryScope.launch {
             modificationRequests.collect { request ->
                 when (request) {
-                    is ModificationRequest.InitializeSiteEntryListAndDisplayListToGivenList -> {
-                        debug("InitializeSiteEntryListAndDisplayListToGivenList ${request.siteEntries.size}")
-                        _savedSiteEntries.clear()
-                        _savedSiteEntries.addAll(request.siteEntries)
-                        _displayedSiteEntries.value = _savedSiteEntries.toList()
-                    }
-
-                    is ModificationRequest.InitializeUnprocessedGPMAndDisplayListToGivenList -> {
-                        debug("InitializeUnprocessedGPMAndDisplayListToGivenList ${request.savedGPMs.size}")
-                        _unprocessedGPMs.clear()
-                        _unprocessedGPMs.addAll(request.savedGPMs)
-                        _displayedUnprocessedGPMs.value = _unprocessedGPMs.toList()
-                    }
-
                     is ModificationRequest.ResetGPMDisplayListToAllUnprocessed ->
-                        _displayedUnprocessedGPMs.value = _unprocessedGPMs.toList().also {
-                            debug("ResetGPMDisplayListToAllUnprocessed ${it.size}")
-                        }
+                        _displayedUnprocessedGPMs.value =
+                            DataModel.unprocessedGPMsFlow.value.toList().also {
+                                debug("ResetGPMDisplayListToAllUnprocessed ${it.size}")
+                            }
 
                     is ModificationRequest.ResetSiteEntryDisplayListToAllSaved ->
-                        _displayedSiteEntries.value = _savedSiteEntries.toList().also {
-                            debug("ResetSiteEntryDisplayListToAllSaved ${it.size}")
-                        }
+                        _displayedSiteEntries.value =
+                            DataModel.siteEntriesStateFlow.value.toList().also {
+                                debug("ResetSiteEntryDisplayListToAllSaved ${it.size}")
+                            }
 
                     is ModificationRequest.AddGpmToDisplayList ->
                         _displayedUnprocessedGPMs.update { it + request.savedGPM }.also {
@@ -70,9 +60,6 @@ class ImportMergeDataRepository {
                         }
 
                     is ModificationRequest.RemoveAllMatchingGpmsFromDisplayAndUnprocessedLists -> {
-                        if (!_unprocessedGPMs.removeAll { it.id == request.id }) {
-                            Log.d(TAG, "Couldn't remove(all) GPM $request.id from _unprocessedGPMs")
-                        }
                         _displayedUnprocessedGPMs.update {
                             it.filterNot { gpm -> gpm.id == request.id }
                         }.also {
@@ -92,6 +79,10 @@ class ImportMergeDataRepository {
                 }
             }
         }
+    }
+
+    fun onCleared() {
+        collector.cancel()
     }
 
     fun removeAllMatchingGpmsFromDisplayAndUnprocessedLists(id: Long) {
@@ -129,40 +120,11 @@ class ImportMergeDataRepository {
         }
     }
 
-    internal suspend fun initializeUnprocessedGPMAndDisplayListToGivenList(newGPMs: Set<SavedGPM>) {
-        modificationRequests.emit(
-            ModificationRequest.InitializeUnprocessedGPMAndDisplayListToGivenList(
-                newGPMs.toList()
-            )
-        )
-    }
-
     suspend fun resetGPMDisplayListToAllUnprocessed() {
         modificationRequests.emit(ModificationRequest.ResetGPMDisplayListToAllUnprocessed)
     }
 
-    internal suspend fun initializeSiteEntryListAndDisplayListToGivenList(newSiteEntries: List<DecryptableSiteEntry>) {
-        modificationRequests.emit(
-            ModificationRequest.InitializeSiteEntryListAndDisplayListToGivenList(
-                newSiteEntries
-            )
-        )
-    }
-
     suspend fun resetSiteEntryDisplayListToAllSaved() {
         modificationRequests.emit(ModificationRequest.ResetSiteEntryDisplayListToAllSaved)
-    }
-
-    fun getList(dataType: DataType): List<Any> {
-        return when (dataType) {
-            DataType.GPM -> _unprocessedGPMs.toList()
-            DataType.DecryptableSiteEntry -> _savedSiteEntries.toList()
-            DataType.WrappedDecryptableSiteEntry -> _savedSiteEntries.map {
-                WrappedDecryptableSiteEntry(
-                    it
-                )
-            }.toList()
-            // Handle other data types similarly
-        }
     }
 }

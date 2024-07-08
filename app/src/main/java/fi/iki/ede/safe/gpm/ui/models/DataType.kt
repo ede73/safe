@@ -3,8 +3,8 @@ package fi.iki.ede.safe.gpm.ui.models
 import fi.iki.ede.safe.model.DecryptableSiteEntry
 
 sealed class DataType {
-    object GPM : DataType()
-    object DecryptableSiteEntry : DataType()
+    //    object GPM : DataType()
+//    object DecryptableSiteEntry : DataType()
     object WrappedDecryptableSiteEntry : DataType()
     // Add other data types as needed
 }
