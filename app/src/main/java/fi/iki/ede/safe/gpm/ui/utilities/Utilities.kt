@@ -14,6 +14,7 @@ import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.model.ScoringConfig
 import fi.iki.ede.safe.gpm.ui.models.DNDObject
+import fi.iki.ede.safe.gpm.ui.models.SiteEntryToGPM
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.ui.utilities.firebaseLog
