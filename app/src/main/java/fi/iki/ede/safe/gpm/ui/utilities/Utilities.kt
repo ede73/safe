@@ -23,16 +23,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.InputStream
 
+private const val TAG = "Utilities"
+
 // Combine two lists, siteEntries and gpms
 internal fun combineLists(
     siteEntries: List<DecryptableSiteEntry>,
     gpms: List<SavedGPM>
 ): List<CombinedListPairs> {
     val maxSize = maxOf(siteEntries.size, gpms.size)
-    val combinedList = mutableListOf<CombinedListPairs>()
+    val combinedSet = mutableSetOf<CombinedListPairs>()
 
     for (i in 0 until maxSize) {
-        combinedList.add(
+        combinedSet.add(
             CombinedListPairs.SiteEntryToGPM(
                 siteEntries.getOrNull(i),
                 gpms.getOrNull(i)
@@ -40,46 +42,11 @@ internal fun combineLists(
         )
     }
 
-    // The matching password list is built such that every matching site entry and SavedGPM
-    // will pair up. So this leads to multiple site entries -> GPMs. As matching process continues
-    // we remove the matched GPMS. Evidently this leads to situation as follows:
-    // SiteEntry(1) -> GPM
-    // SiteEntry(1) -> null (ie. matched GPM)
-    // SiteEntry(1) -> null (ie. another matched GPM)
-    // And this leads the LazyColumn to throw up, as we have a non-unique row here!
-    // I don't see the opposite possible, since every GPM is unique, even if we had uneven lists
-    // null -> GPM(1)
-    // null -> GPM(2) (another one, not the same0
-    // SO let's filter out those buggy ones
-
-    // Since the search already goes SiteEntries to GPMs, we should be sorted, but to protect against changes
-    val sortedPairs = combinedList.sortedWith(compareBy<CombinedListPairs> {
-        (it as CombinedListPairs.SiteEntryToGPM).siteEntry?.id
-    }.thenBy {
-        (it as CombinedListPairs.SiteEntryToGPM).gpm == null
-    })
-
-    // also other issue, (some bug immediate or rate) causes duplicate entries when DnDing items
-    // (happened once!)
-    return sortedPairs.filterIndexed { index, pair ->
-        val currentPair = pair as? CombinedListPairs.SiteEntryToGPM
-        val prevPair = sortedPairs.getOrNull(index - 1) as? CombinedListPairs.SiteEntryToGPM
-        if (currentPair?.gpm == null) {
-            prevPair?.siteEntry != currentPair?.siteEntry
-        } else {
-            // also filter duplicates
-            (prevPair?.siteEntry != currentPair.siteEntry && prevPair?.gpm != currentPair.gpm).also {
-                firebaseLog("Duplicate siteEntry&GPM in list siteEntryId=${currentPair.siteEntry?.id} / gpmid=${currentPair.gpm.id}")
-            }
-        }
-    }.sortedWith(compareBy<CombinedListPairs, String?>(nullsLast()) {
+    return combinedSet.sortedWith(compareBy<CombinedListPairs, String?>(nullsLast()) {
         (it as CombinedListPairs.SiteEntryToGPM).siteEntry?.cachedPlainDescription?.lowercase()
     }.thenBy {
         (it as CombinedListPairs.SiteEntryToGPM).gpm?.cachedDecryptedName ?: ""
-    }).also {
-        val s = it.map { (it as CombinedListPairs.SiteEntryToGPM).siteEntry }.toSet()
-        val g = it.map { (it as CombinedListPairs.SiteEntryToGPM).gpm }.toSet()
-    }
+    })
 }
 
 internal fun readAndParseCSV(
@@ -135,7 +102,6 @@ internal fun processIncomingGPMs(
     scoringConfig: ScoringConfig,
     progressReport: (progress: String) -> Unit
 ): ImportChangeSet {
-
     debug {
         progressReport("We have previous ${importChangeSet.getUnprocessedSavedGPMs.size} imports")
         //importChangeSet.getUnprocessedSavedGPMs.forEach { Log.d(TAG,"$it") }
