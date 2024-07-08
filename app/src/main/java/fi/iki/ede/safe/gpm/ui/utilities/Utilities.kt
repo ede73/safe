@@ -69,7 +69,7 @@ internal fun combineLists(
         } else {
             // also filter duplicates
             (prevPair?.siteEntry != currentPair.siteEntry && prevPair?.gpm != currentPair.gpm).also {
-                firebaseLog("Duplicate siteEntry&GPM in list siteEntryId=${currentPair.siteEntry!!.id} / gpmid=${currentPair.gpm.id}")
+                firebaseLog("Duplicate siteEntry&GPM in list siteEntryId=${currentPair.siteEntry?.id} / gpmid=${currentPair.gpm.id}")
             }
         }
     }.sortedWith(compareBy<CombinedListPairs, String?>(nullsLast()) {
