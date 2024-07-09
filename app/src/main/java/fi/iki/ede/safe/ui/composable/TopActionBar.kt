@@ -1,6 +1,5 @@
 package fi.iki.ede.safe.ui.composable
 
-import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -8,9 +7,7 @@ import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.ManagedActivityResultLauncher
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -55,28 +52,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 private const val TAG = "TopActionBar"
-
-@Composable
-fun setupActivityResultLauncher(
-    cancelled: ((ActivityResult) -> Unit)? = null,
-    resultOk: (ActivityResult) -> Unit
-)
-        : ManagedActivityResultLauncher<Intent, ActivityResult> {
-    return rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult(),
-    ) {
-        when (it.resultCode) {
-            Activity.RESULT_OK -> {
-                resultOk(it)
-            }
-
-            Activity.RESULT_CANCELED -> {
-                if (cancelled != null)
-                    cancelled(it)
-            }
-        }
-    }
-}
 
 /**
  * Used in category and password list views

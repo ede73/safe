@@ -12,13 +12,12 @@ Paused: not important
     - for now, both go under 1st category found or not possible to restore if no categories
 
 TODO:
+- BOTTOM toolbar!
 - Enhance linter
     - linter test case provides different AST from prod (doesn't use k2?)
 - Add hard coded colors to linter, should use material colors
 - Enhance search to span extensions!
 - GPM:
-    - Implement better GPM view
-    - Visualize GPM linkage
     - Show ignored
 - Add edited-aspect to CRUD password/category. SQlite has no autom.modified, and feels too much to track that way, just bump preferences
 - Backup codes - messes up notes
@@ -43,6 +42,9 @@ TODO:
 - notify of old passwords
 
 DONE:
+- GPM:
+    - Implement better GPM view
+    - Visualize GPM linkage(actually took diff approach totally joined/disjoined lists)
 - proper state machine
 - replace old photo preview with proper photo
 - Extension: convert 'hard coded' pre-selected extensions to  completely user definable (categories)
