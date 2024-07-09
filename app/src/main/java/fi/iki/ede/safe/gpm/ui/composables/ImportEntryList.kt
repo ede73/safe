@@ -218,9 +218,15 @@ fun ImportEntryList(viewModel: ImportGPMViewModel) {
         }
     }
 
-    val imports = viewModel.importMergeDataRepository.displayedUnprocessedGPMs.collectAsState()
-    val mine = viewModel.importMergeDataRepository.displayedSiteEntries.collectAsState()
-    val combinedList = combineLists(mine.value, imports.value)
+    val displayedSiteEntries =
+        viewModel.importMergeDataRepository.displayedSiteEntries.collectAsState()
+    val displayedGPMs =
+        viewModel.importMergeDataRepository.displayedUnprocessedGPMs.collectAsState()
+    val combinedList = combineLists(
+        displayedSiteEntries.value,
+        displayedGPMs.value,
+        viewModel.displayedItemsAreConnected
+    )
     val s = combinedList.map { it.siteEntry }.toSet()
     val g = combinedList.map { it.gpm }.toSet()
     val listHash = "${s.hashCode()}-${g.hashCode()}-${combinedList.hashCode()}"
@@ -324,7 +330,7 @@ fun ImportEntryListPreview() {
                 "hash"
             )
         }
-        // would require datamodel mocks to complete
+        // would require data model mocks to complete
         val fakeViewModel = ImportGPMViewModel().apply {
 
         }

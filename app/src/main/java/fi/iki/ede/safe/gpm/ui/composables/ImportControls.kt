@@ -75,10 +75,10 @@ fun ImportControls(
 
         // TODO: Reset search lists? WHERE?
         viewModel.launchSearch(
-            if (isRegularExpression) 0.0 else similarityScore.toDouble() / 100,
-            searchTextField.text,
             toggleableStateToSearchTarget(searchPasswords.value),
             toggleableStateToSearchTarget(searchGPMs.value),
+            if (isRegularExpression) 0.0 else similarityScore.toDouble() / 100,
+            searchTextField.text,
             regex,
         )
     }

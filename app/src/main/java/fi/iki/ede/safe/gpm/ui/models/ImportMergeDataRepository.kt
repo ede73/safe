@@ -4,6 +4,7 @@ import android.util.Log
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableSiteEntry
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -21,7 +22,6 @@ class ImportMergeDataRepository {
     private val _displayedSiteEntries = MutableStateFlow<List<DecryptableSiteEntry>>(emptyList())
     val displayedUnprocessedGPMs: StateFlow<List<SavedGPM>> = _displayedUnprocessedGPMs
     val displayedSiteEntries: StateFlow<List<DecryptableSiteEntry>> = _displayedSiteEntries
-
     private val modificationRequests = MutableSharedFlow<ModificationRequest>()
     private val repositoryScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
@@ -70,11 +70,13 @@ class ImportMergeDataRepository {
                     is ModificationRequest.EmptyGpmDisplayLists -> {
                         debug("EmptyGpmDisplayLists")
                         _displayedUnprocessedGPMs.value = emptyList()
+                        request.completion.complete(Unit)
                     }
 
                     is ModificationRequest.EmptySiteEntryDisplayLists -> {
                         debug("EmptySiteEntryDisplayLists")
                         _displayedSiteEntries.value = emptyList()
+                        request.completion.complete(Unit)
                     }
                 }
             }
@@ -95,28 +97,34 @@ class ImportMergeDataRepository {
         }
     }
 
-    suspend fun emptyGPMDisplayList() {
-        modificationRequests.emit(ModificationRequest.EmptyGpmDisplayLists)
+    suspend fun emptyGPMDisplayList() = CompletableDeferred<Unit>().apply {
+        modificationRequests.emit(ModificationRequest.EmptyGpmDisplayLists(this))
     }
 
-    suspend fun emptySiteEntryDisplayList() {
-        modificationRequests.emit(ModificationRequest.EmptySiteEntryDisplayLists)
+    suspend fun emptySiteEntryDisplayList() = CompletableDeferred<Unit>().apply {
+        modificationRequests.emit(ModificationRequest.EmptySiteEntryDisplayLists(this))
     }
 
-    fun addDisplayItem(items: List<Any>) {
+    fun addDisplayItem(item: Any) {
         repositoryScope.launch {
-            items.forEach { item ->
-                when (item) {
-                    is WrappedDecryptableSiteEntry ->
-                        modificationRequests.emit(ModificationRequest.AddSiteEntryToDisplayList(item.siteEntry))
+            when (item) {
+                is WrappedDecryptableSiteEntry ->
+                    modificationRequests.emit(ModificationRequest.AddSiteEntryToDisplayList(item.siteEntry))
 
-                    is DecryptableSiteEntry ->
-                        modificationRequests.emit(ModificationRequest.AddSiteEntryToDisplayList(item))
+                is DecryptableSiteEntry ->
+                    modificationRequests.emit(ModificationRequest.AddSiteEntryToDisplayList(item))
 
-                    is SavedGPM ->
-                        modificationRequests.emit(ModificationRequest.AddGpmToDisplayList(item))
-                }
+                is SavedGPM ->
+                    modificationRequests.emit(ModificationRequest.AddGpmToDisplayList(item))
             }
+        }
+    }
+
+    fun addConnectedDisplayItem(item: Pair<DecryptableSiteEntry, SavedGPM>) {
+        repositoryScope.launch {
+            // TODO: REMOVE - use the PAIR
+            modificationRequests.emit(ModificationRequest.AddSiteEntryToDisplayList(item.first))
+            modificationRequests.emit(ModificationRequest.AddGpmToDisplayList(item.second))
         }
     }
 
