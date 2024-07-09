@@ -46,6 +46,11 @@ class ImportGPMViewModel : ViewModel() {
         importMergeDataRepository.onCleared()
     }
 
+    fun removeConnectedDisplayItem(siteEntry: DecryptableSiteEntry, linkedSavedGPM: SavedGPM) {
+        importMergeDataRepository.removeConnectedDisplayItem(siteEntry to linkedSavedGPM)
+
+    }
+
     fun removeAllMatchingGpmsFromDisplayAndUnprocessedLists(id: Long) {
         importMergeDataRepository.removeAllMatchingGpmsFromDisplayAndUnprocessedLists(id)
     }

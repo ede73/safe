@@ -20,8 +20,12 @@ private const val TAG = "ImportMergeDataRepository"
 class ImportMergeDataRepository {
     private val _displayedUnprocessedGPMs = MutableStateFlow<List<SavedGPM>>(emptyList())
     private val _displayedSiteEntries = MutableStateFlow<List<DecryptableSiteEntry>>(emptyList())
+    private val _connectedDisplayItems =
+        MutableStateFlow<List<Pair<DecryptableSiteEntry, SavedGPM>>>(emptyList())
     val displayedUnprocessedGPMs: StateFlow<List<SavedGPM>> = _displayedUnprocessedGPMs
     val displayedSiteEntries: StateFlow<List<DecryptableSiteEntry>> = _displayedSiteEntries
+    val connectedDisplayItems: StateFlow<List<Pair<DecryptableSiteEntry, SavedGPM>>> =
+        _connectedDisplayItems
     private val modificationRequests = MutableSharedFlow<ModificationRequest>()
     private val repositoryScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
@@ -59,6 +63,16 @@ class ImportMergeDataRepository {
                             debug("AddSiteEntryToDisplayList ${request.siteEntry.cachedPlainDescription}")
                         }
 
+                    is ModificationRequest.AddConnectedDisplayItem ->
+                        _connectedDisplayItems.update { it + request.connectedEntry }.also {
+                            debug("AddConnectedDisplayItem ${request.connectedEntry}")
+                        }
+
+                    is ModificationRequest.RemoveConnectedDisplayItem ->
+                        _connectedDisplayItems.update { it - request.connectedEntry }.also {
+                            debug("RemoveConnectedDisplayItem ${request.connectedEntry}")
+                        }
+
                     is ModificationRequest.RemoveAllMatchingGpmsFromDisplayAndUnprocessedLists -> {
                         _displayedUnprocessedGPMs.update {
                             it.filterNot { gpm -> gpm.id == request.id }
@@ -70,6 +84,7 @@ class ImportMergeDataRepository {
                     is ModificationRequest.EmptyGpmDisplayLists -> {
                         debug("EmptyGpmDisplayLists")
                         _displayedUnprocessedGPMs.value = emptyList()
+                        _connectedDisplayItems.value = emptyList()
                         request.completion.complete(Unit)
                     }
 
@@ -85,6 +100,12 @@ class ImportMergeDataRepository {
 
     fun onCleared() {
         collector.cancel()
+    }
+
+    fun removeConnectedDisplayItem(pair: Pair<DecryptableSiteEntry, SavedGPM>) {
+        repositoryScope.launch {
+            modificationRequests.emit(ModificationRequest.RemoveConnectedDisplayItem(pair))
+        }
     }
 
     fun removeAllMatchingGpmsFromDisplayAndUnprocessedLists(id: Long) {
@@ -122,9 +143,7 @@ class ImportMergeDataRepository {
 
     fun addConnectedDisplayItem(item: Pair<DecryptableSiteEntry, SavedGPM>) {
         repositoryScope.launch {
-            // TODO: REMOVE - use the PAIR
-            modificationRequests.emit(ModificationRequest.AddSiteEntryToDisplayList(item.first))
-            modificationRequests.emit(ModificationRequest.AddGpmToDisplayList(item.second))
+            modificationRequests.emit(ModificationRequest.AddConnectedDisplayItem(item))
         }
     }
 

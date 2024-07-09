@@ -9,6 +9,12 @@ sealed class ModificationRequest {
     data class AddSiteEntryToDisplayList(val siteEntry: DecryptableSiteEntry) :
         ModificationRequest()
 
+    data class AddConnectedDisplayItem(val connectedEntry: Pair<DecryptableSiteEntry, SavedGPM>) :
+        ModificationRequest()
+
+    data class RemoveConnectedDisplayItem(val connectedEntry: Pair<DecryptableSiteEntry, SavedGPM>) :
+        ModificationRequest()
+
     data class RemoveAllMatchingGpmsFromDisplayAndUnprocessedLists(val id: Long) :
         ModificationRequest()
 
