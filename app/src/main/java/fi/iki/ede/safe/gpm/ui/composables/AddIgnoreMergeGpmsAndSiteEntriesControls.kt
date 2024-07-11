@@ -73,7 +73,6 @@ fun AddIgnoreMergeGpmsAndSiteEntriesControls(
             RegexOption.IGNORE_CASE
         ) else null
 
-        // TODO: Reset search lists? WHERE?
         viewModel.launchSearch(
             toggleableStateToSearchTarget(searchPasswords.value),
             toggleableStateToSearchTarget(searchGPMs.value),
@@ -243,7 +242,6 @@ fun AddIgnoreMergeGpmsAndSiteEntriesControls(
                 }
             }
         }
-        // TODO: Search from what is being displayed?
     }
 }
 

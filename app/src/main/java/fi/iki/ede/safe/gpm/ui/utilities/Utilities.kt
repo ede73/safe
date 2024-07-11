@@ -30,38 +30,24 @@ private const val TAG = "Utilities"
 internal fun combineLists(
     siteEntries: List<DecryptableSiteEntry>,
     gpms: List<SavedGPM>,
-    displayedItemsAreConnected: Boolean // TODO: tells if lists are independent or connected!
 ): List<SiteEntryToGPM> {
-    if (displayedItemsAreConnected) {
-        val combinedSet = mutableSetOf<SiteEntryToGPM>()
-        for (i in 0 until maxOf(siteEntries.size, gpms.size)) {
-            combinedSet.add(SiteEntryToGPM(siteEntries.getOrNull(i), gpms.getOrNull(i)))
-        }
+    fun <T> List<T>.extendToSize(size: Int): List<T?> {
+        return this + List(size - this.size) { null }
+    }
 
-        return combinedSet.sortedWith(compareBy<SiteEntryToGPM, String?>(nullsLast()) {
-            it.siteEntry?.cachedPlainDescription?.lowercase()
-        }.thenBy {
-            it.gpm?.cachedDecryptedName ?: ""
-        })
-    } else {
-        fun <T> List<T>.extendToSize(size: Int): List<T?> {
-            return this + List(size - this.size) { null }
-        }
-
-        val maxSize = maxOf(siteEntries.size, gpms.size)
-        val extendedSiteEntries =
-            siteEntries.extendToSize(maxSize).sortedWith(
-                compareBy<DecryptableSiteEntry?, String?>(nullsLast()) {
-                    it?.cachedPlainDescription?.lowercase()
-                })
-        val extendedGPMs = gpms.extendToSize(maxSize).sortedWith(
-            compareBy<SavedGPM?, String?>(nullsLast()) {
-                it?.cachedDecryptedName?.lowercase()
+    val maxSize = maxOf(siteEntries.size, gpms.size)
+    val extendedSiteEntries =
+        siteEntries.extendToSize(maxSize).sortedWith(
+            compareBy<DecryptableSiteEntry?, String?>(nullsLast()) {
+                it?.cachedPlainDescription?.lowercase()
             })
-        return mutableListOf<SiteEntryToGPM>().apply {
-            for (i in 0 until maxSize) {
-                add(SiteEntryToGPM(extendedSiteEntries.getOrNull(i), extendedGPMs.getOrNull(i)))
-            }
+    val extendedGPMs = gpms.extendToSize(maxSize).sortedWith(
+        compareBy<SavedGPM?, String?>(nullsLast()) {
+            it?.cachedDecryptedName?.lowercase()
+        })
+    return mutableListOf<SiteEntryToGPM>().apply {
+        for (i in 0 until maxSize) {
+            add(SiteEntryToGPM(extendedSiteEntries.getOrNull(i), extendedGPMs.getOrNull(i)))
         }
     }
 }

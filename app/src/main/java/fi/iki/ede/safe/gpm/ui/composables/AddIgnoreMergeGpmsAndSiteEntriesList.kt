@@ -94,12 +94,13 @@ fun AddIgnoreMergeGpmsAndSiteEntriesList(viewModel: ImportGPMViewModel) {
         linkedSavedGPM: SavedGPM? = null,
     ) {
         try {
+            // TODO: IN theory this should not be needed, data model will update flow
+            // and thus the screen will be updated, but sorting order? location? gone?
             if (linkedSavedGPM != null) {
                 viewModel.removeConnectedDisplayItem(siteEntry, linkedSavedGPM)
             } else {
                 viewModel.removeAllMatchingGpmsFromDisplayAndUnprocessedLists(gpmId)
             }
-            // TODO: should remove the MATCHING SiteEntry too - IF we're doing matching lists
             DataModel.linkSaveGPMAndSiteEntry(siteEntry, gpmId)
         } catch (ex: Exception) {
             firebaseRecordException(
@@ -110,8 +111,7 @@ fun AddIgnoreMergeGpmsAndSiteEntriesList(viewModel: ImportGPMViewModel) {
     }
 
     fun addSavedGPM(savedGPMId: Long, maybeLinkedSiteEntry: Pair<DecryptableSiteEntry, SavedGPM>?) {
-        // TODO: Adding to first category...
-        // either make import category automatically or ASK user whe
+        // TODO: Ask user the category, no goes to GPM cat
         val catId =
             DataModel.categoriesStateFlow.value.firstOrNull { it.plainName == "Google Password Manager" }
 
@@ -249,20 +249,22 @@ fun AddIgnoreMergeGpmsAndSiteEntriesList(viewModel: ImportGPMViewModel) {
     val displayedGPMs =
         viewModel.importMergeDataRepository.displayedUnprocessedGPMs.collectAsState()
     val combinedList = when (viewModel.displayedItemsAreConnected) {
-        // TODO: combine the lists, other has sorting, this one below doesn't
         true -> connectedDisplayItems.value.map { SiteEntryToGPM(it.first, it.second, true) }
+            .sortedWith(compareBy<SiteEntryToGPM, String?>(nullsLast()) {
+                it.siteEntry?.cachedPlainDescription?.lowercase()
+            }.thenBy {
+                it.gpm?.cachedDecryptedName?.lowercase()
+            })
+
         false -> combineLists(
             displayedSiteEntries.value,
             displayedGPMs.value,
-            viewModel.displayedItemsAreConnected // REMOVE
         )
-
     }
-    val s = combinedList.map { it.siteEntry }.toSet()
-    val g = combinedList.map { it.gpm }.toSet()
-    val listHash = "${s.hashCode()}-${g.hashCode()}-${combinedList.hashCode()}"
-
-//    val itemPositions = remember(combinedList) { mutableStateMapOf<String, Pair<Rect, Rect>>() }
+    // something with LazyColumn not working right, make sure the list hash REALLY updates
+    val listHash = "${combinedList.map { it.siteEntry }.toSet().hashCode()}-${
+        combinedList.map { it.gpm }.toSet().hashCode()
+    }-${combinedList.hashCode()}"
 
     Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -278,33 +280,18 @@ fun AddIgnoreMergeGpmsAndSiteEntriesList(viewModel: ImportGPMViewModel) {
             items(
                 combinedList,
                 key = { item ->
-                    val site = item
+                    val twoColumn = item
                     // some how lazycolumn super-anally retains the list order by the KEYs!
                     // Since I'm providing sorted list (and sort order ain't maintained)..
                     // let's pass list instance ID, YES, forces full refresh, but at least we're sorted!
-                    "$listHash,site=${site.siteEntry?.id} gpmid=${site.gpm?.id}"
+                    "$listHash,site=${twoColumn.siteEntry?.id} gpmid=${twoColumn.gpm?.id}"
                 }
-            ) { x ->
-                val site = x
-                Row(
-                    modifier = Modifier
-                        .padding(vertical = 4.dp)
-//                        .onGloballyPositioned { coordinates ->
-//                            val position = coordinates.positionInParent()
-//                            val key = "${site.siteEntry?.id}-${site.gpm?.id}"
-//                            if (site.gpm != null) {
-//                                parentPositions[key] = Pair(position.y, position.y)
-//                            }
-//                        }
-                ) {
-//                    val siteEntryCoordinates = remember { mutableStateOf<LayoutCoordinates?>(null) }
-//                    val gpmCoordinates = remember { mutableStateOf<LayoutCoordinates?>(null) }
-                    val siteEntry = site.siteEntry
+            ) { twoColumn ->
+                Row(modifier = Modifier.padding(vertical = 4.dp)) {
+                    val siteEntry = twoColumn.siteEntry
                     DraggableText(
                         if (siteEntry != null) DNDObject.SiteEntry(siteEntry) else DNDObject.Spacer,
-                        modifier = mySizeModifier
-                            .weight(1f),
-//                            .onGloballyPositioned { siteEntryCoordinates.value = it },
+                        modifier = mySizeModifier.weight(1f),
                         onItemDropped = { (_, maybeId) ->
                             if (siteEntry == null) false
                             else maybeId.toLongOrNull()?.let {
@@ -312,7 +299,7 @@ fun AddIgnoreMergeGpmsAndSiteEntriesList(viewModel: ImportGPMViewModel) {
                                     linkSavedGPMAndDecryptableSiteEntry(
                                         siteEntry,
                                         it,
-                                        site.gpm.takeIf { site.connected },
+                                        twoColumn.gpm.takeIf { twoColumn.connected },
                                     )
                                 }
                                 true
@@ -328,42 +315,16 @@ fun AddIgnoreMergeGpmsAndSiteEntriesList(viewModel: ImportGPMViewModel) {
                     Spacer(modifier = Modifier.fillMaxWidth(0.1f))
 
                     DraggableText(
-                        if (site.gpm != null) DNDObject.GPM(site.gpm)
+                        if (twoColumn.gpm != null) DNDObject.GPM(twoColumn.gpm)
                         else DNDObject.Spacer,
-                        modifier = mySizeModifier
-                            .weight(1f),
-//                            .onGloballyPositioned { gpmCoordinates.value = it },
-                        onTap = { showInfo.value = site.gpm }
+                        modifier = mySizeModifier.weight(1f),
+                        onTap = { showInfo.value = twoColumn.gpm }
                     )
-//                    LaunchedEffect(siteEntryCoordinates.value, gpmCoordinates.value) {
-//                        val siteEntryCoord = siteEntryCoordinates.value
-//                        val gpmCoord = gpmCoordinates.value
-//                        val rect = makeRect(siteEntryCoord!!) to makeRect(gpmCoord!!)
-//                        if (rect.first != null && rect.second != null) {
-//                            val hash = "${site.siteEntry?.id}-${site.gpm?.id}"
-//                            itemPositions[hash] = rect as Pair<Rect, Rect>
-////                            println("${parentPositions[hash]}==${rect}")
-//                        }
-//                    }
                 }
             }
         }
-//        if (viewModel.displayedItemsAreConnected) {
-//            // DrawConnectingLines(itemPositions, Modifier.matchParentSize())
-//        }
     }
 }
-
-//private fun makeRect(
-//    layoutCoord: LayoutCoordinates
-//) = layoutCoord.parentLayoutCoordinates?.let {
-//    Rect(
-//        layoutCoord.positionInWindow().x,
-//        it.positionInParent().y,
-//        layoutCoord.positionInWindow().x + layoutCoord.size.width.toFloat(),
-//        it.positionInParent().y + layoutCoord.size.height.toFloat()
-//    )
-//}
 
 @Preview(showBackground = true)
 @Composable
@@ -395,25 +356,3 @@ fun ImportEntryListPreview() {
         AddIgnoreMergeGpmsAndSiteEntriesList(fakeViewModel)
     }
 }
-
-//@Composable
-//fun DrawConnectingLines(
-//    itemPositions: SnapshotStateMap<String, Pair<Rect, Rect>>,
-//    modifier: Modifier
-//) {
-//    Canvas(modifier = modifier) {
-//        val lineColor = Color.Black.copy(alpha = 0.4f)
-//        val lineWidth = 2.dp.toPx()
-//
-//        itemPositions.forEach { (_, positions) ->
-//            val (left, right) = positions
-//            drawLine(
-//                color = lineColor,
-//                start = Offset(left.right, left.top + (left.bottom - left.top) / 2),
-//                end = Offset(right.left, right.top + (left.bottom - left.top) / 2),
-//                strokeWidth = lineWidth,
-//                cap = Stroke.DefaultCap
-//            )
-//        }
-//    }
-//}
