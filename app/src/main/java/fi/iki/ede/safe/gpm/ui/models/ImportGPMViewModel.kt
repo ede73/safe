@@ -46,22 +46,26 @@ class ImportGPMViewModel : ViewModel() {
         importMergeDataRepository.onCleared()
     }
 
+    // if search takes FOR EVER and user is already dragndropping, flow updates, but search
+    // obviously runs on the COPY it was started with, to avoid concurrent mod AND adding
+    // finalized items, we collect them here and ignore in the search
+    private var excludedGPMs = setOf<Long>()
     fun removeConnectedDisplayItem(siteEntry: DecryptableSiteEntry, linkedSavedGPM: SavedGPM) {
         importMergeDataRepository.removeConnectedDisplayItem(siteEntry to linkedSavedGPM)
-
+        excludedGPMs = excludedGPMs + linkedSavedGPM.id!!
     }
 
     fun removeAllMatchingGpmsFromDisplayAndUnprocessedLists(id: Long) {
         importMergeDataRepository.removeAllMatchingGpmsFromDisplayAndUnprocessedLists(id)
+        excludedGPMs = excludedGPMs + id
     }
 
-    val singleListInnerSearch = listOf<Any?>(null)
+    // marker list for distributed single list search
+    private val singleListInnerSearch = listOf<Any?>(null)
 
     // thread safe abstraction allowing implementing easy match algorithms
     // and the heavy lifting of editing lists while iterating them is done here
     // not messing up the call site
-    // TODO: ADD PRE-MANGLE! instead of decrypting 300000 entries, do 400+700 , make hash and compare the hashes! (or parts)
-    // TODO: pre-mangle, make all lowercase - for instance
     private fun <O, I> launchIterateLists(
         name: String,
         outerList: List<O>,
@@ -70,43 +74,56 @@ class ImportGPMViewModel : ViewModel() {
         compare: (outerItem: O, innerItem: I) -> Pair<O, I?>?,
         exceptionHandler: (Exception) -> Unit = {}
     ) = viewModelScope.launch(Dispatchers.Default) {
+        excludedGPMs = emptySet()
         val maxParallelism = Runtime.getRuntime().availableProcessors()
         start()
+
+        fun isGpmExcluded(gpm: I) = when (gpm) {
+            is SavedGPM -> {
+                excludedGPMs.contains(gpm.id)
+            }
+
+            else -> false
+        }
+
+        fun <I, O> foundMatchMaybeAdd(
+            innerList: List<I>,
+            addOuterItem: O,
+            addInnerItem: I?
+        ) {
+            if (innerList === singleListInnerSearch) {
+                // this is a single list search
+                importMergeDataRepository.addDisplayItem(addOuterItem as Any)
+            } else if (addInnerItem != null) {
+                importMergeDataRepository.addConnectedDisplayItem(
+                    Pair(
+                        if (addOuterItem is WrappedDecryptableSiteEntry)
+                            addOuterItem.siteEntry
+                        else
+                            addOuterItem as DecryptableSiteEntry,
+                        addInnerItem as SavedGPM
+                    )
+                )
+            }
+        }
+
         // allow iterating while editing
         val copyOfOuterList = outerList.toList()
-
-        val progress =
-            Progress(copyOfOuterList.size * innerList.size.toLong()) { percentCompleted ->
-                jobManager.updateProgress(percentCompleted)
-            }
+        val copyOfInnerList = innerList.toList()
+        val listTotalSearchSpace = copyOfOuterList.size * copyOfInnerList.size.toLong()
+        val progress = Progress(listTotalSearchSpace) { percentCompleted ->
+            jobManager.updateProgress(percentCompleted)
+        }
         try {
             copyOfOuterList.chunked(maxParallelism).forEach { chunkedOuterEntry ->
                 launch {
                     chunkedOuterEntry.forEach outerExit@{ outerEntry ->
                         if (!isActive) return@outerExit
-                        // TODO: this might NOT be enuf if GPMs removed(ignored/linked)
-                        // while search on going, another solution is to add a removed items list
-                        // and just in case subtract from here..
-                        // just in case GPM list was modified, lets search on new entries
-                        val copyOfInnerList = innerList.toList()
                         copyOfInnerList.forEach innerExit@{ innerEntry ->
-                            if (!isActive) return@innerExit
+                            if (!isActive || isGpmExcluded(innerEntry)) return@innerExit
                             progress.increment()
                             compare(outerEntry, innerEntry)?.let { (addOuterItem, addInnerItem) ->
-                                if (innerList === singleListInnerSearch) {
-                                    // this is a single list search
-                                    importMergeDataRepository.addDisplayItem(addOuterItem as Any)
-                                } else if (addInnerItem != null) {
-                                    importMergeDataRepository.addConnectedDisplayItem(
-                                        Pair(
-                                            if (addOuterItem is WrappedDecryptableSiteEntry)
-                                                addOuterItem.siteEntry
-                                            else
-                                                addOuterItem as DecryptableSiteEntry,
-                                            addInnerItem as SavedGPM
-                                        )
-                                    )
-                                }
+                                foundMatchMaybeAdd(innerList, addOuterItem, addInnerItem)
                             }
                         }
                     }
@@ -161,10 +178,8 @@ class ImportGPMViewModel : ViewModel() {
         CoroutineScope(Dispatchers.Default).launch {
             jobManager.cancelAndAddNewJob {
                 _displayedItemsAreConnected = true
-                importMergeDataRepository.emptySiteEntryDisplayList()
-                    .await() // TODO: REMOVE, hoist reset control!
-                importMergeDataRepository.emptyGPMDisplayList()
-                    .await() // TODO: REMOVE, hoist reset control!
+                importMergeDataRepository.emptySiteEntryDisplayList().await()
+                importMergeDataRepository.emptyGPMDisplayList().await()
                 launchIterateLists("applyMatchingNames",
                     DataModel.siteEntriesStateFlow.value,
                     DataModel.unprocessedGPMsFlow.value.toList(),
@@ -256,7 +271,7 @@ class ImportGPMViewModel : ViewModel() {
         needle: LowerCaseTrimmedString,
         haystack: (L) -> String
     ) = resetSearchList().await().let {
-        // we sent reset display lest call out already, so by the time thread starts, list should be clear
+        // we sent reset display call out already, so by the time thread starts, list should be clear
         launchIterateList(
             searchHintText,
             listOfItemsToSearch,

@@ -223,9 +223,7 @@ fun AddIgnoreMergeGpmsAndSiteEntriesControls(
                 if (checked) {
                     viewModel.launchMatchingPasswordSearchAndResetDisplayLists()
                 } else {
-                    viewModel.cancelAllJobs {
-                        //viewModel.resetDisplayLists()
-                    }
+                    viewModel.cancelAllJobs {}
                 }
             }
             TextualCheckbox(
