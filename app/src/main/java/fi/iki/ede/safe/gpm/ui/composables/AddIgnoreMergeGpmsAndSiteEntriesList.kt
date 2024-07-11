@@ -127,7 +127,7 @@ fun AddIgnoreMergeGpmsAndSiteEntriesList(viewModel: ImportGPMViewModel) {
             })
         }
 
-        coroutineScope.launch(Dispatchers.IO) {
+        coroutineScope.launch {
             if (catId == null) {
                 DataModel.addOrEditCategory(DecryptableCategoryEntry().apply {
                     encryptedName = "Google Password Manager".encrypt()
