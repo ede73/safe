@@ -22,15 +22,15 @@ import fi.iki.ede.gpm.changeset.ImportChangeSet
 import fi.iki.ede.gpm.changeset.ScoredMatch
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
-import fi.iki.ede.safe.gpm.ui.composables.ImportResultListPager
-import fi.iki.ede.safe.gpm.ui.composables.ImportScreen
+import fi.iki.ede.safe.gpm.ui.composables.ImportNewGpmsComposable
+import fi.iki.ede.safe.gpm.ui.composables.ImportNewGpmsPager
 import fi.iki.ede.safe.gpm.ui.utilities.makeIncomingForTesting
 import fi.iki.ede.safe.gpm.ui.utilities.makeSavedForTesting
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.AutoLockingBaseComponentActivity
 
-class ImportGooglePasswords : AutoLockingBaseComponentActivity() {
+class ImportNewGpmsScreen : AutoLockingBaseComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -41,9 +41,9 @@ class ImportGooglePasswords : AutoLockingBaseComponentActivity() {
                 Surface(
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
-                    ImportScreen(::avertInactivity, hasUnlinkedItemsFromPreviousRound) {
+                    ImportNewGpmsComposable(::avertInactivity, hasUnlinkedItemsFromPreviousRound) {
                         // done!
-                        MergeGooglePasswordsToMine.startMe(this)
+                        AddIgnoreMergeGpmsAndSiteEntriesScreen.startMe(this)
                         finish()
                     }
                 }
@@ -53,7 +53,7 @@ class ImportGooglePasswords : AutoLockingBaseComponentActivity() {
 
     companion object {
         fun startMe(context: Context) {
-            context.startActivity(Intent(context, ImportGooglePasswords::class.java))
+            context.startActivity(Intent(context, ImportNewGpmsScreen::class.java))
         }
     }
 }
@@ -65,7 +65,7 @@ fun ImportGooglePasswordsPreview() {
     KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
     SafeTheme {
         Column {
-            ImportScreen(null, true) {}
+            ImportNewGpmsComposable(null, true) {}
 
             HorizontalDivider(modifier = Modifier.padding(20.dp))
 
@@ -91,7 +91,7 @@ fun ImportGooglePasswordsPreview() {
             val import: ImportChangeSet = ImportChangeSet(incoming, saved, matches)
             val importChangeSet = remember { mutableStateOf<ImportChangeSet?>(import) }
 
-            ImportResultListPager(importChangeSet, {})
+            ImportNewGpmsPager(importChangeSet, {})
         }
     }
 }

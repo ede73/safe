@@ -20,7 +20,7 @@ import fi.iki.ede.safe.ui.theme.SafeListItem
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @Composable
-fun Page1(importChangeSet: MutableState<ImportChangeSet?>) =
+fun ImportNewGpmsToBeAddedPage(importChangeSet: MutableState<ImportChangeSet?>) =
     Column {
         Text("New passwords(will be ADDED). Ie. didn't match incoming to anything existing.")
         val selectableList =
@@ -44,6 +44,6 @@ fun Page1Preview() {
     KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
     SafeTheme {
         val m = remember { mutableStateOf<ImportChangeSet?>(makeFakeImportForTesting()) }
-        Page1(m)
+        ImportNewGpmsToBeAddedPage(m)
     }
 }

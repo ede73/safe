@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.dp
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.BackupDatabase
 import fi.iki.ede.safe.backupandrestore.ExportConfig
-import fi.iki.ede.safe.gpm.ui.activities.ImportGooglePasswords
+import fi.iki.ede.safe.gpm.ui.activities.ImportNewGpmsScreen
 import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
 import fi.iki.ede.safe.service.AutolockingService
@@ -261,7 +261,7 @@ private fun MakeDropdownMenu(
                 onClick = {
                     try {
                         displayMenu.value = false
-                        ImportGooglePasswords.startMe(context)
+                        ImportNewGpmsScreen.startMe(context)
                     } catch (ex: ActivityNotFoundException) {
                         Log.e(TAG, "Cannot launch ImportGooglePasswordManager", ex)
                     }

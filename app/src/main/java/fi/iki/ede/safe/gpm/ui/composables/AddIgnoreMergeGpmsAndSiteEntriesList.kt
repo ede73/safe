@@ -64,7 +64,7 @@ private const val TAG = "ImportEntryList"
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ImportEntryList(viewModel: ImportGPMViewModel) {
+fun AddIgnoreMergeGpmsAndSiteEntriesList(viewModel: ImportGPMViewModel) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val showInfo = remember { mutableStateOf<SavedGPM?>(null) }
@@ -392,7 +392,7 @@ fun ImportEntryListPreview() {
         val fakeViewModel = ImportGPMViewModel().apply {
 
         }
-        ImportEntryList(fakeViewModel)
+        AddIgnoreMergeGpmsAndSiteEntriesList(fakeViewModel)
     }
 }
 

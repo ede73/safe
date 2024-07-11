@@ -24,13 +24,13 @@ import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ImportResultListPager(importChangeSet: MutableState<ImportChangeSet?>, done: () -> Unit) {
+fun ImportNewGpmsPager(importChangeSet: MutableState<ImportChangeSet?>, done: () -> Unit) {
     Column {
         val pages = listOf<@Composable () -> Unit>(
-            { Page1(importChangeSet) },
-            { Page2(importChangeSet) },
-            { Page3(importChangeSet) },
-            { Page4(importChangeSet) },
+            { ImportNewGpmsToBeAddedPage(importChangeSet) },
+            { MatchingGpmsToBeUpdatedPage(importChangeSet) },
+            { ConflictingGpmsPage(importChangeSet) },
+            { ObsoleteGpmsToBeDeletedPage(importChangeSet) },
         )
 
         val pagerState = rememberPagerState(pageCount = { 4 })
@@ -59,6 +59,6 @@ fun ImportResultListPagerPreview() {
     KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
     SafeTheme {
         val m = remember { mutableStateOf<ImportChangeSet?>(makeFakeImportForTesting()) }
-        ImportResultListPager(m, {})
+        ImportNewGpmsPager(m, {})
     }
 }

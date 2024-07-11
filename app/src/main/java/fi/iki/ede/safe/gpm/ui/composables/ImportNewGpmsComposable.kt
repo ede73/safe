@@ -60,13 +60,12 @@ import kotlin.reflect.KFunction1
 private const val TAG = "ImportScreen"
 
 @Composable
-fun ImportScreen(
+fun ImportNewGpmsComposable(
     avertInactivity: ((Context, String) -> Unit)?,
     hasUnlinkedItemsFromPreviousRound: Boolean,
     skipImportReminder: Boolean = false,
     _done: () -> Unit,
 ) {
-
     val context = LocalContext.current
     val myScope = CoroutineScope(Dispatchers.IO)
     val importFailed = stringResource(id = R.string.google_password_import_failed)
@@ -288,7 +287,7 @@ fun ImportScreen(
             }
         }
 
-        ImportResultListPager(importChangeSet, _done)
+        ImportNewGpmsPager(importChangeSet, _done)
 
         if (!skipImportReminder && showUsage.value) {
             UsageInfoDialog(stringResource(id = R.string.google_password_import_usage),
@@ -349,7 +348,7 @@ private fun doImport(importChangeSet: ImportChangeSet) {
 fun ImportScreenPreview() {
     SafeTheme {
         fun fake(a: Context, b: String) {}
-        ImportScreen(::fake, hasUnlinkedItemsFromPreviousRound = false, true) {
+        ImportNewGpmsComposable(::fake, hasUnlinkedItemsFromPreviousRound = false, true) {
         }
     }
 }

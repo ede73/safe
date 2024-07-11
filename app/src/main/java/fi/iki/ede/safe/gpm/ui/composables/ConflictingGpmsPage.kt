@@ -25,7 +25,7 @@ import fi.iki.ede.safe.ui.theme.SafeListItem
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @Composable
-fun Page3(importChangeSet: MutableState<ImportChangeSet?>) =
+fun ConflictingGpmsPage(importChangeSet: MutableState<ImportChangeSet?>) =
     Column {
         Text("Conflicts - incoming matches multiple existing ones. We'll do nothing to sort these. They're included in other sets though.")
         Column {
@@ -81,6 +81,6 @@ fun Page3Preview() {
     KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
     SafeTheme {
         val m = remember { mutableStateOf<ImportChangeSet?>(makeFakeImportForTesting()) }
-        Page3(m)
+        ConflictingGpmsPage(m)
     }
 }

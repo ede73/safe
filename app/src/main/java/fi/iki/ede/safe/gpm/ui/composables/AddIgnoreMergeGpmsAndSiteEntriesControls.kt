@@ -43,7 +43,7 @@ import fi.iki.ede.safe.ui.theme.SafeTheme
 import java.util.regex.PatternSyntaxException
 
 @Composable
-fun ImportControls(
+fun AddIgnoreMergeGpmsAndSiteEntriesControls(
     viewModel: ImportGPMViewModel,
 ) {
     val isWorkingAndProgress by viewModel.isWorkingAndProgress.observeAsState(false to null as Float?)
@@ -253,6 +253,6 @@ fun ImportControlsPreview() {
     val fakeViewModel = ImportGPMViewModel().apply {
     }
     SafeTheme {
-        ImportControls(fakeViewModel)
+        AddIgnoreMergeGpmsAndSiteEntriesControls(fakeViewModel)
     }
 }

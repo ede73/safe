@@ -20,7 +20,7 @@ import fi.iki.ede.safe.ui.theme.SafeListItem
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @Composable
-fun Page4(importChangeSet: MutableState<ImportChangeSet?>) =
+fun ObsoleteGpmsToBeDeletedPage(importChangeSet: MutableState<ImportChangeSet?>) =
     Column {
         Text("Obsolete passwords(will be DELETED). Ie. identified not to exist in new import.")
         val selectableList =
@@ -46,6 +46,6 @@ fun Page4Preview() {
     KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
     SafeTheme {
         val m = remember { mutableStateOf<ImportChangeSet?>(makeFakeImportForTesting()) }
-        Page4(m)
+        ObsoleteGpmsToBeDeletedPage(m)
     }
 }
