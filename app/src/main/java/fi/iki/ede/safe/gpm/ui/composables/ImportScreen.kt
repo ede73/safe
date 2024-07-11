@@ -202,6 +202,7 @@ fun ImportScreen(
                     myScope.launch {
                         DataModel.deleteAllSavedGPMs()
                     }
+                    deleteAllCounter = 0
                 }
             }
         )
