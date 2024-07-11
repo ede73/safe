@@ -19,10 +19,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.TestOnly
 import java.time.ZonedDateTime
 
 object DataModel {
@@ -30,30 +32,43 @@ object DataModel {
 
     init {
         if (BuildConfig.DEBUG) {
-            val thisClass = this
             GlobalScope.launch {
                 val TAG = "DataModel(observer)"
                 _siteEntriesStateFlow.collect { list ->
                     Log.d(
                         TAG,
-                        "Debug observer: $thisClass _siteEntriesStateFlow:  (${
+                        "Debug observer: _siteEntriesStateFlow:  (${
                             list.map { it.id }.joinToString(",")
                         })"
                     )
                 }
+            }
+            GlobalScope.launch {
                 _categoriesStateFlow.collect { list ->
                     Log.d(
                         TAG,
-                        "Debug observer: $thisClass _categoriesStateFlow:  (${
+                        "Debug observer: _categoriesStateFlow:  (${
                             list.map { it.id }.joinToString(",")
                         })"
                     )
                 }
+            }
+            GlobalScope.launch {
                 _allSavedGPMsFlow.collect { list ->
                     Log.d(
                         TAG,
-                        "Debug observer: $thisClass _savedGPMsFlow: (${
+                        "Debug observer: _savedGPMsFlow: (${
                             list.map { it.id }.joinToString(",")
+                        })"
+                    )
+                }
+            }
+            GlobalScope.launch {
+                _siteEntryToSavedGPMFlow.collect { map ->
+                    Log.d(
+                        TAG,
+                        "Debug observer: _siteEntryToSavedGPMFlow: (${
+                            map.map { it.value }.flatten().joinToString(",")
                         })"
                     )
                 }
@@ -67,25 +82,31 @@ object DataModel {
 
     private val _siteEntryToSavedGPMFlow =
         MutableStateFlow(LinkedHashMap<DecryptableSiteEntry, Set<SavedGPM>>())
+
+    @get:TestOnly
     val siteEntryToSavedGPMStateFlow: StateFlow<LinkedHashMap<DecryptableSiteEntry, Set<SavedGPM>>>
         get() = _siteEntryToSavedGPMFlow
 
     // combines all saved GPMs excluding ignored ones as well as those linked
-    val unprocessedGPMsFlow: StateFlow<Set<SavedGPM>> =
-        combine(
-            _allSavedGPMsFlow,
-            _siteEntryToSavedGPMFlow
-        ) { setOfSavedGPMs, siteEntryToGpmsLink ->
-            setOfSavedGPMs.filterNot { savedGPM ->
-                // ignore ignore + linked
-                savedGPM.flaggedIgnored ||
-                        savedGPM.id in siteEntryToGpmsLink.values.flatten().map { it.id }.toSet()
-            }.toSet()
-        }.stateIn(
-            scope = scope,
-            started = SharingStarted.Eagerly,
-            initialValue = emptySet()
-        )
+    val unprocessedGPMsFlow: StateFlow<Set<SavedGPM>> = combine(
+        _allSavedGPMsFlow,
+        _siteEntryToSavedGPMFlow
+    ) { setOfSavedGPMs, siteEntryToGpmsLink ->
+        Log.d(TAG, "Inside..unprocessedGPMsFlow")
+        val linkedGPMs = siteEntryToGpmsLink.values.flatten().map { it.id }.toSet()
+        setOfSavedGPMs.filterNot { savedGPM ->
+            savedGPM.flaggedIgnored || savedGPM.id in linkedGPMs
+        }.toSet().also {
+            Log.d(TAG, "unprocessedGPMsFlow updated:")
+            Log.d(TAG, linkedGPMs.sortedBy { it }.joinToString(","))
+        }
+    }.catch {
+        Log.e(TAG, "FAILUREEEEE $it")
+    }.stateIn(
+        scope = scope,
+        started = SharingStarted.Eagerly,
+        initialValue = emptySet()
+    )
 
     // Categories state and events
     private val _categoriesStateFlow = MutableStateFlow<List<DecryptableCategoryEntry>>(emptyList())
@@ -108,7 +129,7 @@ object DataModel {
     fun getSiteEntriesOfCategory(categoryId: DBID): List<DecryptableSiteEntry> =
         _siteEntriesStateFlow.value.filter { it.categoryId == categoryId }
 
-    fun getSavedGPM(savedGPMId: DBID): SavedGPM =
+    private fun getSavedGPM(savedGPMId: DBID): SavedGPM =
         _allSavedGPMsFlow.value.first { it.id == savedGPMId }
 
     // TODO: used only while developing? or fixing broken imports?
@@ -428,25 +449,23 @@ object DataModel {
     }
 
     fun linkSaveGPMAndSiteEntry(siteEntry: DecryptableSiteEntry, savedGpmId: Long) {
-        val gpm = getSavedGPM(savedGpmId)
-        Preferences.setLastModified()
-        val siteEntryIndex =
-            _siteEntryToSavedGPMFlow.value.keys.firstOrNull { it.id == siteEntry.id }
-        if (siteEntryIndex == null) {
-            _siteEntryToSavedGPMFlow.update { map ->
-                map[siteEntry] = setOf(gpm)
-                map
+        getSavedGPM(savedGpmId).let { savedGPM ->
+            val map = _siteEntryToSavedGPMFlow.value.toMutableMap()
+            map.keys.find { it.id == siteEntry.id }.let { existingEntry ->
+                if (existingEntry != null) {
+                    val updatedSet = map[existingEntry]?.toMutableSet() ?: mutableSetOf()
+                    updatedSet.add(savedGPM)
+                    map[existingEntry] = updatedSet
+                } else {
+                    map[siteEntry] = setOf(savedGPM)
+                }
             }
-        } else {
-            _siteEntryToSavedGPMFlow.update { map ->
-                val newSet = map[siteEntryIndex]!!.toSet() + setOf(gpm)
-                map[siteEntryIndex] = newSet
-                map
-            }
+            _siteEntryToSavedGPMFlow.value = LinkedHashMap(map)
         }
 
         try {
             DBHelperFactory.getDBHelper().linkSaveGPMAndSiteEntry(siteEntry.id!!, savedGpmId)
+            Preferences.setLastModified()
         } catch (ex: Exception) {
             firebaseRecordException(
                 "Linking SE=${siteEntry.id} and GPM=${savedGpmId} failed (exists already?) should never happend",
@@ -460,15 +479,16 @@ object DataModel {
         categoryId: DBID,
         onAdd: suspend (DecryptableSiteEntry) -> Unit
     ) {
-        val gpm = getSavedGPM(savedGpmId)
-        Preferences.setLastModified()
-        addOrUpdateSiteEntry(DecryptableSiteEntry(categoryId).apply {
-            username = gpm.encryptedUsername
-            password = gpm.encryptedPassword
-            website = gpm.encryptedUrl
-            description = gpm.encryptedName
-            note = gpm.encryptedNote
-        }, onAdd)
+        getSavedGPM(savedGpmId).let { gpm ->
+            Preferences.setLastModified()
+            addOrUpdateSiteEntry(DecryptableSiteEntry(categoryId).apply {
+                username = gpm.encryptedUsername
+                password = gpm.encryptedPassword
+                website = gpm.encryptedUrl
+                description = gpm.encryptedName
+                note = gpm.encryptedNote
+            }, onAdd)
+        }
     }
 
     fun getLinkedGPMs(siteEntryID: DBID): Set<SavedGPM> =

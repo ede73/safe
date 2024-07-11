@@ -2,6 +2,9 @@ package fi.iki.ede.gpm.model
 
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.support.DisallowedFunctions
+import fi.iki.ede.gpm.changeset.harmonizePotentialDomainName
+import fi.iki.ede.gpm.similarity.LowerCaseTrimmedString
+import fi.iki.ede.gpm.similarity.toLowerCasedTrimmedString
 
 data class SavedGPM private constructor(
     val id: Long? = null,
@@ -21,6 +24,9 @@ data class SavedGPM private constructor(
     val cachedDecryptedUrl: String by lazy { encryptedUrl.decrypt() } // ok
     val cachedDecryptedPassword: String by lazy { encryptedPassword.decrypt() } // ok
     val cachedDecryptedNote: String by lazy { encryptedNote.decrypt() } // ok
+    val harmonizedName: LowerCaseTrimmedString by lazy {
+        harmonizePotentialDomainName(cachedDecryptedName).toLowerCasedTrimmedString()
+    }
 
     constructor(id: Long? = null, importing: IncomingGPM) : this(
         id,

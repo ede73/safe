@@ -188,20 +188,18 @@ class ImportGPMViewModel : ViewModel() {
                 importMergeDataRepository.emptyGPMDisplayList().await()
 
                 launchIterateLists("applyMatchingNames",
-                    DataModel.siteEntriesStateFlow.value.toList(),
+                    DataModel.siteEntriesStateFlow.value.map { WrappedDecryptableSiteEntry(it) },
                     DataModel.unprocessedGPMsFlow.value.toList(),
                     compare = { outerEntry, innerEntry ->
-                        val siteEntryName =
-                            harmonizePotentialDomainName(outerEntry.cachedPlainDescription).toLowerCasedTrimmedString()
-                        val gpmName =
-                            harmonizePotentialDomainName(innerEntry.cachedDecryptedName).toLowerCasedTrimmedString()
-
                         if (similarityThreshold > 0) {
-                            findSimilarity(siteEntryName, gpmName).let { simScore ->
+                            findSimilarity(
+                                outerEntry.cachedHarmonizedDecryptedDescription,
+                                innerEntry.harmonizedName
+                            ).let { simScore ->
                                 (outerEntry to innerEntry).takeIf { simScore >= similarityThreshold }
                             }
                         } else {
-                            (outerEntry to innerEntry).takeIf { siteEntryName == gpmName }
+                            (outerEntry to innerEntry).takeIf { outerEntry.cachedHarmonizedDecryptedDescription == innerEntry.harmonizedName }
                         }
                     }
                 )
