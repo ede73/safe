@@ -70,6 +70,7 @@ class ImportGPMViewModel : ViewModel() {
         compare: (outerItem: O, innerItem: I) -> Pair<O, I?>?,
         exceptionHandler: (Exception) -> Unit = {}
     ) = viewModelScope.launch(Dispatchers.Default) {
+        val maxParallelism = Runtime.getRuntime().availableProcessors()
         start()
         // allow iterating while editing
         val copyOfOuterList = outerList.toList()
@@ -79,33 +80,32 @@ class ImportGPMViewModel : ViewModel() {
                 jobManager.updateProgress(percentCompleted)
             }
         try {
-            run jobCancelled@{
-                if (isActive) {
-                    copyOfOuterList.forEach { outerEntry ->
+            copyOfOuterList.chunked(maxParallelism).forEach { chunkedOuterEntry ->
+                launch {
+                    chunkedOuterEntry.forEach outerExit@{ outerEntry ->
+                        if (!isActive) return@outerExit
                         // TODO: this might NOT be enuf if GPMs removed(ignored/linked)
                         // while search on going, another solution is to add a removed items list
                         // and just in case subtract from here..
                         // just in case GPM list was modified, lets search on new entries
                         val copyOfInnerList = innerList.toList()
-                        copyOfInnerList.forEach { innerEntry ->
-                            if (!isActive) return@jobCancelled
+                        copyOfInnerList.forEach innerExit@{ innerEntry ->
+                            if (!isActive) return@innerExit
                             progress.increment()
                             compare(outerEntry, innerEntry)?.let { (addOuterItem, addInnerItem) ->
                                 if (innerList === singleListInnerSearch) {
                                     // this is a single list search
                                     importMergeDataRepository.addDisplayItem(addOuterItem as Any)
-                                } else {
-                                    if (addInnerItem != null) {
-                                        importMergeDataRepository.addConnectedDisplayItem(
-                                            Pair(
-                                                if (addOuterItem is WrappedDecryptableSiteEntry)
-                                                    addOuterItem.siteEntry
-                                                else
-                                                    addOuterItem as DecryptableSiteEntry,
-                                                addInnerItem as SavedGPM
-                                            )
+                                } else if (addInnerItem != null) {
+                                    importMergeDataRepository.addConnectedDisplayItem(
+                                        Pair(
+                                            if (addOuterItem is WrappedDecryptableSiteEntry)
+                                                addOuterItem.siteEntry
+                                            else
+                                                addOuterItem as DecryptableSiteEntry,
+                                            addInnerItem as SavedGPM
                                         )
-                                    }
+                                    )
                                 }
                             }
                         }
