@@ -19,7 +19,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -80,11 +79,10 @@ object DataModel {
     private val _allSavedGPMsFlow = MutableStateFlow<Set<SavedGPM>>(emptySet())
     val allSavedGPMsFlow: StateFlow<Set<SavedGPM>> = _allSavedGPMsFlow.asStateFlow()
 
-    private val _siteEntryToSavedGPMFlow =
-        MutableStateFlow(LinkedHashMap<DecryptableSiteEntry, Set<SavedGPM>>())
+    private val _siteEntryToSavedGPMFlow = MutableStateFlow(LinkedHashMap<DBID, Set<DBID>>())
 
     @get:TestOnly
-    val siteEntryToSavedGPMStateFlow: StateFlow<LinkedHashMap<DecryptableSiteEntry, Set<SavedGPM>>>
+    val siteEntryToSavedGPMStateFlow: StateFlow<LinkedHashMap<DBID, Set<DBID>>>
         get() = _siteEntryToSavedGPMFlow
 
     // combines all saved GPMs excluding ignored ones as well as those linked
@@ -92,16 +90,10 @@ object DataModel {
         _allSavedGPMsFlow,
         _siteEntryToSavedGPMFlow
     ) { setOfSavedGPMs, siteEntryToGpmsLink ->
-        Log.d(TAG, "Inside..unprocessedGPMsFlow")
-        val linkedGPMs = siteEntryToGpmsLink.values.flatten().map { it.id }.toSet()
+        val linkedGPMs = siteEntryToGpmsLink.values.flatten().toSet()
         setOfSavedGPMs.filterNot { savedGPM ->
             savedGPM.flaggedIgnored || savedGPM.id in linkedGPMs
-        }.toSet().also {
-            Log.d(TAG, "unprocessedGPMsFlow updated:")
-            Log.d(TAG, linkedGPMs.sortedBy { it }.joinToString(","))
-        }
-    }.catch {
-        Log.e(TAG, "FAILUREEEEE $it")
+        }.toSet()
     }.stateIn(
         scope = scope,
         started = SharingStarted.Eagerly,
@@ -302,14 +294,7 @@ object DataModel {
 
     private fun syncLoadLinkedGPMs() {
         val siteEntryIdGpmIdMappings = DBHelperFactory.getDBHelper().fetchAllSiteEntryGPMMappings()
-        val allSavedGPMs = _allSavedGPMsFlow.value
-        _siteEntryToSavedGPMFlow.value = siteEntryIdGpmIdMappings.map { it ->
-            getSiteEntry(it.key) to it.value.mapNotNull { linkedGpmId ->
-                allSavedGPMs.firstOrNull { savedGpm -> linkedGpmId == savedGpm.id }
-            }.toSet()
-        }.toMap().let {
-            LinkedHashMap(it)
-        }
+        _siteEntryToSavedGPMFlow.value = LinkedHashMap(siteEntryIdGpmIdMappings)
     }
 
     fun markSavedGPMIgnored(savedGpmId: Long) {
@@ -449,19 +434,17 @@ object DataModel {
     }
 
     fun linkSaveGPMAndSiteEntry(siteEntry: DecryptableSiteEntry, savedGpmId: Long) {
-        getSavedGPM(savedGpmId).let { savedGPM ->
-            val map = _siteEntryToSavedGPMFlow.value.toMutableMap()
-            map.keys.find { it.id == siteEntry.id }.let { existingEntry ->
-                if (existingEntry != null) {
-                    val updatedSet = map[existingEntry]?.toMutableSet() ?: mutableSetOf()
-                    updatedSet.add(savedGPM)
-                    map[existingEntry] = updatedSet
-                } else {
-                    map[siteEntry] = setOf(savedGPM)
-                }
+        val map = _siteEntryToSavedGPMFlow.value.toMutableMap()
+        map.keys.find { it == siteEntry.id }.let { existingEntry ->
+            if (existingEntry != null) {
+                val updatedSet = map[existingEntry]?.toMutableSet() ?: mutableSetOf()
+                updatedSet.add(savedGpmId)
+                map[existingEntry] = updatedSet
+            } else {
+                map[siteEntry.id!!] = setOf(savedGpmId)
             }
-            _siteEntryToSavedGPMFlow.value = LinkedHashMap(map)
         }
+        _siteEntryToSavedGPMFlow.value = LinkedHashMap(map)
 
         try {
             DBHelperFactory.getDBHelper().linkSaveGPMAndSiteEntry(siteEntry.id!!, savedGpmId)
@@ -492,7 +475,9 @@ object DataModel {
     }
 
     fun getLinkedGPMs(siteEntryID: DBID): Set<SavedGPM> =
-        _siteEntryToSavedGPMFlow.value.filterKeys { it.id == siteEntryID }.values.flatten().toSet()
+        _siteEntryToSavedGPMFlow.value.filterKeys { it == siteEntryID }.values.flatten().map {
+            getSavedGPM(it)
+        }.toSet()
 
     fun getAllSiteEntryExtensions(ignoreId: DBID? = null): Map<String, Set<String>> =
         _siteEntriesStateFlow.value.filter { it.id != ignoreId }
