@@ -1,6 +1,8 @@
 package fi.iki.ede.safe.gpm.ui.models
 
+import android.util.Log
 import androidx.annotation.GuardedBy
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -9,6 +11,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.atomic.AtomicReference
+
+private val TAG = "JobManager"
 
 class JobManager(private val onWorkingStateChange: (Boolean, percentCompleted: Float?) -> Unit) {
     private val control = Mutex(false)
@@ -33,37 +37,43 @@ class JobManager(private val onWorkingStateChange: (Boolean, percentCompleted: F
         }
     }
 
-    suspend fun cancelAllJobs(block: () -> Unit = {}) {
+    suspend fun cancelAllJobs(atomicOnCancellation: () -> Unit = {}) {
         control.withLock {
             jobs.forEach { it.cancel() }
             jobs.forEach { it.join() }
             maybeChangeWorkingState(masterJob.get(), false, null)
-            block()
+            atomicOnCancellation()
         }
     }
 
-    suspend fun cancelAndAddNewJobs(block: suspend CoroutineScope.() -> List<Job>): List<Job> =
+    suspend fun cancelAndAddNewJobs(atomicGenerateNewJobs: suspend CoroutineScope.() -> List<Job>): List<Job> =
         control.withLock {
             jobs.forEach { it.cancel() }
             jobs.forEach { it.join() }
 
-            val newJobs = coroutineScope { block() }
+            val newJobs = coroutineScope { atomicGenerateNewJobs() }
             onWorkingStateChange(true, 0f)
             jobs.clear()
             jobs.addAll(newJobs)
 
             val newMasterJob = Job().also { mj ->
                 newJobs.forEach { job ->
-                    job.invokeOnCompletion { _ ->
+                    job.invokeOnCompletion { j ->
+                        Log.w(
+                            TAG,
+                            "Job ${(job as CoroutineScope).coroutineContext}/$j completed"
+                        )
                         if (jobs.none { it.isActive }) {
-                            CoroutineScope(Dispatchers.Main).launch {
+                            CoroutineScope(Dispatchers.Main).launch(CoroutineName("maybeChangeWorkingState:false/null")) {
                                 maybeChangeWorkingState(mj, false, null)
                             }
                         }
                     }
                 }
             }
-            masterJob.set(newMasterJob)
+            jobStateControl.withLock {
+                masterJob.set(newMasterJob)
+            }
             newJobs
         }
 

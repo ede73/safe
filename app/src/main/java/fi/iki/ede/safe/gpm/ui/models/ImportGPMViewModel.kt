@@ -13,6 +13,7 @@ import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -33,10 +34,10 @@ class ImportGPMViewModel : ViewModel() {
     val importMergeDataRepository = ImportMergeDataRepository()
 
     init {
-        viewModelScope.launch {
+        viewModelScope.launch(CoroutineName("resetGPMDisplayListToAllUnprocessed")) {
             importMergeDataRepository.resetGPMDisplayListToAllUnprocessed()
         }
-        viewModelScope.launch {
+        viewModelScope.launch(CoroutineName("resetSiteEntryDisplayListToAllSaved")) {
             importMergeDataRepository.resetSiteEntryDisplayListToAllSaved()
         }
     }
@@ -73,7 +74,7 @@ class ImportGPMViewModel : ViewModel() {
         start: () -> Unit = {},
         compare: (outerItem: O, innerItem: I) -> Pair<O, I?>?,
         exceptionHandler: (Exception) -> Unit = {}
-    ) = viewModelScope.launch(Dispatchers.Default) {
+    ) = viewModelScope.launch(Dispatchers.Default + CoroutineName("launchIterateLists:$name")) {
         excludedGPMs = emptySet()
         val maxParallelism = Runtime.getRuntime().availableProcessors()
         start()
@@ -114,26 +115,29 @@ class ImportGPMViewModel : ViewModel() {
         val progress = Progress(listTotalSearchSpace) { percentCompleted ->
             jobManager.updateProgress(percentCompleted)
         }
+
         try {
-            copyOfOuterList.chunked(maxParallelism).forEach { chunkedOuterEntry ->
-                launch {
-                    chunkedOuterEntry.forEach outerExit@{ outerEntry ->
-                        if (!isActive) return@outerExit
-                        copyOfInnerList.forEach innerExit@{ innerEntry ->
-                            if (!isActive || isGpmExcluded(innerEntry)) return@innerExit
-                            progress.increment()
-                            compare(outerEntry, innerEntry)?.let { (addOuterItem, addInnerItem) ->
-                                foundMatchMaybeAdd(innerList, addOuterItem, addInnerItem)
+            copyOfOuterList.chunked((copyOfOuterList.size + maxParallelism - 1) / maxParallelism)
+                .forEach { chunkedOuterEntry ->
+                    launch(CoroutineName("launchIterateLists:$name, chunk $chunkedOuterEntry.size")) {
+                        chunkedOuterEntry.forEach outerExit@{ outerEntry ->
+                            if (!isActive) return@outerExit
+                            copyOfInnerList.forEach innerExit@{ innerEntry ->
+                                if (!isActive || isGpmExcluded(innerEntry)) return@innerExit
+                                progress.increment()
+                                compare(
+                                    outerEntry,
+                                    innerEntry
+                                )?.let { (addOuterItem, addInnerItem) ->
+                                    foundMatchMaybeAdd(innerList, addOuterItem, addInnerItem)
+                                }
                             }
                         }
                     }
                 }
-            }
         } catch (ex: Exception) {
             firebaseRecordException("Something went wrong in $name", ex)
             exceptionHandler(ex)
-        } finally {
-            jobManager.updateProgress(100.0f)
         }
     }
 
@@ -152,15 +156,15 @@ class ImportGPMViewModel : ViewModel() {
         exceptionHandler
     )
 
-    // TODO: PRE-MANGLE! calculate hash of all the PWDs and compare those
     fun launchMatchingPasswordSearchAndResetDisplayLists() {
-        CoroutineScope(Dispatchers.Default).launch {
+        CoroutineScope(Dispatchers.Default).launch(CoroutineName("launchMatchingPasswordSearchAndResetDisplayLists()")) {
             jobManager.cancelAndAddNewJob {
+
                 _displayedItemsAreConnected = true
-                importMergeDataRepository.emptySiteEntryDisplayList()
-                    .await() // TODO: REMOVE, hoist reset control!
-                importMergeDataRepository.emptyGPMDisplayList()
-                    .await() // TODO: REMOVE, hoist reset control!
+
+                importMergeDataRepository.emptySiteEntryDisplayList().await()
+                importMergeDataRepository.emptyGPMDisplayList().await()
+
                 launchIterateLists("applyMatchingPasswords",
                     DataModel.siteEntriesStateFlow.value.map { WrappedDecryptableSiteEntry(it) },
                     DataModel.unprocessedGPMsFlow.value.toList(),
@@ -175,13 +179,16 @@ class ImportGPMViewModel : ViewModel() {
     }
 
     fun launchMatchingNameSearchAndResetDisplayLists(similarityThreshold: Double) {
-        CoroutineScope(Dispatchers.Default).launch {
+        CoroutineScope(Dispatchers.Default).launch(CoroutineName("launchMatchingNameSearchAndResetDisplayLists")) {
             jobManager.cancelAndAddNewJob {
+
                 _displayedItemsAreConnected = true
+
                 importMergeDataRepository.emptySiteEntryDisplayList().await()
                 importMergeDataRepository.emptyGPMDisplayList().await()
+
                 launchIterateLists("applyMatchingNames",
-                    DataModel.siteEntriesStateFlow.value,
+                    DataModel.siteEntriesStateFlow.value.toList(),
                     DataModel.unprocessedGPMsFlow.value.toList(),
                     compare = { outerEntry, innerEntry ->
                         val siteEntryName =
@@ -189,9 +196,13 @@ class ImportGPMViewModel : ViewModel() {
                         val gpmName =
                             harmonizePotentialDomainName(innerEntry.cachedDecryptedName).toLowerCasedTrimmedString()
 
-                        val simScore = findSimilarity(siteEntryName, gpmName)
-                        if (simScore >= similarityThreshold) outerEntry to innerEntry
-                        else null
+                        if (similarityThreshold > 0) {
+                            findSimilarity(siteEntryName, gpmName).let { simScore ->
+                                (outerEntry to innerEntry).takeIf { simScore >= similarityThreshold }
+                            }
+                        } else {
+                            (outerEntry to innerEntry).takeIf { siteEntryName == gpmName }
+                        }
                     }
                 )
             }
@@ -209,7 +220,7 @@ class ImportGPMViewModel : ViewModel() {
     ) {
         if (searchText.isEmpty()) return
         searchJob?.cancel()
-        searchJob = viewModelScope.launch {
+        searchJob = viewModelScope.launch(CoroutineName("launchSearch")) {
             delay(750)
             performSearch(
                 passwordSearchTarget,
@@ -228,7 +239,7 @@ class ImportGPMViewModel : ViewModel() {
         searchText: LowerCaseTrimmedString,
         regex: Regex? = null
     ) {
-        CoroutineScope(Dispatchers.Default).launch {
+        CoroutineScope(Dispatchers.Default).launch(CoroutineName("performSearch")) {
             jobManager.cancelAndAddNewJobs {
                 _displayedItemsAreConnected = false
                 val passwordSearchThread =
@@ -271,21 +282,18 @@ class ImportGPMViewModel : ViewModel() {
         needle: LowerCaseTrimmedString,
         haystack: (L) -> String
     ) = resetSearchList().await().let {
-        // we sent reset display call out already, so by the time thread starts, list should be clear
         launchIterateList(
             searchHintText,
             listOfItemsToSearch,
             compare = { item ->
                 if (similarityThresholdOrSubString > 0) {
-                    if (findSimilarity(
+                    item.takeIf {
+                        findSimilarity(
                             harmonizePotentialDomainName(haystack(item)).toLowerCasedTrimmedString(),
                             needle
                         ) > similarityThresholdOrSubString
-                    ) item else null
-                } else if (regex == null && haystack(item).contains(
-                        needle.lowercasedTrimmed,
-                        ignoreCase = true
-                    )
+                    }
+                } else if (regex == null && haystack(item).contains(needle.lowercasedTrimmed, true)
                 ) item
                 else if (regex != null && regex.containsMatchIn(haystack(item))) item
                 else null
@@ -294,7 +302,7 @@ class ImportGPMViewModel : ViewModel() {
     }
 
     fun cancelAllJobs(atomicBlock: () -> Unit = {}) {
-        CoroutineScope(Dispatchers.Default).launch {
+        CoroutineScope(Dispatchers.Default).launch(CoroutineName("cancelAllJobs")) {
             jobManager.cancelAllJobs(atomicBlock)
         }
     }
