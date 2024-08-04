@@ -6,8 +6,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DropdownMenu
@@ -20,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -40,6 +41,8 @@ import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import fi.iki.ede.safe.ui.theme.SafeListItem
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.launch
+import java.time.ZoneId
+import java.time.ZonedDateTime
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -84,24 +87,26 @@ fun SiteEntryRow(
             }),
     ) {
         Row {
-            Text(
-                text = siteEntry.cachedPlainDescription,
-                maxLines = 1,
-                overflow = TextOverflow.Clip,
-                // Move to bounding box (up)
+            Box(
                 modifier = Modifier
-                    .padding(12.dp)
                     .weight(2f)
-            )
-
-            if (siteEntry.passwordChangedDate != null) {
-                Spacer(modifier = Modifier.weight(1f)) // This will push the Text to the end
-
+            ) {
                 Text(
-                    text = getPasswordAgePlurality(DateUtils.getPeriodBetweenDates(siteEntry.passwordChangedDate!!)),
-                    modifier = Modifier.padding(12.dp),
-                    style = safeTheme.customFonts.smallNote
+                    text = siteEntry.cachedPlainDescription,
+                    maxLines = 1,
+                    overflow = TextOverflow.Clip,
+                    // Move to bounding box (up)
+                    modifier = Modifier
+                        .padding(12.dp)
                 )
+
+                if (siteEntry.passwordChangedDate != null) {
+                    Text(
+                        text = getPasswordAgePlurality(DateUtils.getPeriodBetweenDates(siteEntry.passwordChangedDate!!)),
+                        modifier = Modifier.align(Alignment.TopEnd).padding(horizontal=10.dp),
+                        style = safeTheme.customFonts.smallNote
+                    )
+                }
             }
         }
         DropdownMenu(expanded = displayMenu, onDismissRequest = { displayMenu = false }) {
@@ -162,7 +167,9 @@ fun SiteEntryRowPreview() {
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()
         val site1 = DecryptableSiteEntry(1).apply {
-            description = encrypter("Description1".toByteArray())
+            description = encrypter("This is lengthy description worth of a king".toByteArray())
+            passwordChangedDate =
+                ZonedDateTime.of(2023, 11, 10, 10, 10, 10, 0, ZoneId.systemDefault())
         }
         val cat = DecryptableCategoryEntry().apply {
             id = 1
