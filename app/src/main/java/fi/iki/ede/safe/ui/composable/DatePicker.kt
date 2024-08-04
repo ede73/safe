@@ -49,23 +49,21 @@ fun DatePicker(zonedDateTime: ZonedDateTime?, onValueChange: (ZonedDateTime?) ->
     val months =
         (1..12).map { String.format(Locale.getDefault(), "%02d", it) } + listOf("--")
 
-    val selectedYear = remember {
+    val selectedYear = remember(zonedDateTime) {
         mutableStateOf(quickFormat(zonedDateTime, "%04d", "----") { it.year })
     }
-    val selectedMonth = remember {
+    val selectedMonth = remember(zonedDateTime) {
         mutableStateOf(quickFormat(zonedDateTime, "%02d", "--") { it.monthValue })
     }
-    val selectedDay = remember {
+    val selectedDay = remember(zonedDateTime) {
         mutableStateOf(quickFormat(zonedDateTime, "%02d", "--") { it.dayOfMonth })
     }
-
-    val days = remember {
+    val days = remember(selectedYear, selectedDay) {
         derivedStateOf {
             val daysInMonth = daysInSelectedYearAndMonth(selectedYear, selectedMonth)
             (1..daysInMonth).map { it.toString().padStart(2, '0') } + "--"
         }
     }
-
     hasValueChanged(selectedYear, zonedDateTime, selectedMonth, selectedDay, onValueChange)
 
     val yearPagerState = rememberPagerState(
@@ -99,6 +97,12 @@ fun DatePicker(zonedDateTime: ZonedDateTime?, onValueChange: (ZonedDateTime?) ->
         LaunchedEffect(Unit) {
             dayPagerState.scrollToPage(days.value.size)
         }
+    }
+    // Ensure yearPagerState and monthPagerState update correctly when zonedDateTime changes
+    LaunchedEffect(zonedDateTime) {
+        yearPagerState.scrollToPage(years.indexOf(selectedYear.value))
+        monthPagerState.scrollToPage(months.indexOf(selectedMonth.value))
+        dayPagerState.scrollToPage(days.value.indexOf(selectedDay.value))
     }
     Column {
         Text(text = stringResource(id = R.string.password_entry_changed_date))

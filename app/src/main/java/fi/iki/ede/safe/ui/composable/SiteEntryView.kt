@@ -103,6 +103,7 @@ fun SiteEntryView(
                     length = passwordLength
                 ).encrypt(encrypter)
             )
+            viewModel.updatePasswordChangedDate(ZonedDateTime.now())
         }
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             Spacer(Modifier.weight(1f))
