@@ -7,13 +7,18 @@ import android.text.TextUtils
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -124,8 +129,14 @@ fun SiteEntryView(
                         context.startActivity(Intent(Intent.ACTION_VIEW, uri))
                     }
                 },
-                enabled = !TextUtils.isEmpty(website) && Uri.parse(website) != null
-            ) { Text(stringResource(id = R.string.password_entry_visit)) }
+                enabled = !TextUtils.isEmpty(website) && Uri.parse(website) != null,
+                contentPadding = PaddingValues(0.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.OpenInBrowser,
+                    contentDescription = stringResource(id = R.string.password_entry_visit)
+                )
+            }
             Spacer(Modifier.weight(1f))
             TextField(
                 value = passEntry.website,
@@ -139,9 +150,17 @@ fun SiteEntryView(
             )
         }
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
-            SafeButton(onClick = {
-                ClipboardUtils.addToClipboard(context, passEntry.username.decrypt(decrypter))
-            }) { Text(stringResource(id = R.string.password_entry_username_label)) }
+            SafeButton(
+                onClick = {
+                    ClipboardUtils.addToClipboard(context, passEntry.username.decrypt(decrypter))
+                },
+                contentPadding = PaddingValues(0.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ContentCopy,
+                    contentDescription = stringResource(id = R.string.password_entry_username_label)
+                )
+            }
             Spacer(Modifier.weight(1f))
             PasswordTextField(
                 textTip = R.string.password_entry_username_tip,
@@ -177,9 +196,16 @@ fun SiteEntryView(
             )
         }
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
-            SafeButton(onClick = {
-                ClipboardUtils.addToClipboard(context, passEntry.password.decrypt(decrypter))
-            }) { Text(stringResource(id = R.string.password_entry_password_label)) }
+            SafeButton(
+                onClick = {
+                    ClipboardUtils.addToClipboard(context, passEntry.password.decrypt(decrypter))
+                }, contentPadding = PaddingValues(0.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ContentCopy,
+                    contentDescription = stringResource(id = R.string.password_entry_username_label)
+                )
+            }
             Spacer(Modifier.weight(1f))
             PasswordTextField(
                 textTip = R.string.password_entry_password_tip,
