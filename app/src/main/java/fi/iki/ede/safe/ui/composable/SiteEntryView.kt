@@ -12,10 +12,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
@@ -221,15 +223,57 @@ fun SiteEntryView(
             )
         }
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
-            SafeButton(
-                onClick = {
-                    ClipboardUtils.addToClipboard(context, passEntry.password.decrypt(decrypter))
-                }, contentPadding = PaddingValues(0.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ContentCopy,
-                    contentDescription = stringResource(id = R.string.password_entry_username_label)
-                )
+            // some sites required OLD password AND new password (even if you are already
+            // logged in and hence clearly knowledgeable of the old password), to avoid copy
+            // paste hell, let's notice the situation and allow copying original and new separately!
+            // TODO: not good enough
+            Column {
+                if (viewModel.originalPassword != null && passEntry.password.decrypt(decrypter) != viewModel.originalPassword?.decrypt(
+                        decrypter
+                    )
+                ) {
+                    SafeButton(
+                        onClick = {
+                            ClipboardUtils.addToClipboard(
+                                context,
+                                viewModel.originalPassword?.decrypt(decrypter)
+                            )
+                        }, contentPadding = PaddingValues(0.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.History,
+                            modifier = Modifier
+                                .padding(0.dp)
+                                .size(20.dp),
+                            contentDescription = stringResource(id = R.string.password_entry_username_label)
+                        )
+                        Icon(
+                            imageVector = Icons.Default.ContentCopy,
+                            modifier = Modifier
+                                .padding(0.dp)
+                                .size(20.dp),
+                            contentDescription = stringResource(id = R.string.password_entry_username_label)
+                        )
+                    }
+                }
+                SafeButton(
+                    modifier = Modifier.padding(0.dp),
+                    onClick = {
+                        ClipboardUtils.addToClipboard(
+                            context,
+                            passEntry.password.decrypt(decrypter)
+                        )
+                    },
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ContentCopy,
+                        modifier = Modifier
+                            .padding(0.dp)
+                            .size(20.dp),
+                        contentDescription = stringResource(id = R.string.password_entry_username_label)
+                    )
+                }
             }
             Spacer(Modifier.weight(1f))
             PasswordTextField(
@@ -543,7 +587,7 @@ private fun tryParseUri(website: String): Uri =
 @Composable
 fun SiteEntryViewPreview() {
     SafeTheme {
-        PopCustomPasswordDialog {}
+        //PopCustomPasswordDialog {}
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()

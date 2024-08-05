@@ -17,8 +17,10 @@ import java.time.ZonedDateTime
 open class EditingSiteEntryViewModel : ViewModel() {
     private val _editableSiteEntryState = MutableStateFlow(EditableSiteEntry(-1))
     val editableSiteEntryState: StateFlow<EditableSiteEntry> = _editableSiteEntryState.asStateFlow()
+    var originalPassword: IVCipherText? = null
 
     fun editSiteEntry(siteEntry: DecryptableSiteEntry) {
+        originalPassword = siteEntry.password
         _editableSiteEntryState.value = EditableSiteEntry(
             siteEntry.categoryId as DBID,
             siteEntry.id as DBID,

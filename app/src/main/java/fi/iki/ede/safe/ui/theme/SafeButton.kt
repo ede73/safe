@@ -20,7 +20,7 @@ fun SafeButton(
         enabled = enabled,
         modifier = modifier,
         shape = safeTheme.customShapes.button,
-        contentPadding = contentPadding ?: ButtonDefaults.ContentPadding
+        contentPadding = contentPadding ?: ButtonDefaults.ContentPadding,
     ) {
         content()
     }
