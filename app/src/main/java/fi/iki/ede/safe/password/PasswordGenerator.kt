@@ -1,21 +1,24 @@
 package fi.iki.ede.safe.password
 
 import java.security.SecureRandom
+import kotlin.math.min
+
+val PG_SYMBOLS = "!@#\$%^&*()[]{}:;'\"/><.,-_=+~"
 
 object PasswordGenerator {
     fun genPassword(
         passUpper: Boolean,
         passLower: Boolean,
         passNum: Boolean,
-        passSymbol: Boolean,
+        passSymbols: Boolean,
+        symbols: String = PG_SYMBOLS,
         length: Int
     ): String {
         val upperCases = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         val lowerCases = "abcdefghijklmnopqrstuvwxyz"
         val numbers = "0123456789"
-        val symbols = "!@#\$%^&*()[]{}:;'\"/><.,-_=+~"
-
-        // just refuse to make less than 8 char pwds
+        val minSymbols = if (passSymbols) min(2, symbols.length) else 0
+        // just refuse to make less than 8 char passwords
         if (length < 8) {
             return ""
         }
@@ -23,7 +26,7 @@ object PasswordGenerator {
             append(if (passUpper) upperCases else "")
             append(if (passLower) lowerCases else "")
             append(if (passNum) numbers else "")
-            append(if (passSymbol) symbols else "")
+            append(if (passSymbols) symbols else "")
 
         }
         if (charset.isEmpty()) {
@@ -42,13 +45,14 @@ object PasswordGenerator {
                     pass.append(charset[pos])
                 }
             }
-            // also ensure there's at least 2 characters from each class
+            // also ensure there's at least 2(*) characters from each class
             // since we randomly generate the password, there's a probability that all are
             // say just numbers
+            // (*) except symbols IF passed symbol list<2
         } while ((passUpper && pass.count { character -> upperCases.contains(character) } < 2) ||
             (passLower && pass.count { character -> lowerCases.contains(character) } < 2) ||
             (passNum && pass.count { character -> numbers.contains(character) } < 2) ||
-            (passSymbol && pass.count { character -> symbols.contains(character) } < 2)
+            (passSymbols && pass.count { character -> symbols.contains(character) } < minSymbols)
         )
 
         return pass.toString()

@@ -31,7 +31,7 @@ import fi.iki.ede.safe.ui.utilities.AutoLockingBaseComponentActivity
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopActionBarForSiteEntryView(
-    onGeneratePassword: () -> Unit = {},
+    onGeneratePassword: (custom: Boolean) -> Unit = {},
 ) {
     val context = LocalContext.current
     var displayMenu by remember { mutableStateOf(false) }
@@ -67,7 +67,15 @@ fun TopActionBarForSiteEntryView(
                         text = { Text(text = stringResource(id = R.string.action_bar_generate_password)) },
                         onClick = {
                             displayMenu = false
-                            onGeneratePassword()
+                            onGeneratePassword(false)
+                        },
+                        modifier = Modifier.testTag(TestTag.TOP_ACTION_BAR_GENERATE_PASSWORD)
+                    )
+                    DropdownMenuItem(
+                        text = { Text(text = stringResource(id = R.string.action_bar_generate_custom_password)) },
+                        onClick = {
+                            displayMenu = false
+                            onGeneratePassword(true)
                         },
                         modifier = Modifier.testTag(TestTag.TOP_ACTION_BAR_GENERATE_PASSWORD)
                     )

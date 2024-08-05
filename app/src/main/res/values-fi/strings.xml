@@ -200,4 +200,11 @@ Nämä valinnat muistetaan, joten seuraavan kerran linkitys on helpompaa.</strin
     <string name="extension_preferences_apply">Tallenna</string>
     <string name="extension_preferences_rename">Nimeä</string>
     <string name="preferences_edit_extensions">Muokkaa laajennuksia</string>
+    <string name="action_bar_generate_custom_password">Luo oma salasana</string>
+    <string name="site_entry_generated_password">Luotu salasana ilmaantuu tähän</string>
+    <string name="generic_cancel">Peru</string>
+    <string name="site_entry_uppercases">Isot kirjaimet</string>
+    <string name="site_entry_lowercases">Pienet kirjaimet</string>
+    <string name="site_entry_numbers">Numerot</string>
+    <string name="site_entry_regenerate">Luo uusi</string>
 </resources>

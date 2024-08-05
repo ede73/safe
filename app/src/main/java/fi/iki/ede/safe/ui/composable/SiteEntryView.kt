@@ -17,14 +17,17 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.OpenInBrowser
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,6 +44,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.IVCipherText
+import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.decrypt
 import fi.iki.ede.crypto.support.encrypt
@@ -51,6 +55,7 @@ import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.model.Preferences
+import fi.iki.ede.safe.password.PG_SYMBOLS
 import fi.iki.ede.safe.password.PasswordGenerator
 import fi.iki.ede.safe.splits.PluginManager
 import fi.iki.ede.safe.splits.PluginName
@@ -88,22 +93,41 @@ fun SiteEntryView(
     val safeTheme = LocalSafeTheme.current
     var passwordWasUpdated by remember { mutableStateOf(false) }
     var showLinkedInfo by remember { mutableStateOf<Set<SavedGPM>?>(null) }
-
+    var showCustomPasswordGenerator by remember {
+        mutableStateOf(false)
+    }
+    if (showCustomPasswordGenerator) {
+        PopCustomPasswordDialog {
+            // on dismiss
+            if (it != null) {
+                viewModel.updatePassword(it.encrypt(encrypter))
+                passwordWasUpdated = true
+                viewModel.updatePasswordChangedDate(ZonedDateTime.now())
+            }
+            showCustomPasswordGenerator = false
+        }
+    }
     Column(
         modifier = Modifier.verticalScroll(rememberScrollState())
     ) {
-        TopActionBarForSiteEntryView {
-            passwordWasUpdated = true
-            viewModel.updatePassword(
-                PasswordGenerator.genPassword(
-                    passUpper = true,
-                    passLower = true,
-                    passNum = true,
-                    passSymbol = true,
-                    length = passwordLength
-                ).encrypt(encrypter)
-            )
-            viewModel.updatePasswordChangedDate(ZonedDateTime.now())
+        TopActionBarForSiteEntryView { custom ->
+            if (custom) {
+                // some sites have annoying limits like you cant use this is that special char
+                // or you HAVE to use this or that special char
+                showCustomPasswordGenerator = true
+            } else {
+                passwordWasUpdated = true
+                viewModel.updatePassword(
+                    PasswordGenerator.genPassword(
+                        passUpper = true,
+                        passLower = true,
+                        passNum = true,
+                        passSymbols = true,
+                        length = passwordLength
+                    ).encrypt(encrypter)
+                )
+                viewModel.updatePasswordChangedDate(ZonedDateTime.now())
+            }
         }
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             Spacer(Modifier.weight(1f))
@@ -280,6 +304,96 @@ fun SiteEntryView(
 }
 
 @Composable
+fun PopCustomPasswordDialog(
+    onDismiss: (password: Password?) -> Unit
+) {
+    val upperCases = remember { mutableStateOf(true) }
+    val lowerCases = remember { mutableStateOf(true) }
+    val numbers = remember { mutableStateOf(true) }
+    var symbols by remember { mutableStateOf(PG_SYMBOLS) }
+    var passwordLength by remember { mutableIntStateOf(15) }
+    var regenerate by remember { mutableIntStateOf(0) }
+    val password by remember(
+        upperCases.value,
+        lowerCases.value,
+        numbers.value,
+        passwordLength,
+        symbols,
+        regenerate
+    ) {
+        mutableStateOf(
+            PasswordGenerator.genPassword(
+                passUpper = upperCases.value,
+                passLower = lowerCases.value,
+                passNum = numbers.value,
+                passSymbols = symbols.isNotEmpty(),
+                symbols = symbols,
+                length = passwordLength
+            )
+        )
+    }
+
+    AlertDialog(
+        onDismissRequest = {
+            onDismiss(Password(password))
+        },
+        title = { Text(stringResource(id = R.string.action_bar_generate_custom_password)) },
+        text = {
+            Column {
+                TextualCheckbox(
+                    initiallyChecked = upperCases,
+                    textResourceId = R.string.site_entry_uppercases,
+                    checkedChanged = { upperCases.value = it })
+                TextualCheckbox(
+                    initiallyChecked = lowerCases,
+                    textResourceId = R.string.site_entry_lowercases,
+                    checkedChanged = { lowerCases.value = it })
+                TextualCheckbox(
+                    initiallyChecked = numbers,
+                    textResourceId = R.string.site_entry_numbers,
+                    checkedChanged = { numbers.value = it })
+                TextField(value = symbols,
+                    onValueChange = { newSymbolCandidates ->
+                        val filtered =
+                            newSymbolCandidates.filter { !it.isLetterOrDigit() && !it.isWhitespace() }
+                        val uniqueSymbols = filtered.toSet().joinToString("")
+                        symbols = uniqueSymbols
+                    })
+                Row {
+                    Text(passwordLength.toString())
+                    Slider(
+                        value = passwordLength.toFloat(),
+                        onValueChange = { passwordLength = it.toInt() },
+                        valueRange = 8.0f..30.0f,
+                        steps = 22
+                    )
+                }
+                SafeButton(onClick = { regenerate++ }) {
+                    Text(stringResource(id = R.string.site_entry_regenerate))
+                }
+                PasswordTextField(
+                    textTip = R.string.site_entry_generated_password,
+                    inputValue = password,
+                    enableZoom = true
+                )
+            }
+        },
+        confirmButton = {
+            SafeButton(
+                onClick = {
+                    onDismiss(Password(password))
+                }
+            ) { Text(stringResource(id = R.string.generic_ok)) }
+        },
+        dismissButton = {
+            SafeButton(onClick = { }) {
+                Text(stringResource(id = R.string.generic_cancel))
+            }
+        }
+    )
+}
+
+@Composable
 fun SiteEntryExtensionList(
     viewModel: EditingSiteEntryViewModel,
 ) {
@@ -429,6 +543,7 @@ private fun tryParseUri(website: String): Uri =
 @Composable
 fun SiteEntryViewPreview() {
     SafeTheme {
+        PopCustomPasswordDialog {}
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()

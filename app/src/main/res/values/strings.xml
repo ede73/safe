@@ -254,4 +254,11 @@ These selections will be remembered, so next time linking will be easier.</strin
     <string name="extension_preferences_apply">Apply</string>
     <string name="extension_preferences_rename">Rename</string>
     <string name="preferences_edit_extensions">Edit Extensions</string>
+    <string name="action_bar_generate_custom_password">Generate custom password</string>
+    <string name="site_entry_generated_password">Generated password appears here</string>
+    <string name="generic_cancel">Cancel</string>
+    <string name="site_entry_uppercases">Upper cases</string>
+    <string name="site_entry_lowercases">Lower cases</string>
+    <string name="site_entry_numbers">Numbers</string>
+    <string name="site_entry_regenerate">Regenerate</string>
 </resources>

@@ -68,7 +68,7 @@ class SiteEntryEditScreen : AutoLockingBaseComponentActivity() {
                     passUpper = true,
                     passLower = true,
                     passNum = true,
-                    passSymbol = true,
+                    passSymbols = true,
                     length = passwordLength
                 )
 
