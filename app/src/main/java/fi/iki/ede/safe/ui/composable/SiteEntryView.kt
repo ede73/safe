@@ -355,7 +355,7 @@ fun PopCustomPasswordDialog(
     val lowerCases = remember { mutableStateOf(true) }
     val numbers = remember { mutableStateOf(true) }
     var symbols by remember { mutableStateOf(PG_SYMBOLS) }
-    var passwordLength by remember { mutableIntStateOf(15) }
+    var passwordLength by remember { mutableIntStateOf(18) }
     var regenerate by remember { mutableIntStateOf(0) }
     val password by remember(
         upperCases.value,
