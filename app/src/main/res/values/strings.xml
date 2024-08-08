@@ -261,4 +261,5 @@ These selections will be remembered, so next time linking will be easier.</strin
     <string name="site_entry_lowercases">Lower cases</string>
     <string name="site_entry_numbers">Numbers</string>
     <string name="site_entry_regenerate">Regenerate</string>
+    <string name="password_search_extensions">+Extensions</string>
 </resources>

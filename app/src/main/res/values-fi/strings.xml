@@ -207,4 +207,5 @@ Nämä valinnat muistetaan, joten seuraavan kerran linkitys on helpompaa.</strin
     <string name="site_entry_lowercases">Pienet kirjaimet</string>
     <string name="site_entry_numbers">Numerot</string>
     <string name="site_entry_regenerate">Luo uusi</string>
+    <string name="password_search_extensions">+Laajennukset</string>
 </resources>

@@ -86,13 +86,18 @@ class DecryptableSiteEntry(categoryId: Long) {
         searchWebsites: Boolean,
         searchUsernames: Boolean,
         searchPasswords: Boolean,
-        searchNotes: Boolean
+        searchNotes: Boolean,
+        searchExtensions: Boolean
     ) = // TODO: Might be able to optimize?
         cachedPlainDescription.contains(searchText, true) ||
                 (searchWebsites && plainWebsite.contains(searchText, true)) ||
                 (searchUsernames && plainUsername.contains(searchText, true)) ||
                 (searchPasswords && plainPassword.contains(searchText, true)) ||
-                (searchNotes && plainNote.contains(searchText, true))
+                (searchNotes && plainNote.contains(searchText, true)) ||
+                (searchExtensions && plainExtensions.values.joinToString("")
+                    .contains(searchText, true)).also {
+                    println(plainExtensions.values.joinToString(""))
+                }
 
     fun isSame(
         description: String,

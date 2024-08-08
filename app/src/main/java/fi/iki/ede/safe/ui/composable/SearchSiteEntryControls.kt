@@ -60,6 +60,7 @@ fun SearchSiteEntryControls(
     searchTextField: MutableState<TextFieldValue>,
 ) {
     val focusRequester = remember { FocusRequester() }
+    val searchExtensions = remember { mutableStateOf(false) }
     val searchNotes = remember { mutableStateOf(false) }
     val searchPasswords = remember { mutableStateOf(false) }
     val searchUsernames = remember { mutableStateOf(false) }
@@ -75,7 +76,8 @@ fun SearchSiteEntryControls(
             searchWebsites.value,
             searchUsernames.value,
             searchPasswords.value,
-            searchNotes.value
+            searchNotes.value,
+            searchExtensions.value
         )
     }
 
@@ -141,6 +143,11 @@ fun SearchSiteEntryControls(
                 checkedChanged = ::findNow
             )
             TextualCheckbox(searchNotes, R.string.password_search_notes, checkedChanged = ::findNow)
+            TextualCheckbox(
+                searchExtensions,
+                R.string.password_search_extensions,
+                checkedChanged = ::findNow
+            )
         }
     }
 
@@ -160,7 +167,8 @@ fun beginSearch(
     searchWebsites: Boolean,
     searchUsernames: Boolean,
     searchPasswords: Boolean,
-    searchNotes: Boolean
+    searchNotes: Boolean,
+    searchExtensions: Boolean
 ) {
     try {
         synchronized(allSiteEntries) {
@@ -230,6 +238,7 @@ fun beginSearch(
                                         searchUsernames,
                                         searchPasswords,
                                         searchNotes,
+                                        searchExtensions,
                                         matchingSiteEntries
                                     )
                                 }
@@ -263,6 +272,7 @@ private fun asyncFilterChunkOfSiteEntries(
     searchUsernames: Boolean,
     searchPasswords: Boolean,
     searchNotes: Boolean,
+    searchExtensions: Boolean,
     matchingSiteEntries: MutableStateFlow<List<DecryptableSiteEntry>>,
 ) {
     var searchedSiteEntryCount = 0.0f
@@ -278,7 +288,8 @@ private fun asyncFilterChunkOfSiteEntries(
                     searchWebsites,
                     searchUsernames,
                     searchPasswords,
-                    searchNotes
+                    searchNotes,
+                    searchExtensions,
                 )
             ) {
                 matchingSiteEntries.update { currentList -> currentList + it }
