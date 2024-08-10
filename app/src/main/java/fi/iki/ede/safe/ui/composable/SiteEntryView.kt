@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.text.TextUtils
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -33,9 +36,11 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.integerResource
@@ -69,6 +74,7 @@ import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.AvertInactivityDuringLongTask
+import kotlinx.coroutines.launch
 import java.time.ZonedDateTime
 
 inline fun <T, C : Collection<T>> C.ifNotEmpty(block: (C) -> Unit): C {
@@ -76,6 +82,7 @@ inline fun <T, C : Collection<T>> C.ifNotEmpty(block: (C) -> Unit): C {
     return this
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SiteEntryView(
     viewModel: EditingSiteEntryViewModel,
@@ -98,6 +105,9 @@ fun SiteEntryView(
     var showCustomPasswordGenerator by remember {
         mutableStateOf(false)
     }
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    val coroutineScope = rememberCoroutineScope()
+
     if (showCustomPasswordGenerator) {
         PopCustomPasswordDialog {
             // on dismiss
@@ -321,7 +331,15 @@ fun SiteEntryView(
             textTip = R.string.password_entry_note_tip,
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag(TestTag.SITE_ENTRY_NOTE),
+                .testTag(TestTag.SITE_ENTRY_NOTE)
+                .bringIntoViewRequester(bringIntoViewRequester)
+                .onFocusEvent { focusState ->
+                    if (focusState.isFocused) {
+                        coroutineScope.launch {
+                            bringIntoViewRequester.bringIntoView()
+                        }
+                    }
+                },
             inputValue = passEntry.note.decrypt(decrypter),
             onValueChange = { viewModel.updateNote(it.encrypt(encrypter)) },
             singleLine = false,
