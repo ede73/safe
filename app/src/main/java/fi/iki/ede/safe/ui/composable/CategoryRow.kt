@@ -2,6 +2,7 @@ package fi.iki.ede.safe.ui.composable
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -60,22 +62,25 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
                 )
                 .testTag(TestTag.CATEGORY_ROW),
         ) {
-            Text(
-                text = category.plainName,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp)
-                    .weight(2f),
-                style = safeTheme.customFonts.listEntries
-            )
-            Spacer(modifier = Modifier.weight(1f)) // This will push the Text to the end
-            Text(
-                text = "(${category.containedSiteEntryCount})",
-                modifier = Modifier.padding(12.dp),
-                style = safeTheme.customFonts.smallNote,
-            )
+                    .weight(2f)
+            ) {
+                Text(
+                    text = category.plainName,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    style = safeTheme.customFonts.listEntries
+                )
+                Text(
+                    text = "(${category.containedSiteEntryCount})",
+                    modifier = Modifier.align(Alignment.TopEnd).padding(horizontal=10.dp),
+                    style = safeTheme.customFonts.smallNote,
+                )
+            }
         }
         DropdownMenu(
             expanded = displayMenu,
@@ -148,7 +153,8 @@ fun CategoryRowPreview() {
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()
         val cat = DecryptableCategoryEntry().apply {
-            encryptedName = encrypter("Category".toByteArray())
+            encryptedName = encrypter("Category description that is really long and lengthy".toByteArray())
+            containedSiteEntryCount = 666
         }
         CategoryRow(category = cat)
     }

@@ -96,8 +96,7 @@ fun SiteEntryRow(
                     maxLines = 1,
                     overflow = TextOverflow.Clip,
                     // Move to bounding box (up)
-                    modifier = Modifier
-                        .padding(12.dp)
+                    modifier = Modifier.padding(12.dp)
                 )
 
                 if (siteEntry.passwordChangedDate != null) {
