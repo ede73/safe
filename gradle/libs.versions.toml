@@ -27,7 +27,7 @@ uiToolingPreviewAndroid = "1.6.8"
 uiautomator = "2.3.0"
 volley = "1.2.1"
 #plugins
-agp = "8.5.0-beta02"
+agp = "8.7.1"
 jetbrainsKotlinJvm = "2.0.0"
 kotlin = "2.0.0"
 
