@@ -1,6 +1,6 @@
 [versions]
 # libraries
-activityCompose = "1.9.0"
+activityCompose = "1.9.3"
 androidXTest = "1.6.1"
 appcompat = "1.7.0"
 bcprovJdk16 = "1.46"
