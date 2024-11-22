@@ -267,8 +267,8 @@ dependencies {
     implementation(libs.feature.delivery.ktx)
     // Don't convert to catalog declaration, something is broken
     implementation(platform("com.google.firebase:firebase-bom:33.6.0")) // firebase crashlytics
-    implementation("com.google.firebase:firebase-analytics") // firebase crashlytics (breadcrumbs)
-    implementation("com.google.firebase:firebase-crashlytics")
+    implementation(libs.firebase.analytics) // firebase crashlytics (breadcrumbs)
+    implementation(libs.firebase.crashlytics)
     implementation(libs.kotlinx.serialization.json)
 
     // Bring bouncy castle to unit tests
