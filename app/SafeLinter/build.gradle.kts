@@ -18,11 +18,11 @@ java {
 dependencies {
 //    compileOnly(libs.lint.api)
 //    compileOnly(libs.lint.checks)
-    compileOnly("com.android.tools.lint:lint-api:30.0.0") {
+    compileOnly("com.android.tools.lint:lint-api:31.7.2") {
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk8")
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-reflect")
     }
-    compileOnly("com.android.tools.lint:lint-checks:30.0.0") {
+    compileOnly("com.android.tools.lint:lint-checks:31.7.2") {
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk8")
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-reflect")
     }
@@ -30,7 +30,7 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     //testImplementation(libs.lint.api)
-    testImplementation("com.android.tools.lint:lint-api:30.0.0") {
+    testImplementation("com.android.tools.lint:lint-api:31.7.2") {
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib-jdk8")
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-reflect")
     }
