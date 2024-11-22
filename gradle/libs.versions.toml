@@ -29,8 +29,9 @@ uiautomator = "2.3.0"
 volley = "1.2.1"
 #plugins
 agp = "8.7.2"
-jetbrainsKotlinJvm = "2.0.0"
-kotlin = "2.0.0"
+# see also dependency resolution in settings.gradle.kts for 2.0.21!
+jetbrainsKotlinJvm = "2.0.21"
+kotlin = "2.0.21"
 
 [libraries]
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
