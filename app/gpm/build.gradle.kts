@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "fi.iki.ede.gpm"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 26

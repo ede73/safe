@@ -4,7 +4,7 @@ plugins {
 }
 android {
     namespace = "fi.iki.ede.crypto"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 26

@@ -95,7 +95,7 @@ android {
 //        }
 //    }
     namespace = "fi.iki.ede.safe"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "fi.iki.ede.safe"
