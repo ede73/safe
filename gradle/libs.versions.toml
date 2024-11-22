@@ -19,6 +19,7 @@ material = "1.12.0"
 material3Android = "1.2.1"
 materialIconsExtendedAndroid = "1.6.8"
 mockk = "1.13.13"
+monitor = "1.7.1"
 preferenceKtx = "1.2.1"
 runtimeLivedataVersion = "1.6.8"
 uiTestJunit4Android = "1.6.8"
@@ -42,6 +43,7 @@ androidx-camera-view = { group = "androidx.camera", name = "camera-view", versio
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-material-icons-extended-android = { group = "androidx.compose.material", name = "material-icons-extended-android", version.ref = "materialIconsExtendedAndroid" }
 androidx-material3-android = { group = "androidx.compose.material3", name = "material3-android", version.ref = "material3Android" }
+androidx-monitor = { module = "androidx.test:monitor", version.ref = "monitor" }
 androidx-preference-ktx = { group = "androidx.preference", name = "preference-ktx", version.ref = "preferenceKtx" }
 androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedataVersion" }
 androidx-test-core = { group = "androidx.test", name = "core", version = "androidXTest" }
