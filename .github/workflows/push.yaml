@@ -1,37 +1,30 @@
-name: Android CI
+name: Push
 
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build:
-
+    name: Build
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v4
-    - name: set up JDK 21
-      uses: actions/setup-java@v4
+        - run: echo "The job was automatically triggered by a ${{ github.event_name }} event."
+        - run: echo "This job is running on a ${{ runner.os }} server hosted by GitHub!"
+    - uses: actions/checkout@v3
+    - run: echo "The ${{ github.repository }} repository has been cloned."
+    - run: echo "Setting up JDK" 
+    - name: set up JDK 11
+      uses: actions/setup-java@v3
       with:
-        java-version: '21'
-        distribution: 'zulu'
+        java-version: '11'
+        distribution: 'temurin'
         cache: gradle
-
-    - name: Create local.properties
-      run: |
-        echo "sdk.dir=${{ secrets.ANDROID_SDK_ROOT }}" > local.properties
-        echo "instrumentationStorePassword=${{ secrets.INSTRUMENTATION_STORE_PASSWORD }}" >> local.properties
-        echo "instrumentationKeyPassword=${{ secrets.INSTRUMENTATION_KEY_PASSWORD }}" >> local.properties
-        echo "instrumentationKeyStore=${{ secrets.INSTRUMENTATION_KEYSTORE }}" >> local.properties
-        echo "instrumentationStoreKeyAlias=${{ secrets.INSTRUMENTATION_STORE_KEY_ALIAS }}" >> local.properties
-        cat << 'EOF' > app/google-services.json
-        ${{ secrets.FIREBASE_CONFIG }}
-        EOF
-
+    - run: echo "The workflow is now ready to test your code."
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
+    - run: echo "Building Debug APK."  
     - name: Build with Gradle
       run: ./gradlew build
+    - run: echo "Build status report=${{ job.status }}."
