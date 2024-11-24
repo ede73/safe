@@ -27,7 +27,9 @@ jobs:
         echo "instrumentationKeyPassword=${{ secrets.INSTRUMENTATION_KEY_PASSWORD }}" >> local.properties
         echo "instrumentationKeyStore=${{ secrets.INSTRUMENTATION_KEYSTORE }}" >> local.properties
         echo "instrumentationStoreKeyAlias=${{ secrets.INSTRUMENTATION_STORE_KEY_ALIAS }}" >> local.properties
-        echo "{}" > app/google-services.json
+        cat << 'EOF' > app/google-services.json
+        ${{ secrets.FIREBASE_CONFIG }}
+        EOF
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
