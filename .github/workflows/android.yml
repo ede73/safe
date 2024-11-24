@@ -20,6 +20,14 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
+    - name: Create local.properties
+      run: |
+        echo "sdk.dir=${{ secrets.ANDROID_SDK_ROOT }}" > local.properties
+        echo "instrumentationStorePassword=${{ secrets.INSTRUMENTATION_STORE_PASSWORD }}" >> local.properties
+        echo "instrumentationKeyPassword=${{ secrets.INSTRUMENTATION_KEY_PASSWORD }}" >> local.properties
+        echo "instrumentationKeyStore=${{ secrets.INSTRUMENTATION_KEYSTORE }}" >> local.properties
+        echo "instrumentationStoreKeyAlias=${{ secrets.INSTRUMENTATION_STORE_KEY_ALIAS }}" >> local.properties
+
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
     - name: Build with Gradle
