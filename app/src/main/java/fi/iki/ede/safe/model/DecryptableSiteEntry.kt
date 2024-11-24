@@ -148,7 +148,16 @@ class DecryptableSiteEntry(categoryId: Long) {
 
     // Flow state is annoying since it requires NEW ENTITIES for changes to register
     fun copy(): DecryptableSiteEntry = DecryptableSiteEntry(categoryId!!).apply {
-        description = this@DecryptableSiteEntry.description
+        this.description = this@DecryptableSiteEntry.description
+        this.decryptedCachedPlainDescription =
+            this@DecryptableSiteEntry.decryptedCachedPlainDescription
+        this.id = this@DecryptableSiteEntry.id
+        this.note = this@DecryptableSiteEntry.note
+        this.password = this@DecryptableSiteEntry.password
+        this.passwordChangedDate = this@DecryptableSiteEntry.passwordChangedDate
+        this.photo = this@DecryptableSiteEntry.photo
+        this.username = this@DecryptableSiteEntry.username
+        this.website = this@DecryptableSiteEntry.website
     }
 
     private val decrypter = KeyStoreHelperFactory.getDecrypter()
