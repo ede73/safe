@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.map
 
 class SiteEntryListScreen : AutoLockingBaseComponentActivity() {
 
+    @Suppress("FlowOperatorInvokedInComposition")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val categoryId =

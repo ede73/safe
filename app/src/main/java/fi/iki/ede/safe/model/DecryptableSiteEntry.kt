@@ -96,7 +96,7 @@ class DecryptableSiteEntry(categoryId: Long) {
                 (searchNotes && plainNote.contains(searchText, true)) ||
                 (searchExtensions && plainExtensions.values.joinToString("")
                     .contains(searchText, true)).also {
-                    println(plainExtensions.values.joinToString(""))
+                    //println(plainExtensions.values.joinToString(""))
                 }
 
     fun isSame(
@@ -141,15 +141,6 @@ class DecryptableSiteEntry(categoryId: Long) {
     // Flow state is annoying since it requires NEW ENTITIES for changes to register
     fun copy(): DecryptableSiteEntry = DecryptableSiteEntry(categoryId!!).apply {
         description = this@DecryptableSiteEntry.description
-        decryptedCachedPlainDescription =
-            this@DecryptableSiteEntry.decryptedCachedPlainDescription
-        id = this@DecryptableSiteEntry.id
-        note = this@DecryptableSiteEntry.note
-        password = this@DecryptableSiteEntry.password
-        passwordChangedDate = this@DecryptableSiteEntry.passwordChangedDate
-        photo = this@DecryptableSiteEntry.photo
-        username = this@DecryptableSiteEntry.username
-        website = this@DecryptableSiteEntry.website
     }
 
     private val decrypter = KeyStoreHelperFactory.getDecrypter()
