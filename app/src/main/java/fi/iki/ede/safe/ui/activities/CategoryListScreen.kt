@@ -61,12 +61,14 @@ class CategoryListScreen : AutoLockingBaseComponentActivity() {
 }
 
 @Composable
+@Suppress("FlowOperatorInvokedInComposition")
 private fun CategoryListScreenCompose(
     flow: StateFlow<List<DecryptableCategoryEntry>> = MutableStateFlow(
         emptyList()
     )
 ) {
     val coroutineScope = rememberCoroutineScope()
+    // TODO: Either new kotlin, coroutines or both, this is a linter error now
     val categoriesState by flow.map { categories -> categories.sortedBy { it.plainName.lowercase() } }
         .collectAsState(initial = emptyList())
     var displayAddCategoryDialog by remember { mutableStateOf(false) }

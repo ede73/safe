@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.map
 
 class SiteEntryListScreen : AutoLockingBaseComponentActivity() {
 
+    @Suppress("FlowOperatorInvokedInComposition")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val categoryId =
@@ -34,6 +35,7 @@ class SiteEntryListScreen : AutoLockingBaseComponentActivity() {
 
         setContent {
             val context = LocalContext.current
+            // TODO: Either new kotlin, coroutines or both, this is a linter error now
             val siteEntriesState by siteEntriesStateFlow
                 .map { passwords -> passwords.filter { it.categoryId == categoryId } }
                 .map { passwords -> passwords.sortedBy { it.cachedPlainDescription.lowercase() } }
