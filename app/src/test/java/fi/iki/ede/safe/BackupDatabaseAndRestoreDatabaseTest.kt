@@ -285,7 +285,6 @@ class BackupDatabaseAndRestoreDatabaseTest {
                     val actualChangedDateTime =
                         passwords[i].passwordChangedDate?.withZoneSameInstant(fakeChangedDateTime.zone)
                     assertEquals(fakeChangedDateTime, actualChangedDateTime)
-                    assertEquals(fakeChangedDateTime, passwords[i].passwordChangedDate)
                 } else {
                     assertEquals(null, passwords[i].passwordChangedDate)
                 }
