@@ -130,7 +130,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         val count = 1000.0
         Log.d(TAG, "Restore: " + (measureTimeMillis {
             (1..count.toInt()).forEach {
-                val out = runBlocking { BackupDatabase.backup().toString() }
+                runBlocking { BackupDatabase.backup().toString() }
             }
         } / count) + " ms")
 
@@ -177,7 +177,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
 
     @Test
     fun backupTestOnlyACategory() {
-        val db = mockDataModelFor_UNIT_TESTS_ONLY(
+        mockDataModelFor_UNIT_TESTS_ONLY(
             linkedMapOf(
                 Pair(
                     DataModelMocks.makeCat(1, ks),
@@ -252,7 +252,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
     @Test
     fun restoreTest() {
         val r = RestoreDatabase()
-        val context = mockkClass(Context::class)
+        mockkClass(Context::class)
 
         mockZonedDateTimeNow(2000)
         mockGetLastBackupTime(1234)
