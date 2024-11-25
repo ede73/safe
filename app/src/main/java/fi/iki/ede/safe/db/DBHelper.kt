@@ -420,7 +420,7 @@ class DBHelper internal constructor(
             insert(SiteEntry2GooglePasswordManager, ContentValues().apply {
                 put(SiteEntry2GooglePasswordManager.Columns.PASSWORD_ID, siteEntryID)
                 put(SiteEntry2GooglePasswordManager.Columns.GOOGLE_ID, savedGPMID)
-            }).let { println("DBLinker $siteEntryID to $savedGPMID") }
+            }).let { Log.w(TAG, "DBLinker $siteEntryID to $savedGPMID") }
         }
 
 
