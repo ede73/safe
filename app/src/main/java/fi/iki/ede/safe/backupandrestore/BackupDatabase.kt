@@ -1,6 +1,5 @@
 package fi.iki.ede.safe.backupandrestore
 
-import android.annotation.SuppressLint
 import android.text.TextUtils
 import android.util.Log
 import fi.iki.ede.crypto.IVCipherText
@@ -28,7 +27,6 @@ import java.time.ZonedDateTime
  * Make sure to increase the version code. Linter will highlight places to fix
  */
 class BackupDatabase : ExportConfig(ExportVersion.V1) {
-    @SuppressLint("AvoidPrintln")
     fun generateXMLExport(): String {
         val serializer = XmlPullParserFactory.newInstance().newSerializer()
         val xmlStringWriter = StringWriter()
