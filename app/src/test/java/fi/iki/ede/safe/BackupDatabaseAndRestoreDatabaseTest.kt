@@ -340,28 +340,34 @@ class BackupDatabaseAndRestoreDatabaseTest {
             DataModel.loadFromDatabase()
         }
 
-        println(
-            "Categories: ${
-                DataModel.categoriesStateFlow.value.map { it.id }.joinToString(",")
-            }"
-        )
-        println(
-            "SiteEntries: ${
-                DataModel.siteEntriesStateFlow.value.map { it.id }.joinToString(",")
-            }"
-        )
-        println(
-            "GPMs: ${
-                DataModel.allSavedGPMsFlow.value.map { it.id }.joinToString(",")
-            }"
-        )
-        println("GPM linked to SiteEntry:" + DataModel.siteEntryToSavedGPMStateFlow.value.entries.joinToString { (key, value) ->
-            "Key: $key, Values: ${
-                value.joinToString(
-                    ", "
-                )
-            }"
-        })
+        if (BuildConfig.DEBUG) {
+            Log.i(
+                TAG,
+                "Categories: ${
+                    DataModel.categoriesStateFlow.value.map { it.id }.joinToString(",")
+                }"
+            )
+            Log.i(
+                TAG,
+                "SiteEntries: ${
+                    DataModel.siteEntriesStateFlow.value.map { it.id }.joinToString(",")
+                }"
+            )
+            Log.i(
+                TAG,
+                "GPMs: ${
+                    DataModel.allSavedGPMsFlow.value.map { it.id }.joinToString(",")
+                }"
+            )
+            Log.i(TAG,
+                "GPM linked to SiteEntry:" + DataModel.siteEntryToSavedGPMStateFlow.value.entries.joinToString { (key, value) ->
+                    "Key: $key, Values: ${
+                        value.joinToString(
+                            ", "
+                        )
+                    }"
+                })
+        }
         val categories = DataModel.categoriesStateFlow.value
         assertEquals(2, categories.size)
         assertEquals("encryptedcat1", categories[0].plainName)
