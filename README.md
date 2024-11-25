@@ -26,7 +26,8 @@ I don't want my sensitive data be whisked away to a cloud provider that forgot t
 - When creating new (updated) password, can copy&paste old & new separately
 - Google Password Manager import - continuous import, with drag and drop (from GPM to Safe) and heuristic autoimport
 - Firebase integrated for run time analysis
- 
+- Extensive unit tests, bouncycastle, UI tests
+
 Code, showcasing asynchronous database access, every lengthy operation runs in a coroutine, using TPM (ie. might not work on cheapo-phones)
 + other hidden gems, like automatically entering PIN to emulator, or running instrumentation tests in Windows Subsystem Linux box (check ci folder)
  
