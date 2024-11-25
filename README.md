@@ -11,7 +11,7 @@ I don't want my sensitive data be whisked away to a cloud provider that forgot t
 - All the data is encrypted all the time (during editing briefly decrypted)
 - Utilizing android keystore that does storage and heavy lifting, masterkey won't leak
 - OpenSSL decryptable backup
-- Can attach photos
+- Can attach photos (encrypted too!)
 - Can generate new secure, totally random passwords
 - Quick search
 - Open Source!
@@ -20,6 +20,14 @@ I don't want my sensitive data be whisked away to a cloud provider that forgot t
 - Automatic timed lock
 - Can import OISafe backup
 - I currently have Have I Been Pawned breach check for the passwords, but not sure if I'll put it on release version
+- Plugin modules
+- Trashcan for deleted passwords, and automatic emptying set to user preferred date
+- Passwords can have extensions (tags/shared meta information), like phone number, which authenticator used etc.
+- When creating new (updated) password, can copy&paste old & new separately
+- Google Password Manager import - continuous import, with drag and drop (from GPM to Safe) and heuristic autoimport
+- Firebase integrated for run time analysis
+ 
+Code, showcasing asynchronous database access, every lengthy operation runs in a coroutine, using TPM (ie. might not work on cheapo-phones)
 
 Written in Kotlin, utilizing JetPack/Compose.
 
