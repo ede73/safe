@@ -1,10 +1,12 @@
 package fi.iki.ede.safe.model
 
 import android.graphics.Bitmap
+import android.util.Log
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.gpm.model.decrypt
 import fi.iki.ede.gpm.model.encrypt
+import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -18,6 +20,10 @@ import java.time.ZonedDateTime
  * TODO: Doesn't really belong to this project, does it?
  */
 class DecryptableSiteEntry(categoryId: Long) {
+    companion object {
+        const val TAG = "DecryptableSiteEntry"
+    }
+
     var description: IVCipherText = IVCipherText.getEmpty()
         set(value) {
             if (field != value) {
@@ -96,7 +102,9 @@ class DecryptableSiteEntry(categoryId: Long) {
                 (searchNotes && plainNote.contains(searchText, true)) ||
                 (searchExtensions && plainExtensions.values.joinToString("")
                     .contains(searchText, true)).also {
-                    println(plainExtensions.values.joinToString(""))
+                    if (BuildConfig.DEBUG) {
+                        Log.i(TAG, plainExtensions.values.joinToString(""))
+                    }
                 }
 
     fun isSame(
@@ -141,15 +149,6 @@ class DecryptableSiteEntry(categoryId: Long) {
     // Flow state is annoying since it requires NEW ENTITIES for changes to register
     fun copy(): DecryptableSiteEntry = DecryptableSiteEntry(categoryId!!).apply {
         description = this@DecryptableSiteEntry.description
-        decryptedCachedPlainDescription =
-            this@DecryptableSiteEntry.decryptedCachedPlainDescription
-        id = this@DecryptableSiteEntry.id
-        note = this@DecryptableSiteEntry.note
-        password = this@DecryptableSiteEntry.password
-        passwordChangedDate = this@DecryptableSiteEntry.passwordChangedDate
-        photo = this@DecryptableSiteEntry.photo
-        username = this@DecryptableSiteEntry.username
-        website = this@DecryptableSiteEntry.website
     }
 
     private val decrypter = KeyStoreHelperFactory.getDecrypter()
