@@ -251,7 +251,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
     }
 
     @Test
-    @Ignore("Temporary")
+    @Ignore("GITHUB_ACTIONS: Fails when run in github, works locally")
     fun restoreTest() {
         val r = RestoreDatabase()
         mockkClass(Context::class)
@@ -283,7 +283,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
             (1..2).forEach { l ->
                 val i = (f - 1) * 2 + (l - 1)
                 if (i == 0) {
-                    // fails
+                    // GITHUB_ACTIONS: FAILS
                     assertEquals(fakeChangedDateTime, passwords[i].passwordChangedDate)
                 } else {
                     assertEquals(null, passwords[i].passwordChangedDate)
@@ -317,7 +317,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         )
 
     @Test
-    @Ignore("temporary")
+    @Ignore("GITHUB_ACTIONS: Fails when run in github, works locally")
     fun restoreBackupImmediateTest() {
         // the purpose of ready made encrypted backup below is to capture backwards/forwards
         // breaking changes, let's have one more - more precise just ensuring the current
@@ -392,7 +392,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         (0..3).forEach { id ->
             val categoryId = categoryIds[id]
             if (id == 0) {
-                // fails
+                // GITHUB_ACTIONS: FAILS
                 assertEquals(fakeChangedDateTime, passwords[id].passwordChangedDate)
             } else {
                 assertEquals(null, passwords[id].passwordChangedDate)
