@@ -281,6 +281,10 @@ class BackupDatabaseAndRestoreDatabaseTest {
             (1..2).forEach { l ->
                 val i = (f - 1) * 2 + (l - 1)
                 if (i == 0) {
+                    // target runs on what ever timezone (github Etc/UTC) so convert to our test TZ
+                    val actualChangedDateTime =
+                        passwords[i].passwordChangedDate?.withZoneSameInstant(fakeChangedDateTime.zone)
+                    assertEquals(fakeChangedDateTime, actualChangedDateTime)
                     assertEquals(fakeChangedDateTime, passwords[i].passwordChangedDate)
                 } else {
                     assertEquals(null, passwords[i].passwordChangedDate)
@@ -394,7 +398,10 @@ class BackupDatabaseAndRestoreDatabaseTest {
         (0..3).forEach { id ->
             val categoryId = categoryIds[id]
             if (id == 0) {
-                assertEquals(fakeChangedDateTime, passwords[id].passwordChangedDate)
+                // target runs on what ever timezone (github Etc/UTC) so convert to our test TZ
+                val actualChangedDateTime =
+                    passwords[id].passwordChangedDate?.withZoneSameInstant(fakeChangedDateTime.zone)
+                assertEquals(fakeChangedDateTime, actualChangedDateTime)
             } else {
                 assertEquals(null, passwords[id].passwordChangedDate)
             }
