@@ -39,7 +39,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 import java.time.ZoneId
@@ -282,7 +281,10 @@ class BackupDatabaseAndRestoreDatabaseTest {
             (1..2).forEach { l ->
                 val i = (f - 1) * 2 + (l - 1)
                 if (i == 0) {
-                    assertEquals(fakeChangedDateTime, passwords[i].passwordChangedDate)
+                    // target runs on what ever timezone (github Etc/UTC) so convert to our test TZ
+                    val actualChangedDateTime =
+                        passwords[i].passwordChangedDate?.withZoneSameInstant(fakeChangedDateTime.zone)
+                    assertEquals(fakeChangedDateTime, actualChangedDateTime)
                 } else {
                     assertEquals(null, passwords[i].passwordChangedDate)
                 }
@@ -315,7 +317,6 @@ class BackupDatabaseAndRestoreDatabaseTest {
         )
 
     @Test
-    @Ignore("GITHUB_ACTIONS: Fails when run in github, works locally")
     fun restoreBackupImmediateTest() {
         // the purpose of ready made encrypted backup below is to capture backwards/forwards
         // breaking changes, let's have one more - more precise just ensuring the current
@@ -396,8 +397,10 @@ class BackupDatabaseAndRestoreDatabaseTest {
         (0..3).forEach { id ->
             val categoryId = categoryIds[id]
             if (id == 0) {
-                // GITHUB_ACTIONS: FAILS
-                assertEquals(fakeChangedDateTime, passwords[id].passwordChangedDate)
+                // target runs on what ever timezone (github Etc/UTC) so convert to our test TZ
+                val actualChangedDateTime =
+                    passwords[id].passwordChangedDate?.withZoneSameInstant(fakeChangedDateTime.zone)
+                assertEquals(fakeChangedDateTime, actualChangedDateTime)
             } else {
                 assertEquals(null, passwords[id].passwordChangedDate)
             }
