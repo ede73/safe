@@ -28,7 +28,8 @@ I don't want my sensitive data be whisked away to a cloud provider that forgot t
 - Firebase integrated for run time analysis
  
 Code, showcasing asynchronous database access, every lengthy operation runs in a coroutine, using TPM (ie. might not work on cheapo-phones)
-
++ other hidden gems, like automatically entering PIN to emulator, or running instrumentation tests in Windows Subsystem Linux box (check ci folder)
+ 
 Written in Kotlin, utilizing JetPack/Compose.
 
 Building:
@@ -51,5 +52,4 @@ Check docs:
 - [Google Password Manager import](docs/GPM%20Import%20Usage.txt) - How Google Password Manager import is done
 - [Bash script](docs/dec.sh) - to decrypt export file
 - [TODO](docs/TODO.txt) 
-- [](docs/) - xxx
-- [](docs/) - xxx
+
