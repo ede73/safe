@@ -397,3 +397,9 @@ tasks.register("fullBuild") {
         "compileDebugAndroidTestKotlin"
     )
 }
+
+kotlin {
+    compilerOptions {
+        extraWarnings.set(true)
+    }
+}
