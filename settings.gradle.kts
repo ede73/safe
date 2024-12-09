@@ -12,9 +12,9 @@ pluginManagement {
     }
     resolutionStrategy {
         eachPlugin {
-            if (requested.id.namespace == "org.jetbrains.kotlin") {
-                useVersion("2.0.21")
-            }
+//            if (requested.id.namespace == "org.jetbrains.kotlin") {
+//                useVersion("2.0.21")
+//            }
         }
     }
 }

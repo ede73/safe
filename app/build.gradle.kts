@@ -266,7 +266,7 @@ dependencies {
     //implementation(libs.core.ktx)
     implementation(libs.feature.delivery.ktx)
     // Don't convert to catalog declaration, something is broken
-    implementation(platform("com.google.firebase:firebase-bom:33.6.0")) // firebase crashlytics
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0")) // firebase crashlytics
     implementation(libs.firebase.analytics) // firebase crashlytics (breadcrumbs)
     implementation(libs.firebase.crashlytics)
     implementation(libs.kotlinx.serialization.json)
