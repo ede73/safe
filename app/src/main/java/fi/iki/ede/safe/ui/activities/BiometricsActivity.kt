@@ -85,7 +85,8 @@ class BiometricsActivity : AppCompatActivity() {
             BiometricManager.BIOMETRIC_ERROR_UNSUPPORTED -> showMessage("ERROR: The specified options are incompatible with the current Android version")
             BiometricManager.BIOMETRIC_STATUS_UNKNOWN -> showMessage("ERROR: Unable to determine whether the user can authenticate")
         }
-        finishActivity(RESULT_CANCELED)
+        setResult(RESULT_CANCELED, Intent().setAction(intent.action))
+        finish()
     }
 
     private fun showBiometricPrompt(title: String, subtitle: String) {
