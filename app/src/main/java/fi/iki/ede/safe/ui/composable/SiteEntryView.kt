@@ -189,7 +189,11 @@ fun SiteEntryView(
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             SafeButton(
                 onClick = {
-                    ClipboardUtils.addToClipboard(context, passEntry.username.decrypt(decrypter))
+                    ClipboardUtils.addToClipboard(
+                        context,
+                        passEntry.username.decrypt(decrypter),
+                        Preferences.getClipboardClearDelaySecs()
+                    )
                 },
                 contentPadding = PaddingValues(0.dp)
             ) {
@@ -246,7 +250,8 @@ fun SiteEntryView(
                         onClick = {
                             ClipboardUtils.addToClipboard(
                                 context,
-                                viewModel.originalPassword?.decrypt(decrypter)
+                                viewModel.originalPassword?.decrypt(decrypter),
+                                Preferences.getClipboardClearDelaySecs()
                             )
                         }, contentPadding = PaddingValues(0.dp)
                     ) {
@@ -271,7 +276,8 @@ fun SiteEntryView(
                     onClick = {
                         ClipboardUtils.addToClipboard(
                             context,
-                            passEntry.password.decrypt(decrypter)
+                            passEntry.password.decrypt(decrypter),
+                            Preferences.getClipboardClearDelaySecs()
                         )
                     },
                     contentPadding = PaddingValues(0.dp)

@@ -11,7 +11,7 @@ import android.os.PersistableBundle
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.model.Preferences
+import java.util.concurrent.TimeUnit
 
 // https://developer.android.com/develop/ui/views/touch-and-input/copy-paste
 object ClipboardUtils {
@@ -19,7 +19,7 @@ object ClipboardUtils {
 
     // using Clipboard is 'iffy' someone might eavesdrop, even though since Android10
     // random apps reading clipboard are not allowed anymore(input method & current focus app)
-    fun addToClipboard(ctx: Context, data: String?) {
+    fun addToClipboard(ctx: Context, data: String?, delaySecs: Int = 0) {
         val cp = ClipData.newPlainText(PASSWORD_SAFE, data?.trim() ?: "")
         cp.apply {
             //We're compiled by API 33 or higher
@@ -30,7 +30,9 @@ object ClipboardUtils {
             }
         }
         getClipboardManager(ctx).setPrimaryClip(cp)
-        sendClearClipboardBroadcast(ctx)
+        if (delaySecs > 0) {
+            sendClearClipboardBroadcast(ctx, TimeUnit.SECONDS.toMillis(delaySecs.toLong()))
+        }
     }
 
     /**
@@ -53,8 +55,8 @@ object ClipboardUtils {
     private fun getClipboardManager(ctx: Context): ClipboardManager =
         ctx.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
 
-    private fun sendClearClipboardBroadcast(context: Context) =
-        Handler(Looper.getMainLooper()).postDelayed(
+    private fun sendClearClipboardBroadcast(context: Context, delayMs: Long): Boolean {
+        return Handler(Looper.getMainLooper()).postDelayed(
             {
                 clearClipboard(context)
                 // Only show a toast for Android 12 and lower.
@@ -65,6 +67,7 @@ object ClipboardUtils {
                     ).show()
                 }
             },
-            (Preferences.getClipboardClearDelaySecs() * 1000).toLong()
+            delayMs
         )
+    }
 }
