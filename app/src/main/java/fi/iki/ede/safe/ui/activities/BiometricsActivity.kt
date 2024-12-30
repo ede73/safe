@@ -17,11 +17,11 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.crypto.keystore.CipherUtilities
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.hexToByteArray
 import fi.iki.ede.crypto.support.toHexString
+import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.model.Preferences.PREFERENCE_BIOMETRICS_ENABLED
@@ -171,8 +171,8 @@ class BiometricsActivity : AppCompatActivity() {
             val biometricKey = ks.getOrCreateBiokey()
             try {
                 val decrypted = ks.decryptByteArray(stampCipher, biometricKey)
-                val then = DateUtils.newParse(String(decrypted))
-                val age = DateUtils.getPeriodBetweenDates(then)
+                val then = fi.iki.ede.dateutils.DateUtils.newParse(String(decrypted))
+                val age = fi.iki.ede.dateutils.DateUtils.getPeriodBetweenDates(then)
                 if (age.days < 128) {
                     LoginHandler.biometricLogin()
                     return true

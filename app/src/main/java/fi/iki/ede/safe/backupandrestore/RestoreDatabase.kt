@@ -6,13 +6,13 @@ import android.util.Log
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
-import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_ITERATION_COUNT
 import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_LENGTH_BITS
 import fi.iki.ede.crypto.keystore.KeyManagement
 import fi.iki.ede.crypto.keystore.KeyManagement.generatePBKDF2AESKey
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.hexToByteArray
+import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Attributes
@@ -158,7 +158,9 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             val creationTime = myParser.getTrimmedAttributeValue(
                                 Attributes.ROOT_PASSWORD_SAFE_CREATION_TIME
                             ).toLongOrNull()?.let {
-                                DateUtils.unixEpochSecondsToLocalZonedDateTime(it)
+                                fi.iki.ede.dateutils.DateUtils.unixEpochSecondsToLocalZonedDateTime(
+                                    it
+                                )
                             }
                             val lastBackupDone = Preferences.getLastBackupTime()
                             // TODO: until above can be mocked..feeling lazy
@@ -286,8 +288,10 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                 try {
                                     siteEntry.passwordChangedDate =
                                         changed.toLongOrNull()?.let {
-                                            DateUtils.unixEpochSecondsToLocalZonedDateTime(it)
-                                        } ?: DateUtils.newParse(changed)
+                                            fi.iki.ede.dateutils.DateUtils.unixEpochSecondsToLocalZonedDateTime(
+                                                it
+                                            )
+                                        } ?: fi.iki.ede.dateutils.DateUtils.newParse(changed)
                                 } catch (ex: DateTimeParseException) {
                                     firebaseRecordException("Failed to parse date ($changed)", ex)
                                     // silently fail, parse failure ain't critical

@@ -4,8 +4,8 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.crypto.keystore.CipherUtilities
+import fi.iki.ede.dateutils.DateUtils
 import java.time.ZonedDateTime
 
 internal fun ContentValues.put(column: TableColumns<*>, value: IVCipherText) =
@@ -21,7 +21,7 @@ internal fun ContentValues.put(column: TableColumns<*>, value: String) =
     put(column.columnName, value)
 
 internal fun ContentValues.put(column: TableColumns<*>, date: ZonedDateTime) =
-    put(column, DateUtils.toUnixSeconds(date))
+    put(column, fi.iki.ede.dateutils.DateUtils.toUnixSeconds(date))
 
 internal fun Cursor.getColumnIndexOrThrow(column: TableColumns<*>) =
     getColumnIndexOrThrow(column.columnName)
@@ -29,10 +29,10 @@ internal fun Cursor.getColumnIndexOrThrow(column: TableColumns<*>) =
 internal fun Cursor.getZonedDateTimeOfPasswordChange(): ZonedDateTime? =
     getString(getColumnIndexOrThrow(SiteEntry.Columns.PASSWORD_CHANGE_DATE))?.let { date ->
         date.toLongOrNull()?.let {
-            DateUtils.unixEpochSecondsToLocalZonedDateTime(it)
+            fi.iki.ede.dateutils.DateUtils.unixEpochSecondsToLocalZonedDateTime(it)
         } ?: run {
             //ok, we have something that isn't numerical
-            DateUtils.newParse(date)
+            fi.iki.ede.dateutils.DateUtils.newParse(date)
         }
     }
 

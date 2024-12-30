@@ -28,8 +28,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
@@ -101,8 +101,14 @@ fun SiteEntryRow(
 
                 if (siteEntry.passwordChangedDate != null) {
                     Text(
-                        text = getPasswordAgePlurality(DateUtils.getPeriodBetweenDates(siteEntry.passwordChangedDate!!)),
-                        modifier = Modifier.align(Alignment.TopEnd).padding(horizontal=10.dp),
+                        text = getPasswordAgePlurality(
+                            fi.iki.ede.dateutils.DateUtils.getPeriodBetweenDates(
+                                siteEntry.passwordChangedDate!!
+                            )
+                        ),
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(horizontal = 10.dp),
                         style = safeTheme.customFonts.smallNote
                     )
                 }

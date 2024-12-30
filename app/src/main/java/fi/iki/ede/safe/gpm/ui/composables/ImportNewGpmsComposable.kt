@@ -31,7 +31,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.BuildConfig
-import fi.iki.ede.crypto.date.DateUtils
+import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.gpm.changeset.ImportChangeSet
 import fi.iki.ede.gpm.debug
 import fi.iki.ede.safe.R
@@ -80,9 +80,9 @@ fun ImportNewGpmsComposable(
     val showImportProgress = remember { mutableStateOf(false) }
     val showUsage = remember {
         mutableStateOf(
-            DateUtils.getPeriodBetweenDates(
+            fi.iki.ede.dateutils.DateUtils.getPeriodBetweenDates(
                 ZonedDateTime.now(),
-                DateUtils.unixEpochSecondsToLocalZonedDateTime(Preferences.getGpmImportUsageShown())
+                fi.iki.ede.dateutils.DateUtils.unixEpochSecondsToLocalZonedDateTime(Preferences.getGpmImportUsageShown())
             ).days > 10
         )
     }

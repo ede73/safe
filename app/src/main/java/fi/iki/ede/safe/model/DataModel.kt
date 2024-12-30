@@ -1,7 +1,7 @@
 package fi.iki.ede.safe.model
 
 import android.util.Log
-import fi.iki.ede.crypto.date.DateUtils
+import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.safe.BuildConfig
@@ -331,9 +331,9 @@ object DataModel {
             // are we past deletion time here?
             val softDeletedMaxAge = softDeletedMaxAgeProvider()
             val expiredSoftDeletedSiteEntries = softDeletedSiteEntries.filter {
-                val softDeletedAge = DateUtils.getPeriodBetweenDates(
+                val softDeletedAge = fi.iki.ede.dateutils.DateUtils.getPeriodBetweenDates(
                     ZonedDateTime.now(),
-                    DateUtils.unixEpochSecondsToLocalZonedDateTime(it.deleted),
+                    fi.iki.ede.dateutils.DateUtils.unixEpochSecondsToLocalZonedDateTime(it.deleted),
                 )
                 if (softDeletedAge.days > softDeletedMaxAge) {
                     Preferences.setLastModified()

@@ -62,6 +62,7 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
     implementation(libs.material)
+    implementation(project(":dateutils"))
 
     // Bring bouncy castle to unit tests
     testImplementation(libs.bcprov.jdk16)

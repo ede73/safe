@@ -245,6 +245,7 @@ dependencies {
 
     lintChecks(project(":app:SafeLinter"))
     implementation(project(":app:crypto"))
+    implementation(project(":dateutils"))
     // cant dynamically filter these out as imports would fail and making stub is too much work..
     implementation(project(":app:gpm"))
 

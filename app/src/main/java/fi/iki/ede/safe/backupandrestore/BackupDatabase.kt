@@ -3,9 +3,9 @@ package fi.iki.ede.safe.backupandrestore
 import android.text.TextUtils
 import android.util.Log
 import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.toHexString
+import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Attributes
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Elements
@@ -38,7 +38,8 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
                 currentVersion.version
             )
             .plainTextAttribute(
-                Attributes.ROOT_PASSWORD_SAFE_CREATION_TIME, DateUtils.toUnixSeconds(
+                Attributes.ROOT_PASSWORD_SAFE_CREATION_TIME,
+                fi.iki.ede.dateutils.DateUtils.toUnixSeconds(
                     ZonedDateTime.now()
                 ).toString()
             )

@@ -6,7 +6,7 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.SaltedEncryptedPassword
 import fi.iki.ede.crypto.SaltedPassword
-import fi.iki.ede.crypto.date.DateUtils
+import fi.iki.ede.dateutils.DateUtils
 import java.text.ParseException
 import java.time.ZonedDateTime
 
@@ -90,7 +90,8 @@ class RestoreDataSet(
     fun setPasswordChangedDate(passwordChangedDate: String) {
         if (currentEntry != null && !TextUtils.isEmpty(passwordChangedDate)) {
             try {
-                currentEntry!!.passwordChangedDate = DateUtils.newParse(passwordChangedDate)
+                currentEntry!!.passwordChangedDate =
+                    fi.iki.ede.dateutils.DateUtils.newParse(passwordChangedDate)
             } catch (pe: ParseException) {
                 Log.e(TAG, "failed setPasswordChangedDate($passwordChangedDate)")
             }

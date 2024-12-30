@@ -1,4 +1,4 @@
-package fi.iki.ede.crypto.date
+package fi.iki.ede.dateutils
 
 import android.util.Log
 import java.time.Duration

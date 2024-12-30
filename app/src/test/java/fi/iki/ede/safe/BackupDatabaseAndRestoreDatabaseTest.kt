@@ -9,11 +9,11 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.KeystoreHelperMock4UnitTests
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
-import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.hexToByteArray
 import fi.iki.ede.crypto.support.toHexString
+import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.safe.DataModelMocks.mockDataModelFor_UNIT_TESTS_ONLY
 import fi.iki.ede.safe.backupandrestore.BackupDatabase
 import fi.iki.ede.safe.backupandrestore.RestoreDatabase
@@ -139,7 +139,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
 
     private fun mockZonedDateTimeNow(unixEpochSeconds: Long) {
         mockkStatic(ZonedDateTime::class)
-        every { ZonedDateTime.now() } returns DateUtils.unixEpochSecondsToLocalZonedDateTime(
+        every { ZonedDateTime.now() } returns fi.iki.ede.dateutils.DateUtils.unixEpochSecondsToLocalZonedDateTime(
             unixEpochSeconds
         )
     }
@@ -168,7 +168,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         every { Preferences.storeAllExtensions(any()) } returns Unit
         every { Preferences.getAllExtensions() } returns emptySet<String>()
         every { Preferences.getLastBackupTime() } returns unixEpochSeconds?.let {
-            DateUtils.unixEpochSecondsToLocalZonedDateTime(
+            fi.iki.ede.dateutils.DateUtils.unixEpochSecondsToLocalZonedDateTime(
                 it
             )
         }

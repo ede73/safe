@@ -15,6 +15,7 @@
             <option value="$PROJECT_DIR$/app/crypto" />
             <option value="$PROJECT_DIR$/app/gpm" />
             <option value="$PROJECT_DIR$/categorypager" />
+            <option value="$PROJECT_DIR$/dateutils" />
             <option value="$PROJECT_DIR$/hibp" />
             <option value="$PROJECT_DIR$/oisaferestore" />
           </set>

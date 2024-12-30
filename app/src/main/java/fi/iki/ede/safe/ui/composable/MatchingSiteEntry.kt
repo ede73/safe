@@ -23,8 +23,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.date.DateUtils
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DataModel.getCategory
@@ -86,7 +86,7 @@ fun MatchingSiteEntry(
                     Spacer(modifier = Modifier.weight(1f)) // This will push the Text to the end
                     Text(
                         text = getPasswordAgePlurality(
-                            duration = DateUtils.getPeriodBetweenDates(
+                            duration = fi.iki.ede.dateutils.DateUtils.getPeriodBetweenDates(
                                 siteEntry.passwordChangedDate!!
                             )
                         ),
@@ -132,7 +132,8 @@ fun MatchingSiteEntry(
             }
             if (displayMoveDialog) {
                 val currentCategory = siteEntry.getCategory()
-                val filteredCategories = DataModel.categoriesStateFlow.collectAsState().value.filter { it != currentCategory }
+                val filteredCategories =
+                    DataModel.categoriesStateFlow.collectAsState().value.filter { it != currentCategory }
 
                 MoveSiteEntryDialog(filteredCategories, onConfirm = { newCategory ->
                     coroutineScope.launch {

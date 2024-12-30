@@ -32,6 +32,7 @@ agp = "8.7.3"
 # see also dependency resolution in settings.gradle.kts for 2.0.21!
 jetbrainsKotlinJvm = "2.0.21"
 kotlin = "2.1.0"
+espressoCore = "3.6.1"
 
 [libraries]
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
@@ -73,6 +74,7 @@ mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 mockk-agent = { group = "io.mockk", name = "mockk-agent", version.ref = "mockk" }
 mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
 volley = { module = "com.android.volley:volley", version.ref = "volley" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

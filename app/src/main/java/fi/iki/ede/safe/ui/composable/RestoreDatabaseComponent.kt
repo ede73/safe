@@ -10,7 +10,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import fi.iki.ede.crypto.Password
-import fi.iki.ede.crypto.date.DateUtils
+import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.RestoreDatabase
 import fi.iki.ede.safe.db.DBHelperFactory
@@ -46,7 +46,8 @@ fun RestoreDatabaseComponent(
         lastBackupDone: ZonedDateTime
     ): Boolean {
         val result = CompletableDeferred<Boolean>()
-        val days = DateUtils.getPeriodBetweenDates(backupCreationTime, lastBackupDone)
+        val days =
+            fi.iki.ede.dateutils.DateUtils.getPeriodBetweenDates(backupCreationTime, lastBackupDone)
 
         val restoreOldBackupMessage = context.getString(
             R.string.restore_screen_not_most_recent_backup_age,

@@ -43,6 +43,7 @@ android {
 dependencies {
     implementation(project(":app"))
     implementation(project(":app:crypto"))
+    implementation(project(":dateutils"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
