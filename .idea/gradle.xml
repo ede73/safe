@@ -16,6 +16,7 @@
             <option value="$PROJECT_DIR$/app/gpm" />
             <option value="$PROJECT_DIR$/app/preferences" />
             <option value="$PROJECT_DIR$/categorypager" />
+            <option value="$PROJECT_DIR$/clipboardutils" />
             <option value="$PROJECT_DIR$/dateutils" />
             <option value="$PROJECT_DIR$/hibp" />
             <option value="$PROJECT_DIR$/oisaferestore" />

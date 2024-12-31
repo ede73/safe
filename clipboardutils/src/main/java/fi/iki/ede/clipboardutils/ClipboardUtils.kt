@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.clipboard
+package fi.iki.ede.clipboardutils
 
 import android.content.ClipData
 import android.content.ClipDescription
@@ -10,7 +10,6 @@ import android.os.Looper
 import android.os.PersistableBundle
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import fi.iki.ede.safe.R
 import java.util.concurrent.TimeUnit
 
 // https://developer.android.com/develop/ui/views/touch-and-input/copy-paste

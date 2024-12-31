@@ -37,9 +37,6 @@
     <string name="category_list_edit">Edit category %s</string>
     <string name="category_list_edit_category">Edit category name</string>
 
-    <!-- clipboard -->
-    <string name="clipboard_cleared">Clipboard cleared!</string>
-
     <!-- generic reusables list -->
     <string name="generic_add">Add</string>
     <string name="generic_dont_delete">Don\'t delete!</string>

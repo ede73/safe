@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.MotionEvent
 import androidx.activity.ComponentActivity
-import fi.iki.ede.safe.clipboard.ClipboardUtils
 import fi.iki.ede.safe.model.LoginHandler
 
 @Suppress("LeakingThis")
@@ -34,7 +33,7 @@ open class AutoLockingBaseComponentActivity : ComponentActivity(), ScreenOffLock
     companion object {
         fun lockTheApplication(context: Context) {
             // Clear the clipboard, if it contains the last password used
-            ClipboardUtils.clearClipboard(context)
+            fi.iki.ede.clipboardutils.ClipboardUtils.clearClipboard(context)
             // Basically sign out
             LoginHandler.logout()
             context.stopService(Intent(context, AutolockingService::class.java))

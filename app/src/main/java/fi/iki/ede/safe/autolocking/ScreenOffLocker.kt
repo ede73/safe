@@ -10,7 +10,6 @@ import android.os.Build
 import android.util.Log
 import android.view.MotionEvent
 import androidx.activity.ComponentActivity
-import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.splits.IntentManager

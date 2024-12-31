@@ -12,7 +12,6 @@ import android.os.IBinder
 import android.util.Log
 import androidx.annotation.RequiresApi
 import fi.iki.ede.crypto.BuildConfig
-import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.notifications.AutoLockNotification
 import java.time.Duration

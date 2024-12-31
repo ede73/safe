@@ -30,7 +30,6 @@
     <string name="category_list_delete_confirm">Haluatko varmasti poistaa %s?</string>
     <string name="category_list_edit">Muokkaa kategoriaa %s</string>
     <string name="category_list_edit_category">Muokkaa kategorian nimeä</string>
-    <string name="clipboard_cleared">Leikekirja tyhjätty!</string>
     <string name="generic_add">Lisää</string>
     <string name="generic_dont_delete">Älä poista!</string>
     <string name="generic_ok">OK!</string>

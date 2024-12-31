@@ -50,16 +50,15 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import fi.iki.ede.clipboardutils.ClipboardUtils
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.decrypt
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.gpm.model.SavedGPM
-import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.autolocking.AvertInactivityDuringLongTask
-import fi.iki.ede.safe.clipboard.ClipboardUtils
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
@@ -189,7 +188,7 @@ fun SiteEntryView(
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             SafeButton(
                 onClick = {
-                    ClipboardUtils.addToClipboard(
+                    fi.iki.ede.clipboardutils.ClipboardUtils.addToClipboard(
                         context,
                         passEntry.username.decrypt(decrypter),
                         fi.iki.ede.preferences.Preferences.getClipboardClearDelaySecs()
@@ -248,7 +247,7 @@ fun SiteEntryView(
                 ) {
                     SafeButton(
                         onClick = {
-                            ClipboardUtils.addToClipboard(
+                            fi.iki.ede.clipboardutils.ClipboardUtils.addToClipboard(
                                 context,
                                 viewModel.originalPassword?.decrypt(decrypter),
                                 fi.iki.ede.preferences.Preferences.getClipboardClearDelaySecs()
@@ -274,7 +273,7 @@ fun SiteEntryView(
                 SafeButton(
                     modifier = Modifier.padding(0.dp),
                     onClick = {
-                        ClipboardUtils.addToClipboard(
+                        fi.iki.ede.clipboardutils.ClipboardUtils.addToClipboard(
                             context,
                             passEntry.password.decrypt(decrypter),
                             fi.iki.ede.preferences.Preferences.getClipboardClearDelaySecs()
