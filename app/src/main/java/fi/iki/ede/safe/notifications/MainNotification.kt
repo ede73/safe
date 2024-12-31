@@ -13,8 +13,8 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.ui.activities.CategoryListScreen
 
 abstract class MainNotification(
@@ -88,7 +88,7 @@ abstract class MainNotification(
             context,
             Manifest.permission.POST_NOTIFICATIONS
         ) == PackageManager.PERMISSION_GRANTED).also {
-            Preferences.setNotificationPermissionRequired(!it)
+            fi.iki.ede.preferences.Preferences.setNotificationPermissionRequired(!it)
             if (!it) flagToRequestNotificationPermission()
         }
 
@@ -112,6 +112,6 @@ abstract class MainNotification(
     // And this is running as services, so we need to route the request
     // And pop up the question once activity is opened (let's say CategoryList)
     private fun flagToRequestNotificationPermission() {
-        Preferences.setNotificationPermissionRequired(true)
+        fi.iki.ede.preferences.Preferences.setNotificationPermissionRequired(true)
     }
 }

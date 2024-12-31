@@ -29,7 +29,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -38,13 +37,13 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.google.common.util.concurrent.ListenableFuture
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.model.AllowedEvents
-import fi.iki.ede.safe.model.MainStateMachine.Companion.INITIAL
-import fi.iki.ede.safe.model.StateMachine
+import fi.iki.ede.safe.autolocking.AvertInactivityDuringLongTask
 import fi.iki.ede.safe.ui.theme.SafeTextButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
-import fi.iki.ede.safe.ui.utilities.AvertInactivityDuringLongTask
 import fi.iki.ede.safe.ui.utilities.firebaseRecordException
+import fi.iki.ede.statemachine.AllowedEvents
+import fi.iki.ede.statemachine.MainStateMachine.Companion.INITIAL
+import fi.iki.ede.statemachine.StateMachine
 import androidx.camera.core.Preview as CameraXPreview
 
 private const val TAG = "SafePhoto"
@@ -56,7 +55,7 @@ fun SafePhoto(
     onBitmapCaptured: (Bitmap?) -> Unit
 ) {
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
 
     fun hasPhotoPermission(): Boolean =
         ContextCompat.checkSelfPermission(
@@ -65,11 +64,11 @@ fun SafePhoto(
         ) == PackageManager.PERMISSION_GRANTED
 
     Column {
-        StateMachine.Create("beforePhotoPreview") {
+        fi.iki.ede.statemachine.StateMachine.Create("beforePhotoPreview") {
             StateEvent(
                 "beforePhotoPreview",
                 INITIAL,
-                AllowedEvents("VerifyPermissionBeforePreview")
+                fi.iki.ede.statemachine.AllowedEvents("VerifyPermissionBeforePreview")
             ) {
                 inactivity.resumeInactivity(context, "Before photo preview")
                 ShowPermissionRequestButton(
@@ -87,7 +86,7 @@ fun SafePhoto(
             StateEvent(
                 "verifyingPermissionBeforePreview",
                 INITIAL,
-                AllowedEvents("DidNotGetPermission")
+                fi.iki.ede.statemachine.AllowedEvents("DidNotGetPermission")
             ) {
                 var transitionToShowPhotoPreview by remember { mutableStateOf(false) }
                 var handleNoPermissionGranted by remember { mutableStateOf(false) }
@@ -118,7 +117,10 @@ fun SafePhoto(
                     }
                 }
             }
-            StateEvent("beforePhotoPreview", "DidNotGetPermission", AllowedEvents(INITIAL)) {
+            StateEvent(
+                "beforePhotoPreview", "DidNotGetPermission",
+                fi.iki.ede.statemachine.AllowedEvents(INITIAL)
+            ) {
                 // explain to user why permission is required!
                 // TODO:
                 Log.e(TAG, "Explain to user why permission is required")
@@ -145,7 +147,10 @@ fun SafePhoto(
                     )
                 }
             }
-            StateEvent("showingTakeDeletePhoto", INITIAL, AllowedEvents("VerifyPermission")) {
+            StateEvent(
+                "showingTakeDeletePhoto", INITIAL,
+                fi.iki.ede.statemachine.AllowedEvents("VerifyPermission")
+            ) {
                 inactivity.resumeInactivity(context, "Photo taken")
                 ShowTakeDeletePhoto(
                     photo,
@@ -170,7 +175,7 @@ fun SafePhoto(
 private fun ShowPermissionRequestButton(
     photo: Bitmap?,
     onBitmapCaptured: (Bitmap?) -> Unit,
-    state: StateMachine.StateEvent
+    state: fi.iki.ede.statemachine.StateMachine.StateEvent
 ) {
     var askPermission by remember { mutableStateOf(false) }
     if (askPermission) {
@@ -204,7 +209,7 @@ private fun ShowPhotoPreview(
 
     cameraProviderFuture.get().let { cameraProvider ->
         val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
-        preview.setSurfaceProvider(previewView.surfaceProvider)
+        preview.surfaceProvider = previewView.surfaceProvider
         cameraProvider.unbindAll()
         cameraProvider.bindToLifecycle(
             lifecycleOwner, cameraSelector, preview, imageCapture
@@ -240,7 +245,7 @@ private fun ShowPhotoPreview(
 private fun ShowTakeDeletePhoto(
     photo: Bitmap?,
     onBitmapCaptured: (Bitmap?) -> Unit,
-    state: StateMachine.StateEvent
+    state: fi.iki.ede.statemachine.StateMachine.StateEvent
 ) {
     var takePhoto by remember { mutableStateOf(false) }
     if (takePhoto) {

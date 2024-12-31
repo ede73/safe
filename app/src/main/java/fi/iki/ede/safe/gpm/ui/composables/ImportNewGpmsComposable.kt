@@ -31,9 +31,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.BuildConfig
-import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.gpm.changeset.ImportChangeSet
 import fi.iki.ede.gpm.debug
+import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.gpm.ui.utilities.deleteInternalCopy
 import fi.iki.ede.safe.gpm.ui.utilities.doesInternalDocumentExist
@@ -41,7 +41,6 @@ import fi.iki.ede.safe.gpm.ui.utilities.getImportStreamAndMoveOrDeleteOriginal
 import fi.iki.ede.safe.gpm.ui.utilities.getInternalDocumentInputStream
 import fi.iki.ede.safe.gpm.ui.utilities.readAndParseCSV
 import fi.iki.ede.safe.model.DataModel
-import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.ui.dialogs.MyProgressDialog
 import fi.iki.ede.safe.ui.dialogs.ProgressStateHolder
 import fi.iki.ede.safe.ui.dialogs.UsageInfoDialog
@@ -82,7 +81,7 @@ fun ImportNewGpmsComposable(
         mutableStateOf(
             fi.iki.ede.dateutils.DateUtils.getPeriodBetweenDates(
                 ZonedDateTime.now(),
-                fi.iki.ede.dateutils.DateUtils.unixEpochSecondsToLocalZonedDateTime(Preferences.getGpmImportUsageShown())
+                fi.iki.ede.dateutils.DateUtils.unixEpochSecondsToLocalZonedDateTime(fi.iki.ede.preferences.Preferences.getGpmImportUsageShown())
             ).days > 10
         )
     }
@@ -292,7 +291,7 @@ fun ImportNewGpmsComposable(
         if (!skipImportReminder && showUsage.value) {
             UsageInfoDialog(stringResource(id = R.string.google_password_import_usage),
                 onDismiss = {
-                    Preferences.gpmImportUsageShown()
+                    fi.iki.ede.preferences.Preferences.gpmImportUsageShown()
                     showUsage.value = false
                 })
         }

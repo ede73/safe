@@ -245,7 +245,9 @@ dependencies {
 
     lintChecks(project(":app:SafeLinter"))
     implementation(project(":app:crypto"))
+    implementation(project(":app:preferences"))
     implementation(project(":dateutils"))
+    implementation(project(":statemachine"))
     // cant dynamically filter these out as imports would fail and making stub is too much work..
     implementation(project(":app:gpm"))
 
@@ -320,6 +322,9 @@ tasks.configureEach {
                 "testDebugUnitTest",
                 ":app:crypto:testDebugUnitTest",
                 ":app:gpm:testDebugUnitTest",
+                ":app:preferences:testDebugUnitTest",
+                ":dateutils:testDebugUnitTest",
+                ":statemachine:testDebugUnitTest",
                 ":oisaferestore:testDebugUnitTest"
             )
             // INSTRUMENTED TESTS, takes long time

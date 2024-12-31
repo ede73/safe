@@ -2,9 +2,9 @@ package fi.iki.ede.safe
 
 import fi.iki.ede.crypto.KeystoreHelperMock4UnitTests
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.DataModelMocks.mockDataModelFor_UNIT_TESTS_ONLY
 import fi.iki.ede.safe.model.DataModel
-import fi.iki.ede.safe.model.Preferences
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
@@ -19,14 +19,14 @@ class DataModelDBTest {
 
     @Before
     fun before() {
-        mockkObject(Preferences)
-        every { Preferences.setLastModified() } returns Unit
-        every { Preferences.storeAllExtensions(any()) } returns Unit
+        mockkObject(fi.iki.ede.preferences.Preferences)
+        every { fi.iki.ede.preferences.Preferences.setLastModified() } returns Unit
+        every { fi.iki.ede.preferences.Preferences.storeAllExtensions(any()) } returns Unit
     }
 
     @After
     fun after() {
-        unmockkObject(Preferences)
+        unmockkObject(fi.iki.ede.preferences.Preferences)
     }
 
     @Test

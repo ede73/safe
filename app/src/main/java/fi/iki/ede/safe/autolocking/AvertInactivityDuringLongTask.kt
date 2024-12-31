@@ -1,10 +1,10 @@
-package fi.iki.ede.safe.ui.utilities
+package fi.iki.ede.safe.autolocking
 
 import android.content.Context
 import androidx.annotation.Discouraged
 
 // Dedicated interface for averting inactivity a bit
-// during long tasks (that are possibly outside out app scode)
+// during long tasks (that are possibly outside out apps code)
 // like browsing google drive/taking a photo/lingering in permission dialog
 // TODO: Make a proper inactivity pause/resume
 interface AvertInactivityDuringLongTask {

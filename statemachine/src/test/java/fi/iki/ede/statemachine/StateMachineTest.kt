@@ -1,8 +1,6 @@
-package fi.iki.ede.safe
+package fi.iki.ede.statemachine
 
-import fi.iki.ede.safe.model.AllowedEvents
-import fi.iki.ede.safe.model.MainStateMachine.Companion.INITIAL
-import fi.iki.ede.safe.model.StateMachine
+import fi.iki.ede.statemachine.MainStateMachine.Companion.INITIAL
 import io.mockk.every
 import io.mockk.mockkConstructor
 import io.mockk.slot
@@ -24,19 +22,34 @@ class StateMachineTest {
 
     @Test
     fun testStateEventHandling() {
-        mockkConstructor(StateMachine.StateEvent::class, recordPrivateCalls = true)
+        mockkConstructor(
+            StateMachine.StateEvent::class,
+            recordPrivateCalls = true
+        )
         val state = slot<String>()
-        every { anyConstructed<StateMachine.StateEvent>().transitionTo(capture(state)) } answers { callOriginal() }
+        every {
+            anyConstructed<StateMachine.StateEvent>().transitionTo(
+                capture(state)
+            )
+        } answers { callOriginal() }
 
         val stateMachine = getStateMachine()
 
         stateMachine.injectEvent("sublimed")
         assertEquals("gas", state.captured)
-        verify(exactly = 1) { anyConstructed<StateMachine.StateEvent>().transitionTo(any()) }
+        verify(exactly = 1) {
+            anyConstructed<StateMachine.StateEvent>().transitionTo(
+                any()
+            )
+        }
 
         stateMachine.injectEvent("deposited")
         assertEquals("solid", state.captured)
-        verify(exactly = 2) { anyConstructed<StateMachine.StateEvent>().transitionTo(any()) }
+        verify(exactly = 2) {
+            anyConstructed<StateMachine.StateEvent>().transitionTo(
+                any()
+            )
+        }
     }
 
     @Test
@@ -51,7 +64,10 @@ class StateMachineTest {
                 transitionTo("unknown")
                 counter++
             }
-            stateEvent("unknown", "not_run_by_transition", AllowedEvents("not_run_by_transition")) {
+            stateEvent(
+                "unknown", "not_run_by_transition",
+                AllowedEvents("not_run_by_transition")
+            ) {
                 transitionTo("solid")
                 counter++
             }

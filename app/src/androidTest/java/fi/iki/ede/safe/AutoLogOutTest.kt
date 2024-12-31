@@ -8,9 +8,9 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import fi.iki.ede.preferences.Preferences
+import fi.iki.ede.safe.autolocking.AutolockingService
 import fi.iki.ede.safe.model.LoginHandler
-import fi.iki.ede.safe.model.Preferences
-import fi.iki.ede.safe.service.AutolockingService
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.BiometricsActivity
 import fi.iki.ede.safe.ui.activities.CategoryListScreen
@@ -93,9 +93,9 @@ class AutoLogOutTest {
         fun initialize() {
             MockKeyStore.mockKeyStore()
 
-            mockkObject(Preferences)
-            every { Preferences.getLockTimeoutDuration() } returns 100.milliseconds
-            every { Preferences.getLockOnScreenLock(any()) } returns true
+            mockkObject(fi.iki.ede.preferences.Preferences)
+            every { fi.iki.ede.preferences.Preferences.getLockTimeoutDuration() } returns 100.milliseconds
+            every { fi.iki.ede.preferences.Preferences.getLockOnScreenLock(any()) } returns true
             mockkObject(BiometricsActivity)
             mockIsBiometricsEnabled { false }
 

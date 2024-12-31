@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.ui.utilities
+package fi.iki.ede.safe.autolocking
 
 import android.content.Context
 import android.content.Intent
@@ -7,7 +7,6 @@ import android.view.MotionEvent
 import androidx.activity.ComponentActivity
 import fi.iki.ede.safe.clipboard.ClipboardUtils
 import fi.iki.ede.safe.model.LoginHandler
-import fi.iki.ede.safe.service.AutolockingService
 
 @Suppress("LeakingThis")
 open class AutoLockingBaseComponentActivity : ComponentActivity(), ScreenOffLocker {

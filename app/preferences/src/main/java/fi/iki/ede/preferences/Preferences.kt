@@ -1,14 +1,10 @@
-package fi.iki.ede.safe.model
+package fi.iki.ede.preferences
 
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Environment
-import androidx.preference.PreferenceManager
-import fi.iki.ede.dateutils.DateUtils
-import fi.iki.ede.safe.BuildConfig
-import fi.iki.ede.safe.R
-import fi.iki.ede.safe.splits.PluginName
+import android.preference.PreferenceManager
 import java.time.ZonedDateTime
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
@@ -46,7 +42,7 @@ object Preferences {
     const val PREFERENCE_BACKUP_DOCUMENT = "backup_document"
     private val PREFERENCE_BACKUP_PATH_DEFAULT_VALUE =
         (Environment.getExternalStorageDirectory()?.absolutePath
-            ?: "") + "/${PASSWORDSAFE_EXPORT_FILE}"
+            ?: "") + "/$PASSWORDSAFE_EXPORT_FILE"
     const val PREFERENCE_BIOMETRICS_ENABLED = "biometrics"
     const val PREFERENCE_BIO_CIPHER = "bio_cipher"
     const val PREFERENCE_EXPERIMENTAL_FEATURES = "experiments"
@@ -123,10 +119,9 @@ object Preferences {
     fun setLastBackupTime() = storeTimestamp(PREFERENCE_LAST_BACKUP_TIME)
     fun getLastBackupTime() = getStoredTimestamp(PREFERENCE_LAST_BACKUP_TIME)
 
-    fun getEnabledExperiments(): Set<PluginName> =
-        sharedPreferences.getStringSet(PREFERENCE_EXPERIMENTAL_FEATURES, emptySet())
-            ?.mapNotNull { PluginName.entries.firstOrNull { p -> p.pluginName == it } }
-            ?.toSet() ?: emptySet()
+    fun getEnabledExperimentNames(): Set<String> =
+        sharedPreferences.getStringSet(PREFERENCE_EXPERIMENTAL_FEATURES, emptySet())?.toSet()
+            ?: emptySet()
 
     // This is safety measure on app crash, it must go to the disk immediately
     @SuppressLint("ApplySharedPref")

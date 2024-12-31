@@ -14,15 +14,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import fi.iki.ede.crypto.Password
+import fi.iki.ede.safe.autolocking.AutoLockingBaseComponentActivity
 import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.model.DataModel
-import fi.iki.ede.safe.model.MainStateMachine.Companion.INITIAL
-import fi.iki.ede.safe.model.StateMachine
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.composable.AskBackupPasswordAndCommence
 import fi.iki.ede.safe.ui.composable.RestoreDatabaseComponent
 import fi.iki.ede.safe.ui.composable.setupActivityResultLauncher
-import fi.iki.ede.safe.ui.utilities.AutoLockingBaseComponentActivity
+import fi.iki.ede.statemachine.MainStateMachine.Companion.INITIAL
+import fi.iki.ede.statemachine.StateMachine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
@@ -44,7 +44,7 @@ class RestoreDatabaseScreen : AutoLockingBaseComponentActivity() {
         setContent {
             val coroutineScope = rememberCoroutineScope()
 
-            StateMachine.Create("selectingDocument") {
+            fi.iki.ede.statemachine.StateMachine.Create("selectingDocument") {
                 pauseInactivity(context, "Paused while selecting document")
                 StateEvent("selectingDocument", INITIAL) {
                     var nextState by remember { mutableStateOf(false) }

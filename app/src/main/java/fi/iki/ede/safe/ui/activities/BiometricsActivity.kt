@@ -21,12 +21,11 @@ import fi.iki.ede.crypto.keystore.CipherUtilities
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.hexToByteArray
 import fi.iki.ede.crypto.support.toHexString
-import fi.iki.ede.dateutils.DateUtils
+import fi.iki.ede.preferences.Preferences.PREFERENCE_BIOMETRICS_ENABLED
+import fi.iki.ede.preferences.Preferences.PREFERENCE_BIO_CIPHER
+import fi.iki.ede.preferences.Preferences.sharedPreferences
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.LoginHandler
-import fi.iki.ede.safe.model.Preferences.PREFERENCE_BIOMETRICS_ENABLED
-import fi.iki.ede.safe.model.Preferences.PREFERENCE_BIO_CIPHER
-import fi.iki.ede.safe.model.Preferences.sharedPreferences
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import java.time.ZonedDateTime
 

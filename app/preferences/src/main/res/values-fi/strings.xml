@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="preferences_autobackup_restore_finished">Google automaattisen varmuuskopion palautus päättyi</string>
+    <string name="preferences_autobackup_restore_started">Google automaattinen varmuuskopio palautettu</string>
+    <string name="preferences_automatic_locking_selection_title">Valitse automaattinen lukitusviive</string>
+    <string name="preferences_clipboard_clear_delay_title">Leikekirjan tyhjennysviive</string>
+    <string name="preferences_experimental_features_title">Saatavilla olevat kokeelliset ominaisuudet</string>
+    <string name="preferences_summary_automatic_locking_timeout">Valitun viiveen jälkeen, ohjelma lukitsee itsensä ja vaatii sisäänkirjauksen</string>
+    <string name="preferences_summary_clipboard_clear_delay">Viive sekunneissa, jonka jälkeen leikekirja tyhjennetään</string>
+    <string name="preferences_summary_default_user_name">Oletuskäyttäjänimi kun lisätään uusi salasana. Valinnainen, yleensä sähkäpostiosoitteesi</string>
+    <string name="preferences_summary_enable_biometrics">Salasanan sijaan voit kirjautua biometriikalla. Salasanakirjaus on aina mahdollinen. Android järjestemä huolehtii biometriikan tallennuksesta ja varmennuksesta.</string>
+    <string name="preferences_summary_experimental_features">Täältä voi testata kokeellisia ominaisuuksia. Ne ei välttämättä toimi täydellisesti.</string>
+    <string name="preferences_summary_lastback_never_done">Ei varmuuskopioita</string>
+    <string name="preferences_summary_lock_when_screen_locks">Lukitse sovellus kun näyttö lukitaan</string>
+    <string name="preferences_title">Asetukset</string>
+    <string name="preferences_title_autobackup_quota_exceeded">Googlen automaattisen varmuuskopioinnin tila loppui</string>
+    <string name="preferences_title_autobackup_started">Google automaattinen varmuuskopiointi alkoi (ja ehkä päättyi)</string>
+    <string name="preferences_title_automatic_locking_timeout">Automaattisen lukituksen viive</string>
+    <string name="preferences_title_clipboard_clear_delay">Leikekirjan tyhjennysviive</string>
+    <string name="preferences_title_default_backup_path">Oletusvarmuuskkopiopolku</string>
+    <string name="preferences_title_default_user_name">Oletuskäyttäjänimi</string>
+    <string name="preferences_title_enable_biometrics">Salli biometrinen tunnistautuminen</string>
+    <string name="preferences_title_experimental_features">Kokeelliset ominaisuudet</string>
+    <string name="preferences_title_lock_when_screen_locks">Lukitse kun näyttö lukitaan</string>
+    <string name="preferences_title_make_a_crash">Kaada sovellus</string>
+    <string name="preferences_title_time_of_last_backup">Viimeisen varmuuskopion aika</string>
+    <string name="preferences_title_soft_delete">Tuhoa poistetut salasanat</string>
+    <string name="preferences_summary_soft_delete"><![CDATA[%s. Voit asettaa poistoajan salasanoille, jotka on merkattu poistettavaksi. Jos 0, salasanat tuhotaan heti, jos > 0, poistettavaksi merkatut salasanat tuhotaan näin monen päivän jälkeen.]]></string>
+    <string name="preferences_edit_extensions">Muokkaa laajennuksia</string>
+</resources>

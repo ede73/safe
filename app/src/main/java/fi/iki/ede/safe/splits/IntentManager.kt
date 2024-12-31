@@ -4,8 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.db.DBID
-import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.ui.activities.CategoryListScreen
 import fi.iki.ede.safe.ui.activities.HelpScreen
 import fi.iki.ede.safe.ui.activities.LoginScreen
@@ -19,6 +19,12 @@ import fi.iki.ede.safe.ui.activities.SiteEntryListScreen
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
 
 private const val TAG = "IntentManager"
+
+fun fi.iki.ede.preferences.Preferences.getEnabledExperiments(): Set<PluginName> =
+    getEnabledExperimentNames()
+        .mapNotNull { PluginName.entries.firstOrNull { p -> p.pluginName == it } }
+        .toSet()
+
 
 // Every intent retrieved/launched in the app go thru IntentManager
 // If a plugin wants to tap into the intent, they can modify or even replace it
@@ -45,7 +51,7 @@ object IntentManager {
         flags: Int? = null,
         extras: Bundle? = null
     ): Intent {
-        val enabledExperiments = Preferences.getEnabledExperiments()
+        val enabledExperiments = fi.iki.ede.preferences.Preferences.getEnabledExperiments()
         val replacements = intentReplacements.filter { (key, _) -> key in enabledExperiments }
             .flatMap { entry ->
                 entry.value.filterKeys { it == activityClass }.map { Pair(entry.key, it.value) }

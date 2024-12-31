@@ -14,10 +14,12 @@
             <option value="$PROJECT_DIR$/app/SafeLinter" />
             <option value="$PROJECT_DIR$/app/crypto" />
             <option value="$PROJECT_DIR$/app/gpm" />
+            <option value="$PROJECT_DIR$/app/preferences" />
             <option value="$PROJECT_DIR$/categorypager" />
             <option value="$PROJECT_DIR$/dateutils" />
             <option value="$PROJECT_DIR$/hibp" />
             <option value="$PROJECT_DIR$/oisaferestore" />
+            <option value="$PROJECT_DIR$/statemachine" />
           </set>
         </option>
         <option name="resolveExternalAnnotations" value="false" />

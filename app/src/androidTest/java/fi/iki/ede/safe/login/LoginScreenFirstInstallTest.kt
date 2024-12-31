@@ -12,11 +12,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
+import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.backupandrestore.MyBackupAgent
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.LoginHandler
-import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.ui.activities.BiometricsActivity
 import fi.iki.ede.safe.ui.activities.LoginScreen
 import fi.iki.ede.safe.utilities.AutoMockingUtilities
@@ -124,7 +124,7 @@ class LoginScreenFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
             if (InstrumentationRegistry.getArguments().getString("test") == "true")
                 System.setProperty("test", "true")
 
-            mockkObject(Preferences)
+            mockkObject(fi.iki.ede.preferences.Preferences)
             mockkObject(BiometricsActivity)
             mockIsBiometricsInitialized { false }
 

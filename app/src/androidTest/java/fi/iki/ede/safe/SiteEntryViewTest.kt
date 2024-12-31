@@ -17,8 +17,8 @@ import androidx.test.core.app.ActivityScenario.launch
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.model.LoginHandler
-import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen.Companion.SITE_ENTRY_ID
@@ -105,8 +105,11 @@ class SiteEntryViewTest : NodeHelper {
         DBHelper4AndroidTest.initializeEverything(context)
         DBHelper4AndroidTest.configureDefaultTestDataModelAndDB()
 
-        mockkObject(Preferences)
-        every { Preferences.getAllExtensions() } returns setOf("extension1", "extension2")
+        mockkObject(fi.iki.ede.preferences.Preferences)
+        every { fi.iki.ede.preferences.Preferences.getAllExtensions() } returns setOf(
+            "extension1",
+            "extension2"
+        )
         val intent = Intent(context, SiteEntryEditScreen::class.java).apply {
             putExtra(SITE_ENTRY_ID, 1L)
         }
@@ -119,7 +122,7 @@ class SiteEntryViewTest : NodeHelper {
 
     @After
     fun after() {
-        unmockkObject(Preferences)
+        unmockkObject(fi.iki.ede.preferences.Preferences)
     }
 
     private fun goBack() {

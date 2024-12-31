@@ -12,8 +12,8 @@ import fi.iki.ede.crypto.keystore.KeyManagement
 import fi.iki.ede.crypto.keystore.KeyManagement.generatePBKDF2AESKey
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.hexToByteArray
-import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Attributes
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Elements
@@ -22,7 +22,6 @@ import fi.iki.ede.safe.db.DBID
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.model.LoginHandler
-import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import kotlinx.coroutines.CancellationException
 import org.xmlpull.v1.XmlPullParser
@@ -162,7 +161,8 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                     it
                                 )
                             }
-                            val lastBackupDone = Preferences.getLastBackupTime()
+                            val lastBackupDone =
+                                fi.iki.ede.preferences.Preferences.getLastBackupTime()
                             // TODO: until above can be mocked..feeling lazy
                             //val creationTime: ZonedDateTime? = null
                             // if we know the backup creation time AND we known when a backup

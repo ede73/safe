@@ -13,14 +13,13 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.hexToByteArray
 import fi.iki.ede.crypto.support.toHexString
-import fi.iki.ede.dateutils.DateUtils
+import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.DataModelMocks.mockDataModelFor_UNIT_TESTS_ONLY
 import fi.iki.ede.safe.backupandrestore.BackupDatabase
 import fi.iki.ede.safe.backupandrestore.RestoreDatabase
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.LoginHandler
-import fi.iki.ede.safe.model.Preferences
 import io.mockk.every
 import io.mockk.isMockKMock
 import io.mockk.mockk
@@ -71,9 +70,9 @@ class BackupDatabaseAndRestoreDatabaseTest {
         mockkStatic(FirebaseCrashlytics::class)
         every { FirebaseCrashlytics.getInstance() } returns mockk(relaxed = true)
 
-        mockkObject(Preferences)
-        every { Preferences.storeAllExtensions(any()) } returns Unit
-        every { Preferences.getAllExtensions() } returns emptySet<String>()
+        mockkObject(fi.iki.ede.preferences.Preferences)
+        every { fi.iki.ede.preferences.Preferences.storeAllExtensions(any()) } returns Unit
+        every { fi.iki.ede.preferences.Preferences.getAllExtensions() } returns emptySet<String>()
 
         KeystoreHelperMock4UnitTests.mock()
         ks = KeyStoreHelperFactory.getKeyStoreHelper()
@@ -89,7 +88,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
 
     @After
     fun after() {
-        unmockkObject(Preferences)
+        unmockkObject(fi.iki.ede.preferences.Preferences)
         unmockkObject(Firebase)
         unmockkStatic(FirebaseCrashlytics::class)
         unmockkAll()
@@ -164,15 +163,15 @@ class BackupDatabaseAndRestoreDatabaseTest {
         mockkStatic(Environment::class)
         every { Environment.getExternalStorageDirectory() } returns File("path/to/fake/directory")
 
-        mockkObject(Preferences)
-        every { Preferences.storeAllExtensions(any()) } returns Unit
-        every { Preferences.getAllExtensions() } returns emptySet<String>()
-        every { Preferences.getLastBackupTime() } returns unixEpochSeconds?.let {
+        mockkObject(fi.iki.ede.preferences.Preferences)
+        every { fi.iki.ede.preferences.Preferences.storeAllExtensions(any()) } returns Unit
+        every { fi.iki.ede.preferences.Preferences.getAllExtensions() } returns emptySet<String>()
+        every { fi.iki.ede.preferences.Preferences.getLastBackupTime() } returns unixEpochSeconds?.let {
             fi.iki.ede.dateutils.DateUtils.unixEpochSecondsToLocalZonedDateTime(
                 it
             )
         }
-        every { Preferences.getSoftDeleteDays() } returns 0
+        every { fi.iki.ede.preferences.Preferences.getSoftDeleteDays() } returns 0
     }
 
     @Test

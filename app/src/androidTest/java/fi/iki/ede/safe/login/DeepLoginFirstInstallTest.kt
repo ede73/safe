@@ -12,11 +12,11 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.backupandrestore.MyBackupAgent
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.LoginHandler
-import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.BiometricsActivity
@@ -184,7 +184,7 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
             if (InstrumentationRegistry.getArguments().getString("test") == "true")
                 System.setProperty("test", "true")
 
-            mockkObject(Preferences)
+            mockkObject(fi.iki.ede.preferences.Preferences)
             mockkObject(BiometricsActivity)
             MyResultLauncher.beforeClassJvmStaticSetup()
 

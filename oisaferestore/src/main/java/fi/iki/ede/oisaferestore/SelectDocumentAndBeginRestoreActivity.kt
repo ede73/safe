@@ -15,12 +15,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.safe.R
+import fi.iki.ede.safe.autolocking.AutoLockingBaseComponentActivity
 import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.composable.AskBackupPasswordAndCommence
-import fi.iki.ede.safe.ui.utilities.AutoLockingBaseComponentActivity
 import kotlinx.coroutines.runBlocking
 
 class SelectDocumentAndBeginRestoreActivity : AutoLockingBaseComponentActivity() {

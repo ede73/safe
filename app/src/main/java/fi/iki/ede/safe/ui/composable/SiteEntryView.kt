@@ -56,12 +56,13 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.decrypt
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.R
+import fi.iki.ede.safe.autolocking.AvertInactivityDuringLongTask
 import fi.iki.ede.safe.clipboard.ClipboardUtils
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
-import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.password.PG_SYMBOLS
 import fi.iki.ede.safe.password.PasswordGenerator
 import fi.iki.ede.safe.splits.PluginManager
@@ -73,7 +74,6 @@ import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
-import fi.iki.ede.safe.ui.utilities.AvertInactivityDuringLongTask
 import kotlinx.coroutines.launch
 import java.time.ZonedDateTime
 
@@ -192,7 +192,7 @@ fun SiteEntryView(
                     ClipboardUtils.addToClipboard(
                         context,
                         passEntry.username.decrypt(decrypter),
-                        Preferences.getClipboardClearDelaySecs()
+                        fi.iki.ede.preferences.Preferences.getClipboardClearDelaySecs()
                     )
                 },
                 contentPadding = PaddingValues(0.dp)
@@ -251,7 +251,7 @@ fun SiteEntryView(
                             ClipboardUtils.addToClipboard(
                                 context,
                                 viewModel.originalPassword?.decrypt(decrypter),
-                                Preferences.getClipboardClearDelaySecs()
+                                fi.iki.ede.preferences.Preferences.getClipboardClearDelaySecs()
                             )
                         }, contentPadding = PaddingValues(0.dp)
                     ) {
@@ -277,7 +277,7 @@ fun SiteEntryView(
                         ClipboardUtils.addToClipboard(
                             context,
                             passEntry.password.decrypt(decrypter),
-                            Preferences.getClipboardClearDelaySecs()
+                            fi.iki.ede.preferences.Preferences.getClipboardClearDelaySecs()
                         )
                     },
                     contentPadding = PaddingValues(0.dp)
@@ -469,7 +469,7 @@ fun SiteEntryExtensionList(
     val allExtensions = DataModel.getAllSiteEntryExtensions()
 
     VerticalCollapsible(stringResource(id = R.string.site_entry_extension_collapsible)) {
-        Preferences.getAllExtensions().sortedBy { it }.forEach {
+        fi.iki.ede.preferences.Preferences.getAllExtensions().sortedBy { it }.forEach {
             Column {
                 SiteEntryExtensionSelector(
                     viewModel,

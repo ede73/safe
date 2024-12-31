@@ -24,16 +24,16 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
+import fi.iki.ede.safe.autolocking.AutolockingService
 import fi.iki.ede.safe.backupandrestore.MyBackupAgent
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.db.DBHelper.Companion.DATABASE_NAME
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.LoginHandler
-import fi.iki.ede.safe.model.Preferences
-import fi.iki.ede.safe.service.AutolockingService
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.splits.PluginManager
 import fi.iki.ede.safe.ui.TestTag
@@ -245,7 +245,8 @@ private fun LoginScreenCompose(
                 // just FYI
                 if (MyBackupAgent.haveRestoreMark(context)) {
                     val time =
-                        Preferences.getAutoBackupRestoreFinished()?.toLocalDateTime()?.toString()
+                        fi.iki.ede.preferences.Preferences.getAutoBackupRestoreFinished()
+                            ?.toLocalDateTime()?.toString()
                             ?: ""
                     Text(
                         stringResource(R.string.login_screen_restore_mark_message, time),

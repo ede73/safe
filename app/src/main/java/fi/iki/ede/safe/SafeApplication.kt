@@ -9,13 +9,14 @@ import com.google.android.play.core.splitcompat.SplitCompatApplication
 import com.google.firebase.Firebase
 import com.google.firebase.FirebaseApp
 import com.google.firebase.crashlytics.crashlytics
+import fi.iki.ede.preferences.Preferences
+import fi.iki.ede.preferences.Preferences.PREFERENCE_EXPERIMENTAL_FEATURES
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.db.DBHelperFactory
-import fi.iki.ede.safe.model.Preferences
-import fi.iki.ede.safe.model.Preferences.PREFERENCE_EXPERIMENTAL_FEATURES
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.splits.PluginManager.reinitializePlugins
 import fi.iki.ede.safe.splits.PluginName
+import fi.iki.ede.safe.splits.getEnabledExperiments
 
 private val TAG = "SafeApplication"
 
@@ -44,9 +45,9 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
         Firebase.crashlytics.setCustomKey("git_commit_hash", BuildConfig.GIT_COMMIT_HASH)
         Firebase.crashlytics.setCustomKey("VERSION_NAME", BuildConfig.VERSION_NAME)
         Firebase.crashlytics.setCustomKey("VERSION_CODE", BuildConfig.VERSION_CODE)
-        Firebase.crashlytics.setCrashlyticsCollectionEnabled(true)
+        Firebase.crashlytics.isCrashlyticsCollectionEnabled = true
 //        throw RuntimeException("Test Crash")
-        Preferences.initialize(this)
+        fi.iki.ede.preferences.Preferences.initialize(this)
         DBHelperFactory.initializeDatabase(DBHelper(this, DBHelper.DATABASE_NAME, true))
         reinitializePlugins(this)
         PreferenceManager.getDefaultSharedPreferences(this)
@@ -67,7 +68,7 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
     // We want to ensure as plugins are loaded/unloaded their registration is correctly removed
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
         if (key == PREFERENCE_EXPERIMENTAL_FEATURES) {
-            val enabledExperiments = Preferences.getEnabledExperiments()
+            val enabledExperiments = fi.iki.ede.preferences.Preferences.getEnabledExperiments()
             PluginName.entries.forEach {
                 if (it !in enabledExperiments) {
                     // this plugin might have just been disabled

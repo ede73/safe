@@ -5,8 +5,8 @@ import com.google.android.play.core.splitinstall.SplitInstallManager
 import com.google.android.play.core.splitinstall.SplitInstallManagerFactory
 import com.google.firebase.Firebase
 import com.google.firebase.crashlytics.crashlytics
+import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.BuildConfig
-import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.ui.utilities.firebaseLog
 import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import java.util.ServiceConfigurationError
@@ -113,7 +113,7 @@ object PluginManager {
 
     fun reinitializePlugins(appContext: Context) {
         val sm = SplitInstallManagerFactory.create(appContext)
-        Preferences.getEnabledExperiments().forEach {
+        fi.iki.ede.preferences.Preferences.getEnabledExperiments().forEach {
             firebaseLog("Is enabled plugin $it installed?")
             if (isPluginInstalled(sm, it)) {
                 firebaseLog(" is installed $it, initialize now")
@@ -147,5 +147,5 @@ object PluginManager {
     private fun getBundleTestMode() = if (BuildConfig.DEBUG) _bundleTestMode else false
 
     fun isPluginEnabled(plugin: PluginName) =
-        plugin in Preferences.getEnabledExperiments()
+        plugin in fi.iki.ede.preferences.Preferences.getEnabledExperiments()
 }

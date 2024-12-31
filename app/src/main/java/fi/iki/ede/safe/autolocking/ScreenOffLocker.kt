@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.ui.utilities
+package fi.iki.ede.safe.autolocking
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -10,10 +10,9 @@ import android.os.Build
 import android.util.Log
 import android.view.MotionEvent
 import androidx.activity.ComponentActivity
+import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.model.LoginHandler
-import fi.iki.ede.safe.model.Preferences
-import fi.iki.ede.safe.service.AutolockingService
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.activities.LoginScreen
 
@@ -54,7 +53,7 @@ interface ScreenOffLocker : AvertInactivityDuringLongTask {
     private fun checkScreenOff(context: Context, intent: Intent) {
         when (intent.action) {
             Intent.ACTION_SCREEN_OFF -> {
-                if (Preferences.getLockOnScreenLock(true)) {
+                if (fi.iki.ede.preferences.Preferences.getLockOnScreenLock(true)) {
                     AutoLockingBaseComponentActivity.lockTheApplication(context)
                 }
             }

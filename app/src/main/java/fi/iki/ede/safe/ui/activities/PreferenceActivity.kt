@@ -18,30 +18,30 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import com.google.firebase.Firebase
 import com.google.firebase.crashlytics.crashlytics
+import fi.iki.ede.preferences.Preferences.PREFERENCE_AUTOBACKUP_QUOTA_EXCEEDED
+import fi.iki.ede.preferences.Preferences.PREFERENCE_AUTOBACKUP_RESTORE_FINISHED
+import fi.iki.ede.preferences.Preferences.PREFERENCE_AUTOBACKUP_RESTORE_STARTED
+import fi.iki.ede.preferences.Preferences.PREFERENCE_AUTOBACKUP_STARTED
+import fi.iki.ede.preferences.Preferences.getAutoBackupQuotaExceeded
+import fi.iki.ede.preferences.Preferences.getAutoBackupRestoreFinished
+import fi.iki.ede.preferences.Preferences.getAutoBackupRestoreStarts
+import fi.iki.ede.preferences.Preferences.getAutoBackupStarts
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
+import fi.iki.ede.safe.autolocking.AutoLockingBaseAppCompatActivity
+import fi.iki.ede.safe.autolocking.AutolockingService
 import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableSiteEntry
-import fi.iki.ede.safe.model.Preferences
-import fi.iki.ede.safe.model.Preferences.PREFERENCE_AUTOBACKUP_QUOTA_EXCEEDED
-import fi.iki.ede.safe.model.Preferences.PREFERENCE_AUTOBACKUP_RESTORE_FINISHED
-import fi.iki.ede.safe.model.Preferences.PREFERENCE_AUTOBACKUP_RESTORE_STARTED
-import fi.iki.ede.safe.model.Preferences.PREFERENCE_AUTOBACKUP_STARTED
-import fi.iki.ede.safe.model.Preferences.getAutoBackupQuotaExceeded
-import fi.iki.ede.safe.model.Preferences.getAutoBackupRestoreFinished
-import fi.iki.ede.safe.model.Preferences.getAutoBackupRestoreStarts
-import fi.iki.ede.safe.model.Preferences.getAutoBackupStarts
-import fi.iki.ede.safe.service.AutolockingService
 import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.composable.ExtensionsEditor
 import fi.iki.ede.safe.ui.models.PluginLoaderViewModel
-import fi.iki.ede.safe.ui.utilities.AutoLockingBaseAppCompatActivity
 import fi.iki.ede.safe.ui.utilities.firebaseLog
 import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import fi.iki.ede.safe.ui.utilities.startActivityForResults
 import kotlinx.coroutines.launch
+import fi.iki.ede.preferences.R as prefR
 
 
 class PreferenceActivity : AutoLockingBaseAppCompatActivity() {
@@ -49,7 +49,7 @@ class PreferenceActivity : AutoLockingBaseAppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.preferences)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false)
+        PreferenceManager.setDefaultValues(this, prefR.xml.preferences, false)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -65,7 +65,7 @@ class PreferenceActivity : AutoLockingBaseAppCompatActivity() {
         private val backupDocumentSelected =
             startActivityForResults(TestTag.PREFERENCES_SAVE_LOCATION) { result ->
                 if (result.resultCode == RESULT_OK) {
-                    Preferences.setBackupDocument(result.data!!.data!!.path)
+                    fi.iki.ede.preferences.Preferences.setBackupDocument(result.data!!.data!!.path)
                 }
             }
 
@@ -96,7 +96,7 @@ class PreferenceActivity : AutoLockingBaseAppCompatActivity() {
             }
 
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-            addPreferencesFromResource(R.xml.preferences)
+            addPreferencesFromResource(prefR.xml.preferences)
 
             val versionPreference = Preference(requireContext()).apply {
                 key = "version_preference"
@@ -108,7 +108,7 @@ class PreferenceActivity : AutoLockingBaseAppCompatActivity() {
 
             preferenceScreen?.addPreference(versionPreference)
 
-            findPreference<MultiSelectListPreference>(Preferences.PREFERENCE_EXPERIMENTAL_FEATURES).let { experimentalFeatures ->
+            findPreference<MultiSelectListPreference>(fi.iki.ede.preferences.Preferences.PREFERENCE_EXPERIMENTAL_FEATURES).let { experimentalFeatures ->
                 experimentalFeatures?.apply {
                     PluginName.entries.map { it.pluginName }.let { dfms ->
                         entries = dfms.toTypedArray()
@@ -117,9 +117,9 @@ class PreferenceActivity : AutoLockingBaseAppCompatActivity() {
                 }
             }
 
-            findPreference<Preference>(Preferences.PREFERENCE_BACKUP_DOCUMENT).let { backupPathClicker ->
-                backupPathClicker?.summary = Preferences.getBackupDocument()
-                if (Preferences.SUPPORT_EXPORT_LOCATION_MEMORY) {
+            findPreference<Preference>(fi.iki.ede.preferences.Preferences.PREFERENCE_BACKUP_DOCUMENT).let { backupPathClicker ->
+                backupPathClicker?.summary = fi.iki.ede.preferences.Preferences.getBackupDocument()
+                if (fi.iki.ede.preferences.Preferences.SUPPORT_EXPORT_LOCATION_MEMORY) {
                     backupPathClicker?.onPreferenceClickListener = addClickListener {
                         backupDocumentSelected.launch(ExportConfig.getCreateDocumentIntent())
                         false
@@ -127,7 +127,7 @@ class PreferenceActivity : AutoLockingBaseAppCompatActivity() {
                 } else backupPathClicker?.isEnabled = false
             }
 
-            addChangeListener<Preference, Any>(Preferences.PREFERENCE_LOCK_TIMEOUT_MINUTES) {
+            addChangeListener<Preference, Any>(fi.iki.ede.preferences.Preferences.PREFERENCE_LOCK_TIMEOUT_MINUTES) {
                 activity?.startService(
                     Intent(
                         requireContext(),
@@ -136,19 +136,20 @@ class PreferenceActivity : AutoLockingBaseAppCompatActivity() {
                 )
             }
 
-            addChangeListener<Preference, Boolean>(Preferences.PREFERENCE_BIOMETRICS_ENABLED) { enabledOrDisabled ->
+            addChangeListener<Preference, Boolean>(fi.iki.ede.preferences.Preferences.PREFERENCE_BIOMETRICS_ENABLED) { enabledOrDisabled ->
                 if (enabledOrDisabled) {
                     BiometricsActivity.clearBiometricKeys()
                 }
             }
 
-            addPreferenceClickListener<Preference>(Preferences.PREFERENCE_MAKE_CRASH) {
-                Firebase.crashlytics.setCrashlyticsCollectionEnabled(true)
+            addPreferenceClickListener<Preference>(fi.iki.ede.preferences.Preferences.PREFERENCE_MAKE_CRASH) {
+                Firebase.crashlytics.isCrashlyticsCollectionEnabled = true
                 throw RuntimeException("Crash Test from preferences")
             }
 
-            findPreference<Preference>(Preferences.PREFERENCE_LAST_BACKUP_TIME).let { it ->
-                val lb = Preferences.getLastBackupTime()?.toLocalDateTime()?.toString()
+            findPreference<Preference>(fi.iki.ede.preferences.Preferences.PREFERENCE_LAST_BACKUP_TIME).let { it ->
+                val lb = fi.iki.ede.preferences.Preferences.getLastBackupTime()?.toLocalDateTime()
+                    ?.toString()
                     ?: resources.getString(R.string.preferences_summary_lastback_never_done)
                 it?.summary = lb
             }
@@ -186,7 +187,8 @@ class PreferenceActivity : AutoLockingBaseAppCompatActivity() {
                         val allUsedExtensionsAndOnesInPreferences =
                             (DataModel.siteEntriesStateFlow.collectAsState().value.map {
                                 it.plainExtensions.keys
-                            }.flatten().toSet() + Preferences.getAllExtensions()).toList()
+                            }.flatten()
+                                .toSet() + fi.iki.ede.preferences.Preferences.getAllExtensions()).toList()
                         ExtensionsEditor(allUsedExtensionsAndOnesInPreferences) {
                             // we should have two lists, original and modifications
                             // empty items represent DELETIONS
@@ -233,7 +235,7 @@ class PreferenceActivity : AutoLockingBaseAppCompatActivity() {
                                     newList.add(new)
                                 }
                             }
-                            Preferences.storeAllExtensions(newList.toSet())
+                            fi.iki.ede.preferences.Preferences.storeAllExtensions(newList.toSet())
                             coroutineScope.launch {
                                 editedEntries.forEach { siteEntry ->
                                     DataModel.addOrUpdateSiteEntry(siteEntry) {}
@@ -247,7 +249,7 @@ class PreferenceActivity : AutoLockingBaseAppCompatActivity() {
 
             (view as? ViewGroup)?.addView(composeView)
 
-            addPreferenceClickListener<Preference>(Preferences.PREFERENCE_EXTENSIONS_KEY) {
+            addPreferenceClickListener<Preference>(fi.iki.ede.preferences.Preferences.PREFERENCE_EXTENSIONS_KEY) {
                 showDialog.value = true
                 true
             }
@@ -268,10 +270,10 @@ class PreferenceActivity : AutoLockingBaseAppCompatActivity() {
             key: String?
         ) {
             when (key) {
-                Preferences.PREFERENCE_EXPERIMENTAL_FEATURES -> {
+                fi.iki.ede.preferences.Preferences.PREFERENCE_EXPERIMENTAL_FEATURES -> {
                     val allPlugins = PluginName.entries.toSet()
                     val enabledPlugins = sharedPreferences?.getStringSet(
-                        Preferences.PREFERENCE_EXPERIMENTAL_FEATURES,
+                        fi.iki.ede.preferences.Preferences.PREFERENCE_EXPERIMENTAL_FEATURES,
                         null
                     )?.map { dfmName ->
                         PluginName.entries.first { it.pluginName == dfmName }
@@ -295,9 +297,9 @@ class PreferenceActivity : AutoLockingBaseAppCompatActivity() {
                     }
                 }
 
-                Preferences.PREFERENCE_BACKUP_DOCUMENT -> {
-                    findPreference<Preference?>(Preferences.PREFERENCE_BACKUP_DOCUMENT)?.summary =
-                        Preferences.getBackupDocument()
+                fi.iki.ede.preferences.Preferences.PREFERENCE_BACKUP_DOCUMENT -> {
+                    findPreference<Preference?>(fi.iki.ede.preferences.Preferences.PREFERENCE_BACKUP_DOCUMENT)?.summary =
+                        fi.iki.ede.preferences.Preferences.getBackupDocument()
                 }
             }
         }

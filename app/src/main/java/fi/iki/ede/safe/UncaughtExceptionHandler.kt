@@ -1,7 +1,7 @@
 package fi.iki.ede.safe
 
 import android.util.Log
-import fi.iki.ede.safe.model.Preferences
+import fi.iki.ede.preferences.Preferences
 
 private val TAG = "MyExceptionHandler"
 
@@ -17,7 +17,7 @@ class MyExceptionHandler(private val defaultHandler: Thread.UncaughtExceptionHan
         }
         // Clear all plugins
         try {
-            Preferences.clearAllPlugins()
+            fi.iki.ede.preferences.Preferences.clearAllPlugins()
         } catch (ex: Exception) {
             // nothing to do here
         }

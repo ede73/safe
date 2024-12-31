@@ -8,16 +8,16 @@ import android.app.backup.FullBackupDataOutput
 import android.content.Context
 import android.os.ParcelFileDescriptor
 import android.util.Log
-import fi.iki.ede.safe.model.Preferences
+import fi.iki.ede.preferences.Preferences
 import java.io.File
 
 const val TAG = "MyBackupAgent"
 
 class MyBackupAgent : BackupAgentHelper() {
-    
+
     override fun onCreate() {
         super.onCreate()
-        Preferences.initialize(this.applicationContext)
+        fi.iki.ede.preferences.Preferences.initialize(this.applicationContext)
         Log.e(TAG, "onCreate")
     }
 
@@ -27,7 +27,7 @@ class MyBackupAgent : BackupAgentHelper() {
 
     override fun onFullBackup(data: FullBackupDataOutput?) {
         log("onFullBackup")
-        Preferences.autoBackupStarts()
+        fi.iki.ede.preferences.Preferences.autoBackupStarts()
         super.onFullBackup(data)
     }
 
@@ -36,7 +36,7 @@ class MyBackupAgent : BackupAgentHelper() {
         newState: ParcelFileDescriptor?
     ) {
         log("onBackup")
-        Preferences.autoBackupStarts()
+        fi.iki.ede.preferences.Preferences.autoBackupStarts()
         super.onBackup(oldState, data, newState)
     }
 
@@ -45,7 +45,7 @@ class MyBackupAgent : BackupAgentHelper() {
         newState: ParcelFileDescriptor?
     ) {
         log("onRestore")
-        Preferences.autoBackupRestoreStarts()
+        fi.iki.ede.preferences.Preferences.autoBackupRestoreStarts()
         super.onRestore(data, appVersionCode, newState)
     }
 
@@ -55,20 +55,20 @@ class MyBackupAgent : BackupAgentHelper() {
         newState: ParcelFileDescriptor?
     ) {
         log("onRestore")
-        Preferences.autoBackupRestoreStarts()
+        fi.iki.ede.preferences.Preferences.autoBackupRestoreStarts()
         super.onRestore(data, appVersionCode, newState)
     }
 
     override fun onRestoreFinished() {
         log("onRestoreFinished")
-        Preferences.autoBackupRestoreFinished()
+        fi.iki.ede.preferences.Preferences.autoBackupRestoreFinished()
         markRestored(applicationContext)
         super.onRestoreFinished()
     }
 
     override fun onQuotaExceeded(backupDataBytes: Long, quotaBytes: Long) {
         log("onQuotaExceeded")
-        Preferences.autoBackupQuotaExceeded()
+        fi.iki.ede.preferences.Preferences.autoBackupQuotaExceeded()
         super.onQuotaExceeded(backupDataBytes, quotaBytes)
     }
 

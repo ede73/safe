@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.service
+package fi.iki.ede.safe.autolocking
 
 import android.annotation.SuppressLint
 import android.app.Service
@@ -12,10 +12,9 @@ import android.os.IBinder
 import android.util.Log
 import androidx.annotation.RequiresApi
 import fi.iki.ede.crypto.BuildConfig
+import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.model.LoginHandler
-import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.notifications.AutoLockNotification
-import fi.iki.ede.safe.ui.utilities.AutoLockingBaseComponentActivity.Companion.lockTheApplication
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -37,7 +36,7 @@ class AutolockingService : Service() {
             override fun onReceive(context: Context, intent: Intent) {
                 when (intent.action) {
                     Intent.ACTION_SCREEN_OFF -> {
-                        if (Preferences.getLockOnScreenLock(true)) {
+                        if (fi.iki.ede.preferences.Preferences.getLockOnScreenLock(true)) {
                             lockOut()
                         }
                     }
@@ -96,7 +95,8 @@ class AutolockingService : Service() {
         autoLockCountdownNotifier = null
         autoLockNotification.setNotification(this@AutolockingService)
 
-        val timeoutUntilStop = Preferences.getLockTimeoutDuration().inWholeMilliseconds
+        val timeoutUntilStop =
+            fi.iki.ede.preferences.Preferences.getLockTimeoutDuration().inWholeMilliseconds
 
         autoLockCountdownNotifier =
             object : CountDownTimer(timeoutUntilStop, Duration.ofSeconds(10L).toMillis()) {
@@ -132,7 +132,7 @@ class AutolockingService : Service() {
         autoLockNotification.clearNotification()
         autoLockCountdownNotifier?.cancel()
         sendRestartTimer(this)
-        lockTheApplication(this)
+        AutoLockingBaseComponentActivity.lockTheApplication(this)
         launchLoginScreen(this)
     }
 

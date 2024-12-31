@@ -22,13 +22,13 @@ import fi.iki.ede.gpm.changeset.ImportChangeSet
 import fi.iki.ede.gpm.changeset.ScoredMatch
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.safe.autolocking.AutoLockingBaseComponentActivity
 import fi.iki.ede.safe.gpm.ui.composables.ImportNewGpmsComposable
 import fi.iki.ede.safe.gpm.ui.composables.ImportNewGpmsPager
 import fi.iki.ede.safe.gpm.ui.utilities.makeIncomingForTesting
 import fi.iki.ede.safe.gpm.ui.utilities.makeSavedForTesting
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.ui.theme.SafeTheme
-import fi.iki.ede.safe.ui.utilities.AutoLockingBaseComponentActivity
 
 class ImportNewGpmsScreen : AutoLockingBaseComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

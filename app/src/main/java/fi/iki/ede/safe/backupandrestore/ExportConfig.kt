@@ -1,7 +1,7 @@
 package fi.iki.ede.safe.backupandrestore
 
 import android.content.Intent
-import fi.iki.ede.safe.model.Preferences
+import fi.iki.ede.preferences.Preferences
 
 abstract class ExportConfig(currentCodedVersion: ExportVersion) {
     // IMPORTANT: If you ever introduce a breaking change, make sure to advance the version code
@@ -14,7 +14,7 @@ abstract class ExportConfig(currentCodedVersion: ExportVersion) {
     companion object {
         fun getCreateDocumentIntent(): Intent {
             // https://developer.android.com/reference/kotlin/android/content/Intent#action_create_document
-            val backupDocument = Preferences.PASSWORDSAFE_EXPORT_FILE
+            val backupDocument = fi.iki.ede.preferences.Preferences.PASSWORDSAFE_EXPORT_FILE
 
             val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
                 .addCategory(Intent.CATEGORY_OPENABLE)

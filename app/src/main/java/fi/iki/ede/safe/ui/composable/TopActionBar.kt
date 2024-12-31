@@ -33,20 +33,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.R
+import fi.iki.ede.safe.autolocking.AutoLockingBaseComponentActivity
+import fi.iki.ede.safe.autolocking.AutolockingService
 import fi.iki.ede.safe.backupandrestore.BackupDatabase
 import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.gpm.ui.activities.ImportNewGpmsScreen
-import fi.iki.ede.safe.model.Preferences
 import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
-import fi.iki.ede.safe.service.AutolockingService
 import fi.iki.ede.safe.splits.DropDownMenu
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.dialogs.ShowTrashDialog
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeTheme
-import fi.iki.ede.safe.ui.utilities.AutoLockingBaseComponentActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -187,7 +187,7 @@ private fun MakeDropdownMenu(
                 withContext(Dispatchers.IO) {
                     initiateBackup(context, it.data?.data!!) {
                         toast.value = backupCompleted
-                    }.let { Preferences.setLastBackupTime() }
+                    }.let { fi.iki.ede.preferences.Preferences.setLastBackupTime() }
                 }
             }
         }
