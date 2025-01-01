@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.ui.composable
+package fi.iki.ede.safe.safephoto
 
 import android.Manifest
 import android.content.Context
@@ -16,31 +16,22 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.google.common.util.concurrent.ListenableFuture
-import fi.iki.ede.autolock.AvertInactivityDuringLongTask
-import fi.iki.ede.safe.R
-import fi.iki.ede.safe.ui.theme.SafeTextButton
-import fi.iki.ede.safe.ui.theme.SafeTheme
-import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import fi.iki.ede.statemachine.AllowedEvents
 import fi.iki.ede.statemachine.MainStateMachine.Companion.INITIAL
 import fi.iki.ede.statemachine.StateMachine
@@ -50,9 +41,13 @@ private const val TAG = "SafePhoto"
 
 @Composable
 fun SafePhoto(
-    inactivity: AvertInactivityDuringLongTask,
-    photo: Bitmap?,
-    onBitmapCaptured: (Bitmap?) -> Unit
+    // inactivity indicator, pause=true, resume=false
+    inactivity: (pauseOrResume: Boolean, why: String) -> Unit,
+    currentPhoto: Bitmap?,
+    onBitmapCaptured: (Bitmap?) -> Unit,
+    photoPermissionRequiredContent: @Composable (oldPhoto: Bitmap?, onBitmapCaptured: (Bitmap?) -> Unit, askPermission: MutableState<Boolean>) -> Unit,
+    takePhotoContent: @Composable (oldPhoto: Bitmap?, onBitmapCaptured: (Bitmap?) -> Unit, takePhoto: MutableState<Boolean>) -> Unit,
+    composeTakePhoto: @Composable (takePhoto: () -> Unit) -> Unit
 ) {
     val context = LocalContext.current
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
@@ -70,11 +65,12 @@ fun SafePhoto(
                 INITIAL,
                 AllowedEvents("VerifyPermissionBeforePreview")
             ) {
-                inactivity.resumeInactivity(context, "Before photo preview")
+                inactivity(true, "Before photo preview")
                 ShowPermissionRequestButton(
-                    photo,
+                    currentPhoto,
                     onBitmapCaptured,
-                    this
+                    this,
+                    photoPermissionRequiredContent
                 )
             }
             StateEvent(
@@ -111,7 +107,9 @@ fun SafePhoto(
                             try {
                                 requestPermissionLauncher.launch(Manifest.permission.CAMERA)
                             } catch (e: Exception) {
-                                firebaseRecordException("failed to request permission", e)
+                                // TODO: Temporarily disabled, should of course never happen as
+                                // an error, but can't rely on main apps firebase (or other) logging
+                                //firebaseRecordException("failed to request permission", e)
                             }
                         }
                     }
@@ -130,7 +128,7 @@ fun SafePhoto(
                 "showingPhotoPreview",
                 INITIAL,
             ) {
-                inactivity.pauseInactivity(context, "Showing preview")
+                inactivity(true, "Showing preview")
                 var tookThePicture by remember { mutableStateOf(false) }
                 var failedTakingThePicture by remember { mutableStateOf(false) }
                 if (tookThePicture) {
@@ -143,7 +141,12 @@ fun SafePhoto(
                         lifecycleOwner,
                         onBitmapCaptured,
                         pictureSuccess = { tookThePicture = true },
-                        pictureFailure = { failedTakingThePicture = true }
+                        pictureFailure = { exception ->
+                            // TODO: Temporarily disabled
+                            //firebaseRecordException("Photo failed", exception)
+                            failedTakingThePicture = true
+                        },
+                        composeTakePhoto
                     )
                 }
             }
@@ -151,11 +154,12 @@ fun SafePhoto(
                 "showingTakeDeletePhoto", INITIAL,
                 AllowedEvents("VerifyPermission")
             ) {
-                inactivity.resumeInactivity(context, "Photo taken")
+                inactivity(false, "Photo taken")
                 ShowTakeDeletePhoto(
-                    photo,
+                    currentPhoto,
                     onBitmapCaptured,
-                    this
+                    this,
+                    takePhotoContent
                 )
             }
             StateEvent(
@@ -165,32 +169,24 @@ fun SafePhoto(
                 TransitionTo("verifyingPermissionBeforePreview")
             }
         }
-        if (photo != null) {
-            ZoomableImageViewer(photo)
+        if (currentPhoto != null) {
+            ZoomableImageViewer(currentPhoto)
         }
     }
 }
 
 @Composable
 private fun ShowPermissionRequestButton(
-    photo: Bitmap?,
+    oldPhoto: Bitmap?,
     onBitmapCaptured: (Bitmap?) -> Unit,
-    state: StateMachine.StateEvent
+    state: StateMachine.StateEvent,
+    content: @Composable (oldPhoto: Bitmap?, onBitmapCaptured: (Bitmap?) -> Unit, askPermission: MutableState<Boolean>) -> Unit
 ) {
-    var askPermission by remember { mutableStateOf(false) }
-    if (askPermission) {
+    val askPermission = remember { mutableStateOf(false) }
+    if (askPermission.value) {
         state.DispatchEvent("VerifyPermissionBeforePreview")
     } else {
-        Row {
-            SafeTextButton(onClick = {
-                askPermission = true
-            }) { Text(text = stringResource(id = R.string.password_entry_capture_photo)) }
-            if (photo != null) {
-                SafeTextButton(onClick = {
-                    onBitmapCaptured(null)
-                }) { Text(text = stringResource(id = R.string.password_entry_delete_photo)) }
-            }
-        }
+        content(oldPhoto, onBitmapCaptured, askPermission)
     }
 }
 
@@ -200,7 +196,8 @@ private fun ShowPhotoPreview(
     lifecycleOwner: LifecycleOwner,
     onBitmapCaptured: (Bitmap?) -> Unit,
     pictureSuccess: () -> Unit,
-    pictureFailure: () -> Unit
+    pictureFailure: (exception: Exception) -> Unit,
+    composeTakePhoto: @Composable (takePhoto: () -> Unit) -> Unit
 ) {
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     val preview = remember { CameraXPreview.Builder().build() }
@@ -221,23 +218,19 @@ private fun ShowPhotoPreview(
             factory = { previewView },
             modifier = Modifier.fillMaxSize()
         )
-        SafeTextButton(
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(16.dp),
-            onClick = {
-                cameraProviderFuture.addListener(
-                    takePhoto(
-                        context,
-                        lifecycleOwner,
-                        cameraProviderFuture,
-                        onBitmapCaptured,
-                        pictureSuccess,
-                        pictureFailure
-                    ),
-                    ContextCompat.getMainExecutor(context)
-                )
-            }) { Text(text = stringResource(id = R.string.password_entry_capture_photo)) }
+        composeTakePhoto {
+            cameraProviderFuture.addListener(
+                takePhoto(
+                    context,
+                    lifecycleOwner,
+                    cameraProviderFuture,
+                    onBitmapCaptured,
+                    pictureSuccess,
+                    pictureFailure
+                ),
+                ContextCompat.getMainExecutor(context)
+            )
+        }
     }
 }
 
@@ -245,22 +238,14 @@ private fun ShowPhotoPreview(
 private fun ShowTakeDeletePhoto(
     photo: Bitmap?,
     onBitmapCaptured: (Bitmap?) -> Unit,
-    state: StateMachine.StateEvent
+    state: StateMachine.StateEvent,
+    content: @Composable (oldPhoto: Bitmap?, onBitmapCaptured: (Bitmap?) -> Unit, takePhoto: MutableState<Boolean>) -> Unit
 ) {
-    var takePhoto by remember { mutableStateOf(false) }
-    if (takePhoto) {
+    val takePhoto = remember { mutableStateOf(false) }
+    if (takePhoto.value) {
         state.DispatchEvent("VerifyPermission")
     } else {
-        Row {
-            SafeTextButton(onClick = {
-                takePhoto = true
-            }) { Text(text = stringResource(id = R.string.password_entry_capture_photo)) }
-            if (photo != null) {
-                SafeTextButton(onClick = {
-                    onBitmapCaptured(null)
-                }) { Text(text = stringResource(id = R.string.password_entry_delete_photo)) }
-            }
-        }
+        content(photo, onBitmapCaptured, takePhoto)
     }
 }
 
@@ -270,7 +255,7 @@ private fun takePhoto(
     cameraProviderFuture: ListenableFuture<ProcessCameraProvider>,
     onBitmapCaptured: (Bitmap?) -> Unit,
     pictureSuccess: () -> Unit,
-    pictureFailure: () -> Unit
+    pictureFailure: (exception: Exception) -> Unit
 ): Runnable {
     return Runnable {
         // CameraProvider is used to bind the lifecycle of cameras to the lifecycle owner
@@ -304,8 +289,7 @@ private fun takePhoto(
 
                 override fun onError(exception: ImageCaptureException) {
                     // Handle any errors during capture here
-                    firebaseRecordException("Photo failed", exception)
-                    pictureFailure()
+                    pictureFailure(exception)
                 }
             }
         )
@@ -315,21 +299,8 @@ private fun takePhoto(
 @Preview(showBackground = true)
 @Composable
 fun SafePhotoPreview() {
-    val mockInactivity = object : AvertInactivityDuringLongTask {
-        override fun avertInactivity(context: Context, why: String) {
-            // Mock implementation
-        }
-
-        override fun pauseInactivity(context: Context, why: String) {
-            TODO("Not yet implemented")
-        }
-
-        override fun resumeInactivity(context: Context, why: String) {
-            TODO("Not yet implemented")
-        }
-    }
-
-    SafeTheme {
+    // SafeTheme
+    MaterialTheme {
         val width = 100
         val height = 100
         val redColor = Color.RED
@@ -339,6 +310,22 @@ fun SafePhotoPreview() {
                 dummyBitmap.setPixel(x, y, redColor)
             }
         }
-        SafePhoto(mockInactivity, dummyBitmap, onBitmapCaptured = {})
+        SafePhoto(
+            { isPausedOrResume, why ->
+                if (isPausedOrResume) {
+                    // pause inactivity - we're displaying preview
+                } else {
+                    //resumed inactivity measurements
+                }
+            },
+            dummyBitmap,
+            onBitmapCaptured = {},
+            photoPermissionRequiredContent = { oldPhoto, onBitmapCaptured, askPermission ->
+            },
+            takePhotoContent = { oldPhoto, onBitmapCaptured, takePhoto ->
+            },
+            composeTakePhoto = { onClick -> }
+        )
     }
 }
+

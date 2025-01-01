@@ -2,6 +2,7 @@ package fi.iki.ede.safe.ui.composable
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
 import android.text.TextUtils
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -30,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -63,6 +66,7 @@ import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.password.PG_SYMBOLS
 import fi.iki.ede.safe.password.PasswordGenerator
+import fi.iki.ede.safe.safephoto.SafePhoto
 import fi.iki.ede.safe.splits.PluginManager
 import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.ui.TestTag
@@ -71,6 +75,7 @@ import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import fi.iki.ede.safe.ui.theme.SafeButton
+import fi.iki.ede.safe.ui.theme.SafeTextButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.launch
 import java.time.ZonedDateTime
@@ -353,18 +358,69 @@ fun SiteEntryView(
 
         if (context is AvertInactivityDuringLongTask) {
             SafePhoto(
-                (context as AvertInactivityDuringLongTask),
-                photo = passEntry.plainPhoto,
+                { isPausedOrResume, why ->
+                    if (isPausedOrResume) {
+                        (context as AvertInactivityDuringLongTask).pauseInactivity(context, why)
+                    } else {
+                        (context as AvertInactivityDuringLongTask).resumeInactivity(context, why)
+
+                    }
+                },
+                currentPhoto = passEntry.plainPhoto,
                 onBitmapCaptured = {
                     val samePhoto =
                         it?.sameAs(passEntry.plainPhoto) ?: (passEntry.plainPhoto == null)
                     if (!samePhoto) {
                         viewModel.updatePhoto(it)
                     }
-                })
+                },
+                photoPermissionRequiredContent = { oldPhoto, onBitmapCaptured, askPermission ->
+                    TakePhotoOrAskPermission(
+                        askPermission,
+                        oldPhoto,
+                        onBitmapCaptured
+                    )
+                },
+                takePhotoContent = { oldPhoto, onBitmapCaptured, takePhoto ->
+                    TakePhotoOrAskPermission(
+                        takePhoto,
+                        oldPhoto,
+                        onBitmapCaptured
+                    )
+                },
+                composeTakePhoto = { takePhoto ->
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        SafeTextButton(
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .padding(16.dp),
+                            onClick = {
+                                takePhoto()
+                            }) { Text(text = stringResource(id = R.string.password_entry_capture_photo)) }
+                    }
+                }
+            )
         }
         if (showLinkedInfo != null) {
             ShowLinkedGpmsDialog(showLinkedInfo!!, onDismiss = { showLinkedInfo = null })
+        }
+    }
+}
+
+@Composable
+private fun TakePhotoOrAskPermission(
+    askPermission: MutableState<Boolean>,
+    oldPhoto: Bitmap?,
+    onBitmapCaptured: (Bitmap?) -> Unit
+) {
+    Row {
+        SafeTextButton(onClick = { askPermission.value = true }) {
+            Text(text = stringResource(id = R.string.password_entry_capture_photo))
+        }
+        if (oldPhoto != null) {
+            SafeTextButton(onClick = { onBitmapCaptured(null) }) {
+                Text(text = stringResource(id = R.string.password_entry_delete_photo))
+            }
         }
     }
 }

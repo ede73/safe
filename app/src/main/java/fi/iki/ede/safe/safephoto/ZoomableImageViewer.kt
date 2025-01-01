@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.ui.composable
+package fi.iki.ede.safe.safephoto
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -9,6 +9,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -23,8 +24,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
-import fi.iki.ede.safe.R
-import fi.iki.ede.safe.ui.theme.SafeTheme
 
 
 @Composable
@@ -73,7 +72,8 @@ fun ZoomableImageViewer(bitmap: Bitmap) {
 @Preview(showBackground = true)
 @Composable
 fun ZoomableImageViewerPreview() {
-    SafeTheme {
+    // SafeTheme
+    MaterialTheme {
         Column {
             val context = LocalContext.current
             fun getBitmapFromVectorDrawable(context: Context, drawableId: Int): Bitmap {
@@ -89,7 +89,6 @@ fun ZoomableImageViewerPreview() {
                     Bitmap.Config.ARGB_8888
                 )
                 val canvas = Canvas(bitmap)
-                //drawable.setBounds(0, 0, canvas.width, canvas.height)
                 drawable.setBounds(0, 0, 64, 64)
                 drawable.draw(canvas)
                 return bitmap
@@ -98,7 +97,7 @@ fun ZoomableImageViewerPreview() {
             ZoomableImageViewer(
                 bitmap = getBitmapFromVectorDrawable(
                     context,
-                    R.drawable.ic_launcher_safe
+                    android.R.drawable.ic_delete
                 )
             )
         }
