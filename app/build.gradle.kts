@@ -249,6 +249,7 @@ dependencies {
     implementation(project(":dateutils"))
     implementation(project(":statemachine"))
     implementation(project(":clipboardutils"))
+    implementation(project(":notifications"))
     // cant dynamically filter these out as imports would fail and making stub is too much work..
     implementation(project(":app:gpm"))
 

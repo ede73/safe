@@ -19,6 +19,7 @@
             <option value="$PROJECT_DIR$/clipboardutils" />
             <option value="$PROJECT_DIR$/dateutils" />
             <option value="$PROJECT_DIR$/hibp" />
+            <option value="$PROJECT_DIR$/notifications" />
             <option value="$PROJECT_DIR$/oisaferestore" />
             <option value="$PROJECT_DIR$/statemachine" />
           </set>

@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.notifications
+package fi.iki.ede.notifications
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -13,12 +13,12 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import fi.iki.ede.preferences.Preferences
 import kotlin.reflect.KClass
 
-
-abstract class MainNotification(
+class MainNotification(
     context: Context,
-    private val notificationConfig: NotificationType,
+    private val notificationConfig: NotificationSetup,
     descriptionParam: String? = null,
 ) {
     private val mNotifyManager: NotificationManagerCompat = NotificationManagerCompat.from(context)
@@ -28,18 +28,19 @@ abstract class MainNotification(
         createChannel(context)
         notificationBuilder = getNotificationBuilder(
             context,
-            getPendingIntent(context, notificationConfig.cfg.type),
-            context.getString(notificationConfig.cfg.channelDescription, descriptionParam)
+            getPendingIntent(context, notificationConfig.type),
+            context.getString(notificationConfig.channelDescription, descriptionParam)
         ).apply {
+            // Extension point (just make public)
             augmentNotificationBuilder(this)
         }
     }
 
-    fun augmentNotificationBuilder(augmentNotificationBuilder: NotificationCompat.Builder) {
+    private fun augmentNotificationBuilder(augmentNotificationBuilder: NotificationCompat.Builder) {
     }
 
     fun clearNotification() {
-        mNotifyManager.cancel(notificationConfig.cfg.notificationID)
+        mNotifyManager.cancel(notificationConfig.notificationID)
     }
 
     private fun getNotificationManager(context: Context) =
@@ -47,24 +48,24 @@ abstract class MainNotification(
 
     private fun createChannel(context: Context) {
         val mChannel = NotificationChannel(
-            notificationConfig.cfg.channel,
-            context.getString(notificationConfig.cfg.channelName),
-            notificationConfig.cfg.importance
+            notificationConfig.channel,
+            context.getString(notificationConfig.channelName),
+            notificationConfig.importance
         )
         mChannel.enableLights(false)
         mChannel.enableVibration(false)
-        mChannel.description = context.getString(notificationConfig.cfg.channelDescription)
+        mChannel.description = context.getString(notificationConfig.channelDescription)
         getNotificationManager(context).createNotificationChannel(mChannel)
     }
 
     private fun getNotificationBuilder(context: Context, pi: PendingIntent, content: String) =
-        NotificationCompat.Builder(context, notificationConfig.cfg.channel)
-            .setContentTitle(context.getString(notificationConfig.cfg.channelName))
+        NotificationCompat.Builder(context, notificationConfig.channel)
+            .setContentTitle(context.getString(notificationConfig.channelName))
             .setContentText(content)
-            .setSmallIcon(notificationConfig.cfg.icon)
+            .setSmallIcon(notificationConfig.icon)
             .setContentIntent(pi)
-            .setCategory(notificationConfig.cfg.category).apply {
-                if (notificationConfig.cfg.category == NotificationCompat.CATEGORY_SERVICE)
+            .setCategory(notificationConfig.category).apply {
+                if (notificationConfig.category == NotificationCompat.CATEGORY_SERVICE)
                     setOngoing(true)
             }
 
@@ -87,13 +88,20 @@ abstract class MainNotification(
             context,
             Manifest.permission.POST_NOTIFICATIONS
         ) == PackageManager.PERMISSION_GRANTED).also {
-            fi.iki.ede.preferences.Preferences.setNotificationPermissionRequired(!it)
+            Preferences.setNotificationPermissionRequired(!it)
             if (!it) flagToRequestNotificationPermission()
         }
 
-    open fun setNotification(context: Context) {
+    fun setNotification(
+        context: Context,
+        customSetup: ((mainNotification: MainNotification) -> Unit)? = null
+    ) {
         if (!isNotificationPermissionGranted(context)) return
-        notify(context)
+        if (customSetup == null) {
+            notify(context)
+        } else {
+            customSetup(this)
+        }
     }
 
     @SuppressLint("MissingPermission", "Broken linter")
@@ -103,7 +111,7 @@ abstract class MainNotification(
     ) {
         if (!isNotificationPermissionGranted(context)) return
         mNotifyManager.notify(
-            notificationConfig.cfg.notificationID,
+            notificationConfig.notificationID,
             notificationBuilder.apply {
                 augmentNotificationBuilder(this)
             }.build()
@@ -114,6 +122,6 @@ abstract class MainNotification(
     // And this is running as services, so we need to route the request
     // And pop up the question once activity is opened (let's say CategoryList)
     private fun flagToRequestNotificationPermission() {
-        fi.iki.ede.preferences.Preferences.setNotificationPermissionRequired(true)
+        Preferences.setNotificationPermissionRequired(true)
     }
 }

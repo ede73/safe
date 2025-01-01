@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.notifications
+package fi.iki.ede.notifications
 
 import android.app.NotificationManager
 import kotlin.reflect.KClass

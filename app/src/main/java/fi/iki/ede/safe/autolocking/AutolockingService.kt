@@ -15,8 +15,9 @@ import android.os.CountDownTimer
 import android.os.IBinder
 import android.util.Log
 import androidx.annotation.RequiresApi
+import fi.iki.ede.notifications.MainNotification
 import fi.iki.ede.safe.BuildConfig
-import fi.iki.ede.safe.notifications.AutoLockNotification
+import fi.iki.ede.safe.notifications.notifications
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -26,12 +27,14 @@ private const val TAG = "AutolockingService"
 class AutolockingService : Service() {
     private var autoLockCountdownNotifier: CountDownTimer? = null
     private lateinit var mIntentReceiver: BroadcastReceiver
-    private lateinit var autoLockNotification: AutoLockNotification
+    private lateinit var autoLockNotification: MainNotification
     private val paused: AtomicBoolean = AtomicBoolean(false)
 
     override fun onBind(intent: Intent): IBinder {
         return LocalBinder()
     }
+
+    private fun get(key: String) = notifications.find { it.channel == key }!!
 
     override fun onCreate() {
         mIntentReceiver = object : BroadcastReceiver() {
@@ -55,7 +58,7 @@ class AutolockingService : Service() {
         } else {
             oldRegisterReceiver()
         }
-        autoLockNotification = AutoLockNotification(this)
+        autoLockNotification = MainNotification(this, get("autolock_notification"))
     }
 
     override fun onDestroy() {
@@ -95,7 +98,11 @@ class AutolockingService : Service() {
         }
         autoLockCountdownNotifier?.cancel()
         autoLockCountdownNotifier = null
-        autoLockNotification.setNotification(this@AutolockingService)
+        autoLockNotification.setNotification(this@AutolockingService, { mainNotification ->
+            mainNotification.notify(this@AutolockingService) {
+                it.setProgress(100, 0, false)
+            }
+        })
 
         val timeoutUntilStop =
             fi.iki.ede.preferences.Preferences.getLockTimeoutDuration().inWholeMilliseconds
@@ -106,11 +113,15 @@ class AutolockingService : Service() {
                     // doing nothing.
                     millisecondsTillAutoLock = millisUntilFinished
                     if (mFeatures?.isLoggedIn() == true) {
-                        autoLockNotification.updateProgress(
-                            context = this@AutolockingService,
-                            timeoutUntilStop.toInt(),
-                            millisecondsTillAutoLock.toInt()
-                        )
+                        autoLockNotification.setNotification(
+                            this@AutolockingService, { mainNotification ->
+                                mainNotification.notify(this@AutolockingService) {
+                                    it.setProgress(
+                                        timeoutUntilStop.toInt(),
+                                        millisUntilFinished.toInt(), false
+                                    )
+                                }
+                            })
                     }
                 }
 
@@ -152,13 +163,11 @@ class AutolockingService : Service() {
         RECEIVER_NOT_EXPORTED
     )
 
-
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     private fun oldRegisterReceiver() = registerReceiver(
         mIntentReceiver,
         getBCastIntentFilter(),
     )
-
 
     /**
      * Restart the CountDownTimer()
@@ -191,6 +200,7 @@ class AutolockingService : Service() {
     inner class LocalBinder : Binder() {
         fun setAutolockingFeatures(features: AutoLockingFeatures) {
             mFeatures = features
+            initializeAutolockCountdownTimer()
         }
     }
 
