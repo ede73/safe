@@ -46,7 +46,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     // Volley for HTTP breach checks
     implementation(libs.volley)
-    implementation(project(":app:crypto"))
+    implementation(project(":crypto"))
 
     testImplementation(libs.junit)
 

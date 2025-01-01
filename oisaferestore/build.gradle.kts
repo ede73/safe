@@ -42,7 +42,7 @@ android {
 
 dependencies {
     implementation(project(":app"))
-    implementation(project(":app:crypto"))
+    implementation(project(":crypto"))
     implementation(project(":dateutils"))
 
     implementation(libs.androidx.core.ktx)
@@ -57,7 +57,7 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kxml2)
     testImplementation(libs.mockk)
-    testImplementation(project(":app:crypto"))
+    testImplementation(project(":crypto"))
 
     //androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.test.junit.ktx)

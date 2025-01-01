@@ -244,7 +244,7 @@ dependencies {
     implementation(libs.androidx.camera.view)
 
     lintChecks(project(":app:SafeLinter"))
-    implementation(project(":app:crypto"))
+    implementation(project(":crypto"))
     implementation(project(":app:preferences"))
     implementation(project(":dateutils"))
     implementation(project(":autolock"))
@@ -282,8 +282,8 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kxml2)
     testImplementation(libs.mockk)
-    testImplementation(project(":app:crypto"))
-    testImplementation(testFixtures(project(":app:crypto")))
+    testImplementation(project(":crypto"))
+    testImplementation(testFixtures(project(":crypto")))
     testImplementation(project(":app"))
 
     //androidTestImplementation(libs.androidx.test.junit.ktx)

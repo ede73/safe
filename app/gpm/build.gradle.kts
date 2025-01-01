@@ -40,7 +40,7 @@ android {
 }
 
 dependencies {
-    implementation(project(":app:crypto"))
+    implementation(project(":crypto"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

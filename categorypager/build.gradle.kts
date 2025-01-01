@@ -51,7 +51,7 @@ android {
 
 dependencies {
     implementation(project(":app"))
-    implementation(project(":app:crypto"))
+    implementation(project(":crypto"))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
