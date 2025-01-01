@@ -29,7 +29,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "safe"
 include(":app")
-include(":app:gpm")
 include(":app:preferences")
 include(":app:SafeLinter")
 include(":autolock")
@@ -37,6 +36,7 @@ include(":categorypager")
 include(":clipboardutils")
 include(":crypto")
 include(":dateutils")
+include(":gpm")
 include(":hibp")
 include(":notifications")
 include(":oisaferestore")

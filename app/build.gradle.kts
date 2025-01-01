@@ -252,7 +252,7 @@ dependencies {
     implementation(project(":clipboardutils"))
     implementation(project(":notifications"))
     // cant dynamically filter these out as imports would fail and making stub is too much work..
-    implementation(project(":app:gpm"))
+    implementation(project(":gpm"))
 
     implementation(libs.app.update.ktx)
     implementation(libs.androidx.activity.compose)
