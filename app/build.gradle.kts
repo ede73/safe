@@ -238,11 +238,6 @@ composeCompiler {
 }
 
 dependencies {
-    implementation(libs.androidx.camera.core)
-    implementation(libs.androidx.camera.lifecycle)
-    implementation(libs.androidx.camera.camera2)
-    implementation(libs.androidx.camera.view)
-
     lintChecks(project(":app:SafeLinter"))
     implementation(project(":crypto"))
     implementation(project(":app:preferences"))
@@ -253,6 +248,10 @@ dependencies {
     implementation(project(":notifications"))
     // cant dynamically filter these out as imports would fail and making stub is too much work..
     implementation(project(":gpm"))
+
+    implementation(project(":safephoto"))
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
 
     implementation(libs.app.update.ktx)
     implementation(libs.androidx.activity.compose)
@@ -269,7 +268,6 @@ dependencies {
     implementation(libs.androidx.ui.test.junit4.android)
     implementation(libs.androidx.ui.tooling.preview.android)
     implementation(libs.material)
-    //implementation(libs.core.ktx)
     implementation(libs.feature.delivery.ktx)
     // Don't convert to catalog declaration, something is broken
     implementation(platform("com.google.firebase:firebase-bom:33.7.0")) // firebase crashlytics
@@ -333,6 +331,7 @@ tasks.configureEach {
                 ":hibp:testDebugUnitTest",
                 ":notifications:testDebugUnitTest",
                 ":oisaferestore:testDebugUnitTest",
+                ":safephoto:testDebugUnitTest",
                 ":statemachine:testDebugUnitTest",
             )
             // INSTRUMENTED TESTS, takes long time

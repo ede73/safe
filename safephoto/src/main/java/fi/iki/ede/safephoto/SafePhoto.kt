@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.safephoto
+package fi.iki.ede.safephoto
 
 import android.Manifest
 import android.content.Context

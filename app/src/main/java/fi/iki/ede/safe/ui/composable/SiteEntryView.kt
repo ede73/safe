@@ -66,7 +66,6 @@ import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.password.PG_SYMBOLS
 import fi.iki.ede.safe.password.PasswordGenerator
-import fi.iki.ede.safe.safephoto.SafePhoto
 import fi.iki.ede.safe.splits.PluginManager
 import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.ui.TestTag
@@ -77,6 +76,7 @@ import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTextButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
+import fi.iki.ede.safephoto.SafePhoto
 import kotlinx.coroutines.launch
 import java.time.ZonedDateTime
 
@@ -357,7 +357,7 @@ fun SiteEntryView(
         )
 
         if (context is AvertInactivityDuringLongTask) {
-            SafePhoto(
+            fi.iki.ede.safephoto.SafePhoto(
                 { isPausedOrResume, why ->
                     if (isPausedOrResume) {
                         (context as AvertInactivityDuringLongTask).pauseInactivity(context, why)
