@@ -33,9 +33,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.autolocking.AutoLockingBaseComponentActivity
+import fi.iki.ede.safe.SafeApplication
 import fi.iki.ede.safe.autolocking.AutolockingService
 import fi.iki.ede.safe.backupandrestore.BackupDatabase
 import fi.iki.ede.safe.backupandrestore.ExportConfig
@@ -92,7 +91,7 @@ fun TopActionBar(
                 }
 
                 IconButton(onClick = {
-                    AutoLockingBaseComponentActivity.lockTheApplication(context)
+                    SafeApplication.lockTheApplication(context)
                     IntentManager.startLoginScreen(
                         context, openCategoryScreenAfterLogin = false
                     )

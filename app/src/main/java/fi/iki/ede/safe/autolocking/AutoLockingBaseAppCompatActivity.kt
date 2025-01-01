@@ -6,9 +6,11 @@ import androidx.appcompat.app.AppCompatActivity
 
 
 @Suppress("LeakingThis")
-open class AutoLockingBaseAppCompatActivity : AppCompatActivity(), ScreenOffLocker {
+open class AutoLockingBaseAppCompatActivity(features: AutoLockingFeatures) : AppCompatActivity(),
+    ScreenOffLocker {
 
     override val mIntentReceiver = screenOffIntentReceiver
+    override val mFeatures = features
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

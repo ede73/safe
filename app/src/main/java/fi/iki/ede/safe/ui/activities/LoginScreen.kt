@@ -2,6 +2,7 @@ package fi.iki.ede.safe.ui.activities
 
 import android.content.Context
 import android.content.Intent
+import android.content.ServiceConnection
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -24,7 +25,6 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
-import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.autolocking.AutolockingService
@@ -36,6 +36,7 @@ import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.splits.PluginManager
+import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.composable.BiometricsComponent
 import fi.iki.ede.safe.ui.composable.LoginPasswordPrompts
@@ -73,6 +74,15 @@ open class LoginScreen : ComponentActivity() {
     private var openCategoryListScreen: Boolean = true
     private val biometricsFirstTimeRegister = biometricsFirstTimeActivity()
     private val biometricsVerify = biometricsVerifyActivity()
+    private var serviceConnection: ServiceConnection? = null
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (serviceConnection != null) {
+            unbindService(serviceConnection!!)
+            serviceConnection = null
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -96,7 +106,6 @@ open class LoginScreen : ComponentActivity() {
                 return
             }
         }
-
 
         setContent {
             LoginScreenCompose(
@@ -155,7 +164,11 @@ open class LoginScreen : ComponentActivity() {
         // Mitigate coming from old client where first time login preference
         // wasn't used
         setResult(RESULT_OK, Intent())
-        startService(Intent(applicationContext, AutolockingService::class.java))
+        serviceConnection = AutolockingService.startAutolockingService(
+            this,
+            AutolockingFeaturesImpl,
+            applicationContext
+        )
         if (openCategoryListScreen) {
             IntentManager.startCategoryScreen(this)
         }

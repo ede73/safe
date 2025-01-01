@@ -1,16 +1,15 @@
 package fi.iki.ede.safe.autolocking
 
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.view.MotionEvent
 import androidx.activity.ComponentActivity
-import fi.iki.ede.safe.model.LoginHandler
 
 @Suppress("LeakingThis")
-open class AutoLockingBaseComponentActivity : ComponentActivity(), ScreenOffLocker {
+open class AutoLockingBaseComponentActivity(features: AutoLockingFeatures) : ComponentActivity(),
+    ScreenOffLocker {
 
     override val mIntentReceiver = screenOffIntentReceiver
+    override val mFeatures = features
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -29,14 +28,4 @@ open class AutoLockingBaseComponentActivity : ComponentActivity(), ScreenOffLock
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean =
         super.dispatchTouchEvent(doOnDispatchTouchEvent(event))
-
-    companion object {
-        fun lockTheApplication(context: Context) {
-            // Clear the clipboard, if it contains the last password used
-            fi.iki.ede.clipboardutils.ClipboardUtils.clearClipboard(context)
-            // Basically sign out
-            LoginHandler.logout()
-            context.stopService(Intent(context, AutolockingService::class.java))
-        }
-    }
 }

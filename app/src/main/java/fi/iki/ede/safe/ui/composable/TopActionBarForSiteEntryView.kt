@@ -20,7 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.autolocking.AutoLockingBaseComponentActivity
+import fi.iki.ede.safe.SafeApplication
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeTheme
@@ -46,7 +46,7 @@ fun TopActionBarForSiteEntryView(
             },
             actions = {
                 IconButton(onClick = {
-                    AutoLockingBaseComponentActivity.lockTheApplication(context)
+                    SafeApplication.lockTheApplication(context)
                 }, modifier = Modifier.testTag(TestTag.TOP_ACTION_BAR_LOCK)) {
                     Icon(Icons.Default.Lock, stringResource(id = R.string.action_bar_lock))
                 }

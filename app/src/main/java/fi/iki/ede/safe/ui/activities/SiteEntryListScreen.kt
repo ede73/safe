@@ -19,13 +19,14 @@ import fi.iki.ede.safe.autolocking.AutoLockingBaseComponentActivity
 import fi.iki.ede.safe.model.DataModel.siteEntriesStateFlow
 import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.splits.IntentManager
+import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.composable.SiteEntryList
 import fi.iki.ede.safe.ui.composable.TopActionBar
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 
-class SiteEntryListScreen : AutoLockingBaseComponentActivity() {
+class SiteEntryListScreen : AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
 
     @Suppress("FlowOperatorInvokedInComposition")
     override fun onCreate(savedInstanceState: Bundle?) {

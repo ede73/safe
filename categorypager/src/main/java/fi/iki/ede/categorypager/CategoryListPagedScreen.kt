@@ -3,7 +3,6 @@ package fi.iki.ede.categorypager
 import android.os.Bundle
 import android.text.TextUtils
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
@@ -26,6 +25,7 @@ import fi.iki.ede.safe.autolocking.AutoLockingBaseComponentActivity
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DataModel.siteEntriesStateFlow
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
+import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.composable.AddOrEditCategory
 import fi.iki.ede.safe.ui.composable.CategoryRow
 import fi.iki.ede.safe.ui.composable.SiteEntryList
@@ -39,7 +39,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 
-class CategoryListPagedScreen : AutoLockingBaseComponentActivity() {
+class CategoryListPagedScreen : AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent { CategoryListScreenPagedCompose(DataModel.categoriesStateFlow) }
@@ -47,7 +47,6 @@ class CategoryListPagedScreen : AutoLockingBaseComponentActivity() {
 }
 
 @Composable
-@OptIn(ExperimentalFoundationApi::class)
 private fun CategoryListScreenPagedCompose(
     flow: StateFlow<List<DecryptableCategoryEntry>> = MutableStateFlow(emptyList())
 ) {

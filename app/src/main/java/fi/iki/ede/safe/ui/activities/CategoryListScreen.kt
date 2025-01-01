@@ -21,12 +21,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
-import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.autolocking.AutoLockingBaseComponentActivity
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.notifications.SetupNotifications
+import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.composable.AddOrEditCategory
 import fi.iki.ede.safe.ui.composable.CategoryList
 import fi.iki.ede.safe.ui.composable.TopActionBar
@@ -37,7 +37,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 
-class CategoryListScreen : AutoLockingBaseComponentActivity() {
+class CategoryListScreen : AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->

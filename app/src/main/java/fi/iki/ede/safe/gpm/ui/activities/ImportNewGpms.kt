@@ -28,9 +28,10 @@ import fi.iki.ede.safe.gpm.ui.composables.ImportNewGpmsPager
 import fi.iki.ede.safe.gpm.ui.utilities.makeIncomingForTesting
 import fi.iki.ede.safe.gpm.ui.utilities.makeSavedForTesting
 import fi.iki.ede.safe.model.DataModel
+import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
-class ImportNewGpmsScreen : AutoLockingBaseComponentActivity() {
+class ImportNewGpmsScreen : AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 

@@ -18,11 +18,11 @@ import fi.iki.ede.safe.autolocking.AutoLockingBaseComponentActivity
 import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.splits.IntentManager
+import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.composable.AskBackupPasswordAndCommence
 import fi.iki.ede.safe.ui.composable.RestoreDatabaseComponent
 import fi.iki.ede.safe.ui.composable.setupActivityResultLauncher
 import fi.iki.ede.statemachine.MainStateMachine.Companion.INITIAL
-import fi.iki.ede.statemachine.StateMachine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
@@ -34,7 +34,7 @@ class RestoreViewModel : ViewModel() {
     var backupPassword: Password? = null
 }
 
-class RestoreDatabaseScreen : AutoLockingBaseComponentActivity() {
+class RestoreDatabaseScreen : AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
     private val viewModel: RestoreViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {

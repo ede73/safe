@@ -1,9 +1,10 @@
 package fi.iki.ede.safe.notifications
 
 import android.content.Context
+import fi.iki.ede.safe.ui.activities.CategoryListScreen
 
 class AutoLockNotification(context: Context) :
-    MainNotification(context, NotificationType.AUTO_LOCK) {
+    MainNotification(context, NotificationType.AUTO_LOCK, CategoryListScreen::class.java) {
 
     override fun setNotification(context: Context) {
         if (!isNotificationPermissionGranted(context)) return

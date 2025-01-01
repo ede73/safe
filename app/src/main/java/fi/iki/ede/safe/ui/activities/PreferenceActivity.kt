@@ -1,6 +1,6 @@
 package fi.iki.ede.safe.ui.activities
 
-import android.content.Intent
+import android.content.ServiceConnection
 import android.content.SharedPreferences
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.os.Bundle
@@ -34,6 +34,7 @@ import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.splits.PluginName
+import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.composable.ExtensionsEditor
 import fi.iki.ede.safe.ui.models.PluginLoaderViewModel
@@ -44,7 +45,7 @@ import kotlinx.coroutines.launch
 import fi.iki.ede.preferences.R as prefR
 
 
-class PreferenceActivity : AutoLockingBaseAppCompatActivity() {
+class PreferenceActivity : AutoLockingBaseAppCompatActivity(AutolockingFeaturesImpl) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.preferences)
@@ -68,6 +69,7 @@ class PreferenceActivity : AutoLockingBaseAppCompatActivity() {
                     fi.iki.ede.preferences.Preferences.setBackupDocument(result.data!!.data!!.path)
                 }
             }
+        private var serviceConnection: ServiceConnection? = null
 
         private inline fun <reified T : Preference, reified C : Any> addChangeListener(
             preferenceKey: String,
@@ -94,6 +96,14 @@ class PreferenceActivity : AutoLockingBaseAppCompatActivity() {
             Preference.OnPreferenceClickListener { _ ->
                 clicked()
             }
+
+        override fun onDestroy() {
+            super.onDestroy()
+            if (serviceConnection != null) {
+                activity?.unbindService(serviceConnection!!)
+                serviceConnection = null
+            }
+        }
 
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             addPreferencesFromResource(prefR.xml.preferences)
@@ -128,11 +138,10 @@ class PreferenceActivity : AutoLockingBaseAppCompatActivity() {
             }
 
             addChangeListener<Preference, Any>(fi.iki.ede.preferences.Preferences.PREFERENCE_LOCK_TIMEOUT_MINUTES) {
-                activity?.startService(
-                    Intent(
-                        requireContext(),
-                        AutolockingService::class.java
-                    )
+                serviceConnection = AutolockingService.startAutolockingService(
+                    requireActivity(),
+                    AutolockingFeaturesImpl,
+                    requireContext()
                 )
             }
 

@@ -20,10 +20,13 @@ import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.splits.IntentManager
+import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.composable.AskBackupPasswordAndCommence
 import kotlinx.coroutines.runBlocking
 
-class SelectDocumentAndBeginRestoreActivity : AutoLockingBaseComponentActivity() {
+class SelectDocumentAndBeginRestoreActivity : AutoLockingBaseComponentActivity(
+    AutolockingFeaturesImpl
+) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

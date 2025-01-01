@@ -1,19 +1,23 @@
 package fi.iki.ede.safe.autolocking
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.Service
 import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.ServiceConnection
+import android.os.Binder
 import android.os.Build
 import android.os.CountDownTimer
 import android.os.IBinder
 import android.util.Log
 import androidx.annotation.RequiresApi
 import fi.iki.ede.crypto.BuildConfig
-import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.notifications.AutoLockNotification
+import fi.iki.ede.safe.ui.activities.CategoryListScreen
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -23,11 +27,11 @@ private const val TAG = "AutolockingService"
 class AutolockingService : Service() {
     private var autoLockCountdownNotifier: CountDownTimer? = null
     private lateinit var mIntentReceiver: BroadcastReceiver
-    private lateinit var autoLockNotification: AutoLockNotification
+    private lateinit var autoLockNotification: AutoLockNotification<CategoryListScreen>
     private val paused: AtomicBoolean = AtomicBoolean(false)
 
-    override fun onBind(intent: Intent): IBinder? {
-        return null
+    override fun onBind(intent: Intent): IBinder {
+        return LocalBinder()
     }
 
     override fun onCreate() {
@@ -57,7 +61,7 @@ class AutolockingService : Service() {
 
     override fun onDestroy() {
         unregisterReceiver(mIntentReceiver)
-        if (LoginHandler.isLoggedIn()) {
+        if (mFeatures?.isLoggedIn() == true) {
             lockOut()
         }
         autoLockNotification.clearNotification()
@@ -72,7 +76,7 @@ class AutolockingService : Service() {
     }
 
     private fun initializeAutolockCountdownTimer() {
-        if (!LoginHandler.isLoggedIn()) {
+        if (mFeatures == null || mFeatures?.isLoggedIn() == false) {
             autoLockNotification.clearNotification()
             autoLockCountdownNotifier?.cancel()
             if (BuildConfig.DEBUG) {
@@ -102,7 +106,7 @@ class AutolockingService : Service() {
                 override fun onTick(millisUntilFinished: Long) {
                     // doing nothing.
                     millisecondsTillAutoLock = millisUntilFinished
-                    if (LoginHandler.isLoggedIn()) {
+                    if (mFeatures?.isLoggedIn() == true) {
                         autoLockNotification.updateProgress(
                             context = this@AutolockingService,
                             timeoutUntilStop.toInt(),
@@ -131,7 +135,7 @@ class AutolockingService : Service() {
         autoLockNotification.clearNotification()
         autoLockCountdownNotifier?.cancel()
         sendRestartTimer(this)
-        AutoLockingBaseComponentActivity.lockTheApplication(this)
+        mFeatures?.lockApplication(this)
         launchLoginScreen(this)
     }
 
@@ -183,7 +187,41 @@ class AutolockingService : Service() {
         restartTimer()
     }
 
+    var mFeatures: AutoLockingFeatures? = null
+
+    inner class LocalBinder : Binder() {
+        fun setAutolockingFeatures(features: AutoLockingFeatures) {
+            mFeatures = features
+        }
+    }
+
     companion object {
+        fun startAutolockingService(
+            activity: Activity,
+            features: AutoLockingFeatures,
+            applicationContext: Context
+        ): ServiceConnection {
+            activity.startService(Intent(applicationContext, AutolockingService::class.java))
+
+            val serviceConnection = object : ServiceConnection {
+                override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+                    val binder = service as AutolockingService.LocalBinder
+                    binder.setAutolockingFeatures(features)
+                }
+
+                override fun onServiceDisconnected(name: ComponentName?) {
+                    // Handle disconnection
+                }
+            }
+            val serviceIntent = Intent(applicationContext, AutolockingService::class.java)
+            activity.bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE)
+            return serviceConnection
+        }
+
+        fun stopAutolockingService(context: Context) {
+            context.stopService(Intent(context, AutolockingService::class.java))
+        }
+
         fun sendRestartTimer(context: Context) =
             context.sendBroadcast(Intent(ACTION_RESTART_TIMER).apply {
                 setPackage(context.packageName)
@@ -198,7 +236,6 @@ class AutolockingService : Service() {
             context.sendBroadcast(Intent(ACTION_RESUME_TIMER).apply {
                 setPackage(context.packageName)
             })
-
 
         private const val ACTION_RESTART_TIMER = "fi.iki.ede.action.RESTART_TIMER"
         private const val ACTION_PAUSE_TIMER = "fi.iki.ede.action.PAUSE_TIMER"

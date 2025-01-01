@@ -11,12 +11,10 @@ import android.util.Log
 import android.view.MotionEvent
 import androidx.activity.ComponentActivity
 import fi.iki.ede.safe.BuildConfig
-import fi.iki.ede.safe.model.LoginHandler
-import fi.iki.ede.safe.splits.IntentManager
-import fi.iki.ede.safe.ui.activities.LoginScreen
 
 interface ScreenOffLocker : AvertInactivityDuringLongTask {
     val mIntentReceiver: BroadcastReceiver
+    val mFeatures: AutoLockingFeatures
 
     val screenOffIntentReceiver: BroadcastReceiver
         get() = object : BroadcastReceiver() {
@@ -53,12 +51,13 @@ interface ScreenOffLocker : AvertInactivityDuringLongTask {
         when (intent.action) {
             Intent.ACTION_SCREEN_OFF -> {
                 if (fi.iki.ede.preferences.Preferences.getLockOnScreenLock(true)) {
-                    AutoLockingBaseComponentActivity.lockTheApplication(context)
+                    // TODO:
+                    mFeatures.lockApplication(context)
                 }
             }
 
             AutolockingService.ACTION_LAUNCH_LOGIN_SCREEN -> {
-                IntentManager.startLoginScreen(context, openCategoryScreenAfterLogin = false)
+                mFeatures.startLoginScreen(context)
             }
         }
     }
@@ -87,12 +86,11 @@ interface ScreenOffLocker : AvertInactivityDuringLongTask {
     // If we're not logged in (due to inactivity - or what ever)
     // always launch login screen
     fun checkShouldLaunchLoginScreen(context: Context): Boolean {
-        if (LoginHandler.isLoggedIn()) {
+        if (mFeatures.isLoggedIn()) {
             return false
         }
-        val activity = this as ComponentActivity
-        if (activity !is LoginScreen) {
-            IntentManager.startLoginScreen(context, openCategoryScreenAfterLogin = false)
+        if (!mFeatures.isThisLoginScreen(this as ComponentActivity)) {
+            mFeatures.startLoginScreen(context)
         }
         return true
     }

@@ -24,13 +24,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.encrypt
-import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.autolocking.AutoLockingBaseComponentActivity
 import fi.iki.ede.safe.db.DBID
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.password.PasswordGenerator
+import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen.Companion.SITE_ENTRY_ID
 import fi.iki.ede.safe.ui.composable.SiteEntryView
@@ -42,7 +42,7 @@ import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import java.time.ZonedDateTime
 
-class SiteEntryEditScreen : AutoLockingBaseComponentActivity() {
+class SiteEntryEditScreen : AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
