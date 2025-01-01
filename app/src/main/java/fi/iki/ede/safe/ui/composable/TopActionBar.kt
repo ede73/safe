@@ -33,9 +33,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import fi.iki.ede.autolock.AutolockingService
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.SafeApplication
-import fi.iki.ede.safe.autolocking.AutolockingService
 import fi.iki.ede.safe.backupandrestore.BackupDatabase
 import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.gpm.ui.activities.ImportNewGpmsScreen

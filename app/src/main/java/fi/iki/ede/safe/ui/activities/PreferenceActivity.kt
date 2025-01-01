@@ -18,6 +18,7 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import com.google.firebase.Firebase
 import com.google.firebase.crashlytics.crashlytics
+import fi.iki.ede.autolock.AutolockingService
 import fi.iki.ede.preferences.Preferences.PREFERENCE_AUTOBACKUP_QUOTA_EXCEEDED
 import fi.iki.ede.preferences.Preferences.PREFERENCE_AUTOBACKUP_RESTORE_FINISHED
 import fi.iki.ede.preferences.Preferences.PREFERENCE_AUTOBACKUP_RESTORE_STARTED
@@ -28,8 +29,6 @@ import fi.iki.ede.preferences.Preferences.getAutoBackupRestoreStarts
 import fi.iki.ede.preferences.Preferences.getAutoBackupStarts
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.autolocking.AutoLockingBaseAppCompatActivity
-import fi.iki.ede.safe.autolocking.AutolockingService
 import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableSiteEntry
@@ -45,7 +44,8 @@ import kotlinx.coroutines.launch
 import fi.iki.ede.preferences.R as prefR
 
 
-class PreferenceActivity : AutoLockingBaseAppCompatActivity(AutolockingFeaturesImpl) {
+class PreferenceActivity :
+    fi.iki.ede.autolock.AutoLockingBaseAppCompatActivity(AutolockingFeaturesImpl) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.preferences)

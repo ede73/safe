@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.autolocking
+package fi.iki.ede.autolock
 
 import android.os.Bundle
 import android.view.MotionEvent

@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.autolocking
+package fi.iki.ede.autolock
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -10,7 +10,6 @@ import android.os.Build
 import android.util.Log
 import android.view.MotionEvent
 import androidx.activity.ComponentActivity
-import fi.iki.ede.safe.BuildConfig
 
 interface ScreenOffLocker : AvertInactivityDuringLongTask {
     val mIntentReceiver: BroadcastReceiver

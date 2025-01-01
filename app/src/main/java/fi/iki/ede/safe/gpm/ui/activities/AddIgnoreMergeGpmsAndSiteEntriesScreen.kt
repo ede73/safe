@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import fi.iki.ede.safe.autolocking.AutoLockingBaseComponentActivity
+import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
 import fi.iki.ede.safe.gpm.ui.composables.AddIgnoreMergeGpmsAndSiteEntriesControls
 import fi.iki.ede.safe.gpm.ui.composables.AddIgnoreMergeGpmsAndSiteEntriesList
 import fi.iki.ede.safe.gpm.ui.models.ImportGPMViewModel
@@ -18,7 +18,7 @@ import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
 class AddIgnoreMergeGpmsAndSiteEntriesScreen :
-    AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
+    fi.iki.ede.autolock.AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
     private val viewModel: ImportGPMViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {

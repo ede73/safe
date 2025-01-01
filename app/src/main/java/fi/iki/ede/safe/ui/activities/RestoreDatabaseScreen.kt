@@ -13,8 +13,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
 import fi.iki.ede.crypto.Password
-import fi.iki.ede.safe.autolocking.AutoLockingBaseComponentActivity
 import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.splits.IntentManager
@@ -34,7 +34,8 @@ class RestoreViewModel : ViewModel() {
     var backupPassword: Password? = null
 }
 
-class RestoreDatabaseScreen : AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
+class RestoreDatabaseScreen :
+    fi.iki.ede.autolock.AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
     private val viewModel: RestoreViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {

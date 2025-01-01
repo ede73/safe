@@ -36,8 +36,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.google.common.util.concurrent.ListenableFuture
+import fi.iki.ede.autolock.AvertInactivityDuringLongTask
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.autolocking.AvertInactivityDuringLongTask
 import fi.iki.ede.safe.ui.theme.SafeTextButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.firebaseRecordException
@@ -50,7 +50,7 @@ private const val TAG = "SafePhoto"
 
 @Composable
 fun SafePhoto(
-    inactivity: AvertInactivityDuringLongTask,
+    inactivity: fi.iki.ede.autolock.AvertInactivityDuringLongTask,
     photo: Bitmap?,
     onBitmapCaptured: (Bitmap?) -> Unit
 ) {
@@ -315,7 +315,7 @@ private fun takePhoto(
 @Preview(showBackground = true)
 @Composable
 fun SafePhotoPreview() {
-    val mockInactivity = object : AvertInactivityDuringLongTask {
+    val mockInactivity = object : fi.iki.ede.autolock.AvertInactivityDuringLongTask {
         override fun avertInactivity(context: Context, why: String) {
             // Mock implementation
         }

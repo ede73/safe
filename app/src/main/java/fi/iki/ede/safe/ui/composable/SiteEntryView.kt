@@ -50,7 +50,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.clipboardutils.ClipboardUtils
+import fi.iki.ede.autolock.AvertInactivityDuringLongTask
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
@@ -58,7 +58,6 @@ import fi.iki.ede.crypto.support.decrypt
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.autolocking.AvertInactivityDuringLongTask
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.DecryptableSiteEntry
@@ -352,9 +351,9 @@ fun SiteEntryView(
             highlight = false,
         )
 
-        if (context is AvertInactivityDuringLongTask) {
+        if (context is fi.iki.ede.autolock.AvertInactivityDuringLongTask) {
             SafePhoto(
-                (context as AvertInactivityDuringLongTask),
+                (context as fi.iki.ede.autolock.AvertInactivityDuringLongTask),
                 photo = passEntry.plainPhoto,
                 onBitmapCaptured = {
                     val samePhoto =

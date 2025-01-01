@@ -88,7 +88,7 @@
             android:label="@string/title_activity_restore_screen" />
 
         <service
-            android:name=".autolocking.AutolockingService"
+            android:name="fi.iki.ede.autolock.AutolockingService"
             android:enabled="true" />
     </application>
 </manifest>

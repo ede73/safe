@@ -10,11 +10,13 @@ import com.google.android.play.core.splitcompat.SplitCompatApplication
 import com.google.firebase.Firebase
 import com.google.firebase.FirebaseApp
 import com.google.firebase.crashlytics.crashlytics
+import fi.iki.ede.autolock.AutolockingService
+import fi.iki.ede.notifications.ConfiguredNotifications
 import fi.iki.ede.preferences.Preferences.PREFERENCE_EXPERIMENTAL_FEATURES
-import fi.iki.ede.safe.autolocking.AutolockingService
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.LoginHandler
+import fi.iki.ede.safe.notifications.prepareNotifications
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.splits.PluginManager.reinitializePlugins
 import fi.iki.ede.safe.splits.PluginName
@@ -54,6 +56,8 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
         reinitializePlugins(this)
         PreferenceManager.getDefaultSharedPreferences(this)
             .registerOnSharedPreferenceChangeListener(this)
+        ConfiguredNotifications.notifications = prepareNotifications()
+
     }
 
     override fun onTerminate() {

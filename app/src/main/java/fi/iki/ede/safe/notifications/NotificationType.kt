@@ -5,7 +5,8 @@ import fi.iki.ede.notifications.initializeNotifications
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.activities.CategoryListScreen
 
-val notifications = initializeNotifications {
+
+fun prepareNotifications() = initializeNotifications {
     notification(
         1,
         "autolock_notification",

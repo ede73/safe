@@ -21,13 +21,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import fi.iki.ede.autolock.AutolockingService
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.autolocking.AutolockingService
 import fi.iki.ede.safe.backupandrestore.MyBackupAgent
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.db.DBHelper.Companion.DATABASE_NAME

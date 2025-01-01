@@ -8,8 +8,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import fi.iki.ede.preferences.Preferences
-import fi.iki.ede.safe.autolocking.AutolockingService
+import fi.iki.ede.autolock.AutolockingService
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.BiometricsActivity

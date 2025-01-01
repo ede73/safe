@@ -61,6 +61,7 @@ dependencies {
     implementation(libs.androidx.ui.test.junit4.android)
     implementation(libs.androidx.ui.tooling.preview.android)
     implementation(libs.material)
+    implementation(project(":autolock"))
 
     testImplementation(libs.junit)
 

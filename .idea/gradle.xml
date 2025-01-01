@@ -15,6 +15,7 @@
             <option value="$PROJECT_DIR$/app/crypto" />
             <option value="$PROJECT_DIR$/app/gpm" />
             <option value="$PROJECT_DIR$/app/preferences" />
+            <option value="$PROJECT_DIR$/autolock" />
             <option value="$PROJECT_DIR$/categorypager" />
             <option value="$PROJECT_DIR$/clipboardutils" />
             <option value="$PROJECT_DIR$/dateutils" />

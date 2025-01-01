@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.autolocking
+package fi.iki.ede.autolock
 
 import android.content.Context
 import androidx.activity.ComponentActivity

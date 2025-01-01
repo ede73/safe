@@ -1,17 +1,20 @@
 package fi.iki.ede.safe.notifications
 
 import android.content.Context
+import fi.iki.ede.notifications.ConfiguredNotifications
 import fi.iki.ede.notifications.MainNotification
 
 
 object SetupNotifications {
-    private fun get(key: String) = notifications.find { it.channel == key }!!
     fun setup(context: Context) {
         compareAndSetPreferenceWithCallback(
             "notification.getAutoBackupStarts",
             fi.iki.ede.preferences.Preferences.getAutoBackupStarts()?.toLocalDate().toString()
         ) {
-            MainNotification(context, get("google_auto_backup_notification"))
+            MainNotification(
+                context,
+                ConfiguredNotifications.get("google_auto_backup_notification")
+            )
                 .apply { setNotification(context) }
         }
         compareAndSetPreferenceWithCallback(
@@ -21,7 +24,7 @@ object SetupNotifications {
         ) {
             MainNotification(
                 context,
-                get("google_auto_backup_quota_exceeded_notification")
+                ConfiguredNotifications.get("google_auto_backup_quota_exceeded_notification")
             )
                 .apply { setNotification(context) }
         }
@@ -32,7 +35,7 @@ object SetupNotifications {
         if (lastBackup == null || lastModified != null && lastModified > lastBackup) {
             MainNotification(
                 context,
-                get("backup_notification"),
+                ConfiguredNotifications.get("backup_notification"),
                 fi.iki.ede.preferences.Preferences.getLastBackupTime()?.toLocalDate().toString()
             ).apply { setNotification(context) }
         }

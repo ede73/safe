@@ -3,6 +3,14 @@ package fi.iki.ede.notifications
 import android.app.NotificationManager
 import kotlin.reflect.KClass
 
+object ConfiguredNotifications {
+    var notifications: List<NotificationSetup> = emptyList()
+
+    // TODO: Remove (move to configured)
+    fun get(key: String) =
+        notifications.find { it.channel == key }!!
+}
+
 class NotificationDSL {
     private val notifications = mutableListOf<NotificationSetup>()
 
