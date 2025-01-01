@@ -1,7 +1,6 @@
 package fi.iki.ede.safe.notifications
 
 import android.content.Context
-import fi.iki.ede.preferences.Preferences
 
 object SetupNotifications {
     fun setup(context: Context) {
@@ -9,7 +8,11 @@ object SetupNotifications {
             "notification.getAutoBackupStarts",
             fi.iki.ede.preferences.Preferences.getAutoBackupStarts()?.toLocalDate().toString()
         ) {
-            GoogleAutoBackupNotification(context, it).apply { setNotification(context) }
+            GoogleAutoBackupNotification(context, it).apply {
+                setNotification(
+                    context
+                )
+            }
         }
         compareAndSetPreferenceWithCallback(
             "notification.getAutoBackupQuotaExceeded",

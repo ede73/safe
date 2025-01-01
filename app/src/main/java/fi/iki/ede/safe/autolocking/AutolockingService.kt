@@ -15,9 +15,8 @@ import android.os.CountDownTimer
 import android.os.IBinder
 import android.util.Log
 import androidx.annotation.RequiresApi
-import fi.iki.ede.crypto.BuildConfig
+import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.notifications.AutoLockNotification
-import fi.iki.ede.safe.ui.activities.CategoryListScreen
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -27,7 +26,7 @@ private const val TAG = "AutolockingService"
 class AutolockingService : Service() {
     private var autoLockCountdownNotifier: CountDownTimer? = null
     private lateinit var mIntentReceiver: BroadcastReceiver
-    private lateinit var autoLockNotification: AutoLockNotification<CategoryListScreen>
+    private lateinit var autoLockNotification: AutoLockNotification
     private val paused: AtomicBoolean = AtomicBoolean(false)
 
     override fun onBind(intent: Intent): IBinder {

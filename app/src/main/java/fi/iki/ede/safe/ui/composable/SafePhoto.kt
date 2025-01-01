@@ -64,11 +64,11 @@ fun SafePhoto(
         ) == PackageManager.PERMISSION_GRANTED
 
     Column {
-        fi.iki.ede.statemachine.StateMachine.Create("beforePhotoPreview") {
+        StateMachine.Create("beforePhotoPreview") {
             StateEvent(
                 "beforePhotoPreview",
                 INITIAL,
-                fi.iki.ede.statemachine.AllowedEvents("VerifyPermissionBeforePreview")
+                AllowedEvents("VerifyPermissionBeforePreview")
             ) {
                 inactivity.resumeInactivity(context, "Before photo preview")
                 ShowPermissionRequestButton(
@@ -86,7 +86,7 @@ fun SafePhoto(
             StateEvent(
                 "verifyingPermissionBeforePreview",
                 INITIAL,
-                fi.iki.ede.statemachine.AllowedEvents("DidNotGetPermission")
+                AllowedEvents("DidNotGetPermission")
             ) {
                 var transitionToShowPhotoPreview by remember { mutableStateOf(false) }
                 var handleNoPermissionGranted by remember { mutableStateOf(false) }
@@ -119,7 +119,7 @@ fun SafePhoto(
             }
             StateEvent(
                 "beforePhotoPreview", "DidNotGetPermission",
-                fi.iki.ede.statemachine.AllowedEvents(INITIAL)
+                AllowedEvents(INITIAL)
             ) {
                 // explain to user why permission is required!
                 // TODO:
@@ -149,7 +149,7 @@ fun SafePhoto(
             }
             StateEvent(
                 "showingTakeDeletePhoto", INITIAL,
-                fi.iki.ede.statemachine.AllowedEvents("VerifyPermission")
+                AllowedEvents("VerifyPermission")
             ) {
                 inactivity.resumeInactivity(context, "Photo taken")
                 ShowTakeDeletePhoto(
@@ -175,7 +175,7 @@ fun SafePhoto(
 private fun ShowPermissionRequestButton(
     photo: Bitmap?,
     onBitmapCaptured: (Bitmap?) -> Unit,
-    state: fi.iki.ede.statemachine.StateMachine.StateEvent
+    state: StateMachine.StateEvent
 ) {
     var askPermission by remember { mutableStateOf(false) }
     if (askPermission) {
@@ -245,7 +245,7 @@ private fun ShowPhotoPreview(
 private fun ShowTakeDeletePhoto(
     photo: Bitmap?,
     onBitmapCaptured: (Bitmap?) -> Unit,
-    state: fi.iki.ede.statemachine.StateMachine.StateEvent
+    state: StateMachine.StateEvent
 ) {
     var takePhoto by remember { mutableStateOf(false) }
     if (takePhoto) {

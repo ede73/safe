@@ -13,14 +13,13 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import fi.iki.ede.safe.R
+import kotlin.reflect.KClass
 
 
 abstract class MainNotification(
     context: Context,
     private val notificationConfig: NotificationType,
-    clazz: Class<*>,
-    descriptionParam: String? = null
+    descriptionParam: String? = null,
 ) {
     private val mNotifyManager: NotificationManagerCompat = NotificationManagerCompat.from(context)
     private val notificationBuilder: NotificationCompat.Builder
@@ -29,7 +28,7 @@ abstract class MainNotification(
         createChannel(context)
         notificationBuilder = getNotificationBuilder(
             context,
-            getPendingIntent(context, clazz),
+            getPendingIntent(context, notificationConfig.cfg.type),
             context.getString(notificationConfig.cfg.channelDescription, descriptionParam)
         ).apply {
             augmentNotificationBuilder(this)
@@ -62,7 +61,7 @@ abstract class MainNotification(
         NotificationCompat.Builder(context, notificationConfig.cfg.channel)
             .setContentTitle(context.getString(notificationConfig.cfg.channelName))
             .setContentText(content)
-            .setSmallIcon(R.drawable.passicon)
+            .setSmallIcon(notificationConfig.cfg.icon)
             .setContentIntent(pi)
             .setCategory(notificationConfig.cfg.category).apply {
                 if (notificationConfig.cfg.category == NotificationCompat.CATEGORY_SERVICE)
@@ -71,9 +70,9 @@ abstract class MainNotification(
 
     private fun getPendingIntent(
         context: Context,
-        clazz: Class<*>
+        type: KClass<*>,
     ): PendingIntent = PendingIntent.getActivity(
-        context, 0, Intent(context, clazz::class.java),
+        context, 0, Intent(context, type::class.java),
         PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
@@ -92,7 +91,10 @@ abstract class MainNotification(
             if (!it) flagToRequestNotificationPermission()
         }
 
-    abstract fun setNotification(context: Context)
+    open fun setNotification(context: Context) {
+        if (!isNotificationPermissionGranted(context)) return
+        notify(context)
+    }
 
     @SuppressLint("MissingPermission", "Broken linter")
     fun notify(
