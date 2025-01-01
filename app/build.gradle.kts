@@ -323,12 +323,17 @@ tasks.configureEach {
             // UNIT TESTS
             dependsOn(
                 "testDebugUnitTest",
-                ":app:crypto:testDebugUnitTest",
-                ":app:gpm:testDebugUnitTest",
                 ":app:preferences:testDebugUnitTest",
+                ":autolock:testDebugUnitTest",
+                ":categorypager:testDebugUnitTest",
+                ":clipboardutils:testDebugUnitTest",
+                ":crypto:testDebugUnitTest",
                 ":dateutils:testDebugUnitTest",
+                ":gpm:testDebugUnitTest",
+                ":hibp:testDebugUnitTest",
+                ":notifications:testDebugUnitTest",
+                ":oisaferestore:testDebugUnitTest",
                 ":statemachine:testDebugUnitTest",
-                ":oisaferestore:testDebugUnitTest"
             )
             // INSTRUMENTED TESTS, takes long time
             //task.dependsOn("connectedAndroidTest")
