@@ -81,7 +81,7 @@ fun ImportNewGpmsComposable(
         mutableStateOf(
             fi.iki.ede.dateutils.DateUtils.getPeriodBetweenDates(
                 ZonedDateTime.now(),
-                fi.iki.ede.dateutils.DateUtils.unixEpochSecondsToLocalZonedDateTime(fi.iki.ede.preferences.Preferences.getGpmImportUsageShown())
+                fi.iki.ede.dateutils.DateUtils.unixEpochSecondsToLocalZonedDateTime(Preferences.getGpmImportUsageShown())
             ).days > 10
         )
     }
@@ -291,7 +291,7 @@ fun ImportNewGpmsComposable(
         if (!skipImportReminder && showUsage.value) {
             UsageInfoDialog(stringResource(id = R.string.google_password_import_usage),
                 onDismiss = {
-                    fi.iki.ede.preferences.Preferences.gpmImportUsageShown()
+                    Preferences.gpmImportUsageShown()
                     showUsage.value = false
                 })
         }

@@ -43,7 +43,7 @@ import fi.iki.ede.safe.ui.theme.SafeTheme
 import java.time.ZonedDateTime
 
 class SiteEntryEditScreen :
-    fi.iki.ede.autolock.AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
+    AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

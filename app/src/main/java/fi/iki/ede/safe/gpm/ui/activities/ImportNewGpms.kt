@@ -32,7 +32,7 @@ import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
 class ImportNewGpmsScreen :
-    fi.iki.ede.autolock.AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
+    AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 

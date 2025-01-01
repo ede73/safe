@@ -162,7 +162,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                 )
                             }
                             val lastBackupDone =
-                                fi.iki.ede.preferences.Preferences.getLastBackupTime()
+                                Preferences.getLastBackupTime()
                             // TODO: until above can be mocked..feeling lazy
                             //val creationTime: ZonedDateTime? = null
                             // if we know the backup creation time AND we known when a backup

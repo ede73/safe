@@ -38,7 +38,7 @@ import kotlinx.coroutines.launch
 
 
 class CategoryListScreen :
-    fi.iki.ede.autolock.AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
+    AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->

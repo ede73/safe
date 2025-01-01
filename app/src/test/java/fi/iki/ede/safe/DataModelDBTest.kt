@@ -19,14 +19,14 @@ class DataModelDBTest {
 
     @Before
     fun before() {
-        mockkObject(fi.iki.ede.preferences.Preferences)
-        every { fi.iki.ede.preferences.Preferences.setLastModified() } returns Unit
-        every { fi.iki.ede.preferences.Preferences.storeAllExtensions(any()) } returns Unit
+        mockkObject(Preferences)
+        every { Preferences.setLastModified() } returns Unit
+        every { Preferences.storeAllExtensions(any()) } returns Unit
     }
 
     @After
     fun after() {
-        unmockkObject(fi.iki.ede.preferences.Preferences)
+        unmockkObject(Preferences)
     }
 
     @Test

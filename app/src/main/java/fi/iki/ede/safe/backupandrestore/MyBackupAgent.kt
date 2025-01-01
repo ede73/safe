@@ -17,7 +17,7 @@ class MyBackupAgent : BackupAgentHelper() {
 
     override fun onCreate() {
         super.onCreate()
-        fi.iki.ede.preferences.Preferences.initialize(this.applicationContext)
+        Preferences.initialize(this.applicationContext)
         Log.e(TAG, "onCreate")
     }
 
@@ -27,7 +27,7 @@ class MyBackupAgent : BackupAgentHelper() {
 
     override fun onFullBackup(data: FullBackupDataOutput?) {
         log("onFullBackup")
-        fi.iki.ede.preferences.Preferences.autoBackupStarts()
+        Preferences.autoBackupStarts()
         super.onFullBackup(data)
     }
 
@@ -36,7 +36,7 @@ class MyBackupAgent : BackupAgentHelper() {
         newState: ParcelFileDescriptor?
     ) {
         log("onBackup")
-        fi.iki.ede.preferences.Preferences.autoBackupStarts()
+        Preferences.autoBackupStarts()
         super.onBackup(oldState, data, newState)
     }
 
@@ -45,7 +45,7 @@ class MyBackupAgent : BackupAgentHelper() {
         newState: ParcelFileDescriptor?
     ) {
         log("onRestore")
-        fi.iki.ede.preferences.Preferences.autoBackupRestoreStarts()
+        Preferences.autoBackupRestoreStarts()
         super.onRestore(data, appVersionCode, newState)
     }
 
@@ -55,20 +55,20 @@ class MyBackupAgent : BackupAgentHelper() {
         newState: ParcelFileDescriptor?
     ) {
         log("onRestore")
-        fi.iki.ede.preferences.Preferences.autoBackupRestoreStarts()
+        Preferences.autoBackupRestoreStarts()
         super.onRestore(data, appVersionCode, newState)
     }
 
     override fun onRestoreFinished() {
         log("onRestoreFinished")
-        fi.iki.ede.preferences.Preferences.autoBackupRestoreFinished()
+        Preferences.autoBackupRestoreFinished()
         markRestored(applicationContext)
         super.onRestoreFinished()
     }
 
     override fun onQuotaExceeded(backupDataBytes: Long, quotaBytes: Long) {
         log("onQuotaExceeded")
-        fi.iki.ede.preferences.Preferences.autoBackupQuotaExceeded()
+        Preferences.autoBackupQuotaExceeded()
         super.onQuotaExceeded(backupDataBytes, quotaBytes)
     }
 

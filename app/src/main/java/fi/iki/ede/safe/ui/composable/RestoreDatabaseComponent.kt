@@ -47,7 +47,7 @@ fun RestoreDatabaseComponent(
     ): Boolean {
         val result = CompletableDeferred<Boolean>()
         val days =
-            fi.iki.ede.dateutils.DateUtils.getPeriodBetweenDates(backupCreationTime, lastBackupDone)
+            DateUtils.getPeriodBetweenDates(backupCreationTime, lastBackupDone)
 
         val restoreOldBackupMessage = context.getString(
             R.string.restore_screen_not_most_recent_backup_age,

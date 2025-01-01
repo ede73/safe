@@ -70,9 +70,9 @@ class BackupDatabaseAndRestoreDatabaseTest {
         mockkStatic(FirebaseCrashlytics::class)
         every { FirebaseCrashlytics.getInstance() } returns mockk(relaxed = true)
 
-        mockkObject(fi.iki.ede.preferences.Preferences)
-        every { fi.iki.ede.preferences.Preferences.storeAllExtensions(any()) } returns Unit
-        every { fi.iki.ede.preferences.Preferences.getAllExtensions() } returns emptySet<String>()
+        mockkObject(Preferences)
+        every { Preferences.storeAllExtensions(any()) } returns Unit
+        every { Preferences.getAllExtensions() } returns emptySet<String>()
 
         KeystoreHelperMock4UnitTests.mock()
         ks = KeyStoreHelperFactory.getKeyStoreHelper()
@@ -88,7 +88,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
 
     @After
     fun after() {
-        unmockkObject(fi.iki.ede.preferences.Preferences)
+        unmockkObject(Preferences)
         unmockkObject(Firebase)
         unmockkStatic(FirebaseCrashlytics::class)
         unmockkAll()
@@ -163,15 +163,15 @@ class BackupDatabaseAndRestoreDatabaseTest {
         mockkStatic(Environment::class)
         every { Environment.getExternalStorageDirectory() } returns File("path/to/fake/directory")
 
-        mockkObject(fi.iki.ede.preferences.Preferences)
-        every { fi.iki.ede.preferences.Preferences.storeAllExtensions(any()) } returns Unit
-        every { fi.iki.ede.preferences.Preferences.getAllExtensions() } returns emptySet<String>()
-        every { fi.iki.ede.preferences.Preferences.getLastBackupTime() } returns unixEpochSeconds?.let {
+        mockkObject(Preferences)
+        every { Preferences.storeAllExtensions(any()) } returns Unit
+        every { Preferences.getAllExtensions() } returns emptySet<String>()
+        every { Preferences.getLastBackupTime() } returns unixEpochSeconds?.let {
             fi.iki.ede.dateutils.DateUtils.unixEpochSecondsToLocalZonedDateTime(
                 it
             )
         }
-        every { fi.iki.ede.preferences.Preferences.getSoftDeleteDays() } returns 0
+        every { Preferences.getSoftDeleteDays() } returns 0
     }
 
     @Test

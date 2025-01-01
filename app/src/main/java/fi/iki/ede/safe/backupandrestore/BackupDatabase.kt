@@ -39,7 +39,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
             )
             .plainTextAttribute(
                 Attributes.ROOT_PASSWORD_SAFE_CREATION_TIME,
-                fi.iki.ede.dateutils.DateUtils.toUnixSeconds(
+                DateUtils.toUnixSeconds(
                     ZonedDateTime.now()
                 ).toString()
             )

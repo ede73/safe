@@ -113,7 +113,7 @@ object PluginManager {
 
     fun reinitializePlugins(appContext: Context) {
         val sm = SplitInstallManagerFactory.create(appContext)
-        fi.iki.ede.preferences.Preferences.getEnabledExperiments().forEach {
+        Preferences.getEnabledExperiments().forEach {
             firebaseLog("Is enabled plugin $it installed?")
             if (isPluginInstalled(sm, it)) {
                 firebaseLog(" is installed $it, initialize now")
@@ -147,5 +147,5 @@ object PluginManager {
     private fun getBundleTestMode() = if (BuildConfig.DEBUG) _bundleTestMode else false
 
     fun isPluginEnabled(plugin: PluginName) =
-        plugin in fi.iki.ede.preferences.Preferences.getEnabledExperiments()
+        plugin in Preferences.getEnabledExperiments()
 }

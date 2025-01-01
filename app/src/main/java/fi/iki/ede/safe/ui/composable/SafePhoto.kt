@@ -50,7 +50,7 @@ private const val TAG = "SafePhoto"
 
 @Composable
 fun SafePhoto(
-    inactivity: fi.iki.ede.autolock.AvertInactivityDuringLongTask,
+    inactivity: AvertInactivityDuringLongTask,
     photo: Bitmap?,
     onBitmapCaptured: (Bitmap?) -> Unit
 ) {
@@ -315,7 +315,7 @@ private fun takePhoto(
 @Preview(showBackground = true)
 @Composable
 fun SafePhotoPreview() {
-    val mockInactivity = object : fi.iki.ede.autolock.AvertInactivityDuringLongTask {
+    val mockInactivity = object : AvertInactivityDuringLongTask {
         override fun avertInactivity(context: Context, why: String) {
             // Mock implementation
         }

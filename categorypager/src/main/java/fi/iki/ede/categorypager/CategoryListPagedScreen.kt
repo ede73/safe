@@ -40,7 +40,7 @@ import kotlinx.coroutines.launch
 
 
 class CategoryListPagedScreen :
-    fi.iki.ede.autolock.AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
+    AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent { CategoryListScreenPagedCompose(DataModel.categoriesStateFlow) }

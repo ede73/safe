@@ -21,7 +21,7 @@ internal fun ContentValues.put(column: TableColumns<*>, value: String) =
     put(column.columnName, value)
 
 internal fun ContentValues.put(column: TableColumns<*>, date: ZonedDateTime) =
-    put(column, fi.iki.ede.dateutils.DateUtils.toUnixSeconds(date))
+    put(column, DateUtils.toUnixSeconds(date))
 
 internal fun Cursor.getColumnIndexOrThrow(column: TableColumns<*>) =
     getColumnIndexOrThrow(column.columnName)
@@ -29,10 +29,10 @@ internal fun Cursor.getColumnIndexOrThrow(column: TableColumns<*>) =
 internal fun Cursor.getZonedDateTimeOfPasswordChange(): ZonedDateTime? =
     getString(getColumnIndexOrThrow(SiteEntry.Columns.PASSWORD_CHANGE_DATE))?.let { date ->
         date.toLongOrNull()?.let {
-            fi.iki.ede.dateutils.DateUtils.unixEpochSecondsToLocalZonedDateTime(it)
+            DateUtils.unixEpochSecondsToLocalZonedDateTime(it)
         } ?: run {
             //ok, we have something that isn't numerical
-            fi.iki.ede.dateutils.DateUtils.newParse(date)
+            DateUtils.newParse(date)
         }
     }
 

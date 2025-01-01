@@ -30,7 +30,7 @@ import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class SiteEntrySearchScreen :
-    fi.iki.ede.autolock.AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
+    AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

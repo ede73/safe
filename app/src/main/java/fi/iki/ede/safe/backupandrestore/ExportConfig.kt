@@ -14,7 +14,7 @@ abstract class ExportConfig(currentCodedVersion: ExportVersion) {
     companion object {
         fun getCreateDocumentIntent(): Intent {
             // https://developer.android.com/reference/kotlin/android/content/Intent#action_create_document
-            val backupDocument = fi.iki.ede.preferences.Preferences.PASSWORDSAFE_EXPORT_FILE
+            val backupDocument = Preferences.PASSWORDSAFE_EXPORT_FILE
 
             val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
                 .addCategory(Intent.CATEGORY_OPENABLE)

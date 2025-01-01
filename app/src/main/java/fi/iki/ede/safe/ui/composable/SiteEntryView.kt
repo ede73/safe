@@ -351,9 +351,9 @@ fun SiteEntryView(
             highlight = false,
         )
 
-        if (context is fi.iki.ede.autolock.AvertInactivityDuringLongTask) {
+        if (context is AvertInactivityDuringLongTask) {
             SafePhoto(
-                (context as fi.iki.ede.autolock.AvertInactivityDuringLongTask),
+                (context as AvertInactivityDuringLongTask),
                 photo = passEntry.plainPhoto,
                 onBitmapCaptured = {
                     val samePhoto =

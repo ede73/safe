@@ -35,7 +35,7 @@ class RestoreViewModel : ViewModel() {
 }
 
 class RestoreDatabaseScreen :
-    fi.iki.ede.autolock.AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
+    AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
     private val viewModel: RestoreViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {

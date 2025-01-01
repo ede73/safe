@@ -17,7 +17,7 @@ class MyExceptionHandler(private val defaultHandler: Thread.UncaughtExceptionHan
         }
         // Clear all plugins
         try {
-            fi.iki.ede.preferences.Preferences.clearAllPlugins()
+            Preferences.clearAllPlugins()
         } catch (ex: Exception) {
             // nothing to do here
         }

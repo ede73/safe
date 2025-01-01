@@ -91,7 +91,7 @@ class RestoreDataSet(
         if (currentEntry != null && !TextUtils.isEmpty(passwordChangedDate)) {
             try {
                 currentEntry!!.passwordChangedDate =
-                    fi.iki.ede.dateutils.DateUtils.newParse(passwordChangedDate)
+                    DateUtils.newParse(passwordChangedDate)
             } catch (pe: ParseException) {
                 Log.e(TAG, "failed setPasswordChangedDate($passwordChangedDate)")
             }

@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 
 class SiteEntryListScreen :
-    fi.iki.ede.autolock.AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
+    AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
 
     @Suppress("FlowOperatorInvokedInComposition")
     override fun onCreate(savedInstanceState: Bundle?) {

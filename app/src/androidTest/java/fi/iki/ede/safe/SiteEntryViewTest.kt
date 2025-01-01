@@ -105,8 +105,8 @@ class SiteEntryViewTest : NodeHelper {
         DBHelper4AndroidTest.initializeEverything(context)
         DBHelper4AndroidTest.configureDefaultTestDataModelAndDB()
 
-        mockkObject(fi.iki.ede.preferences.Preferences)
-        every { fi.iki.ede.preferences.Preferences.getAllExtensions() } returns setOf(
+        mockkObject(Preferences)
+        every { Preferences.getAllExtensions() } returns setOf(
             "extension1",
             "extension2"
         )
@@ -122,7 +122,7 @@ class SiteEntryViewTest : NodeHelper {
 
     @After
     fun after() {
-        unmockkObject(fi.iki.ede.preferences.Preferences)
+        unmockkObject(Preferences)
     }
 
     private fun goBack() {

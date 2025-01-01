@@ -257,8 +257,8 @@ class CategoryListScreenTest {
         fun initialize() {
             MockKeyStore.mockKeyStore()
 
-            mockkObject(fi.iki.ede.preferences.Preferences)
-            every { fi.iki.ede.preferences.Preferences.getNotificationPermissionDenied() } returns true
+            mockkObject(Preferences)
+            every { Preferences.getNotificationPermissionDenied() } returns true
 
             mockkObject(LoginHandler)
             every { LoginHandler.isLoggedIn() } returns true

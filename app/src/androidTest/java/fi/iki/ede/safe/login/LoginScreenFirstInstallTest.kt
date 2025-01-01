@@ -124,7 +124,7 @@ class LoginScreenFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
             if (InstrumentationRegistry.getArguments().getString("test") == "true")
                 System.setProperty("test", "true")
 
-            mockkObject(fi.iki.ede.preferences.Preferences)
+            mockkObject(Preferences)
             mockkObject(BiometricsActivity)
             mockIsBiometricsInitialized { false }
 

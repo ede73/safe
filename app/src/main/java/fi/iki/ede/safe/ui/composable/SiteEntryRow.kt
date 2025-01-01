@@ -102,7 +102,7 @@ fun SiteEntryRow(
                 if (siteEntry.passwordChangedDate != null) {
                     Text(
                         text = getPasswordAgePlurality(
-                            fi.iki.ede.dateutils.DateUtils.getPeriodBetweenDates(
+                            DateUtils.getPeriodBetweenDates(
                                 siteEntry.passwordChangedDate!!
                             )
                         ),

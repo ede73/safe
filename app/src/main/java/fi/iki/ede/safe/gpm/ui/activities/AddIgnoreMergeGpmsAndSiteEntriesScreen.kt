@@ -18,7 +18,7 @@ import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.theme.SafeTheme
 
 class AddIgnoreMergeGpmsAndSiteEntriesScreen :
-    fi.iki.ede.autolock.AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
+    AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
     private val viewModel: ImportGPMViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {

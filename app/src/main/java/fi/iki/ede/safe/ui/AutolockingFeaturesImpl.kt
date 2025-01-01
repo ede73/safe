@@ -8,7 +8,7 @@ import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.activities.LoginScreen
 
-object AutolockingFeaturesImpl : fi.iki.ede.autolock.AutoLockingFeatures {
+object AutolockingFeaturesImpl : AutoLockingFeatures {
     override fun lockApplication(context: Context) {
         SafeApplication.lockTheApplication(context)
     }

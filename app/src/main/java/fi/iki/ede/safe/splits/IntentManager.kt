@@ -20,7 +20,7 @@ import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
 
 private const val TAG = "IntentManager"
 
-fun fi.iki.ede.preferences.Preferences.getEnabledExperiments(): Set<PluginName> =
+fun Preferences.getEnabledExperiments(): Set<PluginName> =
     getEnabledExperimentNames()
         .mapNotNull { PluginName.entries.firstOrNull { p -> p.pluginName == it } }
         .toSet()
@@ -51,7 +51,7 @@ object IntentManager {
         flags: Int? = null,
         extras: Bundle? = null
     ): Intent {
-        val enabledExperiments = fi.iki.ede.preferences.Preferences.getEnabledExperiments()
+        val enabledExperiments = Preferences.getEnabledExperiments()
         val replacements = intentReplacements.filter { (key, _) -> key in enabledExperiments }
             .flatMap { entry ->
                 entry.value.filterKeys { it == activityClass }.map { Pair(entry.key, it.value) }

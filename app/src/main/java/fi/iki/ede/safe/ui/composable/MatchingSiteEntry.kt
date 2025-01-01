@@ -86,7 +86,7 @@ fun MatchingSiteEntry(
                     Spacer(modifier = Modifier.weight(1f)) // This will push the Text to the end
                     Text(
                         text = getPasswordAgePlurality(
-                            duration = fi.iki.ede.dateutils.DateUtils.getPeriodBetweenDates(
+                            duration = DateUtils.getPeriodBetweenDates(
                                 siteEntry.passwordChangedDate!!
                             )
                         ),
