@@ -28,7 +28,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.crypto.BuildConfig
+import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.gpm.ui.models.DNDObject
 import fi.iki.ede.safe.gpm.ui.modifiers.dnd
 import fi.iki.ede.safe.gpm.ui.modifiers.getClipData

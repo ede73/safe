@@ -3,9 +3,9 @@ package fi.iki.ede.safe.model
 import android.graphics.BitmapFactory
 import android.util.Base64
 import android.util.Log
-import fi.iki.ede.crypto.BuildConfig
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.support.decrypt
+import fi.iki.ede.safe.BuildConfig
 
 fun DecryptableSiteEntry.decryptPhoto(decrypter: (IVCipherText) -> ByteArray) =
     try {

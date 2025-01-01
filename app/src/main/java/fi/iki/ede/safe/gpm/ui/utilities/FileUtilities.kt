@@ -3,7 +3,7 @@ package fi.iki.ede.safe.gpm.ui.utilities
 import android.content.Context
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
-import fi.iki.ede.crypto.BuildConfig
+import fi.iki.ede.safe.BuildConfig
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileOutputStream

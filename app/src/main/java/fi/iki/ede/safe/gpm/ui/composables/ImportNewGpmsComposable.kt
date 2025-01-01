@@ -30,10 +30,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.crypto.BuildConfig
 import fi.iki.ede.gpm.changeset.ImportChangeSet
 import fi.iki.ede.gpm.debug
 import fi.iki.ede.preferences.Preferences
+import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.gpm.ui.utilities.deleteInternalCopy
 import fi.iki.ede.safe.gpm.ui.utilities.doesInternalDocumentExist

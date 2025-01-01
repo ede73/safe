@@ -2,7 +2,7 @@ package fi.iki.ede.safe.ui.dialogs
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import fi.iki.ede.crypto.BuildConfig
+import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.gpm.changeset.ScoredMatch
