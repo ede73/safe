@@ -14,7 +14,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import fi.iki.ede.preferences.Preferences
-import kotlin.reflect.KClass
 
 class MainNotification(
     context: Context,
@@ -28,7 +27,7 @@ class MainNotification(
         createChannel(context)
         notificationBuilder = getNotificationBuilder(
             context,
-            getPendingIntent(context, notificationConfig.type),
+            getPendingIntent(context, notificationConfig.activityToStartOnClick),
             context.getString(notificationConfig.channelDescription, descriptionParam)
         ).apply {
             // Extension point (just make public)
@@ -58,26 +57,31 @@ class MainNotification(
         getNotificationManager(context).createNotificationChannel(mChannel)
     }
 
-    private fun getNotificationBuilder(context: Context, pi: PendingIntent, content: String) =
-        NotificationCompat.Builder(context, notificationConfig.channel)
-            .setContentTitle(context.getString(notificationConfig.channelName))
-            .setContentText(content)
-            .setSmallIcon(notificationConfig.icon)
-            .setContentIntent(pi)
-            .setCategory(notificationConfig.category).apply {
-                if (notificationConfig.category == NotificationCompat.CATEGORY_SERVICE)
-                    setOngoing(true)
-            }
+    private fun getNotificationBuilder(
+        context: Context,
+        pendingIntent: PendingIntent,
+        content: String
+    ) = NotificationCompat.Builder(context, notificationConfig.channel)
+        .setContentTitle(context.getString(notificationConfig.channelName))
+        .setContentText(content)
+        .setChannelId(notificationConfig.channel) // TODO: REMOVE
+        .setSmallIcon(notificationConfig.icon)
+        .setContentIntent(pendingIntent)
+        .setCategory(notificationConfig.category).apply {
+            if (notificationConfig.category == NotificationCompat.CATEGORY_SERVICE)
+                setOngoing(true)
+        }
 
     private fun getPendingIntent(
         context: Context,
-        type: KClass<*>,
+        activityToStartOnClick: Class<*>,
     ): PendingIntent = PendingIntent.getActivity(
-        context, 0, Intent(context, type::class.java),
+        context, 0,
+        Intent(context, activityToStartOnClick),
         PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
-    fun isNotificationPermissionGranted(context: Context) =
+    private fun isNotificationPermissionGranted(context: Context) =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
             isNotificationPermissionGrantedTiraMisu(context)
         else NotificationManagerCompat.from(context).areNotificationsEnabled()

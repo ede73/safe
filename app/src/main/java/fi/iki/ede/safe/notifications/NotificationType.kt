@@ -3,6 +3,7 @@ package fi.iki.ede.safe.notifications
 import android.app.Notification
 import fi.iki.ede.notifications.initializeNotifications
 import fi.iki.ede.safe.R
+import fi.iki.ede.safe.ui.activities.BackupDatabaseScreen
 import fi.iki.ede.safe.ui.activities.CategoryListScreen
 
 
@@ -13,7 +14,7 @@ fun prepareNotifications() = initializeNotifications {
         R.string.notification_lock_title,
         R.string.notification_lock_description,
         Notification.CATEGORY_SERVICE,
-        CategoryListScreen::class,
+        CategoryListScreen::class.java,
         R.drawable.passicon
     )
     notification(
@@ -22,7 +23,7 @@ fun prepareNotifications() = initializeNotifications {
         R.string.notification_backup_reminder_title,
         R.string.notification_backup_reminder_description,
         Notification.CATEGORY_REMINDER,
-        CategoryListScreen::class,
+        BackupDatabaseScreen::class.java,
         R.drawable.passicon
     )
     notification(
@@ -31,7 +32,7 @@ fun prepareNotifications() = initializeNotifications {
         R.string.notification_google_autobackup_title,
         R.string.notification_google_autobackup_description,
         Notification.CATEGORY_STATUS,
-        CategoryListScreen::class,
+        CategoryListScreen::class.java,
         R.drawable.passicon
     )
     notification(
@@ -40,7 +41,7 @@ fun prepareNotifications() = initializeNotifications {
         R.string.notification_google_autobackup_quota_exceeded_title,
         R.string.notification_google_autobackup_quota_exceeded_description,
         Notification.CATEGORY_ERROR,
-        CategoryListScreen::class,
+        CategoryListScreen::class.java,
         R.drawable.passicon
     )
 }

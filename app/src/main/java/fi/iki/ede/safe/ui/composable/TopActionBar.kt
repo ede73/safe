@@ -1,9 +1,7 @@
 package fi.iki.ede.safe.ui.composable
 
 import android.content.ActivityNotFoundException
-import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.ManagedActivityResultLauncher
@@ -36,8 +34,6 @@ import androidx.compose.ui.unit.dp
 import fi.iki.ede.autolock.AutolockingService
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.SafeApplication
-import fi.iki.ede.safe.backupandrestore.BackupDatabase
-import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.gpm.ui.activities.ImportNewGpmsScreen
 import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
 import fi.iki.ede.safe.splits.DropDownMenu
@@ -48,7 +44,6 @@ import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 private const val TAG = "TopActionBar"
 
@@ -65,14 +60,8 @@ fun TopActionBar(
     val exportImport = remember { mutableStateOf(false) }
     val showChangePasswordDialog = remember { mutableStateOf(false) }
     val showTrashDialog = remember { mutableStateOf(false) }
-    val toast = remember { mutableStateOf("") }
 
     val context = LocalContext.current
-
-    if (toast.value != "") {
-        Toast.makeText(context, toast.value, Toast.LENGTH_LONG).show()
-        toast.value = ""
-    }
 
     val addCompleted = setupActivityResultLauncher {/*  nothing to do anymore (thanks flow!)*/ }
 
@@ -116,7 +105,6 @@ fun TopActionBar(
                 displayMenu,
                 exportImport,
                 showChangePasswordDialog,
-                toast,
                 showTrashDialog
             )
 
@@ -173,24 +161,10 @@ private fun MakeDropdownMenu(
     displayMenu: MutableState<Boolean>,
     exportImport: MutableState<Boolean>,
     showChangePasswordDialog: MutableState<Boolean>,
-    toast: MutableState<String>,
     showTrashDialog: MutableState<Boolean>,
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val backupCompleted = stringResource(id = R.string.action_bar_backup_completed)
-
-    val backupDocumentSelectedResult = setupActivityResultLauncher {
-        if (it.data?.data != null) {
-            coroutineScope.launch {
-                withContext(Dispatchers.IO) {
-                    initiateBackup(context, it.data?.data!!) {
-                        toast.value = backupCompleted
-                    }.let { fi.iki.ede.preferences.Preferences.setLastBackupTime() }
-                }
-            }
-        }
-    }
 
     DropdownMenu(expanded = displayMenu.value, onDismissRequest = { displayMenu.value = false }) {
         // Creating dropdown menu item, on click
@@ -240,9 +214,7 @@ private fun MakeDropdownMenu(
                     // TODO: Move outta here, so we can pause the time for duration of file selection
                     displayMenu.value = false
                     AutolockingService.sendRestartTimer(context)
-                    backupDocumentSelectedResult.launch(
-                        ExportConfig.getCreateDocumentIntent()
-                    )
+                    IntentManager.startBackupDatabaseScreen(context)
                 })
             // Currently does not work from login screen
             // TODO: Make work from login screen?
@@ -279,20 +251,6 @@ private fun MakeDropdownMenu(
             }
         }
     }
-}
-
-// TODO: Wrong place
-private suspend fun initiateBackup(
-    context: Context,
-    uri: Uri,
-    completed: () -> Unit,
-) {
-    BackupDatabase.backup().let { accumulatedStringBuilder: StringBuilder ->
-        context.contentResolver.openOutputStream(uri, "wt")?.use { outputStream ->
-            outputStream.write(accumulatedStringBuilder.toString().toByteArray())
-        }
-    }
-    completed()
 }
 
 @Preview(showBackground = true)

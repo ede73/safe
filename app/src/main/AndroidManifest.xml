@@ -81,5 +81,9 @@
             android:name=".ui.activities.RestoreDatabaseScreen"
             android:exported="false"
             android:label="@string/title_activity_restore_screen" />
+        <activity
+            android:name=".ui.activities.BackupDatabaseScreen"
+            android:exported="false"
+            android:label="@string/title_activity_restore_screen" />
     </application>
 </manifest>

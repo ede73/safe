@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.db.DBID
+import fi.iki.ede.safe.ui.activities.BackupDatabaseScreen
 import fi.iki.ede.safe.ui.activities.CategoryListScreen
 import fi.iki.ede.safe.ui.activities.HelpScreen
 import fi.iki.ede.safe.ui.activities.LoginScreen
@@ -153,4 +154,7 @@ object IntentManager {
         flags: Int? = null,
         extras: Bundle? = null
     ) = context.startActivity(getActivityIntent(context, activityClass, flags, extras))
+
+    fun startBackupDatabaseScreen(context: Context) =
+        startActivity(context, BackupDatabaseScreen::class.java)
 }

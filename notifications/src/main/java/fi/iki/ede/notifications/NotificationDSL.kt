@@ -1,7 +1,6 @@
 package fi.iki.ede.notifications
 
 import android.app.NotificationManager
-import kotlin.reflect.KClass
 
 object ConfiguredNotifications {
     var notifications: List<NotificationSetup> = emptyList()
@@ -20,7 +19,7 @@ class NotificationDSL {
         channelName: Int,
         channelDescription: Int,
         category: String,
-        type: KClass<*>,
+        activityToStartOnClick: Class<*>,
         icon: Int,
         importance: Int = NotificationManager.IMPORTANCE_LOW
     ) {
@@ -31,7 +30,7 @@ class NotificationDSL {
                 channelName,
                 channelDescription,
                 category,
-                type,
+                activityToStartOnClick,
                 icon,
                 importance
             )
