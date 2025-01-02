@@ -250,6 +250,7 @@ dependencies {
     implementation(project(":gpm"))
 
     implementation(project(":safephoto"))
+    implementation(project(":datepicker"))
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)
 

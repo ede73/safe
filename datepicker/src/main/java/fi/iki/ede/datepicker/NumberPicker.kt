@@ -1,10 +1,10 @@
-package fi.iki.ede.safe.ui.composable
+package fi.iki.ede.datepicker
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -18,9 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.safe.ui.theme.SafeTheme
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun NumberPicker(
     numbers: List<String>,
@@ -44,11 +42,10 @@ fun NumberPicker(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Preview(showBackground = true)
 @Composable
 fun NumberPickerPreview() {
-    SafeTheme {
+    MaterialTheme {
         val years = (1990..2023).map { it.toString() }
         val selectedYear = remember { mutableStateOf("2000") }
         val yearPagerState = rememberPagerState(

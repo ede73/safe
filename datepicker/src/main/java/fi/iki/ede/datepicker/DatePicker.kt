@@ -1,10 +1,11 @@
-package fi.iki.ede.safe.ui.composable
+package fi.iki.ede.datepicker
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -14,10 +15,9 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.safe.ui.theme.LocalSafeTheme
-import fi.iki.ede.safe.ui.theme.SafeTheme
 import java.time.Year
 import java.time.YearMonth
 import java.time.ZonedDateTime
@@ -25,8 +25,11 @@ import java.util.Locale
 
 // TODO: One can select a future date, limit it
 @Composable
-fun DatePicker(zonedDateTime: ZonedDateTime?, onValueChange: (ZonedDateTime?) -> Unit) {
-    val safeTheme = LocalSafeTheme.current
+fun DatePicker(
+    zonedDateTime: ZonedDateTime?,
+    datePickerFont: TextStyle = MaterialTheme.typography.headlineMedium,
+    onValueChange: (ZonedDateTime?) -> Unit,
+) {
     // Uh, there's a lot of chained events and other selective logic going on here
     // Basically simple, just select year,month,day
     // But we carry few states:
@@ -103,7 +106,7 @@ fun DatePicker(zonedDateTime: ZonedDateTime?, onValueChange: (ZonedDateTime?) ->
         modifier = Modifier.padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        CompositionLocalProvider(LocalTextStyle provides safeTheme.customFonts.datePicker) {
+        CompositionLocalProvider(LocalTextStyle provides datePickerFont) {
             NumberPicker(years, selectedYear, yearPagerState)
             Text(text = "-")
             NumberPicker(months, selectedMonth, monthPagerState)
@@ -172,10 +175,7 @@ private fun quickFormat(
 @Preview(showBackground = true)
 @Composable
 fun DatePickerPreview() {
-    SafeTheme {
-        DatePicker(
-            ZonedDateTime.now()
-        ) {
-        }
+    MaterialTheme {
+        DatePicker(ZonedDateTime.now()) {}
     }
 }

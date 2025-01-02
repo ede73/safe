@@ -318,7 +318,7 @@ fun SiteEntryView(
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             Column {
                 Text(text = stringResource(id = R.string.password_entry_changed_date))
-                DatePicker(
+                fi.iki.ede.datepicker.DatePicker(
                     zonedDateTime = passEntry.passwordChangedDate,
                     onValueChange = { date: ZonedDateTime? ->
                         viewModel.updatePasswordChangedDate(date)
