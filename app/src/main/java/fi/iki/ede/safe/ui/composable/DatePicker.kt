@@ -1,8 +1,6 @@
 package fi.iki.ede.safe.ui.composable
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.pager.rememberPagerState
@@ -16,10 +14,8 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import fi.iki.ede.safe.ui.theme.SafeTheme
 import java.time.Year
@@ -28,7 +24,6 @@ import java.time.ZonedDateTime
 import java.util.Locale
 
 // TODO: One can select a future date, limit it
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DatePicker(zonedDateTime: ZonedDateTime?, onValueChange: (ZonedDateTime?) -> Unit) {
     val safeTheme = LocalSafeTheme.current
@@ -104,19 +99,16 @@ fun DatePicker(zonedDateTime: ZonedDateTime?, onValueChange: (ZonedDateTime?) ->
         monthPagerState.scrollToPage(months.indexOf(selectedMonth.value))
         dayPagerState.scrollToPage(days.value.indexOf(selectedDay.value))
     }
-    Column {
-        Text(text = stringResource(id = R.string.password_entry_changed_date))
-        Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            CompositionLocalProvider(LocalTextStyle provides safeTheme.customFonts.datePicker) {
-                NumberPicker(years, selectedYear, yearPagerState)
-                Text(text = "-")
-                NumberPicker(months, selectedMonth, monthPagerState)
-                Text(text = "-")
-                NumberPicker(days.value, selectedDay, dayPagerState)
-            }
+    Row(
+        modifier = Modifier.padding(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        CompositionLocalProvider(LocalTextStyle provides safeTheme.customFonts.datePicker) {
+            NumberPicker(years, selectedYear, yearPagerState)
+            Text(text = "-")
+            NumberPicker(months, selectedMonth, monthPagerState)
+            Text(text = "-")
+            NumberPicker(days.value, selectedDay, dayPagerState)
         }
     }
 }

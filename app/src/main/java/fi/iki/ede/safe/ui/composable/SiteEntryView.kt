@@ -76,7 +76,6 @@ import fi.iki.ede.safe.ui.theme.LocalSafeTheme
 import fi.iki.ede.safe.ui.theme.SafeButton
 import fi.iki.ede.safe.ui.theme.SafeTextButton
 import fi.iki.ede.safe.ui.theme.SafeTheme
-import fi.iki.ede.safephoto.SafePhoto
 import kotlinx.coroutines.launch
 import java.time.ZonedDateTime
 
@@ -317,18 +316,21 @@ fun SiteEntryView(
         }
 
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
-            DatePicker(
-                zonedDateTime = passEntry.passwordChangedDate,
-                onValueChange = { date: ZonedDateTime? ->
-                    viewModel.updatePasswordChangedDate(date)
-                })
-            passEntry.id?.let { pid ->
-                val gpms = DataModel.getLinkedGPMs(pid)
-                gpms.ifNotEmpty {
-                    Box(modifier = Modifier.clickable {
-                        showLinkedInfo = gpms
-                    }) {
-                        Text(text = "Has ${it.size} linked GPMs")
+            Column {
+                Text(text = stringResource(id = R.string.password_entry_changed_date))
+                DatePicker(
+                    zonedDateTime = passEntry.passwordChangedDate,
+                    onValueChange = { date: ZonedDateTime? ->
+                        viewModel.updatePasswordChangedDate(date)
+                    })
+                passEntry.id?.let { pid ->
+                    val gpms = DataModel.getLinkedGPMs(pid)
+                    gpms.ifNotEmpty {
+                        Box(modifier = Modifier.clickable {
+                            showLinkedInfo = gpms
+                        }) {
+                            Text(text = "Has ${it.size} linked GPMs")
+                        }
                     }
                 }
             }
