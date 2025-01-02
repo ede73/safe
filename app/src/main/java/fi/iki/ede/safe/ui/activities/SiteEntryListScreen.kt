@@ -18,6 +18,7 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.model.DataModel.siteEntriesStateFlow
 import fi.iki.ede.safe.model.DecryptableSiteEntry
+import fi.iki.ede.safe.notifications.SetupNotifications
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.composable.SiteEntryList
@@ -35,6 +36,7 @@ class SiteEntryListScreen :
         val categoryId =
             savedInstanceState?.getLong(CATEGORY_ID) ?: intent.getLongExtra(CATEGORY_ID, -1)
 
+        SetupNotifications.setup(this)
         setContent {
             val context = LocalContext.current
             // TODO: Either new kotlin, coroutines or both, this is a linter error now

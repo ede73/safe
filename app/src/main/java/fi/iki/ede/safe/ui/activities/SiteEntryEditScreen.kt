@@ -29,6 +29,7 @@ import fi.iki.ede.safe.R
 import fi.iki.ede.safe.db.DBID
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DecryptableSiteEntry
+import fi.iki.ede.safe.notifications.SetupNotifications
 import fi.iki.ede.safe.password.PasswordGenerator
 import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.TestTag
@@ -85,6 +86,7 @@ class SiteEntryEditScreen :
 
         val editingSiteEntryId = intent.getLongExtra(SITE_ENTRY_ID, -1L)
 
+        SetupNotifications.setup(this)
         setContent {
             SiteEntryEditCompose(
                 viewModel,
