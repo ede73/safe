@@ -16,7 +16,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.db.DBID
+import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DataModel.siteEntriesStateFlow
 import fi.iki.ede.safe.notifications.SetupNotifications
 import fi.iki.ede.safe.splits.IntentManager
@@ -35,8 +38,9 @@ class SiteEntryListScreen :
         super.onCreate(savedInstanceState)
         val categoryId =
             savedInstanceState?.getLong(CATEGORY_ID) ?: intent.getLongExtra(CATEGORY_ID, -1)
-
+        require(categoryId != -1L, { "You have to pass a proper category" })
         SetupNotifications.setup(this)
+        val category = DataModel.categoriesStateFlow.value.first { it.id == categoryId }
         setContent {
             val context = LocalContext.current
             // TODO: Either new kotlin, coroutines or both, this is a linter error now
@@ -46,7 +50,7 @@ class SiteEntryListScreen :
                 .filterNotNull()
                 .collectAsState(initial = emptyList())
 
-            SiteEntryListCompose(context, categoryId, siteEntriesState)
+            SiteEntryListCompose(context, category, siteEntriesState)
         }
     }
 
@@ -58,7 +62,7 @@ class SiteEntryListScreen :
 @Composable
 private fun SiteEntryListCompose(
     context: Context?,
-    categoryId: Long,
+    category: DecryptableCategoryEntry,
     siteEntriesState: List<DecryptableSiteEntry>
 ) {
     SafeTheme {
@@ -71,10 +75,10 @@ private fun SiteEntryListCompose(
                 TopActionBar(onAddRequested = {
                     context?.let { context ->
                         it.launch(
-                            IntentManager.getAddPassword(context, categoryId = categoryId)
+                            IntentManager.getAddPassword(context, categoryId = category.id as DBID)
                         )
                     }
-                })
+                }, title = category.plainName)
                 SiteEntryList(siteEntriesState)
                 // last row
             }
@@ -93,5 +97,9 @@ fun SiteEntryListScreenPreview() {
     }, DecryptableSiteEntry(1).apply {
         description = KeyStoreHelperFactory.getEncrypter()("iPhone".toByteArray())
     })
-    SiteEntryListCompose(null, 1, flow)
+    val category = DecryptableCategoryEntry().apply {
+        id = 1
+        encryptedName = KeyStoreHelperFactory.getEncrypter()("Category".toByteArray())
+    }
+    SiteEntryListCompose(null, category, flow)
 }

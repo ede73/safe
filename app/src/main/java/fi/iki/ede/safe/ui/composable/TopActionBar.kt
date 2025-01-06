@@ -55,22 +55,25 @@ private const val TAG = "TopActionBar"
 fun TopActionBar(
     onAddRequested: (addCompleted: ManagedActivityResultLauncher<Intent, ActivityResult>) -> Unit = {},
     loginScreen: Boolean = false,
+    title: String? = null
 ) {
     val displayMenu = remember { mutableStateOf(false) }
     val exportImport = remember { mutableStateOf(false) }
     val showChangePasswordDialog = remember { mutableStateOf(false) }
     val showTrashDialog = remember { mutableStateOf(false) }
-
     val context = LocalContext.current
-
     val addCompleted = setupActivityResultLauncher {/*  nothing to do anymore (thanks flow!)*/ }
 
     SafeTheme {
         TopAppBar(title = {
-            Text(
-                stringResource(id = R.string.application_name),
-                color = SafeTheme.colorScheme.onSurface
-            )
+            if (title != null) {
+                Text(title, color = SafeTheme.colorScheme.onSurface)
+            } else {
+                Text(
+                    stringResource(id = R.string.application_name),
+                    color = SafeTheme.colorScheme.onSurface
+                )
+            }
         }, actions = {
             if (!loginScreen) {
                 IconButton(onClick = {
@@ -261,6 +264,8 @@ fun DefaultPreview() {
             TopActionBar({}, false)
             HorizontalDivider(modifier = Modifier.padding(10.dp))
             TopActionBar({}, true)
+            HorizontalDivider(modifier = Modifier.padding(10.dp))
+            TopActionBar({}, false,"NAME")
         }
     }
 }
