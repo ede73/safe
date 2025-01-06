@@ -365,7 +365,7 @@ object DataModel {
             .flatMap { it.plainExtensions.entries }
             .groupBy({ it.key }, { it.value })
             .mapValues { (_, values) -> values.flatten().filterNot(String::isBlank).toSet() }
-    
+
     private const val TAG = "DataModel"
 }
 

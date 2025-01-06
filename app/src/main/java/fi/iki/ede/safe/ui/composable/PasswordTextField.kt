@@ -62,7 +62,7 @@ fun PasswordTextField(
         unfocusedIndicatorColor = Color.Transparent,
     )
     val isPasswordZoomed = remember { mutableStateOf(false) }
-    val safeTheme =LocalSafeTheme.current
+    val safeTheme = LocalSafeTheme.current
     val splitAt = 6
     var password by remember { mutableStateOf(TextFieldValue(text = inputValue)) }
     val revealPassword = remember { mutableStateOf(false) }

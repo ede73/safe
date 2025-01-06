@@ -36,7 +36,7 @@ fun ShowLinkedGpmsDialog(
     onDismissRequest = { onDismiss() },
     confirmButton = {},
     dismissButton = {
-       SafeTextButton(onClick = onDismiss) {
+        SafeTextButton(onClick = onDismiss) {
             Text("OK")
         }
     },

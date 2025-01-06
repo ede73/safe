@@ -265,7 +265,7 @@ fun DefaultPreview() {
             HorizontalDivider(modifier = Modifier.padding(10.dp))
             TopActionBar({}, true)
             HorizontalDivider(modifier = Modifier.padding(10.dp))
-            TopActionBar({}, false,"NAME")
+            TopActionBar({}, false, "NAME")
         }
     }
 }

@@ -42,7 +42,7 @@
     <string name="generic_dont_delete">Don\'t delete!</string>
     <string name="generic_ok">OK!</string>
     <string name="generic_yes_delete">Do delete!</string>
-    
+
     <!-- login -->
     <string name="login_button">Login</string>
     <string name="login_button_clear_db">Login/Clear database</string>

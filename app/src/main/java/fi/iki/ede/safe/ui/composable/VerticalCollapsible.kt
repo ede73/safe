@@ -26,9 +26,11 @@ fun VerticalCollapsible(
 ) {
     var expanded by remember { mutableStateOf(false) }
 
-    Column(modifier = Modifier
-        .fillMaxWidth()
-        .testTag(TestTag.SITE_ENTRY_EXTENSION_EXPANSION)) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(TestTag.SITE_ENTRY_EXTENSION_EXPANSION)
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
