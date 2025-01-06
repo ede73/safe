@@ -10,9 +10,9 @@ import fi.iki.ede.gpmui.models.GPMDataModel
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.BuildConfig
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -23,30 +23,35 @@ import kotlinx.coroutines.launch
 import java.time.ZonedDateTime
 
 object DataModel {
-    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-
     init {
         if (BuildConfig.DEBUG) {
-            GlobalScope.launch {
-                val TAG = "DataModel(observer)"
-                _siteEntriesStateFlow.collect { list ->
-                    Log.d(
-                        TAG,
-                        "Debug observer: _siteEntriesStateFlow:  (${
-                            list.map { it.id }.joinToString(",")
-                        })"
-                    )
-                }
+            setupDebugStateflowObserver()
+        }
+    }
+
+    private fun setupDebugStateflowObserver() {
+        val tag = "DataModel(observer)"
+        // this is just for debug build..
+        @OptIn(DelicateCoroutinesApi::class)
+        GlobalScope.launch {
+            _siteEntriesStateFlow.collect { list ->
+                Log.d(
+                    tag,
+                    "Debug observer: _siteEntriesStateFlow:  (${
+                        list.map { it.id }.joinToString(",")
+                    })"
+                )
             }
-            GlobalScope.launch {
-                _categoriesStateFlow.collect { list ->
-                    Log.d(
-                        TAG,
-                        "Debug observer: _categoriesStateFlow:  (${
-                            list.map { it.id }.joinToString(",")
-                        })"
-                    )
-                }
+        }
+        @OptIn(DelicateCoroutinesApi::class)
+        GlobalScope.launch {
+            _categoriesStateFlow.collect { list ->
+                Log.d(
+                    tag,
+                    "Debug observer: _categoriesStateFlow:  (${
+                        list.map { it.id }.joinToString(",")
+                    })"
+                )
             }
         }
     }
@@ -56,12 +61,10 @@ object DataModel {
     val categoriesStateFlow: StateFlow<List<DecryptableCategoryEntry>> get() = _categoriesStateFlow
 
     // SiteEntries state and events
-    private val _siteEntriesStateFlow =
-        MutableStateFlow<List<DecryptableSiteEntry>>(emptyList())
+    private val _siteEntriesStateFlow = MutableStateFlow<List<DecryptableSiteEntry>>(emptyList())
     val siteEntriesStateFlow: StateFlow<List<DecryptableSiteEntry>> get() = _siteEntriesStateFlow
 
-    private val _softDeletedStateFlow =
-        MutableStateFlow<Set<DecryptableSiteEntry>>(emptySet())
+    private val _softDeletedStateFlow = MutableStateFlow<Set<DecryptableSiteEntry>>(emptySet())
     val softDeletedStateFlow: StateFlow<Set<DecryptableSiteEntry>> get() = _softDeletedStateFlow
 
     fun DecryptableSiteEntry.getCategory(): DecryptableCategoryEntry =
@@ -336,7 +339,7 @@ object DataModel {
         }
     }
 
-    suspend fun dump() {
+    suspend fun dumpModelInDebugMode() {
         if (BuildConfig.DEBUG) {
             coroutineScope {
                 launch {
@@ -356,14 +359,13 @@ object DataModel {
             }
         }
     }
-    
+
     fun getAllSiteEntryExtensions(ignoreId: DBID? = null): Map<String, Set<String>> =
         _siteEntriesStateFlow.value.filter { it.id != ignoreId }
             .flatMap { it.plainExtensions.entries }
             .groupBy({ it.key }, { it.value })
             .mapValues { (_, values) -> values.flatten().filterNot(String::isBlank).toSet() }
-
-
+    
     private const val TAG = "DataModel"
 }
 

@@ -45,7 +45,7 @@ class DataModelDBTest {
             )
         )
         runBlocking {
-            DataModel.dump()
+            DataModel.dumpModelInDebugMode()
         }
 
         TestCase.assertEquals(1, DataModel.categoriesStateFlow.value.size)

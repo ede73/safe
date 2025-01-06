@@ -157,7 +157,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         )
 
         runBlocking {
-            DataModel.dump()
+            DataModel.dumpModelInDebugMode()
         }
     }
 
