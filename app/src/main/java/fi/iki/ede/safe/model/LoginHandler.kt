@@ -5,8 +5,8 @@ import android.widget.Toast
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.SaltedPassword
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
+import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.db.DBHelperFactory
 
 object LoginHandler {
     private var loggedIn: Boolean = false

@@ -3,6 +3,7 @@ package fi.iki.ede.gpmui.models
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.gpm.changeset.harmonizePotentialDomainName
@@ -20,6 +21,17 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
+class ImportGPMViewModelFactory(private val datamodel: DataModelIF) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(ImportGPMViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return ImportGPMViewModel(datamodel) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
+
+// you have to use factory to instantiate this!
 class ImportGPMViewModel(
     private val datamodel: DataModelIF,
 ) : ViewModel() {
@@ -168,7 +180,7 @@ class ImportGPMViewModel(
 
                 launchIterateLists("applyMatchingPasswords",
                     datamodel.fetchSiteEntriesStateFlow().value.map { WrappedDecryptableSiteEntry(it) },
-                    datamodel.fetchUnprocessedGPMsFlow().value.toList(),
+                    GPMDataModel.unprocessedGPMsFlow.value.toList(),
                     compare = { outerEntry, innerEntry ->
                         if (outerEntry.cachedDecryptedPassword.isNotBlank() &&
                             outerEntry.cachedDecryptedPassword == innerEntry.cachedDecryptedPassword
@@ -193,7 +205,7 @@ class ImportGPMViewModel(
 
                 launchIterateLists("applyMatchingNames",
                     datamodel.fetchSiteEntriesStateFlow().value.map { WrappedDecryptableSiteEntry(it) },
-                    datamodel.fetchUnprocessedGPMsFlow().value.toList(),
+                    GPMDataModel.unprocessedGPMsFlow.value.toList(),
                     compare = { outerEntry, innerEntry ->
                         if (similarityThreshold > 0) {
                             findSimilarity(
@@ -264,7 +276,7 @@ class ImportGPMViewModel(
                     if (gpmSearchTarget == SearchTarget.SEARCH_FROM_DISPLAYED)
                         importMergeDataRepository.displayedUnprocessedGPMs.value.toList()
                     else
-                        datamodel.fetchUnprocessedGPMsFlow().value.toList(),
+                        GPMDataModel.unprocessedGPMsFlow.value.toList(),
                     similarityThresholdOrSubString,
                     regex,
                     searchText

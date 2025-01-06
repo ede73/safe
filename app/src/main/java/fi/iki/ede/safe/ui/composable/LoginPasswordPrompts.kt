@@ -26,6 +26,8 @@ import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.LoginPrecondition
 import fi.iki.ede.safe.ui.activities.LoginStyle
 import fi.iki.ede.safe.ui.testTag
+import fi.iki.ede.theme.SafeButton
+import fi.iki.ede.theme.SafeTheme
 import kotlinx.coroutines.delay
 
 private const val TAG = "LoginPasswordPrompts"
@@ -95,7 +97,7 @@ fun LoginPasswordPrompts(
             }
         )
 
-        fi.iki.ede.theme.SafeButton(
+        SafeButton(
             modifier = Modifier.testTag(TestTag.LOGIN_BUTTON),
             onClick = {
                 val whatToDoAfterLogin = when (loginStyle) {
@@ -119,7 +121,7 @@ fun LoginPasswordPrompts(
         }
 
         if (loginPrecondition == LoginPrecondition.FIRST_TIME_LOGIN_RESTORED_DATABASE) {
-            fi.iki.ede.theme.SafeButton(
+            SafeButton(
                 modifier = Modifier.testTag(TestTag.LOGIN_ANEW_BUTTON),
                 onClick = {
                     loginStyle = when (loginStyle) {
@@ -142,7 +144,7 @@ fun LoginPasswordPrompts(
 @Preview(showBackground = true)
 @Composable
 fun PasswordPromptPreview() {
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         Column {
             Text(text = "------ First time init")
             LoginPasswordPrompts(LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE) { _, _ ->

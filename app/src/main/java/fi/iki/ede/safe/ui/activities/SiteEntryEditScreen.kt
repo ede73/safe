@@ -26,8 +26,9 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.db.DBID
+import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.db.DBID
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.notifications.SetupNotifications
 import fi.iki.ede.safe.password.PasswordGenerator
@@ -39,6 +40,8 @@ import fi.iki.ede.safe.ui.composable.TryPersistSiteEntryChanges
 import fi.iki.ede.safe.ui.models.EditableSiteEntry
 import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.testTag
+import fi.iki.ede.theme.SafeButton
+import fi.iki.ede.theme.SafeTheme
 import java.time.ZonedDateTime
 
 class SiteEntryEditScreen :
@@ -75,7 +78,7 @@ class SiteEntryEditScreen :
                 viewModel.addPassword(
                     newPassword.encrypt(encrypter),
                     categoryId,
-                    fi.iki.ede.preferences.Preferences.getDefaultUserName().encrypt(encrypter)
+                    Preferences.getDefaultUserName().encrypt(encrypter)
                 )
             } else {
                 require(true) { "Must have siteEntry or category ID" }
@@ -144,7 +147,7 @@ private fun SiteEntryEditCompose(
     finishActivity: () -> Unit,
     skipForPreviewToWork: Boolean = false
 ) {
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         Surface(
             modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
         ) {
@@ -169,12 +172,12 @@ private fun SiteEntryEditCompose(
                 AlertDialog(onDismissRequest = {
                     showSaveOrDiscardDialog = false
                 }, confirmButton = {
-                    fi.iki.ede.theme.SafeButton(onClick = {
+                    SafeButton(onClick = {
                         showSaveOrDiscardDialog = false
                         saveEntryRequested = true
                     }) { Text(text = stringResource(id = R.string.password_entry_save)) }
                 }, dismissButton = {
-                    fi.iki.ede.theme.SafeButton(onClick = {
+                    SafeButton(onClick = {
                         setResult(RESULT_CANCELED, null)
                         showSaveOrDiscardDialog = false
                         finnishTheActivity = true
@@ -229,7 +232,7 @@ fun SiteEntryScreenPreview() {
         // Set up the ViewModel with test data as needed
         editSiteEntry(entry)
     }
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         SiteEntryEditCompose(
             fakeViewModel,
             1,

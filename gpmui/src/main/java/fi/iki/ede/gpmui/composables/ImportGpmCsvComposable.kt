@@ -23,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,6 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.gpm.changeset.ImportChangeSet
 import fi.iki.ede.gpm.debug
 import fi.iki.ede.gpmui.BuildConfig
@@ -41,11 +43,12 @@ import fi.iki.ede.gpmui.dialogs.ProgressStateHolder
 import fi.iki.ede.gpmui.dialogs.UsageInfoDialog
 import fi.iki.ede.gpmui.dialogs.YesNoDialog
 import fi.iki.ede.gpmui.getFakeDataModel
-import fi.iki.ede.gpmui.utilities.deleteInternalCopy
-import fi.iki.ede.gpmui.utilities.doesInternalDocumentExist
-import fi.iki.ede.gpmui.utilities.getImportStreamAndMoveOrDeleteOriginal
-import fi.iki.ede.gpmui.utilities.getInternalDocumentInputStream
-import fi.iki.ede.gpmui.utilities.readAndParseCSV
+import fi.iki.ede.gpmui.models.GPMDataModel
+import fi.iki.ede.gpmui.utilities.deleteInternalCopyOfGpmCsvImport
+import fi.iki.ede.gpmui.utilities.doesInternalCopyOfGpmCsvImportExist
+import fi.iki.ede.gpmui.utilities.getInternalCopyOfGpmCsvAsImportStreamAndDeleteOriginal
+import fi.iki.ede.gpmui.utilities.getInternalCopyOfGpmCsvAsInputStream
+import fi.iki.ede.gpmui.utilities.readAndParseCSVToAChangeSet
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.theme.SafeButton
 import fi.iki.ede.theme.SafeTextButton
@@ -60,34 +63,38 @@ import kotlin.reflect.KFunction1
 private const val TAG = "ImportScreen"
 
 @Composable
-fun ImportNewGpmsComposable(
+fun ImportGpmCsvComposable(
     datamodel: DataModelIF,
     avertInactivity: ((Context, String) -> Unit)?,
     hasUnlinkedItemsFromPreviousRound: Boolean,
     skipImportReminder: Boolean = false,
-    _done: () -> Unit,
+    _finishedImporting: () -> Unit,
 ) {
     val context = LocalContext.current
     val myScope = CoroutineScope(Dispatchers.IO)
     val importFailed = stringResource(id = R.string.google_password_import_failed)
-
     var deleteAllCounter = 0
-    val askToDelete = remember { mutableStateOf(false) }
-    val allowAcceptAndMove = remember { mutableStateOf(false) }
+    val askToDeleteInternalCopy = remember { mutableStateOf(false) }
+    val importDoneCanMoveToMatching = remember { mutableStateOf(false) }
     val finishLinking = remember { mutableStateOf(false) }
     val importChangeSet = remember { mutableStateOf<ImportChangeSet?>(null) }
-
-
     val showImportProgress = remember { mutableStateOf(false) }
     val showUsage = remember {
         mutableStateOf(
-            fi.iki.ede.dateutils.DateUtils.getPeriodBetweenDates(
+            DateUtils.getPeriodBetweenDates(
                 ZonedDateTime.now(),
-                fi.iki.ede.dateutils.DateUtils.unixEpochSecondsToLocalZonedDateTime(Preferences.getGpmImportUsageShown())
+                DateUtils.unixEpochSecondsToLocalZonedDateTime(Preferences.getGpmImportUsageShown())
             ).days > 10
         )
     }
     val allowContinuingLastImport = remember { mutableStateOf(true) }
+
+    DisposableEffect(Unit) {
+        // Let's make sure if user navigates away, we'll delete temporary copy
+        onDispose {
+            deleteInternalCopyOfGpmCsvImport(context)
+        }
+    }
 
     fun addMessageToFlow(message: String) {
         myScope.launch {
@@ -100,18 +107,19 @@ fun ImportNewGpmsComposable(
     val selectGpmCsvExport =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
-                getImportStreamAndMoveOrDeleteOriginal(
+                getInternalCopyOfGpmCsvAsImportStreamAndDeleteOriginal(
                     context,
                     result.data!!.data!!,
                     originalNotDeleted = {
                         // TODO: Inform user!
                         addMessageToFlow("Original file not deleted")
+                        addMessageToFlow("Original file not deleted")
                     }
                 )?.let { inputStream ->
                     allowContinuingLastImport.value = false
                     showImportProgress.value = true
-                    allowAcceptAndMove.value = false
-                    actuallyImport(
+                    importDoneCanMoveToMatching.value = false
+                    launchImportGpmCsvFileToAChangeSet(
                         context,
                         datamodel,
                         inputStream,
@@ -121,9 +129,9 @@ fun ImportNewGpmsComposable(
                         avertInactivity,
                         complete = { success ->
                             if (success) {
-                                allowAcceptAndMove.value = true
+                                importDoneCanMoveToMatching.value = true
                             } else {
-                                allowAcceptAndMove.value = false
+                                importDoneCanMoveToMatching.value = false
                                 addMessageToFlow(importFailed)
                             }
                         }
@@ -132,20 +140,25 @@ fun ImportNewGpmsComposable(
             }
         }
 
-    fun done() {
-        if (doesInternalDocumentExist(context)) {
-            askToDelete.value = true
-        } else
-            _done()
+    fun importingDoneFinishAndCleanup() {
+        if (BuildConfig.DEBUG && doesInternalCopyOfGpmCsvImportExist(context)) {
+            askToDeleteInternalCopy.value = true
+        } else {
+            deleteInternalCopyOfGpmCsvImport(context)
+            _finishedImporting()
+        }
     }
 
-    if (BuildConfig.DEBUG && allowContinuingLastImport.value) {
+    if (BuildConfig.DEBUG && allowContinuingLastImport.value && doesInternalCopyOfGpmCsvImportExist(
+            context
+        )
+    ) {
         fun cont() {
-            getInternalDocumentInputStream(context)?.let { inputStream ->
+            getInternalCopyOfGpmCsvAsInputStream(context)?.let { inputStream ->
                 allowContinuingLastImport.value = false
                 showImportProgress.value = true
-                allowAcceptAndMove.value = false
-                actuallyImport(
+                importDoneCanMoveToMatching.value = false
+                launchImportGpmCsvFileToAChangeSet(
                     context,
                     datamodel,
                     inputStream,
@@ -155,9 +168,9 @@ fun ImportNewGpmsComposable(
                     avertInactivity,
                     complete = { success ->
                         if (success) {
-                            allowAcceptAndMove.value = true
+                            importDoneCanMoveToMatching.value = true
                         } else {
-                            allowAcceptAndMove.value = false
+                            importDoneCanMoveToMatching.value = false
                             addMessageToFlow(importFailed)
                         }
                     }
@@ -166,20 +179,23 @@ fun ImportNewGpmsComposable(
         }
         YesNoDialog(
             allowContinuingLastImport,
-            title = "Internal copy found, continue import?",
+            title = "Internal copy found(debug build only!), continue import?",
             positiveText = "Continue",
             positive = { cont() },
             negativeText = "Don't continue"
         )
     }
 
-    if (askToDelete.value) {
+    if (askToDeleteInternalCopy.value) {
         YesNoDialog(
-            askToDelete,
+            askToDeleteInternalCopy,
             title = "Delete internal copy?",
             positiveText = "Delete",
-            positive = { deleteInternalCopy(context) },
-            negativeText = "Keep", dismissed = { _done() }
+            positive = {
+                deleteInternalCopyOfGpmCsvImport(context)
+                _finishedImporting()
+            },
+            negativeText = "Keep", dismissed = { _finishedImporting() }
         )
     }
 
@@ -192,7 +208,7 @@ fun ImportNewGpmsComposable(
         MyProgressDialog(
             showImportProgress,
             "Import",
-            allowAcceptAndMove
+            importDoneCanMoveToMatching
         )
     }
 
@@ -202,7 +218,7 @@ fun ImportNewGpmsComposable(
                 deleteAllCounter++
                 if (deleteAllCounter > 7) {
                     myScope.launch {
-                        datamodel.deleteAllSavedGPMs()
+                        GPMDataModel.deleteAllSavedGPMs()
                     }
                     deleteAllCounter = 0
                 }
@@ -246,19 +262,23 @@ fun ImportNewGpmsComposable(
             }
         }
 
-        SafeButton(enabled = allowAcceptAndMove.value, onClick = {
+        SafeButton(enabled = importDoneCanMoveToMatching.value, onClick = {
             myScope.launch {
                 withContext(Dispatchers.IO) {
                     if (importChangeSet.value != null) {
                         showImportProgress.value = true
+
                         addMessageToFlow("Import to DB...")
-                        doImport(datamodel, importChangeSet.value!!)
+                        storeChangeSet(importChangeSet.value!!)
+
                         addMessageToFlow("Reload datamodel...")
                         datamodel.loadFromDatabase()
+                        GPMDataModel.loadFromDatabase()
+
                         showImportProgress.value = false
                     }
                 }
-                done()
+                importingDoneFinishAndCleanup()
             }
         }) {
             Row {
@@ -275,7 +295,7 @@ fun ImportNewGpmsComposable(
         }
 
         if (finishLinking.value) {
-            SafeButton(onClick = { _done() }) {
+            SafeButton(onClick = { _finishedImporting() }) {
                 Row {
                     Text(
                         stringResource(id = R.string.google_password_import_finish_linking),
@@ -290,7 +310,7 @@ fun ImportNewGpmsComposable(
             }
         }
 
-        ImportNewGpmsPager(importChangeSet, _done)
+        VisualizeChangeSetPager(importChangeSet, _finishedImporting)
 
         if (!skipImportReminder && showUsage.value) {
             UsageInfoDialog(stringResource(id = R.string.google_password_import_usage),
@@ -302,9 +322,9 @@ fun ImportNewGpmsComposable(
     }
 }
 
-fun actuallyImport(
+fun launchImportGpmCsvFileToAChangeSet(
     context: Context,
-    datamodel: DataModelIF,
+    onlyUsedForLogging: DataModelIF,
     inputStream: InputStream,
     myScope: CoroutineScope,
     addMessageToFlow: KFunction1<String, Unit>,
@@ -313,17 +333,25 @@ fun actuallyImport(
     complete: (Boolean) -> Unit
 ) {
     myScope.launch {
-        readAndParseCSV(datamodel, inputStream, importChangeSet, complete = complete) {
+        readAndParseCSVToAChangeSet(
+            onlyUsedForLogging,
+            inputStream,
+            importChangeSet,
+            complete = complete
+        ) {
             addMessageToFlow(it)
             if (avertInactivity != null) {
                 avertInactivity(context, "GPM Import")
             }
         }
+        if (avertInactivity != null) {
+            avertInactivity(context, "GPM Import finished")
+        }
     }
 }
 
 
-private fun doImport(datamodel: DataModelIF, importChangeSet: ImportChangeSet) {
+private fun storeChangeSet(importChangeSet: ImportChangeSet) {
     val add = importChangeSet.newAddedOrUnmatchedIncomingGPMs
     // there's no point updating HASH Matches (ie. nothing has changed)
     val update = importChangeSet.getNonConflictingGPMs.mapNotNull { (incomingGPM, scoredMatch) ->
@@ -343,7 +371,7 @@ private fun doImport(datamodel: DataModelIF, importChangeSet: ImportChangeSet) {
 
     // Should be fine to run async, next screen will pick up changes when DataModel reloads
     CoroutineScope(Dispatchers.IO).launch {
-        datamodel.finishGPMImport(delete, update, add)
+        GPMDataModel.storeNewGpmsAndReload(delete, update, add)
     }
 }
 
@@ -352,7 +380,7 @@ private fun doImport(datamodel: DataModelIF, importChangeSet: ImportChangeSet) {
 fun ImportScreenPreview() {
     MaterialTheme {
         fun fake(a: Context, b: String) {}
-        ImportNewGpmsComposable(
+        ImportGpmCsvComposable(
             getFakeDataModel(),
             ::fake,
             hasUnlinkedItemsFromPreviousRound = false,

@@ -14,6 +14,7 @@ import fi.iki.ede.safe.ui.composable.EnterNewMasterPassword
 import fi.iki.ede.safe.ui.onAllNodesWithTag
 import fi.iki.ede.safe.ui.onNodeWithTag
 import fi.iki.ede.safe.utilities.NodeHelper
+import fi.iki.ede.theme.SafeTheme
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -32,7 +33,7 @@ class EnterNewMasterPasswordTest : NodeHelper {
 
     @Before
     fun setup() = composeTestRule.setContent {
-        fi.iki.ede.theme.SafeTheme {
+        SafeTheme {
             Column {
                 EnterNewMasterPassword {
                     val (oldPassword, newPassword) = it

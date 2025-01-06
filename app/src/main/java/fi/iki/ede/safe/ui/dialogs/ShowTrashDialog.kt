@@ -31,7 +31,9 @@ import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
+import fi.iki.ede.theme.SafeButton
 import fi.iki.ede.theme.SafeListItem
+import fi.iki.ede.theme.SafeTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -58,7 +60,7 @@ fun ShowTrashDialog(
             },
             title = { Text(stringResource(id = R.string.trash_empty_now)) },
             confirmButton = {
-                fi.iki.ede.theme.SafeButton(
+                SafeButton(
                     onClick = {
                         coroutineScope.launch(Dispatchers.IO) {
                             DataModel.emptyAllSoftDeleted(deletedSiteEntries.map { it.id!! }
@@ -69,7 +71,7 @@ fun ShowTrashDialog(
                 ) { Text(stringResource(id = R.string.trash_do_empty)) }
             },
             dismissButton = {
-                fi.iki.ede.theme.SafeButton(onClick = { showEmptyConfirmation = false }) {
+                SafeButton(onClick = { showEmptyConfirmation = false }) {
                     Text(stringResource(id = R.string.trash_cancel))
                 }
             }
@@ -81,7 +83,7 @@ fun ShowTrashDialog(
             text = {
                 Column {
                     if (restoreSiteEntry != null) {
-                        fi.iki.ede.theme.SafeButton(onClick = {
+                        SafeButton(onClick = {
                             coroutineScope.launch(Dispatchers.IO) {
                                 DataModel.restoreSiteEntry(restoreSiteEntry!!)
                                 restoreSiteEntry = null
@@ -113,12 +115,13 @@ fun ShowTrashDialog(
                 }
             },
             confirmButton = {
-                fi.iki.ede.theme.SafeButton(onClick = {
+                SafeButton(onClick = {
                     showEmptyConfirmation = true
                 }) { Text(stringResource(id = R.string.trash_empty_trash)) }
             },
             dismissButton = {
-                fi.iki.ede.theme.SafeButton(onClick = { onDismiss() }) { Text(stringResource(id = R.string.trash_close)) }
+                SafeButton(onClick =
+                { onDismiss() }) { Text(stringResource(id = R.string.trash_close)) }
             },
         )
     }
@@ -127,7 +130,7 @@ fun ShowTrashDialog(
 @Preview(showBackground = true)
 @Composable
 fun ShowTrashPreview() {
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()

@@ -34,6 +34,9 @@ import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.dialogs.DeleteSiteEntryDialog
 import fi.iki.ede.safe.ui.dialogs.MoveSiteEntryDialog
 import fi.iki.ede.safe.ui.testTag
+import fi.iki.ede.theme.LocalSafeTheme
+import fi.iki.ede.theme.SafeListItem
+import fi.iki.ede.theme.SafeTheme
 import kotlinx.coroutines.launch
 
 // TODO: THIS! Should have MUCH more common with PasswordRow!
@@ -47,7 +50,7 @@ fun MatchingSiteEntry(
     onUpdateSiteEntry: (DecryptableSiteEntry) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val safeTheme = fi.iki.ede.theme.LocalSafeTheme.current
+    val safeTheme = LocalSafeTheme.current
     var displayDeleteDialog by remember { mutableStateOf(false) }
     var displayMenu by remember { mutableStateOf(false) }
     var displayMoveDialog by remember { mutableStateOf(false) }
@@ -60,7 +63,7 @@ fun MatchingSiteEntry(
             .fillMaxWidth()
             .padding(4.dp)
     ) {
-        fi.iki.ede.theme.SafeListItem {
+        SafeListItem {
             Text(
                 text = categoryEntry.plainName,
                 style = safeTheme.customFonts.listEntries,
@@ -151,7 +154,7 @@ fun MatchingSiteEntry(
 @Preview(showBackground = true)
 @Composable
 fun MatchingSiteEntryPreview() {
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()

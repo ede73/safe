@@ -42,14 +42,15 @@ import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.cryptoobjects.encrypt
 import fi.iki.ede.cryptoobjects.encrypter
+import fi.iki.ede.db.DBID
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.model.SavedGPM.Companion.makeFromEncryptedStringFields
-import fi.iki.ede.gpmui.DBID
 import fi.iki.ede.gpmui.DataModelIF
 import fi.iki.ede.gpmui.R
 import fi.iki.ede.gpmui.dialogs.ShowInfoDialog
 import fi.iki.ede.gpmui.getFakeDataModel
 import fi.iki.ede.gpmui.models.DNDObject
+import fi.iki.ede.gpmui.models.GPMDataModel
 import fi.iki.ede.gpmui.models.ImportGPMViewModel
 import fi.iki.ede.gpmui.models.SiteEntryToGPM
 import fi.iki.ede.gpmui.modifiers.doesItHaveText
@@ -63,7 +64,7 @@ private const val TAG = "ImportEntryList"
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun AddIgnoreMergeGpmsAndSiteEntriesList(
+fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesList(
     datamodel: DataModelIF,
     viewModel: ImportGPMViewModel,
 ) {
@@ -83,7 +84,7 @@ fun AddIgnoreMergeGpmsAndSiteEntriesList(
                         maybeLinkedSiteEntry.second
                     )
                 }
-                datamodel.markSavedGPMIgnored(id)
+                GPMDataModel.markSavedGPMIgnored(id)
             } catch (ex: Exception) {
                 datamodel.firebaseRecordException("ignoreSavedGPM $id failed", ex)
             }
@@ -103,7 +104,7 @@ fun AddIgnoreMergeGpmsAndSiteEntriesList(
             } else {
                 viewModel.removeAllMatchingGpmsFromDisplayAndUnprocessedLists(gpmId)
             }
-            datamodel.linkSaveGPMAndSiteEntry(siteEntry, gpmId)
+            GPMDataModel.linkSaveGPMAndSiteEntry(siteEntry, gpmId)
         } catch (ex: Exception) {
             datamodel.firebaseRecordException(
                 "linkSavedGPMAndDecryptableSiteEntry ${siteEntry.id} to $gpmId failed",
@@ -123,7 +124,7 @@ fun AddIgnoreMergeGpmsAndSiteEntriesList(
                     maybeLinkedSiteEntry.second
                 )
             }
-            datamodel.addGpmAsSiteEntry(savedGPMId, categoryId = catId, onAdd = {
+            GPMDataModel.addGpmAsSiteEntry(savedGPMId, categoryId = catId, onAdd = {
                 linkSavedGPMAndDecryptableSiteEntry(it, savedGPMId)
             })
         }
@@ -353,9 +354,8 @@ fun ImportEntryListPreview() {
         // would require data model mocks to complete
         val fakemodel = getFakeDataModel()
         val fakeViewModel = ImportGPMViewModel(fakemodel).apply {
-
         }
 
-        AddIgnoreMergeGpmsAndSiteEntriesList(fakemodel, fakeViewModel)
+        AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesList(fakemodel, fakeViewModel)
     }
 }

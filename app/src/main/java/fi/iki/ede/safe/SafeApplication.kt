@@ -11,10 +11,12 @@ import com.google.firebase.Firebase
 import com.google.firebase.FirebaseApp
 import com.google.firebase.crashlytics.crashlytics
 import fi.iki.ede.autolock.AutolockingService
+import fi.iki.ede.clipboardutils.ClipboardUtils
+import fi.iki.ede.db.DBHelper
+import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.notifications.ConfiguredNotifications
+import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.preferences.Preferences.PREFERENCE_EXPERIMENTAL_FEATURES
-import fi.iki.ede.safe.db.DBHelper
-import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.notifications.prepareNotifications
 import fi.iki.ede.safe.splits.IntentManager
@@ -51,7 +53,7 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
         Firebase.crashlytics.setCustomKey("VERSION_CODE", BuildConfig.VERSION_CODE)
         Firebase.crashlytics.isCrashlyticsCollectionEnabled = true
 //        throw RuntimeException("Test Crash")
-        fi.iki.ede.preferences.Preferences.initialize(this)
+        Preferences.initialize(this)
         DBHelperFactory.initializeDatabase(DBHelper(this, DBHelper.DATABASE_NAME, true))
         reinitializePlugins(this)
         PreferenceManager.getDefaultSharedPreferences(this)
@@ -71,7 +73,7 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
         private var instance: SafeApplication? = null
         fun lockTheApplication(context: Context) {
             // Clear the clipboard, if it contains the last password used
-            fi.iki.ede.clipboardutils.ClipboardUtils.clearClipboard(context)
+            ClipboardUtils.clearClipboard(context)
             // Basically sign out
             LoginHandler.logout()
             AutolockingService.stopAutolockingService(context)
@@ -81,7 +83,7 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
     // We want to ensure as plugins are loaded/unloaded their registration is correctly removed
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
         if (key == PREFERENCE_EXPERIMENTAL_FEATURES) {
-            val enabledExperiments = fi.iki.ede.preferences.Preferences.getEnabledExperiments()
+            val enabledExperiments = Preferences.getEnabledExperiments()
             PluginName.entries.forEach {
                 if (it !in enabledExperiments) {
                     // this plugin might have just been disabled

@@ -42,6 +42,9 @@ android {
 
 dependencies {
     implementation(project(":app"))
+    implementation(project(":app:cryptoobjects"))
+    implementation(project(":app:db"))
+    implementation(project(":autolock"))
     implementation(project(":crypto"))
     implementation(project(":dateutils"))
 
@@ -50,8 +53,6 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.material3.android)
-    implementation(project(":autolock"))
-    implementation(project(":app:cryptoobjects"))
 
     // Bring bouncy castle to unit tests
     testImplementation(libs.bcprov.jdk16)

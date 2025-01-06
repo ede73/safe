@@ -2,7 +2,7 @@ package fi.iki.ede.safe.ui.models
 
 import android.graphics.Bitmap
 import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.safe.db.DBID
+import fi.iki.ede.db.DBID
 import java.time.ZonedDateTime
 
 data class EditableSiteEntry(

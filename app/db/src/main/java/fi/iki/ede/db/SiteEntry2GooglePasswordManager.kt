@@ -1,6 +1,6 @@
-package fi.iki.ede.safe.db
+package fi.iki.ede.db
 
-internal object SiteEntry2GooglePasswordManager : Table {
+object SiteEntry2GooglePasswordManager : Table {
     override val tableName: String
         get() = "password2googlepasswords"
 
@@ -14,7 +14,7 @@ internal object SiteEntry2GooglePasswordManager : Table {
     FOREIGN KEY (gpm_id) REFERENCES googlepasswords(id) ON DELETE CASCADE);"""
     )
 
-    override fun drop() = listOf("DROP TABLE IF EXISTS ${tableName};")
+    override fun drop() = listOf("DROP TABLE IF EXISTS $tableName;")
 
     enum class Columns(override val columnName: String) :
         TableColumns<SiteEntry2GooglePasswordManager> {

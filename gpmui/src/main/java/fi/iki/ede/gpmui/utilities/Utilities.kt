@@ -16,6 +16,7 @@ import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.model.ScoringConfig
 import fi.iki.ede.gpmui.DataModelIF
 import fi.iki.ede.gpmui.models.DNDObject
+import fi.iki.ede.gpmui.models.GPMDataModel
 import fi.iki.ede.gpmui.models.SiteEntryToGPM
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -50,33 +51,31 @@ internal fun combineLists(
     }
 }
 
-internal fun readAndParseCSV(
-    datamodel: DataModelIF,
+internal fun readAndParseCSVToAChangeSet(
+    onlyUsedForLogging: DataModelIF,
     inputStream: InputStream,
     importChangeSet: MutableState<ImportChangeSet?>,
     complete: (success: Boolean) -> Unit,
     progressReport: (progress: String) -> Unit,
 ) {
-    datamodel.firebaseLog("Read CSV")
+    onlyUsedForLogging.firebaseLog("Read CSV")
     try {
         progressReport("Read and parse CSV")
         val incomingGPMs = readCsv(inputStream)
         progressReport("Import CSV")
         return importCSV(
-            datamodel,
             incomingGPMs,
             importChangeSet,
             complete,
             progressReport,
-            datamodel::firebaseLog
+            onlyUsedForLogging::firebaseLog
         )
     } catch (ex: Exception) {
-        datamodel.firebaseRecordException("Failed to import", ex)
+        onlyUsedForLogging.firebaseRecordException("Failed to import", ex)
     }
 }
 
 internal fun importCSV(
-    datamodel: DataModelIF,
     file: Set<IncomingGPM>,
     successImportChangeSet: MutableState<ImportChangeSet?>,
     complete: (success: Boolean) -> Unit,
@@ -87,7 +86,7 @@ internal fun importCSV(
     CoroutineScope(Dispatchers.IO).launch {
         try {
             progressReport("Fetch last import from Database")
-            val importChangeSet = ImportChangeSet(file, datamodel.fetchAllSavedGPMsFlow().value)
+            val importChangeSet = ImportChangeSet(file, GPMDataModel.allSavedGPMsFlow.value)
             val scoringConfig = ScoringConfig()
 
             progressReport("Process incoming GPMs")

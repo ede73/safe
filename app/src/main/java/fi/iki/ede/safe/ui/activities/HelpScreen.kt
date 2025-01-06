@@ -13,12 +13,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.composable.HelpViewer
 import fi.iki.ede.safe.ui.testTag
+import fi.iki.ede.theme.SafeTheme
 
 class HelpScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            fi.iki.ede.theme.SafeTheme {
+            SafeTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -43,7 +44,7 @@ class HelpScreen : ComponentActivity() {
 @Preview(showBackground = true)
 @Composable
 fun HelpScreenPreview() {
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         HelpViewer("<html><body>Moro <b>poop</b></body></html>")
     }
 }

@@ -23,6 +23,9 @@ import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
+import fi.iki.ede.theme.SafeButton
+import fi.iki.ede.theme.SafeListItem
+import fi.iki.ede.theme.SafeTheme
 
 @Composable
 fun MoveSiteEntryDialog(
@@ -45,7 +48,7 @@ fun MoveSiteEntryDialog(
                 )
             },
             confirmButton = {
-                fi.iki.ede.theme.SafeButton(
+                SafeButton(
                     onClick = {
                         selectedEntry?.let { onConfirm(it) }
                         showDialog = false
@@ -60,7 +63,7 @@ fun MoveSiteEntryDialog(
                 }
             },
             dismissButton = {
-                fi.iki.ede.theme.SafeButton(onClick = { showDialog = false }) {
+                SafeButton(onClick = { showDialog = false }) {
                     Text(stringResource(id = R.string.move_password_cancel))
                 }
             }
@@ -72,7 +75,7 @@ fun MoveSiteEntryDialog(
             text = {
                 LazyColumn {
                     items(targetCategories.sortedBy { it.plainName }) { entry ->
-                        fi.iki.ede.theme.SafeListItem {
+                        SafeListItem {
                             Text(
                                 text = entry.plainName,
                                 modifier = Modifier
@@ -90,7 +93,7 @@ fun MoveSiteEntryDialog(
             },
             confirmButton = {},
             dismissButton = {
-                fi.iki.ede.theme.SafeButton(onClick = { onDismiss() }) {
+                SafeButton(onClick = { onDismiss() }) {
                     Text(stringResource(id = R.string.move_password_cancel))
                 }
             }
@@ -101,7 +104,7 @@ fun MoveSiteEntryDialog(
 @Preview(showBackground = true)
 @Composable
 fun MoveSiteEtryPreview() {
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()

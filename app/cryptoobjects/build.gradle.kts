@@ -42,6 +42,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.kotlinx.serialization.json)
     implementation(project(":crypto"))
+    implementation(project(":dateutils"))
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -4,7 +4,7 @@ import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
-import fi.iki.ede.safe.db.DBID
+import fi.iki.ede.db.DBID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

@@ -44,7 +44,7 @@ class ImportMergeDataRepository(datamodel: DataModelIF) {
                 when (request) {
                     is ModificationRequest.ResetGPMDisplayListToAllUnprocessed ->
                         _displayedUnprocessedGPMs.value =
-                            datamodel.fetchUnprocessedGPMsFlow().value.toList().also {
+                            GPMDataModel.unprocessedGPMsFlow.value.toList().also {
                                 debug("ResetGPMDisplayListToAllUnprocessed ${it.size}")
                             }
 

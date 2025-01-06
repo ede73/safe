@@ -7,9 +7,9 @@ import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
-import fi.iki.ede.safe.db.DBHelper
-import fi.iki.ede.safe.db.DBHelperFactory
-import fi.iki.ede.safe.db.DBID
+import fi.iki.ede.db.DBHelper
+import fi.iki.ede.db.DBHelperFactory
+import fi.iki.ede.db.DBID
 import fi.iki.ede.safe.model.DataModel
 import kotlinx.coroutines.runBlocking
 

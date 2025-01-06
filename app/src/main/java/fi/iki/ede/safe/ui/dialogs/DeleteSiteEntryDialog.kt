@@ -9,6 +9,8 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.safe.R
+import fi.iki.ede.theme.SafeButton
+import fi.iki.ede.theme.SafeTheme
 
 @Composable
 fun DeleteSiteEntryDialog(
@@ -18,13 +20,13 @@ fun DeleteSiteEntryDialog(
 ) {
     AlertDialog(
         onDismissRequest = { }, confirmButton = {
-            fi.iki.ede.theme.SafeButton(onClick = {
+            SafeButton(onClick = {
                 onConfirm()
             }) {
                 Text(text = stringResource(id = R.string.generic_yes_delete))
             }
         }, dismissButton = {
-            fi.iki.ede.theme.SafeButton(onClick = {
+            SafeButton(onClick = {
                 onDismiss()
             }) {
                 Text(text = stringResource(R.string.generic_dont_delete))
@@ -41,7 +43,7 @@ fun DeleteSiteEntryDialog(
 @Preview(showBackground = true)
 @Composable
 fun DeleteSiteEntryDialogPreview() {
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()

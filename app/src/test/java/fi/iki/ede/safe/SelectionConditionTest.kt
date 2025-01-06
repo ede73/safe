@@ -1,12 +1,12 @@
 package fi.iki.ede.safe
 
-import fi.iki.ede.safe.db.Keys
-import fi.iki.ede.safe.db.SelectionCondition
-import fi.iki.ede.safe.db.Table
-import fi.iki.ede.safe.db.TableColumns
-import fi.iki.ede.safe.db.whereEq
-import fi.iki.ede.safe.db.whereNot
-import fi.iki.ede.safe.db.whereNullOr0
+import fi.iki.ede.db.Keys
+import fi.iki.ede.db.SelectionCondition
+import fi.iki.ede.db.Table
+import fi.iki.ede.db.TableColumns
+import fi.iki.ede.db.whereEq
+import fi.iki.ede.db.whereNot
+import fi.iki.ede.db.whereNullOr0
 import junit.framework.TestCase.assertEquals
 import org.junit.Test
 

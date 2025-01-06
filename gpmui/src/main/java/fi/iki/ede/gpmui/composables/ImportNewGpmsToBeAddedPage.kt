@@ -22,7 +22,7 @@ import fi.iki.ede.theme.SafeListItem
 @Composable
 fun ImportNewGpmsToBeAddedPage(importChangeSet: MutableState<ImportChangeSet?>) =
     Column {
-        Text("New passwords(will be ADDED). Ie. didn't match incoming to anything existing.")
+        Text("New passwords from Google Password Manager (will be ADDED). Ie. didn't match incoming to anything existing.")
         val selectableList =
             importChangeSet.value?.newAddedOrUnmatchedIncomingGPMs?.toList() ?: emptyList()
         val wrappedList = selectableList.map { ItemWrapper(it) }

@@ -62,7 +62,9 @@ import fi.iki.ede.crypto.support.decrypt
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.datepicker.DatePicker
 import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.gpmui.models.GPMDataModel
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
@@ -74,6 +76,11 @@ import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.dialogs.ShowLinkedGpmsDialog
 import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.testTag
+import fi.iki.ede.safephoto.SafePhoto
+import fi.iki.ede.theme.LocalSafeTheme
+import fi.iki.ede.theme.SafeButton
+import fi.iki.ede.theme.SafeTextButton
+import fi.iki.ede.theme.SafeTheme
 import fi.iki.ede.theme.TextualCheckbox
 import kotlinx.coroutines.launch
 import java.time.ZonedDateTime
@@ -100,7 +107,7 @@ fun SiteEntryView(
     val padding = Modifier.padding(6.dp)
     val passEntry by viewModel.editableSiteEntryState.collectAsState()
     val passwordLength = integerResource(id = R.integer.password_default_length)
-    val safeTheme = fi.iki.ede.theme.LocalSafeTheme.current
+    val safeTheme = LocalSafeTheme.current
     var passwordWasUpdated by remember { mutableStateOf(false) }
     var showLinkedInfo by remember { mutableStateOf<Set<SavedGPM>?>(null) }
     var showCustomPasswordGenerator by remember {
@@ -159,7 +166,7 @@ fun SiteEntryView(
         }
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             val website = passEntry.website
-            fi.iki.ede.theme.SafeButton(
+            SafeButton(
                 onClick = {
                     val uri = tryParseUri(website)
                     // Without scheme, ACTION_VIEW will fail
@@ -188,7 +195,7 @@ fun SiteEntryView(
             )
         }
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
-            fi.iki.ede.theme.SafeButton(
+            SafeButton(
                 onClick = {
                     ClipboardUtils.addToClipboard(
                         context,
@@ -247,7 +254,7 @@ fun SiteEntryView(
                         decrypter
                     )
                 ) {
-                    fi.iki.ede.theme.SafeButton(
+                    SafeButton(
                         onClick = {
                             ClipboardUtils.addToClipboard(
                                 context,
@@ -272,7 +279,7 @@ fun SiteEntryView(
                         )
                     }
                 }
-                fi.iki.ede.theme.SafeButton(
+                SafeButton(
                     modifier = Modifier.padding(0.dp),
                     onClick = {
                         ClipboardUtils.addToClipboard(
@@ -317,13 +324,14 @@ fun SiteEntryView(
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             Column {
                 Text(text = stringResource(id = R.string.password_entry_changed_date))
-                fi.iki.ede.datepicker.DatePicker(
+                DatePicker(
                     zonedDateTime = passEntry.passwordChangedDate,
                     onValueChange = { date: ZonedDateTime? ->
                         viewModel.updatePasswordChangedDate(date)
                     })
                 passEntry.id?.let { pid ->
-                    val gpms = DataModel.getLinkedGPMs(pid)
+                    // TODO: inject from GPMUI rather (yes, gonna be tricky)
+                    val gpms = GPMDataModel.getLinkedGPMs(pid)
                     gpms.ifNotEmpty {
                         Box(modifier = Modifier.clickable {
                             showLinkedInfo = gpms
@@ -358,7 +366,7 @@ fun SiteEntryView(
         )
 
         if (context is AvertInactivityDuringLongTask) {
-            fi.iki.ede.safephoto.SafePhoto(
+            SafePhoto(
                 { isPausedOrResume, why ->
                     if (isPausedOrResume) {
                         (context as AvertInactivityDuringLongTask).pauseInactivity(context, why)
@@ -391,7 +399,7 @@ fun SiteEntryView(
                 },
                 composeTakePhoto = { takePhoto ->
                     Box(modifier = Modifier.fillMaxSize()) {
-                        fi.iki.ede.theme.SafeTextButton(
+                        SafeTextButton(
                             modifier = Modifier
                                 .align(Alignment.TopCenter)
                                 .padding(16.dp),
@@ -415,11 +423,11 @@ private fun TakePhotoOrAskPermission(
     onBitmapCaptured: (Bitmap?) -> Unit
 ) {
     Row {
-        fi.iki.ede.theme.SafeTextButton(onClick = { askPermission.value = true }) {
+        SafeTextButton(onClick = { askPermission.value = true }) {
             Text(text = stringResource(id = R.string.password_entry_capture_photo))
         }
         if (oldPhoto != null) {
-            fi.iki.ede.theme.SafeTextButton(onClick = { onBitmapCaptured(null) }) {
+            SafeTextButton(onClick = { onBitmapCaptured(null) }) {
                 Text(text = stringResource(id = R.string.password_entry_delete_photo))
             }
         }
@@ -491,7 +499,7 @@ fun PopCustomPasswordDialog(
                         steps = 22
                     )
                 }
-                fi.iki.ede.theme.SafeButton(onClick = { regenerate++ }) {
+                SafeButton(onClick = { regenerate++ }) {
                     Text(stringResource(id = R.string.site_entry_regenerate))
                 }
                 PasswordTextField(
@@ -502,14 +510,14 @@ fun PopCustomPasswordDialog(
             }
         },
         confirmButton = {
-            fi.iki.ede.theme.SafeButton(
+            SafeButton(
                 onClick = {
                     onDismiss(Password(password))
                 }
             ) { Text(stringResource(id = R.string.generic_ok)) }
         },
         dismissButton = {
-            fi.iki.ede.theme.SafeButton(onClick = { }) {
+            SafeButton(onClick = { }) {
                 Text(stringResource(id = R.string.generic_cancel))
             }
         }
@@ -665,7 +673,7 @@ private fun tryParseUri(website: String): Uri =
 @Preview(showBackground = true)
 @Composable
 fun SiteEntryViewPreview() {
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         //PopCustomPasswordDialog {}
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }

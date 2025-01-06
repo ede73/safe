@@ -239,6 +239,7 @@ composeCompiler {
 
 dependencies {
     implementation(project(":app:cryptoobjects"))
+    implementation(project(":app:db"))
     implementation(project(":gpmui"))
     lintChecks(project(":app:SafeLinter"))
     implementation(project(":crypto"))
@@ -325,6 +326,7 @@ tasks.configureEach {
             // UNIT TESTS
             dependsOn(
                 "testDebugUnitTest",
+                ":app:db:testDebugUnitTest",
                 ":app:cryptoobjects:testDebugUnitTest",
                 ":app:preferences:testDebugUnitTest",
                 ":app:theme:testDebugUnitTest",

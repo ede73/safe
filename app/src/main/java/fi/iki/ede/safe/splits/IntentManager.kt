@@ -4,8 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import fi.iki.ede.db.DBID
 import fi.iki.ede.preferences.Preferences
-import fi.iki.ede.safe.db.DBID
 import fi.iki.ede.safe.ui.activities.BackupDatabaseScreen
 import fi.iki.ede.safe.ui.activities.CategoryListScreen
 import fi.iki.ede.safe.ui.activities.HelpScreen

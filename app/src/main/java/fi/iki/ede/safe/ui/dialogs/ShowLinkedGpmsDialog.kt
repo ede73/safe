@@ -21,9 +21,13 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.cryptoobjects.encrypt
 import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.gpmui.dialogs.ShowInfoDialog
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
+import fi.iki.ede.theme.SafeListItem
+import fi.iki.ede.theme.SafeTextButton
+import fi.iki.ede.theme.SafeTheme
 
 @Composable
 fun ShowLinkedGpmsDialog(
@@ -32,7 +36,7 @@ fun ShowLinkedGpmsDialog(
     onDismissRequest = { onDismiss() },
     confirmButton = {},
     dismissButton = {
-        fi.iki.ede.theme.SafeTextButton(onClick = onDismiss) {
+       SafeTextButton(onClick = onDismiss) {
             Text("OK")
         }
     },
@@ -40,11 +44,11 @@ fun ShowLinkedGpmsDialog(
     text = {
         var showGpm by remember { mutableStateOf<SavedGPM?>(null) }
         if (showGpm != null) {
-            fi.iki.ede.gpmui.dialogs.ShowInfoDialog(showGpm!!, onDismiss = { showGpm = null })
+            ShowInfoDialog(showGpm!!, onDismiss = { showGpm = null })
         }
         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
             gpms.forEach {
-                fi.iki.ede.theme.SafeListItem {
+                SafeListItem {
                     Text(
                         text = it.cachedDecryptedName,
                         modifier = Modifier
@@ -66,7 +70,7 @@ fun ShowLinkedGpmsDialog(
 fun ShowLinkedGPMsPreview() {
     KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
     KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         val gpms = setOf(
             SavedGPM.makeFromEncryptedStringFields(
                 1,

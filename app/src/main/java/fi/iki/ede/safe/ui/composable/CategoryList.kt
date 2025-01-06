@@ -9,6 +9,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
+import fi.iki.ede.theme.SafeTheme
 
 @Composable
 fun CategoryList(categories: List<DecryptableCategoryEntry>) {
@@ -25,7 +26,7 @@ fun CategoryList(categories: List<DecryptableCategoryEntry>) {
 @Preview(showBackground = true)
 @Composable
 fun CategoryListPreview() {
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()

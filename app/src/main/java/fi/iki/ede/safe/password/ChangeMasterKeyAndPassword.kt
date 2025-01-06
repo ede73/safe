@@ -7,7 +7,7 @@ import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_LENGTH_BITS
 import fi.iki.ede.crypto.keystore.KeyManagement.decryptMasterKey
 import fi.iki.ede.crypto.keystore.KeyManagement.encryptMasterKey
 import fi.iki.ede.crypto.keystore.KeyManagement.generatePBKDF2AESKey
-import fi.iki.ede.safe.db.DBHelperFactory
+import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.safe.model.DataModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

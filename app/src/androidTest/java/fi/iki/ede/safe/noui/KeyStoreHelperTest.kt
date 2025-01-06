@@ -6,7 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
-import fi.iki.ede.safe.db.DBHelperFactory
+import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
 import fi.iki.ede.safe.utilities.DBHelper4AndroidTest

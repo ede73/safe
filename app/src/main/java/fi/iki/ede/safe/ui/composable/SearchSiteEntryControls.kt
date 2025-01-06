@@ -37,6 +37,7 @@ import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen.Companion.searchProgressPerThread
 import fi.iki.ede.safe.ui.testTag
+import fi.iki.ede.theme.SafeTheme
 import fi.iki.ede.theme.TextualCheckbox
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -302,7 +303,7 @@ private fun asyncFilterChunkOfSiteEntries(
 @Preview(showBackground = true)
 @Composable
 fun SearchSiteEntryPreview() {
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()

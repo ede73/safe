@@ -19,6 +19,7 @@ import fi.iki.ede.safe.ui.composable.PasswordTextField
 import fi.iki.ede.safe.ui.onNodeWithTag
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.utilities.NodeHelper
+import fi.iki.ede.theme.SafeTheme
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -37,7 +38,7 @@ class PasswordTextFieldAsNoteTest : NodeHelper {
 
     @Before
     fun setup() = composeTestRule.setContent {
-        fi.iki.ede.theme.SafeTheme {
+        SafeTheme {
             Column {
                 PasswordTextField(
                     textTip = R.string.password_entry_note_tip,

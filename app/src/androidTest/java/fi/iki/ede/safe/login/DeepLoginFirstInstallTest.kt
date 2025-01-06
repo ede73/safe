@@ -12,10 +12,10 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import fi.iki.ede.db.DBHelper
+import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.backupandrestore.MyBackupAgent
-import fi.iki.ede.safe.db.DBHelper
-import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.TestTag

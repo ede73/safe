@@ -14,6 +14,9 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.theme.LocalSafeTheme
+import fi.iki.ede.theme.SafeListItem
+import fi.iki.ede.theme.SafeTheme
 
 fun Color.darken(factor: Float): Color {
     return copy(alpha = alpha * factor)
@@ -25,9 +28,9 @@ fun Color.darken(factor: Float): Color {
 @Composable
 fun SiteEntryRowHeader(headerString: String) {
     val headerStart = headerString.substring(0, 1).uppercase()
-    val safeTheme = fi.iki.ede.theme.LocalSafeTheme.current
+    val safeTheme = LocalSafeTheme.current
 
-    fi.iki.ede.theme.SafeListItem(
+    SafeListItem(
         fillWidthFraction = 0.2f,
         yOffset = 32.dp,
         color = CardDefaults.cardColors(
@@ -46,7 +49,7 @@ fun SiteEntryRowHeader(headerString: String) {
 @Preview(showBackground = true)
 @Composable
 fun SiteEntryRowHeaderPreview() {
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()

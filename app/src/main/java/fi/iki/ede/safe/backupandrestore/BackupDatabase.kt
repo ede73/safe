@@ -6,10 +6,12 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.toHexString
 import fi.iki.ede.dateutils.DateUtils
+import fi.iki.ede.db.DBHelperFactory
+import fi.iki.ede.gpmui.db.GPMDB
+import fi.iki.ede.gpmui.models.GPMDataModel
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Attributes
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Elements
-import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.DataModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
@@ -60,12 +62,12 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
 
         // dump all imported passwords!
         // TODO: use datamodel! (proper channels)
-        val gpms = DataModel.allSavedGPMsFlow.value.toSet()
+        val gpms = GPMDataModel.allSavedGPMsFlow.value.toSet()
         if (gpms.isNotEmpty()) {
             serializer.startTag(Elements.IMPORTS)
             val gpmIdToSiteEntry =
                 // TODO: use datamodel!
-                DBHelperFactory.getDBHelper().fetchAllSiteEntryGPMMappings()
+                GPMDB.fetchAllSiteEntryGPMMappings()
                     .flatMap { (a, bSet) -> bSet.map { b -> b to a } }
                     .groupBy({ it.first }, { it.second })
                     .mapValues { (_, v) -> v.toSet() }

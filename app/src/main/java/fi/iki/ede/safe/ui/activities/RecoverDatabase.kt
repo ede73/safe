@@ -34,11 +34,12 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelper.Companion.importExistingEncrypt
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.db.DBHelper
+import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.safe.BuildConfig
-import fi.iki.ede.safe.db.DBHelper
-import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
 import fi.iki.ede.safe.ui.composable.EnterNewMasterPassword
+import fi.iki.ede.theme.SafeTheme
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -336,7 +337,7 @@ private fun nudepwd(): String {
 @Preview(showBackground = true)
 @Composable
 fun RecoverDatabasePreview() {
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         CopyDatabase(null) {}
     }
 }

@@ -4,13 +4,14 @@ import android.content.Context
 import android.util.Log
 import fi.iki.ede.notifications.ConfiguredNotifications
 import fi.iki.ede.notifications.MainNotification
+import fi.iki.ede.preferences.Preferences
 
 
 object SetupNotifications {
     fun setup(context: Context) {
         compareAndSetPreferenceWithCallback(
             "notification.getAutoBackupStarts",
-            fi.iki.ede.preferences.Preferences.getAutoBackupStarts()?.toLocalDate().toString()
+            Preferences.getAutoBackupStarts()?.toLocalDate().toString()
         ) {
             MainNotification(
                 context,
@@ -20,7 +21,7 @@ object SetupNotifications {
         }
         compareAndSetPreferenceWithCallback(
             "notification.getAutoBackupQuotaExceeded",
-            fi.iki.ede.preferences.Preferences.getAutoBackupQuotaExceeded()?.toLocalDate()
+            Preferences.getAutoBackupQuotaExceeded()?.toLocalDate()
                 .toString()
         ) {
             MainNotification(
@@ -31,8 +32,8 @@ object SetupNotifications {
         }
 
         // keep nagging if there are local changes newer than backup!
-        val lastBackup = fi.iki.ede.preferences.Preferences.getLastBackupTime()
-        val lastModified = fi.iki.ede.preferences.Preferences.getLastModified()
+        val lastBackup = Preferences.getLastBackupTime()
+        val lastModified = Preferences.getLastModified()
         Log.e("SetupNotifications", "$lastBackup < $lastModified")
         Log.e("SetupNotifications", "$lastBackup < $lastModified")
         Log.e("SetupNotifications", "$lastBackup < $lastModified")
@@ -41,7 +42,7 @@ object SetupNotifications {
             MainNotification(
                 context,
                 ConfiguredNotifications.get("backup_notification"),
-                fi.iki.ede.preferences.Preferences.getLastBackupTime()?.toLocalDate().toString()
+                Preferences.getLastBackupTime()?.toLocalDate().toString()
             ).apply { setNotification(context) }
         }
     }
@@ -50,10 +51,10 @@ object SetupNotifications {
         key: String,
         value: String?,
         callback: (value: String) -> Unit
-    ) = fi.iki.ede.preferences.Preferences.sharedPreferences.getString(key, null)
+    ) = Preferences.sharedPreferences.getString(key, null)
         .let { currentValue ->
             if (currentValue != value) {
-                fi.iki.ede.preferences.Preferences.sharedPreferences.edit().putString(key, value)
+                Preferences.sharedPreferences.edit().putString(key, value)
                     .apply()
                 if (value != null) {
                     callback(value)

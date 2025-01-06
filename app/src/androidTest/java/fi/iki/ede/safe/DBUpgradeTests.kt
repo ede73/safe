@@ -7,7 +7,7 @@ import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.crypto.support.toHexString
-import fi.iki.ede.safe.db.DBHelper
+import fi.iki.ede.db.DBHelper
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith

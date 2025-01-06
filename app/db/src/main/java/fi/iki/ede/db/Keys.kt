@@ -1,6 +1,6 @@
-package fi.iki.ede.safe.db
+package fi.iki.ede.db
 
-internal object Keys : Table {
+object Keys : Table {
     override val tableName: String
         get() = "keys"
 
@@ -11,7 +11,7 @@ internal object Keys : Table {
     ${Columns.SALT.columnName} TEXT NOT NULL);"""
     )
 
-    override fun drop() = listOf("DROP TABLE IF EXISTS ${tableName};")
+    override fun drop() = listOf("DROP TABLE IF EXISTS $tableName;")
 
     enum class Columns(override val columnName: String) : TableColumns<Keys> {
         ENCRYPTED_KEY("encryptedkey"),

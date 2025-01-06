@@ -10,6 +10,7 @@ import androidx.core.text.HtmlCompat
 import com.google.android.material.textview.MaterialTextView
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
+import fi.iki.ede.theme.SafeTheme
 
 @Composable
 fun HelpViewer(sourceString: String, modifier: Modifier = Modifier) {
@@ -26,7 +27,7 @@ fun HelpViewer(sourceString: String, modifier: Modifier = Modifier) {
 @Preview(showBackground = true)
 @Composable
 fun HelpViewerPreview() {
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         HelpViewer("<h1>Hello</h1>")
     }
 }

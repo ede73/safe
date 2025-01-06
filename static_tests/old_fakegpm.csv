@@ -1,0 +1,6 @@
+name,url,username,password,note
+acme666,,user@acme.com,password,"fake entry, match by name"
+website_match_by_password,,thisisnotreal,password_is_fake666,"fake entry, match by password"
+nonexistent_url_match,https://this_web_site_doesnt_exist666,thisisnotreal,abc,"fake entry, match by URL"
+thismatchesnothing,,username666,password,
+perfetchmatch,,perfectmatch,perfectmatch,"this should match automatically"

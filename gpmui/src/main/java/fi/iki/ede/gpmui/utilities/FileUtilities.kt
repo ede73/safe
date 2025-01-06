@@ -10,37 +10,44 @@ import java.io.FileOutputStream
 import java.io.InputStream
 
 // Google Password Manager exports stuff in plain text (*puke*)
-// let's give user a chance to delete the export immediately
-// or move to our app folder (which android OS keeps quite safe)
-fun getImportStreamAndMoveOrDeleteOriginal(
+// let's copy the file to safety inside app folder
+fun getInternalCopyOfGpmCsvAsImportStreamAndDeleteOriginal(
     context: Context,
     selectedDoc: Uri,
     originalNotDeleted: () -> Unit
-): InputStream? = copyImportToMyAppFolder(context, selectedDoc) ?: run {
+): InputStream? = copyOriginalGpmCsvToMyAppFolder(context, selectedDoc).apply {
+    tryToDeleteOriginalGpmCsv(context, selectedDoc, originalNotDeleted)
+} ?: run {
     // oh, we failed to copy..not much we can do here anymore?
     // Read the INPUT and ask to delete
     val i = context.contentResolver.openInputStream(selectedDoc)
     i?.let { ByteArrayInputStream(it.readBytes()) }
-}.apply {
+}
+
+private fun tryToDeleteOriginalGpmCsv(
+    context: Context,
+    selectedDoc: Uri,
+    originalNotDeleted: () -> Unit
+) {
     val document = DocumentFile.fromSingleUri(context, selectedDoc)
     document?.delete()?.let {
         if (!it) originalNotDeleted()
     }
 }
 
-private const val importedDocFile = "import.csv"
-fun doesInternalDocumentExist(context: Context) =
-    File(context.filesDir, importedDocFile).exists()
+private const val importedGpmCsv = "import.csv"
+fun doesInternalCopyOfGpmCsvImportExist(context: Context) =
+    File(context.filesDir, importedGpmCsv).exists()
 
-fun deleteInternalCopy(context: Context) =
-    File(context.filesDir, importedDocFile).let {
+fun deleteInternalCopyOfGpmCsvImport(context: Context) =
+    File(context.filesDir, importedGpmCsv).let {
         if (it.exists()) {
             it.delete()
         }
     }
 
-fun getInternalDocumentInputStream(context: Context): InputStream? {
-    val file = File(context.filesDir, importedDocFile)
+fun getInternalCopyOfGpmCsvAsInputStream(context: Context): InputStream? {
+    val file = File(context.filesDir, importedGpmCsv)
     if (file.exists()) {
         return file.inputStream()
     } else {
@@ -48,16 +55,16 @@ fun getInternalDocumentInputStream(context: Context): InputStream? {
     }
 }
 
-fun copyImportToMyAppFolder(context: Context, sourceUri: Uri): InputStream? =
+fun copyOriginalGpmCsvToMyAppFolder(context: Context, sourceUri: Uri): InputStream? =
     try {
         val resolver = context.contentResolver
-        val destinationFile = File(context.filesDir, importedDocFile)
+        val destinationFile = File(context.filesDir, importedGpmCsv)
         resolver.openInputStream(sourceUri)?.use { inputStream ->
             FileOutputStream(destinationFile).use { outputStream ->
                 inputStream.copyTo(outputStream)
             }
         }
-        val copiedFiled = File(context.filesDir, importedDocFile)
+        val copiedFiled = File(context.filesDir, importedGpmCsv)
         // in emulator we will keep this file in app folder
         if (!BuildConfig.DEBUG) {
             copiedFiled.deleteOnExit()

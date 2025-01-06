@@ -22,8 +22,12 @@ import fi.iki.ede.gpm.changeset.ImportChangeSet
 import fi.iki.ede.gpmui.utilities.makeFakeImportForTesting
 import fi.iki.ede.theme.SafeTheme
 
+/**
+ * Visualize the change set:
+ * Display added, updated, conflicting and obsolete or deleted GPMs
+ */
 @Composable
-fun ImportNewGpmsPager(importChangeSet: MutableState<ImportChangeSet?>, done: () -> Unit) {
+fun VisualizeChangeSetPager(importChangeSet: MutableState<ImportChangeSet?>, done: () -> Unit) {
     Column {
         val pages = listOf<@Composable () -> Unit>(
             { ImportNewGpmsToBeAddedPage(importChangeSet) },
@@ -59,6 +63,6 @@ fun ImportResultListPagerPreview() {
     MaterialTheme {
         val m =
             remember { mutableStateOf<ImportChangeSet?>(makeFakeImportForTesting()) }
-        ImportNewGpmsPager(m, {})
+        VisualizeChangeSetPager(m, {})
     }
 }

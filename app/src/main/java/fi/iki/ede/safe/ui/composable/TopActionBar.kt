@@ -41,6 +41,7 @@ import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.dialogs.ShowTrashDialog
 import fi.iki.ede.safe.ui.testTag
+import fi.iki.ede.theme.SafeTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -64,11 +65,11 @@ fun TopActionBar(
 
     val addCompleted = setupActivityResultLauncher {/*  nothing to do anymore (thanks flow!)*/ }
 
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         TopAppBar(title = {
             Text(
                 stringResource(id = R.string.application_name),
-                color = fi.iki.ede.theme.SafeTheme.colorScheme.onSurface
+                color = SafeTheme.colorScheme.onSurface
             )
         }, actions = {
             if (!loginScreen) {
@@ -255,7 +256,7 @@ private fun MakeDropdownMenu(
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         Column {
             TopActionBar({}, false)
             HorizontalDivider(modifier = Modifier.padding(10.dp))

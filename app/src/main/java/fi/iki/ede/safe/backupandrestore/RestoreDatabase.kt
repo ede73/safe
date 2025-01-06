@@ -14,13 +14,15 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.hexToByteArray
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.dateutils.DateUtils
+import fi.iki.ede.db.DBHelper
+import fi.iki.ede.db.DBID
 import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.gpmui.db.GPMDB
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Attributes
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Elements
-import fi.iki.ede.safe.db.DBHelper
-import fi.iki.ede.safe.db.DBID
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import kotlinx.coroutines.CancellationException
@@ -158,7 +160,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             val creationTime = myParser.getTrimmedAttributeValue(
                                 Attributes.ROOT_PASSWORD_SAFE_CREATION_TIME
                             ).toLongOrNull()?.let {
-                                fi.iki.ede.dateutils.DateUtils.unixEpochSecondsToLocalZonedDateTime(
+                                DateUtils.unixEpochSecondsToLocalZonedDateTime(
                                     it
                                 )
                             }
@@ -289,10 +291,10 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                 try {
                                     siteEntry.passwordChangedDate =
                                         changed.toLongOrNull()?.let {
-                                            fi.iki.ede.dateutils.DateUtils.unixEpochSecondsToLocalZonedDateTime(
+                                            DateUtils.unixEpochSecondsToLocalZonedDateTime(
                                                 it
                                             )
-                                        } ?: fi.iki.ede.dateutils.DateUtils.newParse(changed)
+                                        } ?: DateUtils.newParse(changed)
                                 } catch (ex: DateTimeParseException) {
                                     firebaseRecordException("Failed to parse date ($changed)", ex)
                                     // silently fail, parse failure ain't critical
@@ -361,7 +363,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                             gpmLinkedToDeletedSiteEntries.getOrPut(gpmId) { mutableSetOf() }
                                                 .add(passwordId)
                                         } else {
-                                            dbHelper.linkSaveGPMAndSiteEntry(passwordId, gpmId)
+                                            GPMDB.linkSaveGPMAndSiteEntry(passwordId, gpmId)
                                         }
                                     }
                                 }
@@ -376,7 +378,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                     val newId = dbHelper.addSiteEntry(deletedSiteEntry)
                                     gpmLinkedToDeletedSiteEntries.forEach { gpmId, deletedSiteEntryIds ->
                                         if (oldId in deletedSiteEntryIds) {
-                                            dbHelper.linkSaveGPMAndSiteEntry(newId, gpmId)
+                                            GPMDB.linkSaveGPMAndSiteEntry(newId, gpmId)
                                         }
                                     }
                                 } catch (ex: Exception) {
@@ -426,7 +428,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             // if GPM is linked to a deleted site entry,
                             // we don't know yet the ID, since link is done in affiliation table
                             // the code resilience code is in linkSaveGPMAndSiteEntry above
-                            dbHelper.addSavedGPM(readGPM)
+                            GPMDB.addSavedGPM(readGPM)
                             readGPM = null
                         }
                     }

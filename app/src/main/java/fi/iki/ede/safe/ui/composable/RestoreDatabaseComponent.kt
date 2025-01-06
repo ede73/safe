@@ -11,9 +11,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.dateutils.DateUtils
+import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.RestoreDatabase
-import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.ui.dialogs.restoreOldBackupDialog
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName

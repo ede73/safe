@@ -23,6 +23,7 @@ import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
+import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.notifications.SetupNotifications
@@ -30,6 +31,7 @@ import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.composable.AddOrEditCategory
 import fi.iki.ede.safe.ui.composable.CategoryList
 import fi.iki.ede.safe.ui.composable.TopActionBar
+import fi.iki.ede.theme.SafeTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -42,14 +44,14 @@ class CategoryListScreen :
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (!isGranted) {
-            fi.iki.ede.preferences.Preferences.setNotificationPermissionDenied(true)
+            Preferences.setNotificationPermissionDenied(true)
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (fi.iki.ede.preferences.Preferences.getNotificationPermissionRequired() &&
-            !fi.iki.ede.preferences.Preferences.getNotificationPermissionDenied()
+        if (Preferences.getNotificationPermissionRequired() &&
+            !Preferences.getNotificationPermissionDenied()
         ) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -73,7 +75,7 @@ private fun CategoryListScreenCompose(
         .collectAsState(initial = emptyList())
     var displayAddCategoryDialog by remember { mutableStateOf(false) }
 
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background

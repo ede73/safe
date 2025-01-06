@@ -26,6 +26,7 @@ import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen.Companion.searchProgressPerThread
 import fi.iki.ede.safe.ui.composable.SearchSiteEntryControls
 import fi.iki.ede.safe.ui.composable.SearchSiteEntryList
+import fi.iki.ede.theme.SafeTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class SiteEntrySearchScreen :
@@ -47,7 +48,7 @@ class SiteEntrySearchScreen :
 
 @Composable
 private fun SiteEntrySearchCompose() {
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         Surface(
             modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
         ) {

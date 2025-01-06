@@ -31,6 +31,9 @@ import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.dialogs.DeleteCategoryDialog
 import fi.iki.ede.safe.ui.testTag
+import fi.iki.ede.theme.LocalSafeTheme
+import fi.iki.ede.theme.SafeListItem
+import fi.iki.ede.theme.SafeTheme
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -39,12 +42,12 @@ import kotlinx.coroutines.runBlocking
 fun CategoryRow(category: DecryptableCategoryEntry) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val safeTheme = fi.iki.ede.theme.LocalSafeTheme.current
+    val safeTheme = LocalSafeTheme.current
     var displayDeleteCategory by remember { mutableStateOf(false) }
     var displayEditDialog by remember { mutableStateOf(false) }
     var displayMenu by remember { mutableStateOf(false) }
 
-    fi.iki.ede.theme.SafeListItem {
+    SafeListItem {
         Row(
             modifier = Modifier
                 .combinedClickable(
@@ -146,7 +149,7 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
 @Preview(showBackground = true)
 @Composable
 fun CategoryRowPreview() {
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()

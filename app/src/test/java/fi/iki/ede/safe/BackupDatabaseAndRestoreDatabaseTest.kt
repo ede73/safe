@@ -14,11 +14,12 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.hexToByteArray
 import fi.iki.ede.crypto.support.toHexString
 import fi.iki.ede.dateutils.DateUtils
+import fi.iki.ede.db.DBHelper
+import fi.iki.ede.gpmui.models.GPMDataModel
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.DataModelMocks.mockDataModelFor_UNIT_TESTS_ONLY
 import fi.iki.ede.safe.backupandrestore.BackupDatabase
 import fi.iki.ede.safe.backupandrestore.RestoreDatabase
-import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.LoginHandler
 import io.mockk.every
@@ -359,11 +360,11 @@ class BackupDatabaseAndRestoreDatabaseTest {
             Log.i(
                 TAG,
                 "GPMs: ${
-                    DataModel.allSavedGPMsFlow.value.map { it.id }.joinToString(",")
+                    GPMDataModel.allSavedGPMsFlow.value.map { it.id }.joinToString(",")
                 }"
             )
             Log.i(TAG,
-                "GPM linked to SiteEntry:" + DataModel.siteEntryToSavedGPMStateFlow.value.entries.joinToString { (key, value) ->
+                "GPM linked to SiteEntry:" + GPMDataModel.siteEntryToSavedGPMStateFlow.value.entries.joinToString { (key, value) ->
                     "Key: $key, Values: ${
                         value.joinToString(
                             ", "
@@ -378,7 +379,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         assertEquals("encryptedcat2", categories[1].plainName)
         assertEquals(2L, categories[1].id)
 
-        val gpms = DataModel.allSavedGPMsFlow.value
+        val gpms = GPMDataModel.allSavedGPMsFlow.value
         assertEquals(2, gpms.size)
         assertEquals("hash", gpms.first().hash)
         assertEquals(1L, gpms.first().id)
@@ -388,7 +389,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         assertEquals("name", gpms.first().cachedDecryptedName)
         assertEquals("note", gpms.first().cachedDecryptedNote)
         assertEquals("password", gpms.first().cachedDecryptedPassword)
-        assertEquals(2L, DataModel.getLinkedGPMs(202L).first().id)
+        assertEquals(2L, GPMDataModel.getLinkedGPMs(202L).first().id)
 
         val passwords = DataModel.siteEntriesStateFlow.value
         val categoryIds = listOf(1L, 2L, 2L, 1L)

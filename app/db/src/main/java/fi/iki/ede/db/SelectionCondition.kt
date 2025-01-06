@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.db
+package fi.iki.ede.db
 
 class SelectionCondition(
     private val column: TableColumns<*>,

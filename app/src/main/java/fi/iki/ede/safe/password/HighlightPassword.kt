@@ -5,6 +5,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.withStyle
+import fi.iki.ede.theme.SafeColors
 
 /**
  * Some letters remind each other and may be difficult to recognize on a totally random string
@@ -20,7 +21,7 @@ import androidx.compose.ui.text.withStyle
  */
 fun highlightPassword(
     password: String,
-    colors: fi.iki.ede.theme.SafeColors,
+    colors: SafeColors,
 ): TransformedText {
     return if (password.isBlank())
         TransformedText(buildAnnotatedString { append("") }, OffsetMapping.Identity)

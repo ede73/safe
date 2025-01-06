@@ -22,6 +22,7 @@ import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DataModel.getCategory
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
+import fi.iki.ede.theme.SafeTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
@@ -82,7 +83,7 @@ fun SearchSiteEntryList(
 @Preview(showBackground = true)
 @Composable
 fun SearchSiteEntryListPreview() {
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()

@@ -17,6 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.safe.R
+import fi.iki.ede.theme.SafeTheme
 import kotlinx.coroutines.job
 
 /**
@@ -70,7 +71,7 @@ fun VerifiedPasswordTextField(
 @Preview(showBackground = true)
 @Composable
 fun VerifiedPasswordTextFieldPreview() {
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         Column {
             VerifiedPasswordTextField(
                 showVerification = true,

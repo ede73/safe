@@ -37,6 +37,9 @@ import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.dialogs.DeleteSiteEntryDialog
 import fi.iki.ede.safe.ui.dialogs.MoveSiteEntryDialog
+import fi.iki.ede.theme.LocalSafeTheme
+import fi.iki.ede.theme.SafeListItem
+import fi.iki.ede.theme.SafeTheme
 import kotlinx.coroutines.launch
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -48,7 +51,7 @@ fun SiteEntryRow(
     categoriesState: List<DecryptableCategoryEntry>,
 ) {
     val context = LocalContext.current
-    val safeTheme = fi.iki.ede.theme.LocalSafeTheme.current
+    val safeTheme = LocalSafeTheme.current
     val coroutineScope = rememberCoroutineScope()
     var displayDeleteDialog by remember { mutableStateOf(false) }
     var displayMenu by remember { mutableStateOf(false) }
@@ -67,7 +70,7 @@ fun SiteEntryRow(
 
     // bit more padding on the start to emphasize difference between header and entry
     // TODO: themable?
-    fi.iki.ede.theme.SafeListItem(
+    SafeListItem(
         borderColor = BorderStroke(
             1.dp,
             MaterialTheme.colorScheme.outlineVariant
@@ -164,7 +167,7 @@ fun SiteEntryRow(
 @Preview(showBackground = true)
 @Composable
 fun SiteEntryRowPreview() {
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()

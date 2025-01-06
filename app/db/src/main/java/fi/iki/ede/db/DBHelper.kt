@@ -1,7 +1,8 @@
-package fi.iki.ede.safe.db
+package fi.iki.ede.db
 
 import android.content.ContentValues
 import android.content.Context
+import android.database.Cursor
 import android.database.DatabaseUtils
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
@@ -12,14 +13,13 @@ import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.CipherUtilities
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
-import fi.iki.ede.cryptoobjects.encrypt
-import fi.iki.ede.gpm.model.IncomingGPM
-import fi.iki.ede.gpm.model.SavedGPM
-import fi.iki.ede.gpm.model.SavedGPM.Companion.makeFromEncryptedStringFields
-import fi.iki.ede.safe.ui.utilities.firebaseRecordException
+import fi.iki.ede.dateutils.DateUtils
 import kotlinx.coroutines.flow.MutableStateFlow
+import java.time.ZonedDateTime
 
 typealias DBID = Long
+
+fun firebaseRecordException(REPLACE: String, ex: Throwable) {}
 
 /**
  * Bug!? in SQLite? Do not use readableDatabase or writeableDatabase.use!
@@ -29,7 +29,7 @@ typealias DBID = Long
  * What ever I tried, the WHOLE database gets close. And is with in-memory DBs
  * once closed, all data is lost :)
  */
-class DBHelper internal constructor(
+class DBHelper(
     context: Context,
     databaseName: String? = DATABASE_NAME,
     regularAppNotATest: Boolean = false
@@ -402,131 +402,6 @@ class DBHelper internal constructor(
             }
         }
 
-    // if user imports new DB , encryption changes and
-    // we don't currently convert GPMs too..all data in the table is irrevocably lost
-    fun deleteAllSavedGPMs() = writableDatabase.let { db ->
-        db.execSQL("DELETE FROM ${GooglePasswordManager.tableName};")
-        db.execSQL("DELETE FROM ${SiteEntry2GooglePasswordManager.tableName};")
-    }
-
-    fun markSavedGPMIgnored(savedGPMID: DBID) =
-        writableDatabase.let { db ->
-            db.update(GooglePasswordManager, ContentValues().apply {
-                put(GooglePasswordManager.Columns.STATUS, 1)
-            }, whereEq(GooglePasswordManager.Columns.ID, savedGPMID)).toLong()
-        }
-
-    fun linkSaveGPMAndSiteEntry(siteEntryID: DBID, savedGPMID: DBID): SQLiteDatabase =
-        writableDatabase.apply {
-            insert(SiteEntry2GooglePasswordManager, ContentValues().apply {
-                put(SiteEntry2GooglePasswordManager.Columns.PASSWORD_ID, siteEntryID)
-                put(SiteEntry2GooglePasswordManager.Columns.GOOGLE_ID, savedGPMID)
-            }).let { Log.w(TAG, "DBLinker $siteEntryID to $savedGPMID") }
-        }
-
-
-    fun fetchAllSiteEntryGPMMappings(): Map<DBID, Set<DBID>> =
-        readableDatabase.let { db ->
-            db.query(
-                SiteEntry2GooglePasswordManager,
-                SiteEntry2GooglePasswordManager.Columns.entries.toSet(),
-            ).use { c ->
-                (0 until c.count)
-                    .map { _ ->
-                        c.moveToNext()
-                        c.getDBID(SiteEntry2GooglePasswordManager.Columns.PASSWORD_ID) to
-                                c.getDBID(SiteEntry2GooglePasswordManager.Columns.GOOGLE_ID)
-                    }
-                    .groupBy({ it.first }, { it.second })
-                    .mapValues { (_, values) -> values.toSet() }
-            }
-        }
-
-
-    fun fetchAllSavedGPMsFromDB(
-        gpmsFlow: MutableStateFlow<Set<SavedGPM>>? = null
-    ): Set<SavedGPM> =
-        readableDatabase.let { db ->
-            db.query(
-                GooglePasswordManager,
-                GooglePasswordManager.Columns.entries.toSet(),
-            ).use {
-                it.moveToFirst()
-                ArrayList<SavedGPM>().apply {
-                    (0 until it.count).forEach { _ ->
-                        val gpm = makeFromEncryptedStringFields(
-                            it.getDBID(GooglePasswordManager.Columns.ID),
-                            it.getIVCipher(GooglePasswordManager.Columns.NAME),
-                            it.getIVCipher(GooglePasswordManager.Columns.URL),
-                            it.getIVCipher(GooglePasswordManager.Columns.USERNAME),
-                            it.getIVCipher(GooglePasswordManager.Columns.PASSWORD),
-                            it.getIVCipher(GooglePasswordManager.Columns.NOTE),
-                            it.getDBID(GooglePasswordManager.Columns.STATUS) == 1L,
-                            it.getString(GooglePasswordManager.Columns.HASH),
-                        )
-                        add(gpm)
-                        if (gpmsFlow != null)
-                            gpmsFlow.value += gpm
-                        it.moveToNext()
-                    }
-                }.toSet()
-            }
-        }
-
-    fun deleteObsoleteSavedGPMs(delete: Set<SavedGPM>) =
-        delete.forEach { savedGPM ->
-            writableDatabase.delete(
-                GooglePasswordManager,
-                whereEq(GooglePasswordManager.Columns.ID, savedGPM.id!!)
-            )
-        }
-
-    fun updateSavedGPMByIncomingGPM(update: Map<IncomingGPM, SavedGPM>) =
-        update.forEach { (incomingGPM, savedGPM) ->
-            this.writableDatabase.update(
-                GooglePasswordManager,
-                ContentValues().apply {
-                    put(GooglePasswordManager.Columns.NAME, incomingGPM.name.encrypt())
-                    put(GooglePasswordManager.Columns.URL, incomingGPM.url.encrypt())
-                    put(GooglePasswordManager.Columns.USERNAME, incomingGPM.username.encrypt())
-                    put(GooglePasswordManager.Columns.PASSWORD, incomingGPM.password.encrypt())
-                    put(GooglePasswordManager.Columns.NOTE, incomingGPM.note.encrypt())
-                    put(GooglePasswordManager.Columns.HASH, incomingGPM.hash)
-                },
-                whereEq(GooglePasswordManager.Columns.ID, savedGPM.id!!)
-            )
-        }
-
-    fun addNewIncomingGPM(add: Set<IncomingGPM>) =
-        add.forEach { incomingGPM ->
-            this.writableDatabase.insert(GooglePasswordManager,
-                ContentValues().apply {
-                    put(GooglePasswordManager.Columns.ID, null) // auto increment
-                    put(GooglePasswordManager.Columns.NAME, incomingGPM.name.encrypt())
-                    put(GooglePasswordManager.Columns.URL, incomingGPM.url.encrypt())
-                    put(GooglePasswordManager.Columns.USERNAME, incomingGPM.username.encrypt())
-                    put(GooglePasswordManager.Columns.PASSWORD, incomingGPM.password.encrypt())
-                    put(GooglePasswordManager.Columns.NOTE, incomingGPM.note.encrypt())
-                    put(GooglePasswordManager.Columns.STATUS, 0)
-                    put(GooglePasswordManager.Columns.HASH, incomingGPM.hash)
-                }
-            )
-        }
-
-    fun addSavedGPM(savedGPM: SavedGPM) =
-        this.writableDatabase.insert(GooglePasswordManager,
-            ContentValues().apply {
-                put(GooglePasswordManager.Columns.ID, savedGPM.id) // auto increment
-                put(GooglePasswordManager.Columns.NAME, savedGPM.encryptedName)
-                put(GooglePasswordManager.Columns.URL, savedGPM.encryptedUrl)
-                put(GooglePasswordManager.Columns.USERNAME, savedGPM.encryptedUsername)
-                put(GooglePasswordManager.Columns.PASSWORD, savedGPM.encryptedPassword)
-                put(GooglePasswordManager.Columns.NOTE, savedGPM.encryptedNote)
-                put(GooglePasswordManager.Columns.STATUS, if (savedGPM.flaggedIgnored) 1 else 0)
-                put(GooglePasswordManager.Columns.HASH, savedGPM.hash)
-            }
-        )
-
     companion object {
         private const val DATABASE_VERSION = 7
         const val DATABASE_NAME = "safe"
@@ -701,3 +576,13 @@ class DBHelper internal constructor(
         }
     }
 }
+
+fun Cursor.getZonedDateTimeOfPasswordChange(): ZonedDateTime? =
+    getString(getColumnIndexOrThrow(SiteEntry.Columns.PASSWORD_CHANGE_DATE))?.let { date ->
+        date.toLongOrNull()?.let {
+            DateUtils.unixEpochSecondsToLocalZonedDateTime(it)
+        } ?: run {
+            //ok, we have something that isn't numerical
+            DateUtils.newParse(date)
+        }
+    }

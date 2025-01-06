@@ -23,6 +23,7 @@ import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.composable.SiteEntryList
 import fi.iki.ede.safe.ui.composable.TopActionBar
+import fi.iki.ede.theme.SafeTheme
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 
@@ -60,7 +61,7 @@ private fun SiteEntryListCompose(
     categoryId: Long,
     siteEntriesState: List<DecryptableSiteEntry>
 ) {
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         Surface(
             modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
         ) {

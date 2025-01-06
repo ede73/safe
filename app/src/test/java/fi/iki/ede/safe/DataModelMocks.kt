@@ -6,14 +6,16 @@ import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.db.DBHelper
+import fi.iki.ede.db.DBHelperFactory
+import fi.iki.ede.db.DBID
 import fi.iki.ede.gpm.model.SavedGPM
-import fi.iki.ede.safe.db.DBHelper
-import fi.iki.ede.safe.db.DBHelperFactory
-import fi.iki.ede.safe.db.DBID
+import fi.iki.ede.gpmui.db.GPMDB
 import fi.iki.ede.safe.model.DataModel
 import io.mockk.every
 import io.mockk.isMockKMock
 import io.mockk.mockkClass
+import io.mockk.mockkObject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import java.time.ZonedDateTime
@@ -80,7 +82,9 @@ object DataModelMocks {
         val db = mockkClass(DBHelper::class)
         require(isMockKMock(db)) { "Mocking failed somehow" }
         DBHelperFactory.initializeDatabase(db)
-
+        mockkObject(GPMDB)
+        every { db.readableDatabase } answers { mockkClass(SQLiteDatabase::class) }
+        every { db.writableDatabase } answers { mockkClass(SQLiteDatabase::class) }
         every { db.addSiteEntry(any<DecryptableSiteEntry>()) } answers {
             val id: DBID =
                 if (firstArg<DecryptableSiteEntry>().id != null) firstArg<DecryptableSiteEntry>().id!!
@@ -200,7 +204,7 @@ object DataModelMocks {
             transactionSuccess = false
         }
 
-        every { db.addSavedGPM(any<SavedGPM>()) } answers {
+        every { GPMDB.addSavedGPM(any<SavedGPM>()) } answers {
             val id: DBID =
                 if (firstArg<SavedGPM>().id != null) firstArg<SavedGPM>().id!!
                 else if (gpmTable.keys.isEmpty()) 1
@@ -212,7 +216,7 @@ object DataModelMocks {
         }
         // GPMs (partial TODO:)
         every {
-            db.fetchAllSavedGPMsFromDB(
+            GPMDB.fetchAllSavedGPMsFromDB(
                 any<MutableStateFlow<Set<SavedGPM>>>()
             )
         } answers {
@@ -221,7 +225,7 @@ object DataModelMocks {
             // TODO: weak model, should filter per SiteEntry in firstArg
             gpmTable.values.flatten().toSet()
         }
-        every { db.linkSaveGPMAndSiteEntry(any<DBID>(), any<DBID>()) } answers {
+        every { GPMDB.linkSaveGPMAndSiteEntry(any<DBID>(), any<DBID>()) } answers {
             val seid = firstArg<DBID>()
             val gpmId = secondArg<DBID>()
             gpmTable2SiteEntryLink[seid] =
@@ -229,7 +233,7 @@ object DataModelMocks {
             mockkClass(SQLiteDatabase::class)
         }
 
-        every { db.fetchAllSiteEntryGPMMappings() } answers {
+        every { GPMDB.fetchAllSiteEntryGPMMappings() } answers {
             gpmTable2SiteEntryLink.toMap()
         }
 

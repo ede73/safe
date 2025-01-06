@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.db
+package fi.iki.ede.db
 
 import android.content.Context
 

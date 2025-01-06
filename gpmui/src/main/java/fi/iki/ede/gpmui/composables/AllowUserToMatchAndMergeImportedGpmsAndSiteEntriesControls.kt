@@ -45,7 +45,7 @@ import fi.iki.ede.theme.TextualCheckbox
 import java.util.regex.PatternSyntaxException
 
 @Composable
-fun AddIgnoreMergeGpmsAndSiteEntriesControls(
+fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesControls(
     datamodel: DataModelIF,
     viewModel: ImportGPMViewModel,
 ) {
@@ -257,6 +257,6 @@ fun ImportControlsPreview() {
     val fakeViewModel = ImportGPMViewModel(fakeModel).apply {
     }
     MaterialTheme {
-        AddIgnoreMergeGpmsAndSiteEntriesControls(fakeModel, fakeViewModel)
+        AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesControls(fakeModel, fakeViewModel)
     }
 }

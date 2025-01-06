@@ -19,6 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.safe.R
+import fi.iki.ede.theme.SafeButton
+import fi.iki.ede.theme.SafeTheme
 
 
 @Composable
@@ -30,7 +32,7 @@ fun AskBackupPasswordAndCommence(
     context: Context,
     doBackup: @Composable (backupPassword: Password) -> Unit
 ) {
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
@@ -53,7 +55,7 @@ fun AskBackupPasswordAndCommence(
                     onValueChange = {
                         backupPassword = it
                     })
-                fi.iki.ede.theme.SafeButton(
+                SafeButton(
                     onClick = {
                         doRestore = true
                         // Disable the button? Progress?

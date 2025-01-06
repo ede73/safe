@@ -17,6 +17,7 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.safe.model.DataModel
+import fi.iki.ede.theme.SafeTheme
 
 @Composable
 fun SiteEntryList(siteEntries: List<DecryptableSiteEntry>) {
@@ -53,7 +54,7 @@ fun SiteEntryList(siteEntries: List<DecryptableSiteEntry>) {
 @Preview(showBackground = true)
 @Composable
 fun SiteEntryListPreview() {
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()

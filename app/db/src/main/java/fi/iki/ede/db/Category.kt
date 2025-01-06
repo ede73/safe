@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.db
+package fi.iki.ede.db
 
 internal object Category : Table {
     override val tableName: String

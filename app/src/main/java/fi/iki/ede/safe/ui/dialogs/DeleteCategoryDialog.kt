@@ -12,6 +12,8 @@ import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
+import fi.iki.ede.theme.SafeButton
+import fi.iki.ede.theme.SafeTheme
 
 @Composable
 fun DeleteCategoryDialog(
@@ -22,7 +24,7 @@ fun DeleteCategoryDialog(
     AlertDialog(
         onDismissRequest = { },
         confirmButton = {
-            fi.iki.ede.theme.SafeButton(
+            SafeButton(
                 modifier = Modifier.testTag(TestTag.CATEGORY_ROW_DELETE_CONFIRM),
                 onClick = {
                     onConfirm()
@@ -32,7 +34,7 @@ fun DeleteCategoryDialog(
             }
         },
         dismissButton = {
-            fi.iki.ede.theme.SafeButton(
+            SafeButton(
                 modifier = Modifier.testTag(TestTag.CATEGORY_ROW_DELETE_CANCEL),
                 onClick = {
                     onDismiss()
@@ -55,7 +57,7 @@ fun DeleteCategoryDialog(
 @Preview(showBackground = true)
 @Composable
 fun DeleteCategoryDialogPreview() {
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()

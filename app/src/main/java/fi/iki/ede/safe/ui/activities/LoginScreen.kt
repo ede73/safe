@@ -26,13 +26,13 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.db.DBHelper
+import fi.iki.ede.db.DBHelper.Companion.DATABASE_NAME
+import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.MyBackupAgent
-import fi.iki.ede.safe.db.DBHelper
-import fi.iki.ede.safe.db.DBHelper.Companion.DATABASE_NAME
-import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.splits.IntentManager
@@ -43,6 +43,7 @@ import fi.iki.ede.safe.ui.composable.BiometricsComponent
 import fi.iki.ede.safe.ui.composable.LoginPasswordPrompts
 import fi.iki.ede.safe.ui.composable.TopActionBar
 import fi.iki.ede.safe.ui.utilities.startActivityForResults
+import fi.iki.ede.theme.SafeTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -236,7 +237,7 @@ private fun LoginScreenCompose(
     goodPasswordEntered: (LoginStyle, Password) -> Boolean,
     biometricsVerify: ActivityResultLauncher<Intent>? = null,
 ) {
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         val context = LocalContext.current
 
         val weHaveRestoredDatabase = isGoodRestoredContent(context)
@@ -299,7 +300,7 @@ private fun isGoodRestoredContent(context: Context) =
 fun LoginScreenPreview() {
     KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
     KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
-    fi.iki.ede.theme.SafeTheme {
+    SafeTheme {
         LoginScreenCompose(
             LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE,
             goodPasswordEntered = { _, _ -> /* No-op for preview */ true },
