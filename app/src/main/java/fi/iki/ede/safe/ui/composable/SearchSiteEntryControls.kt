@@ -30,14 +30,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
-import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen.Companion.searchProgressPerThread
 import fi.iki.ede.safe.ui.testTag
-import fi.iki.ede.safe.ui.theme.SafeTheme
+import fi.iki.ede.theme.TextualCheckbox
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -302,7 +302,7 @@ private fun asyncFilterChunkOfSiteEntries(
 @Preview(showBackground = true)
 @Composable
 fun SearchSiteEntryPreview() {
-    SafeTheme {
+    fi.iki.ede.theme.SafeTheme {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()

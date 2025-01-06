@@ -4,7 +4,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DropdownMenu
@@ -25,16 +24,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
-import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.dialogs.DeleteCategoryDialog
 import fi.iki.ede.safe.ui.testTag
-import fi.iki.ede.safe.ui.theme.LocalSafeTheme
-import fi.iki.ede.safe.ui.theme.SafeListItem
-import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -43,12 +39,12 @@ import kotlinx.coroutines.runBlocking
 fun CategoryRow(category: DecryptableCategoryEntry) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val safeTheme = LocalSafeTheme.current
+    val safeTheme = fi.iki.ede.theme.LocalSafeTheme.current
     var displayDeleteCategory by remember { mutableStateOf(false) }
     var displayEditDialog by remember { mutableStateOf(false) }
     var displayMenu by remember { mutableStateOf(false) }
 
-    SafeListItem {
+    fi.iki.ede.theme.SafeListItem {
         Row(
             modifier = Modifier
                 .combinedClickable(
@@ -77,7 +73,9 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
                 )
                 Text(
                     text = "(${category.containedSiteEntryCount})",
-                    modifier = Modifier.align(Alignment.TopEnd).padding(horizontal=10.dp),
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(horizontal = 10.dp),
                     style = safeTheme.customFonts.smallNote,
                 )
             }
@@ -148,12 +146,13 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
 @Preview(showBackground = true)
 @Composable
 fun CategoryRowPreview() {
-    SafeTheme {
+    fi.iki.ede.theme.SafeTheme {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()
         val cat = DecryptableCategoryEntry().apply {
-            encryptedName = encrypter("Category description that is really long and lengthy".toByteArray())
+            encryptedName =
+                encrypter("Category description that is really long and lengthy".toByteArray())
             containedSiteEntryCount = 666
         }
         CategoryRow(category = cat)

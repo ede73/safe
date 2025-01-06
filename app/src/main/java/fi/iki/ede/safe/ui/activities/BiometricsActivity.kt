@@ -26,7 +26,6 @@ import fi.iki.ede.preferences.Preferences.PREFERENCE_BIO_CIPHER
 import fi.iki.ede.preferences.Preferences.sharedPreferences
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.LoginHandler
-import fi.iki.ede.safe.ui.theme.SafeTheme
 import java.time.ZonedDateTime
 
 // TODO: With latest jetpack biometric lib, authentication failed flow seems to have changed
@@ -41,7 +40,7 @@ class BiometricsActivity : AppCompatActivity() {
         // This is needed to keep background ..light or dark when biometric prompt pops up
         // (title of this activity still seems to be white, but what can you do)
         setContent {
-            SafeTheme {
+            fi.iki.ede.theme.SafeTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {

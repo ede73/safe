@@ -22,15 +22,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
-import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.notifications.SetupNotifications
 import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.composable.AddOrEditCategory
 import fi.iki.ede.safe.ui.composable.CategoryList
 import fi.iki.ede.safe.ui.composable.TopActionBar
-import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -74,7 +73,7 @@ private fun CategoryListScreenCompose(
         .collectAsState(initial = emptyList())
     var displayAddCategoryDialog by remember { mutableStateOf(false) }
 
-    SafeTheme {
+    fi.iki.ede.theme.SafeTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background

@@ -42,57 +42,7 @@
     <string name="generic_dont_delete">Don\'t delete!</string>
     <string name="generic_ok">OK!</string>
     <string name="generic_yes_delete">Do delete!</string>
-
-    <!-- google password manager import -->
-    <string name="google_password_import_accept">Accept! And go to next stage!</string>
-    <string name="google_password_import_dont_search_from_imports">Don\'t search from imports</string>
-    <string name="google_password_import_dont_search_from_passwords">Don\'t search from passwords</string>
-    <string name="google_password_import_failed">Import failed!</string>
-    <string name="google_password_import_finish_linking">Finish GPM linking from last round</string>
-    <string name="google_password_import_locate_matching_names">Locate similar names</string>
-    <string name="google_password_import_locate_matching_passwords">Locate matching passwords</string>
-    <string name="google_password_import_merge_reset_gpm_list">Reset</string>
-    <string name="google_password_import_merge_reset_password_list">Reset</string>
-    <string name="google_password_import_search">Search to limit the entries</string>
-    <string name="google_password_import_search_from_all_imports">Search from all imports</string>
-    <string name="google_password_import_search_from_all_passwords">Search from all passwords</string>
-    <string name="google_password_import_search_from_displayed_imports">Search from displayed imports</string>
-    <string name="google_password_import_search_from_displayed_passwords">Search from displayed password</string>
-    <string name="google_password_import_search_regex">Search using regular expressions</string>
-    <string name="google_password_import_select">Select GPM CSV</string>
-    <string name="google_password_import_select_doc">Export passwords from Google Password Manager (GPM),and select the CSV file.</string>
-    <string name="google_password_launch_gpm"><![CDATA[Open GPM]]></string>
-    <string name="google_password_import_usage">This feature allows you to import Google Password Manager passwords (GPMs) in a continuous manner. This is intended to be used every now and then.\n
-\n
-At no point during import or merge will your existing Site Entries(passwords) be overwritten or modified.\n
-\n
-This part imports the Google Password Manager CSV file to Password Safe database and encrypts it with AES-256. We also store secure SHA-256 hash of all input fields and store it in database also.\n
-\n
-Next time an import is done, we can easily find what has not changed by comparing the hashes. Of changes GPMs we decrypt them, and compare again the changes. If only one field has changed (url, name, password, username, note), we assume it is the same password and we can update it into saved GPMs (that are strongly encrypted!).\n
-\n
-Those new incoming GPMs that have more than one field changes, we try other heuristics to match them with existing. At the end, you will have lists or\n
-- new unseen GPMs (or ones we could not match) - these will be added to saved GPMs\n
-- 100% matching, or matching but with 1 field change (these will be updated)\n
-- conflicts where either multiple incoming GPMS match to existing 1 GPM or vice versa\n
-- Saved GPMs that did not match anything in incoming GPMS.\n
-\n
-You can move/edit the lists, and eventually accept the situation. New list will be saved to database.\n
-\n
-This part of the process is intended just be keep your GPM imports clean and easy, without any loss.\n
-\n
-Why so complicated? Well in the next phase of import, you can match GPMs to your existing Site Entries, or add them as new Site Entries.\n
-\n
-This allows basically you to import passwords from GPM to Password Safe, but also for your on convenience keep the passwords mostly synchronized by LINKING them with Password Safe Site Entries, updating URLs, updating passwords, or just keeping YOU yourself informed if you change password in Password Safe, you should do the same in Google Password Manager too.\n
-\n
-You can delete the mapping anytime you like, you can delete GPM imports altogether, and just do fresh new import every time, of course this will not be beneficial since your mapping will be lost.\n
-\n
-After you have done with the import, 2nd part starts, that allows you to:\n
-- link GPMs to existing Site Entries\n
-- add new GPMs as new Site Entries\n
-- ignore GPMs\n
-\n
-These selections will be remembered, so next time linking will be easier.</string>
-
+    
     <!-- login -->
     <string name="login_button">Login</string>
     <string name="login_button_clear_db">Login/Clear database</string>

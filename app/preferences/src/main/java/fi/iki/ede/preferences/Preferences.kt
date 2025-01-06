@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Environment
 import android.preference.PreferenceManager
+import fi.iki.ede.dateutils.DateUtils
 import java.time.ZonedDateTime
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
@@ -109,12 +110,12 @@ object Preferences {
 
 
     private fun storeTimestamp(key: String) = sharedPreferences.edit().putLong(
-        key, fi.iki.ede.dateutils.DateUtils.toUnixSeconds(ZonedDateTime.now())
+        key, DateUtils.toUnixSeconds(ZonedDateTime.now())
     ).apply()
 
     private fun getStoredTimestamp(key: String) = sharedPreferences.getLong(key, 0)
         .takeIf { it != 0L }
-        ?.let { fi.iki.ede.dateutils.DateUtils.unixEpochSecondsToLocalZonedDateTime(it) }
+        ?.let { DateUtils.unixEpochSecondsToLocalZonedDateTime(it) }
 
     fun setLastBackupTime() = storeTimestamp(PREFERENCE_LAST_BACKUP_TIME)
     fun getLastBackupTime() = getStoredTimestamp(PREFERENCE_LAST_BACKUP_TIME)

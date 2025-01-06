@@ -15,7 +15,6 @@ import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.composable.VerifiedPasswordTextField
 import fi.iki.ede.safe.ui.onAllNodesWithTag
 import fi.iki.ede.safe.ui.testTag
-import fi.iki.ede.safe.ui.theme.SafeTheme
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -37,7 +36,7 @@ class VerifiedPasswordTextFieldTest {
 
     @Before
     fun setup() = composeTestRule.setContent {
-        SafeTheme {
+        fi.iki.ede.theme.SafeTheme {
             Column {
                 VerifiedPasswordTextField(
                     showVerification = true,

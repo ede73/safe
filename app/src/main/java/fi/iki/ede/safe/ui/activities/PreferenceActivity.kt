@@ -19,6 +19,7 @@ import androidx.preference.PreferenceManager
 import com.google.firebase.Firebase
 import com.google.firebase.crashlytics.crashlytics
 import fi.iki.ede.autolock.AutolockingService
+import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.preferences.Preferences.PREFERENCE_AUTOBACKUP_QUOTA_EXCEEDED
 import fi.iki.ede.preferences.Preferences.PREFERENCE_AUTOBACKUP_RESTORE_FINISHED
 import fi.iki.ede.preferences.Preferences.PREFERENCE_AUTOBACKUP_RESTORE_STARTED
@@ -31,7 +32,6 @@ import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.ExportConfig
 import fi.iki.ede.safe.model.DataModel
-import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.TestTag

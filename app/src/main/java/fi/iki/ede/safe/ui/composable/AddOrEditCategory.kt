@@ -21,7 +21,6 @@ import androidx.compose.ui.window.Dialog
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
-import fi.iki.ede.safe.ui.theme.SafeButton
 import kotlinx.coroutines.android.awaitFrame
 import kotlinx.coroutines.job
 
@@ -60,7 +59,7 @@ fun AddOrEditCategory(
                         .focusable()
                         .focusTarget()
                 )
-                SafeButton(
+                fi.iki.ede.theme.SafeButton(
                     modifier = Modifier.testTag(TestTag.CATEGORY_BUTTON),
                     onClick = { onSubmit(newCategory) }
                 ) {

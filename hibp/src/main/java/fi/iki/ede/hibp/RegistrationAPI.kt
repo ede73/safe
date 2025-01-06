@@ -17,7 +17,6 @@ import fi.iki.ede.safe.splits.GetComposable
 import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.splits.RegistrationAPI
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
-import fi.iki.ede.safe.ui.theme.SafeButton
 
 private val TAG = PluginName.HIBP.pluginName
 
@@ -60,7 +59,7 @@ class RegistrationAPIProviderImpl : RegistrationAPI.Provider, GetComposable {
                 )
             }
             if (breachCheckResult == BreachCheckEnum.NOT_CHECKED) {
-                SafeButton(onClick = {
+                fi.iki.ede.theme.SafeButton(onClick = {
                     val decrypter = KeyStoreHelperFactory.getDecrypter()
                     BreachCheck.doBreachCheck(
                         KAnonymity(encryptedPassword.decrypt(decrypter)),

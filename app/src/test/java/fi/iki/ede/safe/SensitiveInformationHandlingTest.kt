@@ -7,9 +7,9 @@ import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.SaltedPassword
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.cryptoobjects.encrypt
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
-import fi.iki.ede.gpm.model.encrypt
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.fail
 import org.junit.Before

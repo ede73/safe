@@ -238,9 +238,12 @@ composeCompiler {
 }
 
 dependencies {
+    implementation(project(":app:cryptoobjects"))
+    implementation(project(":gpmui"))
     lintChecks(project(":app:SafeLinter"))
     implementation(project(":crypto"))
     implementation(project(":app:preferences"))
+    implementation(project(":app:theme"))
     implementation(project(":dateutils"))
     implementation(project(":autolock"))
     implementation(project(":statemachine"))
@@ -322,13 +325,17 @@ tasks.configureEach {
             // UNIT TESTS
             dependsOn(
                 "testDebugUnitTest",
+                ":app:cryptoobjects:testDebugUnitTest",
                 ":app:preferences:testDebugUnitTest",
+                ":app:theme:testDebugUnitTest",
                 ":autolock:testDebugUnitTest",
                 ":categorypager:testDebugUnitTest",
                 ":clipboardutils:testDebugUnitTest",
                 ":crypto:testDebugUnitTest",
+                ":datepicker:testDebugUnitTest",
                 ":dateutils:testDebugUnitTest",
                 ":gpm:testDebugUnitTest",
+                ":gpmui:testDebugUnitTest",
                 ":hibp:testDebugUnitTest",
                 ":notifications:testDebugUnitTest",
                 ":oisaferestore:testDebugUnitTest",

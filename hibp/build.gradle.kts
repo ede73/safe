@@ -47,6 +47,7 @@ dependencies {
     // Volley for HTTP breach checks
     implementation(libs.volley)
     implementation(project(":crypto"))
+    implementation(project(":app:theme"))
 
     testImplementation(libs.junit)
 

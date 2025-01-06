@@ -34,14 +34,13 @@ import androidx.compose.ui.unit.dp
 import fi.iki.ede.autolock.AutolockingService
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.SafeApplication
-import fi.iki.ede.safe.gpm.ui.activities.ImportNewGpmsScreen
+import fi.iki.ede.safe.gpmui.activities.ImportNewGpmsScreen
 import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
 import fi.iki.ede.safe.splits.DropDownMenu
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.dialogs.ShowTrashDialog
 import fi.iki.ede.safe.ui.testTag
-import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -65,11 +64,11 @@ fun TopActionBar(
 
     val addCompleted = setupActivityResultLauncher {/*  nothing to do anymore (thanks flow!)*/ }
 
-    SafeTheme {
+    fi.iki.ede.theme.SafeTheme {
         TopAppBar(title = {
             Text(
                 stringResource(id = R.string.application_name),
-                color = SafeTheme.colorScheme.onSurface
+                color = fi.iki.ede.theme.SafeTheme.colorScheme.onSurface
             )
         }, actions = {
             if (!loginScreen) {
@@ -256,7 +255,7 @@ private fun MakeDropdownMenu(
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
-    SafeTheme {
+    fi.iki.ede.theme.SafeTheme {
         Column {
             TopActionBar({}, false)
             HorizontalDivider(modifier = Modifier.padding(10.dp))

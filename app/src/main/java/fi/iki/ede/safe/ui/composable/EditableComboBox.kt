@@ -31,7 +31,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
-import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -152,7 +151,7 @@ fun EditableComboBox(
 @Preview(showBackground = true)
 @Composable
 fun EditableComboBoxPreview() {
-    SafeTheme {
+    fi.iki.ede.theme.SafeTheme {
         EditableComboBox(
             selectedItems = setOf("previous1"),
             allItems = setOf("previous1", "previous2"),

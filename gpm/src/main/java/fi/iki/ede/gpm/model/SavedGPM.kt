@@ -2,6 +2,8 @@ package fi.iki.ede.gpm.model
 
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.support.DisallowedFunctions
+import fi.iki.ede.cryptoobjects.decrypt
+import fi.iki.ede.cryptoobjects.encrypt
 import fi.iki.ede.gpm.changeset.harmonizePotentialDomainName
 import fi.iki.ede.gpm.similarity.LowerCaseTrimmedString
 import fi.iki.ede.gpm.similarity.toLowerCasedTrimmedString

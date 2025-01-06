@@ -12,6 +12,8 @@ import fi.iki.ede.crypto.keystore.KeyManagement
 import fi.iki.ede.crypto.keystore.KeyManagement.generatePBKDF2AESKey
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.hexToByteArray
+import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
+import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.BuildConfig
@@ -19,8 +21,6 @@ import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Attributes
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Elements
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.db.DBID
-import fi.iki.ede.safe.model.DecryptableCategoryEntry
-import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import kotlinx.coroutines.CancellationException
@@ -125,7 +125,8 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         val path = mutableListOf<Elements?>()
         var category: DecryptableCategoryEntry? = null
         var siteEntry: DecryptableSiteEntry? = null
-        val deletedSiteEntriesToRestore = mutableSetOf<DecryptableSiteEntry>()
+        val deletedSiteEntriesToRestore =
+            mutableSetOf<DecryptableSiteEntry>()
         val gpmLinkedToDeletedSiteEntries = mutableMapOf<DBID, MutableSet<DBID>>()
         val categoryIDs = mutableSetOf<DBID>()
         var readGPM: SavedGPM? = null

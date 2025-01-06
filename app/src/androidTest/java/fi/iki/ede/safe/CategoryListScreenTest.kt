@@ -12,9 +12,9 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.model.DataModel
-import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.CategoryListScreen

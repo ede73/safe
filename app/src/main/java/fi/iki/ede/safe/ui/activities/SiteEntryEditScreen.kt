@@ -25,10 +25,10 @@ import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.encrypt
+import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.db.DBID
 import fi.iki.ede.safe.model.DataModel
-import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.notifications.SetupNotifications
 import fi.iki.ede.safe.password.PasswordGenerator
 import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
@@ -39,8 +39,6 @@ import fi.iki.ede.safe.ui.composable.TryPersistSiteEntryChanges
 import fi.iki.ede.safe.ui.models.EditableSiteEntry
 import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.testTag
-import fi.iki.ede.safe.ui.theme.SafeButton
-import fi.iki.ede.safe.ui.theme.SafeTheme
 import java.time.ZonedDateTime
 
 class SiteEntryEditScreen :
@@ -146,7 +144,7 @@ private fun SiteEntryEditCompose(
     finishActivity: () -> Unit,
     skipForPreviewToWork: Boolean = false
 ) {
-    SafeTheme {
+    fi.iki.ede.theme.SafeTheme {
         Surface(
             modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
         ) {
@@ -171,12 +169,12 @@ private fun SiteEntryEditCompose(
                 AlertDialog(onDismissRequest = {
                     showSaveOrDiscardDialog = false
                 }, confirmButton = {
-                    SafeButton(onClick = {
+                    fi.iki.ede.theme.SafeButton(onClick = {
                         showSaveOrDiscardDialog = false
                         saveEntryRequested = true
                     }) { Text(text = stringResource(id = R.string.password_entry_save)) }
                 }, dismissButton = {
-                    SafeButton(onClick = {
+                    fi.iki.ede.theme.SafeButton(onClick = {
                         setResult(RESULT_CANCELED, null)
                         showSaveOrDiscardDialog = false
                         finnishTheActivity = true
@@ -231,7 +229,7 @@ fun SiteEntryScreenPreview() {
         // Set up the ViewModel with test data as needed
         editSiteEntry(entry)
     }
-    SafeTheme {
+    fi.iki.ede.theme.SafeTheme {
         SiteEntryEditCompose(
             fakeViewModel,
             1,

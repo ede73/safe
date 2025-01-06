@@ -10,12 +10,12 @@ import android.util.Log
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.CipherUtilities
+import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
+import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.cryptoobjects.encrypt
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.model.SavedGPM.Companion.makeFromEncryptedStringFields
-import fi.iki.ede.gpm.model.encrypt
-import fi.iki.ede.safe.model.DecryptableCategoryEntry
-import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -271,23 +271,24 @@ class DBHelper internal constructor(
                     // TODO: Until we get chainable selects..filter here
                     if (softDeletedOnly || it.getInt(it.getColumnIndexOrThrow(SiteEntry.Columns.DELETED)) == 0) {
                         val siteEntry =
-                            DecryptableSiteEntry(it.getDBID(SiteEntry.Columns.CATEGORY_ID)).apply {
-                                id = it.getDBID(SiteEntry.Columns.SITEENTRY_ID)
-                                password = it.getIVCipher(SiteEntry.Columns.PASSWORD)
-                                description = it.getIVCipher(SiteEntry.Columns.DESCRIPTION)
-                                username = it.getIVCipher(SiteEntry.Columns.USERNAME)
-                                website = it.getIVCipher(SiteEntry.Columns.WEBSITE)
-                                note = it.getIVCipher(SiteEntry.Columns.NOTE)
-                                photo = it.getIVCipher(SiteEntry.Columns.PHOTO)
-                                deleted = it.getDBID(SiteEntry.Columns.DELETED)
-                                extensions = it.getIVCipher(SiteEntry.Columns.EXTENSIONS)
-                                try {
-                                    it.getZonedDateTimeOfPasswordChange()
-                                        ?.let { time -> passwordChangedDate = time }
-                                } catch (ex: Exception) {
-                                    firebaseRecordException("Date parsing issue", ex)
+                            DecryptableSiteEntry(it.getDBID(SiteEntry.Columns.CATEGORY_ID))
+                                .apply {
+                                    id = it.getDBID(SiteEntry.Columns.SITEENTRY_ID)
+                                    password = it.getIVCipher(SiteEntry.Columns.PASSWORD)
+                                    description = it.getIVCipher(SiteEntry.Columns.DESCRIPTION)
+                                    username = it.getIVCipher(SiteEntry.Columns.USERNAME)
+                                    website = it.getIVCipher(SiteEntry.Columns.WEBSITE)
+                                    note = it.getIVCipher(SiteEntry.Columns.NOTE)
+                                    photo = it.getIVCipher(SiteEntry.Columns.PHOTO)
+                                    deleted = it.getDBID(SiteEntry.Columns.DELETED)
+                                    extensions = it.getIVCipher(SiteEntry.Columns.EXTENSIONS)
+                                    try {
+                                        it.getZonedDateTimeOfPasswordChange()
+                                            ?.let { time -> passwordChangedDate = time }
+                                    } catch (ex: Exception) {
+                                        firebaseRecordException("Date parsing issue", ex)
+                                    }
                                 }
-                            }
                         add(siteEntry)
                         if (siteEntriesFlow != null)
                             siteEntriesFlow.value += siteEntry
@@ -322,7 +323,7 @@ class DBHelper internal constructor(
             whereEq(SiteEntry.Columns.SITEENTRY_ID, entry.id!!)
         )
         assert(ret == 1) { "Oh no...DB update failed to update..." }
-        return entry.id as DBID
+        return entry.id!!
     }
 
     fun updateSiteEntryCategory(id: DBID, newCategoryId: DBID) =

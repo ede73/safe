@@ -11,9 +11,9 @@ import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_ITERATION_COUNT
 import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_LENGTH_BITS
 import fi.iki.ede.crypto.keystore.KeyManagement
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
+import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.safe.db.DBHelper
-import fi.iki.ede.safe.model.DecryptableCategoryEntry
-import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.model.LoginHandler
 import java.io.InputStream
 import javax.crypto.spec.SecretKeySpec

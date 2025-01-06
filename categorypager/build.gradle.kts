@@ -62,6 +62,8 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview.android)
     implementation(libs.material)
     implementation(project(":autolock"))
+    implementation(project(":app:cryptoobjects"))
+    implementation(project(":app:theme"))
 
     testImplementation(libs.junit)
 

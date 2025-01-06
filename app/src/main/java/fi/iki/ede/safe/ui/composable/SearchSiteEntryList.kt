@@ -16,13 +16,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
+import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DataModel.getCategory
-import fi.iki.ede.safe.model.DecryptableCategoryEntry
-import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
-import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
@@ -83,7 +82,7 @@ fun SearchSiteEntryList(
 @Preview(showBackground = true)
 @Composable
 fun SearchSiteEntryListPreview() {
-    SafeTheme {
+    fi.iki.ede.theme.SafeTheme {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()

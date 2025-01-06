@@ -24,13 +24,11 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DataModel.siteEntriesStateFlow
-import fi.iki.ede.safe.model.DecryptableCategoryEntry
 import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.composable.AddOrEditCategory
 import fi.iki.ede.safe.ui.composable.CategoryRow
 import fi.iki.ede.safe.ui.composable.SiteEntryList
 import fi.iki.ede.safe.ui.composable.TopActionBar
-import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,7 +47,9 @@ class CategoryListPagedScreen :
 
 @Composable
 private fun CategoryListScreenPagedCompose(
-    flow: StateFlow<List<DecryptableCategoryEntry>> = MutableStateFlow(emptyList())
+    flow: StateFlow<List<fi.iki.ede.cryptoobjects.DecryptableCategoryEntry>> = MutableStateFlow(
+        emptyList()
+    )
 ) {
     val coroutineScope = rememberCoroutineScope()
     val categoriesState by flow.map { categories -> categories.sortedBy { it.plainName.lowercase() } }
@@ -57,7 +57,7 @@ private fun CategoryListScreenPagedCompose(
     val displayAddCategoryDialog = remember { mutableStateOf(false) }
     val pagerState = rememberPagerState(pageCount = { categoriesState.size })
 
-    SafeTheme {
+    fi.iki.ede.theme.SafeTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
@@ -93,7 +93,7 @@ private fun AddOrEditCategory(
         categoryName = "",
         onSubmit = {
             if (!TextUtils.isEmpty(it)) {
-                val entry = DecryptableCategoryEntry().apply {
+                val entry = fi.iki.ede.cryptoobjects.DecryptableCategoryEntry().apply {
                     encryptedName = encrypter(it.toByteArray())
                 }
                 coroutineScope.launch {
@@ -110,9 +110,9 @@ fun CategoryListPagedScreenPreview() {
     KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
     KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
 
-    val flow = listOf(DecryptableCategoryEntry().apply {
+    val flow = listOf(fi.iki.ede.cryptoobjects.DecryptableCategoryEntry().apply {
         encryptedName = KeyStoreHelperFactory.getEncrypter()("Android".toByteArray())
-    }, DecryptableCategoryEntry().apply {
+    }, fi.iki.ede.cryptoobjects.DecryptableCategoryEntry().apply {
         encryptedName = KeyStoreHelperFactory.getEncrypter()("iPhone".toByteArray())
     })
     CategoryListScreenPagedCompose(MutableStateFlow(flow))

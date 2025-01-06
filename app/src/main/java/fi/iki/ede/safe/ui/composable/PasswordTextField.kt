@@ -39,8 +39,6 @@ import fi.iki.ede.safe.R
 import fi.iki.ede.safe.password.highlightPassword
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
-import fi.iki.ede.safe.ui.theme.LocalSafeTheme
-import fi.iki.ede.safe.ui.theme.SafeTheme
 
 private const val TAG = "PasswordTextField"
 
@@ -62,7 +60,7 @@ fun PasswordTextField(
         unfocusedIndicatorColor = Color.Transparent,
     )
     val isPasswordZoomed = remember { mutableStateOf(false) }
-    val safeTheme = LocalSafeTheme.current
+    val safeTheme = fi.iki.ede.theme.LocalSafeTheme.current
     val splitAt = 6
     var password by remember { mutableStateOf(TextFieldValue(text = inputValue)) }
     val revealPassword = remember { mutableStateOf(false) }
@@ -167,7 +165,7 @@ private fun showOrObfuscatePassword(
     password: TextFieldValue,
     isExpanded: Boolean
 ) = if (revealPassword.value || isExpanded) {
-    val safeTheme = LocalSafeTheme.current
+    val safeTheme = fi.iki.ede.theme.LocalSafeTheme.current
     VisualTransformation {
         if (highlight)
             highlightPassword(password.text, safeTheme.customColors)
@@ -184,7 +182,7 @@ private fun showOrObfuscatePassword(
 @Preview(showBackground = true)
 @Composable
 fun PasswordTextFieldPreview() {
-    SafeTheme {
+    fi.iki.ede.theme.SafeTheme {
         Column {
             PasswordTextField(
                 textTip = R.string.login_password_tip,

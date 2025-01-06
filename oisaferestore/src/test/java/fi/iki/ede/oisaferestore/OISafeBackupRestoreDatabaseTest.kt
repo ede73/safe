@@ -10,9 +10,9 @@ import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_ITERATION_COUNT
 import fi.iki.ede.crypto.keystore.KeyManagement
 import fi.iki.ede.crypto.support.hexToByteArray
 import fi.iki.ede.crypto.support.toHex
+import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
+import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.safe.db.DBHelper
-import fi.iki.ede.safe.model.DecryptableCategoryEntry
-import fi.iki.ede.safe.model.DecryptableSiteEntry
 import io.mockk.every
 import io.mockk.mockkClass
 import io.mockk.slot
@@ -63,14 +63,14 @@ class OISafeBackupRestoreDatabaseTest {
             )
         } answers {}
         every { db.inTransaction() } answers { inTransaction }
-        val cat = slot<DecryptableCategoryEntry>()
-        val categories = mutableListOf<DecryptableCategoryEntry>()
+        val cat = slot<fi.iki.ede.cryptoobjects.DecryptableCategoryEntry>()
+        val categories = mutableListOf<fi.iki.ede.cryptoobjects.DecryptableCategoryEntry>()
         every { dbHelper.addCategory(capture(cat)) } answers {
             categories.add(cat.captured)
             (categories.size + 1).toLong()
         }
-        val pwd = slot<DecryptableSiteEntry>()
-        val siteEntries = mutableListOf<DecryptableSiteEntry>()
+        val pwd = slot<fi.iki.ede.cryptoobjects.DecryptableSiteEntry>()
+        val siteEntries = mutableListOf<fi.iki.ede.cryptoobjects.DecryptableSiteEntry>()
         every { dbHelper.addSiteEntry(capture(pwd)) } answers {
             siteEntries.add(pwd.captured)
             (siteEntries.size + 1).toLong()

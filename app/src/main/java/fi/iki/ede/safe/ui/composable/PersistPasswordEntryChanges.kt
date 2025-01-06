@@ -6,11 +6,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.encrypt
-import fi.iki.ede.gpm.model.encrypt
+import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.cryptoobjects.encrypt
 import fi.iki.ede.safe.model.DataModel
-import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.ui.models.EditableSiteEntry
-import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.runBlocking
 import java.time.ZonedDateTime
 
@@ -55,7 +54,7 @@ fun PersistPasswordEntryChanges(
 fun PersistPasswordEntryChangesPreview() {
     KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
     KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
-    SafeTheme {
+    fi.iki.ede.theme.SafeTheme {
         PersistPasswordEntryChanges(
             editedSiteEntry = EditableSiteEntry(
                 1,

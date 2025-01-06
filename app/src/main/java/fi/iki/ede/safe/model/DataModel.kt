@@ -1,8 +1,12 @@
 package fi.iki.ede.safe.model
 
 import android.util.Log
+import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
+import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.db.DBID
@@ -104,10 +108,12 @@ object DataModel {
     val categoriesStateFlow: StateFlow<List<DecryptableCategoryEntry>> get() = _categoriesStateFlow
 
     // SiteEntries state and events
-    private val _siteEntriesStateFlow = MutableStateFlow<List<DecryptableSiteEntry>>(emptyList())
+    private val _siteEntriesStateFlow =
+        MutableStateFlow<List<DecryptableSiteEntry>>(emptyList())
     val siteEntriesStateFlow: StateFlow<List<DecryptableSiteEntry>> get() = _siteEntriesStateFlow
 
-    private val _softDeletedStateFlow = MutableStateFlow<Set<DecryptableSiteEntry>>(emptySet())
+    private val _softDeletedStateFlow =
+        MutableStateFlow<Set<DecryptableSiteEntry>>(emptySet())
     val softDeletedStateFlow: StateFlow<Set<DecryptableSiteEntry>> get() = _softDeletedStateFlow
 
     fun DecryptableSiteEntry.getCategory(): DecryptableCategoryEntry =
@@ -130,11 +136,11 @@ object DataModel {
     }
 
     // TODO: RENAME
-    suspend fun addOrEditCategory(
+    fun addOrEditCategory(
         category: DecryptableCategoryEntry,
         onAdd: suspend (DecryptableCategoryEntry) -> Unit = {}
     ) {
-        fi.iki.ede.preferences.Preferences.setLastModified()
+        Preferences.setLastModified()
         CoroutineScope(Dispatchers.IO).launch {
             val db = DBHelperFactory.getDBHelper()
             if (category.id == null) {
@@ -160,7 +166,7 @@ object DataModel {
         require(category.getCategory() == category) {
             "Alas category OBJECTS THEMSELVES are different, and SEARCH is needed"
         }
-        fi.iki.ede.preferences.Preferences.setLastModified()
+        Preferences.setLastModified()
         CoroutineScope(Dispatchers.IO).launch {
             DBHelperFactory.getDBHelper().deleteCategory(category.id!!)
             _categoriesStateFlow.update { oldMap -> oldMap.filterNot { it.id == category.id } }
@@ -175,7 +181,7 @@ object DataModel {
         onAdd: suspend (DecryptableSiteEntry) -> Unit = {}
     ) {
         require(siteEntry.categoryId != null) { "SiteEntry's category must be known" }
-        fi.iki.ede.preferences.Preferences.setLastModified()
+        Preferences.setLastModified()
         CoroutineScope(Dispatchers.IO).launch {
             val db = DBHelperFactory.getDBHelper()
             if (siteEntry.id == null) {
@@ -197,7 +203,7 @@ object DataModel {
         targetCategory: DecryptableCategoryEntry
     ) {
         require(siteEntry.categoryId != null) { "SiteEntry's category must be known" }
-        fi.iki.ede.preferences.Preferences.setLastModified()
+        Preferences.setLastModified()
         CoroutineScope(Dispatchers.IO).launch {
             DBHelperFactory.getDBHelper()
                 .updateSiteEntryCategory(siteEntry.id!!, targetCategory.id!!)
@@ -224,7 +230,7 @@ object DataModel {
     }
 
     fun emptyAllSoftDeleted(ids: Set<DBID>) {
-        fi.iki.ede.preferences.Preferences.setLastModified()
+        Preferences.setLastModified()
         val db = DBHelperFactory.getDBHelper()
         ids.forEach { id ->
             db.hardDeleteSiteEntry(id)
@@ -233,7 +239,7 @@ object DataModel {
     }
 
     fun restoreSiteEntry(siteEntry: DecryptableSiteEntry) {
-        fi.iki.ede.preferences.Preferences.setLastModified()
+        Preferences.setLastModified()
         CoroutineScope(Dispatchers.IO).launch {
             _softDeletedStateFlow.value -= _softDeletedStateFlow.value.filter { it.id == siteEntry.id }
             // Find category this password belonged to, or first category if it doesn't exist
@@ -261,10 +267,10 @@ object DataModel {
 
     fun deleteSiteEntry(siteEntry: DecryptableSiteEntry) {
         require(siteEntry.categoryId != null) { "SiteEntry's category must be known" }
-        fi.iki.ede.preferences.Preferences.setLastModified()
+        Preferences.setLastModified()
         CoroutineScope(Dispatchers.IO).launch {
             val db = DBHelperFactory.getDBHelper()
-            fi.iki.ede.preferences.Preferences.getSoftDeleteDays().let {
+            Preferences.getSoftDeleteDays().let {
                 if (it > 0) {
                     siteEntry.deleted = System.currentTimeMillis()
                     db.markSiteEntryDeleted(siteEntry.id!!)
@@ -296,8 +302,8 @@ object DataModel {
         _siteEntryToSavedGPMFlow.value = LinkedHashMap(siteEntryIdGpmIdMappings)
     }
 
-    fun markSavedGPMIgnored(savedGpmId: Long) {
-        fi.iki.ede.preferences.Preferences.setLastModified()
+    fun markSavedGPMIgnored(savedGpmId: DBID) {
+        Preferences.setLastModified()
         DBHelperFactory.getDBHelper().markSavedGPMIgnored(savedGpmId)
         _allSavedGPMsFlow.update { currentList ->
             currentList.map { savedGPM ->
@@ -312,10 +318,10 @@ object DataModel {
 
     // contraption just for unit tests
     var softDeletedMaxAgeProvider: () -> Int =
-        { fi.iki.ede.preferences.Preferences.getSoftDeleteDays() }
+        { Preferences.getSoftDeleteDays() }
 
     private fun storeAllExtensionsToPreferences() {
-        fi.iki.ede.preferences.Preferences.storeAllExtensions(getAllSiteEntryExtensions().keys)
+        Preferences.storeAllExtensions(getAllSiteEntryExtensions().keys)
     }
 
     suspend fun loadFromDatabase() {
@@ -331,12 +337,12 @@ object DataModel {
             // are we past deletion time here?
             val softDeletedMaxAge = softDeletedMaxAgeProvider()
             val expiredSoftDeletedSiteEntries = softDeletedSiteEntries.filter {
-                val softDeletedAge = fi.iki.ede.dateutils.DateUtils.getPeriodBetweenDates(
+                val softDeletedAge = DateUtils.getPeriodBetweenDates(
                     ZonedDateTime.now(),
-                    fi.iki.ede.dateutils.DateUtils.unixEpochSecondsToLocalZonedDateTime(it.deleted),
+                    DateUtils.unixEpochSecondsToLocalZonedDateTime(it.deleted),
                 )
                 if (softDeletedAge.days > softDeletedMaxAge) {
-                    fi.iki.ede.preferences.Preferences.setLastModified()
+                    Preferences.setLastModified()
                     db.hardDeleteSiteEntry(it.id!!)
                     true
                 } else false
@@ -433,7 +439,10 @@ object DataModel {
         }
     }
 
-    fun linkSaveGPMAndSiteEntry(siteEntry: DecryptableSiteEntry, savedGpmId: Long) {
+    fun linkSaveGPMAndSiteEntry(
+        siteEntry: DecryptableSiteEntry,
+        savedGpmId: DBID
+    ) {
         val map = _siteEntryToSavedGPMFlow.value.toMutableMap()
         map.keys.find { it == siteEntry.id }.let { existingEntry ->
             if (existingEntry != null) {
@@ -448,7 +457,7 @@ object DataModel {
 
         try {
             DBHelperFactory.getDBHelper().linkSaveGPMAndSiteEntry(siteEntry.id!!, savedGpmId)
-            fi.iki.ede.preferences.Preferences.setLastModified()
+            Preferences.setLastModified()
         } catch (ex: Exception) {
             firebaseRecordException(
                 "Linking SE=${siteEntry.id} and GPM=${savedGpmId} failed (exists already?) should never happend",
@@ -463,7 +472,7 @@ object DataModel {
         onAdd: suspend (DecryptableSiteEntry) -> Unit
     ) {
         getSavedGPM(savedGpmId).let { gpm ->
-            fi.iki.ede.preferences.Preferences.setLastModified()
+            Preferences.setLastModified()
             addOrUpdateSiteEntry(DecryptableSiteEntry(categoryId).apply {
                 username = gpm.encryptedUsername
                 password = gpm.encryptedPassword
@@ -495,7 +504,7 @@ object DataModel {
         DBHelperFactory.getDBHelper().addNewIncomingGPM(add)
         syncLoadAllSavedGPMs()
         syncLoadLinkedGPMs()
-        fi.iki.ede.preferences.Preferences.setLastModified()
+        Preferences.setLastModified()
     }
 
     private const val TAG = "DataModel"

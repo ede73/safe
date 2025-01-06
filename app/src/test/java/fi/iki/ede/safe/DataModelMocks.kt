@@ -4,13 +4,13 @@ import android.database.sqlite.SQLiteDatabase
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
+import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
+import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.db.DBID
 import fi.iki.ede.safe.model.DataModel
-import fi.iki.ede.safe.model.DecryptableCategoryEntry
-import fi.iki.ede.safe.model.DecryptableSiteEntry
 import io.mockk.every
 import io.mockk.isMockKMock
 import io.mockk.mockkClass
@@ -127,7 +127,8 @@ object DataModelMocks {
                 any<MutableStateFlow<List<DecryptableSiteEntry>>>()
             )
         } answers {
-            val flow = thirdArg<MutableStateFlow<List<DecryptableSiteEntry>>?>()
+            val flow =
+                thirdArg<MutableStateFlow<List<DecryptableSiteEntry>>?>()
             if (secondArg<Boolean>()) {
                 flow?.value = emptyList()
                 ArrayList(emptyList())
@@ -152,7 +153,8 @@ object DataModelMocks {
         }
 
         // transaction support
-        val siteEntriesTableBackup = linkedMapOf<DBID, DecryptableSiteEntry>()
+        val siteEntriesTableBackup =
+            linkedMapOf<DBID, DecryptableSiteEntry>()
         val categoryTableBackup = linkedMapOf<DBID, DecryptableCategoryEntry>()
         var masterKeyStoreBackup: Pair<Salt, IVCipherText>? = null
         val sql = mockkClass(SQLiteDatabase::class)

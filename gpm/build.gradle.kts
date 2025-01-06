@@ -45,7 +45,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-
+    implementation(project(":app:cryptoobjects"))
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
 

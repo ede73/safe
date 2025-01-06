@@ -51,6 +51,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.material3.android)
     implementation(project(":autolock"))
+    implementation(project(":app:cryptoobjects"))
 
     // Bring bouncy castle to unit tests
     testImplementation(libs.bcprov.jdk16)

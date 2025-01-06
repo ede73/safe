@@ -19,7 +19,6 @@ import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.BiometricsActivity
 import fi.iki.ede.safe.ui.testTag
-import fi.iki.ede.safe.ui.theme.SafeButton
 
 @Composable
 fun BiometricsComponent(bioVerify: ActivityResultLauncher<Intent>) {
@@ -44,7 +43,7 @@ fun BiometricsComponent(bioVerify: ActivityResultLauncher<Intent>) {
         // Actually during login, we could JUST launch the bio verification immediately
         // since biometrics is enabled AND we have previously recorded entry
         bioVerify.launch(BiometricsActivity.getVerificationIntent(context))
-        SafeButton(
+        fi.iki.ede.theme.SafeButton(
             modifier = Modifier.testTag(TestTag.BIOMETRICS_BUTTON),
             onClick = {
                 bioVerify.launch(BiometricsActivity.getVerificationIntent(context))

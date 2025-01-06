@@ -1,5 +1,8 @@
 package fi.iki.ede.safe.model
 
+import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
+import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+
 // TODO: hot events not actually used right now(never?)
 sealed class PasswordSafeEvent {
     sealed class CategoryEvent : PasswordSafeEvent() {

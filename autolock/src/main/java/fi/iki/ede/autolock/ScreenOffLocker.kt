@@ -10,6 +10,7 @@ import android.os.Build
 import android.util.Log
 import android.view.MotionEvent
 import androidx.activity.ComponentActivity
+import fi.iki.ede.preferences.Preferences
 
 interface ScreenOffLocker : AvertInactivityDuringLongTask {
     val mIntentReceiver: BroadcastReceiver
@@ -49,7 +50,7 @@ interface ScreenOffLocker : AvertInactivityDuringLongTask {
     private fun checkScreenOff(context: Context, intent: Intent) {
         when (intent.action) {
             Intent.ACTION_SCREEN_OFF -> {
-                if (fi.iki.ede.preferences.Preferences.getLockOnScreenLock(true)) {
+                if (Preferences.getLockOnScreenLock(true)) {
                     // TODO:
                     mFeatures.lockApplication(context)
                 }

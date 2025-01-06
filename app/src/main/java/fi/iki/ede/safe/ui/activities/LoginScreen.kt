@@ -26,6 +26,7 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.backupandrestore.MyBackupAgent
@@ -41,7 +42,6 @@ import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.composable.BiometricsComponent
 import fi.iki.ede.safe.ui.composable.LoginPasswordPrompts
 import fi.iki.ede.safe.ui.composable.TopActionBar
-import fi.iki.ede.safe.ui.theme.SafeTheme
 import fi.iki.ede.safe.ui.utilities.startActivityForResults
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -236,7 +236,7 @@ private fun LoginScreenCompose(
     goodPasswordEntered: (LoginStyle, Password) -> Boolean,
     biometricsVerify: ActivityResultLauncher<Intent>? = null,
 ) {
-    SafeTheme {
+    fi.iki.ede.theme.SafeTheme {
         val context = LocalContext.current
 
         val weHaveRestoredDatabase = isGoodRestoredContent(context)
@@ -258,7 +258,7 @@ private fun LoginScreenCompose(
                 // just FYI
                 if (MyBackupAgent.haveRestoreMark(context)) {
                     val time =
-                        fi.iki.ede.preferences.Preferences.getAutoBackupRestoreFinished()
+                        Preferences.getAutoBackupRestoreFinished()
                             ?.toLocalDateTime()?.toString()
                             ?: ""
                     Text(
@@ -299,7 +299,7 @@ private fun isGoodRestoredContent(context: Context) =
 fun LoginScreenPreview() {
     KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
     KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
-    SafeTheme {
+    fi.iki.ede.theme.SafeTheme {
         LoginScreenCompose(
             LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE,
             goodPasswordEntered = { _, _ -> /* No-op for preview */ true },

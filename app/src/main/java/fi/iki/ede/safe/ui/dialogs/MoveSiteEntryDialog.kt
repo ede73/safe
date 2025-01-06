@@ -18,14 +18,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
+import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.model.DecryptableCategoryEntry
-import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
-import fi.iki.ede.safe.ui.theme.SafeButton
-import fi.iki.ede.safe.ui.theme.SafeListItem
-import fi.iki.ede.safe.ui.theme.SafeTheme
 
 @Composable
 fun MoveSiteEntryDialog(
@@ -48,7 +45,7 @@ fun MoveSiteEntryDialog(
                 )
             },
             confirmButton = {
-                SafeButton(
+                fi.iki.ede.theme.SafeButton(
                     onClick = {
                         selectedEntry?.let { onConfirm(it) }
                         showDialog = false
@@ -63,7 +60,7 @@ fun MoveSiteEntryDialog(
                 }
             },
             dismissButton = {
-                SafeButton(onClick = { showDialog = false }) {
+                fi.iki.ede.theme.SafeButton(onClick = { showDialog = false }) {
                     Text(stringResource(id = R.string.move_password_cancel))
                 }
             }
@@ -75,7 +72,7 @@ fun MoveSiteEntryDialog(
             text = {
                 LazyColumn {
                     items(targetCategories.sortedBy { it.plainName }) { entry ->
-                        SafeListItem {
+                        fi.iki.ede.theme.SafeListItem {
                             Text(
                                 text = entry.plainName,
                                 modifier = Modifier
@@ -93,7 +90,7 @@ fun MoveSiteEntryDialog(
             },
             confirmButton = {},
             dismissButton = {
-                SafeButton(onClick = { onDismiss() }) {
+                fi.iki.ede.theme.SafeButton(onClick = { onDismiss() }) {
                     Text(stringResource(id = R.string.move_password_cancel))
                 }
             }
@@ -104,7 +101,7 @@ fun MoveSiteEntryDialog(
 @Preview(showBackground = true)
 @Composable
 fun MoveSiteEtryPreview() {
-    SafeTheme {
+    fi.iki.ede.theme.SafeTheme {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()

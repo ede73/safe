@@ -5,12 +5,12 @@ import android.database.sqlite.SQLiteDatabase
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
+import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.safe.db.DBHelper
 import fi.iki.ede.safe.db.DBHelperFactory
 import fi.iki.ede.safe.db.DBID
 import fi.iki.ede.safe.model.DataModel
-import fi.iki.ede.safe.model.DecryptableCategoryEntry
-import fi.iki.ede.safe.model.DecryptableSiteEntry
 import kotlinx.coroutines.runBlocking
 
 object DBHelper4AndroidTest {

@@ -19,8 +19,6 @@ import fi.iki.ede.crypto.Password
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
-import fi.iki.ede.safe.ui.theme.SafeButton
-import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.job
 
 @Composable
@@ -51,7 +49,7 @@ fun EnterNewMasterPassword(
                     },
                     stealFocus = false
                 )
-                SafeButton(
+                fi.iki.ede.theme.SafeButton(
                     modifier = Modifier.testTag(TestTag.CHANGE_PASSWORD_OK),
                     onClick = { onNewMasterPassword(Pair(oldPassword, newPassword)) },
                     enabled = !newPassword.isEmpty() &&
@@ -74,7 +72,7 @@ fun EnterNewMasterPassword(
 @Preview(showBackground = true)
 @Composable
 fun EnterNewMasterPasswordPreview() {
-    SafeTheme {
+    fi.iki.ede.theme.SafeTheme {
         EnterNewMasterPassword {
 
         }

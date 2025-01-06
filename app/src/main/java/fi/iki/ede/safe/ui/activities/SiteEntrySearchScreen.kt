@@ -21,12 +21,11 @@ import androidx.compose.ui.unit.dp
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
-import fi.iki.ede.safe.model.DecryptableSiteEntry
+import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen.Companion.searchProgressPerThread
 import fi.iki.ede.safe.ui.composable.SearchSiteEntryControls
 import fi.iki.ede.safe.ui.composable.SearchSiteEntryList
-import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class SiteEntrySearchScreen :
@@ -48,13 +47,17 @@ class SiteEntrySearchScreen :
 
 @Composable
 private fun SiteEntrySearchCompose() {
-    SafeTheme {
+    fi.iki.ede.theme.SafeTheme {
         Surface(
             modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
         ) {
             val searchText = remember { mutableStateOf(TextFieldValue("")) }
             val matchingPasswordEntries =
-                remember { MutableStateFlow<List<DecryptableSiteEntry>>(emptyList()) }
+                remember {
+                    MutableStateFlow<List<DecryptableSiteEntry>>(
+                        emptyList()
+                    )
+                }
             Column {
                 SearchSiteEntryControls(
                     matchingPasswordEntries,

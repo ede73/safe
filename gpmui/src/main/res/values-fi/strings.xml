@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="google_password_import_accept">Hyväksy ja mene seuraavaan vaiheeseen!</string>
+    <string name="google_password_import_dont_search_from_imports">Älä etsi tuotavista</string>
+    <string name="google_password_import_dont_search_from_passwords">Älä etsi salasanoista</string>
+    <string name="google_password_import_failed">Tuonti epäonnistui!</string>
+    <string name="google_password_import_finish_linking">Viimeistele GPM linkitys edelliseltä kerralta</string>
+    <string name="google_password_import_locate_matching_names">Etsi samankaltaiset nimet</string>
+    <string name="google_password_import_locate_matching_passwords">Etsi samat salasanat</string>
+    <string name="google_password_import_merge_reset_gpm_list">Nollaa</string>
+    <string name="google_password_import_merge_reset_password_list">Nollaa</string>
+    <string name="google_password_import_search">Etsi rajataksesi valintojen määrää</string>
+    <string name="google_password_import_search_from_all_imports">Etsi kaikista tuotavista</string>
+    <string name="google_password_import_search_from_all_passwords">Etsi kaikista salasanoista</string>
+    <string name="google_password_import_search_from_displayed_imports">Etsi näytetyistä tuotavista</string>
+    <string name="google_password_import_search_from_displayed_passwords">Etsi näytetyistä salasanoista</string>
+    <string name="google_password_import_search_regex">Etsi regular expressionsioneilla</string>
+    <string name="google_password_import_select">Valitse GPM CSV</string>
+    <string name="google_password_import_select_doc">Tallenna salasanat Google Password Managerista (GPM), valitse CSV tiedosto</string>
+    <string name="google_password_launch_gpm"><![CDATA[Avaa GPM]]></string>
+    <string name="google_password_import_usage">Tämä ominaisuus mahdollistaa Google Password Managerin salasanojen (GPM) tuonnin jatkuvalla tavalla. Tätä on tarkoitus käyttää silloin tällöin.\n
+\n
+Tuonnin tai yhdistämisen aikana olemassa olevia sivustotietueita (salasanoja) ei missään vaiheessa ylikirjoiteta tai muuteta.\n
+\n
+Tämä osa tuo Google Password Managerin CSV-tiedoston Password Safe -tietokantaan ja salaa sen AES-256:lla. Tallennamme myös kaikkien syöttökenttien turvallisen SHA-256-tiivisteen ja säilytämme sen myös tietokannassa.\n
+\n
+Seuraavan kerran tuonnin yhteydessä voimme helposti löytää, mikä ei ole muuttunut, vertaamalla tiivisteitä. Muuttuneiden GPM:ien osalta puramme niiden salauksen ja vertaamme muutoksia uudelleen. Jos vain yksi kenttä on muuttunut (url, nimi, salasana, käyttäjänimi, huomautus), oletamme, että kyseessä on sama salasana ja voimme päivittää sen tallennettuihin GPM:iin (jotka ovat vahvasti salattuja!).\n
+\n
+Uudet saapuvat GPM:t, joissa on muuttunut enemmän kuin yksi kenttä, yritämme sovittaa olemassa oleviin muiden heuristiikkojen avulla. Lopulta sinulla on luettelot tai\n
+- uudet tuodut GPM:t (tai sellaiset, joita emme voineet yhdistää) - nämä lisätään tallennettuihin GPM:iin\n
+- 100% vastaavat, tai vastaavat, mutta yhden kentän muutoksella (nämä päivitetään)\n
+- ristiriidat, joissa joko useat saapuvat GPM:t vastaavat olemassa olevaa yhtä GPM:ää tai päinvastoin\n
+- Tallennetut GPM:t, jotka eivät vastanneet mitään saapuvissa GPM:issä.\n
+\n
+Voit siirtää/muokata luetteloita ja lopulta hyväksyä tilanteen. Uusi luettelo tallennetaan tietokantaan.\n
+\n
+Tämän prosessin osan on tarkoitus vain pitää GPM-tuontisi puhtaana ja helposti, ilman mitään menetyksiä.\n
+\n
+Miksi niin monimutkaista? No, tuonnin seuraavassa vaiheessa voit yhdistää GPM:t olemassa oleviin sivustotietueisiisi tai lisätä ne uusina sivustotietueina.\n
+\n
+Tämä mahdollistaa periaatteessa salasanojen tuonnin GPM:stä Password Safeen, mutta myös omaksi mukavuudeksesi pitää salasanat pääosin synkronoituna LINKITETTYNÄ ne Password Safe -sivustotietueiden kanssa, päivittämällä URL-osoitteita, päivittämällä salasanoja tai vain pitämällä SINUT itse informoituna, jos muutat salasanaa Password Safessa, sinun tulisi tehdä sama Google Password Managerissakin.\n
+\n
+Voit poistaa kartoituksen milloin tahansa, voit poistaa GPM-tuonnit kokonaan ja tehdä vain uuden tuonnin joka kerta, tietysti tämä ei ole hyödyllistä, koska kartoituksesi menetetään.\n
+\n
+Kun olet suorittanut tuonnin, alkaa toinen osa, joka mahdollistaa sinulle:\n
+- yhdistää GPM:t olemassa oleviin sivustotietueisiin\n
+- lisätä uudet GPM:t uusina sivustotietueina\n
+- ohittaa GPM:t\n
+\n
+Nämä valinnat muistetaan, joten seuraavan kerran linkitys on helpompaa.</string>
+</resources>

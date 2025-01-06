@@ -16,14 +16,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.safe.model.DataModel.siteEntriesStateFlow
-import fi.iki.ede.safe.model.DecryptableSiteEntry
 import fi.iki.ede.safe.notifications.SetupNotifications
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.composable.SiteEntryList
 import fi.iki.ede.safe.ui.composable.TopActionBar
-import fi.iki.ede.safe.ui.theme.SafeTheme
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 
@@ -61,7 +60,7 @@ private fun SiteEntryListCompose(
     categoryId: Long,
     siteEntriesState: List<DecryptableSiteEntry>
 ) {
-    SafeTheme {
+    fi.iki.ede.theme.SafeTheme {
         Surface(
             modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
         ) {

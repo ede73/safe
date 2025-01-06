@@ -23,7 +23,6 @@ import fi.iki.ede.safe.R
 import fi.iki.ede.safe.SafeApplication
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
-import fi.iki.ede.safe.ui.theme.SafeTheme
 
 /**
  * Used in password views
@@ -36,12 +35,12 @@ fun TopActionBarForSiteEntryView(
     val context = LocalContext.current
     var displayMenu by remember { mutableStateOf(false) }
 
-    SafeTheme {
+    fi.iki.ede.theme.SafeTheme {
         TopAppBar(
             title = {
                 Text(
                     stringResource(id = R.string.application_name),
-                    color = SafeTheme.colorScheme.onSurface
+                    color = fi.iki.ede.theme.SafeTheme.colorScheme.onSurface
                 )
             },
             actions = {

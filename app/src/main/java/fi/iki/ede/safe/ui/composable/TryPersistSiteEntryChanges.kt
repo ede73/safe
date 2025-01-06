@@ -11,7 +11,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.models.EditableSiteEntry
-import fi.iki.ede.safe.ui.theme.SafeButton
 
 @Composable
 fun TryPersistSiteEntryChanges(
@@ -31,7 +30,7 @@ fun TryPersistSiteEntryChanges(
             emptyDescription = false
         },
             confirmButton = {
-                SafeButton(onClick = {
+                fi.iki.ede.theme.SafeButton(onClick = {
                     onDismiss()
                     emptyDescription = false
                 }) {

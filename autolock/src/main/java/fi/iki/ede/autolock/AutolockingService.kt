@@ -17,6 +17,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import fi.iki.ede.notifications.ConfiguredNotifications
 import fi.iki.ede.notifications.MainNotification
+import fi.iki.ede.preferences.Preferences
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -38,7 +39,7 @@ class AutolockingService : Service() {
             override fun onReceive(context: Context, intent: Intent) {
                 when (intent.action) {
                     Intent.ACTION_SCREEN_OFF -> {
-                        if (fi.iki.ede.preferences.Preferences.getLockOnScreenLock(true)) {
+                        if (Preferences.getLockOnScreenLock(true)) {
                             lockOut()
                         }
                     }
@@ -103,7 +104,7 @@ class AutolockingService : Service() {
         })
 
         val timeoutUntilStop =
-            fi.iki.ede.preferences.Preferences.getLockTimeoutDuration().inWholeMilliseconds
+            Preferences.getLockTimeoutDuration().inWholeMilliseconds
 
         autoLockCountdownNotifier =
             object : CountDownTimer(timeoutUntilStop, Duration.ofSeconds(10L).toMillis()) {

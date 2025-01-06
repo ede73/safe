@@ -12,11 +12,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
-import fi.iki.ede.safe.model.DecryptableCategoryEntry
-import fi.iki.ede.safe.model.DecryptableSiteEntry
-import fi.iki.ede.safe.ui.theme.LocalSafeTheme
-import fi.iki.ede.safe.ui.theme.SafeListItem
-import fi.iki.ede.safe.ui.theme.SafeTheme
+import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
+import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 
 fun Color.darken(factor: Float): Color {
     return copy(alpha = alpha * factor)
@@ -28,9 +25,9 @@ fun Color.darken(factor: Float): Color {
 @Composable
 fun SiteEntryRowHeader(headerString: String) {
     val headerStart = headerString.substring(0, 1).uppercase()
-    val safeTheme = LocalSafeTheme.current
+    val safeTheme = fi.iki.ede.theme.LocalSafeTheme.current
 
-    SafeListItem(
+    fi.iki.ede.theme.SafeListItem(
         fillWidthFraction = 0.2f,
         yOffset = 32.dp,
         color = CardDefaults.cardColors(
@@ -49,7 +46,7 @@ fun SiteEntryRowHeader(headerString: String) {
 @Preview(showBackground = true)
 @Composable
 fun SiteEntryRowHeaderPreview() {
-    SafeTheme {
+    fi.iki.ede.theme.SafeTheme {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()
