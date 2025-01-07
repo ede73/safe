@@ -19,12 +19,12 @@ import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBID
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpmui.db.GPMDB
+import fi.iki.ede.logger.firebaseRecordException
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Attributes
 import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Elements
 import fi.iki.ede.safe.model.LoginHandler
-import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import kotlinx.coroutines.CancellationException
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
@@ -296,7 +296,10 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                             )
                                         } ?: DateUtils.newParse(changed)
                                 } catch (ex: DateTimeParseException) {
-                                    firebaseRecordException("Failed to parse date ($changed)", ex)
+                                    firebaseRecordException(
+                                        "Failed to parse date ($changed)",
+                                        ex
+                                    )
                                     // silently fail, parse failure ain't critical
                                     // and no corrective measure here, passwords are more important
                                     if (BuildConfig.DEBUG) {

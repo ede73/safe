@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.ui.utilities
+package fi.iki.ede.logger
 
 import android.util.Log
 import com.google.firebase.Firebase

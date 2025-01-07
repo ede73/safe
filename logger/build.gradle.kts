@@ -1,11 +1,10 @@
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.org.jetbrains.kotlin.android)
 }
 
 android {
-    namespace = "fi.iki.ede.gpmui"
+    namespace = "fi.iki.ede.logger"
     compileSdk = 35
 
     defaultConfig {
@@ -31,10 +30,6 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
-    buildFeatures {
-        compose = true
-        buildConfig = true
-    }
 }
 
 dependencies {
@@ -42,22 +37,10 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-    implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.material3.android)
-    implementation(libs.androidx.ui.tooling.preview.android)
-    implementation(libs.androidx.material.icons.extended.android)
-    implementation(project(":app:cryptoobjects"))
-    implementation(project(":app:theme"))
-    implementation(project(":app:db"))
-    implementation(project(":autolock"))
-    implementation(project(":dateutils"))
-    implementation(project(":crypto"))
-    implementation(project(":gpm"))
-    implementation(project(":logger"))
-    implementation(project(":app:preferences"))
-    implementation(libs.runtime.livedata)
-    implementation(libs.androidx.ui.test.android)
-    debugImplementation(libs.androidx.ui.tooling)
+    // Don't convert to catalog declaration, something is broken
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0")) // firebase crashlytics
+    implementation(libs.firebase.analytics) // firebase crashlytics (breadcrumbs)
+    implementation(libs.firebase.crashlytics)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -14,10 +14,11 @@ import fi.iki.ede.gpm.debug
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.model.ScoringConfig
-import fi.iki.ede.gpmui.DataModelIF
 import fi.iki.ede.gpmui.models.DNDObject
 import fi.iki.ede.gpmui.models.GPMDataModel
 import fi.iki.ede.gpmui.models.SiteEntryToGPM
+import fi.iki.ede.logger.firebaseLog
+import fi.iki.ede.logger.firebaseRecordException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -52,13 +53,12 @@ internal fun combineLists(
 }
 
 internal fun readAndParseCSVToAChangeSet(
-    onlyUsedForLogging: DataModelIF,
     inputStream: InputStream,
     importChangeSet: MutableState<ImportChangeSet?>,
     complete: (success: Boolean) -> Unit,
     progressReport: (progress: String) -> Unit,
 ) {
-    onlyUsedForLogging.firebaseLog("Read CSV")
+    firebaseLog("Read CSV")
     try {
         progressReport("Read and parse CSV")
         val incomingGPMs = readCsv(inputStream)
@@ -68,10 +68,9 @@ internal fun readAndParseCSVToAChangeSet(
             importChangeSet,
             complete,
             progressReport,
-            onlyUsedForLogging::firebaseLog
         )
     } catch (ex: Exception) {
-        onlyUsedForLogging.firebaseRecordException("Failed to import", ex)
+        firebaseRecordException("Failed to import", ex)
     }
 }
 
@@ -80,7 +79,6 @@ internal fun importCSV(
     successImportChangeSet: MutableState<ImportChangeSet?>,
     complete: (success: Boolean) -> Unit,
     progressReport: (progress: String) -> Unit,
-    firebaseLog: (message: String) -> Unit,
 ) {
     firebaseLog("Import CSV")
     CoroutineScope(Dispatchers.IO).launch {

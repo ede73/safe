@@ -14,12 +14,11 @@ import fi.iki.ede.crypto.keystore.CipherUtilities
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.dateutils.DateUtils
+import fi.iki.ede.logger.firebaseRecordException
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.time.ZonedDateTime
 
 typealias DBID = Long
-
-fun firebaseRecordException(REPLACE: String, ex: Throwable) {}
 
 /**
  * Bug!? in SQLite? Do not use readableDatabase or writeableDatabase.use!

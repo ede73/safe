@@ -20,8 +20,6 @@ interface DataModelIF {
 
     fun fetchSiteEntriesStateFlow(): StateFlow<List<DecryptableSiteEntry>>
     fun findCategoryByName(name: String): DecryptableCategoryEntry?
-    fun firebaseLog(message: String)
-    fun firebaseRecordException(message: String, ex: Throwable)
     fun getReadableDatabase(): SQLiteDatabase
     fun getWritableDatabase(): SQLiteDatabase
     fun startEditPassword(context: Context, passwordId: DBID)

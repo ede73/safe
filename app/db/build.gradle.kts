@@ -43,6 +43,7 @@ dependencies {
     implementation(project(":app:cryptoobjects"))
     implementation(project(":crypto"))
     implementation(project(":dateutils"))
+    implementation(project(":logger"))
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.espresso.core)

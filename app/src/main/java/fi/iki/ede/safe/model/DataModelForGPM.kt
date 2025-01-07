@@ -36,14 +36,6 @@ object DataModelForGPM : DataModelIF {
     override fun findCategoryByName(name: String): DecryptableCategoryEntry? =
         categoriesStateFlow.value.firstOrNull { it.plainName == name }
 
-    override fun firebaseLog(message: String) {
-        fi.iki.ede.safe.ui.utilities.firebaseLog(message)
-    }
-
-    override fun firebaseRecordException(message: String, ex: Throwable) {
-        fi.iki.ede.safe.ui.utilities.firebaseRecordException(message, ex)
-    }
-
     override suspend fun loadFromDatabase() = DataModel.loadFromDatabase()
 
     override fun startEditPassword(context: Context, passwordId: DBID) =

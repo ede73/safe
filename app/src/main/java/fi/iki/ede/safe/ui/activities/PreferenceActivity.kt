@@ -21,6 +21,8 @@ import com.google.firebase.crashlytics.crashlytics
 import fi.iki.ede.autolock.AutoLockingBaseAppCompatActivity
 import fi.iki.ede.autolock.AutolockingService
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.logger.firebaseLog
+import fi.iki.ede.logger.firebaseRecordException
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.preferences.Preferences.PREFERENCE_AUTOBACKUP_QUOTA_EXCEEDED
 import fi.iki.ede.preferences.Preferences.PREFERENCE_AUTOBACKUP_RESTORE_FINISHED
@@ -39,8 +41,6 @@ import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.composable.ExtensionsEditor
 import fi.iki.ede.safe.ui.models.PluginLoaderViewModel
-import fi.iki.ede.safe.ui.utilities.firebaseLog
-import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import fi.iki.ede.safe.ui.utilities.startActivityForResults
 import kotlinx.coroutines.launch
 import fi.iki.ede.preferences.R as prefR

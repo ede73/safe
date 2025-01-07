@@ -121,7 +121,6 @@ fun ImportGpmCsvComposable(
                     importDoneCanMoveToMatching.value = false
                     launchImportGpmCsvFileToAChangeSet(
                         context,
-                        datamodel,
                         inputStream,
                         myScope,
                         ::addMessageToFlow,
@@ -160,7 +159,6 @@ fun ImportGpmCsvComposable(
                 importDoneCanMoveToMatching.value = false
                 launchImportGpmCsvFileToAChangeSet(
                     context,
-                    datamodel,
                     inputStream,
                     myScope,
                     ::addMessageToFlow,
@@ -324,7 +322,6 @@ fun ImportGpmCsvComposable(
 
 fun launchImportGpmCsvFileToAChangeSet(
     context: Context,
-    onlyUsedForLogging: DataModelIF,
     inputStream: InputStream,
     myScope: CoroutineScope,
     addMessageToFlow: KFunction1<String, Unit>,
@@ -334,7 +331,6 @@ fun launchImportGpmCsvFileToAChangeSet(
 ) {
     myScope.launch {
         readAndParseCSVToAChangeSet(
-            onlyUsedForLogging,
             inputStream,
             importChangeSet,
             complete = complete

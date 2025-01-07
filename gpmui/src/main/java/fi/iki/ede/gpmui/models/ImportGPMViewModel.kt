@@ -12,6 +12,7 @@ import fi.iki.ede.gpm.similarity.LowerCaseTrimmedString
 import fi.iki.ede.gpm.similarity.findSimilarity
 import fi.iki.ede.gpm.similarity.toLowerCasedTrimmedString
 import fi.iki.ede.gpmui.DataModelIF
+import fi.iki.ede.logger.firebaseRecordException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -149,7 +150,7 @@ class ImportGPMViewModel(
                     }
                 }
         } catch (ex: Exception) {
-            datamodel.firebaseRecordException("Something went wrong in $name", ex)
+            firebaseRecordException("Something went wrong in $name", ex)
             exceptionHandler(ex)
         }
     }

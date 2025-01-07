@@ -8,6 +8,7 @@ import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpmui.BuildConfig
 import fi.iki.ede.gpmui.DataModelIF
 import fi.iki.ede.gpmui.db.GPMDB
+import fi.iki.ede.logger.firebaseRecordException
 import fi.iki.ede.preferences.Preferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -175,7 +176,7 @@ object GPMDataModel {
             GPMDB.linkSaveGPMAndSiteEntry(siteEntry.id!!, savedGpmId)
             Preferences.setLastModified()
         } catch (ex: Exception) {
-            datamodel.firebaseRecordException(
+            firebaseRecordException(
                 "Linking SE=${siteEntry.id} and GPM=${savedGpmId} failed (exists already?) should never happend",
                 ex
             )

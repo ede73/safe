@@ -32,6 +32,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.google.common.util.concurrent.ListenableFuture
+import fi.iki.ede.logger.firebaseRecordException
 import fi.iki.ede.statemachine.AllowedEvents
 import fi.iki.ede.statemachine.MainStateMachine.Companion.INITIAL
 import fi.iki.ede.statemachine.StateMachine
@@ -107,9 +108,8 @@ fun SafePhoto(
                             try {
                                 requestPermissionLauncher.launch(Manifest.permission.CAMERA)
                             } catch (e: Exception) {
-                                // TODO: Temporarily disabled, should of course never happen as
                                 // an error, but can't rely on main apps firebase (or other) logging
-                                //firebaseRecordException("failed to request permission", e)
+                                firebaseRecordException("failed to request permission", e)
                             }
                         }
                     }
@@ -142,8 +142,7 @@ fun SafePhoto(
                         onBitmapCaptured,
                         pictureSuccess = { tookThePicture = true },
                         pictureFailure = { exception ->
-                            // TODO: Temporarily disabled
-                            //firebaseRecordException("Photo failed", exception)
+                            firebaseRecordException("Photo failed", exception)
                             failedTakingThePicture = true
                         },
                         composeTakePhoto

@@ -7,13 +7,12 @@ import com.google.android.play.core.splitinstall.SplitInstallManagerFactory
 import com.google.android.play.core.splitinstall.SplitInstallRequest
 import com.google.android.play.core.splitinstall.SplitInstallStateUpdatedListener
 import com.google.android.play.core.splitinstall.model.SplitInstallSessionStatus
+import fi.iki.ede.logger.firebaseLog
+import fi.iki.ede.logger.firebaseRecordException
 import fi.iki.ede.safe.splits.PluginManager
 import fi.iki.ede.safe.splits.PluginManager.initializePlugin
 import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.splits.RegistrationAPI
-import fi.iki.ede.safe.ui.utilities.firebaseJustTry
-import fi.iki.ede.safe.ui.utilities.firebaseLog
-import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import java.util.Collections
 
 private const val TAG = "PluginLoaderViewModel"
@@ -49,7 +48,7 @@ class PluginLoaderViewModel(app: Application) : AndroidViewModel(app) {
 
             SplitInstallSessionStatus.INSTALLED -> {
                 informUser("${session.plugin.pluginName} module installed successfully")
-                firebaseJustTry("SplitInstallSessionStatus.INSTALLED try to init too") {
+                fi.iki.ede.logger.firebaseJustTry("SplitInstallSessionStatus.INSTALLED try to init too") {
                     initializePlugin(getApplication(), session.plugin)
                 }
                 session.completed = true
@@ -58,7 +57,10 @@ class PluginLoaderViewModel(app: Application) : AndroidViewModel(app) {
                 }
             }
 
-            else -> firebaseLog(TAG, "Status: ${session.plugin.pluginName} ${state.status()}")
+            else -> firebaseLog(
+                TAG,
+                "Status: ${session.plugin.pluginName} ${state.status()}"
+            )
         }
     }
 

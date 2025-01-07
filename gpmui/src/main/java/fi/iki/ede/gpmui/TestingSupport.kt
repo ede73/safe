@@ -67,7 +67,4 @@ fun getFakeDataModel() = object : DataModelIF {
     override fun getWritableDatabase(): SQLiteDatabase {
         TODO("Not yet implemented")
     }
-
-    override fun firebaseLog(message: String) {}
-    override fun firebaseRecordException(message: String, ex: Throwable) {}
 }

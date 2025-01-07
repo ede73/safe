@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         minSdk = 26
-        
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
@@ -41,15 +41,16 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.view)
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.material3.android)
     implementation(libs.androidx.ui.tooling.preview.android)
     implementation(libs.material)
-
     implementation(project(":statemachine"))
+    implementation(project(":logger"))
+    // uh, guava dependency resolution for CameraX https://github.com/google/ExoPlayer/issues/7993
+    implementation(libs.guava)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.junit)

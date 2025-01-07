@@ -55,6 +55,7 @@ import fi.iki.ede.gpmui.models.ImportGPMViewModel
 import fi.iki.ede.gpmui.models.SiteEntryToGPM
 import fi.iki.ede.gpmui.modifiers.doesItHaveText
 import fi.iki.ede.gpmui.utilities.combineLists
+import fi.iki.ede.logger.firebaseRecordException
 import fi.iki.ede.theme.SafeButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -86,7 +87,7 @@ fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesList(
                 }
                 GPMDataModel.markSavedGPMIgnored(id)
             } catch (ex: Exception) {
-                datamodel.firebaseRecordException("ignoreSavedGPM $id failed", ex)
+                firebaseRecordException("ignoreSavedGPM $id failed", ex)
             }
         }
     }
@@ -106,7 +107,7 @@ fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesList(
             }
             GPMDataModel.linkSaveGPMAndSiteEntry(siteEntry, gpmId)
         } catch (ex: Exception) {
-            datamodel.firebaseRecordException(
+            firebaseRecordException(
                 "linkSavedGPMAndDecryptableSiteEntry ${siteEntry.id} to $gpmId failed",
                 ex
             )

@@ -252,12 +252,11 @@ dependencies {
     implementation(project(":notifications"))
     // cant dynamically filter these out as imports would fail and making stub is too much work..
     implementation(project(":gpm"))
-
+    implementation(project(":logger"))
     implementation(project(":safephoto"))
     implementation(project(":datepicker"))
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)
-
     implementation(libs.app.update.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)

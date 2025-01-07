@@ -3,8 +3,8 @@ package fi.iki.ede.safe
 import android.util.Log
 import com.google.firebase.Firebase
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import fi.iki.ede.safe.ui.utilities.firebaseJustTry
-import fi.iki.ede.safe.ui.utilities.firebaseTry
+import fi.iki.ede.logger.firebaseJustTry
+import fi.iki.ede.logger.firebaseTry
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject

@@ -5,10 +5,10 @@ import com.google.android.play.core.splitinstall.SplitInstallManager
 import com.google.android.play.core.splitinstall.SplitInstallManagerFactory
 import com.google.firebase.Firebase
 import com.google.firebase.crashlytics.crashlytics
+import fi.iki.ede.logger.firebaseLog
+import fi.iki.ede.logger.firebaseRecordException
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.BuildConfig
-import fi.iki.ede.safe.ui.utilities.firebaseLog
-import fi.iki.ede.safe.ui.utilities.firebaseRecordException
 import java.util.ServiceConfigurationError
 import java.util.ServiceLoader
 import kotlin.reflect.full.createInstance

@@ -8,6 +8,7 @@ biometricKtx = "1.2.0-alpha05"
 cameraCore = "1.4.0"
 coreKtx = "1.15.0"
 featureDeliveryKtx = "2.1.0"
+guava = "31.1-android"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 kotlinStdlib = "2.1.0"
@@ -35,6 +36,7 @@ kotlin = "2.1.0"
 espressoCore = "3.6.1"
 runtimeLivedata = "1.7.6"
 uiTestAndroid = "1.7.6"
+firebaseCrashlyticsBuildtools = "3.0.2"
 
 [libraries]
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
@@ -65,6 +67,7 @@ bcprov-jdk16 = { module = "org.bouncycastle:bcprov-jdk16", version.ref = "bcprov
 feature-delivery-ktx = { group = "com.google.android.play", name = "feature-delivery-ktx", version.ref = "featureDeliveryKtx" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
+guava = { module = "com.google.guava:guava", version.ref = "guava" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlinStdlib" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
@@ -79,6 +82,7 @@ volley = { module = "com.android.volley:volley", version.ref = "volley" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedata" }
 androidx-ui-test-android = { group = "androidx.compose.ui", name = "ui-test-android", version.ref = "uiTestAndroid" }
+firebase-crashlytics-buildtools = { group = "com.google.firebase", name = "firebase-crashlytics-buildtools", version.ref = "firebaseCrashlyticsBuildtools" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
