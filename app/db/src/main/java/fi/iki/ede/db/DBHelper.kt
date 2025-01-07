@@ -17,6 +17,7 @@ import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.logger.firebaseRecordException
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.time.ZonedDateTime
+import kotlin.reflect.KFunction0
 
 typealias DBID = Long
 
@@ -31,12 +32,15 @@ typealias DBID = Long
 class DBHelper(
     context: Context,
     databaseName: String? = DATABASE_NAME,
-    regularAppNotATest: Boolean = false
-) :
-    SQLiteOpenHelper(
-        context, databaseName, null, DATABASE_VERSION,
-        // Alas API 33:OpenParams.Builder().setJournalMode(JOURNAL_MODE_MEMORY).build()
-    ) {
+    regularAppNotATest: Boolean = false,
+    getExternalTables: KFunction0<List<Table>>,
+    private val upgradeExternalTables: (db: SQLiteDatabase, upgrade: Int) -> Unit = { _, _ -> },
+) : SQLiteOpenHelper(
+    context, databaseName, null, DATABASE_VERSION,
+    // Alas API 33:OpenParams.Builder().setJournalMode(JOURNAL_MODE_MEMORY).build()
+) {
+    private val dynamicTables = mutableListOf<Table>()
+
     init {
         if (!regularAppNotATest || System.getProperty("test") == "test") {
             // MUST be a test case
@@ -45,6 +49,7 @@ class DBHelper(
             require(databaseName != null) { "Cannot use InMemory DB in prod" }
             require(System.getProperty("test") != "test") { "Test cannot use file DB" }
         }
+        dynamicTables.addAll(getExternalTables())
     }
 
 //    @OptIn(ExperimentalStdlibApi::class)
@@ -75,16 +80,16 @@ class DBHelper(
 //    }
 
     private var onCreateCalled = false
+    private fun getTables() = getTablesForRestoration() + listOf(Keys)
+    private fun getTablesForRestoration() = listOf(
+        Category,
+        SiteEntry,
+    ) + dynamicTables
+
     override fun onCreate(db: SQLiteDatabase?) {
         require(!onCreateCalled) { "ON create called TWICE" }
         onCreateCalled = true
-        listOf(
-            Category,
-            SiteEntry,
-            Keys,
-            GooglePasswordManager,
-            SiteEntry2GooglePasswordManager
-        ).forEach {
+        getTables().forEach {
             try {
                 it.create().forEach { sql ->
                     db?.execSQL(sql)
@@ -106,29 +111,41 @@ class DBHelper(
                     // should never happen except maybe during upgrade test scenarios
                 }
 
-                1 -> upgradeFromV1ToV2AddPhoto(db, upgrade)
+                1 -> upgradeFromV1ToV2AddPhoto(db, {
+                    upgradeExternalTables(it, upgrade)
+                })
 
                 2 -> {
                     // there's no drop column support prior to 3.50.0 - no harm leaving the column
                     // compared to alternative - full table recreation and copy
                     // Actually its buggy (potentially destructive) until 3.35.5
-                    upgradeFromV2ToV3RemoveLastDateTimeEdit(db, upgrade)
+                    upgradeFromV2ToV3RemoveLastDateTimeEdit(db, {
+                        upgradeExternalTables(it, upgrade)
+                    })
                 }
 
                 3 -> {
-                    upgradeFromV3ToV4MergeKeys(db, upgrade)
+                    upgradeFromV3ToV4MergeKeys(db, {
+                        upgradeExternalTables(it, upgrade)
+                    })
                 }
 
                 4 -> {
-                    upgradeFromV4ToV5MergeKeys(db, upgrade)
+                    upgradeFromV4ToV5MergeKeys(db, {
+                        upgradeExternalTables(it, upgrade)
+                    })
                 }
 
                 5 -> {
-                    upgradeFromV5ToV6AddDeletedColumn(db, upgrade)
+                    upgradeFromV5ToV6AddDeletedColumn(db, {
+                        upgradeExternalTables(it, upgrade)
+                    })
                 }
 
                 6 -> {
-                    upgradeFromV6ToV7AddExtensionsColumn(db, upgrade)
+                    upgradeFromV6ToV7AddExtensionsColumn(db, {
+                        upgradeExternalTables(it, upgrade)
+                    })
                 }
 
                 else -> Log.w(
@@ -382,12 +399,7 @@ class DBHelper(
             beginTransaction()
             // best effort to rid of all the tables
             try {
-                listOf(
-                    SiteEntry,
-                    Category,
-                    GooglePasswordManager,
-                    SiteEntry2GooglePasswordManager
-                ).forEach { tables ->
+                getTablesForRestoration().forEach { tables ->
                     tables.drop().forEach { sql ->
                         execSQL(sql)
                     }
@@ -431,45 +443,50 @@ class DBHelper(
             return 0 // versions are equal
         }
 
-        fun upgradeFromV6ToV7AddExtensionsColumn(db: SQLiteDatabase, upgrade: Int) {
+        fun upgradeFromV6ToV7AddExtensionsColumn(
+            db: SQLiteDatabase,
+            upgradeExternals: (db: SQLiteDatabase) -> Unit
+        ) {
             db.beginTransaction()
             try {
                 db.execSQL("ALTER TABLE ${SiteEntry.tableName} ADD COLUMN extensions TEXT")
             } catch (ex: SQLiteException) {
-                Log.i(TAG, "onUpgrade $upgrade: $ex")
+                Log.i(TAG, "onUpgrade to 7: $ex")
             }
+            upgradeExternals(db)
             db.setTransactionSuccessful()
             db.endTransaction()
         }
 
-        fun upgradeFromV5ToV6AddDeletedColumn(db: SQLiteDatabase, upgrade: Int) {
+        fun upgradeFromV5ToV6AddDeletedColumn(
+            db: SQLiteDatabase,
+            upgradeExternals: (db: SQLiteDatabase) -> Unit
+        ) {
             db.beginTransaction()
             try {
                 db.execSQL("ALTER TABLE ${SiteEntry.tableName} ADD COLUMN deleted INTEGER DEFAULT 0")
             } catch (ex: SQLiteException) {
-                Log.i(TAG, "onUpgrade $upgrade: $ex")
+                Log.i(TAG, "onUpgrade to 6: $ex")
             }
+            upgradeExternals(db)
             db.setTransactionSuccessful()
             db.endTransaction()
         }
 
-        fun upgradeFromV4ToV5MergeKeys(db: SQLiteDatabase, upgrade: Int) {
+        fun upgradeFromV4ToV5MergeKeys(
+            db: SQLiteDatabase,
+            upgradeExternals: (db: SQLiteDatabase) -> Unit
+        ) {
             db.beginTransaction()
-            try {
-                GooglePasswordManager.create().forEach {
-                    db.execSQL(it)
-                }
-                SiteEntry2GooglePasswordManager.create().forEach {
-                    db.execSQL(it)
-                }
-            } catch (ex: SQLiteException) {
-                Log.i(TAG, "onUpgrade $upgrade: $ex")
-            }
+            upgradeExternals(db)
             db.setTransactionSuccessful()
             db.endTransaction()
         }
 
-        fun upgradeFromV3ToV4MergeKeys(db: SQLiteDatabase, upgrade: Int) {
+        fun upgradeFromV3ToV4MergeKeys(
+            db: SQLiteDatabase,
+            upgradeExternals: (db: SQLiteDatabase) -> Unit
+        ) {
             db.beginTransaction()
             var masterKey: IVCipherText? = null
             var salt: Salt? = null
@@ -508,9 +525,10 @@ class DBHelper(
                         salt = Salt(dsalt)
                     }
                 }
+                upgradeExternals(db)
             } catch (ex: SQLiteException) {
                 // possibly we've already done the upgrade, so just skip the transfer
-                Log.i(TAG, "onUpgrade $upgrade: $ex")
+                Log.i(TAG, "onUpgrade to 4: $ex")
             }
 
             db.execSQL("DROP TABLE IF EXISTS master_key;")
@@ -535,14 +553,18 @@ class DBHelper(
             db.endTransaction()
         }
 
-        fun upgradeFromV2ToV3RemoveLastDateTimeEdit(db: SQLiteDatabase, upgrade: Int) {
+        fun upgradeFromV2ToV3RemoveLastDateTimeEdit(
+            db: SQLiteDatabase,
+            upgradeExternals: (db: SQLiteDatabase) -> Unit
+        ) {
             if (compareSqliteVersions(sqliteVersion(), "3.55.5") >= 0) {
                 db.beginTransaction()
                 try {
                     db.execSQL("ALTER TABLE categories DROP COLUMN lastdatetimeedit;")
                 } catch (ex: SQLiteException) {
-                    Log.i(TAG, "onUpgrade $upgrade: $ex")
+                    Log.i(TAG, "onUpgrade to 3: $ex")
                 }
+                upgradeExternals(db)
                 db.setTransactionSuccessful()
                 db.endTransaction()
             } else {
@@ -557,16 +579,20 @@ class DBHelper(
             }
         }
 
-        fun upgradeFromV1ToV2AddPhoto(db: SQLiteDatabase, upgrade: Int) {
+        fun upgradeFromV1ToV2AddPhoto(
+            db: SQLiteDatabase,
+            upgradeExternals: (db: SQLiteDatabase) -> Unit
+        ) {
             db.beginTransaction()
             try {
                 db.execSQL(
                     "ALTER TABLE ${SiteEntry.tableName} ADD COLUMN photo TEXT;",
                 )
+                upgradeExternals(db)
             } catch (ex: SQLiteException) {
                 if (ex.message?.contains("duplicate column") != true) {
                     // something else wrong than duplicate column
-                    Log.i(TAG, "onUpgrade $upgrade: $ex")
+                    Log.i(TAG, "onUpgrade to 2: $ex")
                     throw ex
                 }
             }

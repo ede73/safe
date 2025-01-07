@@ -29,6 +29,7 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelper.Companion.DATABASE_NAME
 import fi.iki.ede.db.DBHelperFactory
+import fi.iki.ede.gpmui.db.GPMDB
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
@@ -136,7 +137,13 @@ open class LoginScreen : ComponentActivity() {
         val context = this
         val passwordIsAccepted = if (loginStyle == LoginStyle.FIRST_TIME_LOGIN_CLEAR_DATABASE) {
             context.deleteDatabase(DATABASE_NAME)
-            DBHelperFactory.initializeDatabase(DBHelper(context, DATABASE_NAME, true))
+            DBHelperFactory.initializeDatabase(
+                DBHelper(
+                    context, DATABASE_NAME, true,
+                    GPMDB::getExternalTables,
+                    GPMDB::upgradeTables,
+                )
+            )
             LoginHandler.firstTimeLogin(it)
             true
         } else {

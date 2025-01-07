@@ -38,7 +38,7 @@ open class LoggedOutTest {
         InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
 
     @Before
-    fun beforeEachTest() {
+    open fun beforeEachTest() {
         DBHelper4AndroidTest.justStoreSaltAndMasterKey(
             initializeMasterKey = fakeEncryptedMasterKey,
             initializeSalt = fakeSalt,

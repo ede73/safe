@@ -10,6 +10,7 @@ import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.db.DBID
+import fi.iki.ede.gpmui.db.GPMDB
 import fi.iki.ede.safe.model.DataModel
 import kotlinx.coroutines.runBlocking
 
@@ -27,7 +28,12 @@ object DBHelper4AndroidTest {
 
     // you have to KEEP the readable database reference, else in memory database will be destroyed
     fun initializeEverything(context: Context): SQLiteDatabase {
-        val dbHelper = DBHelperFactory.initializeDatabase(DBHelper(context, null, false))
+        val dbHelper = DBHelperFactory.initializeDatabase(
+            DBHelper(
+                context, null, false, GPMDB::getExternalTables,
+                GPMDB::upgradeTables
+            )
+        )
         val writableDatabase = dbHelper.writableDatabase
         dbHelper.storeSaltAndEncryptedMasterKey(storedSalt!!, storedMasterKey!!)
         return writableDatabase!!

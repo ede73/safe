@@ -14,6 +14,7 @@ import fi.iki.ede.autolock.AutolockingService
 import fi.iki.ede.clipboardutils.ClipboardUtils
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelperFactory
+import fi.iki.ede.gpmui.db.GPMDB
 import fi.iki.ede.notifications.ConfiguredNotifications
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.preferences.Preferences.PREFERENCE_EXPERIMENTAL_FEATURES
@@ -54,7 +55,15 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
         Firebase.crashlytics.isCrashlyticsCollectionEnabled = true
 //        throw RuntimeException("Test Crash")
         Preferences.initialize(this)
-        DBHelperFactory.initializeDatabase(DBHelper(this, DBHelper.DATABASE_NAME, true))
+        DBHelperFactory.initializeDatabase(
+            DBHelper(
+                this,
+                DBHelper.DATABASE_NAME,
+                true,
+                GPMDB::getExternalTables,
+                GPMDB::upgradeTables,
+            )
+        )
         reinitializePlugins(this)
         PreferenceManager.getDefaultSharedPreferences(this)
             .registerOnSharedPreferenceChangeListener(this)

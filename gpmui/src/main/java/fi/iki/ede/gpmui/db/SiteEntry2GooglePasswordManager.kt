@@ -1,4 +1,7 @@
-package fi.iki.ede.db
+package fi.iki.ede.gpmui.db
+
+import fi.iki.ede.db.Table
+import fi.iki.ede.db.TableColumns
 
 object SiteEntry2GooglePasswordManager : Table {
     override val tableName: String

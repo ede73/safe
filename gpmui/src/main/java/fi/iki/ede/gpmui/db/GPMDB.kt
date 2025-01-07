@@ -2,12 +2,12 @@ package fi.iki.ede.gpmui.db
 
 import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteException
 import android.util.Log
 import fi.iki.ede.cryptoobjects.encrypt
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.db.DBID
 import fi.iki.ede.db.GooglePasswordManager
-import fi.iki.ede.db.SiteEntry2GooglePasswordManager
 import fi.iki.ede.db.delete
 import fi.iki.ede.db.getDBID
 import fi.iki.ede.db.getIVCipher
@@ -30,6 +30,25 @@ object GPMDB {
 
     private fun getWritableDatabase(): SQLiteDatabase =
         DBHelperFactory.getDBHelper().writableDatabase
+
+    // must be call early on before OPENING the DB
+    // alas this is now loose contract
+    fun getExternalTables() = listOf(GooglePasswordManager, SiteEntry2GooglePasswordManager)
+
+    fun upgradeTables(db: SQLiteDatabase, upgrade: Int) {
+        if (upgrade == 4) {
+            try {
+                GooglePasswordManager.create().forEach {
+                    db.execSQL(it)
+                }
+                SiteEntry2GooglePasswordManager.create().forEach {
+                    db.execSQL(it)
+                }
+            } catch (ex: SQLiteException) {
+                Log.i(TAG, "onUpgrade to 5: $ex")
+            }
+        }
+    }
 
     // if user imports new DB , encryption changes and
     // we don't currently convert GPMs too..all data in the table is irrevocably lost

@@ -16,6 +16,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelperFactory
+import fi.iki.ede.gpmui.db.GPMDB
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.backupandrestore.MyBackupAgent
 import fi.iki.ede.safe.model.LoginHandler
@@ -263,7 +264,12 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
                 InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
             MyBackupAgent.removeRestoreMark(context)
             // we'll overwrite the DBHelper with in-memory one...
-            DBHelperFactory.initializeDatabase(DBHelper(context, null, false))
+            DBHelperFactory.initializeDatabase(
+                DBHelper(
+                    context, null, false, GPMDB::getExternalTables,
+                    GPMDB::upgradeTables
+                )
+            )
             DBHelper4AndroidTest.justStoreSaltAndMasterKey(
                 initializeMasterKey = fakeEncryptedMasterKey,
                 initializeSalt = fakeSalt,

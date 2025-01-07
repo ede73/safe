@@ -296,11 +296,11 @@ class InMemorySQLiteOpenHelper(
             Log.i("DB", "   onUpgrade cycle version it")
             when (it) {
                 // add photo to passwords
-                1 -> DBHelper.upgradeFromV1ToV2AddPhoto(db, it)
+                1 -> DBHelper.upgradeFromV1ToV2AddPhoto(db) {}
                 // delete useless lastdatetimeedit
-                2 -> DBHelper.upgradeFromV2ToV3RemoveLastDateTimeEdit(db, it)
+                2 -> DBHelper.upgradeFromV2ToV3RemoveLastDateTimeEdit(db) {}
                 // merge keys
-                3 -> DBHelper.upgradeFromV3ToV4MergeKeys(db, it)
+                3 -> DBHelper.upgradeFromV3ToV4MergeKeys(db) {}
             }
             Log.i("DB$it", dumpDatabaseSchema(db))
         }
