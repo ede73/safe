@@ -1,24 +1,10 @@
 package fi.iki.ede.safe.ui.activities
 
-import android.content.Context
 import android.os.Bundle
-import android.os.Environment
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
@@ -34,11 +20,9 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelper.Companion.importExistingEncrypt
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
-import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.safe.BuildConfig
-import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
-import fi.iki.ede.safe.ui.composable.EnterNewMasterPassword
+import fi.iki.ede.safe.ui.composable.CopyDatabase
 import fi.iki.ede.theme.SafeTheme
 import java.io.File
 import java.io.FileInputStream
@@ -97,121 +81,7 @@ class RecoverDatabase : ComponentActivity() {
     }
 }
 
-@Composable
-private fun CopyDatabase(
-    createDocumentLauncher: ActivityResultLauncher<String>?,
-    updateOutput: (String) -> Unit
-) {
-    val context: Context = LocalContext.current
-    val dbInput =
-        remember {
-            mutableStateOf(
-                context.getDatabasePath(DBHelper.DATABASE_NAME)?.path ?: "unknown"
-            )
-        }
-    val dbOutput =
-        remember {
-            mutableStateOf(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).path
-                    ?: ""
-            )
-        }
-
-    Column {
-        Text("Input")
-        TextField(value = dbInput.value, onValueChange = {
-            dbInput.value = it
-            updateOutput(it)
-        })
-
-        Text("Output")
-        TextField(value = dbOutput.value, onValueChange = { dbOutput.value = it })
-
-//        var text by remember {
-//            mutableStateOf(
-//                when (ContextCompat.checkSelfPermission(
-//                    context,
-//                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-//                )) {
-//                    PackageManager.PERMISSION_GRANTED -> "Copy"
-//                    else -> "Request Permission"
-//                }
-//            )
-
-        val text by remember { mutableStateOf("Copy") }
-        ///text = "Copy"
-
-        Button(onClick = {
-            createDocumentLauncher?.launch(File(dbInput.value).name)
-//            when (ContextCompat.checkSelfPermission(
-//                context,
-//                Manifest.permission.WRITE_EXTERNAL_STORAGE
-//            )) {
-//                PackageManager.PERMISSION_GRANTED ->
-//                    createDocumentLauncher?.launch(dbInput.value)
-//
-//                else -> {
-//                    requestPermissionLauncher?.launch(
-//                        Manifest.permission.WRITE_EXTERNAL_STORAGE
-//                    )
-//                    text = "Requesting"
-//                }
-//            }
-        }) {
-            Text(text)
-        }
-
-        var pwd by remember { mutableStateOf("12345678") }
-        Row {
-            TextField(value = pwd, onValueChange = { pwd = it })
-            Button(onClick = {
-                reconvertDatabase(pwd) {
-                    Toast.makeText(context, "Reset", Toast.LENGTH_SHORT).show()
-                }
-            }) {
-                Text("Reset DB Password")
-            }
-        }
-
-        var changePassword by remember { mutableStateOf(false) }
-
-        if (changePassword) {
-            EnterNewMasterPassword {
-                val (oldMasterPassword, newMasterPassword) = it
-                ChangeMasterKeyAndPassword.changeMasterPassword(
-                    oldMasterPassword,
-                    newMasterPassword
-                ) { success ->
-                    changePassword = false
-                }
-            }
-        }
-
-        Button(onClick = {
-            changePassword = true
-        }) {
-            Text("Change password")
-        }
-
-        val res = nudepwd()
-        Text(res)
-
-        //        val newPass = Password("newpass")
-//        val salt = Salt(generateRandomBytes(64))
-//        val newPBKDF2Key = generatePBKDF2AESKey(salt, KEY_ITERATION_COUNT, newPass, KEY_LENGTH_BITS)
-//        Cipher.getInstance("AES/CBC/PKCS7Padding").let {
-//            it.init(
-//                Cipher.ENCRYPT_MODE,
-//                sm,
-//                IvParameterSpec(generateRandomBytes(it.blockSize * 8))
-//            )
-//            IVCipherText(it.iv, it.doFinal(input))
-//        }
-
-    }
-}
-
-private fun reconvertDatabase(pwd: String, completed: () -> Unit) {
+fun reconvertDatabase(pwd: String, completed: () -> Unit) {
     val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
     keyStore.load(null)
     val existingUnencryptedMasterKey = keyStore.getKey("secret_masterkey", null)!!
@@ -317,7 +187,7 @@ private fun encryptMasterPassword(salt: Salt, newPBKDF2Key: SecretKeySpec): Stri
     }
 }
 
-private fun nudepwd(): String {
+fun nudepwd(): String {
     try {
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
         keyStore.load(null)

@@ -1,25 +1,9 @@
 package fi.iki.ede.safe.ui.activities
 
-import android.app.Activity.RESULT_CANCELED
-import android.app.Activity.RESULT_OK
-import android.content.Intent
 import android.os.Bundle
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
 import fi.iki.ede.crypto.IVCipherText
@@ -33,15 +17,10 @@ import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.notifications.SetupNotifications
 import fi.iki.ede.safe.password.PasswordGenerator
 import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
-import fi.iki.ede.safe.ui.TestTag
-import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen.Companion.SITE_ENTRY_ID
-import fi.iki.ede.safe.ui.composable.SiteEntryView
-import fi.iki.ede.safe.ui.composable.TryPersistSiteEntryChanges
+import fi.iki.ede.safe.ui.composable.SiteEntryEditCompose
 import fi.iki.ede.safe.ui.models.EditableSiteEntry
 import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
-import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safe.ui.utilities.MeasureTime
-import fi.iki.ede.theme.SafeButton
 import fi.iki.ede.theme.SafeTheme
 import java.time.ZonedDateTime
 import kotlin.time.Duration.Companion.milliseconds
@@ -147,79 +126,6 @@ class SiteEntryEditScreen :
         const val SITE_ENTRY_ID = "password_id"
         const val CATEGORY_ID = "category_id"
         const val TAG = "PasswordEntryScreen"
-    }
-}
-
-@Composable
-private fun SiteEntryEditCompose(
-    viewModel: EditingSiteEntryViewModel,
-    editingSiteEntryId: DBID?,
-    resolveEditsAndChangedSiteEntry: (DBID?, EditableSiteEntry) -> Pair<Boolean, Boolean>,
-    setResult: (Int, Intent?) -> Unit,
-    finishActivity: () -> Unit,
-    skipForPreviewToWork: Boolean = false
-) {
-    SafeTheme {
-        Surface(
-            modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
-        ) {
-            // TODO: Not sure! AlertDialogs are both closed, anyway this solves the issue
-            val edits = viewModel.editableSiteEntryState.collectAsState().value
-            var finnishTheActivity by remember { mutableStateOf(false) }
-            var saveEntryRequested by remember { mutableStateOf(false) }
-            var showSaveOrDiscardDialog by remember { mutableStateOf(false) }
-            var somethingChanged by remember { mutableStateOf(false) }
-            val (siteEntryChanged, passwordChanged) = resolveEditsAndChangedSiteEntry(
-                editingSiteEntryId,
-                edits,
-            )
-            somethingChanged = siteEntryChanged
-
-            // If we've some edits AND back button is pressed, show dialog
-            BackHandler(enabled = somethingChanged) {
-                showSaveOrDiscardDialog = somethingChanged
-            }
-
-            if (showSaveOrDiscardDialog) {
-                AlertDialog(onDismissRequest = {
-                    showSaveOrDiscardDialog = false
-                }, confirmButton = {
-                    SafeButton(onClick = {
-                        showSaveOrDiscardDialog = false
-                        saveEntryRequested = true
-                    }) { Text(text = stringResource(id = R.string.password_entry_save)) }
-                }, dismissButton = {
-                    SafeButton(onClick = {
-                        setResult(RESULT_CANCELED, null)
-                        showSaveOrDiscardDialog = false
-                        finnishTheActivity = true
-                    }) { Text(text = stringResource(id = R.string.password_entry_discard)) }
-                }, title = {
-                    Text(text = stringResource(id = R.string.password_entry_unsaved_changes_info))
-                }, modifier = Modifier.testTag(TestTag.SITE_ENTRY_SAVE_DIALOG))
-            } else if (saveEntryRequested) {
-                TryPersistSiteEntryChanges(
-                    edits,
-                    passwordChanged,
-                    onDismiss = {
-                        saveEntryRequested = false
-                    },
-                    onSaved = {
-                        // TODO: what if failed?
-                        val resultIntent = Intent()
-                        resultIntent.putExtra(SITE_ENTRY_ID, edits.id)
-                        setResult(RESULT_OK, resultIntent)
-                        saveEntryRequested = false
-                        finnishTheActivity = true
-                    }
-                )
-            }
-            if (finnishTheActivity) {
-                finishActivity()
-            } else {
-                SiteEntryView(viewModel, skipForPreviewToWork = skipForPreviewToWork)
-            }
-        }
     }
 }
 

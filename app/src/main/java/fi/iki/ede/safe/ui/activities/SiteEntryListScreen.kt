@@ -1,16 +1,10 @@
 package fi.iki.ede.safe.ui.activities
 
-import android.content.Context
 import android.os.Bundle
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
@@ -18,15 +12,11 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
-import fi.iki.ede.db.DBID
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.DataModel.siteEntriesStateFlow
 import fi.iki.ede.safe.notifications.SetupNotifications
-import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
-import fi.iki.ede.safe.ui.composable.SiteEntryList
-import fi.iki.ede.safe.ui.composable.TopActionBar
-import fi.iki.ede.theme.SafeTheme
+import fi.iki.ede.safe.ui.composable.SiteEntryListCompose
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 
@@ -56,33 +46,6 @@ class SiteEntryListScreen :
 
     companion object {
         const val CATEGORY_ID = "category_id"
-    }
-}
-
-@Composable
-private fun SiteEntryListCompose(
-    context: Context?,
-    category: DecryptableCategoryEntry,
-    siteEntriesState: List<DecryptableSiteEntry>
-) {
-    SafeTheme {
-        Surface(
-            modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
-        ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                TopActionBar(onAddRequested = {
-                    context?.let { context ->
-                        it.launch(
-                            IntentManager.getAddPassword(context, categoryId = category.id as DBID)
-                        )
-                    }
-                }, title = category.plainName)
-                SiteEntryList(siteEntriesState)
-                // last row
-            }
-        }
     }
 }
 

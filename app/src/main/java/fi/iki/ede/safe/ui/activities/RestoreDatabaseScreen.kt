@@ -1,7 +1,6 @@
 package fi.iki.ede.safe.ui.activities
 
 import android.content.Context
-import android.net.Uri
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -12,27 +11,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
 import fi.iki.ede.backup.ExportConfig
-import fi.iki.ede.crypto.Password
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.composable.AskBackupPasswordAndCommence
 import fi.iki.ede.safe.ui.composable.RestoreDatabaseComponent
 import fi.iki.ede.safe.ui.composable.setupActivityResultLauncher
+import fi.iki.ede.safe.ui.models.RestoreViewModel
 import fi.iki.ede.statemachine.MainStateMachine.Companion.INITIAL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
 
-class RestoreViewModel : ViewModel() {
-    var docUri: Uri? = null
-
-    // TODO: Terrible, move..
-    var backupPassword: Password? = null
-}
 
 class RestoreDatabaseScreen :
     AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {

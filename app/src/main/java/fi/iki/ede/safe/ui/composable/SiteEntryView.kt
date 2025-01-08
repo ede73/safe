@@ -1,6 +1,5 @@
 package fi.iki.ede.safe.ui.composable
 
-import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
@@ -24,10 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.OpenInBrowser
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -35,10 +31,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -57,7 +50,6 @@ import androidx.compose.ui.unit.dp
 import fi.iki.ede.autolock.AvertInactivityDuringLongTask
 import fi.iki.ede.clipboardutils.ClipboardUtils
 import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.decrypt
 import fi.iki.ede.crypto.support.encrypt
@@ -68,11 +60,7 @@ import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpmui.models.GPMDataModel
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.model.DataModel
-import fi.iki.ede.safe.password.PG_SYMBOLS
 import fi.iki.ede.safe.password.PasswordGenerator
-import fi.iki.ede.safe.splits.PluginManager
-import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.dialogs.ShowLinkedGpmsDialog
 import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
@@ -82,10 +70,7 @@ import fi.iki.ede.theme.LocalSafeTheme
 import fi.iki.ede.theme.SafeButton
 import fi.iki.ede.theme.SafeTextButton
 import fi.iki.ede.theme.SafeTheme
-import fi.iki.ede.theme.TextualCheckbox
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.time.ZonedDateTime
 
 inline fun <T, C : Collection<T>> C.ifNotEmpty(block: (C) -> Unit): C {
@@ -443,239 +428,6 @@ private fun TakePhotoOrAskPermission(
             }
         }
     }
-}
-
-@Composable
-fun PopCustomPasswordDialog(
-    onDismiss: (password: Password?) -> Unit
-) {
-    val upperCases = remember { mutableStateOf(true) }
-    val lowerCases = remember { mutableStateOf(true) }
-    val numbers = remember { mutableStateOf(true) }
-    var symbols by remember { mutableStateOf(PG_SYMBOLS) }
-    var passwordLength by remember { mutableIntStateOf(18) }
-    var regenerate by remember { mutableIntStateOf(0) }
-    val password by remember(
-        upperCases.value,
-        lowerCases.value,
-        numbers.value,
-        passwordLength,
-        symbols,
-        regenerate
-    ) {
-        mutableStateOf(
-            PasswordGenerator.genPassword(
-                passUpper = upperCases.value,
-                passLower = lowerCases.value,
-                passNum = numbers.value,
-                passSymbols = symbols.isNotEmpty(),
-                symbols = symbols,
-                length = passwordLength
-            )
-        )
-    }
-
-    AlertDialog(
-        onDismissRequest = {
-            onDismiss(Password(password))
-        },
-        title = { Text(stringResource(id = R.string.action_bar_generate_custom_password)) },
-        text = {
-            Column {
-                TextualCheckbox(
-                    initiallyChecked = upperCases,
-                    textResourceId = R.string.site_entry_uppercases,
-                    checkedChanged = { upperCases.value = it })
-                TextualCheckbox(
-                    initiallyChecked = lowerCases,
-                    textResourceId = R.string.site_entry_lowercases,
-                    checkedChanged = { lowerCases.value = it })
-                TextualCheckbox(
-                    initiallyChecked = numbers,
-                    textResourceId = R.string.site_entry_numbers,
-                    checkedChanged = { numbers.value = it })
-                TextField(value = symbols,
-                    onValueChange = { newSymbolCandidates ->
-                        val filtered =
-                            newSymbolCandidates.filter { !it.isLetterOrDigit() && !it.isWhitespace() }
-                        val uniqueSymbols = filtered.toSet().joinToString("")
-                        symbols = uniqueSymbols
-                    })
-                Row {
-                    Text(passwordLength.toString())
-                    Slider(
-                        value = passwordLength.toFloat(),
-                        onValueChange = { passwordLength = it.toInt() },
-                        valueRange = 8.0f..30.0f,
-                        steps = 22
-                    )
-                }
-                SafeButton(onClick = { regenerate++ }) {
-                    Text(stringResource(id = R.string.site_entry_regenerate))
-                }
-                PasswordTextField(
-                    textTip = R.string.site_entry_generated_password,
-                    inputValue = password,
-                    enableZoom = true
-                )
-            }
-        },
-        confirmButton = {
-            SafeButton(
-                onClick = {
-                    onDismiss(Password(password))
-                }
-            ) { Text(stringResource(id = R.string.generic_ok)) }
-        },
-        dismissButton = {
-            SafeButton(onClick = { }) {
-                Text(stringResource(id = R.string.generic_cancel))
-            }
-        }
-    )
-}
-
-@Composable
-fun SiteEntryExtensionList(
-    viewModel: EditingSiteEntryViewModel,
-) {
-    // TODO: NONO..flow!
-    val allExtensions = produceState<Map<String, Set<String>>?>(initialValue = null) {
-        value = withContext(Dispatchers.IO) {
-            DataModel.getAllSiteEntryExtensions()
-        }
-    }.value
-
-    VerticalCollapsible(stringResource(id = R.string.site_entry_extension_collapsible)) {
-        Preferences.getAllExtensions().sortedBy { it }.forEach {
-            Column {
-                SiteEntryExtensionSelector(
-                    viewModel,
-                    allExtensions?.getOrDefault(it, emptySet()) ?: emptySet(),
-                    it
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun SiteEntryExtensionSelector(
-    viewModel: EditingSiteEntryViewModel,
-    allKnownValues: Set<String>,
-    extensionType: String,
-) {
-    val entry by viewModel.editableSiteEntryState.collectAsState()
-
-    fun addToMap(
-        map: Map<String, Set<String>>,
-        type: String,
-        value: String
-    ): Map<String, Set<String>> {
-        val mutableMap = map.toMutableMap()
-        mutableMap[type] = mutableMap[type]?.plus(value) ?: setOf(value)
-        return mutableMap.toMap()
-    }
-
-    fun removeFromMap(
-        map: Map<String, Set<String>>,
-        type: String,
-        value: String
-    ): Map<String, Set<String>> {
-        val mutableMap = map.toMutableMap()
-        mutableMap[type] = mutableMap[type]?.minus(value) ?: emptySet()
-        return mutableMap
-    }
-
-    val allKnownEntries =
-        remember { mutableStateListOf<String>().also { it.addAll(allKnownValues) } }
-    var checked by remember { mutableStateOf(false) }
-    if (!entry.plainExtension.containsKey(extensionType)) {
-        entry.plainExtension = entry.plainExtension.toMutableMap().apply {
-            this[extensionType] = setOf()
-        }
-    }
-    var selectedEntry by remember { mutableStateOf("") }
-
-    if (entry.plainExtension[extensionType]!!.isEmpty() && !checked) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(
-                checked = checked,
-                onCheckedChange = { checked = !checked },
-                modifier = Modifier.testTag(TestTag.SITE_ENTRY_EXTENSION_ENTRY_CHECKBOX)
-            )
-            Text(text = extensionType)
-        }
-    } else {
-        Text(text = extensionType)
-        EditableComboBox(
-            selectedItems = entry.plainExtension[extensionType]!!.toSet(),
-            allItems = allKnownEntries.toSet(),
-            onItemSelected = { selectedItem ->
-                val currentExtension = entry.plainExtension
-                val currentSet = currentExtension[extensionType] ?: emptySet()
-                if (selectedItem in currentSet) {
-                    viewModel.updateExtensions(
-                        removeFromMap(
-                            currentExtension,
-                            extensionType,
-                            selectedItem
-                        )
-                    )
-                    ""
-                } else {
-                    viewModel.updateExtensions(
-                        addToMap(
-                            currentExtension,
-                            extensionType,
-                            selectedItem
-                        )
-                    )
-                    selectedItem
-                }
-            },
-            onItemEdited = { editedItem ->
-                val rem = removeFromMap(
-                    entry.plainExtension,
-                    extensionType,
-                    selectedEntry
-                )
-                val add = addToMap(rem, extensionType, editedItem)
-                viewModel.updateExtensions(add)
-                selectedEntry = editedItem
-            },
-            onItemRequestedToDelete = { itemToDelete ->
-                // ONLY can delete if NOT used anywhere else
-                if (!DataModel.getAllSiteEntryExtensions(entry.id).flatMap { it.value }.toSet()
-                        .contains(itemToDelete)
-                ) {
-                    // deletion allowed, not used anywhere else..will "autodelete" from full collection on save
-                    entry.plainExtension[extensionType].let { currentSet ->
-                        if (itemToDelete in currentSet!!) {
-                            viewModel.updateExtensions(
-                                removeFromMap(
-                                    entry.plainExtension,
-                                    extensionType,
-                                    itemToDelete
-                                ),
-                            )
-                        }
-                    }
-                    allKnownEntries.remove(itemToDelete)
-                }
-            })
-    }
-}
-
-@Composable
-fun breachCheckButton(
-    context: Context,
-    encryptedPassword: IVCipherText
-): @Composable () -> Unit = {
-    if (PluginManager.isPluginEnabled(PluginName.HIBP))
-        PluginManager.getComposableInterface(PluginName.HIBP)
-            ?.getComposable(context, encryptedPassword)
-            ?.invoke()
 }
 
 private fun tryParseUri(website: String): Uri =

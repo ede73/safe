@@ -7,20 +7,8 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.ActivityResultLauncher
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import fi.iki.ede.autolock.AutolockingService
 import fi.iki.ede.backup.MyBackupAgent
 import fi.iki.ede.crypto.IVCipherText
@@ -31,18 +19,14 @@ import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelper.Companion.DATABASE_NAME
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.gpmui.db.GPMDB
-import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.BuildConfig
-import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.splits.PluginManager
 import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.TestTag
-import fi.iki.ede.safe.ui.composable.BiometricsComponent
-import fi.iki.ede.safe.ui.composable.LoginPasswordPrompts
-import fi.iki.ede.safe.ui.composable.TopActionBar
+import fi.iki.ede.safe.ui.composable.LoginScreenCompose
 import fi.iki.ede.safe.ui.utilities.startActivityForResults
 import fi.iki.ede.theme.SafeTheme
 import kotlinx.coroutines.CoroutineScope
@@ -238,53 +222,6 @@ open class LoginScreen : ComponentActivity() {
     }
 }
 
-@Composable
-private fun LoginScreenCompose(
-    loginPrecondition: LoginPrecondition,
-    goodPasswordEntered: (LoginStyle, Password) -> Boolean,
-    biometricsVerify: ActivityResultLauncher<Intent>? = null,
-) {
-    SafeTheme {
-        val context = LocalContext.current
-
-        val weHaveRestoredDatabase = isGoodRestoredContent(context)
-        // there is one big caveat now
-        // IF our data was indeed restored from backup
-        // making NEW login will basically render our database un-readable(???)
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            Column {
-                TopActionBar(loginScreen = true)
-                LoginPasswordPrompts(loginPrecondition) { loginStyle, pwd ->
-                    goodPasswordEntered(loginStyle, pwd)
-                }
-                // TODO: if we're fresh from backup - biometrics don't work
-                biometricsVerify?.let { BiometricsComponent(it) }
-
-                // just FYI
-                if (MyBackupAgent.haveRestoreMark(context)) {
-                    val time =
-                        Preferences.getAutoBackupRestoreFinished()
-                            ?.toLocalDateTime()?.toString()
-                            ?: ""
-                    Text(
-                        stringResource(R.string.login_screen_restore_mark_message, time),
-                        modifier = Modifier.border(
-                            BorderStroke(
-                                1.dp,
-                                MaterialTheme.colorScheme.primary
-                            )
-                        )
-                    )
-                }
-
-            }
-        }
-    }
-}
-
 private fun haveMasterkeyInDatabase(): Boolean {
     val db = DBHelperFactory.getDBHelper()
     val (salt, cipheredMasterKey) = try {
@@ -297,7 +234,7 @@ private fun haveMasterkeyInDatabase(): Boolean {
     return true
 }
 
-private fun isGoodRestoredContent(context: Context) =
+fun isGoodRestoredContent(context: Context) =
     if (!MyBackupAgent.haveRestoreMark(context)) false
     else haveMasterkeyInDatabase()
 
