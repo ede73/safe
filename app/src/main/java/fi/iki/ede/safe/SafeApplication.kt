@@ -14,7 +14,7 @@ import fi.iki.ede.autolock.AutolockingService
 import fi.iki.ede.clipboardutils.ClipboardUtils
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelperFactory
-import fi.iki.ede.gpmui.db.GPMDB
+import fi.iki.ede.gpmdatamodel.db.GPMDB
 import fi.iki.ede.notifications.ConfiguredNotifications
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.preferences.Preferences.PREFERENCE_EXPERIMENTAL_FEATURES

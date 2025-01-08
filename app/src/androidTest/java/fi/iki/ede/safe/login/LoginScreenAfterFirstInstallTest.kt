@@ -17,7 +17,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.backup.MyBackupAgent
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelperFactory
-import fi.iki.ede.gpmui.db.GPMDB
+import fi.iki.ede.gpmdatamodel.db.GPMDB
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.splits.IntentManager

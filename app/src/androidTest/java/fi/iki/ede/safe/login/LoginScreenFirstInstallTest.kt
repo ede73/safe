@@ -15,7 +15,7 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelperFactory
-import fi.iki.ede.gpmui.db.GPMDB
+import fi.iki.ede.gpmdatamodel.db.GPMDB
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.ui.activities.BiometricsActivity
@@ -141,7 +141,10 @@ class LoginScreenFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
             // we'll overwrite the DBHelper with in-memory one...
             DBHelperFactory.initializeDatabase(
                 DBHelper(
-                    context, null, false, GPMDB::getExternalTables,
+                    context,
+                    null,
+                    false,
+                    GPMDB::getExternalTables,
                     GPMDB::upgradeTables
                 )
             )

@@ -17,6 +17,7 @@ class RegistrationAPIImpl : RegistrationAPI {
         IntentManager.registerSubMenu(
             getName(),
             DropDownMenu.TopActionBarImportExportMenu,
+            // TODO: move locally
             fi.iki.ede.safe.R.string.action_bar_old_restore
         ) { context ->
             context.startActivity(

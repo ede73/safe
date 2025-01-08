@@ -14,8 +14,8 @@ import fi.iki.ede.gpm.debug
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.model.ScoringConfig
+import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.gpmui.models.DNDObject
-import fi.iki.ede.gpmui.models.GPMDataModel
 import fi.iki.ede.gpmui.models.SiteEntryToGPM
 import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.logger.firebaseRecordException

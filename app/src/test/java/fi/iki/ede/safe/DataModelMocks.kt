@@ -11,7 +11,8 @@ import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.db.DBID
 import fi.iki.ede.gpm.model.SavedGPM
-import fi.iki.ede.gpmui.db.GPMDB
+import fi.iki.ede.gpmdatamodel.GPMDataModel
+import fi.iki.ede.gpmdatamodel.db.GPMDB
 import io.mockk.every
 import io.mockk.isMockKMock
 import io.mockk.mockkClass
@@ -225,7 +226,12 @@ object DataModelMocks {
             // TODO: weak model, should filter per SiteEntry in firstArg
             gpmTable.values.flatten().toSet()
         }
-        every { GPMDB.linkSaveGPMAndSiteEntry(any<DBID>(), any<DBID>()) } answers {
+        every {
+            GPMDB.linkSaveGPMAndSiteEntry(
+                any<DBID>(),
+                any<DBID>()
+            )
+        } answers {
             val seid = firstArg<DBID>()
             val gpmId = secondArg<DBID>()
             gpmTable2SiteEntryLink[seid] =
@@ -239,7 +245,9 @@ object DataModelMocks {
 
         DataModel.softDeletedMaxAgeProvider = { 0 }
         runBlocking {
-            DataModel.loadFromDatabase()
+            DataModel.loadFromDatabase({
+                GPMDataModel.loadFromDatabase()
+            })
         }
         return db
     }

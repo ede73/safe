@@ -7,6 +7,7 @@ import com.google.android.play.core.splitinstall.SplitInstallManagerFactory
 import com.google.android.play.core.splitinstall.SplitInstallRequest
 import com.google.android.play.core.splitinstall.SplitInstallStateUpdatedListener
 import com.google.android.play.core.splitinstall.model.SplitInstallSessionStatus
+import fi.iki.ede.logger.firebaseJustTry
 import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.logger.firebaseRecordException
 import fi.iki.ede.safe.splits.PluginManager
@@ -48,7 +49,7 @@ class PluginLoaderViewModel(app: Application) : AndroidViewModel(app) {
 
             SplitInstallSessionStatus.INSTALLED -> {
                 informUser("${session.plugin.pluginName} module installed successfully")
-                fi.iki.ede.logger.firebaseJustTry("SplitInstallSessionStatus.INSTALLED try to init too") {
+                firebaseJustTry("SplitInstallSessionStatus.INSTALLED try to init too") {
                     initializePlugin(getApplication(), session.plugin)
                 }
                 session.completed = true

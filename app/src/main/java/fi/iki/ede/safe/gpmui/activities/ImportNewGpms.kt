@@ -23,13 +23,11 @@ import fi.iki.ede.gpm.changeset.ImportChangeSet
 import fi.iki.ede.gpm.changeset.ScoredMatch
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.gpmui.composables.ImportGpmCsvComposable
 import fi.iki.ede.gpmui.composables.VisualizeChangeSetPager
-import fi.iki.ede.gpmui.getFakeDataModel
-import fi.iki.ede.gpmui.models.GPMDataModel
 import fi.iki.ede.gpmui.utilities.makeIncomingForTesting
 import fi.iki.ede.gpmui.utilities.makeSavedForTesting
-import fi.iki.ede.safe.model.DataModelForGPM
 import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.theme.SafeTheme
 
@@ -38,8 +36,7 @@ class ImportNewGpmsScreen :
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val hasUnlinkedItemsFromPreviousRound =
-            GPMDataModel.unprocessedGPMsFlow.value.isNotEmpty()
+        val hasUnlinkedItemsFromPreviousRound = GPMDataModel.unprocessedGPMsFlow.value.isNotEmpty()
 
         setContent {
             SafeTheme {
@@ -47,7 +44,6 @@ class ImportNewGpmsScreen :
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
                     ImportGpmCsvComposable(
-                        DataModelForGPM,
                         ::avertInactivity,
                         hasUnlinkedItemsFromPreviousRound
                     ) {
@@ -74,7 +70,7 @@ fun ImportGooglePasswordsPreview() {
     KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
     MaterialTheme {
         Column {
-            ImportGpmCsvComposable(getFakeDataModel(), null, true) {}
+            ImportGpmCsvComposable(null, true) {}
 
             HorizontalDivider(modifier = Modifier.padding(20.dp))
 

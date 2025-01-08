@@ -43,7 +43,6 @@ dependencies {
     implementation(project(":app:cryptoobjects"))
     implementation(project(":app:db"))
     implementation(project(":app:preferences"))
-    implementation(project(":gpmui"))
     implementation(project(":dateutils"))
     implementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.junit)

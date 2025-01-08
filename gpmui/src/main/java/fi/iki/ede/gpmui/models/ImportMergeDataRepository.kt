@@ -2,8 +2,9 @@ package fi.iki.ede.gpmui.models
 
 import android.util.Log
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.gpm.model.SavedGPM
-import fi.iki.ede.gpmui.DataModelIF
+import fi.iki.ede.gpmdatamodel.GPMDataModel
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,7 +18,7 @@ import kotlinx.coroutines.launch
 
 private const val TAG = "ImportMergeDataRepository"
 
-class ImportMergeDataRepository(datamodel: DataModelIF) {
+class ImportMergeDataRepository {
     private val _displayedUnprocessedGPMs = MutableStateFlow<List<SavedGPM>>(emptyList())
     private val _displayedSiteEntries = MutableStateFlow<List<DecryptableSiteEntry>>(emptyList())
     private val _connectedDisplayItems =
@@ -50,7 +51,7 @@ class ImportMergeDataRepository(datamodel: DataModelIF) {
 
                     is ModificationRequest.ResetSiteEntryDisplayListToAllSaved ->
                         _displayedSiteEntries.value =
-                            datamodel.fetchSiteEntriesStateFlow().value.toList().also {
+                            DataModel.siteEntriesStateFlow.value.toList().also {
                                 debug("ResetSiteEntryDisplayListToAllSaved ${it.size}")
                             }
 

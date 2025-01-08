@@ -1,16 +1,15 @@
-package fi.iki.ede.gpmui.models
+package fi.iki.ede.gpmdatamodel
 
 import android.util.Log
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.db.DBID
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
-import fi.iki.ede.gpmui.BuildConfig
-import fi.iki.ede.gpmui.DataModelIF
-import fi.iki.ede.gpmui.db.GPMDB
+import fi.iki.ede.gpmdatamodel.db.GPMDB
 import fi.iki.ede.logger.firebaseRecordException
 import fi.iki.ede.preferences.Preferences
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.SupervisorJob
@@ -24,35 +23,39 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
 
-private const val TAG = "DataModelForGPM"
 
 object GPMDataModel {
+    private const val TAG = "DataModelForGPM"
+
     init {
         if (BuildConfig.DEBUG) {
-            GlobalScope.launch {
-                _allSavedGPMsFlow.collect { list ->
-                    Log.d(
-                        TAG,
-                        "Debug observer: _savedGPMsFlow: (${
-                            list.map { it.id }.joinToString(",")
-                        })"
-                    )
-                }
-            }
-            GlobalScope.launch {
-                _siteEntryToSavedGPMFlow.collect { map ->
-                    Log.d(
-                        TAG,
-                        "Debug observer: _siteEntryToSavedGPMFlow: (${
-                            map.map { it.value }.flatten().joinToString(",")
-                        })"
-                    )
-                }
-            }
+            setupDebugStateflowObserver()
         }
     }
 
-    lateinit var datamodel: DataModelIF
+    @OptIn(DelicateCoroutinesApi::class)
+    private fun setupDebugStateflowObserver() {
+        GlobalScope.launch {
+            _allSavedGPMsFlow.collect { list ->
+                Log.d(
+                    TAG,
+                    "Debug observer: _savedGPMsFlow: (${
+                        list.map { it.id }.joinToString(",")
+                    })"
+                )
+            }
+        }
+        GlobalScope.launch {
+            _siteEntryToSavedGPMFlow.collect { map ->
+                Log.d(
+                    TAG,
+                    "Debug observer: _siteEntryToSavedGPMFlow: (${
+                        map.map { it.value }.flatten().joinToString(",")
+                    })"
+                )
+            }
+        }
+    }
 
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
@@ -81,23 +84,6 @@ object GPMDataModel {
         started = SharingStarted.Eagerly,
         initialValue = emptySet()
     )
-
-    suspend fun addGpmAsSiteEntry(
-        savedGpmId: DBID,
-        categoryId: DBID,
-        onAdd: suspend (DecryptableSiteEntry) -> Unit
-    ) {
-        getSavedGPM(savedGpmId).let { gpm ->
-            Preferences.setLastModified()
-            datamodel.addOrUpdateSiteEntry(DecryptableSiteEntry(categoryId).apply {
-                username = gpm.encryptedUsername
-                password = gpm.encryptedPassword
-                website = gpm.encryptedUrl
-                description = gpm.encryptedName
-                note = gpm.encryptedNote
-            }, onAdd)
-        }
-    }
 
     fun storeNewGpmsAndReload(
         delete: Set<SavedGPM>,
@@ -136,7 +122,7 @@ object GPMDataModel {
         }
     }
 
-    private fun getSavedGPM(savedGPMId: DBID): SavedGPM =
+    fun getSavedGPM(savedGPMId: DBID): SavedGPM =
         _allSavedGPMsFlow.value.first { it.id == savedGPMId }
 
     fun getLinkedGPMs(siteEntryID: DBID): Set<SavedGPM> =

@@ -14,6 +14,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.datamodel.DataModel
+import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.ui.TestTag
@@ -164,7 +165,9 @@ class CategoryListScreenTest {
         runTest {
             DBHelper4AndroidTest.addCategory(newCategory)
             runBlocking {
-                DataModel.loadFromDatabase()
+                DataModel.loadFromDatabase({
+                    GPMDataModel.loadFromDatabase()
+                })
             }
 
             val categoriesEmitted = mutableListOf<List<DecryptableCategoryEntry>>()
@@ -208,7 +211,9 @@ class CategoryListScreenTest {
         val newCategory = "newCategory"
         DBHelper4AndroidTest.addCategory(newCategory)
         runBlocking {
-            DataModel.loadFromDatabase()
+            DataModel.loadFromDatabase({
+                GPMDataModel.loadFromDatabase()
+            })
         }
 
         advanceUntilIdle()

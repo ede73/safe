@@ -67,7 +67,9 @@ class SelectDocumentAndBeginRestoreActivity : AutoLockingBaseComponentActivity(
                             if (ex == null) {
                                 // TODO: MAKE ASYNC
                                 runBlocking {
-                                    DataModel.loadFromDatabase()
+                                    DataModel.loadFromDatabase({
+                                        // There's no GPMs here
+                                    })
                                 }
                                 processedMessage.value = context.getString(
                                     R.string.restore_screen_restored,

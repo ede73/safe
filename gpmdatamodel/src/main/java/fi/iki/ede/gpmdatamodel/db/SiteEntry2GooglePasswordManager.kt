@@ -1,4 +1,4 @@
-package fi.iki.ede.gpmui.db
+package fi.iki.ede.gpmdatamodel.db
 
 import fi.iki.ede.db.Table
 import fi.iki.ede.db.TableColumns

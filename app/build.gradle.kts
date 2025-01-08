@@ -242,6 +242,7 @@ dependencies {
     implementation(project(":app:db"))
     implementation(project(":app:backup"))
     implementation(project(":gpmui"))
+    implementation(project(":gpmdatamodel"))
     lintChecks(project(":app:SafeLinter"))
     implementation(project(":crypto"))
     implementation(project(":app:preferences"))
@@ -329,6 +330,7 @@ tasks.configureEach {
                 "testDebugUnitTest",
                 ":app:backup:testDebugUnitTest",
                 ":app:cryptoobjects:testDebugUnitTest",
+                ":app:datamodel:testDebugUnitTest",
                 ":app:db:testDebugUnitTest",
                 ":app:preferences:testDebugUnitTest",
                 ":app:theme:testDebugUnitTest",
@@ -339,6 +341,7 @@ tasks.configureEach {
                 ":datepicker:testDebugUnitTest",
                 ":dateutils:testDebugUnitTest",
                 ":gpm:testDebugUnitTest",
+                ":gpmdatamodel:testDebugUnitTest",
                 ":gpmui:testDebugUnitTest",
                 ":hibp:testDebugUnitTest",
                 ":notifications:testDebugUnitTest",

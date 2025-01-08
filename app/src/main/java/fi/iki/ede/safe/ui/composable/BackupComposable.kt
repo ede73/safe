@@ -12,8 +12,8 @@ import androidx.compose.ui.res.stringResource
 import fi.iki.ede.backup.BackupDatabase
 import fi.iki.ede.backup.ExportConfig
 import fi.iki.ede.datamodel.DataModel
-import fi.iki.ede.gpmui.db.GPMDB
-import fi.iki.ede.gpmui.models.GPMDataModel
+import fi.iki.ede.gpmdatamodel.GPMDataModel
+import fi.iki.ede.gpmdatamodel.db.GPMDB
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.R
 import kotlinx.coroutines.Dispatchers
@@ -54,6 +54,7 @@ private suspend fun initiateBackup(
         DataModel.categoriesStateFlow.value,
         DataModel.softDeletedStateFlow.value,
         DataModel::getSiteEntriesOfCategory,
+        /* TODO: NO NO GPMDB */
         GPMDB.fetchAllSiteEntryGPMMappings(),
         GPMDataModel.allSavedGPMsFlow.value.toSet(),
     ).let { accumulatedStringBuilder: StringBuilder ->

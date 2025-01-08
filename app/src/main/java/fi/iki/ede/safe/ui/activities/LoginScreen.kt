@@ -19,7 +19,8 @@ import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelper.Companion.DATABASE_NAME
 import fi.iki.ede.db.DBHelperFactory
-import fi.iki.ede.gpmui.db.GPMDB
+import fi.iki.ede.gpmdatamodel.GPMDataModel
+import fi.iki.ede.gpmdatamodel.db.GPMDB
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.splits.IntentManager
@@ -171,7 +172,9 @@ open class LoginScreen : ComponentActivity() {
         val myScope = CoroutineScope(Dispatchers.Main)
         myScope.launch {
             withContext(Dispatchers.IO) {
-                DataModel.loadFromDatabase()
+                DataModel.loadFromDatabase({
+                    GPMDataModel.loadFromDatabase()
+                })
             }
         }
     }

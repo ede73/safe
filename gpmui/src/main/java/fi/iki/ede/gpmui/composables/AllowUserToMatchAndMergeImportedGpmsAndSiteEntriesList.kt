@@ -1,5 +1,6 @@
 package fi.iki.ede.gpmui.composables
 
+import android.content.Context
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.gestures.scrollBy
@@ -42,32 +43,34 @@ import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.cryptoobjects.encrypt
 import fi.iki.ede.cryptoobjects.encrypter
+import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.db.DBID
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.model.SavedGPM.Companion.makeFromEncryptedStringFields
-import fi.iki.ede.gpmui.DataModelIF
+import fi.iki.ede.gpmdatamodel.GPMDataModel
+import fi.iki.ede.gpmdatamodel.GPMDataModel.getSavedGPM
 import fi.iki.ede.gpmui.R
 import fi.iki.ede.gpmui.dialogs.ShowInfoDialog
-import fi.iki.ede.gpmui.getFakeDataModel
 import fi.iki.ede.gpmui.models.DNDObject
-import fi.iki.ede.gpmui.models.GPMDataModel
 import fi.iki.ede.gpmui.models.ImportGPMViewModel
 import fi.iki.ede.gpmui.models.SiteEntryToGPM
 import fi.iki.ede.gpmui.modifiers.doesItHaveText
 import fi.iki.ede.gpmui.utilities.combineLists
 import fi.iki.ede.logger.firebaseRecordException
+import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.theme.SafeButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlin.reflect.KFunction2
 
 private const val TAG = "ImportEntryList"
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesList(
-    datamodel: DataModelIF,
     viewModel: ImportGPMViewModel,
+    editSiteEntry: KFunction2<Context, DBID, Unit>
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -115,9 +118,6 @@ fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesList(
     }
 
     fun addSavedGPM(savedGPMId: Long, maybeLinkedSiteEntry: Pair<DecryptableSiteEntry, SavedGPM>?) {
-        // TODO: Ask user the category, no goes to GPM cat
-        val catId = datamodel.findCategoryByName("Google Password Manager")
-
         suspend fun addNow(catId: DBID) {
             if (maybeLinkedSiteEntry != null) {
                 viewModel.removeConnectedDisplayItem(
@@ -125,20 +125,33 @@ fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesList(
                     maybeLinkedSiteEntry.second
                 )
             }
-            GPMDataModel.addGpmAsSiteEntry(savedGPMId, categoryId = catId, onAdd = {
+            val savedGPM = getSavedGPM(savedGPMId)
+            DataModel.addOrUpdateSiteEntry(DecryptableSiteEntry(catId).apply {
+                username = savedGPM.encryptedUsername
+                password = savedGPM.encryptedPassword
+                website = savedGPM.encryptedUrl
+                description = savedGPM.encryptedName
+                note = savedGPM.encryptedNote
+            }, {
                 linkSavedGPMAndDecryptableSiteEntry(it, savedGPMId)
+                Preferences.setLastModified()
             })
-        }
 
-        coroutineScope.launch {
-            if (catId == null) {
-                datamodel.addOrEditCategory(DecryptableCategoryEntry().apply {
-                    encryptedName = "Google Password Manager".encrypt()
-                }, onAdd = {
-                    addNow(it.id as DBID)
-                })
-            } else {
-                addNow(catId.id as DBID)
+            coroutineScope.launch {
+                // TODO: Ask user the category, now goes to GPM cat
+                val gpmCategory = DataModel.categoriesStateFlow.value.firstOrNull {
+                    it.plainName == "Google Password Manager"
+                }
+
+                if (gpmCategory == null) {
+                    DataModel.addOrEditCategory(DecryptableCategoryEntry().apply {
+                        encryptedName = "Google Password Manager".encrypt()
+                    }, onAdd = { gpmCategoryId ->
+                        addNow(gpmCategoryId.id as DBID)
+                    })
+                } else {
+                    addNow(gpmCategory.id as DBID)
+                }
             }
         }
     }
@@ -310,7 +323,7 @@ fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesList(
                         },
                         onTap = {
                             if (siteEntry?.id != null) {
-                                datamodel.startEditPassword(context, siteEntry.id!!)
+                                editSiteEntry(context, siteEntry.id as DBID)
                             }
                         }
                     )
@@ -353,10 +366,9 @@ fun ImportEntryListPreview() {
             )
         }
         // would require data model mocks to complete
-        val fakemodel = getFakeDataModel()
-        val fakeViewModel = ImportGPMViewModel(fakemodel).apply {
-        }
+        val fakeViewModel = ImportGPMViewModel().apply {}
 
-        AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesList(fakemodel, fakeViewModel)
+        fun startEditSiteEntry(context: Context, id: DBID) {}
+        AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesList(fakeViewModel, ::startEditSiteEntry)
     }
 }

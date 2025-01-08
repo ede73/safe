@@ -8,5 +8,6 @@ interface AutoLockingFeatures {
     fun startLoginScreen(context: Context)
     fun isLoggedIn(): Boolean
     fun isThisLoginScreen(componentActivity: ComponentActivity): Boolean
+    fun startEditSiteEntry(context: Context, siteEntryID: Long)
 }
 

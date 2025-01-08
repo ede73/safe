@@ -67,7 +67,7 @@ fun SearchSiteEntryList(
                 siteEntry = filteredItem,
                 categoryEntry = filteredItem.getCategory(), onSiteEntryClick = {
                     launcher.launch(
-                        IntentManager.getEditPassword(context, it.id!!)
+                        IntentManager.getEditSiteEntryIntent(context, it.id!!)
                     )
                 }, onDeleteSiteEntry = { deletedEntry ->
                     // it is gone already

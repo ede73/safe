@@ -13,7 +13,7 @@ import fi.iki.ede.backup.RestoreDatabase
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelperFactory
-import fi.iki.ede.gpmui.db.GPMDB
+import fi.iki.ede.gpmdatamodel.db.GPMDB
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.ui.dialogs.restoreOldBackupDialog

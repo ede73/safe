@@ -3,15 +3,15 @@ package fi.iki.ede.gpmui.models
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.gpm.changeset.harmonizePotentialDomainName
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.similarity.LowerCaseTrimmedString
 import fi.iki.ede.gpm.similarity.findSimilarity
 import fi.iki.ede.gpm.similarity.toLowerCasedTrimmedString
-import fi.iki.ede.gpmui.DataModelIF
+import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.logger.firebaseRecordException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
@@ -22,20 +22,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-class ImportGPMViewModelFactory(private val datamodel: DataModelIF) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(ImportGPMViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return ImportGPMViewModel(datamodel) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
-    }
-}
-
 // you have to use factory to instantiate this!
-class ImportGPMViewModel(
-    private val datamodel: DataModelIF,
-) : ViewModel() {
+class ImportGPMViewModel : ViewModel() {
     // LiveData to signal the UI to show loading
     private val _isWorkingAndProgress = MutableLiveData(false to null as Float?)
     private val jobManager = JobManager { completed, percentCompleted ->
@@ -45,7 +33,7 @@ class ImportGPMViewModel(
     val displayedItemsAreConnected: Boolean
         get() = _displayedItemsAreConnected
     val isWorkingAndProgress: LiveData<Pair<Boolean, Float?>> = _isWorkingAndProgress
-    val importMergeDataRepository = ImportMergeDataRepository(datamodel)
+    val importMergeDataRepository = ImportMergeDataRepository()
 
     init {
         viewModelScope.launch(CoroutineName("resetGPMDisplayListToAllUnprocessed")) {
@@ -180,7 +168,7 @@ class ImportGPMViewModel(
                 importMergeDataRepository.emptyGPMDisplayList().await()
 
                 launchIterateLists("applyMatchingPasswords",
-                    datamodel.fetchSiteEntriesStateFlow().value.map { WrappedDecryptableSiteEntry(it) },
+                    DataModel.siteEntriesStateFlow.value.map { WrappedDecryptableSiteEntry(it) },
                     GPMDataModel.unprocessedGPMsFlow.value.toList(),
                     compare = { outerEntry, innerEntry ->
                         if (outerEntry.cachedDecryptedPassword.isNotBlank() &&
@@ -192,10 +180,7 @@ class ImportGPMViewModel(
         }
     }
 
-    fun launchMatchingNameSearchAndResetDisplayLists(
-        datamodel: DataModelIF,
-        similarityThreshold: Double
-    ) {
+    fun launchMatchingNameSearchAndResetDisplayLists(similarityThreshold: Double) {
         CoroutineScope(Dispatchers.Default).launch(CoroutineName("launchMatchingNameSearchAndResetDisplayLists")) {
             jobManager.cancelAndAddNewJob {
 
@@ -205,7 +190,7 @@ class ImportGPMViewModel(
                 importMergeDataRepository.emptyGPMDisplayList().await()
 
                 launchIterateLists("applyMatchingNames",
-                    datamodel.fetchSiteEntriesStateFlow().value.map { WrappedDecryptableSiteEntry(it) },
+                    DataModel.siteEntriesStateFlow.value.map { WrappedDecryptableSiteEntry(it) },
                     GPMDataModel.unprocessedGPMsFlow.value.toList(),
                     compare = { outerEntry, innerEntry ->
                         if (similarityThreshold > 0) {
@@ -264,7 +249,7 @@ class ImportGPMViewModel(
                         if (passwordSearchTarget == SearchTarget.SEARCH_FROM_DISPLAYED)
                             importMergeDataRepository.displayedSiteEntries.value.toList()
                         else
-                            datamodel.fetchSiteEntriesStateFlow().value,
+                            DataModel.siteEntriesStateFlow.value,
                         similarityThresholdOrSubString,
                         regex,
                         searchText

@@ -80,7 +80,7 @@ fun SiteEntryRow(
             .fillMaxWidth()
             .combinedClickable(onClick = {
                 editCompleted.launch(
-                    IntentManager.getEditPassword(context, siteEntry.id!!)
+                    IntentManager.getEditSiteEntryIntent(context, siteEntry.id!!)
                 )
             }, onLongClick = {
                 displayMenu = true

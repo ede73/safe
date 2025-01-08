@@ -18,8 +18,8 @@ import fi.iki.ede.crypto.support.toHexString
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelper
-import fi.iki.ede.gpmui.db.GPMDB
-import fi.iki.ede.gpmui.models.GPMDataModel
+import fi.iki.ede.gpmdatamodel.GPMDataModel
+import fi.iki.ede.gpmdatamodel.db.GPMDB
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.DataModelMocks.mockDataModelFor_UNIT_TESTS_ONLY
 import fi.iki.ede.safe.model.LoginHandler
@@ -301,7 +301,9 @@ class BackupDatabaseAndRestoreDatabaseTest {
             throw Exception("We should not ask user anything, valid backup!")
         }
         runBlocking {
-            DataModel.loadFromDatabase()
+            DataModel.loadFromDatabase({
+                GPMDataModel.loadFromDatabase()
+            })
         }
 
         val passwords = DataModel.siteEntriesStateFlow.value
@@ -392,7 +394,9 @@ class BackupDatabaseAndRestoreDatabaseTest {
         }
 
         runBlocking {
-            DataModel.loadFromDatabase()
+            DataModel.loadFromDatabase({
+                GPMDataModel.loadFromDatabase()
+            })
         }
 
         if (BuildConfig.DEBUG) {
@@ -411,7 +415,8 @@ class BackupDatabaseAndRestoreDatabaseTest {
             Log.i(
                 TAG,
                 "GPMs: ${
-                    GPMDataModel.allSavedGPMsFlow.value.map { it.id }.joinToString(",")
+                    GPMDataModel.allSavedGPMsFlow.value.map { it.id }
+                        .joinToString(",")
                 }"
             )
             Log.i(TAG,

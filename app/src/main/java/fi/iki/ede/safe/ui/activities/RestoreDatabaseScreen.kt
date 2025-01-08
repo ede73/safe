@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
 import fi.iki.ede.backup.ExportConfig
 import fi.iki.ede.datamodel.DataModel
+import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.composable.AskBackupPasswordAndCommence
@@ -21,6 +22,7 @@ import fi.iki.ede.safe.ui.composable.RestoreDatabaseComponent
 import fi.iki.ede.safe.ui.composable.setupActivityResultLauncher
 import fi.iki.ede.safe.ui.models.RestoreViewModel
 import fi.iki.ede.statemachine.MainStateMachine.Companion.INITIAL
+import fi.iki.ede.statemachine.StateMachine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
@@ -37,7 +39,7 @@ class RestoreDatabaseScreen :
         setContent {
             val coroutineScope = rememberCoroutineScope()
 
-            fi.iki.ede.statemachine.StateMachine.Create("selectingDocument") {
+            StateMachine.Create("selectingDocument") {
                 pauseInactivity(context, "Paused while selecting document")
                 StateEvent("selectingDocument", INITIAL) {
                     var nextState by remember { mutableStateOf(false) }
@@ -104,7 +106,9 @@ class RestoreDatabaseScreen :
                             if (ex == null) {
                                 processedMessage.value = "Re-read database"
                                 coroutineScope.launch(Dispatchers.IO) {
-                                    DataModel.loadFromDatabase()
+                                    DataModel.loadFromDatabase({
+                                        GPMDataModel.loadFromDatabase()
+                                    })
                                 }
                                 processedMessage.value = "Done!"
                                 IntentManager.startCategoryScreen(context)

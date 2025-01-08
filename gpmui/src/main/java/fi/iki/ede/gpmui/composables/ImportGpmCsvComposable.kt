@@ -32,18 +32,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.gpm.changeset.ImportChangeSet
 import fi.iki.ede.gpm.debug
+import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.gpmui.BuildConfig
-import fi.iki.ede.gpmui.DataModelIF
 import fi.iki.ede.gpmui.R
 import fi.iki.ede.gpmui.dialogs.MyProgressDialog
 import fi.iki.ede.gpmui.dialogs.ProgressStateHolder
 import fi.iki.ede.gpmui.dialogs.UsageInfoDialog
 import fi.iki.ede.gpmui.dialogs.YesNoDialog
-import fi.iki.ede.gpmui.getFakeDataModel
-import fi.iki.ede.gpmui.models.GPMDataModel
 import fi.iki.ede.gpmui.utilities.deleteInternalCopyOfGpmCsvImport
 import fi.iki.ede.gpmui.utilities.doesInternalCopyOfGpmCsvImportExist
 import fi.iki.ede.gpmui.utilities.getInternalCopyOfGpmCsvAsImportStreamAndDeleteOriginal
@@ -64,7 +63,6 @@ private const val TAG = "ImportScreen"
 
 @Composable
 fun ImportGpmCsvComposable(
-    datamodel: DataModelIF,
     avertInactivity: ((Context, String) -> Unit)?,
     hasUnlinkedItemsFromPreviousRound: Boolean,
     skipImportReminder: Boolean = false,
@@ -270,8 +268,9 @@ fun ImportGpmCsvComposable(
                         storeChangeSet(importChangeSet.value!!)
 
                         addMessageToFlow("Reload datamodel...")
-                        datamodel.loadFromDatabase()
-                        GPMDataModel.loadFromDatabase()
+                        DataModel.loadFromDatabase {
+                            GPMDataModel.loadFromDatabase()
+                        }
 
                         showImportProgress.value = false
                     }
@@ -375,10 +374,8 @@ private fun storeChangeSet(importChangeSet: ImportChangeSet) {
 @Composable
 fun ImportScreenPreview() {
     MaterialTheme {
-        fun fake(a: Context, b: String) {}
         ImportGpmCsvComposable(
-            getFakeDataModel(),
-            ::fake,
+            { _, _ -> },
             hasUnlinkedItemsFromPreviousRound = false,
             true
         ) {

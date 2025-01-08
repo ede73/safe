@@ -9,6 +9,7 @@ import fi.iki.ede.crypto.keystore.KeyManagement.encryptMasterKey
 import fi.iki.ede.crypto.keystore.KeyManagement.generatePBKDF2AESKey
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.db.DBHelperFactory
+import fi.iki.ede.gpmdatamodel.GPMDataModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -44,7 +45,9 @@ object ChangeMasterKeyAndPassword {
             val myScope = CoroutineScope(Dispatchers.Main)
             myScope.launch {
                 withContext(Dispatchers.IO) {
-                    DataModel.loadFromDatabase()
+                    DataModel.loadFromDatabase({
+                        GPMDataModel.loadFromDatabase()
+                    })
                     // TODO: REALLY issue info to the caller that we're finished..
                     // else there's few seconds data is actually flaky..
                     finished(true)

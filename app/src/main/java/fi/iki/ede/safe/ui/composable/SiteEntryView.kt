@@ -57,7 +57,7 @@ import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.datepicker.DatePicker
 import fi.iki.ede.gpm.model.SavedGPM
-import fi.iki.ede.gpmui.models.GPMDataModel
+import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.password.PasswordGenerator

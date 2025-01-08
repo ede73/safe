@@ -86,21 +86,21 @@ object IntentManager {
     private val menuAdditions =
         mutableMapOf<PluginName, MutableMap<DropDownMenu, MutableList<Pair<Int, (Context) -> Unit>>>>()
 
-    fun getAddPassword(context: Context, categoryId: DBID) =
+    fun getAddSiteEntryIntent(context: Context, siteEntryId: DBID) =
         getActivityIntent(context, SiteEntryEditScreen::class.java, extras = Bundle().apply {
-            putLong(CATEGORY_ID, categoryId)
+            putLong(CATEGORY_ID, siteEntryId)
         })
 
-    fun getEditPassword(context: Context, passwordId: DBID) =
+    fun getEditSiteEntryIntent(context: Context, siteEntryId: DBID) =
         getActivityIntent(context, SiteEntryEditScreen::class.java, extras = Bundle().apply {
-            putLong(SITE_ENTRY_ID, passwordId)
+            putLong(SITE_ENTRY_ID, siteEntryId)
         })
 
-    fun startEditPassword(context: Context, passwordId: DBID) =
+    fun startEditSiteEntryScreen(context: Context, siteEntryId: DBID) =
         startActivity(
             context,
             SiteEntryEditScreen::class.java, extras = Bundle().apply {
-                putLong(SITE_ENTRY_ID, passwordId)
+                putLong(SITE_ENTRY_ID, siteEntryId)
             }
         )
 

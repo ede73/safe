@@ -29,7 +29,10 @@ internal fun SiteEntryListCompose(
                 TopActionBar(onAddRequested = {
                     context?.let { context ->
                         it.launch(
-                            IntentManager.getAddPassword(context, categoryId = category.id as DBID)
+                            IntentManager.getAddSiteEntryIntent(
+                                context,
+                                siteEntryId = category.id as DBID
+                            )
                         )
                     }
                 }, title = category.plainName)

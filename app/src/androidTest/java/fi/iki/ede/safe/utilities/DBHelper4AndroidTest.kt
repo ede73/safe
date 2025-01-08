@@ -11,7 +11,8 @@ import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.db.DBID
-import fi.iki.ede.gpmui.db.GPMDB
+import fi.iki.ede.gpmdatamodel.GPMDataModel
+import fi.iki.ede.gpmdatamodel.db.GPMDB
 import kotlinx.coroutines.runBlocking
 
 object DBHelper4AndroidTest {
@@ -48,7 +49,7 @@ object DBHelper4AndroidTest {
             addPassword(DEFAULT_2ND_PASSWORD_OF_2ND_CATEGORY, it)
         })
         // Also handle initializing the data model
-        runBlocking { DataModel.loadFromDatabase() }
+        runBlocking { DataModel.loadFromDatabase({ GPMDataModel.loadFromDatabase() }) }
 
         assert(2 == DataModel.categoriesStateFlow.value.size) {
             "DataModel initialization failure, <> 2 categories"

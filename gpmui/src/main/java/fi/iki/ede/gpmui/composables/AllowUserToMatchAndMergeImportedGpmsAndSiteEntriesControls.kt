@@ -34,10 +34,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.gpm.similarity.toLowerCasedTrimmedString
-import fi.iki.ede.gpmui.DataModelIF
 import fi.iki.ede.gpmui.R
 import fi.iki.ede.gpmui.TestTag
-import fi.iki.ede.gpmui.getFakeDataModel
 import fi.iki.ede.gpmui.models.ImportGPMViewModel
 import fi.iki.ede.gpmui.models.SearchTarget
 import fi.iki.ede.gpmui.testTag
@@ -45,10 +43,7 @@ import fi.iki.ede.theme.TextualCheckbox
 import java.util.regex.PatternSyntaxException
 
 @Composable
-fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesControls(
-    datamodel: DataModelIF,
-    viewModel: ImportGPMViewModel,
-) {
+fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesControls(viewModel: ImportGPMViewModel) {
     val isWorkingAndProgress by viewModel.isWorkingAndProgress.observeAsState(false to null as Float?)
     val searchPasswords = remember { mutableStateOf(ToggleableState.Indeterminate) }
     val searchGPMs = remember { mutableStateOf(ToggleableState.Off) }
@@ -236,7 +231,6 @@ fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesControls(
             ) { checked ->
                 if (checked) {
                     viewModel.launchMatchingNameSearchAndResetDisplayLists(
-                        datamodel,
                         similarityScore.toDouble() / 100
                     )
                 } else {
@@ -252,11 +246,9 @@ fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesControls(
 @Preview(showBackground = true)
 @Composable
 fun ImportControlsPreview() {
-    val fakeModel = getFakeDataModel()
 
-    val fakeViewModel = ImportGPMViewModel(fakeModel).apply {
-    }
+    val fakeViewModel = ImportGPMViewModel().apply {}
     MaterialTheme {
-        AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesControls(fakeModel, fakeViewModel)
+        AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesControls(fakeViewModel)
     }
 }

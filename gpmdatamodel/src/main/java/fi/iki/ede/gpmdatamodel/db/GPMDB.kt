@@ -1,4 +1,4 @@
-package fi.iki.ede.gpmui.db
+package fi.iki.ede.gpmdatamodel.db
 
 import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase

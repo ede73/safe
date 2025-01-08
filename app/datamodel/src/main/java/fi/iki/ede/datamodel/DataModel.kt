@@ -1,12 +1,12 @@
 package fi.iki.ede.datamodel
 
+import android.content.Context
 import android.util.Log
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.db.DBID
-import fi.iki.ede.gpmui.models.GPMDataModel
 import fi.iki.ede.preferences.Preferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -243,7 +243,7 @@ object DataModel {
         Preferences.storeAllExtensions(getAllSiteEntryExtensions().keys)
     }
 
-    suspend fun loadFromDatabase() {
+    suspend fun loadFromDatabase(loadExternalDatabases: () -> Unit) {
         _categoriesStateFlow.value = emptyList()
         _siteEntriesStateFlow.value = emptyList()
         _softDeletedStateFlow.value = emptySet()
@@ -288,10 +288,6 @@ object DataModel {
                         }
                     storeAllExtensionsToPreferences()
                 }
-                // TODO: REMOVE, let GPMDataModel handle this, aint our business
-                val gpms = async {
-                    GPMDataModel.syncLoadAllSavedGPMs()
-                }
                 launch { syncLoadSoftDeletedSiteEntries() }
                 awaitAll(cats, sites)
 
@@ -300,14 +296,7 @@ object DataModel {
                         dumpStrayCategoriesSiteEntries()
                     }
                 }
-
-                launch {
-                    // TODO: REMOVE, let GPMDataModel handle this, aint our business
-                    gpms.await()
-                    // we can load these in the background, not critical
-                    // TODO: REMOVE, let GPMDataModel handle this, aint our business
-                    GPMDataModel.syncLoadLinkedGPMs()
-                }
+                loadExternalDatabases()
             }
         }
     }
@@ -364,7 +353,7 @@ object DataModel {
             .flatMap { it.plainExtensions.entries }
             .groupBy({ it.key }, { it.value })
             .mapValues { (_, values) -> values.flatten().filterNot(String::isBlank).toSet() }
-
+    
     private const val TAG = "DataModel"
 }
 
