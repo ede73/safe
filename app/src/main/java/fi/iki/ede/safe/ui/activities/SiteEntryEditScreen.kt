@@ -40,62 +40,74 @@ import fi.iki.ede.safe.ui.composable.TryPersistSiteEntryChanges
 import fi.iki.ede.safe.ui.models.EditableSiteEntry
 import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.testTag
+import fi.iki.ede.safe.ui.utilities.MeasureTime
 import fi.iki.ede.theme.SafeButton
 import fi.iki.ede.theme.SafeTheme
 import java.time.ZonedDateTime
+import kotlin.time.Duration.Companion.milliseconds
+
 
 class SiteEntryEditScreen :
     AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        MeasureTime("SiteEntryEditScreen.onCreate").apply {
+            val encrypter = KeyStoreHelperFactory.getEncrypter()
+            val viewModel: EditingSiteEntryViewModel by viewModels()
+            lap("view model")
 
-        val encrypter = KeyStoreHelperFactory.getEncrypter()
+            if (savedInstanceState == null) {
+                if (intent.hasExtra(SITE_ENTRY_ID)) {
+                    // Edit a password
+                    val siteEntryId = intent.getLongExtra(SITE_ENTRY_ID, -1L)
+                    require(siteEntryId != -1L) { "Password must be value and exist" }
+                    viewModel.editSiteEntry(DataModel.getSiteEntry(siteEntryId))
+                    lap("extract site entry id")
+                } else if (intent.hasExtra(CATEGORY_ID)) {
+                    // Add a new siteentry
+                    val categoryId = intent.getLongExtra(CATEGORY_ID, -1L)
+                    require(categoryId != -1L) { "Category must be a value and exist" }
 
-        val viewModel: EditingSiteEntryViewModel by viewModels()
+                    val passwordLength =
+                        this@SiteEntryEditScreen.resources.getInteger(R.integer.password_default_length)
+                    // new password - auto gen proper pwd
+                    val newPassword = PasswordGenerator.genPassword(
+                        passUpper = true,
+                        passLower = true,
+                        passNum = true,
+                        passSymbols = true,
+                        length = passwordLength
+                    )
 
-        if (savedInstanceState == null) {
-            if (intent.hasExtra(SITE_ENTRY_ID)) {
-                // Edit a password
-                val siteEntryId = intent.getLongExtra(SITE_ENTRY_ID, -1L)
-                require(siteEntryId != -1L) { "Password must be value and exist" }
-                viewModel.editSiteEntry(DataModel.getSiteEntry(siteEntryId))
-            } else if (intent.hasExtra(CATEGORY_ID)) {
-                // Add a new siteentry
-                val categoryId = intent.getLongExtra(CATEGORY_ID, -1L)
-                require(categoryId != -1L) { "Category must be a value and exist" }
-
-                val passwordLength = this.resources.getInteger(R.integer.password_default_length)
-                // new password - auto gen proper pwd
-                val newPassword = PasswordGenerator.genPassword(
-                    passUpper = true,
-                    passLower = true,
-                    passNum = true,
-                    passSymbols = true,
-                    length = passwordLength
-                )
-
-                viewModel.addPassword(
-                    newPassword.encrypt(encrypter),
-                    categoryId,
-                    Preferences.getDefaultUserName().encrypt(encrypter)
-                )
-            } else {
-                require(true) { "Must have siteEntry or category ID" }
+                    viewModel.addPassword(
+                        newPassword.encrypt(encrypter),
+                        categoryId,
+                        Preferences.getDefaultUserName().encrypt(encrypter)
+                    )
+                    lap("make new password entry")
+                } else {
+                    require(true) { "Must have siteEntry or category ID" }
+                }
             }
-        }
 
-        val editingSiteEntryId = intent.getLongExtra(SITE_ENTRY_ID, -1L)
+            val editingSiteEntryId = intent.getLongExtra(SITE_ENTRY_ID, -1L)
 
-        SetupNotifications.setup(this)
-        setContent {
-            SiteEntryEditCompose(
-                viewModel,
-                editingSiteEntryId.takeIf { it != -1L },
-                ::resolveEditsAndChangedSiteEntry,
-                ::setResult,
-                ::finishActivity
-            )
+            SetupNotifications.setup(this@SiteEntryEditScreen)
+            lap("set up notifications")
+
+            setContent {
+                SiteEntryEditCompose(
+                    viewModel,
+                    editingSiteEntryId.takeIf { it != -1L },
+                    ::resolveEditsAndChangedSiteEntry,
+                    ::setResult,
+                    ::finishActivity
+                )
+                // let's ensure we log in debug mode a proper error if screen load is too slow
+                // (bit rot had set it)
+                lap("launch SiteEntryEditCompose", 600.milliseconds)
+            }
         }
     }
 

@@ -38,6 +38,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -82,7 +83,9 @@ import fi.iki.ede.theme.SafeButton
 import fi.iki.ede.theme.SafeTextButton
 import fi.iki.ede.theme.SafeTheme
 import fi.iki.ede.theme.TextualCheckbox
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.ZonedDateTime
 
 inline fun <T, C : Collection<T>> C.ifNotEmpty(block: (C) -> Unit): C {
@@ -127,6 +130,7 @@ fun SiteEntryView(
             showCustomPasswordGenerator = false
         }
     }
+
     Column(
         modifier = Modifier.verticalScroll(rememberScrollState())
     ) {
@@ -149,6 +153,7 @@ fun SiteEntryView(
                 viewModel.updatePasswordChangedDate(ZonedDateTime.now())
             }
         }
+
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             Spacer(Modifier.weight(1f))
             TextField(
@@ -164,6 +169,7 @@ fun SiteEntryView(
                 colors = hideFocusLine,
             )
         }
+
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             val website = passEntry.website
             SafeButton(
@@ -194,6 +200,7 @@ fun SiteEntryView(
                 colors = hideFocusLine,
             )
         }
+
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             SafeButton(
                 onClick = {
@@ -224,6 +231,7 @@ fun SiteEntryView(
                 highlight = false,
             )
         }
+
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             val text = buildAnnotatedString {
                 append(stringResource(id = R.string.password_entry_highlight_hint))
@@ -244,6 +252,7 @@ fun SiteEntryView(
                 style = safeTheme.customFonts.smallNote,
             )
         }
+
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             // some sites required OLD password AND new password (even if you are already
             // logged in and hence clearly knowledgeable of the old password), to avoid copy
@@ -315,6 +324,7 @@ fun SiteEntryView(
             )
             passwordWasUpdated = false
         }
+
         Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
             if (!skipForPreviewToWork) {
                 breachCheckButton(context, passEntry.password)()
@@ -410,6 +420,7 @@ fun SiteEntryView(
                 }
             )
         }
+
         if (showLinkedInfo != null) {
             ShowLinkedGpmsDialog(showLinkedInfo!!, onDismiss = { showLinkedInfo = null })
         }
@@ -529,14 +540,18 @@ fun SiteEntryExtensionList(
     viewModel: EditingSiteEntryViewModel,
 ) {
     // TODO: NONO..flow!
-    val allExtensions = DataModel.getAllSiteEntryExtensions()
+    val allExtensions = produceState<Map<String, Set<String>>?>(initialValue = null) {
+        value = withContext(Dispatchers.IO) {
+            DataModel.getAllSiteEntryExtensions()
+        }
+    }.value
 
     VerticalCollapsible(stringResource(id = R.string.site_entry_extension_collapsible)) {
         Preferences.getAllExtensions().sortedBy { it }.forEach {
             Column {
                 SiteEntryExtensionSelector(
                     viewModel,
-                    allExtensions.getOrDefault(it, emptySet()),
+                    allExtensions?.getOrDefault(it, emptySet()) ?: emptySet(),
                     it
                 )
             }
