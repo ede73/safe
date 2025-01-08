@@ -32,6 +32,7 @@ class FirebaseLoggingTest {
         unmockkStatic(FirebaseCrashlytics::class)
     }
 
+    @Suppress("SameReturnValue", "Yes, intentionally, this is a method that throws")
     private fun throwException(): Int {
         // just to fool linter static analysis
         val x = Math.random()

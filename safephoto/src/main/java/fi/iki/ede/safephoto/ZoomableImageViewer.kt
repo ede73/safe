@@ -1,6 +1,5 @@
 package fi.iki.ede.safephoto
 
-import android.R
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -98,7 +97,7 @@ fun ZoomableImageViewerPreview() {
             ZoomableImageViewer(
                 bitmap = getBitmapFromVectorDrawable(
                     context,
-                    R.drawable.ic_delete
+                    android.R.drawable.ic_delete
                 )
             )
         }

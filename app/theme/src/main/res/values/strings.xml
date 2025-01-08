@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="just_preview_text">This is a sample text</string>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- this is just for code preview, we dont need translations -->
+    <string name="just_preview_text" tools:ignore="MissingTranslation">This is a sample text</string>
 </resources>

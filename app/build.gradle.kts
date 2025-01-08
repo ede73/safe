@@ -326,8 +326,9 @@ tasks.configureEach {
             // UNIT TESTS
             dependsOn(
                 "testDebugUnitTest",
-                ":app:db:testDebugUnitTest",
+                ":app:backup:testDebugUnitTest",
                 ":app:cryptoobjects:testDebugUnitTest",
+                ":app:db:testDebugUnitTest",
                 ":app:preferences:testDebugUnitTest",
                 ":app:theme:testDebugUnitTest",
                 ":autolock:testDebugUnitTest",

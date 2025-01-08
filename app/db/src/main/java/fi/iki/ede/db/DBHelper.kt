@@ -427,6 +427,7 @@ class DBHelper(
             "0"
         }
 
+        @Suppress("SameParameterValue", "yes, for now version2 is always 3.55.5")
         private fun compareSqliteVersions(version1: String, version2: String): Int {
             val parts1 = version1.split(".")
             val parts2 = version2.split(".")

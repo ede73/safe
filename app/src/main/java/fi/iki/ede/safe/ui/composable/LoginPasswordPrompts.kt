@@ -71,12 +71,12 @@ fun LoginPasswordPrompts(
 //    )
     val color = animateColorAsState(
         targetValue = if (wrongPassword) Color.Red else Color.Transparent,
-        animationSpec = tween(durationMillis = 500)
+        animationSpec = tween(durationMillis = 500), label = ""
     )
 
     val shake = animateDpAsState(
         targetValue = if (wrongPassword) 10.dp else 0.dp,
-        animationSpec = tween(durationMillis = 50)
+        animationSpec = tween(durationMillis = 50), label = ""
     )
     Column {
         Text(text = stringResource(id = R.string.login_tip))

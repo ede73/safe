@@ -32,7 +32,7 @@ fun Cursor.getIVCipher(column: TableColumns<*>) =
         getBlob(getColumnIndexOrThrow(column.columnName)) ?: byteArrayOf(),
     )
 
-fun Cursor.getString(column: TableColumns<*>) =
+fun Cursor.getString(column: TableColumns<*>): String =
     getString(getColumnIndexOrThrow(column.columnName))
 
 fun Cursor.getDBID(column: TableColumns<*>) =

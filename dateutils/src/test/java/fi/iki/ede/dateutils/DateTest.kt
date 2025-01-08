@@ -7,7 +7,7 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 class DateTest {
-
+    @Suppress("SameParameterValue", "sigh, unixTimestamp, same value suppress")
     private fun unixTimestampToZonedDateTime(unixTimestamp: Long, zoneId: ZoneId): ZonedDateTime {
         val startOfDay = Instant.ofEpochMilli(unixTimestamp)
             .atZone(zoneId)

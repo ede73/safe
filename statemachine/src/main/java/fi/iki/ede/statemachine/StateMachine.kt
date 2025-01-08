@@ -1,5 +1,6 @@
 package fi.iki.ede.statemachine
 
+import android.annotation.SuppressLint
 import androidx.compose.runtime.Composable
 
 
@@ -60,6 +61,7 @@ class StateMachine(currentState: State) : MainStateMachine(currentState) {
     }
 
     companion object {
+        @SuppressLint("ComposableNaming", "Need different name not clash with non-compose API")
         @Composable
         fun Create(initialState: State, init: StateMachine.() -> Unit): StateMachine =
             StateMachine(initialState).apply(init).also {
