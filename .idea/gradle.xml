@@ -14,6 +14,7 @@
             <option value="$PROJECT_DIR$/app/SafeLinter" />
             <option value="$PROJECT_DIR$/app/backup" />
             <option value="$PROJECT_DIR$/app/cryptoobjects" />
+            <option value="$PROJECT_DIR$/app/datamodel" />
             <option value="$PROJECT_DIR$/app/db" />
             <option value="$PROJECT_DIR$/app/preferences" />
             <option value="$PROJECT_DIR$/app/theme" />

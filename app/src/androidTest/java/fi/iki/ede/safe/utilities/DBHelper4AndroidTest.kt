@@ -7,11 +7,11 @@ import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.db.DBID
 import fi.iki.ede.gpmui.db.GPMDB
-import fi.iki.ede.safe.model.DataModel
 import kotlinx.coroutines.runBlocking
 
 object DBHelper4AndroidTest {

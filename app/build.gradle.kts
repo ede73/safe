@@ -246,6 +246,7 @@ dependencies {
     implementation(project(":crypto"))
     implementation(project(":app:preferences"))
     implementation(project(":app:theme"))
+    implementation(project(":app:datamodel"))
     implementation(project(":dateutils"))
     implementation(project(":autolock"))
     implementation(project(":statemachine"))

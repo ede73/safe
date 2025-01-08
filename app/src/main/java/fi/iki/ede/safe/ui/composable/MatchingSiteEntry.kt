@@ -26,10 +26,10 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.datamodel.DataModel
+import fi.iki.ede.datamodel.DataModel.getCategory
 import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.model.DataModel
-import fi.iki.ede.safe.model.DataModel.getCategory
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.dialogs.DeleteSiteEntryDialog
 import fi.iki.ede.safe.ui.dialogs.MoveSiteEntryDialog

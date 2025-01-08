@@ -10,10 +10,10 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.db.DBID
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.notifications.SetupNotifications
 import fi.iki.ede.safe.password.PasswordGenerator
 import fi.iki.ede.safe.ui.AutolockingFeaturesImpl

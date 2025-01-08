@@ -54,6 +54,9 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
     implementation(libs.androidx.material3.android)
+    implementation(project(":app:datamodel"))
+    implementation(project(":app:datamodel"))
+    implementation(project(":app:datamodel"))
 
     // Bring bouncy castle to unit tests
     testImplementation(libs.bcprov.jdk16)

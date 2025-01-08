@@ -4,9 +4,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.res.stringResource
+import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

@@ -4,10 +4,11 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.datamodel.DataModel
+import fi.iki.ede.datamodel.DataModel.categoriesStateFlow
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.db.DBID
 import fi.iki.ede.gpmui.DataModelIF
-import fi.iki.ede.safe.model.DataModel.categoriesStateFlow
 import fi.iki.ede.safe.splits.IntentManager
 import kotlinx.coroutines.flow.StateFlow
 

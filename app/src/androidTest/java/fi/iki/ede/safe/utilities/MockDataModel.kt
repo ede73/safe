@@ -1,7 +1,7 @@
 package fi.iki.ede.safe.utilities
 
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
-import fi.iki.ede.safe.model.DataModel
+import fi.iki.ede.datamodel.DataModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch

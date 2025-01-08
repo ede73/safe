@@ -2,9 +2,9 @@ package fi.iki.ede.safe
 
 import fi.iki.ede.crypto.KeystoreHelperMock4UnitTests
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.DataModelMocks.mockDataModelFor_UNIT_TESTS_ONLY
-import fi.iki.ede.safe.model.DataModel
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkObject

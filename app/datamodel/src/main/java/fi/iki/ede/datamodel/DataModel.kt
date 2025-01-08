@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.model
+package fi.iki.ede.datamodel
 
 import android.util.Log
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
@@ -8,7 +8,6 @@ import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.db.DBID
 import fi.iki.ede.gpmui.models.GPMDataModel
 import fi.iki.ede.preferences.Preferences
-import fi.iki.ede.safe.BuildConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers

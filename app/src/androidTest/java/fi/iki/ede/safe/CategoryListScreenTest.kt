@@ -13,8 +13,8 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
+import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.preferences.Preferences
-import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.CategoryListScreen
@@ -151,8 +151,9 @@ class CategoryListScreenTest {
             .assertIsDisplayed()
         categoryActivityTestRule.onNodeWithTag(TestTag.CATEGORY_ROW_DELETE)
             .assertIsNotDisplayed()
-        assert(DataModel.categoriesStateFlow.value
-            .find { it.plainName == DBHelper4AndroidTest.DEFAULT_1ST_CATEGORY } != null)
+        assert(
+            DataModel.categoriesStateFlow.value
+                .find { it.plainName == DBHelper4AndroidTest.DEFAULT_1ST_CATEGORY } != null)
         { "Failed to find cancelled deleted category from the DB" }
     }
 

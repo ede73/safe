@@ -11,11 +11,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import fi.iki.ede.backup.BackupDatabase
 import fi.iki.ede.backup.ExportConfig
+import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.gpmui.db.GPMDB
 import fi.iki.ede.gpmui.models.GPMDataModel
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.model.DataModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

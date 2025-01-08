@@ -22,6 +22,7 @@ import fi.iki.ede.autolock.AutoLockingBaseAppCompatActivity
 import fi.iki.ede.autolock.AutolockingService
 import fi.iki.ede.backup.ExportConfig
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.logger.firebaseRecordException
 import fi.iki.ede.preferences.Preferences
@@ -35,7 +36,6 @@ import fi.iki.ede.preferences.Preferences.getAutoBackupRestoreStarts
 import fi.iki.ede.preferences.Preferences.getAutoBackupStarts
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.TestTag

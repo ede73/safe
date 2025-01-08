@@ -64,6 +64,7 @@ dependencies {
     implementation(project(":autolock"))
     implementation(project(":app:cryptoobjects"))
     implementation(project(":app:theme"))
+    implementation(project(":app:datamodel"))
 
     testImplementation(libs.junit)
 
