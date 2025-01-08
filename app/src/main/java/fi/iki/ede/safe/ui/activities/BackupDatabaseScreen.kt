@@ -15,10 +15,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
+import fi.iki.ede.backup.BackupDatabase
+import fi.iki.ede.backup.ExportConfig
+import fi.iki.ede.gpmui.db.GPMDB
+import fi.iki.ede.gpmui.models.GPMDataModel
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.backupandrestore.BackupDatabase
-import fi.iki.ede.safe.backupandrestore.ExportConfig
+import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.composable.setupActivityResultLauncher
 import kotlinx.coroutines.Dispatchers
@@ -70,7 +73,13 @@ private suspend fun initiateBackup(
     uri: Uri,
     completed: () -> Unit,
 ) {
-    BackupDatabase.backup().let { accumulatedStringBuilder: StringBuilder ->
+    BackupDatabase.backup(
+        DataModel.categoriesStateFlow.value,
+        DataModel.softDeletedStateFlow.value,
+        DataModel::getSiteEntriesOfCategory,
+        GPMDB.fetchAllSiteEntryGPMMappings(),
+        GPMDataModel.allSavedGPMsFlow.value.toSet(),
+    ).let { accumulatedStringBuilder: StringBuilder ->
         context.contentResolver.openOutputStream(uri, "wt")?.use { outputStream ->
             outputStream.write(accumulatedStringBuilder.toString().toByteArray())
         }

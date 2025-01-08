@@ -1,8 +1,10 @@
-package fi.iki.ede.safe.backupandrestore
+package fi.iki.ede.backup
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
+import fi.iki.ede.backup.ExportConfig.Companion.Attributes
+import fi.iki.ede.backup.ExportConfig.Companion.Elements
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
@@ -18,13 +20,8 @@ import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBID
 import fi.iki.ede.gpm.model.SavedGPM
-import fi.iki.ede.gpmui.db.GPMDB
 import fi.iki.ede.logger.firebaseRecordException
 import fi.iki.ede.preferences.Preferences
-import fi.iki.ede.safe.BuildConfig
-import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Attributes
-import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Elements
-import fi.iki.ede.safe.model.LoginHandler
 import kotlinx.coroutines.CancellationException
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
@@ -48,8 +45,11 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         backup: String,
         userPassword: Password,
         dbHelper: DBHelper,
+        linkSaveGPMAndSiteEntry: (DBID, DBID) -> Unit,
+        addSavedGPM: (SavedGPM) -> Unit,
+        passwordLogin: (context: Context, password: Password) -> Boolean,
         reportProgress: (categories: Int?, passwords: Int?, message: String?) -> Unit,
-        verifyUserWantForOldBackup: (backupCreated: ZonedDateTime, lastBackupDone: ZonedDateTime) -> Boolean
+        verifyUserWantForOldBackup: (backupCreated: ZonedDateTime, lastBackupDone: ZonedDateTime) -> Boolean,
     ): Int {
         reportProgress(null, null, "Begin restoration")
         val myParser = XmlPullParserFactory.newInstance().newPullParser()
@@ -76,10 +76,12 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                 dbHelper,
                 db,
                 myParser,
+                linkSaveGPMAndSiteEntry,
+                addSavedGPM,
                 verifyUserWantForOldBackup,
                 reportProgress,
             )
-            LoginHandler.passwordLogin(context, userPassword)
+            passwordLogin(context, userPassword)
             reportProgress(null, null, "Finished with backup")
             return passwords
         } catch (ex: Exception) {
@@ -121,6 +123,8 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         dbHelper: DBHelper,
         db: SQLiteDatabase,
         myParser: XmlPullParser,
+        linkSaveGPMAndSiteEntry: (DBID, DBID) -> Unit,
+        addSavedGPM: (SavedGPM) -> Unit,
         verifyOldBackupRestoration: (backupCreated: ZonedDateTime, lastBackupDone: ZonedDateTime) -> Boolean,
         reportProgress: (categories: Int?, passwords: Int?, message: String?) -> Unit,
     ): Int {
@@ -366,7 +370,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                             gpmLinkedToDeletedSiteEntries.getOrPut(gpmId) { mutableSetOf() }
                                                 .add(passwordId)
                                         } else {
-                                            GPMDB.linkSaveGPMAndSiteEntry(passwordId, gpmId)
+                                            linkSaveGPMAndSiteEntry(passwordId, gpmId)
                                         }
                                     }
                                 }
@@ -381,7 +385,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                     val newId = dbHelper.addSiteEntry(deletedSiteEntry)
                                     gpmLinkedToDeletedSiteEntries.forEach { gpmId, deletedSiteEntryIds ->
                                         if (oldId in deletedSiteEntryIds) {
-                                            GPMDB.linkSaveGPMAndSiteEntry(newId, gpmId)
+                                            linkSaveGPMAndSiteEntry(newId, gpmId)
                                         }
                                     }
                                 } catch (ex: Exception) {
@@ -431,7 +435,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             // if GPM is linked to a deleted site entry,
                             // we don't know yet the ID, since link is done in affiliation table
                             // the code resilience code is in linkSaveGPMAndSiteEntry above
-                            GPMDB.addSavedGPM(readGPM)
+                            addSavedGPM(readGPM)
                             readGPM = null
                         }
                     }

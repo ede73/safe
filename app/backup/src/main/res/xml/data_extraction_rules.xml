@@ -14,6 +14,9 @@
             path="safe" />
         <include
             domain="sharedpref"
+            path="fi.iki.ede.safe.preferences.xml" />
+        <include
+            domain="sharedpref"
             path="fi.iki.ede.safe.debug_preferences.xml" />
     </cloud-backup>
     <device-transfer>
@@ -23,6 +26,9 @@
         <include
             domain="database"
             path="safe" />
+        <include
+            domain="sharedpref"
+            path="fi.iki.ede.safe.preferences.xml" />
         <include
             domain="sharedpref"
             path="fi.iki.ede.safe.debug_preferences.xml" />

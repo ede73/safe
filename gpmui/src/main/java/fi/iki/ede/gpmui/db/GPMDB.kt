@@ -72,6 +72,7 @@ object GPMDB {
             }).let { Log.w(TAG, "DBLinker $siteEntryID to $savedGPMID") }
         }
 
+    // TODO: block external access! Should only be accessed via datamodel
     fun fetchAllSiteEntryGPMMappings(): Map<DBID, Set<DBID>> =
         getReadableDatabase().let { db ->
             db.query(

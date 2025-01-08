@@ -9,11 +9,13 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import fi.iki.ede.backup.RestoreDatabase
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelperFactory
+import fi.iki.ede.gpmui.db.GPMDB
 import fi.iki.ede.safe.R
-import fi.iki.ede.safe.backupandrestore.RestoreDatabase
+import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.ui.dialogs.restoreOldBackupDialog
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
@@ -81,6 +83,9 @@ fun RestoreDatabaseComponent(
                     String(stream.readBytes()),
                     backupPassword,
                     dbHelper,
+                    GPMDB::linkSaveGPMAndSiteEntry,
+                    GPMDB::addSavedGPM,
+                    LoginHandler::passwordLogin,
                     { categories: Int?, passwords: Int?, message: String? ->
                         categories?.let {
                             processedCategories.intValue = it

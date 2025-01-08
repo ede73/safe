@@ -1,18 +1,18 @@
-package fi.iki.ede.safe.backupandrestore
+package fi.iki.ede.backup
 
 import android.text.TextUtils
 import android.util.Log
+import fi.iki.ede.backup.ExportConfig.Companion.Attributes
+import fi.iki.ede.backup.ExportConfig.Companion.Elements
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.toHexString
+import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
+import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelperFactory
-import fi.iki.ede.gpmui.db.GPMDB
-import fi.iki.ede.gpmui.models.GPMDataModel
-import fi.iki.ede.safe.BuildConfig
-import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Attributes
-import fi.iki.ede.safe.backupandrestore.ExportConfig.Companion.Elements
-import fi.iki.ede.safe.model.DataModel
+import fi.iki.ede.db.DBID
+import fi.iki.ede.gpm.model.SavedGPM
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -29,7 +29,13 @@ import java.time.ZonedDateTime
  * Make sure to increase the version code. Linter will highlight places to fix
  */
 class BackupDatabase : ExportConfig(ExportVersion.V1) {
-    fun generateXMLExport(): String {
+    fun generateXMLExport(
+        categoriesList: List<DecryptableCategoryEntry>,
+        softDeletedEntries: Set<DecryptableSiteEntry>,
+        siteEntryGPMMappings: Map<DBID, Set<DBID>>,
+        allSavedGPMs: Set<SavedGPM>,
+        getSiteEntriesOfCategory: (categoryId: DBID) -> List<DecryptableSiteEntry>
+    ): String {
         val serializer = XmlPullParserFactory.newInstance().newSerializer()
         val xmlStringWriter = StringWriter()
         serializer.setOutput(xmlStringWriter)
@@ -46,15 +52,15 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
                 ).toString()
             )
 
-        for (category in DataModel.categoriesStateFlow.value) {
+        for (category in categoriesList) {
             serializer.startTagWithIVCipherAttribute(
                 Elements.CATEGORY,
                 makePair(Attributes.CATEGORY_NAME, category.encryptedName)
             )
-            for (encryptedPassword in DataModel.getSiteEntriesOfCategory(category.id!!)) {
+            for (encryptedPassword in getSiteEntriesOfCategory(category.id!!)) {
                 serializer.writeSiteEntry(encryptedPassword)
             }
-            DataModel.softDeletedStateFlow.value.toSet().forEach { deletedPassword ->
+            softDeletedEntries.toSet().forEach { deletedPassword ->
                 serializer.writeSiteEntry(deletedPassword)
             }
             serializer.endTag(Elements.CATEGORY)
@@ -62,17 +68,15 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
 
         // dump all imported passwords!
         // TODO: use datamodel! (proper channels)
-        val gpms = GPMDataModel.allSavedGPMsFlow.value.toSet()
-        if (gpms.isNotEmpty()) {
+        if (allSavedGPMs.isNotEmpty()) {
             serializer.startTag(Elements.IMPORTS)
             val gpmIdToSiteEntry =
                 // TODO: use datamodel!
-                GPMDB.fetchAllSiteEntryGPMMappings()
-                    .flatMap { (a, bSet) -> bSet.map { b -> b to a } }
+                siteEntryGPMMappings.flatMap { (a, bSet) -> bSet.map { b -> b to a } }
                     .groupBy({ it.first }, { it.second })
                     .mapValues { (_, v) -> v.toSet() }
             serializer.startTag(Elements.IMPORTS_GPM)
-            gpms.forEach { savedGPM ->
+            allSavedGPMs.forEach { savedGPM ->
                 serializer.writeGPMEntry(
                     savedGPM,
                     gpmIdToSiteEntry.getOrDefault(savedGPM.id!!, emptySet())
@@ -109,8 +113,22 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
         const val TAG = "Backup"
         const val MIME_TYPE_BACKUP = "text/xml"
 
-        suspend fun backup() = flow<ByteArray> {
-            emit(BackupDatabase().generateXMLExport().toByteArray())
+        suspend fun backup(
+            categoriesList: List<DecryptableCategoryEntry>,
+            softDeletedEntries: Set<DecryptableSiteEntry>,
+            getSiteEntriesOfCategory: (categoryId: DBID) -> List<DecryptableSiteEntry>,
+            siteEntryGPMMappings: Map<DBID, Set<DBID>>,
+            allSavedGPMs: Set<SavedGPM>,
+        ) = flow<ByteArray> {
+            emit(
+                BackupDatabase().generateXMLExport(
+                    categoriesList,
+                    softDeletedEntries,
+                    siteEntryGPMMappings,
+                    allSavedGPMs,
+                    getSiteEntriesOfCategory
+                ).toByteArray()
+            )
         }.transform<ByteArray, IVCipherText> { ba ->
             val encrypter = KeyStoreHelperFactory.getEncrypter()
             emit(encrypter(ba))

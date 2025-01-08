@@ -19,13 +19,8 @@
 
     <application
         android:name=".SafeApplication"
-        android:allowBackup="true"
         android:allowClearUserData="true"
-        android:backupAgent=".backupandrestore.MyBackupAgent"
-        android:dataExtractionRules="@xml/data_extraction_rules"
         android:enableOnBackInvokedCallback="true"
-        android:fullBackupContent="@xml/backup_rules"
-        android:fullBackupOnly="true"
         android:icon="@drawable/ic_launcher_safe"
         android:label="@string/application_name"
         android:theme="@style/Theme.Safe"

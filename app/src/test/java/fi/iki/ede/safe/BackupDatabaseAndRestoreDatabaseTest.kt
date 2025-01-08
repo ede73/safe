@@ -5,6 +5,8 @@ import android.os.Environment
 import android.util.Log
 import com.google.firebase.Firebase
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import fi.iki.ede.backup.BackupDatabase
+import fi.iki.ede.backup.RestoreDatabase
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.KeystoreHelperMock4UnitTests
 import fi.iki.ede.crypto.Password
@@ -15,11 +17,10 @@ import fi.iki.ede.crypto.support.hexToByteArray
 import fi.iki.ede.crypto.support.toHexString
 import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelper
+import fi.iki.ede.gpmui.db.GPMDB
 import fi.iki.ede.gpmui.models.GPMDataModel
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.DataModelMocks.mockDataModelFor_UNIT_TESTS_ONLY
-import fi.iki.ede.safe.backupandrestore.BackupDatabase
-import fi.iki.ede.safe.backupandrestore.RestoreDatabase
 import fi.iki.ede.safe.model.DataModel
 import fi.iki.ede.safe.model.LoginHandler
 import io.mockk.every
@@ -113,6 +114,9 @@ class BackupDatabaseAndRestoreDatabaseTest {
                     PASSWORD_ENCRYPTED_BACKUP_AT_1234,
                     backupPassword,
                     dbHelper,
+                    GPMDB::linkSaveGPMAndSiteEntry,
+                    GPMDB::addSavedGPM,
+                    { _, _ -> true },
                     { _, _, _ -> }
                 ) { thisBackupCreationTime, lastBackupDone ->
                     throw Exception("We should not ask user anything, valid backup!")
@@ -131,7 +135,15 @@ class BackupDatabaseAndRestoreDatabaseTest {
         val count = 1000.0
         Log.d(TAG, "Restore: " + (measureTimeMillis {
             (1..count.toInt()).forEach {
-                runBlocking { BackupDatabase.backup().toString() }
+                runBlocking {
+                    BackupDatabase.backup(
+                        DataModel.categoriesStateFlow.value,
+                        DataModel.softDeletedStateFlow.value,
+                        DataModel::getSiteEntriesOfCategory,
+                        GPMDB.fetchAllSiteEntryGPMMappings(),
+                        GPMDataModel.allSavedGPMsFlow.value.toSet()
+                    ).toString()
+                }
             }
         } / count) + " ms")
 
@@ -148,7 +160,15 @@ class BackupDatabaseAndRestoreDatabaseTest {
     @Test
     fun backupTest() {
         mockZonedDateTimeNow(1234)
-        val out = runBlocking { BackupDatabase.backup().toString() }
+        val out = runBlocking {
+            BackupDatabase.backup(
+                DataModel.categoriesStateFlow.value,
+                DataModel.softDeletedStateFlow.value,
+                DataModel::getSiteEntriesOfCategory,
+                GPMDB.fetchAllSiteEntryGPMMappings(),
+                GPMDataModel.allSavedGPMsFlow.value.toSet()
+            ).toString()
+        }
         unmockkStatic(ZonedDateTime::class)
         Log.d(TAG, out)
         Assert.assertEquals(
@@ -187,7 +207,15 @@ class BackupDatabaseAndRestoreDatabaseTest {
             )
         )
 
-        val out = runBlocking { BackupDatabase.backup().toString() }
+        val out = runBlocking {
+            BackupDatabase.backup(
+                DataModel.categoriesStateFlow.value,
+                DataModel.softDeletedStateFlow.value,
+                DataModel::getSiteEntriesOfCategory,
+                GPMDB.fetchAllSiteEntryGPMMappings(),
+                GPMDataModel.allSavedGPMsFlow.value.toSet()
+            ).toString()
+        }
         assertEquals(6, out.lines().size)
         unmockkObject(DataModel)
     }
@@ -224,6 +252,9 @@ class BackupDatabaseAndRestoreDatabaseTest {
                     PASSWORD_ENCRYPTED_BACKUP_AT_1234,
                     backupPassword,
                     dbHelper,
+                    GPMDB::linkSaveGPMAndSiteEntry,
+                    GPMDB::addSavedGPM,
+                    { _, _ -> true },
                     { _, _, _ -> }
                 ) { thisBackupCreationTime, lastBackupDone ->
                     askedUser = true
@@ -262,6 +293,9 @@ class BackupDatabaseAndRestoreDatabaseTest {
             PASSWORD_ENCRYPTED_BACKUP_AT_1234,
             backupPassword,
             dbHelper,
+            GPMDB::linkSaveGPMAndSiteEntry,
+            GPMDB::addSavedGPM,
+            { _, _ -> true },
             { _, _, _ -> }
         ) { thisBackupCreationTime, lastBackupDone ->
             throw Exception("We should not ask user anything, valid backup!")
@@ -323,8 +357,22 @@ class BackupDatabaseAndRestoreDatabaseTest {
         // breaking changes, let's have one more - more precise just ensuring the current
         // backup can fully be restored in the exact condition it is described in XML
         mockkConstructor(BackupDatabase::class)
-        every { anyConstructed<BackupDatabase>().generateXMLExport() } returns TOP_LAYER_UNENCRYPTED_BACKUP_XML.trim()
-        val finalOutput = runBlocking { BackupDatabase.backup().toString() }
+        every {
+            anyConstructed<BackupDatabase>().generateXMLExport(
+                any(),
+                any(),
+                any(), any(), any()
+            )
+        } returns TOP_LAYER_UNENCRYPTED_BACKUP_XML.trim()
+        val finalOutput = runBlocking {
+            BackupDatabase.backup(
+                DataModel.categoriesStateFlow.value,
+                DataModel.softDeletedStateFlow.value,
+                DataModel::getSiteEntriesOfCategory,
+                GPMDB.fetchAllSiteEntryGPMMappings(),
+                GPMDataModel.allSavedGPMsFlow.value.toSet()
+            ).toString()
+        }
         unmockkConstructor(BackupDatabase::class)
 
         val r = RestoreDatabase()
@@ -335,6 +383,9 @@ class BackupDatabaseAndRestoreDatabaseTest {
             finalOutput,
             backupPassword,
             dbHelper,
+            GPMDB::linkSaveGPMAndSiteEntry,
+            GPMDB::addSavedGPM,
+            { _, _ -> true },
             { _, _, _ -> }
         ) { thisBackupCreationTime, lastBackupDone ->
             throw Exception("We should not ask user anything, valid backup!")

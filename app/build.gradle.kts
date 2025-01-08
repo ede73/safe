@@ -240,6 +240,7 @@ composeCompiler {
 dependencies {
     implementation(project(":app:cryptoobjects"))
     implementation(project(":app:db"))
+    implementation(project(":app:backup"))
     implementation(project(":gpmui"))
     lintChecks(project(":app:SafeLinter"))
     implementation(project(":crypto"))

@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.backupandrestore
+package fi.iki.ede.backup
 
 import android.content.Intent
 import fi.iki.ede.preferences.Preferences
