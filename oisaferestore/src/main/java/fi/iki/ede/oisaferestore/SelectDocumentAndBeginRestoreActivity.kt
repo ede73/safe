@@ -14,13 +14,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
+import fi.iki.ede.autolock.AutolockingFeaturesImpl
 import fi.iki.ede.backup.ExportConfig
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.splits.IntentManager
-import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.composable.AskBackupPasswordAndCommence
 import kotlinx.coroutines.runBlocking
 

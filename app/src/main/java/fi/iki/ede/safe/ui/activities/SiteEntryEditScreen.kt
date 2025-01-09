@@ -6,6 +6,7 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
+import fi.iki.ede.autolock.AutolockingFeaturesImpl
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.encrypt
@@ -16,7 +17,6 @@ import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.notifications.SetupNotifications
 import fi.iki.ede.safe.password.PasswordGenerator
-import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.composable.SiteEntryEditCompose
 import fi.iki.ede.safe.ui.models.EditableSiteEntry
 import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
@@ -36,12 +36,13 @@ class SiteEntryEditScreen :
             val viewModel: EditingSiteEntryViewModel by viewModels()
             lap("view model")
 
+            val editingSiteEntryId = intent.getLongExtra(SITE_ENTRY_ID, -1L)
+
             if (savedInstanceState == null) {
                 if (intent.hasExtra(SITE_ENTRY_ID)) {
                     // Edit a password
-                    val siteEntryId = intent.getLongExtra(SITE_ENTRY_ID, -1L)
-                    require(siteEntryId != -1L) { "Password must be value and exist" }
-                    viewModel.editSiteEntry(DataModel.getSiteEntry(siteEntryId))
+                    require(editingSiteEntryId != -1L) { "Password must be value and exist" }
+                    viewModel.editSiteEntry(DataModel.getSiteEntry(editingSiteEntryId))
                     lap("extract site entry id")
                 } else if (intent.hasExtra(CATEGORY_ID)) {
                     // Add a new siteentry
@@ -69,8 +70,6 @@ class SiteEntryEditScreen :
                     require(true) { "Must have siteEntry or category ID" }
                 }
             }
-
-            val editingSiteEntryId = intent.getLongExtra(SITE_ENTRY_ID, -1L)
 
             SetupNotifications.setup(this@SiteEntryEditScreen)
             lap("set up notifications")

@@ -7,7 +7,7 @@ interface AutoLockingFeatures {
     fun lockApplication(context: Context)
     fun startLoginScreen(context: Context)
     fun isLoggedIn(): Boolean
-    fun isThisLoginScreen(componentActivity: ComponentActivity): Boolean
     fun startEditSiteEntry(context: Context, siteEntryID: Long)
+    fun isThisLoginScreen(componentActivity: ComponentActivity): Boolean
 }
 

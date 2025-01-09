@@ -9,6 +9,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import fi.iki.ede.autolock.AutolockingFeaturesImpl
 import fi.iki.ede.autolock.AutolockingService
 import fi.iki.ede.backup.MyBackupAgent
 import fi.iki.ede.crypto.IVCipherText
@@ -25,7 +26,6 @@ import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.splits.PluginManager
-import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.composable.LoginScreenCompose
 import fi.iki.ede.safe.ui.utilities.startActivityForResults

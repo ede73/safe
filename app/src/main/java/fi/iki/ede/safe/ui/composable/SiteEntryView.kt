@@ -326,13 +326,9 @@ fun SiteEntryView(
                     })
                 passEntry.id?.let { pid ->
                     // TODO: inject from GPMUI rather (yes, gonna be tricky)
-                    val gpms = GPMDataModel.getLinkedGPMs(pid)
-                    gpms.ifNotEmpty {
-                        Box(modifier = Modifier.clickable {
-                            showLinkedInfo = gpms
-                        }) {
-                            Text(text = "Has ${it.size} linked GPMs")
-                        }
+                    GPMDataModel.getLinkedGPMs(pid).ifNotEmpty { gpms ->
+                        Box(modifier = Modifier.clickable { showLinkedInfo = gpms })
+                        { Text(text = "Has ${gpms.size} linked GPMs") }
                     }
                 }
             }

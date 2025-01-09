@@ -2,8 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application>
-        <meta-data
-            android:name="DB:fi.iki.ede.gpmui.db"
-            android:value="GooglePasswordManager,SiteEntry2GooglePasswordManager" />
+        <!-- TODO: android:theme="@style/Theme.Safe.AppCompat" -->
+        <activity
+            android:name="fi.iki.ede.gpmui.activities.ImportNewGpmsScreen"
+            android:exported="false" />
+        <activity
+            android:name="fi.iki.ede.gpmui.activities.AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesScreen"
+            android:exported="false" />
     </application>
 </manifest>

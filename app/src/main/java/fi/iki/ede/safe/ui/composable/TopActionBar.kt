@@ -32,9 +32,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.autolock.AutolockingService
+import fi.iki.ede.gpmui.activities.ImportNewGpmsScreen
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.SafeApplication
-import fi.iki.ede.safe.gpmui.activities.ImportNewGpmsScreen
 import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
 import fi.iki.ede.safe.splits.DropDownMenu
 import fi.iki.ede.safe.splits.IntentManager

@@ -7,7 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
-import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
+import fi.iki.ede.autolock.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.composable.BackupComposable
 
 class BackupDatabaseScreen : AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {

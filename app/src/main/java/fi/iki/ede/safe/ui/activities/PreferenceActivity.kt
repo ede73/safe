@@ -19,6 +19,7 @@ import androidx.preference.PreferenceManager
 import com.google.firebase.Firebase
 import com.google.firebase.crashlytics.crashlytics
 import fi.iki.ede.autolock.AutoLockingBaseAppCompatActivity
+import fi.iki.ede.autolock.AutolockingFeaturesImpl
 import fi.iki.ede.autolock.AutolockingService
 import fi.iki.ede.backup.ExportConfig
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
@@ -37,7 +38,6 @@ import fi.iki.ede.preferences.Preferences.getAutoBackupStarts
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.splits.PluginName
-import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.composable.ExtensionsEditor
 import fi.iki.ede.safe.ui.models.PluginLoaderViewModel

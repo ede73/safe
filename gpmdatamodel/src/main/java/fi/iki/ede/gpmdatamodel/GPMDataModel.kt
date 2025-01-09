@@ -7,6 +7,7 @@ import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpmdatamodel.db.GPMDB
 import fi.iki.ede.logger.firebaseRecordException
+import fi.iki.ede.logger.firebaseTry
 import fi.iki.ede.preferences.Preferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -125,10 +126,13 @@ object GPMDataModel {
     fun getSavedGPM(savedGPMId: DBID): SavedGPM =
         _allSavedGPMsFlow.value.first { it.id == savedGPMId }
 
-    fun getLinkedGPMs(siteEntryID: DBID): Set<SavedGPM> =
+    fun getLinkedGPMs(siteEntryID: DBID): Set<SavedGPM> = firebaseTry {
         _siteEntryToSavedGPMFlow.value.filterKeys { it == siteEntryID }.values.flatten().map {
             getSavedGPM(it)
         }.toSet()
+    }.firebaseCatch {
+        emptySet()
+    }
 
     // TODO: used only while developing? or fixing broken imports?
     fun deleteAllSavedGPMs() {

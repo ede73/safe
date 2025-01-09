@@ -10,6 +10,7 @@ import com.google.android.play.core.splitcompat.SplitCompatApplication
 import com.google.firebase.Firebase
 import com.google.firebase.FirebaseApp
 import com.google.firebase.crashlytics.crashlytics
+import fi.iki.ede.autolock.AutolockingFeaturesImpl
 import fi.iki.ede.autolock.AutolockingService
 import fi.iki.ede.clipboardutils.ClipboardUtils
 import fi.iki.ede.db.DBHelper
@@ -24,6 +25,7 @@ import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.splits.PluginManager.reinitializePlugins
 import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.splits.getEnabledExperiments
+import fi.iki.ede.safe.ui.activities.LoginScreen
 
 private val TAG = "SafeApplication"
 
@@ -55,6 +57,20 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
         Firebase.crashlytics.isCrashlyticsCollectionEnabled = true
 //        throw RuntimeException("Test Crash")
         Preferences.initialize(this)
+
+        // TODO: replace with DI once KMP transform done
+        AutolockingFeaturesImpl.registerCallbacks({ context ->
+            lockTheApplication(context)
+        }, { context ->
+            IntentManager.startLoginScreen(context, openCategoryScreenAfterLogin = false)
+        }, { context, siteEntryID ->
+            IntentManager.startEditSiteEntryScreen(context, siteEntryID)
+        }, {
+            LoginHandler.isLoggedIn()
+        }, { componentActivity ->
+            componentActivity is LoginScreen
+        }
+        )
         DBHelperFactory.initializeDatabase(
             DBHelper(
                 this,

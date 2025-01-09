@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.gpmui.activities
+package fi.iki.ede.gpmui.activities
 
 import android.content.Context
 import android.content.Intent
@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
+import fi.iki.ede.autolock.AutolockingFeaturesImpl
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.gpm.changeset.ImportChangeSet
@@ -28,7 +29,6 @@ import fi.iki.ede.gpmui.composables.ImportGpmCsvComposable
 import fi.iki.ede.gpmui.composables.VisualizeChangeSetPager
 import fi.iki.ede.gpmui.utilities.makeIncomingForTesting
 import fi.iki.ede.gpmui.utilities.makeSavedForTesting
-import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
 import fi.iki.ede.theme.SafeTheme
 
 class ImportNewGpmsScreen :
@@ -48,7 +48,7 @@ class ImportNewGpmsScreen :
                         hasUnlinkedItemsFromPreviousRound
                     ) {
                         // done!
-                        AddIgnoreMergeGpmsAndSiteEntriesScreen.startMe(this)
+                        AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesScreen.startMe(this)
                         finish()
                     }
                 }

@@ -64,13 +64,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.reflect.KFunction2
 
-private const val TAG = "ImportEntryList"
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesList(
     viewModel: ImportGPMViewModel,
-    editSiteEntry: KFunction2<Context, DBID, Unit>
+    editSiteEntry: KFunction2<Context, Long, Unit>
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()

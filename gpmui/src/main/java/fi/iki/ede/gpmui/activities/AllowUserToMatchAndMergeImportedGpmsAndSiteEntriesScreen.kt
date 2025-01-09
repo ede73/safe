@@ -1,4 +1,4 @@
-package fi.iki.ede.safe.gpmui.activities
+package fi.iki.ede.gpmui.activities
 
 import android.content.Context
 import android.content.Intent
@@ -11,14 +11,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
+import fi.iki.ede.autolock.AutolockingFeaturesImpl
+import fi.iki.ede.autolock.AutolockingFeaturesImpl.startEditSiteEntry
 import fi.iki.ede.gpmui.composables.AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesControls
 import fi.iki.ede.gpmui.composables.AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesList
 import fi.iki.ede.gpmui.models.ImportGPMViewModel
-import fi.iki.ede.safe.ui.AutolockingFeaturesImpl
-import fi.iki.ede.safe.ui.AutolockingFeaturesImpl.startEditSiteEntry
 import fi.iki.ede.theme.SafeTheme
 
-class AddIgnoreMergeGpmsAndSiteEntriesScreen :
+class AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesScreen :
     AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
     private val viewModel: ImportGPMViewModel by viewModels()
 
@@ -47,7 +47,7 @@ class AddIgnoreMergeGpmsAndSiteEntriesScreen :
             context.startActivity(
                 Intent(
                     context,
-                    AddIgnoreMergeGpmsAndSiteEntriesScreen::class.java
+                    AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesScreen::class.java
                 )
             )
         }
