@@ -24,14 +24,11 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions { jvmTarget = "21" }
-    kotlin { jvmToolchain(21) }
-    java {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+    kotlinOptions {
+        jvmTarget = "11"
     }
 
     buildFeatures {
@@ -40,14 +37,14 @@ android {
 }
 
 dependencies {
+    implementation(project(":app:cryptoobjects"))
     implementation(project(":crypto"))
 
-    implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.core.ktx)
     implementation(libs.material)
-    implementation(project(":app:cryptoobjects"))
-    testImplementation(libs.junit)
-    testImplementation(libs.mockk)
 
     androidTestImplementation(libs.androidx.test.junit)
+    testImplementation(libs.junit)
+    testImplementation(libs.mockk)
 }

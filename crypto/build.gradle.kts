@@ -26,14 +26,11 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions { jvmTarget = "21" }
-    kotlin { jvmToolchain(21) }
-    java {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+    kotlinOptions {
+        jvmTarget = "11"
     }
 
     testOptions {
@@ -59,25 +56,24 @@ android {
 }
 
 dependencies {
+    implementation(project(":dateutils"))
+
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
     implementation(libs.material)
-    implementation(project(":dateutils"))
-
-    // Bring bouncy castle to unit tests
-    testImplementation(libs.bcprov.jdk16)
-    testImplementation(libs.junit)
-    testImplementation(libs.kxml2)
-    testImplementation(libs.mockk)
 
     androidTestImplementation(libs.androidx.test.rules)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.uiautomator)
     androidTestImplementation(libs.mockk.agent)
     androidTestImplementation(libs.mockk.android)
-
-    testFixturesImplementation(libs.mockk)
     testFixturesImplementation(libs.kotlin.stdlib)
+    testFixturesImplementation(libs.mockk)
+    // Bring bouncy castle to unit tests
+    testImplementation(libs.bcprov.jdk16)
+    testImplementation(libs.junit)
+    testImplementation(libs.kxml2)
+    testImplementation(libs.mockk)
 }
 
 tasks.withType<Test> {

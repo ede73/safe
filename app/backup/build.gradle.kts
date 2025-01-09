@@ -36,19 +36,20 @@ android {
 }
 
 dependencies {
-
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    implementation(project(":gpm"))
     implementation(project(":app:cryptoobjects"))
+    implementation(project(":app:db"))
     implementation(project(":app:preferences"))
-    implementation(project(":logger"))
     implementation(project(":crypto"))
     implementation(project(":dateutils"))
-    implementation(project(":app:db"))
+    implementation(project(":gpm"))
+    implementation(project(":logger"))
+
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.material)
+
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.test.junit)
     testImplementation(libs.junit)
     testImplementation(libs.kxml2)
-    androidTestImplementation(libs.androidx.test.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
 }

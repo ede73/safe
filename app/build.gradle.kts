@@ -218,14 +218,11 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions { jvmTarget = "21" }
-    kotlin { jvmToolchain(21) }
-    java {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+    kotlinOptions {
+        jvmTarget = "11"
     }
 
     testFixtures {
@@ -238,49 +235,59 @@ composeCompiler {
 }
 
 dependencies {
-    implementation(project(":app:cryptoobjects"))
-    implementation(project(":app:db"))
+    implementation(kotlin("reflect"))
     implementation(project(":app:backup"))
-    implementation(project(":gpmui"))
-    implementation(project(":gpmdatamodel"))
-    lintChecks(project(":app:SafeLinter"))
-    implementation(project(":crypto"))
+    implementation(project(":app:cryptoobjects"))
+    implementation(project(":app:datamodel"))
+    implementation(project(":app:db"))
     implementation(project(":app:preferences"))
     implementation(project(":app:theme"))
-    implementation(project(":app:datamodel"))
-    implementation(project(":dateutils"))
     implementation(project(":autolock"))
-    implementation(project(":statemachine"))
     implementation(project(":clipboardutils"))
-    implementation(project(":notifications"))
-    // cant dynamically filter these out as imports would fail and making stub is too much work..
-    implementation(project(":gpm"))
-    implementation(project(":logger"))
-    implementation(project(":safephoto"))
+    implementation(project(":crypto"))
     implementation(project(":datepicker"))
-    implementation(libs.androidx.camera.core)
-    implementation(libs.androidx.camera.camera2)
-    implementation(libs.app.update.ktx)
+    implementation(project(":dateutils"))
+    implementation(project(":gpm"))
+    implementation(project(":gpmdatamodel"))
+    implementation(project(":gpmui"))
+    implementation(project(":logger"))
+    implementation(project(":notifications"))
+    implementation(project(":safephoto"))
+    implementation(project(":statemachine"))
+
+    lintChecks(project(":app:SafeLinter"))
+
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.biometric.ktx)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.core)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.material.icons.extended.android)
     implementation(libs.androidx.material3.android)
     implementation(libs.androidx.preference.ktx)
     implementation(libs.androidx.runtime.livedata)
-    implementation(libs.kotlinx.coroutines.core)
-
-    // TODO: WHY IS THIS HERE?
-    implementation(libs.androidx.ui.test.junit4.android)
     implementation(libs.androidx.ui.tooling.preview.android)
-    implementation(libs.material)
+    implementation(libs.app.update.ktx)
     implementation(libs.feature.delivery.ktx)
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.material)
+    implementation(libs.androidx.ui.test.junit4.android)
     // Don't convert to catalog declaration, something is broken
     implementation(platform("com.google.firebase:firebase-bom:33.7.0")) // firebase crashlytics
     implementation(libs.firebase.analytics) // firebase crashlytics (breadcrumbs)
     implementation(libs.firebase.crashlytics)
     implementation(libs.kotlinx.serialization.json)
+
+    //androidTestImplementation(libs.androidx.test.junit.ktx)
+    androidTestImplementation(libs.androidx.monitor)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.rules)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.uiautomator)
+    androidTestImplementation(libs.mockk.agent)
+    androidTestImplementation(libs.mockk.android)
+    androidTestRuntimeOnly((libs.kotlin.stdlib))
 
     // Bring bouncy castle to unit tests
     testImplementation("org.bouncycastle:bcprov-jdk16:1.46")
@@ -291,17 +298,6 @@ dependencies {
     testImplementation(testFixtures(project(":crypto")))
     testImplementation(project(":app"))
 
-    //androidTestImplementation(libs.androidx.test.junit.ktx)
-    androidTestImplementation(libs.androidx.test.rules)
-    androidTestImplementation(libs.androidx.test.runner)
-    androidTestImplementation(libs.androidx.test.core)
-    androidTestImplementation(libs.androidx.test.uiautomator)
-    androidTestImplementation(libs.mockk.agent)
-    androidTestImplementation(libs.mockk.android)
-    androidTestRuntimeOnly((libs.kotlin.stdlib))
-    androidTestImplementation(libs.androidx.monitor)
-    // camera
-
     // Firebase testlab screenshot ability
     //androidTestImplementation("com.google.firebase:testlab-instr-lib:0.2")
     // needed for val composeTestRule = createComposeRule() but not createComposeRule()<Activity>
@@ -309,7 +305,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     // Docs say: Test rules and transitive dependencies: but seems to work without
     //androidTestImplementation("androidx.compose.ui:ui-test-junit4:$compose_version")
-    implementation(kotlin("reflect"))
+
     testFixturesImplementation(libs.kotlin.stdlib)
     debugRuntimeOnly(libs.androidx.test.runner)
     debugImplementation(libs.androidx.test.runner) // fixed 1.6.1 test runner problem

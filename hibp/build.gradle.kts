@@ -20,14 +20,11 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions { jvmTarget = "21" }
-    kotlin { jvmToolchain(21) }
-    java {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+    kotlinOptions {
+        jvmTarget = "11"
     }
 
     buildFeatures {
@@ -37,20 +34,17 @@ android {
 }
 
 dependencies {
-    implementation(project(":app"))
-
+    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
-    implementation(libs.material)
     implementation(libs.androidx.material3.android)
-    implementation(libs.androidx.activity.compose)
+    implementation(libs.material)
     // Volley for HTTP breach checks
     implementation(libs.volley)
-    implementation(project(":crypto"))
+    implementation(project(":app"))
     implementation(project(":app:theme"))
+    implementation(project(":crypto"))
 
-    testImplementation(libs.junit)
-
-    //androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.test.junit.ktx)
+    testImplementation(libs.junit)
 }

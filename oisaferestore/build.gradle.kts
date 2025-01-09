@@ -20,14 +20,11 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions { jvmTarget = "21" }
-    kotlin { jvmToolchain(21) }
-    java {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+    kotlinOptions {
+        jvmTarget = "11"
     }
 
     buildFeatures {
@@ -42,21 +39,21 @@ android {
 
 dependencies {
     implementation(project(":app"))
-    implementation(project(":app:cryptoobjects"))
-    implementation(project(":app:db"))
     implementation(project(":app:backup"))
+    implementation(project(":app:cryptoobjects"))
+    implementation(project(":app:datamodel"))
+    implementation(project(":app:db"))
     implementation(project(":autolock"))
     implementation(project(":crypto"))
     implementation(project(":dateutils"))
 
-    implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)
-    implementation(libs.material)
+    implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.material3.android)
-    implementation(project(":app:datamodel"))
-    implementation(project(":app:datamodel"))
-    implementation(project(":app:datamodel"))
+    implementation(libs.material)
+
+    androidTestImplementation(libs.androidx.test.junit.ktx)
 
     // Bring bouncy castle to unit tests
     testImplementation(libs.bcprov.jdk16)
@@ -65,8 +62,6 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(project(":crypto"))
 
-    //androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.androidx.test.junit.ktx)
 }
 
 tasks.withType<Test> {

@@ -33,15 +33,15 @@ android {
 }
 
 dependencies {
-
-    implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.core.ktx)
     implementation(libs.material)
     // Don't convert to catalog declaration, something is broken
     implementation(platform("com.google.firebase:firebase-bom:33.7.0")) // firebase crashlytics
     implementation(libs.firebase.analytics) // firebase crashlytics (breadcrumbs)
     implementation(libs.firebase.crashlytics)
-    testImplementation(libs.junit)
+
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    testImplementation(libs.junit)
 }

@@ -20,14 +20,11 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions { jvmTarget = "21" }
-    kotlin { jvmToolchain(21) }
-    java {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+    kotlinOptions {
+        jvmTarget = "11"
     }
 
     buildFeatures {
@@ -51,7 +48,12 @@ android {
 
 dependencies {
     implementation(project(":app"))
+    implementation(project(":app:cryptoobjects"))
+    implementation(project(":app:datamodel"))
+    implementation(project(":app:theme"))
+    implementation(project(":autolock"))
     implementation(project(":crypto"))
+
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
@@ -61,20 +63,16 @@ dependencies {
     implementation(libs.androidx.ui.test.junit4.android)
     implementation(libs.androidx.ui.tooling.preview.android)
     implementation(libs.material)
-    implementation(project(":autolock"))
-    implementation(project(":app:cryptoobjects"))
-    implementation(project(":app:theme"))
-    implementation(project(":app:datamodel"))
 
-    testImplementation(libs.junit)
 
+    androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.test.junit.ktx)
     androidTestImplementation(libs.androidx.test.rules)
-    androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.uiautomator)
     androidTestImplementation(libs.mockk.agent)
     androidTestImplementation(libs.mockk.android)
+    testImplementation(libs.junit)
 
     debugImplementation(libs.androidx.ui.test.manifest)
     debugImplementation(libs.androidx.ui.tooling)

@@ -36,14 +36,15 @@ android {
 }
 
 dependencies {
-
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    implementation(libs.kotlinx.serialization.json)
     implementation(project(":crypto"))
     implementation(project(":dateutils"))
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.test.junit)
+
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.material)
+
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.test.junit)
+    testImplementation(libs.junit)
 }

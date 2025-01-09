@@ -36,19 +36,20 @@ android {
 }
 
 dependencies {
-
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    implementation(libs.kotlinx.coroutines.core)
     implementation(project(":app:cryptoobjects"))
-    implementation(project(":app:db"))
     implementation(project(":app:datamodel"))
+    implementation(project(":app:db"))
     implementation(project(":app:preferences"))
     implementation(project(":crypto"))
     implementation(project(":gpm"))
     implementation(project(":logger"))
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.test.junit)
+
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.material)
+
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.test.junit)
+    testImplementation(libs.junit)
 }

@@ -41,15 +41,15 @@ android {
 }
 
 dependencies {
-
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.core.ktx)
     implementation(libs.material)
-    testImplementation(libs.junit)
-    testImplementation(libs.mockk)
-    androidTestImplementation(libs.androidx.test.junit)
+
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.mockk.agent)
     androidTestImplementation(libs.mockk.android)
+    testImplementation(libs.junit)
+    testImplementation(libs.mockk)
 }

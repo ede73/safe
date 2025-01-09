@@ -36,14 +36,15 @@ android {
 }
 
 dependencies {
-
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    implementation(project(":notifications"))
     // TODO: REMOVE
     implementation(project(":app:preferences"))
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.test.junit)
+    implementation(project(":notifications"))
+
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.material)
+
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.test.junit)
+    testImplementation(libs.junit)
 }
