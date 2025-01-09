@@ -5,7 +5,6 @@ import android.util.Log
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.decrypt
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.time.ZonedDateTime
 

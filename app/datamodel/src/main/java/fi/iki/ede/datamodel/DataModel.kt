@@ -1,6 +1,5 @@
 package fi.iki.ede.datamodel
 
-import android.content.Context
 import android.util.Log
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
@@ -353,7 +352,7 @@ object DataModel {
             .flatMap { it.plainExtensions.entries }
             .groupBy({ it.key }, { it.value })
             .mapValues { (_, values) -> values.flatten().filterNot(String::isBlank).toSet() }
-    
+
     private const val TAG = "DataModel"
 }
 
