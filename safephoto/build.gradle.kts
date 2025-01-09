@@ -53,7 +53,6 @@ dependencies {
     implementation(libs.guava)
     implementation(libs.material)
 
-    androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.test.junit)
     testImplementation(libs.junit)
 }

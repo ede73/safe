@@ -20,21 +20,6 @@ powerAssert {
     functions = listOf("kotlin.assert", "kotlin.test.assertTrue")
 }
 
-configurations.all {
-    resolutionStrategy.eachDependency {
-//        println("requested.group=${requested.group}")
-//        if (requested.id.namespace == "androidx.test") {
-//            useVersion("1.6.1")
-//        }
-//        if (requested.group == "androidx.test" && requested.name == "runner") {
-//            useVersion("1.6.1")
-//        }
-    }
-//    resolutionStrategy {
-//        force("androidx.test:core:1.6.1")
-//    }
-}
-
 subprojects {
     tasks.withType<Test> {
         jvmArgs("-XX:+EnableDynamicAgentLoading")

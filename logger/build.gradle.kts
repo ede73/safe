@@ -42,6 +42,5 @@ dependencies {
     implementation(libs.firebase.crashlytics)
 
     androidTestImplementation(libs.androidx.test.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
     testImplementation(libs.junit)
 }
