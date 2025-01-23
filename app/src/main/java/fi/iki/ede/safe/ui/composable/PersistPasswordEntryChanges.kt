@@ -1,6 +1,8 @@
 package fi.iki.ede.safe.ui.composable
 
+import android.graphics.Bitmap
 import android.text.TextUtils
+import android.util.Base64
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.crypto.IVCipherText
@@ -12,6 +14,7 @@ import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.safe.ui.models.EditableSiteEntry
 import fi.iki.ede.theme.SafeTheme
 import kotlinx.coroutines.runBlocking
+import java.io.ByteArrayOutputStream
 import java.time.ZonedDateTime
 
 @Composable
@@ -32,7 +35,7 @@ fun PersistPasswordEntryChanges(
         passwordChangedDate = editedSiteEntry.passwordChangedDate
         note = editedSiteEntry.note
         photo = if (editedSiteEntry.plainPhoto == null) IVCipherText.getEmpty()
-        else editedSiteEntry.plainPhoto.encrypt(encrypter)
+        else convertToJpegAndEncrypt(editedSiteEntry.plainPhoto, encrypter)
 
         if (passwordChanged) {
             passwordChangedDate = ZonedDateTime.now()
@@ -49,6 +52,16 @@ fun PersistPasswordEntryChanges(
     // TODO: What if failed
     onSaved(true)
 }
+
+@Composable
+private fun convertToJpegAndEncrypt(
+    plainPhoto: Bitmap,
+    encrypter: (ByteArray) -> IVCipherText
+) = ByteArrayOutputStream().let {
+    plainPhoto.compress(Bitmap.CompressFormat.JPEG, 60, it)
+    Base64.encodeToString(it.toByteArray(), Base64.DEFAULT).encrypt(encrypter)
+}
+
 
 @Preview(showBackground = true)
 @Composable

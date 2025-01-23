@@ -9,8 +9,8 @@ import fi.iki.ede.crypto.support.decrypt
 fun DecryptableSiteEntry.decryptPhoto(decrypter: (IVCipherText) -> ByteArray) =
     try {
         val base64Photo = photo.decrypt(decrypter)
-        val imageBytes = Base64.decode(base64Photo, Base64.DEFAULT)
-        BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+        val bitmapOrJpeg = Base64.decode(base64Photo, Base64.DEFAULT)
+        BitmapFactory.decodeByteArray(bitmapOrJpeg, 0, bitmapOrJpeg.size)
     } catch (ex: Exception) {
         if (BuildConfig.DEBUG) {
             Log.e("decryptPhoto", ex.toString())
