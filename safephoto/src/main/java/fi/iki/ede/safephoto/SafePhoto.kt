@@ -281,9 +281,23 @@ private fun takePhoto(
             ContextCompat.getMainExecutor(context),
             object : ImageCapture.OnImageCapturedCallback() {
                 override fun onCaptureSuccess(image: ImageProxy) {
-                    onBitmapCaptured(image.toBitmap())
+                    // let's limit size a bit...
+                    val targetWidth = 800
+                    val scaledBitmap =
+                        scaleBitmapMaintainingAspectRatio(image.toBitmap(), targetWidth)
+                    onBitmapCaptured(scaledBitmap)
                     image.close()
                     pictureSuccess()
+                }
+
+                private fun scaleBitmapMaintainingAspectRatio(
+                    bitmap: Bitmap,
+                    targetWidth: Int
+                ): Bitmap {
+                    val aspectRatio = bitmap.height.toFloat() / bitmap.width.toFloat()
+                    val targetHeight = (targetWidth * aspectRatio).toInt()
+
+                    return Bitmap.createScaledBitmap(bitmap, targetWidth, targetHeight, true)
                 }
 
                 override fun onError(exception: ImageCaptureException) {
