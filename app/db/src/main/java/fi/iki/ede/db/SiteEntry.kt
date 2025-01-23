@@ -1,6 +1,6 @@
 package fi.iki.ede.db
 
-internal object SiteEntry : Table {
+object SiteEntry : Table {
     override val tableName: String
         get() = "passwords"
 
@@ -17,6 +17,8 @@ internal object SiteEntry : Table {
         DELETED("deleted"),
         EXTENSIONS("extensions"),
     }
+
+    override fun lazyColumns() = setOf(Columns.PHOTO)
 
     override fun create() = listOf(
         """CREATE TABLE IF NOT EXISTS $tableName (

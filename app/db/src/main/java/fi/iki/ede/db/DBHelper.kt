@@ -267,6 +267,22 @@ class DBHelper(
             put(Category.Columns.NAME, entry.encryptedName)
         }, whereEq(Category.Columns.CAT_ID, id)).toLong()
 
+    fun fetchPhotoOnly(siteEntryID: DBID): IVCipherText? = readableDatabase.let { db ->
+        db.query(
+            SiteEntry,
+            SiteEntry.lazyColumns(),
+            whereEq(SiteEntry.Columns.SITEENTRY_ID, siteEntryID)
+        ).use {
+            if (it.moveToFirst()) {
+                IVCipherText(
+                    CipherUtilities.IV_LENGTH,
+                    it.getBlob(it.getColumnIndexOrThrow(SiteEntry.Columns.PHOTO))
+                        ?: byteArrayOf()
+                )
+            } else null
+        }
+    }
+
     fun fetchAllRows(
         categoryId: DBID? = null,
         softDeletedOnly: Boolean = false,
@@ -274,7 +290,9 @@ class DBHelper(
     ) = readableDatabase.let { db ->
         db.query(
             SiteEntry,
-            SiteEntry.Columns.entries.toSet(),
+            SiteEntry.Columns.entries.toMutableSet().apply {
+                removeAll(SiteEntry.lazyColumns())
+            }.toSet(),
             if (categoryId != null) {
                 whereEq(SiteEntry.Columns.CATEGORY_ID, categoryId)
             } else if (softDeletedOnly) {
@@ -295,7 +313,11 @@ class DBHelper(
                                     username = it.getIVCipher(SiteEntry.Columns.USERNAME)
                                     website = it.getIVCipher(SiteEntry.Columns.WEBSITE)
                                     note = it.getIVCipher(SiteEntry.Columns.NOTE)
-                                    photo = it.getIVCipher(SiteEntry.Columns.PHOTO)
+                                    it.getIVCipher(
+                                        SiteEntry.Columns.PHOTO
+                                    ) { loadedPhoto ->
+                                        photo = loadedPhoto
+                                    }
                                     deleted = it.getDBID(SiteEntry.Columns.DELETED)
                                     extensions = it.getIVCipher(SiteEntry.Columns.EXTENSIONS)
                                     try {

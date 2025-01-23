@@ -4,4 +4,5 @@ interface Table {
     val tableName: String
     fun create(): List<String>
     fun drop(): List<String>
+    fun lazyColumns() = emptySet<SiteEntry.Columns>()
 }

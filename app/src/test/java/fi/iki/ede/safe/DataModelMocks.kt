@@ -124,6 +124,11 @@ object DataModelMocks {
             categoryTable.values.toList()
         }
 
+        // TODO: implement properly!
+        every { db.fetchPhotoOnly(any<DBID>()) } answers {
+            null
+        }
+
         // TODO: Doesn't handle soft deleted site entries
         every {
             db.fetchAllRows(

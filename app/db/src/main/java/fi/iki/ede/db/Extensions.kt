@@ -26,6 +26,17 @@ fun ContentValues.put(column: TableColumns<*>, date: ZonedDateTime) =
 fun Cursor.getColumnIndexOrThrow(column: TableColumns<*>) =
     getColumnIndexOrThrow(column.columnName)
 
+fun Cursor.getIVCipher(
+    column: TableColumns<*>,
+    updateOnlyIfColumnExists: (IVCipherText) -> Unit
+) = getColumnIndex(column.columnName)
+    .takeIf { it != -1 }
+    ?.let {
+        IVCipherText(CipherUtilities.IV_LENGTH, getBlob(it) ?: byteArrayOf()).also(
+            updateOnlyIfColumnExists
+        )
+    }
+
 fun Cursor.getIVCipher(column: TableColumns<*>) =
     IVCipherText(
         CipherUtilities.IV_LENGTH,

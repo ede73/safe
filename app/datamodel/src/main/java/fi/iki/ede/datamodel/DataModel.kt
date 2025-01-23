@@ -117,7 +117,7 @@ object DataModel {
     fun getSiteEntry(siteEntryId: DBID): DecryptableSiteEntry =
         _siteEntriesStateFlow.value.first { it.id == siteEntryId }
 
-    suspend fun addOrUpdateSiteEntry(
+    fun addOrUpdateSiteEntry(
         siteEntry: DecryptableSiteEntry,
         onAdd: suspend (DecryptableSiteEntry) -> Unit = {}
     ) {
@@ -276,8 +276,7 @@ object DataModel {
                         .fetchAllRows(siteEntriesFlow = _siteEntriesStateFlow)
                     // now that we know passwords, quickly update the category counts too...
                     _siteEntriesStateFlow.value.groupBy { it.categoryId }
-                        .forEach { (categoryId, siteEntries)
-                            ->
+                        .forEach { (categoryId, siteEntries) ->
                             _categoriesStateFlow.updateListItemById(categoryId!!,
                                 keySelector = { it.id!! }) {
                                 it.apply {
@@ -290,12 +289,26 @@ object DataModel {
                 launch { syncLoadSoftDeletedSiteEntries() }
                 awaitAll(cats, sites)
 
+                launch { syncLoadAllPhotos() }
+
                 launch {
                     if (BuildConfig.DEBUG) {
                         dumpStrayCategoriesSiteEntries()
                     }
                 }
                 loadExternalDatabases()
+            }
+        }
+    }
+
+    // TODO: Horrible! Make it load photos in one go instead of polling every entry
+    // Ie. fetch photo IDs first, then then one by one (else cursor will run out of mem)
+    private fun syncLoadAllPhotos() {
+        val dbHelper = DBHelperFactory.getDBHelper()
+        _siteEntriesStateFlow.value.forEach { siteEntry ->
+            val photo = dbHelper.fetchPhotoOnly(siteEntry.id as DBID)
+            if (photo != null) {
+                siteEntry.photo = photo
             }
         }
     }

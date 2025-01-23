@@ -57,6 +57,8 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
                 Elements.CATEGORY,
                 makePair(Attributes.CATEGORY_NAME, category.encryptedName)
             )
+            // TODO: wow, XMLSerializer will run out of memory if massive load of photos
+            // makes sense, need better XML serializer here , one day (made test of 1026 massive photo entries)
             for (encryptedPassword in getSiteEntriesOfCategory(category.id!!)) {
                 serializer.writeSiteEntry(encryptedPassword)
             }
