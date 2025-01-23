@@ -306,9 +306,11 @@ object DataModel {
     private fun syncLoadAllPhotos() {
         val dbHelper = DBHelperFactory.getDBHelper()
         _siteEntriesStateFlow.value.forEach { siteEntry ->
-            val photo = dbHelper.fetchPhotoOnly(siteEntry.id as DBID)
-            if (photo != null) {
-                siteEntry.photo = photo
+            firebaseTry {
+                val photo = dbHelper.fetchPhotoOnly(siteEntry.id as DBID)
+                if (photo != null) {
+                    siteEntry.photo = photo
+                }
             }
         }
     }

@@ -41,6 +41,7 @@ dependencies {
     implementation(project(":app:preferences"))
     implementation(project(":dateutils"))
     implementation(project(":crypto"))
+    implementation(project(":logger"))
 
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
