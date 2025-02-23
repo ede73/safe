@@ -3,6 +3,8 @@ package fi.iki.ede.autolock
 import android.os.Bundle
 import android.view.MotionEvent
 import androidx.activity.ComponentActivity
+import fi.iki.ede.autolock.NavigationBarHelper.enableDrawingBehindNavigationBar
+import fi.iki.ede.autolock.NavigationBarHelper.hideNavigationBar
 
 @Suppress("LeakingThis")
 open class AutoLockingBaseComponentActivity(features: AutoLockingFeatures) : ComponentActivity(),
@@ -13,7 +15,9 @@ open class AutoLockingBaseComponentActivity(features: AutoLockingFeatures) : Com
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableDrawingBehindNavigationBar(window)
         doOnCreate("AutoLockingComponentActivity created")
+        hideNavigationBar(window)
     }
 
     override fun onResume() {
