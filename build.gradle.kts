@@ -7,7 +7,7 @@ plugins {
     alias(libs.plugins.android.library) apply false
     alias(libs.plugins.compose.compiler) apply false // 2.00
     alias(libs.plugins.org.jetbrains.kotlin.android) apply false
-    id("com.google.firebase.crashlytics") version "3.0.2" apply false
+    id("com.google.firebase.crashlytics") version "3.0.3" apply false
     id("com.google.gms.google-services") version "4.4.2" apply false // Firebase crashlytics
     kotlin("plugin.power-assert") version "2.0.0"
     kotlin("plugin.serialization") version "2.0.0"
@@ -25,3 +25,5 @@ subprojects {
         jvmArgs("-XX:+EnableDynamicAgentLoading")
     }
 }
+
+

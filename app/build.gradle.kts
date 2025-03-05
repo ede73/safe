@@ -274,7 +274,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.ui.test.junit4.android)
     // Don't convert to catalog declaration, something is broken
-    implementation(platform("com.google.firebase:firebase-bom:33.9.0")) // firebase crashlytics
+    implementation(platform("com.google.firebase:firebase-bom:33.10.0")) // firebase crashlytics
     implementation(libs.firebase.analytics) // firebase crashlytics (breadcrumbs)
     implementation(libs.firebase.crashlytics)
     implementation(libs.kotlinx.serialization.json)
@@ -287,7 +287,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.uiautomator)
     androidTestImplementation(libs.mockk.agent)
     androidTestImplementation(libs.mockk.android)
-    androidTestRuntimeOnly((libs.kotlin.stdlib))
+    androidTestRuntimeOnly(libs.kotlin.stdlib)
 
     // Bring bouncy castle to unit tests
     testImplementation("org.bouncycastle:bcprov-jdk16:1.46")
@@ -420,4 +420,9 @@ kotlin {
     compilerOptions {
         extraWarnings.set(true)
     }
+}
+
+configurations.all {
+    resolutionStrategy.force("androidx.test:core:1.6.1")
+    resolutionStrategy.force("org.jetbrains.kotlin:kotlin-stdlib:2.1.10")
 }
