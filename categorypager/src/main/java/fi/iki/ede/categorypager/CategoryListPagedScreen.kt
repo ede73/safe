@@ -54,6 +54,8 @@ private fun CategoryListScreenPagedCompose(
     )
 ) {
     val coroutineScope = rememberCoroutineScope()
+
+    @Suppress("FlowOperatorInvokedInComposition")
     val categoriesState by flow.map { categories -> categories.sortedBy { it.plainName.lowercase() } }
         .collectAsState(initial = emptyList())
     val displayAddCategoryDialog = remember { mutableStateOf(false) }
