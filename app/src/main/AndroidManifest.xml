@@ -49,6 +49,21 @@
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
         </activity>
+
+        <activity-alias
+            android:name=".ui.activities.BackupDueAlias"
+            android:exported="true"
+            android:icon="@drawable/ic_launcher_safe_backupnow"
+            android:targetActivity=".ui.activities.LoginScreen">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
+        </activity-alias>
+
         <activity
             android:name=".ui.activities.PreferenceActivity"
             android:exported="false"

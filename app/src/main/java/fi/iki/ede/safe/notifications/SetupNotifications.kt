@@ -5,6 +5,7 @@ import android.util.Log
 import fi.iki.ede.notifications.ConfiguredNotifications
 import fi.iki.ede.notifications.MainNotification
 import fi.iki.ede.preferences.Preferences
+import fi.iki.ede.safe.ui.utilities.setBackupDueIconEnabled
 
 
 object SetupNotifications {
@@ -39,6 +40,7 @@ object SetupNotifications {
         Log.e("SetupNotifications", "$lastBackup < $lastModified")
         Log.e("SetupNotifications", "$lastBackup < $lastModified")
         if (lastBackup == null || lastModified != null && lastModified > lastBackup) {
+            setBackupDueIconEnabled(context, true)
             MainNotification(
                 context,
                 ConfiguredNotifications.get("backup_notification"),

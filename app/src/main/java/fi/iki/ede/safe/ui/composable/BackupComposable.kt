@@ -16,6 +16,7 @@ import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.gpmdatamodel.db.GPMDB
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.R
+import fi.iki.ede.safe.ui.utilities.setBackupDueIconEnabled
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -33,7 +34,10 @@ fun BackupComposable(toast: MutableState<String>) {
                     initiateBackup(context, it.data?.data!!) {
                         toast.value = backupCompleted
                         (context as? Activity)?.finish()
-                    }.let { Preferences.setLastBackupTime() }
+                    }.let {
+                        Preferences.setLastBackupTime()
+                        setBackupDueIconEnabled(context, false)
+                    }
                 }
             }
         }
