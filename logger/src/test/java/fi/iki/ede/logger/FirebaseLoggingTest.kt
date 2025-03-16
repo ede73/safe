@@ -1,34 +1,26 @@
-package fi.iki.ede.safe
+package fi.iki.ede.logger
 
 import android.util.Log
 import com.google.firebase.Firebase
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import fi.iki.ede.logger.firebaseJustTry
-import fi.iki.ede.logger.firebaseTry
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkObject
 import io.mockk.mockkStatic
-import io.mockk.unmockkObject
 import io.mockk.unmockkStatic
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
-private const val TAG = "FirebaseLoggingTest"
-
 class FirebaseLoggingTest {
 
     @Before
     fun before() {
-        mockkObject(Firebase)
+        io.mockk.mockkObject(Firebase)
         mockkStatic(FirebaseCrashlytics::class)
-        every { FirebaseCrashlytics.getInstance() } returns mockk(relaxed = true)
+        io.mockk.every { FirebaseCrashlytics.getInstance() } returns io.mockk.mockk(relaxed = true)
     }
 
     @After
     fun after() {
-        unmockkObject(Firebase)
+        io.mockk.unmockkObject(Firebase)
         unmockkStatic(FirebaseCrashlytics::class)
     }
 

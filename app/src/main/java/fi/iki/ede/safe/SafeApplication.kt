@@ -7,15 +7,13 @@ import androidx.camera.camera2.Camera2Config
 import androidx.camera.core.CameraXConfig
 import androidx.preference.PreferenceManager
 import com.google.android.play.core.splitcompat.SplitCompatApplication
-import com.google.firebase.Firebase
-import com.google.firebase.FirebaseApp
-import com.google.firebase.crashlytics.crashlytics
 import fi.iki.ede.autolock.AutolockingFeaturesImpl
 import fi.iki.ede.autolock.AutolockingService
 import fi.iki.ede.clipboardutils.ClipboardUtils
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.gpmdatamodel.db.GPMDB
+import fi.iki.ede.logger.firebaseInitialize
 import fi.iki.ede.notifications.ConfiguredNotifications
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.preferences.Preferences.PREFERENCE_EXPERIMENTAL_FEATURES
@@ -43,18 +41,20 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
 //            )
 //            StrictMode.enableDefaults()
 //        }
-        Thread.setDefaultUncaughtExceptionHandler(Thread.getDefaultUncaughtExceptionHandler()
-            ?.let { MyExceptionHandler(it) })
+        Thread.setDefaultUncaughtExceptionHandler(
+            Thread.getDefaultUncaughtExceptionHandler()
+                ?.let { MyExceptionHandler(it) })
     }
 
     override fun onCreate() {
         super.onCreate()
         Log.w(TAG, "onCreate")
-        FirebaseApp.initializeApp(this)
-        Firebase.crashlytics.setCustomKey("git_commit_hash", BuildConfig.GIT_COMMIT_HASH)
-        Firebase.crashlytics.setCustomKey("VERSION_NAME", BuildConfig.VERSION_NAME)
-        Firebase.crashlytics.setCustomKey("VERSION_CODE", BuildConfig.VERSION_CODE)
-        Firebase.crashlytics.isCrashlyticsCollectionEnabled = true
+        firebaseInitialize(
+            this,
+            BuildConfig.GIT_COMMIT_HASH,
+            BuildConfig.VERSION_NAME,
+            BuildConfig.VERSION_CODE
+        )
 //        throw RuntimeException("Test Crash")
         Preferences.initialize(this)
 

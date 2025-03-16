@@ -30,6 +30,9 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {
@@ -43,4 +46,5 @@ dependencies {
 
     androidTestImplementation(libs.androidx.test.junit)
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
 }

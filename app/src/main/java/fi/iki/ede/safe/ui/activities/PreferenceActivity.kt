@@ -16,14 +16,13 @@ import androidx.preference.MultiSelectListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
-import com.google.firebase.Firebase
-import com.google.firebase.crashlytics.crashlytics
 import fi.iki.ede.autolock.AutoLockingBaseAppCompatActivity
 import fi.iki.ede.autolock.AutolockingFeaturesImpl
 import fi.iki.ede.autolock.AutolockingService
 import fi.iki.ede.backup.ExportConfig
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.datamodel.DataModel
+import fi.iki.ede.logger.firebaseCollectCrashlytics
 import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.logger.firebaseRecordException
 import fi.iki.ede.preferences.Preferences
@@ -154,7 +153,7 @@ class PreferenceActivity :
             }
 
             addPreferenceClickListener<Preference>(Preferences.PREFERENCE_MAKE_CRASH) {
-                Firebase.crashlytics.isCrashlyticsCollectionEnabled = true
+                firebaseCollectCrashlytics(true)
                 throw RuntimeException("Crash Test from preferences")
             }
 

@@ -1,7 +1,9 @@
 package fi.iki.ede.logger
 
+import android.content.Context
 import android.util.Log
 import com.google.firebase.Firebase
+import com.google.firebase.FirebaseApp
 import com.google.firebase.crashlytics.crashlytics
 
 internal const val TAG = "fireebasehandler"
@@ -20,6 +22,21 @@ class FirebaseTry<T>(private val message: String? = null, val block: () -> T) {
             catchBlock(t)
         }
     }
+}
+
+// used for test crashing the app from preferences, do not assume any other use case
+fun firebaseCollectCrashlytics(enabled: Boolean) {
+    Firebase.crashlytics.isCrashlyticsCollectionEnabled = enabled
+}
+
+fun firebaseInitialize(
+    context: Context, commitHash: String, versionName: String, versionCode: Int
+) {
+    FirebaseApp.initializeApp(context)
+    Firebase.crashlytics.setCustomKey("git_commit_hash", commitHash)
+    Firebase.crashlytics.setCustomKey("VERSION_NAME", versionName)
+    Firebase.crashlytics.setCustomKey("VERSION_CODE", versionCode)
+    Firebase.crashlytics.isCrashlyticsCollectionEnabled = true
 }
 
 fun <T> firebaseTry(message: String? = null, block: () -> T): FirebaseTry<T> =

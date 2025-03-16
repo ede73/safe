@@ -21,9 +21,11 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.org.jetbrains.kotlin.android)
-    id("com.google.gms.google-services") // Firebase crashlytics
-    id("com.google.firebase.crashlytics") // Firebase crashlytics
     kotlin("plugin.serialization")
+    // unfortunately for logger module, firebase plugin is not supported in library, only in main build
+    id("com.google.gms.google-services") // Firebase crashlytics
+    id("com.google.firebase.crashlytics") // Firebase crashlyticsO
+
     //id("fi.iki.ede.safe.SafeLinter")
 }
 
@@ -280,10 +282,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.material)
     implementation(libs.androidx.ui.test.junit4.android)
-    // Don't convert to catalog declaration, something is broken
-    implementation(platform("com.google.firebase:firebase-bom:33.10.0")) // firebase crashlytics
-    implementation(libs.firebase.analytics) // firebase crashlytics (breadcrumbs)
-    implementation(libs.firebase.crashlytics)
     implementation(libs.kotlinx.serialization.json)
 
     //androidTestImplementation(libs.androidx.test.junit.ktx)

@@ -3,8 +3,6 @@ package fi.iki.ede.safe.splits
 import android.content.Context
 import com.google.android.play.core.splitinstall.SplitInstallManager
 import com.google.android.play.core.splitinstall.SplitInstallManagerFactory
-import com.google.firebase.Firebase
-import com.google.firebase.crashlytics.crashlytics
 import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.logger.firebaseRecordException
 import fi.iki.ede.preferences.Preferences
@@ -88,10 +86,10 @@ object PluginManager {
 
     fun uninstallPlugin(splitInstallManager: SplitInstallManager, plugin: PluginName) {
         splitInstallManager.deferredUninstall(listOf(plugin.pluginName))
-            .addOnSuccessListener { Firebase.crashlytics.log("Successfully uninstalled module  $plugin") }
-            .addOnFailureListener { Firebase.crashlytics.log("Failed to uninstall module  $plugin") }
-            .addOnCanceledListener { Firebase.crashlytics.log("Cancelled uninstalling module  $plugin") }
-            .addOnCompleteListener { Firebase.crashlytics.log("Completed uninstalling module  $plugin") }
+            .addOnSuccessListener { firebaseLog("Successfully uninstalled module  $plugin") }
+            .addOnFailureListener { firebaseLog("Failed to uninstall module  $plugin") }
+            .addOnCanceledListener { firebaseLog("Cancelled uninstalling module  $plugin") }
+            .addOnCompleteListener { firebaseLog("Completed uninstalling module  $plugin") }
     }
 
     /**

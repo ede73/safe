@@ -3,8 +3,6 @@ package fi.iki.ede.safe
 import android.content.Context
 import android.os.Environment
 import android.util.Log
-import com.google.firebase.Firebase
-import com.google.firebase.crashlytics.FirebaseCrashlytics
 import fi.iki.ede.backup.BackupDatabase
 import fi.iki.ede.backup.RestoreDatabase
 import fi.iki.ede.crypto.IVCipherText
@@ -20,6 +18,7 @@ import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.gpmdatamodel.db.GPMDB
+import fi.iki.ede.logger.firebaseRecordException
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.DataModelMocks.mockDataModelFor_UNIT_TESTS_ONLY
 import fi.iki.ede.safe.model.LoginHandler
@@ -69,9 +68,8 @@ class BackupDatabaseAndRestoreDatabaseTest {
 
     @Before
     fun before() {
-        mockkObject(Firebase)
-        mockkStatic(FirebaseCrashlytics::class)
-        every { FirebaseCrashlytics.getInstance() } returns mockk(relaxed = true)
+        mockkStatic("fi.iki.ede.logger.FirebaseUtilitiesKt")
+        every { firebaseRecordException(any(), any()) } returns Unit
 
         mockkObject(Preferences)
         every { Preferences.storeAllExtensions(any()) } returns Unit
@@ -92,8 +90,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
     @After
     fun after() {
         unmockkObject(Preferences)
-        unmockkObject(Firebase)
-        unmockkStatic(FirebaseCrashlytics::class)
+        unmockkStatic("fi.iki.ede.logger.FirebaseUtilitiesKt")
         unmockkAll()
     }
 
@@ -419,7 +416,8 @@ class BackupDatabaseAndRestoreDatabaseTest {
                         .joinToString(",")
                 }"
             )
-            Log.i(TAG,
+            Log.i(
+                TAG,
                 "GPM linked to SiteEntry:" + GPMDataModel.siteEntryToSavedGPMStateFlow.value.entries.joinToString { (key, value) ->
                     "Key: $key, Values: ${
                         value.joinToString(
