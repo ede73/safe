@@ -149,6 +149,10 @@ android {
                     excludes += setOf(
                         "**/DebugProbesKt.bin",
                         "**/base/junit/**",
+                        // This build system is going nuts:
+                        // "files found with path 'META-INF/LICENSE.md' from inputs"
+                        // apparently solution is to ignore them
+                        "META-INF/LICENSE.md"
                     )
                     // something fuckety fuck is going on with bundle tool
                     // (there's a 4 year old bug report in this too)
@@ -156,7 +160,7 @@ android {
                     // and this should be FINE since each DFM is in their own namespace
                     // not even merge helped, so currently all service records of DFMs are
                     // stored under META-INF/services of the APP
-                    merges += services
+                    merges += setOf(services)
                 }
             }
             buildConfigField("String", "GIT_COMMIT_HASH", "\"${gitCommitHash}\"")
@@ -166,7 +170,8 @@ android {
             buildConfigField("String", "GIT_COMMIT_HASH", "\"${gitCommitHash}\"")
             packaging {
                 resources {
-                    merges += services
+                    excludes += setOf("META-INF/LICENSE.md")
+                    merges += setOf(services)
                 }
             }
         }
@@ -211,8 +216,10 @@ android {
                 useLegacyPackaging = true
             }
             resources {
-                excludes += "META-INF/LICENSE.md"
-                excludes += "META-INF/LICENSE-notice.md"
+                excludes += setOf(
+                    "META-INF/LICENSE.md",
+                    "META-INF/LICENSE-notice.md"
+                )
             }
         }
     }
