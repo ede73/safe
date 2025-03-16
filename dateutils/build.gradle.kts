@@ -29,6 +29,9 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+    lint {
+        baseline = file("lint-baseline.xml")
+    }
 }
 
 dependencies {

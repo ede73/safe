@@ -35,6 +35,9 @@ android {
 //    testFixtures {
 //        enable = true
 //    }
+    lint {
+        baseline = file("lint-baseline.xml")
+    }
 }
 
 dependencies {

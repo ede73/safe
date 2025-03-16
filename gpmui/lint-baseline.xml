@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 8.9.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.9.0)" variant="all" version="8.9.0">
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="                val downloadsUri: Uri = Uri.parse("
+        errorLine2="                                        ^">
+        <location
+            file="src/main/java/fi/iki/ede/gpmui/composables/ImportGpmCsvComposable.kt"
+            line="225"
+            column="41"/>
+    </issue>
+
+</issues>

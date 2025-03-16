@@ -33,6 +33,9 @@ android {
     testOptions {
         unitTests.isReturnDefaultValues = true
     }
+    lint {
+        baseline = file("lint-baseline.xml")
+    }
 }
 
 dependencies {

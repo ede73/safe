@@ -1,130 +1,631 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues by="lint Koala | 2024.1.1 Beta 2" format="5">
+<issues format="6" by="lint 8.9.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.9.0)" variant="all" version="8.9.0">
 
-    <issue id="UnusedAttribute"
-        message="Attribute `enableOnBackInvokedCallback` is only used in API level 33 and higher (current min is 31)">
-        <location file="src/main/AndroidManifest.xml" line="31" />
+    <issue
+        id="ScopedStorage"
+        message="WRITE_EXTERNAL_STORAGE is deprecated (and is not granted) when targeting Android 13+. If you need to write to shared storage, use the `MediaStore.createWriteRequest` intent."
+        errorLine1="    &lt;uses-permission android:name=&quot;android.permission.WRITE_EXTERNAL_STORAGE&quot; />"
+        errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/debug/AndroidManifest.xml"
+            line="7"
+            column="36"/>
     </issue>
 
-    <issue id="AndroidGradlePluginVersion"
-        message="A newer version of com.android.application than 8.5.0-beta02 is available: 8.5.0">
-        <location file="$HOME/src/safe/gradle/libs.versions.toml" line="3" />
+    <issue
+        id="UnusedAttribute"
+        message="Attribute `enableOnBackInvokedCallback` is only used in API level 33 and higher (current min is 31)"
+        errorLine1="        android:enableOnBackInvokedCallback=&quot;true&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/AndroidManifest.xml"
+            line="23"
+            column="9"/>
     </issue>
 
-    <issue id="AndroidGradlePluginVersion"
-        message="A newer version of com.android.dynamic-feature than 8.5.0-beta02 is available: 8.5.0">
-        <location file="$HOME/src/safe/gradle/libs.versions.toml" line="3" />
+    <issue
+        id="GradleDependency"
+        message="A newer version of `compileSdkVersion` than 34 is available: 35"
+        errorLine1="    compileSdk = 34"
+        errorLine2="    ~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="9"
+            column="5"/>
     </issue>
 
-    <issue id="AndroidGradlePluginVersion"
-        message="A newer version of com.android.library than 8.5.0-beta02 is available: 8.5.0">
-        <location file="$HOME/src/safe/gradle/libs.versions.toml" line="3" />
+    <issue
+        id="FlowOperatorInvokedInComposition"
+        message="Flow operator functions should not be invoked within composition"
+        errorLine1="                    .map { passwords -> passwords.filter { it.categoryId == category.id } }"
+        errorLine2="                     ~~~">
+        <location
+            file="src/main/java/fi/iki/ede/categorypager/CategoryListPagedScreen.kt"
+            line="72"
+            column="22"/>
     </issue>
 
-    <issue id="GradleDependency"
-        message="A newer version of androidx.test.ext:junit than 1.1.5 is available: 1.2.1">
-        <location file="$HOME/src/safe/gradle/libs.versions.toml" line="10" />
+    <issue
+        id="FlowOperatorInvokedInComposition"
+        message="Flow operator functions should not be invoked within composition"
+        errorLine1="                    .map { passwords -> passwords.sortedBy { it.cachedPlainDescription.lowercase() } }"
+        errorLine2="                     ~~~">
+        <location
+            file="src/main/java/fi/iki/ede/categorypager/CategoryListPagedScreen.kt"
+            line="73"
+            column="22"/>
     </issue>
 
-    <issue id="GradleDependency"
-        message="A newer version of androidx.test.ext:junit-ktx than 1.1.5 is available: 1.2.1">
-        <location file="$HOME/src/safe/gradle/libs.versions.toml" line="11" />
+    <issue
+        id="FlowOperatorInvokedInComposition"
+        message="Flow operator functions should not be invoked within composition"
+        errorLine1="                    .filterNotNull()"
+        errorLine2="                     ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/fi/iki/ede/categorypager/CategoryListPagedScreen.kt"
+            line="74"
+            column="22"/>
     </issue>
 
-    <issue id="GradleDependency"
-        message="A newer version of androidx.test:rules than 1.5.0 is available: 1.6.1">
-        <location file="$HOME/src/safe/gradle/libs.versions.toml" line="25" />
+    <issue
+        id="PluralsCandidate"
+        message="Formatting %d followed by words (&quot;days&quot;): This should probably be a plural rather than a string"
+        errorLine1="    &lt;string name=&quot;restore_screen_not_most_recent_backup_age&quot;>Backup is %1$d days older than most recent (backup %2$s vs latest %3$s)&lt;/string>"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="131"
+            column="5"/>
     </issue>
 
-    <issue id="GradleDependency"
-        message="A newer version of androidx.test:runner than 1.5.0 is available: 1.6.1">
-        <location file="$HOME/src/safe/gradle/libs.versions.toml" line="26" />
+    <issue
+        id="UnusedResources"
+        message="The resource `R.array.autolock_time_list_texts` appears to be unused"
+        errorLine1="    &lt;string-array name=&quot;autolock_time_list_texts&quot;>"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/arrays.xml"
+            line="3"
+            column="19"/>
     </issue>
 
-    <issue id="PluralsCandidate"
-        message="Formatting %d followed by words (&quot;days&quot;): This should probably be a plural rather than a string">
-        <location file="src/main/res/values/strings.xml" line="176" />
+    <issue
+        id="UnusedResources"
+        message="The resource `R.array.autolock_time_list_values` appears to be unused"
+        errorLine1="    &lt;string-array name=&quot;autolock_time_list_values&quot;>"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/arrays.xml"
+            line="10"
+            column="19"/>
     </issue>
 
-    <issue id="ObsoleteSdkInt" message="Unnecessary; SDK_INT is always >= 31">
-        <location file="src/main/AndroidManifest.xml" line="37" />
+    <issue
+        id="UnusedResources"
+        message="The resource `R.array.clipboard_clear_delay_texts` appears to be unused"
+        errorLine1="    &lt;string-array name=&quot;clipboard_clear_delay_texts&quot;>"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/arrays.xml"
+            line="18"
+            column="19"/>
     </issue>
 
-    <issue id="ObsoleteSdkInt" message="Unnecessary; SDK_INT is always >= 33">
-        <location file="src/main/java/fi/iki/ede/safe/service/AutolockingService.kt" line="119" />
+    <issue
+        id="UnusedResources"
+        message="The resource `R.array.clipboard_clear_delay_values` appears to be unused"
+        errorLine1="    &lt;string-array name=&quot;clipboard_clear_delay_values&quot;>"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/arrays.xml"
+            line="25"
+            column="19"/>
     </issue>
 
-    <issue id="ObsoleteSdkInt" message="Unnecessary; SDK_INT is always >= 33">
-        <location file="src/main/java/fi/iki/ede/safe/ui/activities/CategoryListScreen.kt"
-            line="74" />
+    <issue
+        id="UnusedResources"
+        message="The resource `R.array.dummy_entries` appears to be unused"
+        errorLine1="    &lt;string-array name=&quot;dummy_entries&quot;>"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/arrays.xml"
+            line="32"
+            column="19"/>
     </issue>
 
-    <issue id="ObsoleteSdkInt" message="Unnecessary; SDK_INT is always >= 28">
-        <location file="src/main/java/fi/iki/ede/safe/clipboard/ClipboardUtils.kt" line="46" />
+    <issue
+        id="UnusedResources"
+        message="The resource `R.array.dummy_entry_values` appears to be unused"
+        errorLine1="    &lt;string-array name=&quot;dummy_entry_values&quot;>"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/arrays.xml"
+            line="35"
+            column="19"/>
     </issue>
 
-    <issue id="ObsoleteSdkInt" message="Unnecessary; SDK_INT is always >= 33">
-        <location file="src/main/java/fi/iki/ede/safe/notifications/MainNotification.kt"
-            line="85" />
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.notification_lock_logged_in` appears to be unused"
+        errorLine1="    &lt;string name=&quot;notification_lock_logged_in&quot;>Logged in&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="58"
+            column="13"/>
     </issue>
 
-    <issue id="AutoboxingStateCreation"
-        message="Prefer `mutableFloatStateOf` instead of `mutableStateOf`">
-        <location file="src/main/java/fi/iki/ede/safe/gpm/ui/composables/ImportEntryList.kt"
-            line="164" />
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.password_entry_password_label` appears to be unused"
+        errorLine1="    &lt;string name=&quot;password_entry_password_label&quot;>Copy&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="81"
+            column="13"/>
     </issue>
 
-    <issue id="UseTomlInstead" message="Use version catalog instead">
-        <location file="build.gradle.kts" line="259" />
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.restore_screen_begin_restore` appears to be unused"
+        errorLine1="    &lt;string name=&quot;restore_screen_begin_restore&quot;>Begin restoration, please wait&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="127"
+            column="13"/>
     </issue>
 
-    <issue id="UseTomlInstead" message="Use version catalog instead">
-        <location file="build.gradle.kts" line="260" />
+    <issue
+        id="UnusedResources"
+        message="The resource `R.plurals.preference_locktime` appears to be unused"
+        errorLine1="    &lt;plurals name=&quot;preference_locktime&quot;>"
+        errorLine2="             ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="143"
+            column="14"/>
     </issue>
 
-    <issue id="UseTomlInstead" message="Use version catalog instead">
-        <location file="build.gradle.kts" line="261" />
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_automatic_locking_selection_title` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_automatic_locking_selection_title&quot;>Choose automatic locking timeout&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="151"
+            column="13"/>
     </issue>
 
-    <issue id="UseTomlInstead"
-        message="Use the existing version catalog reference (`libs.bcprov.jdk16`) instead">
-        <location file="build.gradle.kts" line="265" />
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_clipboard_clear_delay_title` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_clipboard_clear_delay_title&quot;>Clipboard clearing timeout&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="152"
+            column="13"/>
     </issue>
 
-    <issue id="UseTomlInstead" message="Use version catalog instead">
-        <location file="build.gradle.kts" line="280" />
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_experimental_features_title` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_experimental_features_title&quot;>Available Experimental Features&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="153"
+            column="13"/>
     </issue>
 
-    <issue id="IgnoreWithoutReason" message="Test is ignored without giving any explanation">
-        <location file="src/androidTest/java/fi/iki/ede/safe/noui/ApplicationSuffixTest.kt"
-            line="16" />
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_summary_automatic_locking_timeout` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_summary_automatic_locking_timeout&quot;>After chosen amount of minutes, password safe will lock and require logging in again&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="154"
+            column="13"/>
     </issue>
 
-    <issue id="IgnoreWithoutReason" message="Test is ignored without giving any explanation">
-        <location file="src/test/java/fi/iki/ede/safe/ApplicationSuffixTest.kt" line="23" />
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_summary_clipboard_clear_delay` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_summary_clipboard_clear_delay&quot;>Delay in seconds after which clipboard is cleared&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="155"
+            column="13"/>
     </issue>
 
-    <issue id="IgnoreWithoutReason" message="Test is ignored without giving any explanation">
-        <location file="src/androidTest/java/fi/iki/ede/safe/noui/ApplicationSuffixTest.kt"
-            line="54" />
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_summary_default_user_name` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_summary_default_user_name&quot;>Default username when adding a new password. Completely optional, typically your email address.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="156"
+            column="13"/>
     </issue>
 
-    <issue id="IgnoreWithoutReason" message="Test is ignored without giving any explanation">
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_summary_enable_biometrics` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_summary_enable_biometrics&quot;>Instead of password you can login with biometrics. Password fallback always available. Android will take care of actual biometric authenticatin. Password safe only receives information whether it succeeded or not. Even when enabled you may have to occasionally re-enroll for added security.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="157"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_summary_experimental_features` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_summary_experimental_features&quot;>Some new feature may be tested by enabling them. There might be problems until they mature.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="158"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_summary_lock_when_screen_locks` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_summary_lock_when_screen_locks&quot;>When android screen lock turns on, password safe will automatically lock&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="160"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_title` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_title&quot;>Settings&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="161"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_title_automatic_locking_timeout` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_title_automatic_locking_timeout&quot;>Automatic locking timeout&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="162"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_title_clipboard_clear_delay` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_title_clipboard_clear_delay&quot;>Clipboard clearing delay&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="163"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_title_default_backup_path` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_title_default_backup_path&quot;>Default backup path&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="164"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_title_default_user_name` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_title_default_user_name&quot;>Default username&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="165"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_title_enable_biometrics` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_title_enable_biometrics&quot;>Enable biometric identification&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="166"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_title_experimental_features` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_title_experimental_features&quot;>Experimental Features&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="167"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_title_lock_when_screen_locks` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_title_lock_when_screen_locks&quot;>Lock when screen locks&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="168"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_title_time_of_last_backup` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_title_time_of_last_backup&quot;>Time of last backup&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="169"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_title_make_a_crash` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_title_make_a_crash&quot;>Make application crash&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="174"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_title_autobackup_quota_exceeded` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_title_autobackup_quota_exceeded&quot;>Google Automatic backup quota exceeded&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="177"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_title_autobackup_started` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_title_autobackup_started&quot;>Google Automatic backup started(perhaps done)&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="178"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_autobackup_restore_started` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_autobackup_restore_started&quot;>Google Automatic backup was restored&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="179"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_autobackup_restore_finished` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_autobackup_restore_finished&quot;>Google Automatic backups\&apos; restore finished&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="180"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_title_soft_delete` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_title_soft_delete&quot;>Purge deleted passwords&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="184"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_summary_soft_delete` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_summary_soft_delete&quot;>&lt;![CDATA[%s. You can set a soft deletion time for passwords. If 0, they will be deleted immediately, if > 0, passwords marked deleted will be purged after this many days.]]&gt;&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="185"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences_edit_extensions` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences_edit_extensions&quot;>Edit Extensions&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="211"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="            sharedPreferences.edit().putBoolean(PREFERENCE_BIOMETRICS_ENABLED, value).apply()"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/fi/iki/ede/safe/ui/activities/BiometricsActivity.kt"
+            line="144"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        fun clearBiometricKeys() = sharedPreferences.edit()"
+        errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/fi/iki/ede/safe/ui/activities/BiometricsActivity.kt"
+            line="195"
+            column="36"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        private fun storeBioCipher(cipher: IVCipherText) = sharedPreferences.edit()"
+        errorLine2="                                                           ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/fi/iki/ede/safe/ui/activities/BiometricsActivity.kt"
+            line="205"
+            column="60"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="                Preferences.sharedPreferences.edit().putString(key, value)"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/fi/iki/ede/safe/notifications/SetupNotifications.kt"
+            line="59"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="                enabled = !TextUtils.isEmpty(website) &amp;&amp; Uri.parse(website) != null,"
+        errorLine2="                                                         ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/fi/iki/ede/safe/ui/composable/SiteEntryView.kt"
+            line="168"
+            column="58"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="    ) Uri.parse(website)"
+        errorLine2="      ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/fi/iki/ede/safe/ui/composable/SiteEntryView.kt"
+            line="432"
+            column="7"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="    else Uri.parse(&quot;https://$website&quot;)"
+        errorLine2="         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/fi/iki/ede/safe/ui/composable/SiteEntryView.kt"
+            line="433"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use the existing version catalog reference (`libs.bcprov.jdk16`) instead"
+        errorLine1="    testImplementation(&quot;org.bouncycastle:bcprov-jdk16:1.46&quot;)"
+        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="301"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="IgnoreWithoutReason"
+        message="Test is ignored without giving any explanation"
+        errorLine1="    @Ignore"
+        errorLine2="    ~~~~~~~">
+        <location
+            file="src/androidTest/java/fi/iki/ede/safe/noui/ApplicationSuffixTest.kt"
+            line="16"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="IgnoreWithoutReason"
+        message="Test is ignored without giving any explanation"
+        errorLine1="    @Ignore"
+        errorLine2="    ~~~~~~~">
+        <location
+            file="src/test/java/fi/iki/ede/safe/ApplicationSuffixTest.kt"
+            line="23"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="IgnoreWithoutReason"
+        message="Test is ignored without giving any explanation"
+        errorLine1="    @Ignore"
+        errorLine2="    ~~~~~~~">
+        <location
+            file="src/androidTest/java/fi/iki/ede/safe/noui/ApplicationSuffixTest.kt"
+            line="54"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="IgnoreWithoutReason"
+        message="Test is ignored without giving any explanation"
+        errorLine1="    @Ignore"
+        errorLine2="    ~~~~~~~">
         <location
             file="src/androidTest/java/fi/iki/ede/safe/login/LoginScreenAfterFirstInstallTest.kt"
-            line="126" />
+            line="127"
+            column="5"/>
     </issue>
 
-    <issue id="IgnoreWithoutReason" message="Test is ignored without giving any explanation">
+    <issue
+        id="IgnoreWithoutReason"
+        message="Test is ignored without giving any explanation"
+        errorLine1="    @Ignore"
+        errorLine2="    ~~~~~~~">
         <location
             file="src/androidTest/java/fi/iki/ede/safe/login/LoginScreenAfterFirstInstallTest.kt"
-            line="163" />
+            line="164"
+            column="5"/>
     </issue>
 
-    <issue id="IgnoreWithoutReason" message="Test is ignored without giving any explanation">
+    <issue
+        id="IgnoreWithoutReason"
+        message="Test is ignored without giving any explanation"
+        errorLine1="    @Ignore"
+        errorLine2="    ~~~~~~~">
         <location
             file="src/androidTest/java/fi/iki/ede/safe/login/LoginScreenAfterFirstInstallTest.kt"
-            line="205" />
+            line="206"
+            column="5"/>
     </issue>
 
 </issues>
