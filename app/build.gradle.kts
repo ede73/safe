@@ -13,7 +13,7 @@ import java.util.Properties
 //    override fun afterExecute(task: Task, taskState: TaskState) {
 //        val endTime = System.currentTimeMillis()
 //        val duration = endTime - startTime
-//        Log.d(TAG,("Task ${task.path} took ${duration}ms to execute")
+//        Logger.d(TAG,("Task ${task.path} took ${duration}ms to execute")
 //    }
 //})
 
@@ -22,7 +22,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.org.jetbrains.kotlin.android)
     kotlin("plugin.serialization")
-    // unfortunately for logger module, firebase plugin is not supported in library, only in main build
+    // unfortunately for Logger.er module, firebase plugin is not supported in library, only in main build
     id("com.google.gms.google-services") // Firebase crashlytics
     id("com.google.firebase.crashlytics") // Firebase crashlyticsO
 

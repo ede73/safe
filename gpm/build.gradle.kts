@@ -42,6 +42,7 @@ android {
 dependencies {
     implementation(project(":app:cryptoobjects"))
     implementation(project(":crypto"))
+    implementation(project(":logger"))
 
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
@@ -50,4 +51,5 @@ dependencies {
     androidTestImplementation(libs.androidx.test.junit)
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
+    testImplementation(project(":logger"))
 }

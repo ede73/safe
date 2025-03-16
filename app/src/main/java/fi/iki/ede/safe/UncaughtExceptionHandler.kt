@@ -1,6 +1,6 @@
 package fi.iki.ede.safe
 
-import android.util.Log
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.preferences.Preferences
 
 private val TAG = "MyExceptionHandler"
@@ -13,7 +13,7 @@ class MyExceptionHandler(private val defaultHandler: Thread.UncaughtExceptionHan
         // FirebaseCrashlytics.getInstance().recordException(exception)
 
         if (BuildConfig.DEBUG) {
-            Log.e(TAG, "Uncaught exception", exception)
+            Logger.e(TAG, "Uncaught exception", exception)
         }
         // Clear all plugins
         try {

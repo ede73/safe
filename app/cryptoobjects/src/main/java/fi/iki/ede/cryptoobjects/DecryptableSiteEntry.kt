@@ -1,10 +1,10 @@
 package fi.iki.ede.cryptoobjects
 
 import android.graphics.Bitmap
-import android.util.Log
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.decrypt
+import fi.iki.ede.logger.Logger
 import kotlinx.serialization.json.Json
 import java.time.ZonedDateTime
 
@@ -100,7 +100,7 @@ class DecryptableSiteEntry(categoryId: Long) {
                 (searchExtensions && plainExtensions.values.joinToString("")
                     .contains(searchText, true)).also {
                     if (BuildConfig.DEBUG) {
-                        Log.i(TAG, plainExtensions.values.joinToString(""))
+                        Logger.i(TAG, plainExtensions.values.joinToString(""))
                     }
                 }
 

@@ -1,7 +1,6 @@
 package fi.iki.ede.backup
 
 import android.text.TextUtils
-import android.util.Log
 import fi.iki.ede.backup.ExportConfig.Companion.Attributes
 import fi.iki.ede.backup.ExportConfig.Companion.Elements
 import fi.iki.ede.crypto.IVCipherText
@@ -13,6 +12,7 @@ import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.db.DBID
 import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.logger.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -92,10 +92,10 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
         serializer.endDocument()
         val makeThisStreaming = xmlStringWriter.toString()
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, makeThisStreaming)
+            Logger.d(TAG, makeThisStreaming)
         }
         if (makeThisStreaming.contains(" ")) {
-            Log.e(TAG, "Oh no, XML export has non breakable spaces")
+            Logger.e(TAG, "Oh no, XML export has non breakable spaces")
         }
         assert(!TextUtils.isEmpty(makeThisStreaming)) { "Something is broken, XML serialization produced empty file" }
         return makeThisStreaming.trim()

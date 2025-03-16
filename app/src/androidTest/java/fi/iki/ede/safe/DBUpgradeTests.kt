@@ -3,11 +3,11 @@ package fi.iki.ede.safe
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.crypto.support.toHexString
 import fi.iki.ede.db.DBHelper
+import fi.iki.ede.logger.Logger
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -131,7 +131,7 @@ class DBUpgradeTests {
 
     @Test
     fun testUpgradeV3ToV4() {
-        Log.i("xx", baseCategoriesTable(""))
+        Logger.i("xx", baseCategoriesTable(""))
         dbHelper = absoluteV3()
         val database = dbHelper.writableDatabase.verify(3)
         dbHelper.onUpgrade(database, 3, 4)
@@ -287,13 +287,13 @@ class InMemorySQLiteOpenHelper(
         initialDBSql().forEach {
             db.execSQL(it.trimIndent())
         }
-        Log.i("DB", dumpDatabaseSchema(db))
+        Logger.i("DB", dumpDatabaseSchema(db))
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        Log.i("DB", "onUpgrade from $oldVersion to $newVersion")
+        Logger.i("DB", "onUpgrade from $oldVersion to $newVersion")
         (oldVersion until newVersion).forEach {
-            Log.i("DB", "   onUpgrade cycle version it")
+            Logger.i("DB", "   onUpgrade cycle version it")
             when (it) {
                 // add photo to passwords
                 1 -> DBHelper.upgradeFromV1ToV2AddPhoto(db) {}
@@ -302,10 +302,10 @@ class InMemorySQLiteOpenHelper(
                 // merge keys
                 3 -> DBHelper.upgradeFromV3ToV4MergeKeys(db) {}
             }
-            Log.i("DB$it", dumpDatabaseSchema(db))
+            Logger.i("DB$it", dumpDatabaseSchema(db))
         }
         // Upgrade database schema
-        Log.i("DB", dumpDatabaseSchema(db))
+        Logger.i("DB", dumpDatabaseSchema(db))
     }
 
     override fun onConfigure(db: SQLiteDatabase) {

@@ -8,7 +8,6 @@ import android.os.Build
 import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.Settings
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -48,6 +47,7 @@ import fi.iki.ede.gpmui.utilities.doesInternalCopyOfGpmCsvImportExist
 import fi.iki.ede.gpmui.utilities.getInternalCopyOfGpmCsvAsImportStreamAndDeleteOriginal
 import fi.iki.ede.gpmui.utilities.getInternalCopyOfGpmCsvAsInputStream
 import fi.iki.ede.gpmui.utilities.readAndParseCSVToAChangeSet
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.theme.SafeButton
 import fi.iki.ede.theme.SafeTextButton
@@ -209,7 +209,8 @@ fun ImportGpmCsvComposable(
     }
 
     Column(Modifier.padding(12.dp)) {
-        Text(stringResource(id = R.string.google_password_import_select_doc),
+        Text(
+            stringResource(id = R.string.google_password_import_select_doc),
             modifier = Modifier.clickable {
                 deleteAllCounter++
                 if (deleteAllCounter > 7) {
@@ -226,18 +227,19 @@ fun ImportGpmCsvComposable(
                     Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
                         .toString()
                 )
-                selectGpmCsvExport.launch(Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
-                    .putExtra(DocumentsContract.EXTRA_INITIAL_URI, downloadsUri)
-                    .let {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                            // doesn't work on android8(O/24), nor 9(P/26)
-                            // on S24(UPSIDE_DOWN_CAKE/34) this works nice,
-                            it.setType("text/comma-separated-values")
-                        } else {
-                            it.setType("*/*")
-                        }
-                        it
-                    })
+                selectGpmCsvExport.launch(
+                    Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
+                        .putExtra(DocumentsContract.EXTRA_INITIAL_URI, downloadsUri)
+                        .let {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                                // doesn't work on android8(O/24), nor 9(P/26)
+                                // on S24(UPSIDE_DOWN_CAKE/34) this works nice,
+                                it.setType("text/comma-separated-values")
+                            } else {
+                                it.setType("*/*")
+                            }
+                            it
+                        })
             }) {
                 Text(stringResource(id = R.string.google_password_import_select))
                 Icon(
@@ -310,7 +312,8 @@ fun ImportGpmCsvComposable(
         VisualizeChangeSetPager(importChangeSet, _finishedImporting)
 
         if (!skipImportReminder && showUsage.value) {
-            UsageInfoDialog(stringResource(id = R.string.google_password_import_usage),
+            UsageInfoDialog(
+                stringResource(id = R.string.google_password_import_usage),
                 onDismiss = {
                     Preferences.gpmImportUsageShown()
                     showUsage.value = false
@@ -355,9 +358,9 @@ private fun storeChangeSet(importChangeSet: ImportChangeSet) {
     val delete = importChangeSet.nonMatchingSavedGPMsToDelete
 
     debug {
-        Log.d(TAG, "ADD ${add.size} entries")
-        Log.d(TAG, "UPDATE ${update.size} entries")
-        Log.d(TAG, "DELETE ${delete.size} entries")
+        Logger.d(TAG, "ADD ${add.size} entries")
+        Logger.d(TAG, "UPDATE ${update.size} entries")
+        Logger.d(TAG, "DELETE ${delete.size} entries")
     }
     // There must be no overlap between ones we delete/once we get in - of course we can't test this
     //assert(delete.intersect(add).size == 0)

@@ -1,10 +1,10 @@
 package fi.iki.ede.crypto.keystore
 
-import android.util.Log
 import fi.iki.ede.crypto.BuildConfig
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.support.toHexString
+import fi.iki.ede.logger.Logger
 import java.util.Locale
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
@@ -24,7 +24,7 @@ object OpenSSLExamples {
         check(BuildConfig.DEBUG) { "You can't, shouldn't and mustn't log sensitive data" }
         // Double ensure this will NOT run anywhere else than in debug mode
         if (BuildConfig.DEBUG) {
-            Log.i("SENSITIVE_DATA", superSensitiveMessage)
+            Logger.i("SENSITIVE_DATA", superSensitiveMessage)
         }
     }
 

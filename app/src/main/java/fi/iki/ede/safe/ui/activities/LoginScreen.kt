@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
@@ -22,6 +21,7 @@ import fi.iki.ede.db.DBHelper.Companion.DATABASE_NAME
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.gpmdatamodel.db.GPMDB
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.splits.IntentManager
@@ -202,7 +202,10 @@ open class LoginScreen : ComponentActivity() {
                 RESULT_OK -> {
                     if (!BiometricsActivity.verificationAccepted()) {
                         // should never happen
-                        Log.e("---", "Biometric verification NOT accepted - perhaps a new backup?")
+                        Logger.e(
+                            "---",
+                            "Biometric verification NOT accepted - perhaps a new backup?"
+                        )
                     } else {
                         finishLoginProcess()
                     }

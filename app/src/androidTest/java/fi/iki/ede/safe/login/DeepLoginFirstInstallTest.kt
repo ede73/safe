@@ -3,7 +3,6 @@ package fi.iki.ede.safe.login
 import android.app.Activity.RESULT_CANCELED
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.activity.result.ActivityResult
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
@@ -16,6 +15,7 @@ import fi.iki.ede.backup.MyBackupAgent
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.db.Table
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.splits.IntentManager
@@ -111,7 +111,7 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
 //        every { BiometricsActivity.getRegistrationIntent(any()) } returns expectedIntent
 
         MyResultLauncher.registerTestLaunchResult(TestTag.LOGIN_BIOMETRICS_REGISTER) {
-            Log.d(TAG, "Cancelling biometrics")
+            Logger.d(TAG, "Cancelling biometrics")
             ActivityResult(RESULT_CANCELED, null)
         }
         // login and pop biometric prompt (the mock intent)
@@ -159,13 +159,13 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
 
         if (biometricsRegister) {
             if (biometricsChecked == androidx.compose.ui.state.ToggleableState.Off) {
-                Log.d(TAG, "Turn on biometrics checkbox")
+                Logger.d(TAG, "Turn on biometrics checkbox")
                 getBiometricsCheckbox(loginActivityTestRule).performClick()
                 getBiometricsCheckbox(loginActivityTestRule).assertIsChecked()
             }
         } else {
             if (biometricsChecked == androidx.compose.ui.state.ToggleableState.On) {
-                Log.d(TAG, "Turn off biometrics checkbox")
+                Logger.d(TAG, "Turn off biometrics checkbox")
                 getBiometricsCheckbox(loginActivityTestRule).performClick()
                 getBiometricsCheckbox(loginActivityTestRule).assertIsNotChecked()
             }

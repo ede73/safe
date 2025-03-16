@@ -52,6 +52,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":logger"))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)

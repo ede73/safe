@@ -49,6 +49,7 @@ dependencies {
     implementation(project(":autolock"))
     implementation(project(":crypto"))
     implementation(project(":dateutils"))
+    implementation(project(":logger"))
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)

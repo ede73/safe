@@ -3,8 +3,8 @@ package fi.iki.ede.safe.splits
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import fi.iki.ede.db.DBID
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.ui.activities.BackupDatabaseScreen
 import fi.iki.ede.safe.ui.activities.CategoryListScreen
@@ -134,14 +134,15 @@ object IntentManager {
         startActivity(context, SiteEntrySearchScreen::class.java)
 
     fun startSiteEntryListScreen(context: Context, id: DBID) =
-        startActivity(context, SiteEntryListScreen::class.java,
+        startActivity(
+            context, SiteEntryListScreen::class.java,
             Intent.FLAG_ACTIVITY_REORDER_TO_FRONT,
             extras = Bundle().apply {
                 putLong(SiteEntryListScreen.CATEGORY_ID, id)
             })
 
     fun removePluginIntegrations(pluginName: PluginName) {
-        Log.d(TAG, "Plugin ${pluginName.pluginName} is being disabled")
+        Logger.d(TAG, "Plugin ${pluginName.pluginName} is being disabled")
         // not perfect, category pager ..is uninstalled/disabled YES, but app
         // requires restart to get the original category screen established
         intentReplacements.remove(pluginName)

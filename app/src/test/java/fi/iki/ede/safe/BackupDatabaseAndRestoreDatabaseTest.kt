@@ -2,7 +2,6 @@ package fi.iki.ede.safe
 
 import android.content.Context
 import android.os.Environment
-import android.util.Log
 import fi.iki.ede.backup.BackupDatabase
 import fi.iki.ede.backup.RestoreDatabase
 import fi.iki.ede.crypto.IVCipherText
@@ -18,6 +17,7 @@ import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.gpmdatamodel.db.GPMDB
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseRecordException
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.DataModelMocks.mockDataModelFor_UNIT_TESTS_ONLY
@@ -104,7 +104,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         // flow1 Restore: 1.219ms ms
         // flow2 Restore: 13.03ms // chunks size from 16 to 25600 doesnt much vary!
         val count = 1000.0
-        Log.d(TAG, "Restore: " + (measureTimeMillis {
+        Logger.d(TAG, "Restore: " + (measureTimeMillis {
             (1..count.toInt()).forEach {
                 r.doRestore(
                     mockk<Context>(),
@@ -130,7 +130,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         // flow1 Backup: 1.712 ms
         // flow2 Backup: 1.346 ms
         val count = 1000.0
-        Log.d(TAG, "Restore: " + (measureTimeMillis {
+        Logger.d(TAG, "Restore: " + (measureTimeMillis {
             (1..count.toInt()).forEach {
                 runBlocking {
                     BackupDatabase.backup(
@@ -167,7 +167,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
             ).toString()
         }
         unmockkStatic(ZonedDateTime::class)
-        Log.d(TAG, out)
+        Logger.d(TAG, out)
         Assert.assertEquals(
             PASSWORD_ENCRYPTED_BACKUP_AT_1234.trimIndent().trim(),
             out.trimIndent().trim(),
@@ -269,7 +269,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
                     succeed
                 )
             } catch (c: CancellationException) {
-                Log.d(TAG, "Failed as expected...$c")
+                Logger.d(TAG, "Failed as expected...$c")
                 assertFalse(
                     "Expected failure, but succeeded now=${it.first}, last backup=${it.second}, backup=1234",
                     succeed
@@ -397,26 +397,26 @@ class BackupDatabaseAndRestoreDatabaseTest {
         }
 
         if (BuildConfig.DEBUG) {
-            Log.i(
+            Logger.i(
                 TAG,
                 "Categories: ${
                     DataModel.categoriesStateFlow.value.map { it.id }.joinToString(",")
                 }"
             )
-            Log.i(
+            Logger.i(
                 TAG,
                 "SiteEntries: ${
                     DataModel.siteEntriesStateFlow.value.map { it.id }.joinToString(",")
                 }"
             )
-            Log.i(
+            Logger.i(
                 TAG,
                 "GPMs: ${
                     GPMDataModel.allSavedGPMsFlow.value.map { it.id }
                         .joinToString(",")
                 }"
             )
-            Log.i(
+            Logger.i(
                 TAG,
                 "GPM linked to SiteEntry:" + GPMDataModel.siteEntryToSavedGPMStateFlow.value.entries.joinToString { (key, value) ->
                     "Key: $key, Values: ${

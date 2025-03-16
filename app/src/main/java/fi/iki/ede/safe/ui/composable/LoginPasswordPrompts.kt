@@ -1,6 +1,5 @@
 package fi.iki.ede.safe.ui.composable
 
-import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -21,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.Password
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.LoginPrecondition
@@ -148,17 +148,17 @@ fun PasswordPromptPreview() {
         Column {
             Text(text = "------ First time init")
             LoginPasswordPrompts(LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE) { _, _ ->
-                Log.d(TAG, "Got a good password")
+                Logger.d(TAG, "Got a good password")
                 true
             }
             Text(text = "------ First time init")
             LoginPasswordPrompts(LoginPrecondition.NORMAL_LOGIN) { _, _ ->
-                Log.d(TAG, "Got a good password")
+                Logger.d(TAG, "Got a good password")
                 true
             }
             Text(text = "------ Normal login")
             LoginPasswordPrompts(LoginPrecondition.FIRST_TIME_LOGIN_RESTORED_DATABASE) { _, _ ->
-                Log.d(TAG, "Got a good password")
+                Logger.d(TAG, "Got a good password")
                 true
             }
         }

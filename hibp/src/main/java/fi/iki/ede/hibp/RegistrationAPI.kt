@@ -1,7 +1,6 @@
 package fi.iki.ede.hibp
 
 import android.content.Context
-import android.util.Log
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -12,6 +11,7 @@ import androidx.compose.ui.res.stringResource
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.decrypt
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.splits.GetComposable
 import fi.iki.ede.safe.splits.PluginName
@@ -23,18 +23,18 @@ private val TAG = PluginName.HIBP.pluginName
 
 class RegistrationAPIImpl : RegistrationAPI {
     override fun register(context: Context) {
-        Log.e(TAG, "RegistrationAPIImpl::register()")
+        Logger.e(TAG, "RegistrationAPIImpl::register()")
     }
 
     override fun deregister() {
-        Log.e(TAG, "RegistrationAPIImpl::deregister()")
+        Logger.e(TAG, "RegistrationAPIImpl::deregister()")
     }
 
     override fun getName() = PluginName.HIBP
 
     override fun requestToDeregister(ex: Exception?) {
         // Implementation
-        Log.e(TAG, "RegistrationAPIImpl::requestToDeregister()")
+        Logger.e(TAG, "RegistrationAPIImpl::requestToDeregister()")
     }
 }
 
@@ -44,7 +44,7 @@ enum class BreachCheckEnum {
 
 class RegistrationAPIProviderImpl : RegistrationAPI.Provider, GetComposable {
     override fun get(): RegistrationAPI {
-        Log.e(TAG, "RegistrationAPIProviderImpl::get()")
+        Logger.e(TAG, "RegistrationAPIProviderImpl::get()")
         return RegistrationAPIImpl()
     }
 
@@ -71,7 +71,7 @@ class RegistrationAPIProviderImpl : RegistrationAPI.Provider, GetComposable {
                                 false -> BreachCheckEnum.NOT_BREACHED
                             }
                         },
-                        { error -> Log.e(SiteEntryEditScreen.TAG, "Error: $error") })
+                        { error -> Logger.e(SiteEntryEditScreen.TAG, "Error: $error") })
                 }) { Text(stringResource(id = R.string.password_entry_breach_check)) }
             }
             when (breachCheckResult) {

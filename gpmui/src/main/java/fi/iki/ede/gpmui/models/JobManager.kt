@@ -1,7 +1,7 @@
 package fi.iki.ede.gpmui.models
 
-import android.util.Log
 import androidx.annotation.GuardedBy
+import fi.iki.ede.logger.Logger
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -59,7 +59,7 @@ class JobManager(private val onWorkingStateChange: (Boolean, percentCompleted: F
             val newMasterJob = Job().also { mj ->
                 newJobs.forEach { job ->
                     job.invokeOnCompletion { j ->
-                        Log.w(
+                        Logger.w(
                             TAG,
                             "Job ${(job as CoroutineScope).coroutineContext}/$j completed"
                         )

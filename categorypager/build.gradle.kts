@@ -56,6 +56,7 @@ dependencies {
     implementation(project(":app:theme"))
     implementation(project(":autolock"))
     implementation(project(":crypto"))
+    implementation(project(":logger"))
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)

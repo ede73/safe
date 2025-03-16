@@ -7,7 +7,7 @@ import android.app.backup.BackupManager
 import android.app.backup.FullBackupDataOutput
 import android.content.Context
 import android.os.ParcelFileDescriptor
-import android.util.Log
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.preferences.Preferences
 import java.io.File
 
@@ -18,11 +18,11 @@ class MyBackupAgent : BackupAgentHelper() {
     override fun onCreate() {
         super.onCreate()
         Preferences.initialize(this.applicationContext)
-        Log.e(TAG, "onCreate")
+        Logger.e(TAG, "onCreate")
     }
 
     private fun log(message: String) {
-        Log.e(TAG, message)
+        Logger.e(TAG, message)
     }
 
     override fun onFullBackup(data: FullBackupDataOutput?) {

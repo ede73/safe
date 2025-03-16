@@ -3,7 +3,6 @@ package fi.iki.ede.gpmdatamodel.db
 import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
-import android.util.Log
 import fi.iki.ede.cryptoobjects.encrypt
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.db.DBID
@@ -20,6 +19,7 @@ import fi.iki.ede.db.whereEq
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.model.SavedGPM.Companion.makeFromEncryptedStringFields
+import fi.iki.ede.logger.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 
 private const val TAG = "GPMDB"
@@ -45,7 +45,7 @@ object GPMDB {
                     db.execSQL(it)
                 }
             } catch (ex: SQLiteException) {
-                Log.i(TAG, "onUpgrade to 5: $ex")
+                Logger.i(TAG, "onUpgrade to 5: $ex")
             }
         }
     }
@@ -69,7 +69,7 @@ object GPMDB {
             insert(SiteEntry2GooglePasswordManager, ContentValues().apply {
                 put(SiteEntry2GooglePasswordManager.Columns.PASSWORD_ID, siteEntryID)
                 put(SiteEntry2GooglePasswordManager.Columns.GOOGLE_ID, savedGPMID)
-            }).let { Log.w(TAG, "DBLinker $siteEntryID to $savedGPMID") }
+            }).let { Logger.w(TAG, "DBLinker $siteEntryID to $savedGPMID") }
         }
 
     // TODO: block external access! Should only be accessed via datamodel

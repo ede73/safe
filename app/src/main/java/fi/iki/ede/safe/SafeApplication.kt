@@ -2,7 +2,6 @@ package fi.iki.ede.safe
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.camera.camera2.Camera2Config
 import androidx.camera.core.CameraXConfig
 import androidx.preference.PreferenceManager
@@ -13,6 +12,7 @@ import fi.iki.ede.clipboardutils.ClipboardUtils
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.gpmdatamodel.db.GPMDB
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseInitialize
 import fi.iki.ede.notifications.ConfiguredNotifications
 import fi.iki.ede.preferences.Preferences
@@ -31,7 +31,7 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
     SharedPreferences.OnSharedPreferenceChangeListener {
     init {
         instance = this
-        Log.w(TAG, "init")
+        Logger.w(TAG, "init")
 //        if (BuildConfig.DEBUG) {
 //            StrictMode.setVmPolicy(
 //                StrictMode.VmPolicy.Builder()
@@ -48,7 +48,7 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
 
     override fun onCreate() {
         super.onCreate()
-        Log.w(TAG, "onCreate")
+        Logger.w(TAG, "onCreate")
         firebaseInitialize(
             this,
             BuildConfig.GIT_COMMIT_HASH,
@@ -89,7 +89,7 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
 
     override fun onTerminate() {
         super.onTerminate()
-        Log.w(TAG, "onTerminate")
+        Logger.w(TAG, "onTerminate")
         PreferenceManager.getDefaultSharedPreferences(this)
             .unregisterOnSharedPreferenceChangeListener(this)
     }

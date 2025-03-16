@@ -1,9 +1,9 @@
 package fi.iki.ede.gpm.changeset
 
-import android.util.Log
 import fi.iki.ede.gpm.debug
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.logger.Logger
 import java.security.MessageDigest
 
 private const val TAG = "ImportChangeSet"
@@ -59,28 +59,28 @@ data class ImportChangeSet(
 fun printImportReport(
     importChangeSet: ImportChangeSet
 ) {
-    Log.d(TAG, "=======================")
-    Log.d(TAG, "====== IMPORT REPORT ==")
-    Log.d(TAG, "=======================")
+    Logger.d(TAG, "=======================")
+    Logger.d(TAG, "====== IMPORT REPORT ==")
+    Logger.d(TAG, "=======================")
 
-    Log.d(TAG, "New unseen entries(or no match found):")
+    Logger.d(TAG, "New unseen entries(or no match found):")
 //    importChangeSet.getUnprocessedIncomingGPMs.forEach {
-//        Log.d(TAG,"\t$it")
+//        Logger.d(TAG,"\t$it")
 //    }
 
-    Log.d(
+    Logger.d(
         TAG,
         "Known entries with only hash or 1-field-changed against identifiable existing DB entry:"
     )
 //    importChangeSet.matchingGPMs.forEach {
-//        Log.d(TAG,"\t${it.first} matches ${it.second}")
+//        Logger.d(TAG,"\t${it.first} matches ${it.second}")
 //    }
 
-    Log.d(TAG, "Conflicts: input line matches MORE than 1 entry:")
+    Logger.d(TAG, "Conflicts: input line matches MORE than 1 entry:")
 //    importChangeSet.getMatchingConflicts.forEach { it ->
-//        Log.d(TAG,"\t${it.key} matches:")
+//        Logger.d(TAG,"\t${it.key} matches:")
 //        it.value.forEach { scoredSavedGPM ->
-//            Log.d(TAG,"\t\t${scoredSavedGPM.matchScore * 100}% $scoredSavedGPM.item")
+//            Logger.d(TAG,"\t\t${scoredSavedGPM.matchScore * 100}% $scoredSavedGPM.item")
 //        }
 //    }
 }
@@ -93,7 +93,7 @@ fun calculateSha128(fields: List<String>, s: String): String {
         MessageDigest.getInstance("SHA-1").digest(fields.joinToString(separator = "").toByteArray())
             .joinToString("") { "%02x".format(it) }
     debug {
-        // Log.d(TAG,hash)
+        // Logger.d(TAG,hash)
     }
     return hash
 }

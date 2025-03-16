@@ -1,12 +1,12 @@
 package fi.iki.ede.gpm
 
-import android.util.Log
 import fi.iki.ede.gpm.csv.processInputLine
 import fi.iki.ede.gpm.csv.readCsv
 import fi.iki.ede.gpm.model.IncomingGPM.Companion.makeFromCSVImport
+import fi.iki.ede.logger.Logger
 import io.mockk.every
-import io.mockk.mockkStatic
-import io.mockk.unmockkStatic
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -19,13 +19,13 @@ class CSVReaderKtTest {
 
     @Before
     fun before() {
-        mockkStatic(android.util.Log::class)
-        every { Log.d(any(), any()) } returns 0
+        mockkObject(Logger)
+        every { Logger.d(any(), any()) } returns 0
     }
 
     @After
     fun after() {
-        unmockkStatic(android.util.Log::class)
+        unmockkObject(Logger)
     }
 
     @Test
@@ -33,7 +33,7 @@ class CSVReaderKtTest {
         val x = "            d,b,\"c,a\","
         val q = processInputLine(x, 5)
         q.forEach {
-            Log.d(TAG, it)
+            Logger.d(TAG, it)
         }
     }
 
@@ -57,16 +57,16 @@ class CSVReaderKtTest {
         val results = readCsv(input.byteInputStream())
         // yes 2, identical lines compressed
         results.forEach { result ->
-            Log.d(TAG, result.toString())
+            Logger.d(TAG, result.toString())
         }
-        Log.d(TAG, "-----")
+        Logger.d(TAG, "-----")
         assertEquals(4, results.size)
         assertEquals("b,,/", results.elementAt(2).url)
         assertEquals("d\"", results.elementAt(3).password)
         assertEquals("c,", results.elementAt(1).username)
 
         results.forEach { result ->
-            Log.d(TAG, result.toString())
+            Logger.d(TAG, result.toString())
             assertEquals("a", result.name)
             assertEquals("b", result.url.replace(",,/", "")) // naive, should be positional
             assertEquals("c", result.username.replace(",", "")) // naive, should be positional

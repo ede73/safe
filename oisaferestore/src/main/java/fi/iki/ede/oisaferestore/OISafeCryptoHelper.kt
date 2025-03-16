@@ -1,6 +1,5 @@
 package fi.iki.ede.oisaferestore
 
-import android.util.Log
 import fi.iki.ede.crypto.EncryptedPassword
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
@@ -8,6 +7,7 @@ import fi.iki.ede.crypto.SaltedPassword
 import fi.iki.ede.crypto.support.HexString
 import fi.iki.ede.crypto.support.hexToByteArray
 import fi.iki.ede.crypto.support.toHexString
+import fi.iki.ede.logger.Logger
 import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.SecretKey
@@ -90,7 +90,7 @@ open class OISafeCryptoHelper(private val algorithm: Algorithm) {
         check(secretKey != null) { "Must call setPassword before running decrypt." }
         check(salt != null) { "Must call setSalt before running decrypt." }
         if (DEBUG && plaintextArray.isEmpty()) {
-            Log.e(TAG, "Encrypting empty plaintext. You should fix call site and skip these")
+            Logger.e(TAG, "Encrypting empty plaintext. You should fix call site and skip these")
         }
         cipher!!.init(Cipher.ENCRYPT_MODE, secretKey, pbeParamSpec)
         val ciphertext = cipher!!.doFinal(plaintextArray)

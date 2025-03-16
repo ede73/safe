@@ -2,9 +2,9 @@ package fi.iki.ede.cryptoobjects
 
 import android.graphics.BitmapFactory
 import android.util.Base64
-import android.util.Log
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.support.decrypt
+import fi.iki.ede.logger.Logger
 
 fun DecryptableSiteEntry.decryptPhoto(decrypter: (IVCipherText) -> ByteArray) =
     try {
@@ -13,7 +13,7 @@ fun DecryptableSiteEntry.decryptPhoto(decrypter: (IVCipherText) -> ByteArray) =
         BitmapFactory.decodeByteArray(bitmapOrJpeg, 0, bitmapOrJpeg.size)
     } catch (ex: Exception) {
         if (BuildConfig.DEBUG) {
-            Log.e("decryptPhoto", ex.toString())
+            Logger.e("decryptPhoto", ex.toString())
         }
         null
     }

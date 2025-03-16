@@ -1,12 +1,12 @@
 package fi.iki.ede.oisaferestore
 
 import android.text.TextUtils
-import android.util.Log
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.SaltedEncryptedPassword
 import fi.iki.ede.crypto.SaltedPassword
 import fi.iki.ede.dateutils.DateUtils
+import fi.iki.ede.logger.Logger
 import java.text.ParseException
 import java.time.ZonedDateTime
 
@@ -93,7 +93,7 @@ class RestoreDataSet(
                 currentEntry!!.passwordChangedDate =
                     DateUtils.newParse(passwordChangedDate)
             } catch (pe: ParseException) {
-                Log.e(TAG, "failed setPasswordChangedDate($passwordChangedDate)")
+                Logger.e(TAG, "failed setPasswordChangedDate($passwordChangedDate)")
             }
         }
     }

@@ -2,7 +2,6 @@ package fi.iki.ede.backup
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
-import android.util.Log
 import fi.iki.ede.backup.ExportConfig.Companion.Attributes
 import fi.iki.ede.backup.ExportConfig.Companion.Elements
 import fi.iki.ede.crypto.IVCipherText
@@ -20,6 +19,7 @@ import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBID
 import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseRecordException
 import fi.iki.ede.preferences.Preferences
 import kotlinx.coroutines.CancellationException
@@ -101,7 +101,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
             decryptMasterKey(backupEncryptionKeys, userPassword)
         )
 //        .also { // dump for tests
-//            Log.d(TAG,"(${String(it)})")
+//            Logger.d(TAG,"(${String(it)})")
 //        }
     )
 
@@ -307,7 +307,10 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                     // silently fail, parse failure ain't critical
                                     // and no corrective measure here, passwords are more important
                                     if (BuildConfig.DEBUG) {
-                                        Log.e(TAG, "Failed parsing password change data ($changed)")
+                                        Logger.e(
+                                            TAG,
+                                            "Failed parsing password change data ($changed)"
+                                        )
                                     }
                                 }
                             }

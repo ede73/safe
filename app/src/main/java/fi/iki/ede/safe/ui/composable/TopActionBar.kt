@@ -2,7 +2,6 @@ package fi.iki.ede.safe.ui.composable
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.result.ActivityResult
@@ -33,6 +32,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.autolock.AutolockingService
 import fi.iki.ede.gpmui.activities.ImportNewGpmsScreen
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.SafeApplication
 import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
@@ -172,24 +172,28 @@ private fun MakeDropdownMenu(
     DropdownMenu(expanded = displayMenu.value, onDismissRequest = { displayMenu.value = false }) {
         // Creating dropdown menu item, on click
         // would create a Toast message
-        DropdownMenuItem(enabled = !loginScreen,
+        DropdownMenuItem(
+            enabled = !loginScreen,
             text = { Text(text = stringResource(id = R.string.action_bar_settings)) },
             onClick = {
                 displayMenu.value = false
                 IntentManager.startPreferencesActivity(context)
             })
-        DropdownMenuItem(text = { Text(text = stringResource(id = R.string.action_bar_help)) },
+        DropdownMenuItem(
+            text = { Text(text = stringResource(id = R.string.action_bar_help)) },
             onClick = {
                 displayMenu.value = false
                 IntentManager.startHelpScreen(context)
             })
-        DropdownMenuItem(enabled = !loginScreen,
+        DropdownMenuItem(
+            enabled = !loginScreen,
             text = { Text(text = stringResource(id = R.string.action_bar_change_master_password)) },
             onClick = {
                 displayMenu.value = false
                 showChangePasswordDialog.value = true
             })
-        DropdownMenuItem(enabled = !loginScreen,
+        DropdownMenuItem(
+            enabled = !loginScreen,
             text = { Text(text = stringResource(id = R.string.action_bar_show_trash)) },
             onClick = {
                 displayMenu.value = false
@@ -201,18 +205,21 @@ private fun MakeDropdownMenu(
                 try {
                     it.second(context)
                 } catch (ex: Exception) {
-                    Log.e(TAG, "Plugin failed to do the menu", ex)
+                    Logger.e(TAG, "Plugin failed to do the menu", ex)
                 }
             })
         }
-        DropdownMenuItem(enabled = !loginScreen,
+        DropdownMenuItem(
+            enabled = !loginScreen,
             text = { Text(text = stringResource(id = R.string.action_bar_import_export)) },
             onClick = {
                 exportImport.value = true
             })
-        DropdownMenu(expanded = exportImport.value,
+        DropdownMenu(
+            expanded = exportImport.value,
             onDismissRequest = { exportImport.value = false }) {
-            DropdownMenuItem(text = { Text(text = stringResource(id = R.string.action_bar_backup)) },
+            DropdownMenuItem(
+                text = { Text(text = stringResource(id = R.string.action_bar_backup)) },
                 onClick = {
                     // TODO: Move outta here, so we can pause the time for duration of file selection
                     displayMenu.value = false
@@ -221,23 +228,25 @@ private fun MakeDropdownMenu(
                 })
             // Currently does not work from login screen
             // TODO: Make work from login screen?
-            DropdownMenuItem(text = { Text(text = stringResource(id = R.string.action_bar_restore)) },
+            DropdownMenuItem(
+                text = { Text(text = stringResource(id = R.string.action_bar_restore)) },
                 onClick = {
                     try {
                         // TODO: Move outta here, so we can pause the time for duration of file selection
                         displayMenu.value = false
                         IntentManager.startRestoreDatabaseScreen(context)
                     } catch (ex: ActivityNotFoundException) {
-                        Log.e(TAG, "Cannot launch ACTION_OPEN_DOCUMENT")
+                        Logger.e(TAG, "Cannot launch ACTION_OPEN_DOCUMENT")
                     }
                 })
-            DropdownMenuItem(text = { Text(text = stringResource(id = R.string.action_bar_import_google_passwordmanager)) },
+            DropdownMenuItem(
+                text = { Text(text = stringResource(id = R.string.action_bar_import_google_passwordmanager)) },
                 onClick = {
                     try {
                         displayMenu.value = false
                         ImportNewGpmsScreen.startMe(context)
                     } catch (ex: ActivityNotFoundException) {
-                        Log.e(TAG, "Cannot launch ImportGooglePasswordManager", ex)
+                        Logger.e(TAG, "Cannot launch ImportGooglePasswordManager", ex)
                     }
                 })
             IntentManager.getMenuItems(DropDownMenu.TopActionBarImportExportMenu).forEach {
@@ -248,7 +257,7 @@ private fun MakeDropdownMenu(
                             it.second(context)
                         }
                     } catch (ex: Exception) {
-                        Log.e(TAG, "Plugin failed to do the menu", ex)
+                        Logger.e(TAG, "Plugin failed to do the menu", ex)
                     }
                 })
             }

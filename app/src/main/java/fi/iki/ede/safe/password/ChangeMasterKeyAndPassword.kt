@@ -1,6 +1,5 @@
 package fi.iki.ede.safe.password
 
-import android.util.Log
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_ITERATION_COUNT
 import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_LENGTH_BITS
@@ -10,6 +9,7 @@ import fi.iki.ede.crypto.keystore.KeyManagement.generatePBKDF2AESKey
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.gpmdatamodel.GPMDataModel
+import fi.iki.ede.logger.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -60,7 +60,7 @@ object ChangeMasterKeyAndPassword {
         } catch (e: Exception) {
             // TODO: Figure out, basically theres not much to do here, its not like we can
             // setup a transaction to protect stuff, also user always has backup, right? :)
-            Log.e("ChangePassword", "Failed modifying master password $e")
+            Logger.e("ChangePassword", "Failed modifying master password $e")
         } finally {
             //dbHelper.close()
         }

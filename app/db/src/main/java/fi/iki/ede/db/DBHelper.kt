@@ -7,13 +7,13 @@ import android.database.DatabaseUtils
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import android.database.sqlite.SQLiteOpenHelper
-import android.util.Log
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.CipherUtilities
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.dateutils.DateUtils
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseRecordException
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.time.ZonedDateTime
@@ -59,7 +59,7 @@ class DBHelper(
 //        val cursor = database.rawQuery("SELECT name FROM sqlite_master WHERE type='table'", null)
 //        while (cursor.moveToNext()) {
 //            val tableName = cursor.getString(0)
-//            Log.d(TAG,"Table: $tableName")
+//            Logger.d(TAG,"Table: $tableName")
 //            val tableCursor = database.rawQuery(
 //                "SELECT * FROM $tableName", null,
 //            )
@@ -72,7 +72,7 @@ class DBHelper(
 //                        print(tableCursor.getString(i) + " | ")
 //                    }
 //                }
-//                Log.d(TAG,)
+//                Logger.d(TAG,)
 //            }
 //            tableCursor.close()
 //        }
@@ -95,7 +95,7 @@ class DBHelper(
                     db?.execSQL(sql)
                 }
             } catch (ex: SQLiteException) {
-                Log.e(TAG, "Error initializing database, sqliteVersion=${sqliteVersion()}", ex)
+                Logger.e(TAG, "Error initializing database, sqliteVersion=${sqliteVersion()}", ex)
                 throw ex
             }
         }
@@ -105,7 +105,7 @@ class DBHelper(
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         // DO USE hardcoded strings for DB references, as it records history
         (oldVersion until newVersion).forEach { upgrade ->
-            Log.i(TAG, "onUpgrade $upgrade (until $newVersion), sqlite ${sqliteVersion()}")
+            Logger.i(TAG, "onUpgrade $upgrade (until $newVersion), sqlite ${sqliteVersion()}")
             when (upgrade) {
                 0 -> {
                     // should never happen except maybe during upgrade test scenarios
@@ -148,7 +148,7 @@ class DBHelper(
                     })
                 }
 
-                else -> Log.w(
+                else -> Logger.w(
                     TAG, "onUpgrade() with unknown oldVersion $oldVersion to $newVersion"
                 )
             }
@@ -157,7 +157,7 @@ class DBHelper(
 
     // called once (regardless of amount of downgrades needed)
     override fun onDowngrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
-        Log.i(TAG, "Downgrade $oldVersion to $newVersion")
+        Logger.i(TAG, "Downgrade $oldVersion to $newVersion")
     }
 
     fun storeSaltAndEncryptedMasterKey(salt: Salt, ivCipher: IVCipherText) {
@@ -210,7 +210,8 @@ class DBHelper(
                 it.moveToFirst()
                 it.getDBID(Category.Columns.CAT_ID)
             } else { // there isn't already such a category...
-                this.writableDatabase.insert(Category,
+                this.writableDatabase.insert(
+                    Category,
                     ContentValues().apply {
                         put(Category.Columns.NAME, entry.encryptedName)
                     }
@@ -474,7 +475,7 @@ class DBHelper(
             try {
                 db.execSQL("ALTER TABLE ${SiteEntry.tableName} ADD COLUMN extensions TEXT")
             } catch (ex: SQLiteException) {
-                Log.i(TAG, "onUpgrade to 7: $ex")
+                Logger.i(TAG, "onUpgrade to 7: $ex")
             }
             upgradeExternals(db)
             db.setTransactionSuccessful()
@@ -489,7 +490,7 @@ class DBHelper(
             try {
                 db.execSQL("ALTER TABLE ${SiteEntry.tableName} ADD COLUMN deleted INTEGER DEFAULT 0")
             } catch (ex: SQLiteException) {
-                Log.i(TAG, "onUpgrade to 6: $ex")
+                Logger.i(TAG, "onUpgrade to 6: $ex")
             }
             upgradeExternals(db)
             db.setTransactionSuccessful()
@@ -551,7 +552,7 @@ class DBHelper(
                 upgradeExternals(db)
             } catch (ex: SQLiteException) {
                 // possibly we've already done the upgrade, so just skip the transfer
-                Log.i(TAG, "onUpgrade to 4: $ex")
+                Logger.i(TAG, "onUpgrade to 4: $ex")
             }
 
             db.execSQL("DROP TABLE IF EXISTS master_key;")
@@ -570,7 +571,7 @@ class DBHelper(
                 )
             } else {
                 // should never happen obviously, perhaps user installed OLD version, never logged in..
-                Log.w(TAG, "Failed migrating masterkey ${sqliteVersion()}")
+                Logger.w(TAG, "Failed migrating masterkey ${sqliteVersion()}")
             }
             db.setTransactionSuccessful()
             db.endTransaction()
@@ -585,7 +586,7 @@ class DBHelper(
                 try {
                     db.execSQL("ALTER TABLE categories DROP COLUMN lastdatetimeedit;")
                 } catch (ex: SQLiteException) {
-                    Log.i(TAG, "onUpgrade to 3: $ex")
+                    Logger.i(TAG, "onUpgrade to 3: $ex")
                 }
                 upgradeExternals(db)
                 db.setTransactionSuccessful()
@@ -615,7 +616,7 @@ class DBHelper(
             } catch (ex: SQLiteException) {
                 if (ex.message?.contains("duplicate column") != true) {
                     // something else wrong than duplicate column
-                    Log.i(TAG, "onUpgrade to 2: $ex")
+                    Logger.i(TAG, "onUpgrade to 2: $ex")
                     throw ex
                 }
             }

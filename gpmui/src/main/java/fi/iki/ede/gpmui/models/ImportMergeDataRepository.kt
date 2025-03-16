@@ -1,10 +1,10 @@
 package fi.iki.ede.gpmui.models
 
-import android.util.Log
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpmdatamodel.GPMDataModel
+import fi.iki.ede.logger.Logger
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,7 +35,7 @@ class ImportMergeDataRepository {
 
     fun debug(message: String) {
         if (false) {
-            Log.d(TAG, message)
+            Logger.d(TAG, message)
         }
     }
 

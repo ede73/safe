@@ -2,7 +2,6 @@ package fi.iki.ede.oisaferestore
 
 import android.content.Context
 import android.database.sqlite.SQLiteException
-import android.util.Log
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
@@ -14,6 +13,7 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.db.DBHelper
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.safe.model.LoginHandler
 import java.io.InputStream
 import javax.crypto.spec.SecretKeySpec
@@ -85,7 +85,7 @@ object OISafeRestore {
             try {
                 dbHelper.addSiteEntry(fromOiSafePwd(pwdId, password))
             } catch (ex: SQLiteException) {
-                Log.e(TAG, "ERROR adding password $pwdId")
+                Logger.e(TAG, "ERROR adding password $pwdId")
                 db.endTransaction()
                 return -1
             }
@@ -98,7 +98,7 @@ object OISafeRestore {
 
         // also MUST BE signed in
         if (!LoginHandler.isLoggedIn()) {
-            Log.e(TAG, "This should never happen")
+            Logger.e(TAG, "This should never happen")
         }
         return totalPasswords
     }
@@ -116,7 +116,8 @@ fun restoreOiSafeDump(
 
     val encryptedRenewedMasterKeyAndSalt =
         Salt(CipherUtilities.generateRandomBytes(8 * 8)).let { salt ->
-            Pair(salt,
+            Pair(
+                salt,
                 KeyManagement.encryptMasterKey(
                     KeyManagement.generatePBKDF2AESKey(
                         salt,
@@ -145,7 +146,7 @@ fun restoreOiSafeDump(
         }
         totalPasswords
     } catch (ex: Exception) {
-        Log.e("RestoreDatabase", "$ex")
+        Logger.e("RestoreDatabase", "$ex")
         -1
     }
 }

@@ -1,6 +1,6 @@
 package fi.iki.ede.safe.ui.utilities
 
-import android.util.Log
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.safe.BuildConfig
 import kotlin.time.Duration
 
@@ -15,7 +15,7 @@ class MeasureTime(private val title: String = "") : AutoCloseable {
         val now = System.nanoTime()
         startTime = now
         lastLapTime = now
-        Log.i(makeTag(), "========== START ==========")
+        Logger.i(makeTag(), "========== START ==========")
     }
 
     fun lap(message: String, maxDuration: Duration? = null) {
@@ -29,16 +29,16 @@ class MeasureTime(private val title: String = "") : AutoCloseable {
 
         if (maxDuration != null && maxDuration.inWholeNanoseconds < sinceLastLap) {
             // shit, we exceeded allotted time
-            Log.e(makeTag(), "EXCEEDED ${formatTime(maxDuration.inWholeNanoseconds)} $msg")
+            Logger.e(makeTag(), "EXCEEDED ${formatTime(maxDuration.inWholeNanoseconds)} $msg")
         } else {
-            Log.i(makeTag(), msg)
+            Logger.i(makeTag(), msg)
         }
         lastLapTime = now
     }
 
     fun end(message: String, maxDuration: Duration? = null) {
         lap(message, maxDuration)
-        Log.i(makeTag(), "========== STOP ==========")
+        Logger.i(makeTag(), "========== STOP ==========")
         ended = true
     }
 

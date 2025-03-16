@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -32,6 +31,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import com.google.common.util.concurrent.ListenableFuture
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseRecordException
 import fi.iki.ede.statemachine.AllowedEvents
 import fi.iki.ede.statemachine.MainStateMachine.Companion.INITIAL
@@ -96,7 +96,8 @@ fun SafePhoto(
                         TransitionTo("showingPhotoPreview")
                     } else {
                         val requestPermissionLauncher =
-                            rememberLauncherForActivityResult(contract = ActivityResultContracts.RequestPermission(),
+                            rememberLauncherForActivityResult(
+                                contract = ActivityResultContracts.RequestPermission(),
                                 onResult = { isGranted: Boolean ->
                                     if (isGranted) {
                                         transitionToShowPhotoPreview = true
@@ -121,7 +122,7 @@ fun SafePhoto(
             ) {
                 // explain to user why permission is required!
                 // TODO:
-                Log.e(TAG, "Explain to user why permission is required")
+                Logger.e(TAG, "Explain to user why permission is required")
                 DispatchEvent(INITIAL)
             }
             StateEvent(

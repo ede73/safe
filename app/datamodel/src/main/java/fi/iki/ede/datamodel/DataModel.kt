@@ -1,11 +1,11 @@
 package fi.iki.ede.datamodel
 
-import android.util.Log
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.db.DBID
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseTry
 import fi.iki.ede.preferences.Preferences
 import kotlinx.coroutines.CoroutineScope
@@ -34,7 +34,7 @@ object DataModel {
         @OptIn(DelicateCoroutinesApi::class)
         GlobalScope.launch {
             _siteEntriesStateFlow.collect { list ->
-                Log.d(
+                Logger.d(
                     tag,
                     "Debug observer: _siteEntriesStateFlow:  (${
                         list.map { it.id }.joinToString(",")
@@ -45,7 +45,7 @@ object DataModel {
         @OptIn(DelicateCoroutinesApi::class)
         GlobalScope.launch {
             _categoriesStateFlow.collect { list ->
-                Log.d(
+                Logger.d(
                     tag,
                     "Debug observer: _categoriesStateFlow:  (${
                         list.map { it.id }.joinToString(",")
@@ -278,7 +278,8 @@ object DataModel {
                     // now that we know passwords, quickly update the category counts too...
                     _siteEntriesStateFlow.value.groupBy { it.categoryId }
                         .forEach { (categoryId, siteEntries) ->
-                            _categoriesStateFlow.updateListItemById(categoryId!!,
+                            _categoriesStateFlow.updateListItemById(
+                                categoryId!!,
                                 keySelector = { it.id!! }) {
                                 it.apply {
                                     containedSiteEntryCount = siteEntries.size
@@ -333,8 +334,8 @@ object DataModel {
                     filterAList(_siteEntriesStateFlow.value, _categoriesStateFlow.value)
 
                 straySiteEntries.forEach {
-                    Log.e(
-                        "DataModel",
+                    Logger.e(
+                        TAG,
                         "Stray SiteEntry id=${it.id}, category=${it.categoryId}, description=${it.cachedPlainDescription}"
                     )
                 }
@@ -347,12 +348,12 @@ object DataModel {
             coroutineScope {
                 launch {
                     for (category in _categoriesStateFlow.value) {
-                        Log.d(
+                        Logger.d(
                             TAG,
                             "Category id=${category.id} plainname=${category.plainName}"
                         ) // OK: Dump
                         for (siteEntry in getSiteEntriesOfCategory(category.id!!)) {
-                            Log.d(
+                            Logger.d(
                                 TAG,
                                 "  SiteEntry id=${siteEntry.id}, description=${siteEntry.cachedPlainDescription},changed=${siteEntry.passwordChangedDate}"
                             ) // OK: Dump

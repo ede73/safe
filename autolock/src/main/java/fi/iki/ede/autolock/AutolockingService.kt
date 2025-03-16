@@ -13,8 +13,8 @@ import android.os.Binder
 import android.os.Build
 import android.os.CountDownTimer
 import android.os.IBinder
-import android.util.Log
 import androidx.annotation.RequiresApi
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.notifications.ConfiguredNotifications
 import fi.iki.ede.notifications.MainNotification
 import fi.iki.ede.preferences.Preferences
@@ -81,19 +81,19 @@ class AutolockingService : Service() {
             autoLockNotification.clearNotification()
             autoLockCountdownNotifier?.cancel()
             if (BuildConfig.DEBUG) {
-                Log.d(TAG, "Inactivity timer pause reset - no longer logger in")
+                Logger.d(TAG, "Inactivity timer pause reset - no longer logger in")
             }
             paused.set(false)
             return
         }
         if (paused.get()) {
             if (BuildConfig.DEBUG) {
-                Log.d(TAG, "Inactivity timer paused, wont restart")
+                Logger.d(TAG, "Inactivity timer paused, wont restart")
             }
             return
         }
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, "Restart inactivity timer")
+            Logger.d(TAG, "Restart inactivity timer")
         }
         autoLockCountdownNotifier?.cancel()
         autoLockCountdownNotifier = null
@@ -181,7 +181,7 @@ class AutolockingService : Service() {
         // must be started with startTimer first.
         paused.set(true)
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, "Pause inactivity timer")
+            Logger.d(TAG, "Pause inactivity timer")
         }
         autoLockCountdownNotifier?.cancel()
     }
@@ -189,7 +189,7 @@ class AutolockingService : Service() {
     private fun resumeTimer() {
         paused.set(false)
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, "Resume inactivity timer")
+            Logger.d(TAG, "Resume inactivity timer")
         }
         restartTimer()
     }

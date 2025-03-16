@@ -2,7 +2,7 @@ package fi.iki.ede.categorypager
 
 import android.content.Context
 import android.content.Intent
-import android.util.Log
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.splits.RegistrationAPI
@@ -12,7 +12,7 @@ private val TAG = PluginName.CATEGORY_PAGER.pluginName
 
 class RegistrationAPIImpl : RegistrationAPI {
     override fun register(context: Context) {
-        Log.e(TAG, "RegistrationAPIImpl::register()")
+        Logger.e(TAG, "RegistrationAPIImpl::register()")
         val intent = Intent(
             context,
             CategoryListPagedScreen::class.java
@@ -26,20 +26,20 @@ class RegistrationAPIImpl : RegistrationAPI {
     }
 
     override fun deregister() {
-        Log.e(TAG, "RegistrationAPIImpl::deregister()")
+        Logger.e(TAG, "RegistrationAPIImpl::deregister()")
     }
 
     override fun getName() = PluginName.CATEGORY_PAGER
 
     override fun requestToDeregister(ex: Exception?) {
         // Implementation
-        Log.e(TAG, "RegistrationAPIImpl::requestToDeregister()")
+        Logger.e(TAG, "RegistrationAPIImpl::requestToDeregister()")
     }
 }
 
 class RegistrationAPIProviderImpl : RegistrationAPI.Provider {
     override fun get(): RegistrationAPI {
-        Log.e(TAG, "RegistrationAPIProviderImpl::get()")
+        Logger.e(TAG, "RegistrationAPIProviderImpl::get()")
         return RegistrationAPIImpl()
     }
 }

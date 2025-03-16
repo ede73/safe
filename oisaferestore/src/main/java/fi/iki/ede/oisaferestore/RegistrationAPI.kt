@@ -2,7 +2,7 @@ package fi.iki.ede.oisaferestore
 
 import android.content.Context
 import android.content.Intent
-import android.util.Log
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.safe.splits.DropDownMenu
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.splits.PluginName
@@ -13,7 +13,7 @@ private val TAG = PluginName.OISAFERESTORE.pluginName
 // https://github.com/googlearchive/android-dynamic-features/blob/master/app/src/main/java/com/google/android/samples/dynamicfeatures/MainActivity.kt#L151
 class RegistrationAPIImpl : RegistrationAPI {
     override fun register(mainContext: Context) {
-        Log.e(TAG, "RegistrationAPIImpl::register()")
+        Logger.e(TAG, "RegistrationAPIImpl::register()")
         IntentManager.registerSubMenu(
             getName(),
             DropDownMenu.TopActionBarImportExportMenu,
@@ -31,20 +31,20 @@ class RegistrationAPIImpl : RegistrationAPI {
 
     override fun deregister() {
         // Implementation
-        Log.e(TAG, "RegistrationAPIImpl::deregister()")
+        Logger.e(TAG, "RegistrationAPIImpl::deregister()")
     }
 
     override fun getName() = PluginName.OISAFERESTORE
 
     override fun requestToDeregister(ex: Exception?) {
         // Implementation
-        Log.e(TAG, "RegistrationAPIImpl::requestToDeregister()")
+        Logger.e(TAG, "RegistrationAPIImpl::requestToDeregister()")
     }
 }
 
 class RegistrationAPIProviderImpl : RegistrationAPI.Provider {
     override fun get(): RegistrationAPI {
-        Log.e(TAG, "RegistrationAPIProviderImpl::get()")
+        Logger.e(TAG, "RegistrationAPIProviderImpl::get()")
         return RegistrationAPIImpl()
     }
 }

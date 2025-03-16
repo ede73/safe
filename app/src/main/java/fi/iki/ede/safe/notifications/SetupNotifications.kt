@@ -1,7 +1,7 @@
 package fi.iki.ede.safe.notifications
 
 import android.content.Context
-import android.util.Log
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.notifications.ConfiguredNotifications
 import fi.iki.ede.notifications.MainNotification
 import fi.iki.ede.preferences.Preferences
@@ -35,10 +35,10 @@ object SetupNotifications {
         // keep nagging if there are local changes newer than backup!
         val lastBackup = Preferences.getLastBackupTime()
         val lastModified = Preferences.getLastModified()
-        Log.e("SetupNotifications", "$lastBackup < $lastModified")
-        Log.e("SetupNotifications", "$lastBackup < $lastModified")
-        Log.e("SetupNotifications", "$lastBackup < $lastModified")
-        Log.e("SetupNotifications", "$lastBackup < $lastModified")
+        Logger.e("SetupNotifications", "$lastBackup < $lastModified")
+        Logger.e("SetupNotifications", "$lastBackup < $lastModified")
+        Logger.e("SetupNotifications", "$lastBackup < $lastModified")
+        Logger.e("SetupNotifications", "$lastBackup < $lastModified")
         if (lastBackup == null || lastModified != null && lastModified > lastBackup) {
             setBackupDueIconEnabled(context, true)
             MainNotification(

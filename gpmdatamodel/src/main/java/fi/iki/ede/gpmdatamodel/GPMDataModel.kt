@@ -1,11 +1,11 @@
 package fi.iki.ede.gpmdatamodel
 
-import android.util.Log
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.db.DBID
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpmdatamodel.db.GPMDB
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseRecordException
 import fi.iki.ede.logger.firebaseTry
 import fi.iki.ede.preferences.Preferences
@@ -38,7 +38,7 @@ object GPMDataModel {
     private fun setupDebugStateflowObserver() {
         GlobalScope.launch {
             _allSavedGPMsFlow.collect { list ->
-                Log.d(
+                Logger.d(
                     TAG,
                     "Debug observer: _savedGPMsFlow: (${
                         list.map { it.id }.joinToString(",")
@@ -48,7 +48,7 @@ object GPMDataModel {
         }
         GlobalScope.launch {
             _siteEntryToSavedGPMFlow.collect { map ->
-                Log.d(
+                Logger.d(
                     TAG,
                     "Debug observer: _siteEntryToSavedGPMFlow: (${
                         map.map { it.value }.flatten().joinToString(",")

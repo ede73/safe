@@ -1,7 +1,6 @@
 package fi.iki.ede.gpmui.composables
 
 import android.content.ClipDescription
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -33,6 +32,7 @@ import fi.iki.ede.gpmui.BuildConfig
 import fi.iki.ede.gpmui.models.DNDObject
 import fi.iki.ede.gpmui.modifiers.dnd
 import fi.iki.ede.gpmui.modifiers.getClipData
+import fi.iki.ede.logger.Logger
 
 private const val TAG = "DraggableText"
 
@@ -153,7 +153,7 @@ fun DraggableText(
 fun DraggableTextPreview() {
     MaterialTheme {
         DraggableText(DNDObject.JustString("Hello"), onItemDropped = {
-            Log.d(TAG, "item dropped")
+            Logger.d(TAG, "item dropped")
             false
         })
     }

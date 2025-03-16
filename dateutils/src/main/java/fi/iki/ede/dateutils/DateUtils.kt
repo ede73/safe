@@ -1,6 +1,6 @@
 package fi.iki.ede.dateutils
 
-import android.util.Log
+import fi.iki.ede.logger.Logger
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -31,7 +31,7 @@ object DateUtils {
             try {
                 return LocalDate.from(formatter.parse(date)).atStartOfDay(ZoneId.systemDefault())
             } catch (ex: DateTimeParseException) {
-                Log.d(TAG, "..Failed $date with $formatter", ex)
+                Logger.d(TAG, "..Failed $date with $formatter", ex)
             }
         }
         // Biometrics calls us too..

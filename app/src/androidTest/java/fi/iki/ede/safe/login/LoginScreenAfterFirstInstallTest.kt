@@ -2,7 +2,6 @@ package fi.iki.ede.safe.login
 
 import android.app.Activity.RESULT_CANCELED
 import android.content.Context
-import android.util.Log
 import androidx.activity.result.ActivityResult
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -18,6 +17,7 @@ import fi.iki.ede.backup.MyBackupAgent
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.gpmdatamodel.db.GPMDB
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.splits.IntentManager
@@ -130,7 +130,7 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
         mockIsBiometricsInitialized { true }
 
         MyResultLauncher.registerTestLaunchResult(TestTag.LOGIN_BIOMETRICS_VERIFY) {
-            Log.d(TAG, "Cancelling biometrics")
+            Logger.d(TAG, "Cancelling biometrics")
             ActivityResult(RESULT_CANCELED, null)
         }
 
@@ -167,7 +167,7 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
         mockIsBiometricsInitialized { true }
 
         MyResultLauncher.registerTestLaunchResult(TestTag.LOGIN_BIOMETRICS_VERIFY) {
-            Log.d(TAG, "Cancelling biometrics")
+            Logger.d(TAG, "Cancelling biometrics")
             ActivityResult(RESULT_CANCELED, null)
         }
 
@@ -209,7 +209,7 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
         mockIsBiometricsInitialized { true }
 
         MyResultLauncher.registerTestLaunchResult(TestTag.LOGIN_BIOMETRICS_VERIFY) {
-            Log.d(TAG, "Cancelling biometrics")
+            Logger.d(TAG, "Cancelling biometrics")
             ActivityResult(BiometricsActivity.RESULT_FAILED, null)
         }
 

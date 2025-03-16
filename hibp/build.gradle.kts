@@ -47,6 +47,7 @@ dependencies {
     implementation(project(":app"))
     implementation(project(":app:theme"))
     implementation(project(":crypto"))
+    implementation(project(":logger"))
 
     androidTestImplementation(libs.androidx.test.junit.ktx)
     testImplementation(libs.junit)

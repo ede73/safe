@@ -1,6 +1,5 @@
 package fi.iki.ede.gpmui.utilities
 
-import android.util.Log
 import androidx.compose.runtime.MutableState
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.gpm.changeset.ImportChangeSet
@@ -17,6 +16,7 @@ import fi.iki.ede.gpm.model.ScoringConfig
 import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.gpmui.models.DNDObject
 import fi.iki.ede.gpmui.models.SiteEntryToGPM
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.logger.firebaseRecordException
 import kotlinx.coroutines.CoroutineScope
@@ -97,7 +97,7 @@ internal fun importCSV(
             progressReport("Complete!")
             complete(true)
         } catch (ex: Exception) {
-            Log.e("ImportTest", "Import failed", ex)
+            Logger.e("ImportTest", "Import failed", ex)
             progressReport("Import failed! $ex")
             successImportChangeSet.value = null
             complete(false)
@@ -112,9 +112,9 @@ internal fun processIncomingGPMs(
 ): ImportChangeSet {
     debug {
         progressReport("We have previous ${importChangeSet.getUnprocessedSavedGPMs.size} imports")
-        //importChangeSet.getUnprocessedSavedGPMs.forEach { Log.d(TAG,"$it") }
+        //importChangeSet.getUnprocessedSavedGPMs.forEach { Logger.d(TAG,"$it") }
         progressReport("We have incoming ${importChangeSet.getUnprocessedIncomingGPMs.size} imports")
-        //importChangeSet.getUnprocessedIncomingGPMs.forEach { Log.d(TAG,"$it") }
+        //importChangeSet.getUnprocessedIncomingGPMs.forEach { Logger.d(TAG,"$it") }
     }
 
     progressReport("Add all matching passwords by hashes")

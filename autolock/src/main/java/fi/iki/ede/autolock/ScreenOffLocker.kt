@@ -7,9 +7,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
-import android.util.Log
 import android.view.MotionEvent
 import androidx.activity.ComponentActivity
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.preferences.Preferences
 
 interface ScreenOffLocker : AvertInactivityDuringLongTask {
@@ -28,21 +28,21 @@ interface ScreenOffLocker : AvertInactivityDuringLongTask {
     // not perfect, just resets, doesn't actually pause(and resume)
     override fun avertInactivity(context: Context, why: String) {
         if (BuildConfig.DEBUG) {
-            Log.w(TAG, "Try to restart inactivity timer because $why")
+            Logger.w(TAG, "Try to restart inactivity timer because $why")
         }
         AutolockingService.sendRestartTimer(context)
     }
 
     override fun pauseInactivity(context: Context, why: String) {
         if (BuildConfig.DEBUG) {
-            Log.w(TAG, "Pause inactivity timer because $why")
+            Logger.w(TAG, "Pause inactivity timer because $why")
         }
         AutolockingService.sendPauseTimer(context)
     }
 
     override fun resumeInactivity(context: Context, why: String) {
         if (BuildConfig.DEBUG) {
-            Log.w(TAG, "Resume inactivity timer because $why")
+            Logger.w(TAG, "Resume inactivity timer because $why")
         }
         AutolockingService.sendResumeTimer(context)
     }

@@ -1,6 +1,5 @@
 package fi.iki.ede.safe.ui.composable
 
-import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,6 +31,7 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.datamodel.DataModel
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
@@ -249,7 +249,7 @@ fun beginSearch(
             }
         }
     } catch (ex: Exception) {
-        Log.e(TAG, "Something went wrong on search:", ex)
+        Logger.e(TAG, "Something went wrong on search:", ex)
     }
 }
 

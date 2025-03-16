@@ -1,6 +1,6 @@
 package fi.iki.ede.statemachine
 
-import android.util.Log
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.statemachine.StateMachine.StateEvent
 
 private const val TAG = "StateMachine"
@@ -20,7 +20,7 @@ abstract class MainStateMachine(private var currentState: State) {
         ?: throw IllegalStateException("Event $event not found in state $currentState")
 
     internal fun _injectEvent(event: Event): StateEvent =
-        getEventOrThrow(event).also { Log.w(TAG, "Handling event $event in $currentState") }
+        getEventOrThrow(event).also { Logger.w(TAG, "Handling event $event in $currentState") }
 
     fun dumpStateMachine(currentEventName: Event) = states.map { (stateName, events) ->
         "State(${if (currentState == stateName) "*" else ""}${stateName})\n" +
@@ -40,7 +40,7 @@ abstract class MainStateMachine(private var currentState: State) {
 
         private fun getEventIfAllowed(event: Event): StateEvent {
             if (BuildConfig.DEBUG) {
-                Log.d(TAG, dumpStateMachine(name))
+                Logger.d(TAG, dumpStateMachine(name))
             }
             val e = states[currentState]!![event]
                 ?: throw IllegalStateException("Event ($event) not found in state/event ($currentState/$name")
@@ -57,14 +57,14 @@ abstract class MainStateMachine(private var currentState: State) {
 
         internal fun _dispatchEvent(event: Event): StateEvent =
             getEventIfAllowed(event).also {
-                Log.w(
+                Logger.w(
                     TAG,
                     "Handling event $event in $currentState/$name"
                 )
             }
 
         internal fun _transitionTo(state: State): StateMachine.StateEvent? =
-            state.also { Log.w(TAG, "State from $currentState to $state") }
+            state.also { Logger.w(TAG, "State from $currentState to $state") }
                 .let {
                     if (it !in states.keys) throw IllegalStateException("No such state as $it")
                     currentState = it
