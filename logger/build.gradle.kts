@@ -37,7 +37,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.material)
     // Don't convert to catalog declaration, something is broken
-    implementation(platform("com.google.firebase:firebase-bom:33.9.0")) // firebase crashlytics
+    implementation(platform("com.google.firebase:firebase-bom:33.10.0")) // firebase crashlytics
     implementation(libs.firebase.analytics) // firebase crashlytics (breadcrumbs)
     implementation(libs.firebase.crashlytics)
 
