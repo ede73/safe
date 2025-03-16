@@ -105,6 +105,14 @@
         <item quantity="other">%d years</item>
     </plurals>
 
+    <!-- shortcuts -->
+    <string name="shortcut_backup_short">Backup</string>
+    <string name="shortcut_backup_long">Make a backup</string>
+    <string name="shortcut_backup_disabled">Cannot backup</string>
+    <string name="shortcut_search_short">Search</string>
+    <string name="shortcut_search_long">Search for a password</string>
+    <string name="shortcut_search_disabled">Cannot search</string>
+
     <!-- titles / manifest -->
     <string name="title_activity_category_screen">Categories</string>
     <string name="title_activity_help_screen">HelpScreen</string>

@@ -113,6 +113,12 @@
     <string name="restore_screen_not_most_recent_backup_restore">Palauta silti!</string>
     <string name="restore_screen_restore_failed">Palautus epäonnistui</string>
     <string name="restore_screen_restored">Palautus valmis %1$d</string>
+    <string name="shortcut_backup_short">Varmuuskopioi</string>
+    <string name="shortcut_backup_long">Tee varmuuskopio</string>
+    <string name="shortcut_backup_disabled">Varmuuskopiota ei voi tehdä</string>
+    <string name="shortcut_search_short">Etsi</string>
+    <string name="shortcut_search_long">Etsi salasanaa</string>
+    <string name="shortcut_search_disabled">Ei voi etsiä salasanaa</string>
     <string name="title_activity_category_screen">Kategoriat</string>
     <string name="title_activity_help_screen">Apunäyttö</string>
     <string name="title_activity_password_entry_screen">Salasanan muokkausnäyttö</string>

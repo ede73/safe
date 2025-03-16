@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_search"
+        android:shortcutDisabledMessage="@string/shortcut_search_disabled"
+        android:shortcutId="search_password"
+        android:shortcutLongLabel="@string/shortcut_search_long"
+        android:shortcutShortLabel="@string/shortcut_search_short">
+        <intent
+            android:action="android.intent.action.MAIN"
+            android:targetClass="fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen"
+            android:targetPackage="fi.iki.ede.safe" />
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_backup"
+        android:shortcutDisabledMessage="@string/shortcut_backup_disabled"
+        android:shortcutId="backup_passwords"
+        android:shortcutLongLabel="@string/shortcut_backup_long"
+        android:shortcutShortLabel="@string/shortcut_backup_short">
+        <intent
+            android:action="android.intent.action.MAIN"
+            android:targetClass="fi.iki.ede.safe.ui.activities.BackupDatabaseScreen"
+            android:targetPackage="fi.iki.ede.safe" />
+    </shortcut>
+</shortcuts>
