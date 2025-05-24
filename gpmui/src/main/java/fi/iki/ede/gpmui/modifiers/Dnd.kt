@@ -5,38 +5,32 @@ import android.content.ClipDescription
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.draganddrop.dragAndDropSource
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draganddrop.DragAndDropEvent
 import androidx.compose.ui.draganddrop.DragAndDropTarget
 import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
-import androidx.compose.ui.geometry.Offset
 import fi.iki.ede.gpmui.models.DNDObject
 
+// TODO: Blind refactor - potentially broken
 @OptIn(ExperimentalFoundationApi::class)
 fun Modifier.dnd(
     dragObject: DNDObject,
     onItemDropped: ((Pair<ClipDescription, String>) -> Boolean)?,
-    dndTarget: DragAndDropTarget,
-    onTap: (Offset) -> Unit = {}
+    dndTarget: DragAndDropTarget
 ) = this.then(
     if (onItemDropped == null) {
-        Modifier.dragAndDropSource {
-            detectTapGestures(onLongPress = {
-                startTransfer(
-                    DragAndDropTransferData(
-                        when (dragObject) {
-                            is DNDObject.JustString -> throw Exception("Strings not allowed as source")
-                            is DNDObject.GPM -> setClipData(dragObject)
-                            is DNDObject.SiteEntry -> throw Exception("DecryptableSiteEntry not allowed as source")
-                            is DNDObject.Spacer -> throw Exception("Spacers not allowed as source")
-                        }
-                        //flags = View.DRAG_FLAG_GLOBAL
-                    )
-                )
-            }, onTap = onTap)
+        Modifier.dragAndDropSource { _ ->
+            DragAndDropTransferData(
+                when (dragObject) {
+                    is DNDObject.JustString -> throw Exception("Strings not allowed as source")
+                    is DNDObject.GPM -> setClipData(dragObject)
+                    is DNDObject.SiteEntry -> throw Exception("DecryptableSiteEntry not allowed as source")
+                    is DNDObject.Spacer -> throw Exception("Spacers not allowed as source")
+                }
+                //flags = View.DRAG_FLAG_GLOBAL
+            )
         }
     } else {
         Modifier.dragAndDropTarget(

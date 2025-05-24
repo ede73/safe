@@ -106,8 +106,7 @@ fun DraggableText(
                                 .dnd(
                                     dragObject,
                                     onItemDropped,
-                                    dndTarget,
-                                    onTap = onTap
+                                    dndTarget
                                 )
                                 .let {
                                     if (dragObject is DNDObject.SiteEntry) {
