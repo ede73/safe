@@ -6,33 +6,8 @@ plugins {
 
 android {
     namespace = "fi.iki.ede.oisaferestore"
-    compileSdk = 34
-
-    defaultConfig {
-        minSdk = 26
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
-
     buildFeatures {
-        buildConfig = true
         compose = true
-    }
-    lint {
-        baseline = file("lint-baseline.xml")
     }
 }
 

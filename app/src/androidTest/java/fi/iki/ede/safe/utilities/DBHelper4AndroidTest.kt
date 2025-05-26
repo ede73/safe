@@ -49,7 +49,7 @@ object DBHelper4AndroidTest {
             addPassword(DEFAULT_2ND_PASSWORD_OF_2ND_CATEGORY, it)
         })
         // Also handle initializing the data model
-        runBlocking { DataModel.loadFromDatabase({ GPMDataModel.loadFromDatabase() }) }
+        runBlocking { DataModel.loadFromDatabase { GPMDataModel.loadFromDatabase() } }
 
         assert(2 == DataModel.categoriesStateFlow.value.size) {
             "DataModel initialization failure, <> 2 categories"

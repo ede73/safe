@@ -8,12 +8,11 @@ plugins {
 //    targetCompatibility = JavaVersion.VERSION_21
 //}
 //kotlinOptions { jvmTarget = JavaVersion.VERSION_21 }
-kotlin { jvmToolchain(21) }
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-}
-
+//kotlin { jvmToolchain(21) }
+//java {
+//    sourceCompatibility = JavaVersion.VERSION_21
+//    targetCompatibility = JavaVersion.VERSION_21
+//}
 
 dependencies {
 //    compileOnly(libs.lint.api)

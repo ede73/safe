@@ -17,8 +17,6 @@ import io.mockk.mockkObject
 import io.mockk.slot
 
 object MockKeyStore {
-    fun isInitialized() = KeyStoreHelperFactory.getKeyStoreHelper().isMock
-
     fun mockKeyStore(): KeyStoreHelper {
         require(!KeyStoreHelper::class.isMock) { "You should not have mockkObject(KeyStoreHelper) - stern warning" }
         val p = mockkClass(KeyStoreHelper::class)

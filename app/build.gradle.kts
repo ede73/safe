@@ -97,11 +97,9 @@ android {
 //        }
 //    }
     namespace = "fi.iki.ede.safe"
-    compileSdk = 35
 
     defaultConfig {
         applicationId = "fi.iki.ede.safe"
-        minSdk = 26
         targetSdk = 35
 
         val gitRevListProvider = providers.of(GitRevListCountValueSource::class) {}
@@ -141,10 +139,6 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
             packaging {
                 resources {
                     // AndroidStudio Koala adds all sort of this to release builds
@@ -208,7 +202,6 @@ android {
 
     buildFeatures {
         compose = true
-        buildConfig = true
     }
 
     testOptions {
@@ -226,19 +219,8 @@ android {
         }
     }
 
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
-
     testFixtures {
         enable = true
-    }
-    lint {
-        baseline = file("lint-baseline.xml")
     }
 }
 

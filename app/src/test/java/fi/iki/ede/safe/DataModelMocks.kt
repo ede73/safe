@@ -22,7 +22,7 @@ import kotlinx.coroutines.runBlocking
 import java.time.ZonedDateTime
 
 object DataModelMocks {
-    var masterKeyStore: Pair<Salt, IVCipherText>? = null
+    private var masterKeyStore: Pair<Salt, IVCipherText>? = null
 
     fun makeCat(
         categoryId: DBID?,
@@ -71,10 +71,10 @@ object DataModelMocks {
         val gpmTable = linkedMapOf<DBID, Set<SavedGPM>>()
         val gpmTable2SiteEntryLink = linkedMapOf<DBID, Set<DBID>>()
 
-        for (categoryAndSiteEntries in fakeModel.entries) {
-            require(categoryAndSiteEntries.key.id != null) { "When initializing, category ID must be preset" }
-            categoryTable[categoryAndSiteEntries.key.id!!] = categoryAndSiteEntries.key
-            for (siteEntry in categoryAndSiteEntries.value) {
+        for ((category, siteEntries) in fakeModel.entries) {
+            require(category.id != null) { "When initializing, category ID must be preset" }
+            categoryTable[category.id!!] = category
+            for (siteEntry in siteEntries) {
                 require(siteEntry.id != null) { "When initializing, siteEntry ID must be preset" }
                 siteEntryTable[siteEntry.id!!] = siteEntry
             }
@@ -84,9 +84,9 @@ object DataModelMocks {
         require(isMockKMock(db)) { "Mocking failed somehow" }
         DBHelperFactory.initializeDatabase(db)
         mockkObject(GPMDB)
-        every { db.readableDatabase } answers { mockkClass(SQLiteDatabase::class) }
-        every { db.writableDatabase } answers { mockkClass(SQLiteDatabase::class) }
-        every { db.addSiteEntry(any<DecryptableSiteEntry>()) } answers {
+        every { db.readableDatabase } answers { _ -> mockkClass(SQLiteDatabase::class) }
+        every { db.writableDatabase } answers { _ -> mockkClass(SQLiteDatabase::class) }
+        every { db.addSiteEntry(any<DecryptableSiteEntry>()) } answers { _ ->
             val id: DBID =
                 if (firstArg<DecryptableSiteEntry>().id != null) firstArg<DecryptableSiteEntry>().id!!
                 else if (siteEntryTable.keys.isEmpty()) 1
@@ -97,14 +97,14 @@ object DataModelMocks {
             id
         }
 
-        every { db.updateSiteEntry(any<DecryptableSiteEntry>()) } answers {
+        every { db.updateSiteEntry(any<DecryptableSiteEntry>()) } answers { _ ->
             val id = firstArg<DecryptableSiteEntry>().id!!
             check(siteEntryTable.containsKey(id)) { "Updating siteEntry that does not exist" }
             siteEntryTable[id] = firstArg()
             id
         }
 
-        every { db.addCategory(any<DecryptableCategoryEntry>()) } answers {
+        every { db.addCategory(any<DecryptableCategoryEntry>()) } answers { _ ->
             val id: DBID = if (categoryTable.keys.isEmpty()) 1 else categoryTable.keys.max() + 1
             val c = firstArg<DecryptableCategoryEntry>()
             c.id = id
@@ -112,20 +112,20 @@ object DataModelMocks {
             id
         }
 
-        every { db.updateCategory(any<DBID>(), any<DecryptableCategoryEntry>()) } answers {
+        every { db.updateCategory(any<DBID>(), any<DecryptableCategoryEntry>()) } answers { _ ->
             check(categoryTable.containsKey(firstArg())) { "Updating category that does not exist" }
             categoryTable[firstArg()] = secondArg()
             firstArg()
         }
 
-        every { db.fetchAllCategoryRows(any<MutableStateFlow<List<DecryptableCategoryEntry>>>()) } answers {
+        every { db.fetchAllCategoryRows(any<MutableStateFlow<List<DecryptableCategoryEntry>>>()) } answers { _ ->
             val flow = firstArg<MutableStateFlow<List<DecryptableCategoryEntry>>?>()
             flow?.value = categoryTable.values.toList()
             categoryTable.values.toList()
         }
 
         // TODO: implement properly!
-        every { db.fetchPhotoOnly(any<DBID>()) } answers {
+        every { db.fetchPhotoOnly(any<DBID>()) } answers { _ ->
             null
         }
 
@@ -136,7 +136,7 @@ object DataModelMocks {
                 any<Boolean>(),
                 any<MutableStateFlow<List<DecryptableSiteEntry>>>()
             )
-        } answers {
+        } answers { _ ->
             val flow =
                 thirdArg<MutableStateFlow<List<DecryptableSiteEntry>>?>()
             if (secondArg<Boolean>()) {
@@ -153,11 +153,11 @@ object DataModelMocks {
             }
         }
 
-        every { db.storeSaltAndEncryptedMasterKey(any<Salt>(), any<IVCipherText>()) } answers {
+        every { db.storeSaltAndEncryptedMasterKey(any<Salt>(), any<IVCipherText>()) } answers { _ ->
             masterKeyStore = Pair(firstArg(), secondArg())
         }
 
-        every { db.fetchSaltAndEncryptedMasterKey() } answers {
+        every { db.fetchSaltAndEncryptedMasterKey() } answers { _ ->
             require(masterKeyStore != null) { "Master key MUST have been set in the DataModelMocks" }
             masterKeyStore!!
         }
@@ -183,13 +183,13 @@ object DataModelMocks {
             masterKeyStore = null
             sql
         }
-        every { sql.inTransaction() } answers {
+        every { sql.inTransaction() } answers { _ ->
             inTransaction
         }
-        every { sql.setTransactionSuccessful() } answers {
+        every { sql.setTransactionSuccessful() } answers { _ ->
             transactionSuccess = true
         }
-        every { sql.endTransaction() } answers {
+        every { sql.endTransaction() } answers { _ ->
             inTransaction = false
             if (transactionSuccess) {
                 // retain current tables
@@ -210,7 +210,7 @@ object DataModelMocks {
             transactionSuccess = false
         }
 
-        every { GPMDB.addSavedGPM(any<SavedGPM>()) } answers {
+        every { GPMDB.addSavedGPM(any<SavedGPM>()) } answers { _ ->
             val id: DBID =
                 if (firstArg<SavedGPM>().id != null) firstArg<SavedGPM>().id!!
                 else if (gpmTable.keys.isEmpty()) 1
@@ -225,7 +225,7 @@ object DataModelMocks {
             GPMDB.fetchAllSavedGPMsFromDB(
                 any<MutableStateFlow<Set<SavedGPM>>>()
             )
-        } answers {
+        } answers { _ ->
             val flow = firstArg<MutableStateFlow<Set<SavedGPM>>?>()
             flow?.value = gpmTable.values.flatten().toSet()
             // TODO: weak model, should filter per SiteEntry in firstArg
@@ -236,7 +236,7 @@ object DataModelMocks {
                 any<DBID>(),
                 any<DBID>()
             )
-        } answers {
+        } answers { _ ->
             val seid = firstArg<DBID>()
             val gpmId = secondArg<DBID>()
             gpmTable2SiteEntryLink[seid] =
@@ -244,15 +244,15 @@ object DataModelMocks {
             mockkClass(SQLiteDatabase::class)
         }
 
-        every { GPMDB.fetchAllSiteEntryGPMMappings() } answers {
+        every { GPMDB.fetchAllSiteEntryGPMMappings() } answers { _ ->
             gpmTable2SiteEntryLink.toMap()
         }
 
         DataModel.softDeletedMaxAgeProvider = { 0 }
         runBlocking {
-            DataModel.loadFromDatabase({
+            DataModel.loadFromDatabase {
                 GPMDataModel.loadFromDatabase()
-            })
+            }
         }
         return db
     }

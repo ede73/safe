@@ -6,32 +6,9 @@ plugins {
 
 android {
     namespace = "fi.iki.ede.categorypager"
-    compileSdk = 35
-
-    defaultConfig {
-        minSdk = 26
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-        }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
-
     buildFeatures {
         compose = true
-        buildConfig = true
     }
-
     testOptions {
         unitTests.isReturnDefaultValues = true
         packaging {
@@ -43,9 +20,6 @@ android {
                 excludes += "META-INF/LICENSE-notice.md"
             }
         }
-    }
-    lint {
-        baseline = file("lint-baseline.xml")
     }
 }
 

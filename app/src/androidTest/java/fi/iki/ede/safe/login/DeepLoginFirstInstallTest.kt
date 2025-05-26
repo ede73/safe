@@ -205,8 +205,8 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
                     context,
                     null,
                     false,
-                    ::dummy,
-                    { _, _ -> })
+                    ::dummy
+                ) { _, _ -> }
             )
         }
 

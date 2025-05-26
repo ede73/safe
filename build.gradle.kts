@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
@@ -23,6 +24,64 @@ powerAssert {
 subprojects {
     tasks.withType<Test> {
         jvmArgs("-XX:+EnableDynamicAgentLoading")
+    }
+    tasks.withType<KotlinCompile>().configureEach {
+        if (project.path != ":app:SafeLinter") {
+            kotlinOptions {
+                jvmTarget = "11"
+            }
+        }
+    }
+    project.afterEvaluate {
+        val androidExtension =
+            this.extensions.findByType(com.android.build.api.dsl.CommonExtension::class.java)
+        if (androidExtension != null) {
+            androidExtension.apply {
+                compileSdk = 36
+
+                defaultConfig {
+                    minSdk = 26 // Or from libs.versions.toml / gradle.properties
+                    testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+                }
+                buildTypes {
+                    getByName("release") {
+                        //isMinifyEnabled = false
+                        if (project.plugins.hasPlugin("com.android.application")) {
+                            proguardFiles(
+                                getDefaultProguardFile("proguard-android-optimize.txt"),
+                                "proguard-rules.pro"
+                            )
+                        } else {
+                            val moduleProguardRules = project.file("proguard-rules.pro")
+                            if (moduleProguardRules.exists()) {
+                                proguardFiles.add(moduleProguardRules)
+                                println("Applied module-specific 'proguard-rules.pro' to :${project.name}")
+                            }
+                        }
+                    }
+                }
+                compileOptions {
+                    sourceCompatibility = JavaVersion.VERSION_11
+                    targetCompatibility = JavaVersion.VERSION_11
+                }
+                lint {
+                    baseline = file("lint-baseline.xml")
+                }
+//                (this as? com.android.build.api.dsl.TestedExtension)?.let { testedExtension ->
+//                    testedExtension.kotlinOptions { // This might work depending on plugin versions
+//                        jvmTarget = JavaVersion.VERSION_11.toString()
+//                    }
+//                }
+//                if (kotlinExtension != null) {
+//                    kotlinExtension.kotlinOptions {
+//                        jvmTarget = "11"
+//                    }
+//                }
+                buildFeatures {
+                    buildConfig = true
+                }
+            }
+        }
     }
 }
 
