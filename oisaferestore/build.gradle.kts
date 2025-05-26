@@ -31,10 +31,6 @@ android {
         buildConfig = true
         compose = true
     }
-
-//    testFixtures {
-//        enable = true
-//    }
     lint {
         baseline = file("lint-baseline.xml")
     }

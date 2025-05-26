@@ -20,9 +20,6 @@ android {
                 "proguard-rules.pro"
             )
         }
-//        create("instrumentationTest") {
-//            initWith(getByName("release"))
-//        }
     }
 
     compileOptions {
