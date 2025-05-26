@@ -11,7 +11,7 @@ cameraCore = "1.4.2"
 coreKtx = "1.16.0"
 espressoCore = "3.6.1"
 featureDeliveryKtx = "2.1.0"
-guava = "33.4.0-android"
+guava = "33.4.8-android"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 junitVersionKtx = "1.2.1"
@@ -36,7 +36,7 @@ agp = "8.10.0"
 # see also dependency resolution in settings.gradle.kts for 2.0.21!
 jetbrainsKotlinJvm = "2.0.21"
 kotlin = "2.1.0"
-uiTestAndroid = "1.7.8"
+uiTestAndroid = "1.8.2"
 
 [libraries]
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
