@@ -32,7 +32,7 @@ uiToolingPreviewAndroid = "1.8.2"
 uiautomator = "2.3.0"
 volley = "1.2.1"
 #plugins
-agp = "8.10.1"
+agp = "8.11.0"
 # see also dependency resolution in settings.gradle.kts for 2.0.21!
 jetbrainsKotlinJvm = "2.0.21"
 kotlin = "2.1.0"
