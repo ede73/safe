@@ -32,13 +32,6 @@ fun PreferenceFragmentCompat.startActivityForResults(
     ::registerForActivityResult
 )
 
-//fun <I, O> registerActivityForResults(
-//    contract: ActivityResultContract<I, O>,
-//    callback: ActivityResultCallback<O>,
-//    registerFunction: (ActivityResultContract<I, O>, ActivityResultCallback<O>) -> ActivityResultLauncher<I>
-//) =
-//    registerFunction(contract, callback)
-
 fun registerActivityForResults(
     testTag: TestTag, // used in MyResultLauncher.kt, mock, do not remove!
     contract: ActivityResultContract<Intent, ActivityResult>,
