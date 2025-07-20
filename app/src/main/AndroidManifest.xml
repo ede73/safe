@@ -21,6 +21,7 @@
         android:name=".SafeApplication"
         android:allowClearUserData="true"
         android:enableOnBackInvokedCallback="true"
+        android:enabled="true"
         android:icon="@drawable/ic_launcher_safe"
         android:label="@string/application_name"
         android:theme="@style/Theme.Safe"
@@ -42,10 +43,15 @@
         <activity
             android:name=".ui.activities.LoginScreen"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+            </intent-filter>
+        </activity>
 
+        <!-- just used as a launcher - no backup icon -->
         <activity-alias
-            android:name=".ui.activities.LoginScreenAlias"
+            android:name="fi.iki.ede.safe.ui.activities.LoginScreenWithoutBackupIcon"
             android:enabled="true"
             android:exported="true"
             android:icon="@drawable/ic_launcher_safe"
@@ -60,9 +66,10 @@
                 android:resource="@xml/shortcuts" />
         </activity-alias>
 
+        <!-- just used as a launcher - backup icon -->
         <activity-alias
-            android:name=".ui.activities.BackupDueAlias"
-            android:enabled="true"
+            android:name="fi.iki.ede.safe.ui.activities.LoginScreenWithBackupIcon"
+            android:enabled="false"
             android:exported="true"
             android:icon="@drawable/ic_launcher_safe_backupnow"
             android:label="@string/application_name"

@@ -24,6 +24,7 @@ import fi.iki.ede.safe.splits.PluginManager.reinitializePlugins
 import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.splits.getEnabledExperiments
 import fi.iki.ede.safe.ui.activities.LoginScreen
+import fi.iki.ede.safe.ui.utilities.setBackupDueIconEnabled
 
 private val TAG = "SafeApplication"
 
@@ -74,17 +75,16 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
         DBHelperFactory.initializeDatabase(
             DBHelper(
                 this,
-                DBHelper.DATABASE_NAME,
-                true,
-                GPMDB::getExternalTables,
-                GPMDB::upgradeTables,
+                regularAppNotATest = true,
+                getExternalTables = GPMDB::getExternalTables,
+                upgradeExternalTables = GPMDB::upgradeTables,
             )
         )
         reinitializePlugins(this)
+        setBackupDueIconEnabled(this, false)
         PreferenceManager.getDefaultSharedPreferences(this)
             .registerOnSharedPreferenceChangeListener(this)
         ConfiguredNotifications.notifications = prepareNotifications()
-
     }
 
     override fun onTerminate() {

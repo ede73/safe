@@ -5,18 +5,22 @@ import android.content.Context
 import android.content.pm.PackageManager
 
 fun setBackupDueIconEnabled(context: Context, isEnabled: Boolean) {
+    setComponentEnabled(
+        context,
+        "fi.iki.ede.safe.ui.activities.LoginScreen", true
+    )
     setBackupDueAliasIcon(context, isEnabled)
     setNormalAppIcon(context, !isEnabled)
 }
 
 private fun setBackupDueAliasIcon(context: Context, isEnabled: Boolean) = setComponentEnabled(
     context,
-    "fi.iki.ede.safe.ui.activities.BackupDueAlias", isEnabled
+    "fi.iki.ede.safe.ui.activities.LoginScreenWithBackupIcon", isEnabled
 )
 
 private fun setNormalAppIcon(context: Context, isEnabled: Boolean) = setComponentEnabled(
     context,
-    "fi.iki.ede.safe.ui.activities.LoginScreenAlias", isEnabled
+    "fi.iki.ede.safe.ui.activities.LoginScreenWithoutBackupIcon", isEnabled
 )
 
 private fun setComponentEnabled(context: Context, className: String, isEnabled: Boolean) {
