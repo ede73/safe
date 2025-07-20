@@ -16,7 +16,7 @@ private fun setBackupDueAliasIcon(context: Context, isEnabled: Boolean) = setCom
 
 private fun setNormalAppIcon(context: Context, isEnabled: Boolean) = setComponentEnabled(
     context,
-    "fi.iki.ede.safe.ui.activities.LoginScreen", isEnabled
+    "fi.iki.ede.safe.ui.activities.LoginScreenAlias", isEnabled
 )
 
 private fun setComponentEnabled(context: Context, className: String, isEnabled: Boolean) {

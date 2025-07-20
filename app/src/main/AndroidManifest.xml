@@ -38,9 +38,19 @@
             android:name=".ui.activities.HelpScreen"
             android:exported="false"
             android:label="@string/title_activity_help_screen" />
+
         <activity
             android:name=".ui.activities.LoginScreen"
-            android:exported="true">
+            android:enabled="true"
+            android:exported="true" />
+
+        <activity-alias
+            android:name=".ui.activities.LoginScreenAlias"
+            android:enabled="true"
+            android:exported="true"
+            android:icon="@drawable/ic_launcher_safe"
+            android:label="@string/application_name"
+            android:targetActivity=".ui.activities.LoginScreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -48,12 +58,14 @@
             <meta-data
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
-        </activity>
+        </activity-alias>
 
         <activity-alias
             android:name=".ui.activities.BackupDueAlias"
+            android:enabled="true"
             android:exported="true"
             android:icon="@drawable/ic_launcher_safe_backupnow"
+            android:label="@string/application_name"
             android:targetActivity=".ui.activities.LoginScreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
