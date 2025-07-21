@@ -12,7 +12,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.atomic.AtomicReference
 
-private val TAG = "JobManager"
+private const val TAG = "JobManager"
 
 class JobManager(private val onWorkingStateChange: (Boolean, percentCompleted: Float?) -> Unit) {
     private val control = Mutex(false)

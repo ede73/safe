@@ -103,10 +103,10 @@ fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesControls(viewModel: Import
                 value = searchTextField,
                 onValueChange = { value ->
                     searchTextField = value
-                    if (isRegularExpression) {
-                        isRegExError = validateRegex(value.text)
+                    isRegExError = if (isRegularExpression) {
+                        validateRegex(value.text)
                     } else {
-                        isRegExError = false
+                        false
                     }
                     if (value.text != hackToInvokeSearchOnlyIfTextValueChanges.text) {
                         hackToInvokeSearchOnlyIfTextValueChanges = value

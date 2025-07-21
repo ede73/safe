@@ -86,6 +86,7 @@ open class OISafeCryptoHelper(private val algorithm: Algorithm) {
         return encrypt(plaintext.toByteArray())
     }
 
+    @Suppress("SimplifyBooleanWithConstants")
     fun encrypt(plaintextArray: ByteArray): HexString {
         check(secretKey != null) { "Must call setPassword before running decrypt." }
         check(salt != null) { "Must call setSalt before running decrypt." }

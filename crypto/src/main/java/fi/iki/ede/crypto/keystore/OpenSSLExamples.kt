@@ -55,7 +55,7 @@ object OpenSSLExamples {
             sensitiveLog(
                 "OpenSSL counterpart:\n" +
                         "#PKDF2 encrypted secret key is ${iv.toHexString()} ${ciphertext.toHexString()}\n" +
-                        "echo ${Base64.encode(ciphertext)}| openssl enc -aes-256-cbc -d -a -iv ${iv.toHexString()} -K  \$($previousRun) -nosalt|xxd -p -c 255\n" + "" +
+                        "echo ${Base64.encode(ciphertext)}| openssl enc -aes-256-cbc -d -a -iv ${iv.toHexString()} -K  $($previousRun) -nosalt|xxd -p -c 255\n" + "" +
                         "# Should match above key if you remember the password"
             )
         }

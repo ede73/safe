@@ -120,7 +120,7 @@ internal fun processIncomingGPMs(
     progressReport("Add all matching passwords by hashes")
     importChangeSet.matchingGPMs.addAll(fetchMatchingHashes(importChangeSet))
 
-    if (importChangeSet.matchingGPMs.size > 0) {
+    if (importChangeSet.matchingGPMs.isNotEmpty()) {
         progressReport("# filtered some(${importChangeSet.matchingGPMs.size}) away by existing hash..")
     }
 

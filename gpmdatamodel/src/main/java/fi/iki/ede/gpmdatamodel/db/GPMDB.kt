@@ -58,11 +58,9 @@ object GPMDB {
     }
 
     fun markSavedGPMIgnored(savedGPMID: DBID) =
-        getWritableDatabase().let { db ->
-            db.update(GooglePasswordManager, ContentValues().apply {
-                put(GooglePasswordManager.Columns.STATUS, 1)
-            }, whereEq(GooglePasswordManager.Columns.ID, savedGPMID)).toLong()
-        }
+        getWritableDatabase().update(GooglePasswordManager, ContentValues().apply {
+            put(GooglePasswordManager.Columns.STATUS, 1)
+        }, whereEq(GooglePasswordManager.Columns.ID, savedGPMID)).toLong()
 
     fun linkSaveGPMAndSiteEntry(siteEntryID: DBID, savedGPMID: DBID) =
         getWritableDatabase().apply {

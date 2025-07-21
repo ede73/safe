@@ -3,7 +3,7 @@ package fi.iki.ede.safe.password
 import java.security.SecureRandom
 import kotlin.math.min
 
-val PG_SYMBOLS = "!@#\$%^&*()[]{}:;'\"/><.,-_=+~"
+const val PG_SYMBOLS = "!@#$%^&*()[]{}:;'\"/><.,-_=+~"
 
 object PasswordGenerator {
     fun genPassword(

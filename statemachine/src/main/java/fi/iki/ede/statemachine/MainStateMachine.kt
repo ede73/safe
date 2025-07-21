@@ -63,7 +63,7 @@ abstract class MainStateMachine(private var currentState: State) {
                 )
             }
 
-        internal fun _transitionTo(state: State): StateMachine.StateEvent? =
+        internal fun _transitionTo(state: State): StateEvent? =
             state.also { Logger.w(TAG, "State from $currentState to $state") }
                 .let {
                     if (it !in states.keys) throw IllegalStateException("No such state as $it")

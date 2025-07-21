@@ -108,13 +108,12 @@ fun DraggableText(
                                     onItemDropped,
                                     dndTarget
                                 )
-                                .let {
+                                .let { dnd ->
                                     if (dragObject is DNDObject.SiteEntry) {
-                                        it.clickable {
+                                        dnd.clickable {
                                             onTap(Offset(0f, 0f))
                                         }
-                                    } else it
-
+                                    } else dnd
                                 }
                         } else {
                             it

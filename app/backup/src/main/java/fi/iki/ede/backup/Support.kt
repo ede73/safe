@@ -143,7 +143,7 @@ internal fun XmlPullParser.getEncryptedAttribute(name: Attributes): IVCipherText
 }
 
 internal fun XmlPullParser.maybeGetText(gotTextNode: (encryptedText: IVCipherText) -> Unit) {
-    val iv = getTrimmedAttributeValue(ExportConfig.Companion.Attributes.IV)
+    val iv = getTrimmedAttributeValue(Attributes.IV)
     next()
     if (eventType == XmlPullParser.TEXT && text != null && iv.isNotBlank()) {
         gotTextNode.invoke(

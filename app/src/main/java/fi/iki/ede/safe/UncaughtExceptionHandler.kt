@@ -3,7 +3,7 @@ package fi.iki.ede.safe
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.preferences.Preferences
 
-private val TAG = "MyExceptionHandler"
+private const val TAG = "MyExceptionHandler"
 
 class MyExceptionHandler(private val defaultHandler: Thread.UncaughtExceptionHandler) :
     Thread.UncaughtExceptionHandler {
