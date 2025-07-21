@@ -4,8 +4,9 @@ import fi.iki.ede.logger.Logger
 import fi.iki.ede.safe.BuildConfig
 import kotlin.time.Duration
 
+private const val TAG = "MT"
+
 class MeasureTime(private val title: String = "") : AutoCloseable {
-    private val TAG = "MT"
     private var startTime = System.nanoTime()
     private var lastLapTime = startTime
     private var ended = false

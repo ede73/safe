@@ -12,6 +12,8 @@ object SiteEntry : Table {
         USERNAME("username"),
         WEBSITE("website"),
         NOTE("note"),
+
+        @Deprecated("Massive bug in SQLite cursor interface! Dies on >64KB data")
         PHOTO("photo"),
         PASSWORD_CHANGE_DATE("passwordchangeddate"),
         DELETED("deleted"),

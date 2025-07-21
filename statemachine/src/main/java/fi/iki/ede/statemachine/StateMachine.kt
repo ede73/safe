@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import androidx.compose.runtime.Composable
 
 
+@Suppress("FunctionName", "FunctionName", "FunctionName")
 class StateMachine(currentState: State) : MainStateMachine(currentState) {
     fun StateEvent(
         state: State,

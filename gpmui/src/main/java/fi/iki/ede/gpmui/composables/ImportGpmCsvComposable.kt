@@ -67,7 +67,7 @@ fun ImportGpmCsvComposable(
     avertInactivity: ((Context, String) -> Unit)?,
     hasUnlinkedItemsFromPreviousRound: Boolean,
     skipImportReminder: Boolean = false,
-    _finishedImporting: () -> Unit,
+    finishedImporting: () -> Unit,
 ) {
     val context = LocalContext.current
     val myScope = CoroutineScope(Dispatchers.IO)
@@ -143,7 +143,7 @@ fun ImportGpmCsvComposable(
             askToDeleteInternalCopy.value = true
         } else {
             deleteInternalCopyOfGpmCsvImport(context)
-            _finishedImporting()
+            finishedImporting()
         }
     }
 
@@ -190,9 +190,9 @@ fun ImportGpmCsvComposable(
             positiveText = "Delete",
             positive = {
                 deleteInternalCopyOfGpmCsvImport(context)
-                _finishedImporting()
+                finishedImporting()
             },
-            negativeText = "Keep", dismissed = { _finishedImporting() }
+            negativeText = "Keep", dismissed = { finishedImporting() }
         )
     }
 
@@ -294,7 +294,7 @@ fun ImportGpmCsvComposable(
         }
 
         if (finishLinking.value) {
-            SafeButton(onClick = { _finishedImporting() }) {
+            SafeButton(onClick = { finishedImporting() }) {
                 Row {
                     Text(
                         stringResource(id = R.string.google_password_import_finish_linking),
@@ -309,7 +309,7 @@ fun ImportGpmCsvComposable(
             }
         }
 
-        VisualizeChangeSetPager(importChangeSet, _finishedImporting)
+        VisualizeChangeSetPager(importChangeSet, finishedImporting)
 
         if (!skipImportReminder && showUsage.value) {
             UsageInfoDialog(
