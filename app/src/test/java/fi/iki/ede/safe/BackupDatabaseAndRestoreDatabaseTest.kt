@@ -73,7 +73,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
 
         mockkObject(Preferences)
         every { Preferences.storeAllExtensions(any()) } returns Unit
-        every { Preferences.getAllExtensions() } returns emptySet<String>()
+        every { Preferences.getAllExtensions() } returns emptySet()
 
         KeystoreHelperMock4UnitTests.mock()
         ks = KeyStoreHelperFactory.getKeyStoreHelper()
@@ -184,7 +184,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
 
         mockkObject(Preferences)
         every { Preferences.storeAllExtensions(any()) } returns Unit
-        every { Preferences.getAllExtensions() } returns emptySet<String>()
+        every { Preferences.getAllExtensions() } returns emptySet()
         every { Preferences.getLastBackupTime() } returns unixEpochSeconds?.let {
             DateUtils.unixEpochSecondsToLocalZonedDateTime(
                 it

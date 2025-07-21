@@ -34,7 +34,7 @@ fun ExtensionsEditor(
     done: (List<String?>) -> Unit = {},
 ) {
     var showDialog by remember { mutableStateOf(true) }
-    val itemsList = remember { mutableStateListOf<String>(*extensions.toTypedArray()) }
+    val itemsList = remember { mutableStateListOf(*extensions.toTypedArray()) }
     var textFieldValue by remember { mutableStateOf("") }
     var selectedItem by remember { mutableIntStateOf(-1) }
 

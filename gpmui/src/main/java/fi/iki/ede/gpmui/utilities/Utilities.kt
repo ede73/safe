@@ -38,11 +38,11 @@ internal fun combineLists(
     val maxSize = maxOf(siteEntries.size, gpms.size)
     val extendedSiteEntries =
         siteEntries.extendToSize(maxSize).sortedWith(
-            compareBy<DecryptableSiteEntry?, String?>(nullsLast()) {
+            compareBy(nullsLast()) {
                 it?.cachedPlainDescription?.lowercase()
             })
     val extendedGPMs = gpms.extendToSize(maxSize).sortedWith(
-        compareBy<SavedGPM?, String?>(nullsLast()) {
+        compareBy(nullsLast()) {
             it?.cachedDecryptedName?.lowercase()
         })
     return mutableListOf<SiteEntryToGPM>().apply {

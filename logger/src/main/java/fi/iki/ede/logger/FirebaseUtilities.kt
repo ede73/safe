@@ -12,7 +12,7 @@ class FirebaseTry<T>(private val message: String? = null, val block: () -> T) {
         return try {
             if (message != null) {
                 Firebase.crashlytics.log(message)
-                Logger.e(TAG, "$message")
+                Logger.e(TAG, message)
             }
             block()
         } catch (t: Throwable) {
@@ -45,7 +45,7 @@ fun <T> firebaseJustTry(message: String? = null, block: () -> T): T? {
     return try {
         if (message != null) {
             Firebase.crashlytics.log(message)
-            Logger.e(TAG, "$message")
+            Logger.e(TAG, message)
         }
         block()
     } catch (t: Throwable) {

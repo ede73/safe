@@ -121,7 +121,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
             getSiteEntriesOfCategory: (categoryId: DBID) -> List<DecryptableSiteEntry>,
             siteEntryGPMMappings: Map<DBID, Set<DBID>>,
             allSavedGPMs: Set<SavedGPM>,
-        ) = flow<ByteArray> {
+        ) = flow {
             emit(
                 BackupDatabase().generateXMLExport(
                     categoriesList,
@@ -131,10 +131,10 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
                     getSiteEntriesOfCategory
                 ).toByteArray()
             )
-        }.transform<ByteArray, IVCipherText> { ba ->
+        }.transform { ba ->
             val encrypter = KeyStoreHelperFactory.getEncrypter()
             emit(encrypter(ba))
-        }.flowOn(Dispatchers.Default).transform<IVCipherText, String> { encrypted ->
+        }.flowOn(Dispatchers.Default).transform { encrypted ->
             val (salt, currentEncryptedMasterKey) = DBHelperFactory.getDBHelper()
                 .fetchSaltAndEncryptedMasterKey()
             emit(salt.toHex())

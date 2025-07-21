@@ -209,7 +209,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             val mapsToPasswords =
                                 myParser.getTrimmedAttributeValue(Attributes.IMPORTS_GPM_ITEM_MAP_TO_SITE_ENTRY)
                                     .takeIf { it.isNotBlank() }?.split(",")
-                                    ?.mapNotNull { it.toLongOrNull() }?.toSet() ?: emptySet<Long>()
+                                    ?.mapNotNull { it.toLongOrNull() }?.toSet() ?: emptySet()
                             if (mapsToPasswords.isNotEmpty()) {
                                 readGPMMapsToPasswords[readGPM.id!!] = mapsToPasswords
                             }

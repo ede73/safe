@@ -25,7 +25,7 @@ fun makeIncomingForTesting(name: String): IncomingGPM {
 }
 
 fun makeFakeImportForTesting(): ImportChangeSet {
-    val incoming = setOf<IncomingGPM>(
+    val incoming = setOf(
         makeIncomingForTesting("Incoming1"),
         makeIncomingForTesting("Incoming2"),
         makeIncomingForTesting("Incoming3"),
@@ -42,7 +42,7 @@ fun makeFakeImportForTesting(): ImportChangeSet {
         makeIncomingForTesting("Incoming14"),
         makeIncomingForTesting("Incoming15"),
     )
-    val saved = setOf<SavedGPM>(
+    val saved = setOf(
         makeSavedForTesting(1, "Saved1"),
         makeSavedForTesting(2, "Saved2"),
         makeSavedForTesting(2, "Saved3"),
@@ -70,7 +70,7 @@ fun makeFakeImportForTesting(): ImportChangeSet {
         0.7,
         makeSavedForTesting(4, "Saved5"), false
     )
-    val matches = mutableSetOf<Pair<IncomingGPM, ScoredMatch>>(a, b, c)
+    val matches = mutableSetOf(a, b, c)
     // iterate ALL matchingGPMs ie.  overlap (passwords whose hash match perfectly or there's 1 field change)
     // and add them to map Map<IncomingGPM, Set<ScoredMatch>>
     //any incomingGPM with >1 ScoredMatch is a conflict

@@ -22,8 +22,6 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.gpm.changeset.ImportChangeSet
 import fi.iki.ede.gpm.changeset.ScoredMatch
-import fi.iki.ede.gpm.model.IncomingGPM
-import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.gpmui.composables.ImportGpmCsvComposable
 import fi.iki.ede.gpmui.composables.VisualizeChangeSetPager
@@ -74,11 +72,11 @@ fun ImportGooglePasswordsPreview() {
 
             HorizontalDivider(modifier = Modifier.padding(20.dp))
 
-            val incoming = setOf<IncomingGPM>(
+            val incoming = setOf(
                 makeIncomingForTesting("Incoming1"),
                 makeIncomingForTesting("Incoming2"),
             )
-            val saved = setOf<SavedGPM>(
+            val saved = setOf(
                 makeSavedForTesting(1, "Saved1"),
                 makeSavedForTesting(2, "Saved2")
             )
@@ -92,7 +90,7 @@ fun ImportGooglePasswordsPreview() {
                 makeSavedForTesting(4, "Saved4"),
                 false
             )
-            val matches = mutableSetOf<Pair<IncomingGPM, ScoredMatch>>(a, b)
+            val matches = mutableSetOf(a, b)
             val import = ImportChangeSet(incoming, saved, matches)
             val importChangeSet = remember { mutableStateOf<ImportChangeSet?>(import) }
 

@@ -41,7 +41,7 @@ class DecryptableSiteEntry(categoryId: Long) {
     var password: IVCipherText = IVCipherText.getEmpty()
     val plainExtensions: Map<String, Set<String>>
         get() = try {
-            if (extensions.isEmpty()) mapOf<String, Set<String>>()
+            if (extensions.isEmpty()) mapOf()
             else
                 Json.decodeFromString<Map<String, Set<String>>>(
                     extensions.decrypt(decrypter).trim()

@@ -114,7 +114,7 @@ class SiteEntryViewTest : NodeHelper {
             putExtra(SITE_ENTRY_ID, 1L)
         }
 
-        scenario = launch<SiteEntryEditScreen>(intent)
+        scenario = launch(intent)
         scenario.onActivity { activity ->
             viewModel = ViewModelProvider(activity)[EditingSiteEntryViewModel::class.java]
         }
