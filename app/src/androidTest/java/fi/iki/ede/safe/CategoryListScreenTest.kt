@@ -165,9 +165,9 @@ class CategoryListScreenTest {
         runTest {
             DBHelper4AndroidTest.addCategory(newCategory)
             runBlocking {
-                DataModel.loadFromDatabase({
+                DataModel.loadFromDatabase {
                     GPMDataModel.loadFromDatabase()
-                })
+                }
             }
 
             val categoriesEmitted = mutableListOf<List<DecryptableCategoryEntry>>()
@@ -211,9 +211,9 @@ class CategoryListScreenTest {
         val newCategory = "newCategory"
         DBHelper4AndroidTest.addCategory(newCategory)
         runBlocking {
-            DataModel.loadFromDatabase({
+            DataModel.loadFromDatabase {
                 GPMDataModel.loadFromDatabase()
-            })
+            }
         }
 
         advanceUntilIdle()

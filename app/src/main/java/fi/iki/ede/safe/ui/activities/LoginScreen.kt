@@ -172,9 +172,9 @@ open class LoginScreen : ComponentActivity() {
         val myScope = CoroutineScope(Dispatchers.Main)
         myScope.launch {
             withContext(Dispatchers.IO) {
-                DataModel.loadFromDatabase({
+                DataModel.loadFromDatabase {
                     GPMDataModel.loadFromDatabase()
-                })
+                }
             }
         }
     }

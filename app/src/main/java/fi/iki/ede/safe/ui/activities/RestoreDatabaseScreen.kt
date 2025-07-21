@@ -106,9 +106,9 @@ class RestoreDatabaseScreen :
                             if (ex == null) {
                                 processedMessage.value = "Re-read database"
                                 coroutineScope.launch(Dispatchers.IO) {
-                                    DataModel.loadFromDatabase({
+                                    DataModel.loadFromDatabase {
                                         GPMDataModel.loadFromDatabase()
-                                    })
+                                    }
                                 }
                                 processedMessage.value = "Done!"
                                 IntentManager.startCategoryScreen(context)

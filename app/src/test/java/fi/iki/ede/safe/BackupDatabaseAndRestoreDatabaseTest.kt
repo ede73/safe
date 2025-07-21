@@ -298,9 +298,9 @@ class BackupDatabaseAndRestoreDatabaseTest {
             throw Exception("We should not ask user anything, valid backup!")
         }
         runBlocking {
-            DataModel.loadFromDatabase({
+            DataModel.loadFromDatabase {
                 GPMDataModel.loadFromDatabase()
-            })
+            }
         }
 
         val passwords = DataModel.siteEntriesStateFlow.value
@@ -391,9 +391,9 @@ class BackupDatabaseAndRestoreDatabaseTest {
         }
 
         runBlocking {
-            DataModel.loadFromDatabase({
+            DataModel.loadFromDatabase {
                 GPMDataModel.loadFromDatabase()
-            })
+            }
         }
 
         if (BuildConfig.DEBUG) {

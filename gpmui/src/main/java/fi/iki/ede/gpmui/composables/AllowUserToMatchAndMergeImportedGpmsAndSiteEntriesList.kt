@@ -131,10 +131,10 @@ fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesList(
                 website = savedGPM.encryptedUrl
                 description = savedGPM.encryptedName
                 note = savedGPM.encryptedNote
-            }, {
+            }) {
                 linkSavedGPMAndDecryptableSiteEntry(it, savedGPMId)
                 Preferences.setLastModified()
-            })
+            }
 
             coroutineScope.launch {
                 // TODO: Ask user the category, now goes to GPM cat

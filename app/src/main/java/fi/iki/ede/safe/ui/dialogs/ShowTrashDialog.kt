@@ -120,8 +120,9 @@ fun ShowTrashDialog(
                 }) { Text(stringResource(id = R.string.trash_empty_trash)) }
             },
             dismissButton = {
-                SafeButton(onClick =
-                { onDismiss() }) { Text(stringResource(id = R.string.trash_close)) }
+                SafeButton(
+                    onClick =
+                        { onDismiss() }) { Text(stringResource(id = R.string.trash_close)) }
             },
         )
     }
@@ -134,12 +135,12 @@ fun ShowTrashPreview() {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()
-        val cat = DecryptableCategoryEntry().apply {
+        DecryptableCategoryEntry().apply {
             encryptedName = encrypter("Category".toByteArray())
         }
-        val site = DecryptableSiteEntry(1).apply {
+        DecryptableSiteEntry(1).apply {
             description = encrypter("Description".toByteArray())
         }
-        ShowTrashDialog({})
+        ShowTrashDialog {}
     }
 }

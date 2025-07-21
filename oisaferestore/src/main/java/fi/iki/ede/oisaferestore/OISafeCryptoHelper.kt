@@ -116,7 +116,7 @@ open class OISafeCryptoHelper(private val algorithm: Algorithm) {
     }
 
     companion object {
-        private const val DEBUG = true
+        private const val DEBUG = false
         private const val TAG = "CryptoHelper"
 
         fun generateSalt(): Salt {

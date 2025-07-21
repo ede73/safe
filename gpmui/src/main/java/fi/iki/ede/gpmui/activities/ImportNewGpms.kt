@@ -96,7 +96,7 @@ fun ImportGooglePasswordsPreview() {
             val import = ImportChangeSet(incoming, saved, matches)
             val importChangeSet = remember { mutableStateOf<ImportChangeSet?>(import) }
 
-            VisualizeChangeSetPager(importChangeSet, {})
+            VisualizeChangeSetPager(importChangeSet) {}
         }
     }
 }

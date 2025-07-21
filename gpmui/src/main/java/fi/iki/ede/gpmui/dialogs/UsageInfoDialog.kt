@@ -35,6 +35,6 @@ fun UsageInfoDialog(
 @Composable
 fun UsageInfoPreview() {
     MaterialTheme {
-        UsageInfoDialog("message", {})
+        UsageInfoDialog("message") {}
     }
 }

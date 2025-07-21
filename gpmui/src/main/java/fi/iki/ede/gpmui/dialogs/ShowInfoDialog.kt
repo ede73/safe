@@ -50,6 +50,6 @@ fun ShowInfoPreview() {
     val fakeSavedGPM =
         SavedGPM(0, IncomingGPM.makeFromCSVImport("name", "http://acme", "user", "pwd", "note"))
     MaterialTheme {
-        ShowInfoDialog(fakeSavedGPM, {})
+        ShowInfoDialog(fakeSavedGPM) {}
     }
 }

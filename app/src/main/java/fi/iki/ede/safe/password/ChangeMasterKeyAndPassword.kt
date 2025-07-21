@@ -45,9 +45,9 @@ object ChangeMasterKeyAndPassword {
             val myScope = CoroutineScope(Dispatchers.Main)
             myScope.launch {
                 withContext(Dispatchers.IO) {
-                    DataModel.loadFromDatabase({
+                    DataModel.loadFromDatabase {
                         GPMDataModel.loadFromDatabase()
-                    })
+                    }
                     // TODO: REALLY issue info to the caller that we're finished..
                     // else there's few seconds data is actually flaky..
                     finished(true)

@@ -63,6 +63,6 @@ fun ImportResultListPagerPreview() {
     MaterialTheme {
         val m =
             remember { mutableStateOf<ImportChangeSet?>(makeFakeImportForTesting()) }
-        VisualizeChangeSetPager(m, {})
+        VisualizeChangeSetPager(m) {}
     }
 }

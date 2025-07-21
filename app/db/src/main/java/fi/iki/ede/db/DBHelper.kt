@@ -111,41 +111,41 @@ class DBHelper(
                     // should never happen except maybe during upgrade test scenarios
                 }
 
-                1 -> upgradeFromV1ToV2AddPhoto(db, {
+                1 -> upgradeFromV1ToV2AddPhoto(db) {
                     upgradeExternalTables(it, upgrade)
-                })
+                }
 
                 2 -> {
                     // there's no drop column support prior to 3.50.0 - no harm leaving the column
                     // compared to alternative - full table recreation and copy
                     // Actually its buggy (potentially destructive) until 3.35.5
-                    upgradeFromV2ToV3RemoveLastDateTimeEdit(db, {
+                    upgradeFromV2ToV3RemoveLastDateTimeEdit(db) {
                         upgradeExternalTables(it, upgrade)
-                    })
+                    }
                 }
 
                 3 -> {
-                    upgradeFromV3ToV4MergeKeys(db, {
+                    upgradeFromV3ToV4MergeKeys(db) {
                         upgradeExternalTables(it, upgrade)
-                    })
+                    }
                 }
 
                 4 -> {
-                    upgradeFromV4ToV5MergeKeys(db, {
+                    upgradeFromV4ToV5MergeKeys(db) {
                         upgradeExternalTables(it, upgrade)
-                    })
+                    }
                 }
 
                 5 -> {
-                    upgradeFromV5ToV6AddDeletedColumn(db, {
+                    upgradeFromV5ToV6AddDeletedColumn(db) {
                         upgradeExternalTables(it, upgrade)
-                    })
+                    }
                 }
 
                 6 -> {
-                    upgradeFromV6ToV7AddExtensionsColumn(db, {
+                    upgradeFromV6ToV7AddExtensionsColumn(db) {
                         upgradeExternalTables(it, upgrade)
-                    })
+                    }
                 }
 
                 else -> Logger.w(

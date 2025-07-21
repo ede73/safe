@@ -97,11 +97,11 @@ class AutolockingService : Service() {
         }
         autoLockCountdownNotifier?.cancel()
         autoLockCountdownNotifier = null
-        autoLockNotification.setNotification(this@AutolockingService, { mainNotification ->
+        autoLockNotification.setNotification(this@AutolockingService) { mainNotification ->
             mainNotification.notify(this@AutolockingService) {
                 it.setProgress(100, 0, false)
             }
-        })
+        }
 
         val timeoutUntilStop =
             Preferences.getLockTimeoutDuration().inWholeMilliseconds
@@ -113,14 +113,15 @@ class AutolockingService : Service() {
                     millisecondsTillAutoLock = millisUntilFinished
                     if (mFeatures?.isLoggedIn() == true) {
                         autoLockNotification.setNotification(
-                            this@AutolockingService, { mainNotification ->
-                                mainNotification.notify(this@AutolockingService) {
-                                    it.setProgress(
-                                        timeoutUntilStop.toInt(),
-                                        millisUntilFinished.toInt(), false
-                                    )
-                                }
-                            })
+                            this@AutolockingService
+                        ) { mainNotification ->
+                            mainNotification.notify(this@AutolockingService) {
+                                it.setProgress(
+                                    timeoutUntilStop.toInt(),
+                                    millisUntilFinished.toInt(), false
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -213,7 +214,7 @@ class AutolockingService : Service() {
 
             val serviceConnection = object : ServiceConnection {
                 override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                    val binder = service as AutolockingService.LocalBinder
+                    val binder = service as LocalBinder
                     binder.setAutolockingFeatures(features)
                 }
 

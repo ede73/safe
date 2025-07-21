@@ -36,7 +36,7 @@ class SiteEntryListScreen :
         Log.e("SiteEntryListScreen", "Intent category is = ${intent.getLongExtra(CATEGORY_ID, -1)}")
         categoryId =
             savedInstanceState?.getLong(CATEGORY_ID) ?: intent.getLongExtra(CATEGORY_ID, -1)
-        require(categoryId != -1L, { "You have to pass a proper category" })
+        require(categoryId != -1L) { "You have to pass a proper category" }
         SetupNotifications.setup(this)
         Log.e("SiteEntryListScreen", "Trying to locate category $categoryId")
         DataModel.categoriesStateFlow.value.map { category ->
