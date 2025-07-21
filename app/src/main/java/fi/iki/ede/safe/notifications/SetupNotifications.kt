@@ -2,6 +2,7 @@ package fi.iki.ede.safe.notifications
 
 import android.content.Context
 import android.util.Log
+import androidx.core.content.edit
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.notifications.ConfiguredNotifications
 import fi.iki.ede.notifications.MainNotification
@@ -59,8 +60,9 @@ object SetupNotifications {
     ) = Preferences.sharedPreferences.getString(key, null)
         .let { currentValue ->
             if (currentValue != value) {
-                Preferences.sharedPreferences.edit().putString(key, value)
-                    .apply()
+                Preferences.sharedPreferences.edit(commit = true) {
+                    putString(key, value)
+                }
                 if (value != null) {
                     callback(value)
                 }

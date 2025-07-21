@@ -31,6 +31,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.gpm.changeset.ImportChangeSet
@@ -223,10 +224,9 @@ fun ImportGpmCsvComposable(
         )
         Row {
             SafeTextButton(onClick = {
-                val downloadsUri: Uri = Uri.parse(
+                val downloadsUri: Uri =
                     Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                        .toString()
-                )
+                        .toString().toUri()
                 selectGpmCsvExport.launch(
                     Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
                         .putExtra(DocumentsContract.EXTRA_INITIAL_URI, downloadsUri)

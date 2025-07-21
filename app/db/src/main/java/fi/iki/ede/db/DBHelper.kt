@@ -7,6 +7,7 @@ import android.database.DatabaseUtils
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import android.database.sqlite.SQLiteOpenHelper
+import androidx.core.database.sqlite.transaction
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.CipherUtilities
@@ -471,110 +472,106 @@ class DBHelper(
             db: SQLiteDatabase,
             upgradeExternals: (db: SQLiteDatabase) -> Unit
         ) {
-            db.beginTransaction()
-            try {
-                db.execSQL("ALTER TABLE ${SiteEntry.tableName} ADD COLUMN extensions TEXT")
-            } catch (ex: SQLiteException) {
-                Logger.i(TAG, "onUpgrade to 7: $ex")
+            db.transaction {
+                try {
+                    execSQL("ALTER TABLE ${SiteEntry.tableName} ADD COLUMN extensions TEXT")
+                } catch (ex: SQLiteException) {
+                    Logger.i(TAG, "onUpgrade to 7: $ex")
+                }
+                upgradeExternals(this)
             }
-            upgradeExternals(db)
-            db.setTransactionSuccessful()
-            db.endTransaction()
         }
 
         fun upgradeFromV5ToV6AddDeletedColumn(
             db: SQLiteDatabase,
             upgradeExternals: (db: SQLiteDatabase) -> Unit
         ) {
-            db.beginTransaction()
-            try {
-                db.execSQL("ALTER TABLE ${SiteEntry.tableName} ADD COLUMN deleted INTEGER DEFAULT 0")
-            } catch (ex: SQLiteException) {
-                Logger.i(TAG, "onUpgrade to 6: $ex")
+            db.transaction {
+                try {
+                    execSQL("ALTER TABLE ${SiteEntry.tableName} ADD COLUMN deleted INTEGER DEFAULT 0")
+                } catch (ex: SQLiteException) {
+                    Logger.i(TAG, "onUpgrade to 6: $ex")
+                }
+                upgradeExternals(this)
             }
-            upgradeExternals(db)
-            db.setTransactionSuccessful()
-            db.endTransaction()
         }
 
         fun upgradeFromV4ToV5MergeKeys(
             db: SQLiteDatabase,
             upgradeExternals: (db: SQLiteDatabase) -> Unit
         ) {
-            db.beginTransaction()
-            upgradeExternals(db)
-            db.setTransactionSuccessful()
-            db.endTransaction()
+            db.transaction {
+                upgradeExternals(this)
+            }
         }
 
         fun upgradeFromV3ToV4MergeKeys(
             db: SQLiteDatabase,
             upgradeExternals: (db: SQLiteDatabase) -> Unit
         ) {
-            db.beginTransaction()
-            var masterKey: IVCipherText? = null
-            var salt: Salt? = null
-            try {
-                db.query(
-                    true,
-                    "master_key",
-                    arrayOf("encryptedkey"),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-                ).use {
-                    if (it.count > 0) {
-                        it.moveToFirst()
-                        masterKey = IVCipherText(
-                            CipherUtilities.IV_LENGTH,
-                            it.getBlob(it.getColumnIndexOrThrow("encryptedkey"))
-                        )
+            db.transaction {
+                var masterKey: IVCipherText? = null
+                var salt: Salt? = null
+                try {
+                    query(
+                        true,
+                        "master_key",
+                        arrayOf("encryptedkey"),
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null
+                    ).use {
+                        if (it.count > 0) {
+                            it.moveToFirst()
+                            masterKey = IVCipherText(
+                                CipherUtilities.IV_LENGTH,
+                                it.getBlob(it.getColumnIndexOrThrow("encryptedkey"))
+                            )
+                        }
                     }
+
+                    query(
+                        true, "salt", arrayOf("salt"), null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null
+                    ).use { c ->
+                        if (c.count > 0) {
+                            c.moveToFirst()
+                            val dsalt = c.getBlob(c.getColumnIndexOrThrow("salt"))
+                            salt = Salt(dsalt)
+                        }
+                    }
+                    upgradeExternals(this)
+                } catch (ex: SQLiteException) {
+                    // possibly we've already done the upgrade, so just skip the transfer
+                    Logger.i(TAG, "onUpgrade to 4: $ex")
                 }
 
-                db.query(
-                    true, "salt", arrayOf("salt"), null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
-                ).use { c ->
-                    if (c.count > 0) {
-                        c.moveToFirst()
-                        val dsalt = c.getBlob(c.getColumnIndexOrThrow("salt"))
-                        salt = Salt(dsalt)
-                    }
+                execSQL("DROP TABLE IF EXISTS master_key;")
+                execSQL("DROP TABLE IF EXISTS salt;")
+                Keys.create().forEach { sql ->
+                    execSQL(sql)
                 }
-                upgradeExternals(db)
-            } catch (ex: SQLiteException) {
-                // possibly we've already done the upgrade, so just skip the transfer
-                Logger.i(TAG, "onUpgrade to 4: $ex")
-            }
 
-            db.execSQL("DROP TABLE IF EXISTS master_key;")
-            db.execSQL("DROP TABLE IF EXISTS salt;")
-            Keys.create().forEach { sql ->
-                db.execSQL(sql)
+                if (masterKey != null && salt != null) {
+                    insert(
+                        Keys,
+                        ContentValues().apply {
+                            put(Keys.Columns.ENCRYPTED_KEY, masterKey!!)
+                            put(Keys.Columns.SALT, salt!!.salt)
+                        }
+                    )
+                } else {
+                    // should never happen obviously, perhaps user installed OLD version, never logged in..
+                    Logger.w(TAG, "Failed migrating masterkey ${sqliteVersion()}")
+                }
             }
-
-            if (masterKey != null && salt != null) {
-                db.insert(
-                    Keys,
-                    ContentValues().apply {
-                        put(Keys.Columns.ENCRYPTED_KEY, masterKey!!)
-                        put(Keys.Columns.SALT, salt!!.salt)
-                    }
-                )
-            } else {
-                // should never happen obviously, perhaps user installed OLD version, never logged in..
-                Logger.w(TAG, "Failed migrating masterkey ${sqliteVersion()}")
-            }
-            db.setTransactionSuccessful()
-            db.endTransaction()
         }
 
         fun upgradeFromV2ToV3RemoveLastDateTimeEdit(
@@ -582,24 +579,22 @@ class DBHelper(
             upgradeExternals: (db: SQLiteDatabase) -> Unit
         ) {
             if (compareSqliteVersions(sqliteVersion(), "3.55.5") >= 0) {
-                db.beginTransaction()
-                try {
-                    db.execSQL("ALTER TABLE categories DROP COLUMN lastdatetimeedit;")
-                } catch (ex: SQLiteException) {
-                    Logger.i(TAG, "onUpgrade to 3: $ex")
+                db.transaction {
+                    try {
+                        execSQL("ALTER TABLE categories DROP COLUMN lastdatetimeedit;")
+                    } catch (ex: SQLiteException) {
+                        Logger.i(TAG, "onUpgrade to 3: $ex")
+                    }
+                    upgradeExternals(this)
                 }
-                upgradeExternals(db)
-                db.setTransactionSuccessful()
-                db.endTransaction()
             } else {
                 // do it the hard way...
-                db.beginTransaction()
-                db.execSQL("CREATE TABLE new_categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL);")
-                db.execSQL("INSERT INTO new_categories(id, name) SELECT id, name FROM categories;")
-                db.execSQL("DROP TABLE categories;")
-                db.execSQL("ALTER TABLE new_categories RENAME TO categories;")
-                db.setTransactionSuccessful()
-                db.endTransaction()
+                db.transaction {
+                    execSQL("CREATE TABLE new_categories (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL);")
+                    execSQL("INSERT INTO new_categories(id, name) SELECT id, name FROM categories;")
+                    execSQL("DROP TABLE categories;")
+                    execSQL("ALTER TABLE new_categories RENAME TO categories;")
+                }
             }
         }
 
@@ -607,21 +602,20 @@ class DBHelper(
             db: SQLiteDatabase,
             upgradeExternals: (db: SQLiteDatabase) -> Unit
         ) {
-            db.beginTransaction()
-            try {
-                db.execSQL(
-                    "ALTER TABLE ${SiteEntry.tableName} ADD COLUMN photo TEXT;",
-                )
-                upgradeExternals(db)
-            } catch (ex: SQLiteException) {
-                if (ex.message?.contains("duplicate column") != true) {
-                    // something else wrong than duplicate column
-                    Logger.i(TAG, "onUpgrade to 2: $ex")
-                    throw ex
+            db.transaction {
+                try {
+                    execSQL(
+                        "ALTER TABLE ${SiteEntry.tableName} ADD COLUMN photo TEXT;",
+                    )
+                    upgradeExternals(this)
+                } catch (ex: SQLiteException) {
+                    if (ex.message?.contains("duplicate column") != true) {
+                        // something else wrong than duplicate column
+                        Logger.i(TAG, "onUpgrade to 2: $ex")
+                        throw ex
+                    }
                 }
             }
-            db.setTransactionSuccessful()
-            db.endTransaction()
         }
     }
 }

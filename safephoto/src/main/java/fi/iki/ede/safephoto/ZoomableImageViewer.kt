@@ -24,6 +24,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.createBitmap
 
 
 @Composable
@@ -78,16 +79,8 @@ fun ZoomableImageViewerPreview() {
             val context = LocalContext.current
             fun getBitmapFromVectorDrawable(context: Context, drawableId: Int): Bitmap {
                 val drawable =
-                    ContextCompat.getDrawable(context, drawableId) ?: return Bitmap.createBitmap(
-                        1,
-                        1,
-                        Bitmap.Config.ARGB_8888
-                    )
-                val bitmap = Bitmap.createBitmap(
-                    drawable.intrinsicWidth,
-                    drawable.intrinsicHeight,
-                    Bitmap.Config.ARGB_8888
-                )
+                    ContextCompat.getDrawable(context, drawableId) ?: return createBitmap(1, 1)
+                val bitmap = createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight)
                 val canvas = Canvas(bitmap)
                 drawable.setBounds(0, 0, 64, 64)
                 drawable.draw(canvas)

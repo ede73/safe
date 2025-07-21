@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Environment
 import android.preference.PreferenceManager
+import androidx.core.content.edit
 import fi.iki.ede.dateutils.DateUtils
 import java.time.ZonedDateTime
 import kotlin.time.Duration
@@ -72,9 +73,9 @@ object Preferences {
         PREFERENCE_BACKUP_PATH_DEFAULT_VALUE
     }
 
-    fun setBackupDocument(uriString: String?) = sharedPreferences.edit()
-        .putString(PREFERENCE_BACKUP_DOCUMENT, uriString)
-        .apply()
+    fun setBackupDocument(uriString: String?) = sharedPreferences.edit(commit = true) {
+        putString(PREFERENCE_BACKUP_DOCUMENT, uriString)
+    }
 
     fun getDefaultUserName() = sharedPreferences.getString(PREFERENCE_DEFAULT_USER_NAME, "") ?: ""
 
@@ -97,21 +98,28 @@ object Preferences {
     // if missing, we'll flag here to request the permission when user is
     // at screen (ie. from activity)
     fun setNotificationPermissionRequired(value: Boolean) =
-        sharedPreferences.edit().putBoolean(NOTIFICATION_PERMISSION_REQUIRED, value).apply()
+        sharedPreferences.edit(commit = true) {
+            putBoolean(
+                NOTIFICATION_PERMISSION_REQUIRED,
+                value
+            )
+        }
 
     fun getNotificationPermissionRequired() =
         sharedPreferences.getBoolean(NOTIFICATION_PERMISSION_REQUIRED, false)
 
     fun setNotificationPermissionDenied(value: Boolean) =
-        sharedPreferences.edit().putBoolean(NOTIFICATION_PERMISSION_DENIED, value).apply()
+        sharedPreferences.edit(commit = true) { putBoolean(NOTIFICATION_PERMISSION_DENIED, value) }
 
     fun getNotificationPermissionDenied() =
         sharedPreferences.getBoolean(NOTIFICATION_PERMISSION_DENIED, false)
 
 
-    private fun storeTimestamp(key: String) = sharedPreferences.edit().putLong(
-        key, DateUtils.toUnixSeconds(ZonedDateTime.now())
-    ).apply()
+    private fun storeTimestamp(key: String) = sharedPreferences.edit(commit = true) {
+        putLong(
+            key, DateUtils.toUnixSeconds(ZonedDateTime.now())
+        )
+    }
 
     private fun getStoredTimestamp(key: String) = sharedPreferences.getLong(key, 0)
         .takeIf { it != 0L }
@@ -127,7 +135,12 @@ object Preferences {
     // This is safety measure on app crash, it must go to the disk immediately
     @SuppressLint("ApplySharedPref")
     fun clearAllPlugins() {
-        sharedPreferences.edit().putStringSet(PREFERENCE_EXPERIMENTAL_FEATURES, emptySet()).commit()
+        sharedPreferences.edit(commit = true) {
+            putStringSet(
+                PREFERENCE_EXPERIMENTAL_FEATURES,
+                emptySet()
+            )
+        }
     }
 
     fun autoBackupQuotaExceeded() = storeTimestamp(PREFERENCE_AUTOBACKUP_QUOTA_EXCEEDED)
@@ -154,5 +167,10 @@ object Preferences {
         sharedPreferences.getStringSet(PREFERENCE_EXTENSIONS_KEY, emptySet())?.toSet() ?: emptySet()
 
     fun storeAllExtensions(extensions: Set<String>) =
-        sharedPreferences.edit().putStringSet(PREFERENCE_EXTENSIONS_KEY, extensions).apply()
+        sharedPreferences.edit(commit = true) {
+            putStringSet(
+                PREFERENCE_EXTENSIONS_KEY,
+                extensions
+            )
+        }
 }

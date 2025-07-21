@@ -29,6 +29,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.scale
+import androidx.core.graphics.set
 import androidx.lifecycle.LifecycleOwner
 import com.google.common.util.concurrent.ListenableFuture
 import fi.iki.ede.logger.Logger
@@ -298,7 +301,7 @@ private fun takePhoto(
                     val aspectRatio = bitmap.height.toFloat() / bitmap.width.toFloat()
                     val targetHeight = (targetWidth * aspectRatio).toInt()
 
-                    return Bitmap.createScaledBitmap(bitmap, targetWidth, targetHeight, true)
+                    return bitmap.scale(targetWidth, targetHeight)
                 }
 
                 override fun onError(exception: ImageCaptureException) {
@@ -318,10 +321,10 @@ fun SafePhotoPreview() {
         val width = 100
         val height = 100
         val redColor = Color.RED
-        val dummyBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val dummyBitmap = createBitmap(width, height)
         for (x in 0 until width) {
             for (y in 0 until height) {
-                dummyBitmap.setPixel(x, y, redColor)
+                dummyBitmap[x, y] = redColor
             }
         }
         SafePhoto(

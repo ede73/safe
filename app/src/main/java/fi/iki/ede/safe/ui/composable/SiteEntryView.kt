@@ -47,6 +47,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import fi.iki.ede.autolock.AvertInactivityDuringLongTask
 import fi.iki.ede.clipboardutils.ClipboardUtils
 import fi.iki.ede.crypto.IVCipherText
@@ -165,7 +166,7 @@ fun SiteEntryView(
                         context.startActivity(Intent(Intent.ACTION_VIEW, uri))
                     }
                 },
-                enabled = !TextUtils.isEmpty(website) && Uri.parse(website) != null,
+                enabled = !TextUtils.isEmpty(website) && website.toUri() != null,
                 contentPadding = PaddingValues(0.dp)
             ) {
                 Icon(
@@ -429,8 +430,8 @@ private fun TakePhotoOrAskPermission(
 private fun tryParseUri(website: String): Uri =
     if (website.lowercase().startsWith("http://") ||
         website.lowercase().startsWith("https://")
-    ) Uri.parse(website)
-    else Uri.parse("https://$website")
+    ) website.toUri()
+    else "https://$website".toUri()
 
 
 @Preview(showBackground = true)
@@ -470,11 +471,11 @@ fun SiteEntryViewPreview() {
                 )
             )
         }
-        val cat = DecryptableCategoryEntry().apply {
+        DecryptableCategoryEntry().apply {
             id = 1
             encryptedName = encrypter("Category".toByteArray())
         }
-        val lst = mutableListOf(site1, site2)
+        mutableListOf(site1, site2)
 
         // TODO: NO MOCK HERE :(
         //DataModel._categories[cat] = lst
