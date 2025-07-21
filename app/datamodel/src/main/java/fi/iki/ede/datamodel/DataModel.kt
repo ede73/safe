@@ -1,12 +1,12 @@
 package fi.iki.ede.datamodel
 
+import android.util.Log
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.db.DBID
 import fi.iki.ede.logger.Logger
-import fi.iki.ede.logger.firebaseTry
 import fi.iki.ede.preferences.Preferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -308,7 +308,8 @@ object DataModel {
     private fun syncLoadAllPhotos() {
         val dbHelper = DBHelperFactory.getDBHelper()
         _siteEntriesStateFlow.value.forEach { siteEntry ->
-            firebaseTry {
+            Log.w(TAG, "Load photo for ${siteEntry.id}")
+            runCatching {
                 val photo = dbHelper.fetchPhotoOnly(siteEntry.id as DBID)
                 if (photo != null) {
                     siteEntry.photo = photo

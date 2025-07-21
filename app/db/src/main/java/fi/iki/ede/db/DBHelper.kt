@@ -7,6 +7,7 @@ import android.database.DatabaseUtils
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Log
 import androidx.core.database.sqlite.transaction
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
@@ -17,10 +18,17 @@ import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseRecordException
 import kotlinx.coroutines.flow.MutableStateFlow
+import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
 import java.time.ZonedDateTime
+import java.util.UUID
 import kotlin.reflect.KFunction0
 
 typealias DBID = Long
+typealias FileName = String
+
+private const val TAG = "DBHelper"
 
 /**
  * Bug!? in SQLite? Do not use readableDatabase or writeableDatabase.use!
@@ -41,6 +49,7 @@ class DBHelper(
     // Alas API 33:OpenParams.Builder().setJournalMode(JOURNAL_MODE_MEMORY).build()
 ) {
     private val dynamicTables = mutableListOf<Table>()
+    private val photoDir: File = File(context.applicationContext.filesDir, "photos")
 
     init {
         if (!regularAppNotATest || System.getProperty("test") == "test") {
@@ -49,6 +58,9 @@ class DBHelper(
         } else {
             require(databaseName != null) { "Cannot use InMemory DB in prod" }
             require(System.getProperty("test") != "test") { "Test cannot use file DB" }
+        }
+        if (!photoDir.exists() && !photoDir.mkdirs()) {
+            Log.e(TAG, "FAILED MAKING PHOTO DIR")
         }
         dynamicTables.addAll(getExternalTables())
     }
@@ -248,22 +260,6 @@ class DBHelper(
             }
         }
 
-//    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//    // TODO: DELETE, no one uses!
-//    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-//    fun getCategoryCount(id: DBID) =
-//        readableDatabase.let { db ->
-//            db.rawQuery(
-//                "SELECT count(*) FROM ${SiteEntry.tableName} WHERE category=$id",
-//                null
-//            ).use {
-//                if (it.count > 0) {
-//                    it.moveToFirst()
-//                    it.getInt(0)
-//                } else 0
-//            }
-//        }
-
     fun updateCategory(id: DBID, entry: DecryptableCategoryEntry) =
         writableDatabase.update(Category, ContentValues().apply {
             put(Category.Columns.NAME, entry.encryptedName)
@@ -276,11 +272,13 @@ class DBHelper(
             whereEq(SiteEntry.Columns.SITEENTRY_ID, siteEntryID)
         ).use {
             if (it.moveToFirst()) {
-                IVCipherText(
-                    CipherUtilities.IV_LENGTH,
-                    it.getBlob(it.getColumnIndexOrThrow(SiteEntry.Columns.PHOTO))
-                        ?: byteArrayOf()
-                )
+                try {
+                    it.getString(it.getColumnIndexOrThrow(SiteEntry.Columns.PHOTO))
+                        ?.takeIf { name -> name.isNotEmpty() }?.let { name -> loadPhoto(name) }
+                } catch (_: Exception) {
+                    Log.w(TAG, "Failed load photo")
+                    null
+                }
             } else null
         }
     }
@@ -342,13 +340,20 @@ class DBHelper(
     fun updateSiteEntry(entry: DecryptableSiteEntry): DBID {
         require(entry.id != null) { "Cannot update SiteEntry without ID" }
         require(entry.categoryId != null) { "Cannot update SiteEntry without Category ID" }
+        fetchPhotoFilename(entry.id!!).takeIf { it != null }?.let { deletePhoto(it) }
         val args = ContentValues().apply {
             put(SiteEntry.Columns.DESCRIPTION, entry.description)
             put(SiteEntry.Columns.USERNAME, entry.username)
             put(SiteEntry.Columns.PASSWORD, entry.password)
             put(SiteEntry.Columns.WEBSITE, entry.website)
             put(SiteEntry.Columns.NOTE, entry.note)
-            put(SiteEntry.Columns.PHOTO, entry.photo)
+            // old photo filename has been deleted already
+            savePhoto(entry.photo).let { filename ->
+                if (filename == null)
+                    put(SiteEntry.Columns.PHOTO, null)
+                else
+                    put(SiteEntry.Columns.PHOTO, filename)
+            }
             if (entry.passwordChangedDate != null) {
                 put(
                     SiteEntry.Columns.PASSWORD_CHANGE_DATE,
@@ -385,13 +390,72 @@ class DBHelper(
             put(SiteEntry.Columns.USERNAME, entry.username)
             put(SiteEntry.Columns.WEBSITE, entry.website)
             put(SiteEntry.Columns.NOTE, entry.note)
-            put(SiteEntry.Columns.PHOTO, entry.photo)
+            savePhoto(entry.photo).let { filename ->
+                if (filename == null)
+                    put(SiteEntry.Columns.PHOTO, null)
+                else
+                    put(SiteEntry.Columns.PHOTO, filename)
+            }
             put(SiteEntry.Columns.DELETED, entry.deleted)
             entry.passwordChangedDate?.let {
                 put(SiteEntry.Columns.PASSWORD_CHANGE_DATE, it)
             }
             put(SiteEntry.Columns.EXTENSIONS, entry.extensions)
         })
+
+    // SQLite cursor has had a "bug" past decade, if it loads "too much data" namely 64KB it crashes
+    // SQLite itself doesn't have this limit (and by "cursor" i mean android implementation)
+    // So add few photos and DB wont load anymore (unless u stop using cursor)
+    // ROOM has not this limit
+    fun fetchPhotoFilename(siteEntryID: DBID): FileName? = readableDatabase.let { db ->
+        db.query(
+            SiteEntry,
+            SiteEntry.lazyColumns(),
+            whereEq(SiteEntry.Columns.SITEENTRY_ID, siteEntryID)
+        ).use {
+            if (it.moveToFirst()) {
+                try {
+                    it.getString(it.getColumnIndexOrThrow(SiteEntry.Columns.PHOTO))
+                        ?.takeIf { name -> name.isNotEmpty() }
+                } catch (_: Exception) {
+                    Log.w(TAG, "Load photo was blob")
+                    return null
+                }
+            } else null
+        }
+    }
+
+    fun loadPhoto(photoName: FileName): IVCipherText? = File(photoDir, photoName).let { photoFile ->
+        if (!photoFile.exists()) null
+        else IVCipherText(
+            CipherUtilities.IV_LENGTH,
+            FileInputStream(photoFile).use { it.readBytes() })
+    }
+
+    fun deletePhoto(photoName: FileName) = File(photoDir, photoName).let { photoFile ->
+        if (photoFile.exists())
+            photoFile.delete()
+    }
+
+    fun savePhoto(photo: IVCipherText): FileName? = if (photo.isEmpty()) null else
+        File(photoDir, "${UUID.randomUUID()}.photo_data").let { photoFile ->
+            return try {
+                photoFile.outputStream().use {
+                    it.write(photo.iv)
+                    it.write(photo.cipherText)
+                }
+                photoFile.name
+            } catch (e: IOException) {
+                Logger.e(TAG, "Error saving photo ${photoFile.name}: ${e.message}", e)
+                if (photoFile.exists() && !photoFile.delete()) {
+                    Logger.w(
+                        TAG,
+                        "Failed to delete partially written photo file: ${photoFile.absolutePath}"
+                    )
+                }
+                ""
+            }
+        }
 
     fun restoreSoftDeletedSiteEntry(id: DBID) =
         writableDatabase.update(
