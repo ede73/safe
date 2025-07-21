@@ -43,8 +43,8 @@ wait_emu_online() {
 
 kill_emu() {
   emulator_serial="$1"
-  emulatorpid="$2"
+  emulator_pid="$2"
   ANDROID_EMULATOR_WAIT_TIME_BEFORE_KILL=5 adb -s "$emulator_serial" emu kill
-  kill $emulatorpid
-  wait $emulatorpid
+  kill "$emulator_pid"
+  wait "$emulator_pid"
 }

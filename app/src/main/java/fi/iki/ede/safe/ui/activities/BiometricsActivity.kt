@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.CipherUtilities
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
@@ -141,7 +142,12 @@ class BiometricsActivity : AppCompatActivity() {
             sharedPreferences.getBoolean(PREFERENCE_BIOMETRICS_ENABLED, false)
 
         fun setBiometricEnabled(value: Boolean) =
-            sharedPreferences.edit().putBoolean(PREFERENCE_BIOMETRICS_ENABLED, value).apply()
+            sharedPreferences.edit(commit = true) {
+                putBoolean(
+                    PREFERENCE_BIOMETRICS_ENABLED,
+                    value
+                )
+            }
 
         fun haveRecordedBiometric() = getBioCipher().isNotEmpty()
 
@@ -192,9 +198,9 @@ class BiometricsActivity : AppCompatActivity() {
         fun getRegistrationIntent(context: Context) =
             Intent(context, BiometricsActivity::class.java).setAction(BIO_INITIALIZE)
 
-        fun clearBiometricKeys() = sharedPreferences.edit()
-            .remove(PREFERENCE_BIO_CIPHER)
-            .apply()
+        fun clearBiometricKeys() = sharedPreferences.edit(commit = true) {
+            remove(PREFERENCE_BIO_CIPHER)
+        }
 
         private fun getBioCipher(): IVCipherText {
             val pm = sharedPreferences
@@ -202,9 +208,9 @@ class BiometricsActivity : AppCompatActivity() {
             return IVCipherText(CipherUtilities.IV_LENGTH, pm.hexToByteArray())
         }
 
-        private fun storeBioCipher(cipher: IVCipherText) = sharedPreferences.edit()
-            .putString(PREFERENCE_BIO_CIPHER, cipher.combineIVAndCipherText().toHexString())
-            .apply()
+        private fun storeBioCipher(cipher: IVCipherText) = sharedPreferences.edit(commit = true) {
+            putString(PREFERENCE_BIO_CIPHER, cipher.combineIVAndCipherText().toHexString())
+        }
 
         const val RESULT_FAILED = 1
         private const val BIO_INITIALIZE = "bioinitialize"

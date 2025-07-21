@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 import java.io.ByteArrayOutputStream
 import java.io.FileInputStream
 import java.nio.charset.Charset
@@ -75,6 +77,7 @@ abstract class GitRevListCountValueSource : ValueSource<String, ValueSourceParam
     }
 }
 
+val gitRevListProvider = providers.of(GitRevListCountValueSource::class) {}
 
 android {
 //    lint {
@@ -100,9 +103,8 @@ android {
 
     defaultConfig {
         applicationId = "fi.iki.ede.safe"
-        targetSdk = 35
+        targetSdk = 36
 
-        val gitRevListProvider = providers.of(GitRevListCountValueSource::class) {}
         val gitRevListCount = gitRevListProvider.get().toInt()
 
         val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(
@@ -352,14 +354,6 @@ tasks.configureEach {
 tasks.withType<Test> {
     systemProperty("test", "true")
     jvmArgs("--add-opens", "java.base/java.time=ALL-UNNAMED")
-}
-
-abstract class MyValueSource @Inject constructor(private val execOperations: ExecOperations) :
-    ValueSource<String?, ValueSourceParameters.None?> {
-    override fun obtain(): String {
-        // your custom implementation
-        return ""
-    }
 }
 
 abstract class UnlockEmulator2ValueSource : ValueSource<String, ValueSourceParameters.None> {

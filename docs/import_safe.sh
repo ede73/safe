@@ -1,6 +1,6 @@
 #git clone /mnt/c/users/ede/src/safe
 #cd safe
-[[  $(basename $(pwd)) != "safe" ]] && {
+[[  $(basename "$(pwd)") != "safe" ]] && {
   echo "Need to run this on base safe folder!"
   exit 10
 }
@@ -13,7 +13,7 @@ PATH=\${PATH}:\${ANDROID_HOME}/tools:\${ANDROID_HOME}/cmdline-tools/latest/bin
 EOF
 
 cp /mnt/c/users/ede/src/safe/app/google-services.json app
-cat /mnt/c/users/ede/src/safe/local.properties | sed "s,^sdk.dir.*,sdk.dir=${ANDROID_HOME},g" >local.properties
+sed "s,^sdk.dir.*,sdk.dir=${ANDROID_HOME},g" /mnt/c/users/ede/src/safe/local.properties >local.properties
 # sid sdk.dir to point to $ANDROID_HOME
 
 cat << EOF

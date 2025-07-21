@@ -69,11 +69,11 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
         }
 
         // dump all imported passwords!
-        // TODO: use datamodel! (proper channels)
+        // TODO: use data model! (proper channels)
         if (allSavedGPMs.isNotEmpty()) {
             serializer.startTag(Elements.IMPORTS)
             val gpmIdToSiteEntry =
-                // TODO: use datamodel!
+                // TODO: use data model!
                 siteEntryGPMMappings.flatMap { (a, bSet) -> bSet.map { b -> b to a } }
                     .groupBy({ it.first }, { it.second })
                     .mapValues { (_, v) -> v.toSet() }

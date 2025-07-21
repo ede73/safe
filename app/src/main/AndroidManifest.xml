@@ -25,7 +25,7 @@
         android:icon="@drawable/ic_launcher_safe"
         android:label="@string/application_name"
         android:theme="@style/Theme.Safe"
-        tools:targetApi="s">
+        tools:targetApi="33">
         <!-- Keep this AppCompat theme, helps with buggy window title coloring -->
         <activity
             android:name=".ui.activities.BiometricsActivity"
@@ -71,7 +71,7 @@
             android:name="fi.iki.ede.safe.ui.activities.LoginScreenWithBackupIcon"
             android:enabled="false"
             android:exported="true"
-            android:icon="@drawable/ic_launcher_safe_backupnow"
+            android:icon="@drawable/ic_launcher_safe_backup_now"
             android:label="@string/application_name"
             android:targetActivity=".ui.activities.LoginScreen">
             <intent-filter>

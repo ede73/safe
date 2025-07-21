@@ -296,7 +296,7 @@ fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesList(
                 combinedList,
                 key = { item ->
                     val twoColumn = item
-                    // some how lazycolumn super-anally retains the list order by the KEYs!
+                    // some how lazy column super-anally retains the list order by the KEYs!
                     // Since I'm providing sorted list (and sort order ain't maintained)..
                     // let's pass list instance ID, YES, forces full refresh, but at least we're sorted!
                     "$listHash,site=${twoColumn.siteEntry?.id} gpmid=${twoColumn.gpm?.id}"
@@ -347,12 +347,12 @@ fun ImportEntryListPreview() {
     MaterialTheme {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
-        val mine = (1990..2023).map {
+        (1990..2023).map {
             DecryptableSiteEntry(1).apply {
                 description = encrypter("Description $it".toByteArray())
             }
         }
-        val imports = (1..10).map {
+        (1..10).map {
             makeFromEncryptedStringFields(
                 it.toLong(),
                 "name($it)".encrypt(),
