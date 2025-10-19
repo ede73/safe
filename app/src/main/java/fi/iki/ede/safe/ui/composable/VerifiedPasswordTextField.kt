@@ -13,11 +13,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.safe.R
-import fi.iki.ede.theme.SafeTheme
+import fi.iki.ede.theme.SafeThemeSurface
 import kotlinx.coroutines.job
 
 /**
@@ -68,10 +67,10 @@ fun VerifiedPasswordTextField(
     }
 }
 
-@Preview(showBackground = true)
+@DualModePreview
 @Composable
 fun VerifiedPasswordTextFieldPreview() {
-    SafeTheme {
+    SafeThemeSurface {
         Column {
             VerifiedPasswordTextField(
                 showVerification = true,

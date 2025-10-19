@@ -9,11 +9,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.safe.ui.TestTag
+import fi.iki.ede.safe.ui.composable.DualModePreview
 import fi.iki.ede.safe.ui.composable.HelpViewer
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.theme.SafeTheme
+import fi.iki.ede.theme.SafeThemeSurface
 
 class HelpScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,10 +42,10 @@ class HelpScreen : ComponentActivity() {
     }
 }
 
-@Preview(showBackground = true)
+@DualModePreview
 @Composable
 fun HelpScreenPreview() {
-    SafeTheme {
+    SafeThemeSurface {
         HelpViewer("<html><body>Moro <b>poop</b></body></html>")
     }
 }

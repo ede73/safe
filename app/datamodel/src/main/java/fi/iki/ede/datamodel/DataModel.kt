@@ -123,7 +123,7 @@ object DataModel {
         onAdd: suspend (DecryptableSiteEntry) -> Unit = {}
     ) {
         require(siteEntry.categoryId != null) { "SiteEntry's category must be known" }
-        Preferences.setLastModified()
+        runCatching { Preferences.setLastModified() }
         CoroutineScope(Dispatchers.IO).launch {
             val db = DBHelperFactory.getDBHelper()
             if (siteEntry.id == null) {

@@ -6,7 +6,6 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
 import fi.iki.ede.autolock.AutolockingFeaturesImpl
 import fi.iki.ede.crypto.IVCipherText
@@ -16,6 +15,7 @@ import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.notifications.SetupNotifications
 import fi.iki.ede.safe.ui.composable.CategoryListScreenCompose
+import fi.iki.ede.safe.ui.composable.DualModePreview
 import kotlinx.coroutines.flow.MutableStateFlow
 
 
@@ -43,7 +43,7 @@ class CategoryListScreen :
     }
 }
 
-@Preview(showBackground = true)
+@DualModePreview
 @Composable
 fun CategoryScreenPreview() {
     KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }

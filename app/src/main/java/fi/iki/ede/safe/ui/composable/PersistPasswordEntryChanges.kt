@@ -4,7 +4,6 @@ import android.graphics.Bitmap
 import android.text.TextUtils
 import android.util.Base64
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.encrypt
@@ -12,7 +11,7 @@ import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.cryptoobjects.encrypt
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.safe.ui.models.EditableSiteEntry
-import fi.iki.ede.theme.SafeTheme
+import fi.iki.ede.theme.SafeThemeSurface
 import kotlinx.coroutines.runBlocking
 import java.io.ByteArrayOutputStream
 import java.time.ZonedDateTime
@@ -63,12 +62,12 @@ private fun convertToJpegAndEncrypt(
 }
 
 
-@Preview(showBackground = true)
+@DualModePreview
 @Composable
 fun PersistPasswordEntryChangesPreview() {
     KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
     KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
-    SafeTheme {
+    SafeThemeSurface {
         PersistPasswordEntryChanges(
             editedSiteEntry = EditableSiteEntry(
                 1,

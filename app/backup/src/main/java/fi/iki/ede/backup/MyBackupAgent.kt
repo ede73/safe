@@ -79,8 +79,9 @@ class MyBackupAgent : BackupAgentHelper() {
             restored.createNewFile()
         }
 
-        fun haveRestoreMark(context: Context) =
+        fun haveRestoreMark(context: Context) = runCatching {
             File(context.filesDir, RESTORE_MARK).exists()
+        }.getOrDefault(false)
 
         fun removeRestoreMark(context: Context) {
             val restored = File(context.filesDir, RESTORE_MARK)

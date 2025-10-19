@@ -45,7 +45,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import fi.iki.ede.autolock.AvertInactivityDuringLongTask
@@ -70,7 +69,7 @@ import fi.iki.ede.safephoto.SafePhoto
 import fi.iki.ede.theme.LocalSafeTheme
 import fi.iki.ede.theme.SafeButton
 import fi.iki.ede.theme.SafeTextButton
-import fi.iki.ede.theme.SafeTheme
+import fi.iki.ede.theme.SafeThemeSurface
 import kotlinx.coroutines.launch
 import java.time.ZonedDateTime
 
@@ -434,10 +433,10 @@ private fun tryParseUri(website: String): Uri =
     else "https://$website".toUri()
 
 
-@Preview(showBackground = true)
+@DualModePreview
 @Composable
 fun SiteEntryViewPreview() {
-    SafeTheme {
+    SafeThemeSurface {
         //PopCustomPasswordDialog {}
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }

@@ -21,7 +21,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
@@ -30,10 +29,11 @@ import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
+import fi.iki.ede.safe.ui.composable.DualModePreview
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.theme.SafeButton
 import fi.iki.ede.theme.SafeListItem
-import fi.iki.ede.theme.SafeTheme
+import fi.iki.ede.theme.SafeThemeSurface
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -128,10 +128,10 @@ fun ShowTrashDialog(
     }
 }
 
-@Preview(showBackground = true)
+@DualModePreview
 @Composable
 fun ShowTrashPreview() {
-    SafeTheme {
+    SafeThemeSurface {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()

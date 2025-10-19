@@ -25,7 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
@@ -39,7 +38,7 @@ import fi.iki.ede.safe.ui.dialogs.DeleteSiteEntryDialog
 import fi.iki.ede.safe.ui.dialogs.MoveSiteEntryDialog
 import fi.iki.ede.theme.LocalSafeTheme
 import fi.iki.ede.theme.SafeListItem
-import fi.iki.ede.theme.SafeTheme
+import fi.iki.ede.theme.SafeThemeSurface
 import kotlinx.coroutines.launch
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -164,10 +163,10 @@ fun SiteEntryRow(
     }
 }
 
-@Preview(showBackground = true)
+@DualModePreview
 @Composable
 fun SiteEntryRowPreview() {
-    SafeTheme {
+    SafeThemeSurface {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()

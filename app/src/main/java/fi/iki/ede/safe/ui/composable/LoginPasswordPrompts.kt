@@ -17,7 +17,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.integerResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.logger.Logger
@@ -27,7 +26,7 @@ import fi.iki.ede.safe.ui.activities.LoginPrecondition
 import fi.iki.ede.safe.ui.activities.LoginStyle
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.theme.SafeButton
-import fi.iki.ede.theme.SafeTheme
+import fi.iki.ede.theme.SafeThemeSurface
 import kotlinx.coroutines.delay
 
 private const val TAG = "LoginPasswordPrompts"
@@ -141,10 +140,10 @@ fun LoginPasswordPrompts(
     }
 }
 
-@Preview(showBackground = true)
+@DualModePreview
 @Composable
 fun PasswordPromptPreview() {
-    SafeTheme {
+    SafeThemeSurface {
         Column {
             Text(text = "------ First time init")
             LoginPasswordPrompts(LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE) { _, _ ->

@@ -8,7 +8,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
@@ -16,7 +15,7 @@ import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.theme.LocalSafeTheme
 import fi.iki.ede.theme.SafeListItem
-import fi.iki.ede.theme.SafeTheme
+import fi.iki.ede.theme.SafeThemeSurface
 
 fun Color.darken(factor: Float): Color {
     return copy(alpha = alpha * factor)
@@ -46,10 +45,10 @@ fun SiteEntryRowHeader(headerString: String) {
     }
 }
 
-@Preview(showBackground = true)
+@DualModePreview
 @Composable
 fun SiteEntryRowHeaderPreview() {
-    SafeTheme {
+    SafeThemeSurface {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()

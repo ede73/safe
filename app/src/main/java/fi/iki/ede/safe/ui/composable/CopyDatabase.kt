@@ -39,8 +39,10 @@ internal fun CopyDatabase(
     val dbOutput =
         remember {
             mutableStateOf(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).path
-                    ?: ""
+                runCatching {
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).path
+                        ?: ""
+                }.getOrDefault("")
             )
         }
 

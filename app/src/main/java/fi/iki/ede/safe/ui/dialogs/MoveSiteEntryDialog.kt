@@ -14,7 +14,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
@@ -22,10 +21,11 @@ import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
+import fi.iki.ede.safe.ui.composable.DualModePreview
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.theme.SafeButton
 import fi.iki.ede.theme.SafeListItem
-import fi.iki.ede.theme.SafeTheme
+import fi.iki.ede.theme.SafeThemeSurface
 
 @Composable
 fun MoveSiteEntryDialog(
@@ -101,17 +101,17 @@ fun MoveSiteEntryDialog(
     }
 }
 
-@Preview(showBackground = true)
+@DualModePreview
 @Composable
-fun MoveSiteEtryPreview() {
-    SafeTheme {
+fun MoveSiteEntryPreview() {
+    SafeThemeSurface {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()
         val cat = DecryptableCategoryEntry().apply {
             encryptedName = encrypter("Category".toByteArray())
         }
-        val site = DecryptableSiteEntry(1).apply {
+        DecryptableSiteEntry(1).apply {
             description = encrypter("Description".toByteArray())
         }
         MoveSiteEntryDialog(listOf(cat, cat, cat), {}, {})

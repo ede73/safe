@@ -24,9 +24,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.safe.R
+import fi.iki.ede.theme.SafeThemeSurface
 
 @Composable
 fun ExtensionsEditor(
@@ -132,9 +132,10 @@ fun ExtensionsEditor(
     }
 }
 
-
-@Preview(showBackground = true)
+@DualModePreview
 @Composable
 fun ExtensionsEditorPreview() {
-    ExtensionsEditor(listOf("a", "b", "c"))
+    SafeThemeSurface {
+        ExtensionsEditor(listOf("a", "b", "c"))
+    }
 }

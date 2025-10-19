@@ -13,7 +13,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
@@ -22,7 +21,7 @@ import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.datamodel.DataModel.getCategory
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
-import fi.iki.ede.theme.SafeTheme
+import fi.iki.ede.theme.SafeThemeSurface
 import kotlinx.coroutines.flow.MutableStateFlow
 
 @Composable
@@ -80,10 +79,10 @@ fun SearchSiteEntryList(
     }
 }
 
-@Preview(showBackground = true)
+@DualModePreview
 @Composable
 fun SearchSiteEntryListPreview() {
-    SafeTheme {
+    SafeThemeSurface {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()
@@ -93,7 +92,7 @@ fun SearchSiteEntryListPreview() {
         val site2 = DecryptableSiteEntry(1).apply {
             description = encrypter("Description2".toByteArray())
         }
-        val cat = DecryptableCategoryEntry().apply {
+        DecryptableCategoryEntry().apply {
             id = 1
             encryptedName = encrypter("Category".toByteArray())
         }

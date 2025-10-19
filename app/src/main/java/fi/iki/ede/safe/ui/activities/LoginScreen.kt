@@ -7,7 +7,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.autolock.AutolockingFeaturesImpl
 import fi.iki.ede.autolock.AutolockingService
 import fi.iki.ede.backup.MyBackupAgent
@@ -27,9 +26,10 @@ import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.splits.PluginManager
 import fi.iki.ede.safe.ui.TestTag
+import fi.iki.ede.safe.ui.composable.DualModePreview
 import fi.iki.ede.safe.ui.composable.LoginScreenCompose
 import fi.iki.ede.safe.ui.utilities.startActivityForResults
-import fi.iki.ede.theme.SafeTheme
+import fi.iki.ede.theme.SafeThemeSurface
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -240,17 +240,20 @@ private fun haveMasterkeyInDatabase(): Boolean {
     return true
 }
 
-fun isGoodRestoredContent(context: Context) =
+fun isGoodRestoredContent(context: Context) = try {
     if (!MyBackupAgent.haveRestoreMark(context)) false
     else haveMasterkeyInDatabase()
+} catch (_: NoClassDefFoundError) {
+    false
+}
 
 
-@Preview(showBackground = true)
+@DualModePreview
 @Composable
 fun LoginScreenPreview() {
     KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
     KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
-    SafeTheme {
+    SafeThemeSurface {
         LoginScreenCompose(
             LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE,
             goodPasswordEntered = { _, _ -> /* No-op for preview */ true },

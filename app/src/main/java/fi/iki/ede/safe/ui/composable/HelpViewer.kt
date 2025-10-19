@@ -4,13 +4,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.text.HtmlCompat
 import com.google.android.material.textview.MaterialTextView
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
-import fi.iki.ede.theme.SafeTheme
+import fi.iki.ede.theme.SafeThemeSurface
 
 @Composable
 fun HelpViewer(sourceString: String, modifier: Modifier = Modifier) {
@@ -24,10 +23,10 @@ fun HelpViewer(sourceString: String, modifier: Modifier = Modifier) {
     )
 }
 
-@Preview(showBackground = true)
+@DualModePreview
 @Composable
 fun HelpViewerPreview() {
-    SafeTheme {
+    SafeThemeSurface {
         HelpViewer("<h1>Hello</h1>")
     }
 }

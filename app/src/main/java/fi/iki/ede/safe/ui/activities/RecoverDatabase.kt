@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
@@ -23,7 +22,8 @@ import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.ui.composable.CopyDatabase
-import fi.iki.ede.theme.SafeTheme
+import fi.iki.ede.safe.ui.composable.DualModePreview
+import fi.iki.ede.theme.SafeThemeSurface
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -204,10 +204,10 @@ fun nudepwd(): String {
     }
 }
 
-@Preview(showBackground = true)
+@DualModePreview
 @Composable
 fun RecoverDatabasePreview() {
-    SafeTheme {
+    SafeThemeSurface {
         CopyDatabase(null) {}
     }
 }

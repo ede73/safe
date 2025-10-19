@@ -32,7 +32,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.safe.R
@@ -40,7 +39,7 @@ import fi.iki.ede.safe.password.highlightPassword
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.theme.LocalSafeTheme
-import fi.iki.ede.theme.SafeTheme
+import fi.iki.ede.theme.SafeThemeSurface
 
 private const val TAG = "PasswordTextField"
 
@@ -181,10 +180,10 @@ private fun showOrObfuscatePassword(
 }
 
 
-@Preview(showBackground = true)
+@DualModePreview
 @Composable
 fun PasswordTextFieldPreview() {
-    SafeTheme {
+    SafeThemeSurface {
         Column {
             PasswordTextField(
                 textTip = R.string.login_password_tip,

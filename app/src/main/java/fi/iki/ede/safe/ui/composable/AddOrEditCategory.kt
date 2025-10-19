@@ -16,12 +16,12 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusTarget
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.window.Dialog
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.theme.SafeButton
+import fi.iki.ede.theme.SafeThemeSurface
 import kotlinx.coroutines.android.awaitFrame
 import kotlinx.coroutines.job
 
@@ -71,9 +71,11 @@ fun AddOrEditCategory(
     )
 }
 
-@Preview(showBackground = true)
+@DualModePreview
 @Composable
 fun AddOrEditCategoryPreview() {
-    AddOrEditCategory("Category", R.string.category_list_edit_category) {
+    SafeThemeSurface {
+        AddOrEditCategory("Category", R.string.category_list_edit_category) {
+        }
     }
 }

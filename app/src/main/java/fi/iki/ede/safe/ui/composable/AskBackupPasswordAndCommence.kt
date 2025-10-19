@@ -51,7 +51,8 @@ fun AskBackupPasswordAndCommence(
                         selectedDoc.toString()
                     )
                 )
-                PasswordTextField(textTip = R.string.restore_screen_backups_password,
+                PasswordTextField(
+                    textTip = R.string.restore_screen_backups_password,
                     onValueChange = {
                         backupPassword = it
                     })
@@ -79,12 +80,12 @@ fun AskBackupPasswordAndCommence(
 }
 
 
-//@Preview(showBackground = true)
+//@DualModePreview
 //@Composable
 //fun PrepareDBRestorePreview() {
 //    KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
 //    KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
-//    SafeTheme {
+//    SafeThemeSurface {
 //        AskBackupPasswordAndCommence(
 //            processedPasswords = remember { mutableIntStateOf(0) },
 //            processedCategories = remember { mutableIntStateOf(0) },

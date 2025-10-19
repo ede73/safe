@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.backup.MyBackupAgent
@@ -32,7 +33,7 @@ internal fun LoginScreenCompose(
     SafeTheme {
         val context = LocalContext.current
 
-        val weHaveRestoredDatabase = isGoodRestoredContent(context)
+        isGoodRestoredContent(context)
         // there is one big caveat now
         // IF our data was indeed restored from backup
         // making NEW login will basically render our database un-readable(???)
@@ -49,7 +50,7 @@ internal fun LoginScreenCompose(
                 biometricsVerify?.let { BiometricsComponent(it) }
 
                 // just FYI
-                if (MyBackupAgent.haveRestoreMark(context)) {
+                if (!LocalInspectionMode.current && MyBackupAgent.haveRestoreMark(context)) {
                     val time =
                         Preferences.getAutoBackupRestoreFinished()
                             ?.toLocalDateTime()?.toString()
