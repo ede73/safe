@@ -6,8 +6,9 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -37,12 +38,11 @@ internal fun LoginScreenCompose(
         // there is one big caveat now
         // IF our data was indeed restored from backup
         // making NEW login will basically render our database un-readable(???)
-        Surface(
+        Scaffold(
             modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            Column {
-                TopActionBar(loginScreen = true)
+            bottomBar = { BottomActionBar(loginScreen = true) }
+        ) { innerPadding ->
+            Column(modifier = Modifier.padding(innerPadding)) {
                 LoginPasswordPrompts(loginPrecondition) { loginStyle, pwd ->
                     goodPasswordEntered(loginStyle, pwd)
                 }

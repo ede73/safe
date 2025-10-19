@@ -3,8 +3,8 @@ package fi.iki.ede.safe.ui.composable
 import android.text.TextUtils
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -39,18 +39,19 @@ internal fun CategoryListScreenCompose(
     var displayAddCategoryDialog by remember { mutableStateOf(false) }
 
     SafeTheme {
-        Surface(
+        Scaffold(
             modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                TopActionBar(
+            bottomBar = {
+                BottomActionBar(
                     onAddRequested = {
                         displayAddCategoryDialog = true
                     },
                 )
+            }
+        ) { innerPadding ->
+            Column(
+                modifier = Modifier.padding(innerPadding),
+            ) {
                 if (displayAddCategoryDialog) {
                     val encrypter = KeyStoreHelperFactory.getEncrypter()
                     AddOrEditCategory(
@@ -86,14 +87,17 @@ private fun CategoryListScreenComposePreview() {
                 DecryptableCategoryEntry().apply {
                     id = 1
                     encryptedName = encrypter("Bank".toByteArray())
+                    containedSiteEntryCount = 5
                 },
                 DecryptableCategoryEntry().apply {
                     id = 2
                     encryptedName = encrypter("E-Mail".toByteArray())
+                    containedSiteEntryCount = 3
                 },
                 DecryptableCategoryEntry().apply {
                     id = 3
                     encryptedName = encrypter("Social Media".toByteArray())
+                    containedSiteEntryCount = 12
                 }
             )
             MutableStateFlow(fakeCategories)

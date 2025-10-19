@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -116,154 +117,179 @@ fun SiteEntryView(
         }
     }
 
-    Column(
-        modifier = Modifier.verticalScroll(rememberScrollState())
-    ) {
-        TopActionBarForSiteEntryView { custom ->
-            if (custom) {
-                // some sites have annoying limits like you cant use this is that special char
-                // or you HAVE to use this or that special char
-                showCustomPasswordGenerator = true
-            } else {
-                passwordWasUpdated = true
-                viewModel.updatePassword(
-                    PasswordGenerator.genPassword(
-                        passUpper = true,
-                        passLower = true,
-                        passNum = true,
-                        passSymbols = true,
-                        length = passwordLength
-                    ).encrypt(encrypter)
-                )
-                viewModel.updatePasswordChangedDate(ZonedDateTime.now())
-            }
-        }
-
-        Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
-            Spacer(Modifier.weight(1f))
-            TextField(
-                value = passEntry.description,
-                onValueChange = {
-                    viewModel.updateDescription(it)
-                },
-                label = { Text(stringResource(id = R.string.password_entry_description_tip)) },
-                modifier = modifier
-                    .padding(horizontal = 8.dp)
-                    .fillMaxWidth()
-                    .testTag(TestTag.SITE_ENTRY_DESCRIPTION),
-                colors = hideFocusLine,
-            )
-        }
-
-        Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
-            val website = passEntry.website
-            SafeButton(
-                onClick = {
-                    val uri = tryParseUri(website)
-                    // Without scheme, ACTION_VIEW will fail
-                    if (uri.scheme != null) {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, uri))
-                    }
-                },
-                enabled = !TextUtils.isEmpty(website) && website.toUri() != null,
-                contentPadding = PaddingValues(0.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.OpenInBrowser,
-                    contentDescription = stringResource(id = R.string.password_entry_visit)
-                )
-            }
-            Spacer(Modifier.weight(1f))
-            TextField(
-                value = passEntry.website,
-                onValueChange = { viewModel.updateWebSite(it) },
-                label = { Text(stringResource(id = R.string.password_entry_website_tip)) },
-                modifier = modifier
-                    .padding(horizontal = 8.dp)
-                    .fillMaxWidth()
-                    .testTag(TestTag.SITE_ENTRY_WEBSITE),
-                colors = hideFocusLine,
-            )
-        }
-
-        Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
-            SafeButton(
-                onClick = {
-                    ClipboardUtils.addToClipboard(
-                        context,
-                        passEntry.username.decrypt(decrypter),
-                        Preferences.getClipboardClearDelaySecs()
+    Scaffold(
+        bottomBar = {
+            BottomActionBarForSiteEntryView { custom ->
+                if (custom) {
+                    // some sites have annoying limits like you cant use this is that special char
+                    // or you HAVE to use this or that special char
+                    showCustomPasswordGenerator = true
+                } else {
+                    passwordWasUpdated = true
+                    viewModel.updatePassword(
+                        PasswordGenerator.genPassword(
+                            passUpper = true,
+                            passLower = true,
+                            passNum = true,
+                            passSymbols = true,
+                            length = passwordLength
+                        ).encrypt(encrypter)
                     )
-                },
-                contentPadding = PaddingValues(0.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ContentCopy,
-                    contentDescription = stringResource(id = R.string.password_entry_username_label)
+                    viewModel.updatePasswordChangedDate(ZonedDateTime.now())
+                }
+            }
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
+        ) {
+            Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
+                Spacer(Modifier.weight(1f))
+                TextField(
+                    value = passEntry.description,
+                    onValueChange = {
+                        viewModel.updateDescription(it)
+                    },
+                    label = { Text(stringResource(id = R.string.password_entry_description_tip)) },
+                    modifier = modifier
+                        .padding(horizontal = 8.dp)
+                        .fillMaxWidth()
+                        .testTag(TestTag.SITE_ENTRY_DESCRIPTION),
+                    colors = hideFocusLine,
                 )
             }
-            Spacer(Modifier.weight(1f))
-            PasswordTextField(
-                textTip = R.string.password_entry_username_tip,
-                modifier = modifier
-                    .padding(horizontal = 8.dp)
-                    .fillMaxWidth()
-                    .testTag(TestTag.SITE_ENTRY_USERNAME),
-                inputValue = passEntry.username.decrypt(decrypter),
-                onValueChange = {
-                    viewModel.updateUsername(it.encrypt(encrypter))
-                },
-                highlight = false,
-            )
-        }
 
-        Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
-            val text = buildAnnotatedString {
-                append(stringResource(id = R.string.password_entry_highlight_hint))
-                withStyle(style = SpanStyle(background = safeTheme.customColors.numbers108652)) {
-                    append("108652, ")
-                }
-                append(stringResource(id = R.string.password_entry_highlight_hint_l))
-                withStyle(style = SpanStyle(background = safeTheme.customColors.lettersL)) {
-                    append("L(l), ")
-                }
-                append(stringResource(id = R.string.password_entry_highlight_space))
-                withStyle(style = SpanStyle(background = safeTheme.customColors.whiteSpaceL)) {
-                    append(" ")
-                }
-            }
-            Text(
-                text = text,
-                style = safeTheme.customFonts.smallNote,
-            )
-        }
-
-        Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
-            // some sites required OLD password AND new password (even if you are already
-            // logged in and hence clearly knowledgeable of the old password), to avoid copy
-            // paste hell, let's notice the situation and allow copying original and new separately!
-            // TODO: not good enough
-            Column {
-                if (viewModel.originalPassword != null && passEntry.password.decrypt(decrypter) != viewModel.originalPassword?.decrypt(
-                        decrypter
-                    )
+            Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
+                val website = passEntry.website
+                SafeButton(
+                    onClick = {
+                        val uri = tryParseUri(website)
+                        // Without scheme, ACTION_VIEW will fail
+                        if (uri.scheme != null) {
+                            context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+                        }
+                    },
+                    enabled = !TextUtils.isEmpty(website) && website.toUri() != null,
+                    contentPadding = PaddingValues(0.dp)
                 ) {
+                    Icon(
+                        imageVector = Icons.Default.OpenInBrowser,
+                        contentDescription = stringResource(id = R.string.password_entry_visit)
+                    )
+                }
+                Spacer(Modifier.weight(1f))
+                TextField(
+                    value = passEntry.website,
+                    onValueChange = { viewModel.updateWebSite(it) },
+                    label = { Text(stringResource(id = R.string.password_entry_website_tip)) },
+                    modifier = modifier
+                        .padding(horizontal = 8.dp)
+                        .fillMaxWidth()
+                        .testTag(TestTag.SITE_ENTRY_WEBSITE),
+                    colors = hideFocusLine,
+                )
+            }
+
+            Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
+                SafeButton(
+                    onClick = {
+                        ClipboardUtils.addToClipboard(
+                            context,
+                            passEntry.username.decrypt(decrypter),
+                            Preferences.getClipboardClearDelaySecs()
+                        )
+                    },
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ContentCopy,
+                        contentDescription = stringResource(id = R.string.password_entry_username_label)
+                    )
+                }
+                Spacer(Modifier.weight(1f))
+                PasswordTextField(
+                    textTip = R.string.password_entry_username_tip,
+                    modifier = modifier
+                        .padding(horizontal = 8.dp)
+                        .fillMaxWidth()
+                        .testTag(TestTag.SITE_ENTRY_USERNAME),
+                    inputValue = passEntry.username.decrypt(decrypter),
+                    onValueChange = {
+                        viewModel.updateUsername(it.encrypt(encrypter))
+                    },
+                    highlight = false,
+                )
+            }
+
+            Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
+                val text = buildAnnotatedString {
+                    append(stringResource(id = R.string.password_entry_highlight_hint))
+                    withStyle(style = SpanStyle(background = safeTheme.customColors.numbers108652)) {
+                        append("108652, ")
+                    }
+                    append(stringResource(id = R.string.password_entry_highlight_hint_l))
+                    withStyle(style = SpanStyle(background = safeTheme.customColors.lettersL)) {
+                        append("L(l), ")
+                    }
+                    append(stringResource(id = R.string.password_entry_highlight_space))
+                    withStyle(style = SpanStyle(background = safeTheme.customColors.whiteSpaceL)) {
+                        append(" ")
+                    }
+                }
+                Text(
+                    text = text,
+                    style = safeTheme.customFonts.smallNote,
+                )
+            }
+
+            Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
+                // some sites required OLD password AND new password (even if you are already
+                // logged in and hence clearly knowledgeable of the old password), to avoid copy
+                // paste hell, let'''s notice the situation and allow copying original and new separately!
+                // TODO: not good enough
+                Column {
+                    if (viewModel.originalPassword != null && passEntry.password.decrypt(decrypter) != viewModel.originalPassword?.decrypt(
+                            decrypter
+                        )
+                    ) {
+                        SafeButton(
+                            onClick = {
+                                ClipboardUtils.addToClipboard(
+                                    context,
+                                    viewModel.originalPassword?.decrypt(decrypter),
+                                    Preferences.getClipboardClearDelaySecs()
+                                )
+                            }, contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.History,
+                                modifier = Modifier
+                                    .padding(0.dp)
+                                    .size(20.dp),
+                                contentDescription = stringResource(id = R.string.password_entry_username_label)
+                            )
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                modifier = Modifier
+                                    .padding(0.dp)
+                                    .size(20.dp),
+                                contentDescription = stringResource(id = R.string.password_entry_username_label)
+                            )
+                        }
+                    }
                     SafeButton(
+                        modifier = Modifier.padding(0.dp),
                         onClick = {
                             ClipboardUtils.addToClipboard(
                                 context,
-                                viewModel.originalPassword?.decrypt(decrypter),
+                                passEntry.password.decrypt(decrypter),
                                 Preferences.getClipboardClearDelaySecs()
                             )
-                        }, contentPadding = PaddingValues(0.dp)
+                        },
+                        contentPadding = PaddingValues(0.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.History,
-                            modifier = Modifier
-                                .padding(0.dp)
-                                .size(20.dp),
-                            contentDescription = stringResource(id = R.string.password_entry_username_label)
-                        )
                         Icon(
                             imageVector = Icons.Default.ContentCopy,
                             modifier = Modifier
@@ -273,137 +299,118 @@ fun SiteEntryView(
                         )
                     }
                 }
-                SafeButton(
-                    modifier = Modifier.padding(0.dp),
-                    onClick = {
-                        ClipboardUtils.addToClipboard(
-                            context,
-                            passEntry.password.decrypt(decrypter),
-                            Preferences.getClipboardClearDelaySecs()
-                        )
+                Spacer(Modifier.weight(1f))
+                PasswordTextField(
+                    textTip = R.string.password_entry_password_tip,
+                    modifier = modifier
+                        .padding(horizontal = 8.dp)
+                        .fillMaxWidth()
+                        .testTag(TestTag.SITE_ENTRY_PASSWORD),
+                    inputValue = passEntry.password.decrypt(decrypter),
+                    onValueChange = {
+                        viewModel.updatePassword(it.encrypt(encrypter))
                     },
-                    contentPadding = PaddingValues(0.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ContentCopy,
-                        modifier = Modifier
-                            .padding(0.dp)
-                            .size(20.dp),
-                        contentDescription = stringResource(id = R.string.password_entry_username_label)
-                    )
+                    textStyle = safeTheme.customFonts.regularPassword,
+                    enableZoom = true
+                )
+                passwordWasUpdated = false
+            }
+
+            Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
+                if (!skipForPreviewToWork) {
+                    breachCheckButton(context, passEntry.password)()
                 }
             }
-            Spacer(Modifier.weight(1f))
-            PasswordTextField(
-                textTip = R.string.password_entry_password_tip,
-                modifier = modifier
-                    .padding(horizontal = 8.dp)
-                    .fillMaxWidth()
-                    .testTag(TestTag.SITE_ENTRY_PASSWORD),
-                inputValue = passEntry.password.decrypt(decrypter),
-                onValueChange = {
-                    viewModel.updatePassword(it.encrypt(encrypter))
-                },
-                textStyle = safeTheme.customFonts.regularPassword,
-                enableZoom = true
-            )
-            passwordWasUpdated = false
-        }
 
-        Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
-            if (!skipForPreviewToWork) {
-                breachCheckButton(context, passEntry.password)()
-            }
-        }
-
-        Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
-            Column {
-                Text(text = stringResource(id = R.string.password_entry_changed_date))
-                DatePicker(
-                    zonedDateTime = passEntry.passwordChangedDate,
-                    onValueChange = { date: ZonedDateTime? ->
-                        viewModel.updatePasswordChangedDate(date)
-                    })
-                passEntry.id?.let { pid ->
-                    // TODO: inject from GPMUI rather (yes, gonna be tricky)
-                    GPMDataModel.getLinkedGPMs(pid).ifNotEmpty { gpms ->
-                        Box(modifier = Modifier.clickable { showLinkedInfo = gpms })
-                        { Text(text = "Has ${gpms.size} linked GPMs") }
-                    }
-                }
-            }
-        }
-
-        SiteEntryExtensionList(viewModel)
-
-        PasswordTextField(
-            textTip = R.string.password_entry_note_tip,
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag(TestTag.SITE_ENTRY_NOTE)
-                .bringIntoViewRequester(bringIntoViewRequester)
-                .onFocusEvent { focusState ->
-                    if (focusState.isFocused) {
-                        coroutineScope.launch {
-                            bringIntoViewRequester.bringIntoView()
+            Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
+                Column {
+                    Text(text = stringResource(id = R.string.password_entry_changed_date))
+                    DatePicker(
+                        zonedDateTime = passEntry.passwordChangedDate,
+                        onValueChange = { date: ZonedDateTime? ->
+                            viewModel.updatePasswordChangedDate(date)
+                        })
+                    passEntry.id?.let { pid ->
+                        // TODO: inject from GPMUI rather (yes, gonna be tricky)
+                        GPMDataModel.getLinkedGPMs(pid).ifNotEmpty { gpms ->
+                            Box(modifier = Modifier.clickable { showLinkedInfo = gpms })
+                            { Text(text = "Has ${gpms.size} linked GPMs") }
                         }
                     }
-                },
-            inputValue = passEntry.note.decrypt(decrypter),
-            onValueChange = { viewModel.updateNote(it.encrypt(encrypter)) },
-            singleLine = false,
-            maxLines = 22,
-            highlight = false,
-        )
-
-        if (context is AvertInactivityDuringLongTask) {
-            SafePhoto(
-                { isPausedOrResume, why ->
-                    if (isPausedOrResume) {
-                        (context as AvertInactivityDuringLongTask).pauseInactivity(context, why)
-                    } else {
-                        (context as AvertInactivityDuringLongTask).resumeInactivity(context, why)
-
-                    }
-                },
-                currentPhoto = passEntry.plainPhoto,
-                onBitmapCaptured = {
-                    val samePhoto =
-                        it?.sameAs(passEntry.plainPhoto) ?: (passEntry.plainPhoto == null)
-                    if (!samePhoto) {
-                        viewModel.updatePhoto(it)
-                    }
-                },
-                photoPermissionRequiredContent = { oldPhoto, onBitmapCaptured, askPermission ->
-                    TakePhotoOrAskPermission(
-                        askPermission,
-                        oldPhoto,
-                        onBitmapCaptured
-                    )
-                },
-                takePhotoContent = { oldPhoto, onBitmapCaptured, takePhoto ->
-                    TakePhotoOrAskPermission(
-                        takePhoto,
-                        oldPhoto,
-                        onBitmapCaptured
-                    )
-                },
-                composeTakePhoto = { takePhoto ->
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        SafeTextButton(
-                            modifier = Modifier
-                                .align(Alignment.TopCenter)
-                                .padding(16.dp),
-                            onClick = {
-                                takePhoto()
-                            }) { Text(text = stringResource(id = R.string.password_entry_capture_photo)) }
-                    }
                 }
-            )
-        }
+            }
 
-        if (showLinkedInfo != null) {
-            ShowLinkedGpmsDialog(showLinkedInfo!!, onDismiss = { showLinkedInfo = null })
+            SiteEntryExtensionList(viewModel)
+
+            PasswordTextField(
+                textTip = R.string.password_entry_note_tip,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTag.SITE_ENTRY_NOTE)
+                    .bringIntoViewRequester(bringIntoViewRequester)
+                    .onFocusEvent { focusState ->
+                        if (focusState.isFocused) {
+                            coroutineScope.launch {
+                                bringIntoViewRequester.bringIntoView()
+                            }
+                        }
+                    },
+                inputValue = passEntry.note.decrypt(decrypter),
+                onValueChange = { viewModel.updateNote(it.encrypt(encrypter)) },
+                singleLine = false,
+                maxLines = 22,
+                highlight = false,
+            )
+
+            if (context is AvertInactivityDuringLongTask) {
+                SafePhoto(
+                    { isPausedOrResume, why ->
+                        if (isPausedOrResume) {
+                            (context as AvertInactivityDuringLongTask).pauseInactivity(context, why)
+                        } else {
+                            (context as AvertInactivityDuringLongTask).resumeInactivity(context, why)
+
+                        }
+                    },
+                    currentPhoto = passEntry.plainPhoto,
+                    onBitmapCaptured = {
+                        val samePhoto =
+                            it?.sameAs(passEntry.plainPhoto) ?: (passEntry.plainPhoto == null)
+                        if (!samePhoto) {
+                            viewModel.updatePhoto(it)
+                        }
+                    },
+                    photoPermissionRequiredContent = { oldPhoto, onBitmapCaptured, askPermission ->
+                        TakePhotoOrAskPermission(
+                            askPermission,
+                            oldPhoto,
+                            onBitmapCaptured
+                        )
+                    },
+                    takePhotoContent = { oldPhoto, onBitmapCaptured, takePhoto ->
+                        TakePhotoOrAskPermission(
+                            takePhoto,
+                            oldPhoto,
+                            onBitmapCaptured
+                        )
+                    },
+                    composeTakePhoto = { takePhoto ->
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            SafeTextButton(
+                                modifier = Modifier
+                                    .align(Alignment.TopCenter)
+                                    .padding(16.dp),
+                                onClick = {
+                                    takePhoto()
+                                }) { Text(text = stringResource(id = R.string.password_entry_capture_photo)) }
+                        }
+                    }
+                )
+            }
+
+            if (showLinkedInfo != null) {
+                ShowLinkedGpmsDialog(showLinkedInfo!!, onDismiss = { showLinkedInfo = null })
+            }
         }
     }
 }
