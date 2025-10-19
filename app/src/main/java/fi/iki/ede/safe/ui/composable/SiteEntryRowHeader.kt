@@ -3,7 +3,6 @@ package fi.iki.ede.safe.ui.composable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -31,10 +30,8 @@ fun SiteEntryRowHeader(headerString: String) {
 
     SafeListItem(
         fillWidthFraction = 0.2f,
-        yOffset = 32.dp,
-        color = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.darken(0.8f),
-        )
+        yOffset = 72.dp,
+        color = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
         Text(
             text = headerStart,

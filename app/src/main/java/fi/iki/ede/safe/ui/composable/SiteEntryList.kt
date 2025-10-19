@@ -1,5 +1,6 @@
 package fi.iki.ede.safe.ui.composable
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -11,7 +12,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
@@ -33,7 +36,11 @@ fun SiteEntryList(siteEntries: List<DecryptableSiteEntry>) {
             val beginning = siteEntry.cachedPlainDescription.substring(0, 1).uppercase()
             if (previousValue != beginning) {
                 previousValue = beginning
-                siteEntryItems.add { SiteEntryRowHeader(headerString = beginning) }
+                siteEntryItems.add {
+                    Box(modifier = Modifier.zIndex(1f)) {
+                        SiteEntryRowHeader(headerString = beginning)
+                    }
+                }
             }
             siteEntryItems.add { SiteEntryRow(siteEntry, categoriesState) }
         }
@@ -57,13 +64,11 @@ fun SiteEntryListPreview() {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()
-        val site1 = DecryptableSiteEntry(1).apply {
+        val lst = mutableListOf(DecryptableSiteEntry(1).apply {
             description = encrypter("Description1".toByteArray())
-        }
-        val site2 = DecryptableSiteEntry(1).apply {
+        }, DecryptableSiteEntry(1).apply {
             description = encrypter("Description2".toByteArray())
-        }
-        val lst = mutableListOf(site1, site2)
+        })
         SiteEntryList(lst)
     }
 }
