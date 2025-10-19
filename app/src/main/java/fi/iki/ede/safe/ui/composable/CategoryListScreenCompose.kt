@@ -13,11 +13,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.safe.R
 import fi.iki.ede.theme.SafeTheme
+import fi.iki.ede.theme.SafeThemeSurface
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -69,5 +71,33 @@ internal fun CategoryListScreenCompose(
                 CategoryList(categoriesState)
             }
         }
+    }
+}
+
+@DualModePreview
+@Composable
+private fun CategoryListScreenComposePreview() {
+    SafeThemeSurface {
+        val categories = remember {
+            KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
+            KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
+            val encrypter = KeyStoreHelperFactory.getEncrypter()
+            val fakeCategories = listOf(
+                DecryptableCategoryEntry().apply {
+                    id = 1
+                    encryptedName = encrypter("Bank".toByteArray())
+                },
+                DecryptableCategoryEntry().apply {
+                    id = 2
+                    encryptedName = encrypter("E-Mail".toByteArray())
+                },
+                DecryptableCategoryEntry().apply {
+                    id = 3
+                    encryptedName = encrypter("Social Media".toByteArray())
+                }
+            )
+            MutableStateFlow(fakeCategories)
+        }
+        CategoryListScreenCompose(flow = categories)
     }
 }

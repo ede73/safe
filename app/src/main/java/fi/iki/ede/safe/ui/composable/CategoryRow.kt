@@ -2,12 +2,16 @@ package fi.iki.ede.safe.ui.composable
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -30,7 +34,6 @@ import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.dialogs.DeleteCategoryDialog
 import fi.iki.ede.safe.ui.testTag
-import fi.iki.ede.theme.LocalSafeTheme
 import fi.iki.ede.theme.SafeListItem
 import fi.iki.ede.theme.SafeThemeSurface
 import kotlinx.coroutines.launch
@@ -41,7 +44,6 @@ import kotlinx.coroutines.runBlocking
 fun CategoryRow(category: DecryptableCategoryEntry) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val safeTheme = LocalSafeTheme.current
     var displayDeleteCategory by remember { mutableStateOf(false) }
     var displayEditDialog by remember { mutableStateOf(false) }
     var displayMenu by remember { mutableStateOf(false) }
@@ -49,38 +51,39 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
     SafeListItem {
         Row(
             modifier = Modifier
+                .fillMaxWidth()
                 .combinedClickable(
                     onClick = {
                         IntentManager.startSiteEntryListScreen(context, category.id!!)
                     },
                     onLongClick = {
-                        // Creating a dropdown menu
                         displayMenu = true
                     }
                 )
-                .testTag(TestTag.CATEGORY_ROW),
+                .testTag(TestTag.CATEGORY_ROW)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .weight(2f)
+            Column(
+                modifier = Modifier.weight(1f)
             ) {
                 Text(
                     text = category.plainName,
+                    style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                    style = safeTheme.customFonts.listEntries
+                    overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = "(${category.containedSiteEntryCount})",
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(horizontal = 10.dp),
-                    style = safeTheme.customFonts.smallNote,
+                    text = "${category.containedSiteEntryCount} passwords",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
         DropdownMenu(
             expanded = displayMenu,
@@ -153,9 +156,8 @@ fun CategoryRowPreview() {
         KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
         val encrypter = KeyStoreHelperFactory.getEncrypter()
         val cat = DecryptableCategoryEntry().apply {
-            encryptedName =
-                encrypter("Category description that is really long and lengthy".toByteArray())
-            containedSiteEntryCount = 666
+            encryptedName = encrypter("Social Media".toByteArray())
+            containedSiteEntryCount = 12
         }
         CategoryRow(category = cat)
     }
