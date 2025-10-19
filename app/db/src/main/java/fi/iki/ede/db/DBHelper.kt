@@ -276,7 +276,7 @@ class DBHelper(
                     it.getString(it.getColumnIndexOrThrow(SiteEntry.Columns.PHOTO))
                         ?.takeIf { name -> name.isNotEmpty() }?.let { name -> loadPhoto(name) }
                 } catch (_: Exception) {
-                    Log.w(TAG, "Failed load photo")
+                    Log.d(TAG, "Failed load photo")
                     null
                 }
             } else null

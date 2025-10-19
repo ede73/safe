@@ -308,7 +308,7 @@ object DataModel {
     private fun syncLoadAllPhotos() {
         val dbHelper = DBHelperFactory.getDBHelper()
         _siteEntriesStateFlow.value.forEach { siteEntry ->
-            Log.w(TAG, "Load photo for ${siteEntry.id}")
+            Log.d(TAG, "Load photo for ${siteEntry.id}")
             runCatching {
                 val photo = dbHelper.fetchPhotoOnly(siteEntry.id as DBID)
                 if (photo != null) {
