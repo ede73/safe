@@ -27,7 +27,7 @@ import java.util.Locale
 @Composable
 fun DatePicker(
     zonedDateTime: ZonedDateTime?,
-    datePickerFont: TextStyle = MaterialTheme.typography.headlineMedium,
+    datePickerFont: TextStyle = MaterialTheme.typography.titleLarge,
     onValueChange: (ZonedDateTime?) -> Unit,
 ) {
     // Uh, there's a lot of chained events and other selective logic going on here
