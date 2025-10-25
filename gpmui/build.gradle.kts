@@ -33,6 +33,7 @@ dependencies {
     {
         exclude(group = "androidx.test.espresso", module = "espresso-core")
     }
+    implementation(libs.androidx.documentfile)
     implementation(libs.androidx.ui.tooling)
     implementation(libs.androidx.ui.tooling.preview.android)
     implementation(libs.material)

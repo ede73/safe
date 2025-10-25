@@ -407,6 +407,6 @@ kotlin {
 }
 
 configurations.all {
-    resolutionStrategy.force("androidx.test:core:1.6.1")
-    resolutionStrategy.force("org.jetbrains.kotlin:kotlin-stdlib:2.1.10")
+    //resolutionStrategy.force("androidx.test:core:1.6.1")
+    //resolutionStrategy.force("org.jetbrains.kotlin:kotlin-stdlib:2.1.10")
 }
