@@ -18,6 +18,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -38,10 +39,9 @@ import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen.Companion.searchProgr
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.theme.SafeThemeSurface
 import fi.iki.ede.theme.TextualCheckbox
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -59,6 +59,7 @@ fun SearchSiteEntryControls(
     matchingSiteEntries: MutableStateFlow<List<DecryptableSiteEntry>>,
     searchTextField: MutableState<TextFieldValue>,
 ) {
+    val coroutineScope = rememberCoroutineScope()
     val focusRequester = remember { FocusRequester() }
     val searchExtensions = remember { mutableStateOf(false) }
     val searchNotes = remember { mutableStateOf(false) }
@@ -70,6 +71,7 @@ fun SearchSiteEntryControls(
     fun findNow(checked: Boolean) {
         matchingSiteEntries.value = emptyList()
         beginSearch(
+            coroutineScope,
             DataModel.siteEntriesStateFlow.value, // ugly but too many recomposes
             matchingSiteEntries,
             searchTextField.value,
@@ -159,8 +161,8 @@ fun SearchSiteEntryControls(
 private var delayedSearchJob: Job? = null
 private const val TAG = "SearchPasswordAndControls"
 
-@OptIn(DelicateCoroutinesApi::class)
 fun beginSearch(
+    coroutineScope: CoroutineScope,
     allSiteEntries: List<DecryptableSiteEntry>,
     matchingSiteEntries: MutableStateFlow<List<DecryptableSiteEntry>>,
     searchTextField: TextFieldValue,
@@ -201,7 +203,7 @@ fun beginSearch(
             searchProgressPerThread.clear()
             searchProgressPerThread.addAll(List(cpus) { 0f })
 
-            delayedSearchJob = GlobalScope.launch {
+            delayedSearchJob = coroutineScope.launch {
                 val ourJob = coroutineContext[Job]!!
                 // Also due to the fact searching encrypted data is intensive operation, add a delay
                 // so we don't ACTUALLY start the search until user has stopped typing
@@ -232,7 +234,7 @@ fun beginSearch(
                                     asyncFilterChunkOfSiteEntries(
                                         chunkIndex,
                                         ::localIsActive,
-                                        searchTextField.text,
+                                        searchTextField.text.trim(),
                                         siteEntryChunk,
                                         searchWebsites,
                                         searchUsernames,
