@@ -8,9 +8,8 @@ import fi.iki.ede.db.DBID
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.preferences.Preferences
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -21,6 +20,8 @@ import kotlinx.coroutines.launch
 import java.time.ZonedDateTime
 
 object DataModel {
+    private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
     init {
         if (BuildConfig.DEBUG) {
             setupDebugStateflowObserver()
@@ -30,8 +31,7 @@ object DataModel {
     private fun setupDebugStateflowObserver() {
         val tag = "DataModel(observer)"
         // this is just for debug build..
-        @OptIn(DelicateCoroutinesApi::class)
-        GlobalScope.launch {
+        coroutineScope.launch {
             _siteEntriesStateFlow.collect { list ->
                 Logger.d(
                     tag,
@@ -41,8 +41,7 @@ object DataModel {
                 )
             }
         }
-        @OptIn(DelicateCoroutinesApi::class)
-        GlobalScope.launch {
+        coroutineScope.launch {
             _categoriesStateFlow.collect { list ->
                 Logger.d(
                     tag,

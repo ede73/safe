@@ -38,7 +38,7 @@ import fi.iki.ede.theme.SafeListItem
 import fi.iki.ede.theme.SafeThemeSurface
 import kotlinx.coroutines.launch
 
-// TODO: THIS! Should have MUCH more common with PasswordRow!
+// TODO: THIS! Should have MUCH more common with SiteEntryRow!
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MatchingSiteEntry(

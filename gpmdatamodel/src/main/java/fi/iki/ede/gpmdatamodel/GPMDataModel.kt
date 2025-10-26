@@ -12,7 +12,6 @@ import fi.iki.ede.preferences.Preferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -26,6 +25,7 @@ import org.jetbrains.annotations.TestOnly
 
 
 object GPMDataModel {
+    private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private const val TAG = "DataModelForGPM"
 
     init {
@@ -36,7 +36,7 @@ object GPMDataModel {
 
     @OptIn(DelicateCoroutinesApi::class)
     private fun setupDebugStateflowObserver() {
-        GlobalScope.launch {
+        coroutineScope.launch {
             _allSavedGPMsFlow.collect { list ->
                 Logger.d(
                     TAG,
@@ -46,7 +46,7 @@ object GPMDataModel {
                 )
             }
         }
-        GlobalScope.launch {
+        coroutineScope.launch {
             _siteEntryToSavedGPMFlow.collect { map ->
                 Logger.d(
                     TAG,
