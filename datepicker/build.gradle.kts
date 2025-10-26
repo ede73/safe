@@ -18,7 +18,8 @@ dependencies {
     implementation(libs.androidx.material3.android)
     implementation(libs.androidx.ui.tooling.preview.android)
     implementation(libs.material)
-
+    implementation(libs.kotlinx.datetime)
+    implementation(project(":dateutils"))
     androidTestImplementation(libs.androidx.test.junit)
     debugImplementation(libs.androidx.ui.tooling)
     testImplementation(libs.junit)

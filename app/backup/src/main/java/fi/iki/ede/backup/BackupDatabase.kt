@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.fold
 import kotlinx.coroutines.flow.transform
 import org.xmlpull.v1.XmlPullParserFactory
 import java.io.StringWriter
-import java.time.ZonedDateTime
 
 /**
  * TODO: Add HMAC
@@ -47,9 +46,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
             )
             .plainTextAttribute(
                 Attributes.ROOT_PASSWORD_SAFE_CREATION_TIME,
-                DateUtils.toUnixSeconds(
-                    ZonedDateTime.now()
-                ).toString()
+                DateUtils.toUnixSeconds().toString()
             )
 
         for (category in categoriesList) {

@@ -12,7 +12,6 @@ import fi.iki.ede.db.DBID
 import fi.iki.ede.gpm.model.SavedGPM
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlSerializer
-import java.time.ZoneOffset
 
 internal fun XmlSerializer.encryptedAttribute(
     name: Attributes,
@@ -96,7 +95,7 @@ internal fun XmlSerializer.writeSiteEntry(siteEntry: DecryptableSiteEntry) {
         siteEntry.passwordChangedDate?.let {
             Pair(
                 Attributes.SITE_ENTRY_PASSWORD_CHANGED,
-                it.withZoneSameInstant(ZoneOffset.UTC).toEpochSecond().toString()
+                it.epochSeconds.toString()
             )
         }
     )

@@ -13,8 +13,8 @@ import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.safe.ui.models.EditableSiteEntry
 import fi.iki.ede.theme.SafeThemeSurface
 import kotlinx.coroutines.runBlocking
+import kotlinx.datetime.Clock
 import java.io.ByteArrayOutputStream
-import java.time.ZonedDateTime
 
 @Composable
 fun PersistPasswordEntryChanges(
@@ -37,7 +37,7 @@ fun PersistPasswordEntryChanges(
         else convertToJpegAndEncrypt(editedSiteEntry.plainPhoto, encrypter)
 
         if (passwordChanged) {
-            passwordChangedDate = ZonedDateTime.now()
+            passwordChangedDate = Clock.System.now()
         }
 
         siteEntry.extensions = siteEntry.encryptExtension(editedSiteEntry.plainExtension)

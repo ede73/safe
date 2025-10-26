@@ -9,8 +9,9 @@ plugins {
     alias(libs.plugins.android.library) apply false
     alias(libs.plugins.compose.compiler) apply false // 2.00
     alias(libs.plugins.org.jetbrains.kotlin.android) apply false
+    alias(libs.plugins.kotlin.multiplatform) apply false
     id("com.google.firebase.crashlytics") version "3.0.6" apply false
-    id("com.google.gms.google-services") version "4.4.2" apply false // Firebase crashlytics
+    id("com.google.gms.google-services") version "4.4.4" apply false // Firebase crashlytics
     kotlin("plugin.power-assert") version "2.0.0"
     kotlin("plugin.serialization") version "2.0.0"
     alias(libs.plugins.jetbrains.kotlin.jvm) apply false
@@ -84,4 +85,10 @@ subprojects {
     }
 }
 
-
+configurations.all {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "org.junit.jupiter" || requested.group == "org.junit.platform") {
+            useVersion("5.11.3") // match your BOM version exactly
+        }
+    }
+}

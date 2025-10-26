@@ -12,6 +12,7 @@ import androidx.compose.ui.res.stringResource
 import fi.iki.ede.backup.RestoreDatabase
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.dateutils.DateUtils
+import fi.iki.ede.dateutils.toLocalDateTime
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.gpmdatamodel.db.GPMDB
 import fi.iki.ede.safe.R
@@ -23,7 +24,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import java.time.ZonedDateTime
+import kotlinx.datetime.Instant
 
 @Composable
 fun RestoreDatabaseComponent(
@@ -44,8 +45,8 @@ fun RestoreDatabaseComponent(
 
     suspend fun verifyUserWantsToRestoreOldBackup(
         coroutineScope: CoroutineScope,
-        backupCreationTime: ZonedDateTime,
-        lastBackupDone: ZonedDateTime
+        backupCreationTime: Instant,
+        lastBackupDone: Instant
     ): Boolean {
         val result = CompletableDeferred<Boolean>()
         val days =

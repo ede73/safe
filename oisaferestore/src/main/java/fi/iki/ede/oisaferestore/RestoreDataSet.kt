@@ -7,8 +7,8 @@ import fi.iki.ede.crypto.SaltedEncryptedPassword
 import fi.iki.ede.crypto.SaltedPassword
 import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.logger.Logger
+import kotlinx.datetime.Instant
 import java.text.ParseException
-import java.time.ZonedDateTime
 
 data class OISafeCategoryEntry(val id: Long, val encryptedName: IVCipherText)
 class OISafeSiteEntry(val categoryId: Long) {
@@ -17,7 +17,7 @@ class OISafeSiteEntry(val categoryId: Long) {
     var username: IVCipherText = IVCipherText.getEmpty()
     var password: IVCipherText = IVCipherText.getEmpty()
     var note: IVCipherText = IVCipherText.getEmpty()
-    var passwordChangedDate: ZonedDateTime? = null
+    var passwordChangedDate: Instant? = null
 }
 
 @Deprecated("Just for backwards compatibility")

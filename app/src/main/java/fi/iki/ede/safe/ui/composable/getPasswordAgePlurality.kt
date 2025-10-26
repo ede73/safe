@@ -3,10 +3,10 @@ package fi.iki.ede.safe.ui.composable
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.pluralStringResource
 import fi.iki.ede.safe.R
-import java.time.Period
+import kotlinx.datetime.DatePeriod
 
 @Composable
-fun getPasswordAgePlurality(duration: Period): String {
+fun getPasswordAgePlurality(duration: DatePeriod): String {
     val z = buildList {
         if (duration.years > 0) {
             add(

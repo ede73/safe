@@ -23,11 +23,11 @@ import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseRecordException
 import fi.iki.ede.preferences.Preferences
 import kotlinx.coroutines.CancellationException
+import kotlinx.datetime.Instant
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 import java.io.ByteArrayInputStream
 import java.io.StringReader
-import java.time.ZonedDateTime
 import java.time.format.DateTimeParseException
 
 class RestoreDatabase : ExportConfig(ExportVersion.V1) {
@@ -49,7 +49,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         addSavedGPM: (SavedGPM) -> Unit,
         passwordLogin: (context: Context, password: Password) -> Boolean,
         reportProgress: (categories: Int?, passwords: Int?, message: String?) -> Unit,
-        verifyUserWantForOldBackup: (backupCreated: ZonedDateTime, lastBackupDone: ZonedDateTime) -> Boolean,
+        verifyUserWantForOldBackup: (backupCreated: Instant, lastBackupDone: Instant) -> Boolean,
     ): Int {
         reportProgress(null, null, "Begin restoration")
         val myParser = XmlPullParserFactory.newInstance().newPullParser()
@@ -125,7 +125,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         myParser: XmlPullParser,
         linkSaveGPMAndSiteEntry: (DBID, DBID) -> Unit,
         addSavedGPM: (SavedGPM) -> Unit,
-        verifyOldBackupRestoration: (backupCreated: ZonedDateTime, lastBackupDone: ZonedDateTime) -> Boolean,
+        verifyOldBackupRestoration: (backupCreated: Instant, lastBackupDone: Instant) -> Boolean,
         reportProgress: (categories: Int?, passwords: Int?, message: String?) -> Unit,
     ): Int {
         val path = mutableListOf<Elements?>()
@@ -164,7 +164,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             val creationTime = myParser.getTrimmedAttributeValue(
                                 Attributes.ROOT_PASSWORD_SAFE_CREATION_TIME
                             ).toLongOrNull()?.let {
-                                DateUtils.unixEpochSecondsToLocalZonedDateTime(
+                                DateUtils.unixEpochSecondsToInstant(
                                     it
                                 )
                             }
@@ -295,7 +295,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                 try {
                                     siteEntry.passwordChangedDate =
                                         changed.toLongOrNull()?.let {
-                                            DateUtils.unixEpochSecondsToLocalZonedDateTime(
+                                            DateUtils.unixEpochSecondsToInstant(
                                                 it
                                             )
                                         } ?: DateUtils.newParse(changed)

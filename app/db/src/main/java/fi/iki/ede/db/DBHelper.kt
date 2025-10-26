@@ -17,10 +17,10 @@ import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseRecordException
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.datetime.Instant
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
-import java.time.ZonedDateTime
 import java.util.UUID
 import kotlin.reflect.KFunction0
 
@@ -320,7 +320,7 @@ class DBHelper(
                                     deleted = it.getDBID(SiteEntry.Columns.DELETED)
                                     extensions = it.getIVCipher(SiteEntry.Columns.EXTENSIONS)
                                     try {
-                                        it.getZonedDateTimeOfPasswordChange()
+                                        it.getUTCDateTimeOfPasswordChange()
                                             ?.let { time -> passwordChangedDate = time }
                                     } catch (ex: Exception) {
                                         firebaseRecordException("Date parsing issue", ex)
@@ -683,10 +683,10 @@ class DBHelper(
     }
 }
 
-fun Cursor.getZonedDateTimeOfPasswordChange(): ZonedDateTime? =
+fun Cursor.getUTCDateTimeOfPasswordChange(): Instant? =
     getString(getColumnIndexOrThrow(SiteEntry.Columns.PASSWORD_CHANGE_DATE))?.let { date ->
         date.toLongOrNull()?.let {
-            DateUtils.unixEpochSecondsToLocalZonedDateTime(it)
+            DateUtils.unixEpochSecondsToInstant(it)
         } ?: run {
             //ok, we have something that isn't numerical
             DateUtils.newParse(date)

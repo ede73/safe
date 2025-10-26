@@ -72,7 +72,8 @@ import fi.iki.ede.theme.SafeButton
 import fi.iki.ede.theme.SafeTextButton
 import fi.iki.ede.theme.SafeThemeSurface
 import kotlinx.coroutines.launch
-import java.time.ZonedDateTime
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 
 inline fun <T, C : Collection<T>> C.ifNotEmpty(block: (C) -> Unit): C {
     if (this.isNotEmpty()) block(this)
@@ -111,7 +112,7 @@ fun SiteEntryView(
             if (it != null) {
                 viewModel.updatePassword(it.encrypt(encrypter))
                 passwordWasUpdated = true
-                viewModel.updatePasswordChangedDate(ZonedDateTime.now())
+                viewModel.updatePasswordChangedDate(Clock.System.now())
             }
             showCustomPasswordGenerator = false
         }
@@ -135,7 +136,7 @@ fun SiteEntryView(
                             length = passwordLength
                         ).encrypt(encrypter)
                     )
-                    viewModel.updatePasswordChangedDate(ZonedDateTime.now())
+                    viewModel.updatePasswordChangedDate(Clock.System.now())
                 }
             }
         }
@@ -326,8 +327,8 @@ fun SiteEntryView(
                 Column {
                     Text(text = stringResource(id = R.string.password_entry_changed_date))
                     DatePicker(
-                        zonedDateTime = passEntry.passwordChangedDate,
-                        onValueChange = { date: ZonedDateTime? ->
+                        utcInstant = passEntry.passwordChangedDate,
+                        onValueChange = { date: Instant? ->
                             viewModel.updatePasswordChangedDate(date)
                         })
                     passEntry.id?.let { pid ->
@@ -368,7 +369,10 @@ fun SiteEntryView(
                         if (isPausedOrResume) {
                             (context as AvertInactivityDuringLongTask).pauseInactivity(context, why)
                         } else {
-                            (context as AvertInactivityDuringLongTask).resumeInactivity(context, why)
+                            (context as AvertInactivityDuringLongTask).resumeInactivity(
+                                context,
+                                why
+                            )
 
                         }
                     },

@@ -42,8 +42,9 @@ import fi.iki.ede.theme.LocalSafeTheme
 import fi.iki.ede.theme.SafeListItem
 import fi.iki.ede.theme.SafeThemeSurface
 import kotlinx.coroutines.launch
-import java.time.ZoneId
-import java.time.ZonedDateTime
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -175,8 +176,7 @@ fun SiteEntryRowPreview() {
         val encrypter = KeyStoreHelperFactory.getEncrypter()
         val site1 = DecryptableSiteEntry(1).apply {
             description = encrypter("This is lengthy description worth of a king".toByteArray())
-            passwordChangedDate =
-                ZonedDateTime.of(2023, 11, 10, 10, 10, 10, 0, ZoneId.systemDefault())
+            passwordChangedDate = LocalDateTime(2023, 11, 10, 10, 10, 10).toInstant(TimeZone.currentSystemDefault())
         }
         val cat = DecryptableCategoryEntry().apply {
             id = 1

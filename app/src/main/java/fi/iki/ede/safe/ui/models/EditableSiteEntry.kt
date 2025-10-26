@@ -3,7 +3,7 @@ package fi.iki.ede.safe.ui.models
 import android.graphics.Bitmap
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.db.DBID
-import java.time.ZonedDateTime
+import kotlinx.datetime.Instant
 
 data class EditableSiteEntry(
     val categoryId: DBID,
@@ -18,6 +18,6 @@ data class EditableSiteEntry(
     // Since we're actually displaying the photo in UI unconditionally
     // it doesn't lessen security having it as bitmap here
     val plainPhoto: Bitmap? = null,
-    val passwordChangedDate: ZonedDateTime? = null,
+    val passwordChangedDate: Instant? = null,
     var plainExtension: Map<String, Set<String>> = mapOf(),
 )

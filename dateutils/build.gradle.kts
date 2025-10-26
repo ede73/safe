@@ -1,10 +1,46 @@
 plugins {
+    kotlin("multiplatform")
     alias(libs.plugins.android.library)
-    alias(libs.plugins.org.jetbrains.kotlin.android)
+}
+
+kotlin {
+    androidTarget {
+    }
+    jvm("desktop")
+    js(IR) {
+        browser()
+    }
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+
+    sourceSets {
+        val commonMain by getting {
+            dependencies {
+                api(libs.kotlinx.datetime)
+                implementation(project(":logger"))
+            }
+        }
+        val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
+        val androidMain by getting {
+            dependencies {
+                implementation(libs.androidx.appcompat)
+                implementation(libs.androidx.core.ktx)
+            }
+        }
+    }
 }
 
 android {
     namespace = "fi.iki.ede.dateutils"
+    compileSdk = 36
+    defaultConfig {
+        minSdk = 26
+    }
     testOptions {
         unitTests {
             isReturnDefaultValues = true
@@ -13,15 +49,4 @@ android {
             }
         }
     }
-}
-
-dependencies {
-    implementation(project(":logger"))
-    implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.material)
-
-    androidTestImplementation(libs.androidx.test.junit)
-    testImplementation(enforcedPlatform(libs.junit5.bom))
-    testImplementation(libs.junit5.jupiter)
 }

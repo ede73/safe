@@ -16,7 +16,7 @@ import fi.iki.ede.db.DBID
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.theme.SafeTheme
 import fi.iki.ede.theme.SafeThemeSurface
-import java.time.ZonedDateTime
+import kotlinx.datetime.Clock
 
 @Composable
 internal fun SiteEntryListCompose(
@@ -66,7 +66,7 @@ private fun SiteEntryListComposePreview() {
                 DecryptableSiteEntry(1L).apply {
                     description = encrypter("Facebook".toByteArray())
                     username = encrypter("user@example.com".toByteArray())
-                    passwordChangedDate = ZonedDateTime.now()
+                    passwordChangedDate = Clock.System.now()
                 },
                 DecryptableSiteEntry(2L).apply {
                     description = encrypter("Twitter".toByteArray())

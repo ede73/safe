@@ -18,17 +18,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import fi.iki.ede.dateutils.toLocalDate
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import java.time.Year
 import java.time.YearMonth
-import java.time.ZonedDateTime
 import java.util.Locale
 
 // TODO: One can select a future date, limit it
 @Composable
 fun DatePicker(
-    zonedDateTime: ZonedDateTime?,
+    utcInstant: Instant?,
     datePickerFont: TextStyle = MaterialTheme.typography.titleLarge,
-    onValueChange: (ZonedDateTime?) -> Unit,
+    onValueChange: (Instant?) -> Unit,
 ) {
     // Uh, there's a lot of chained events and other selective logic going on here
     // Basically simple, just select year,month,day
@@ -47,14 +49,14 @@ fun DatePicker(
     val months =
         (1..12).map { String.format(Locale.getDefault(), "%02d", it) } + listOf("--")
 
-    val selectedYear = remember(zonedDateTime) {
-        mutableStateOf(quickFormat(zonedDateTime, "%04d", "----") { it.year })
+    val selectedYear = remember(utcInstant) {
+        mutableStateOf(quickFormat(utcInstant, "%04d", "----") { it.toLocalDate().year })
     }
-    val selectedMonth = remember(zonedDateTime) {
-        mutableStateOf(quickFormat(zonedDateTime, "%02d", "--") { it.monthValue })
+    val selectedMonth = remember(utcInstant) {
+        mutableStateOf(quickFormat(utcInstant, "%02d", "--") { it.toLocalDate().monthNumber })
     }
-    val selectedDay = remember(zonedDateTime) {
-        mutableStateOf(quickFormat(zonedDateTime, "%02d", "--") { it.dayOfMonth })
+    val selectedDay = remember(utcInstant) {
+        mutableStateOf(quickFormat(utcInstant, "%02d", "--") { it.toLocalDate().dayOfMonth })
     }
     val days = remember(selectedYear, selectedDay) {
         derivedStateOf {
@@ -62,7 +64,7 @@ fun DatePicker(
             (1..daysInMonth).map { it.toString().padStart(2, '0') } + "--"
         }
     }
-    hasValueChanged(selectedYear, zonedDateTime, selectedMonth, selectedDay, onValueChange)
+    hasValueChanged(selectedYear, utcInstant, selectedMonth, selectedDay, onValueChange)
 
     val yearPagerState = rememberPagerState(
         pageCount = { years.size },
@@ -97,7 +99,7 @@ fun DatePicker(
         }
     }
     // Ensure yearPagerState and monthPagerState update correctly when zonedDateTime changes
-    LaunchedEffect(zonedDateTime) {
+    LaunchedEffect(utcInstant) {
         yearPagerState.scrollToPage(years.indexOf(selectedYear.value))
         monthPagerState.scrollToPage(months.indexOf(selectedMonth.value))
         dayPagerState.scrollToPage(days.value.indexOf(selectedDay.value))
@@ -118,36 +120,30 @@ fun DatePicker(
 
 private fun hasValueChanged(
     selectedYear: MutableState<String>,
-    zonedDateTime: ZonedDateTime?,
+    utcInstant: Instant?,
     selectedMonth: MutableState<String>,
     selectedDay: MutableState<String>,
-    onValueChange: (ZonedDateTime?) -> Unit
+    onValueChange: (Instant?) -> Unit
 ) {
-    if (selectedYear.value != (zonedDateTime?.year ?: "----") &&
-        (selectedMonth.value != (zonedDateTime?.monthValue ?: "--")) &&
-        (selectedDay.value != (zonedDateTime?.dayOfMonth ?: "--"))
+    val localDate = utcInstant?.toLocalDate()
+    if (selectedYear.value != (localDate?.year ?: "----") &&
+        (selectedMonth.value != (localDate?.monthNumber ?: "--")) &&
+        (selectedDay.value != (localDate?.dayOfMonth ?: "--"))
     ) {
-        val selectedZonedTime = try {
+        val selectedInstant = try {
             if (selectedYear.value.contains("-") ||
                 selectedMonth.value.contains("_") ||
                 selectedDay.value.contains("-")
             ) {
                 null
             } else {
-                val zone = zonedDateTime?.zone ?: ZonedDateTime.now().zone
-                ZonedDateTime.of(
-                    selectedYear.value.toInt(),
-                    selectedMonth.value.toInt(),
-                    selectedDay.value.toInt(), 0, 0, 0, 0, zone
-                )
+                utcInstant
             }
         } catch (ex: Exception) {
-            zonedDateTime
+            utcInstant
         }
-        if (selectedZonedTime != zonedDateTime &&
-            (selectedZonedTime?.toLocalDate() != zonedDateTime?.toLocalDate())
-        ) {
-            onValueChange(selectedZonedTime)
+        if (selectedInstant != utcInstant) {
+            onValueChange(selectedInstant)
         }
     }
 }
@@ -163,19 +159,18 @@ private fun daysInSelectedYearAndMonth(
 }
 
 private fun quickFormat(
-    zonedDateTime: ZonedDateTime?,
+    utcInstant: Instant?,
     format: String,
     default: String,
-    comp: (ZonedDateTime) -> Int
-) =
-    zonedDateTime?.let {
-        String.format(Locale.getDefault(), format, comp(it))
-    } ?: default
+    comp: (Instant) -> Int
+) = utcInstant?.let {
+    String.format(Locale.getDefault(), format, comp(it))
+} ?: default
 
 @Preview(showBackground = true)
 @Composable
 fun DatePickerPreview() {
     MaterialTheme {
-        DatePicker(ZonedDateTime.now()) {}
+        DatePicker(Clock.System.now()) {}
     }
 }

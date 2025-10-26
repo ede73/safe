@@ -5,8 +5,8 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.decrypt
 import fi.iki.ede.logger.Logger
+import kotlinx.datetime.Instant
 import kotlinx.serialization.json.Json
-import java.time.ZonedDateTime
 
 /**
  * Allows access to EncryptedPassEntry's fields decrypted
@@ -55,7 +55,7 @@ class DecryptableSiteEntry(categoryId: Long) {
 
     // Password changed date(time) is not privacy critical (hence unencrypted)
     // TODO: LocalDateTime will suffice...
-    var passwordChangedDate: ZonedDateTime? = null
+    var passwordChangedDate: Instant? = null
     var photo: IVCipherText = IVCipherText.getEmpty()
     var username: IVCipherText = IVCipherText.getEmpty()
     var website: IVCipherText = IVCipherText.getEmpty()
@@ -109,7 +109,7 @@ class DecryptableSiteEntry(categoryId: Long) {
         website: String,
         username: IVCipherText,
         password: IVCipherText,
-        passwordChangedDate: ZonedDateTime?,
+        passwordChangedDate: Instant?,
         note: IVCipherText,
         photo: Bitmap?,
         extensions: Map<String, Set<String>>

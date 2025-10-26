@@ -22,7 +22,7 @@ import fi.iki.ede.safe.ui.models.EditableSiteEntry
 import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.utilities.MeasureTime
 import fi.iki.ede.theme.SafeTheme
-import java.time.ZonedDateTime
+import kotlinx.datetime.Clock
 import kotlin.time.Duration.Companion.milliseconds
 
 
@@ -139,7 +139,7 @@ fun SiteEntryScreenPreview() {
     entry.note = IVCipherText(byteArrayOf(), "note\nmay have\nmultiple lines".toByteArray())
     entry.description = IVCipherText(byteArrayOf(), "Secret site".toByteArray())
     entry.password = IVCipherText(byteArrayOf(), "password".toByteArray())
-    entry.passwordChangedDate = ZonedDateTime.now()
+    entry.passwordChangedDate = Clock.System.now()
     entry.username = IVCipherText(byteArrayOf(), "username".toByteArray())
     entry.website = IVCipherText(byteArrayOf(), "website".toByteArray())
     //entry.photo=

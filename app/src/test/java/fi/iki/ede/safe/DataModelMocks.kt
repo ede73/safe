@@ -19,7 +19,7 @@ import io.mockk.mockkClass
 import io.mockk.mockkObject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
-import java.time.ZonedDateTime
+import kotlinx.datetime.Instant
 
 object DataModelMocks {
     private var masterKeyStore: Pair<Salt, IVCipherText>? = null
@@ -44,7 +44,7 @@ object DataModelMocks {
         username: String = "enc_user${id}",
         password: String = "enc_pwd${id}",
         note: String = "enc_note${id}",
-        changedDate: ZonedDateTime? = null
+        changedUtcDate: Instant? = null
     ): DecryptableSiteEntry {
         val siteEntry = DecryptableSiteEntry(categoryId)
         siteEntry.id = id
@@ -53,8 +53,8 @@ object DataModelMocks {
         siteEntry.website = ks.encryptByteArray(website.toByteArray())
         siteEntry.note = ks.encryptByteArray(note.toByteArray())
         siteEntry.password = ks.encryptByteArray(password.toByteArray())
-        if (changedDate != null) {
-            siteEntry.passwordChangedDate = changedDate
+        if (changedUtcDate != null) {
+            siteEntry.passwordChangedDate = changedUtcDate
             //ZonedDateTime.of(2023, 6, 17, 2, 3, 4, 0, ZoneId.of("UTC"))
         }
         return siteEntry

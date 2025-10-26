@@ -8,7 +8,7 @@ import fi.iki.ede.db.DBID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.time.ZonedDateTime
+import kotlinx.datetime.Instant
 
 // This will hold COPY of the decryptable password for purposes of editing
 // Once finished, changes are persisted
@@ -69,7 +69,7 @@ open class EditingSiteEntryViewModel : ViewModel() {
         _editableSiteEntryState.value = updatedState
     }
 
-    fun updatePasswordChangedDate(value: ZonedDateTime?) {
+    fun updatePasswordChangedDate(value: Instant?) {
         // TODO: Changed
         val updatedState = _editableSiteEntryState.value.copy(passwordChangedDate = value)
         _editableSiteEntryState.value = updatedState

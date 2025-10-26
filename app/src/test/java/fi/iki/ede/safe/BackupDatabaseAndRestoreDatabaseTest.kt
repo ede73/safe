@@ -34,15 +34,18 @@ import io.mockk.unmockkConstructor
 import io.mockk.unmockkObject
 import io.mockk.unmockkStatic
 import kotlinx.coroutines.runBlocking
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.File
-import java.time.ZoneId
-import java.time.ZonedDateTime
 import java.util.concurrent.CancellationException
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
@@ -60,8 +63,8 @@ private const val TAG = "BackupDatabaseAndRestoreDatabaseTest"
 // - from breaking current solution
 class BackupDatabaseAndRestoreDatabaseTest {
 
-    private val fakeChangedDateTime: ZonedDateTime =
-        ZonedDateTime.of(1999, 12, 31, 1, 2, 3, 0, ZoneId.of(ZoneId.SHORT_IDS["PST"]))
+    private val fakeChangedDateTime: Instant =
+        LocalDateTime(1999, 12, 31, 1, 2, 3, 0).toInstant(TimeZone.of("America/Los_Angeles"))
     private lateinit var ks: KeyStoreHelper
     private lateinit var dbHelper: DBHelper
 
@@ -96,7 +99,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
     @Test
     fun benchMarkRestore() {
         val r = RestoreDatabase()
-        mockZonedDateTimeNow(2000)
+        mockClockSystemNow(2000)
         mockGetLastBackupTime(1234)
 
         // OLD Restore: 6.772 ms
@@ -123,7 +126,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
 
     @Test
     fun benchmarkBackup() {
-        mockZonedDateTimeNow(1234)
+        mockClockSystemNow(1234)
 
         // OLD Backup: 1.514 ms
         // flow1 Backup: 1.712 ms
@@ -143,19 +146,19 @@ class BackupDatabaseAndRestoreDatabaseTest {
             }
         } / count) + " ms")
 
-        unmockkStatic(ZonedDateTime::class)
+        unmockkObject(Clock.System)
     }
 
-    private fun mockZonedDateTimeNow(unixEpochSeconds: Long) {
-        mockkStatic(ZonedDateTime::class)
-        every { ZonedDateTime.now() } returns DateUtils.unixEpochSecondsToLocalZonedDateTime(
+    private fun mockClockSystemNow(unixEpochSeconds: Long) {
+        mockkObject(Clock.System)
+        every { Clock.System.now() } returns DateUtils.unixEpochSecondsToInstant(
             unixEpochSeconds
         )
     }
 
     @Test
     fun backupTest() {
-        mockZonedDateTimeNow(1234)
+        mockClockSystemNow(1234)
         val out = runBlocking {
             BackupDatabase.backup(
                 DataModel.categoriesStateFlow.value,
@@ -165,7 +168,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
                 GPMDataModel.allSavedGPMsFlow.value.toSet()
             ).toString()
         }
-        unmockkStatic(ZonedDateTime::class)
+        unmockkObject(Clock.System)
         Logger.d(TAG, out)
         assertEquals(
             PASSWORD_ENCRYPTED_BACKUP_AT_1234.trimIndent().trim(),
@@ -185,7 +188,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         every { Preferences.storeAllExtensions(any()) } returns Unit
         every { Preferences.getAllExtensions() } returns emptySet()
         every { Preferences.getLastBackupTime() } returns unixEpochSeconds?.let {
-            DateUtils.unixEpochSecondsToLocalZonedDateTime(
+            DateUtils.unixEpochSecondsToInstant(
                 it
             )
         }
@@ -237,7 +240,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
             // backup being restored is same as last backup, must succeed(we wont consult user)
             Triple(1234L, 1234L, Pair(true, false)),
         ).forEach {
-            mockZonedDateTimeNow(it.first)
+            mockClockSystemNow(it.first)
             mockGetLastBackupTime(it.second)
             val succeed = it.third.first
             val mustAskUser = it.third.second
@@ -282,7 +285,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         val r = RestoreDatabase()
         mockkClass(Context::class)
 
-        mockZonedDateTimeNow(2000)
+        mockClockSystemNow(2000)
         mockGetLastBackupTime(1234)
         r.doRestore(
             mockk<Context>(),
@@ -315,8 +318,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
                 val i = (f - 1) * 2 + (l - 1)
                 if (i == 0) {
                     // target runs on what ever timezone (github Etc/UTC) so convert to our test TZ
-                    val actualChangedDateTime =
-                        passwords[i].passwordChangedDate?.withZoneSameInstant(fakeChangedDateTime.zone)
+                    val actualChangedDateTime = passwords[i].passwordChangedDate
                     assertEquals(fakeChangedDateTime, actualChangedDateTime)
                 } else {
                     assertEquals(null, passwords[i].passwordChangedDate)
@@ -336,7 +338,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
             linkedMapOf(
                 Pair(
                     DataModelMocks.makeCat(1, ks), listOf(
-                        DataModelMocks.makePwd(1, 11, ks, changedDate = fakeChangedDateTime),
+                        DataModelMocks.makePwd(1, 11, ks, changedUtcDate = fakeChangedDateTime),
                         DataModelMocks.makePwd(1, 12, ks)
                     )
                 ),
@@ -374,7 +376,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         unmockkConstructor(BackupDatabase::class)
 
         val r = RestoreDatabase()
-        mockZonedDateTimeNow(2000)
+        mockClockSystemNow(2000)
         mockGetLastBackupTime(1234)
         r.doRestore(
             mockk<Context>(),
@@ -452,8 +454,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
             val categoryId = categoryIds[id]
             if (id == 0) {
                 // target runs on what ever timezone (github Etc/UTC) so convert to our test TZ
-                val actualChangedDateTime =
-                    passwords[id].passwordChangedDate?.withZoneSameInstant(fakeChangedDateTime.zone)
+                val actualChangedDateTime = passwords[id].passwordChangedDate
                 assertEquals(fakeChangedDateTime, actualChangedDateTime)
             } else {
                 assertEquals(null, passwords[id].passwordChangedDate)

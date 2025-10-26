@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.ZonedDateTime
+import kotlinx.datetime.Clock
 
 object DataModel {
     private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
@@ -253,8 +253,8 @@ object DataModel {
             val softDeletedMaxAge = softDeletedMaxAgeProvider()
             val expiredSoftDeletedSiteEntries = softDeletedSiteEntries.filter {
                 val softDeletedAge = DateUtils.getPeriodBetweenDates(
-                    ZonedDateTime.now(),
-                    DateUtils.unixEpochSecondsToLocalZonedDateTime(it.deleted),
+                    Clock.System.now(),
+                    DateUtils.unixEpochSecondsToInstant(it.deleted),
                 )
                 if (softDeletedAge.days > softDeletedMaxAge) {
                     Preferences.setLastModified()

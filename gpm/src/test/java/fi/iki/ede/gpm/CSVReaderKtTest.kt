@@ -4,7 +4,6 @@ import fi.iki.ede.gpm.csv.processInputLine
 import fi.iki.ede.gpm.csv.readCsv
 import fi.iki.ede.gpm.model.IncomingGPM.Companion.makeFromCSVImport
 import fi.iki.ede.logger.Logger
-import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
 import org.junit.jupiter.api.AfterEach
@@ -21,7 +20,7 @@ class CSVReaderKtTest {
     @BeforeEach
     fun before() {
         mockkObject(Logger)
-        every { Logger.d(any(), any()) } returns 0
+        //every { Logger.d(any(), any()) } returns 0
     }
 
     @AfterEach

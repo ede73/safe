@@ -7,8 +7,11 @@ import com.google.firebase.crashlytics.crashlytics
 
 internal const val TAG = "fireebasehandler"
 
-class FirebaseTry<T>(private val message: String? = null, val block: () -> T) {
-    fun firebaseCatch(catchBlock: (Throwable) -> T): T {
+actual class FirebaseTry<T> actual constructor(
+    private val message: String?,
+    private val block: () -> T
+) {
+    actual fun firebaseCatch(catchBlock: (Throwable) -> T): T {
         return try {
             if (message != null) {
                 Firebase.crashlytics.log(message)
@@ -24,24 +27,31 @@ class FirebaseTry<T>(private val message: String? = null, val block: () -> T) {
 }
 
 // used for test crashing the app from preferences, do not assume any other use case
-fun firebaseCollectCrashlytics(enabled: Boolean) {
+actual fun firebaseCollectCrashlytics(enabled: Boolean) {
     Firebase.crashlytics.isCrashlyticsCollectionEnabled = enabled
 }
 
+// This is the platform-specific part that needs a context
 fun firebaseInitialize(
     context: Context, commitHash: String, versionName: String, versionCode: Int
 ) {
     FirebaseApp.initializeApp(context)
+    firebaseInitialize(commitHash, versionName, versionCode)
+}
+
+actual fun firebaseInitialize(
+    commitHash: String, versionName: String, versionCode: Int
+) {
     Firebase.crashlytics.setCustomKey("git_commit_hash", commitHash)
     Firebase.crashlytics.setCustomKey("VERSION_NAME", versionName)
     Firebase.crashlytics.setCustomKey("VERSION_CODE", versionCode)
     Firebase.crashlytics.isCrashlyticsCollectionEnabled = true
 }
 
-fun <T> firebaseTry(message: String? = null, block: () -> T): FirebaseTry<T> =
+actual fun <T> firebaseTry(message: String?, block: () -> T): FirebaseTry<T> =
     FirebaseTry(message, block)
 
-fun <T> firebaseJustTry(message: String? = null, block: () -> T): T? {
+actual fun <T> firebaseJustTry(message: String?, block: () -> T): T? {
     return try {
         if (message != null) {
             Firebase.crashlytics.log(message)
@@ -55,22 +65,22 @@ fun <T> firebaseJustTry(message: String? = null, block: () -> T): T? {
     }
 }
 
-fun firebaseLog(message: String) {
+actual fun firebaseLog(message: String) {
     Firebase.crashlytics.log(message)
     Logger.i(TAG, message)
 }
 
-fun firebaseLog(tag: String, message: String) {
+actual fun firebaseLog(tag: String, message: String) {
     Firebase.crashlytics.log("$tag $message")
     Logger.i(tag, message)
 }
 
-fun firebaseRecordException(t: Throwable) {
+actual fun firebaseRecordException(t: Throwable) {
     Logger.i(TAG, "Caught exception", t)
     Firebase.crashlytics.recordException(t)
 }
 
-fun firebaseRecordException(message: String, t: Throwable) {
+actual fun firebaseRecordException(message: String, t: Throwable) {
     firebaseLog(message)
     firebaseRecordException(t)
 }

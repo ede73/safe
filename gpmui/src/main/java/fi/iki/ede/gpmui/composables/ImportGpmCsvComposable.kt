@@ -56,8 +56,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
 import java.io.InputStream
-import java.time.ZonedDateTime
 import kotlin.reflect.KFunction1
 
 private const val TAG = "ImportScreen"
@@ -81,8 +81,8 @@ fun ImportGpmCsvComposable(
     val showUsage = remember {
         mutableStateOf(
             DateUtils.getPeriodBetweenDates(
-                ZonedDateTime.now(),
-                DateUtils.unixEpochSecondsToLocalZonedDateTime(Preferences.getGpmImportUsageShown())
+                Clock.System.now(),
+                DateUtils.unixEpochSecondsToInstant(Preferences.getGpmImportUsageShown())
             ).days > 10
         )
     }
