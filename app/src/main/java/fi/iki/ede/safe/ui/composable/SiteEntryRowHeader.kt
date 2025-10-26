@@ -1,19 +1,19 @@
 package fi.iki.ede.safe.ui.composable
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.theme.LocalSafeTheme
-import fi.iki.ede.theme.SafeListItem
 import fi.iki.ede.theme.SafeThemeSurface
 
 fun Color.darken(factor: Float): Color {
@@ -28,18 +28,14 @@ fun SiteEntryRowHeader(headerString: String) {
     val headerStart = headerString.substring(0, 1).uppercase()
     val safeTheme = LocalSafeTheme.current
 
-    SafeListItem(
-        fillWidthFraction = 0.2f,
-        yOffset = 72.dp,
-        color = CardDefaults.cardColors(containerColor = Color.Transparent)
-    ) {
-        Text(
-            text = headerStart,
-            modifier = Modifier
-                .padding(14.dp),
-            style = safeTheme.customFonts.listHeaders
-        )
-    }
+    Text(
+        text = headerStart,
+        modifier = Modifier
+            .padding(0.dp, bottom = 15.dp)
+            .zIndex(1f)
+            .offset(x = 20.dp, y = (-10).dp),
+        style = safeTheme.customFonts.listHeaders
+    )
 }
 
 @DualModePreview
