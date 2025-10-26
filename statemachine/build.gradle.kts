@@ -1,11 +1,54 @@
 plugins {
+    kotlin("multiplatform")
     alias(libs.plugins.android.library)
-    alias(libs.plugins.org.jetbrains.kotlin.android)
     alias(libs.plugins.compose.compiler)
+}
+
+kotlin {
+    androidTarget()
+    jvm("desktop")
+    js {
+        browser()
+    }
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+
+    sourceSets {
+        val commonMain by getting {
+            dependencies {
+                implementation(project(":logger"))
+            }
+        }
+        val androidMain by getting {
+            dependencies {
+                implementation(libs.androidx.activity.compose)
+                implementation(libs.androidx.appcompat)
+                implementation(libs.androidx.core.ktx)
+                implementation(libs.material)
+            }
+        }
+        val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
+        val androidUnitTest by getting {
+            dependencies {
+                implementation(project.dependencies.platform(libs.junit5.bom))
+                implementation(libs.junit5.jupiter)
+                implementation(libs.mockk)
+            }
+        }
+    }
 }
 
 android {
     namespace = "fi.iki.ede.statemachine"
+    compileSdk = 36
+    defaultConfig {
+        minSdk = 26
+    }
     buildFeatures {
         compose = true
     }
@@ -16,28 +59,5 @@ android {
                 it.useJUnitPlatform()
             }
         }
-        packaging {
-            resources {
-                excludes += setOf(
-                    "META-INF/LICENSE.md",
-                    "META-INF/LICENSE-notice.md"
-                )
-            }
-        }
     }
-}
-
-dependencies {
-    implementation(project(":logger"))
-    implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.material)
-
-    androidTestImplementation(libs.androidx.test.junit)
-    androidTestImplementation(libs.mockk.agent)
-    androidTestImplementation(libs.mockk.android)
-    testImplementation(enforcedPlatform(libs.junit5.bom))
-    testImplementation(libs.junit5.jupiter)
-    testImplementation(libs.mockk)
 }
