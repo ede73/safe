@@ -1,7 +1,5 @@
 package fi.iki.ede.notifications
 
-import android.app.NotificationManager
-
 data class NotificationSetup(
     val notificationID: Int,
     val channel: String,
@@ -10,5 +8,9 @@ data class NotificationSetup(
     val category: String,
     val activityToStartOnClick: Class<*>,
     val icon: Int,
-    val importance: Int = NotificationManager.IMPORTANCE_LOW
+    val importance: NotificationImportance = NotificationImportance.Low // NotificationManager.IMPORTANCE_LOW
 )
+
+enum class NotificationImportance {
+    Low, High
+}

@@ -14,6 +14,7 @@ import android.os.Build
 import android.os.CountDownTimer
 import android.os.IBinder
 import androidx.annotation.RequiresApi
+import androidx.core.app.NotificationCompat
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.notifications.ConfiguredNotifications
 import fi.iki.ede.notifications.MainNotification
@@ -97,9 +98,9 @@ class AutolockingService : Service() {
         }
         autoLockCountdownNotifier?.cancel()
         autoLockCountdownNotifier = null
-        autoLockNotification.setNotification(this@AutolockingService) { mainNotification ->
-            mainNotification.notify(this@AutolockingService) {
-                it.setProgress(100, 0, false)
+        autoLockNotification.setNotification({ this@AutolockingService }) { mainNotification ->
+            mainNotification.notify({ this@AutolockingService }) {
+                (it as NotificationCompat.Builder).setProgress(100, 0, false)
             }
         }
 
@@ -113,10 +114,10 @@ class AutolockingService : Service() {
                     millisecondsTillAutoLock = millisUntilFinished
                     if (mFeatures?.isLoggedIn() == true) {
                         autoLockNotification.setNotification(
-                            this@AutolockingService
+                            { this@AutolockingService }
                         ) { mainNotification ->
-                            mainNotification.notify(this@AutolockingService) {
-                                it.setProgress(
+                            mainNotification.notify({ this@AutolockingService }) {
+                                (it as NotificationCompat.Builder).setProgress(
                                     timeoutUntilStop.toInt(),
                                     millisUntilFinished.toInt(), false
                                 )

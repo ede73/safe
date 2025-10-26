@@ -20,7 +20,7 @@ object SetupNotifications {
                 context,
                 ConfiguredNotifications.get("google_auto_backup_notification")
             )
-                .apply { setNotification(context) }
+                .apply { setNotification({ context }) }
         }
         compareAndSetPreferenceWithCallback(
             "notification.getAutoBackupQuotaExceeded",
@@ -31,7 +31,7 @@ object SetupNotifications {
                 context,
                 ConfiguredNotifications.get("google_auto_backup_quota_exceeded_notification")
             )
-                .apply { setNotification(context) }
+                .apply { setNotification({ context }) }
         }
 
         // keep nagging if there are local changes newer than backup!
@@ -45,7 +45,7 @@ object SetupNotifications {
                     context,
                     ConfiguredNotifications.get("backup_notification"),
                     Preferences.getLastBackupTime()?.toLocalDate().toString()
-                ).apply { setNotification(context) }
+                ).apply { setNotification({ context }) }
             }
         } catch (e: Exception) {
             Logger.e("SetupNotifications", "error $e")

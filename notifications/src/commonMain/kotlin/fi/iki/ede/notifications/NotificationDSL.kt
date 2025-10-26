@@ -1,13 +1,10 @@
 package fi.iki.ede.notifications
 
-import android.app.NotificationManager
-
 object ConfiguredNotifications {
     var notifications: List<NotificationSetup> = emptyList()
 
     // TODO: Remove (move to configured)
-    fun get(key: String) =
-        notifications.find { it.channel == key }!!
+    fun get(key: String) = notifications.find { it.channel == key }!!
 }
 
 class NotificationDSL {
@@ -19,9 +16,9 @@ class NotificationDSL {
         channelName: Int,
         channelDescription: Int,
         category: String,
-        activityToStartOnClick: Class<*>,
+        activityToStartOnClick: Class<* >,
         icon: Int,
-        importance: Int = NotificationManager.IMPORTANCE_LOW
+        importance: NotificationImportance = NotificationImportance.Low
     ) {
         notifications.add(
             NotificationSetup(

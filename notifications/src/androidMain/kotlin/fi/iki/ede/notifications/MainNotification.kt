@@ -15,11 +15,12 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import fi.iki.ede.preferences.Preferences
 
-class MainNotification(
+actual class MainNotification(
     context: Context,
     private val notificationConfig: NotificationSetup,
-    descriptionParam: String? = null,
+    private val descriptionParam: String? = null
 ) {
+
     private val mNotifyManager: NotificationManagerCompat = NotificationManagerCompat.from(context)
     private val notificationBuilder: NotificationCompat.Builder
 
@@ -35,11 +36,40 @@ class MainNotification(
         }
     }
 
-    private fun augmentNotificationBuilder(augmentNotificationBuilder: NotificationCompat.Builder) {
+    actual fun clearNotification() {
+        mNotifyManager.cancel(notificationConfig.notificationID)
     }
 
-    fun clearNotification() {
-        mNotifyManager.cancel(notificationConfig.notificationID)
+    actual fun setNotification(
+        getContext: () -> Any,
+        customSetup: ((mainNotification: MainNotification) -> Unit)?
+    ) {
+        val context = getContext() as Context
+        if (!isNotificationPermissionGranted(context)) return
+        if (customSetup == null) {
+            notify({ context })
+        } else {
+            customSetup(this)
+        }
+    }
+
+    @SuppressLint("MissingPermission", "Broken linter")
+    actual fun notify(
+        getContext: () -> Any,
+        augmentNotificationBuilder: (Any) -> Unit
+    ) {
+        val context = getContext() as Context
+        if (!isNotificationPermissionGranted(context)) return
+        mNotifyManager.notify(
+            notificationConfig.notificationID,
+            notificationBuilder.apply {
+                augmentNotificationBuilder(this)
+            }.build()
+        )
+    }
+
+
+    private fun augmentNotificationBuilder(augmentNotificationBuilder: NotificationCompat.Builder) {
     }
 
     private fun getNotificationManager(context: Context) =
@@ -49,7 +79,7 @@ class MainNotification(
         val mChannel = NotificationChannel(
             notificationConfig.channel,
             context.getString(notificationConfig.channelName),
-            notificationConfig.importance
+            notificationConfig.importance.toAndroid()
         )
         mChannel.enableLights(false)
         mChannel.enableVibration(false)
@@ -74,7 +104,7 @@ class MainNotification(
 
     private fun getPendingIntent(
         context: Context,
-        activityToStartOnClick: Class<*>,
+        activityToStartOnClick: Class<*>
     ): PendingIntent = PendingIntent.getActivity(
         context, 0,
         Intent(context, activityToStartOnClick),
@@ -84,10 +114,10 @@ class MainNotification(
     private fun isNotificationPermissionGranted(context: Context) =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
             isNotificationPermissionGrantedTiraMisu(context)
-        else NotificationManagerCompat.from(context).areNotificationsEnabled()
+        else mNotifyManager.areNotificationsEnabled()
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    fun isNotificationPermissionGrantedTiraMisu(context: Context) =
+    private fun isNotificationPermissionGrantedTiraMisu(context: Context) =
         (ActivityCompat.checkSelfPermission(
             context,
             Manifest.permission.POST_NOTIFICATIONS
@@ -96,36 +126,13 @@ class MainNotification(
             if (!it) flagToRequestNotificationPermission()
         }
 
-    fun setNotification(
-        context: Context,
-        customSetup: ((mainNotification: MainNotification) -> Unit)? = null
-    ) {
-        if (!isNotificationPermissionGranted(context)) return
-        if (customSetup == null) {
-            notify(context)
-        } else {
-            customSetup(this)
-        }
-    }
-
-    @SuppressLint("MissingPermission", "Broken linter")
-    fun notify(
-        context: Context,
-        augmentNotificationBuilder: (NotificationCompat.Builder) -> Unit = {}
-    ) {
-        if (!isNotificationPermissionGranted(context)) return
-        mNotifyManager.notify(
-            notificationConfig.notificationID,
-            notificationBuilder.apply {
-                augmentNotificationBuilder(this)
-            }.build()
-        )
-    }
-
-    // Alas permissions can ONLY be requested from Activity
-    // And this is running as services, so we need to route the request
-    // And pop up the question once activity is opened (let's say CategoryList)
     private fun flagToRequestNotificationPermission() {
         Preferences.setNotificationPermissionRequired(true)
     }
+}
+
+
+fun NotificationImportance.toAndroid() = when (this) {
+    NotificationImportance.Low -> NotificationManager.IMPORTANCE_LOW
+    NotificationImportance.High -> NotificationManager.IMPORTANCE_HIGH
 }
