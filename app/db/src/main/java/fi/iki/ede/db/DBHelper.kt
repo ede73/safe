@@ -7,7 +7,6 @@ import android.database.DatabaseUtils
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import android.database.sqlite.SQLiteOpenHelper
-import android.util.Log
 import androidx.core.database.sqlite.transaction
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
@@ -60,7 +59,7 @@ class DBHelper(
             require(System.getProperty("test") != "test") { "Test cannot use file DB" }
         }
         if (!photoDir.exists() && !photoDir.mkdirs()) {
-            Log.e(TAG, "FAILED MAKING PHOTO DIR")
+            Logger.e(TAG, "FAILED MAKING PHOTO DIR")
         }
         dynamicTables.addAll(getExternalTables())
     }
@@ -276,7 +275,7 @@ class DBHelper(
                     it.getString(it.getColumnIndexOrThrow(SiteEntry.Columns.PHOTO))
                         ?.takeIf { name -> name.isNotEmpty() }?.let { name -> loadPhoto(name) }
                 } catch (_: Exception) {
-                    Log.d(TAG, "Failed load photo")
+                    Logger.d(TAG, "Failed load photo")
                     null
                 }
             } else null
@@ -418,7 +417,7 @@ class DBHelper(
                     it.getString(it.getColumnIndexOrThrow(SiteEntry.Columns.PHOTO))
                         ?.takeIf { name -> name.isNotEmpty() }
                 } catch (_: Exception) {
-                    Log.w(TAG, "Load photo was blob")
+                    Logger.w(TAG, "Load photo was blob")
                     return null
                 }
             } else null

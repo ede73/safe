@@ -1,7 +1,6 @@
 package fi.iki.ede.safe.ui.activities
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -29,23 +28,13 @@ class SiteEntryListScreen :
     @Suppress("FlowOperatorInvokedInComposition")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Log.e(
-            "SiteEntryListScreen",
-            "saved instance category = ${savedInstanceState?.getLong(CATEGORY_ID)}"
-        )
-        Log.e("SiteEntryListScreen", "Intent category is = ${intent.getLongExtra(CATEGORY_ID, -1)}")
         categoryId =
             savedInstanceState?.getLong(CATEGORY_ID) ?: intent.getLongExtra(CATEGORY_ID, -1)
         require(categoryId != -1L) { "You have to pass a proper category" }
         SetupNotifications.setup(this)
-        Log.e("SiteEntryListScreen", "Trying to locate category $categoryId")
-        DataModel.categoriesStateFlow.value.map { category ->
-            Log.e("SiteEntryListScreen", "Found category ID  ${category.id}")
-        }
         val category = DataModel.categoriesStateFlow.value.first { it.id == categoryId }
         setContent {
             val context = LocalContext.current
-            Log.e("SiteEntryListScreen", "Use category $categoryId to filter passwords")
             // TODO: Either new kotlin, coroutines or both, this is a linter error now
             val siteEntriesState by siteEntriesStateFlow
                 .map { passwords -> passwords.filter { it.categoryId == categoryId } }

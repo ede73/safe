@@ -1,6 +1,5 @@
 package fi.iki.ede.datamodel
 
-import android.util.Log
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.dateutils.DateUtils
@@ -308,7 +307,7 @@ object DataModel {
     private fun syncLoadAllPhotos() {
         val dbHelper = DBHelperFactory.getDBHelper()
         _siteEntriesStateFlow.value.forEach { siteEntry ->
-            Log.d(TAG, "Load photo for ${siteEntry.id}")
+            Logger.d(TAG, "Load photo for ${siteEntry.id}")
             runCatching {
                 val photo = dbHelper.fetchPhotoOnly(siteEntry.id as DBID)
                 if (photo != null) {

@@ -1,7 +1,6 @@
 package fi.iki.ede.safe.notifications
 
 import android.content.Context
-import android.util.Log
 import androidx.core.content.edit
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.notifications.ConfiguredNotifications
@@ -48,7 +47,7 @@ object SetupNotifications {
                 ).apply { setNotification(context) }
             }
         } catch (e: Exception) {
-            Log.e("SetupNotifications", "error $e")
+            Logger.e("SetupNotifications", "error $e")
             throw (e)
         }
     }
