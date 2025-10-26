@@ -16,13 +16,12 @@ import fi.iki.ede.db.DBHelper
 import io.mockk.every
 import io.mockk.mockkClass
 import io.mockk.slot
-import junit.framework.TestCase.assertEquals
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.junit.Assert
-import org.junit.Assert.assertArrayEquals
-import org.junit.Before
-import org.junit.Ignore
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
 import java.security.Security
 
@@ -30,13 +29,8 @@ import java.security.Security
 class OISafeBackupRestoreDatabaseTest {
     private val passwordOfBackup = Password("abc123")
 
-    @Before
-    fun setUp() {
-        Security.insertProviderAt(BouncyCastleProvider(), 1)
-    }
-
     @Test
-    @Ignore("yeap")
+    @Disabled("yeap")
     fun restoreTest() {
 
         throw Exception("GOTTA FIX THIS FIRST KeystoreHelperMock4UnitTests.mock()")
@@ -97,9 +91,9 @@ class OISafeBackupRestoreDatabaseTest {
             encryptedRenewedSaltedMasterKey,
             dbHelper,
         )
-        Assert.assertEquals(2, totalPasswords)
-        Assert.assertEquals(2, categories.size)
-        Assert.assertEquals(2, siteEntries.size)
+        assertEquals(2, totalPasswords)
+        assertEquals(2, categories.size)
+        assertEquals(2, siteEntries.size)
 
         assertEquals("secret", siteEntries[0].cachedPlainDescription)
         assertEquals("", siteEntries[0].plainWebsite)
@@ -127,6 +121,12 @@ class OISafeBackupRestoreDatabaseTest {
     }
 
     companion object {
+        @BeforeAll
+        @JvmStatic
+        fun setUp() {
+            Security.insertProviderAt(BouncyCastleProvider(), 1)
+        }
+
         private val fakeBackupSalt = Salt("5049b760ba4aca3d".hexToByteArray())
         private val encryptedMasterKey =
             EncryptedPassword(

@@ -33,14 +33,13 @@ import io.mockk.unmockkAll
 import io.mockk.unmockkConstructor
 import io.mockk.unmockkObject
 import io.mockk.unmockkStatic
-import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertFalse
-import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.runBlocking
-import org.junit.After
-import org.junit.Assert
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -66,7 +65,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
     private lateinit var ks: KeyStoreHelper
     private lateinit var dbHelper: DBHelper
 
-    @Before
+    @BeforeEach
     fun before() {
         mockkStatic("fi.iki.ede.logger.FirebaseUtilitiesKt")
         every { firebaseRecordException(any(), any()) } returns Unit
@@ -87,7 +86,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         every { LoginHandler.passwordLogin(any(), any()) } returns true
     }
 
-    @After
+    @AfterEach
     fun after() {
         unmockkObject(Preferences)
         unmockkStatic("fi.iki.ede.logger.FirebaseUtilitiesKt")
@@ -168,7 +167,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         }
         unmockkStatic(ZonedDateTime::class)
         Logger.d(TAG, out)
-        Assert.assertEquals(
+        assertEquals(
             PASSWORD_ENCRYPTED_BACKUP_AT_1234.trimIndent().trim(),
             out.trimIndent().trim(),
         )
@@ -261,18 +260,18 @@ class BackupDatabaseAndRestoreDatabaseTest {
                     false
                 }
                 assertTrue(
+                    mustAskUser == askedUser,
                     "Oh no, we should have asked user, but missed, now=${it.first}, last backup=${it.second}, backup=1234",
-                    mustAskUser == askedUser
                 )
                 assertTrue(
+                    succeed,
                     "Expected success, but succeeded now=${it.first}, last backup=${it.second}, backup=1234",
-                    succeed
                 )
             } catch (c: CancellationException) {
                 Logger.d(TAG, "Failed as expected...$c")
                 assertFalse(
+                    succeed,
                     "Expected failure, but succeeded now=${it.first}, last backup=${it.second}, backup=1234",
-                    succeed
                 )
             }
         }

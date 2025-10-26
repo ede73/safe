@@ -11,20 +11,21 @@ import io.mockk.unmockkObject
 import junit.framework.TestCase
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.runBlocking
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+
 
 class DataModelDBTest {
 
-    @Before
+    @BeforeEach
     fun before() {
         mockkObject(Preferences)
         every { Preferences.setLastModified() } returns Unit
         every { Preferences.storeAllExtensions(any()) } returns Unit
     }
 
-    @After
+    @AfterEach
     fun after() {
         unmockkObject(Preferences)
     }

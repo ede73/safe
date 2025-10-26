@@ -1,7 +1,8 @@
 package fi.iki.ede.crypto
 
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Test
 
 class EncodingTests {
 
@@ -21,7 +22,7 @@ class EncodingTests {
         val p1 = Password(password.toCharArray())
         val p2 = Password(password.toByteArray())
         val p3 = Password(password)
-        assert(p1.utf8password.contentEquals(p2.utf8password))
-        assert(p1.utf8password.contentEquals(p3.utf8password))
+        assertArrayEquals(p1.utf8password, p2.utf8password)
+        assertArrayEquals(p1.utf8password, p3.utf8password)
     }
 }

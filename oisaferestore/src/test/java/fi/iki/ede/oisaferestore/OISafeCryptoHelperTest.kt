@@ -6,28 +6,32 @@ import fi.iki.ede.crypto.SaltedPassword
 import fi.iki.ede.crypto.support.HexString
 import fi.iki.ede.crypto.support.hexToByteArray
 import fi.iki.ede.oisaferestore.OISafeCryptoMocks.getCryptoMock
-import junit.framework.TestCase.assertEquals
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.junit.Assert
-import org.junit.Before
-import org.junit.Ignore
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 import java.security.Security
 
 class OISafeCryptoHelperTest {
     private val fixedSalt = Salt("0ede0ede0ede0ede".hexToByteArray())
     private val fixedPassword = Password("password".toByteArray())
 
-    @Before
-    fun loadBouncyCastle() {
-        Security.insertProviderAt(BouncyCastleProvider(), 1)
+    companion object {
+        @BeforeAll
+        @JvmStatic
+        fun loadBouncyCastle() {
+            Security.insertProviderAt(BouncyCastleProvider(), 1)
+        }
     }
 
     @Test
     fun genSalt() {
         val salt1 = OISafeCryptoHelper.generateSalt()
         val salt2 = OISafeCryptoHelper.generateSalt()
-        Assert.assertNotEquals(salt1, salt2)
+        assertNotEquals(salt1, salt2)
     }
 
     @Test
@@ -37,23 +41,23 @@ class OISafeCryptoHelperTest {
         // also doesn't work with bouncycastle!
         val result = ch.encrypt("secret")
         val result2 = ch.encrypt("secret")
-        Assert.assertEquals(result2, result)
-        Assert.assertEquals("216b32709184db94c43ea7f8de9dee82", result)
+        assertEquals(result2, result)
+        assertEquals("216b32709184db94c43ea7f8de9dee82", result)
 
         val decrypted = ch.decrypt(result)
         // in java crypto side, missing IV!
-        Assert.assertArrayEquals("secret".toByteArray(), decrypted)
+        assertArrayEquals("secret".toByteArray(), decrypted)
     }
 
     @Test
     fun decrypt() {
         val ch = getCryptoMock(Algorithm.EXTERNAL_OLD, SaltedPassword(fixedSalt, fixedPassword))
         val decrypted = ch.decrypt("216b32709184db94c43ea7f8de9dee82")
-        Assert.assertArrayEquals("secret".toByteArray(), decrypted)
+        assertArrayEquals("secret".toByteArray(), decrypted)
     }
 
     @Test
-    @Ignore("temp")
+    @Disabled("temp")
     fun tempMasterKey() {
         val ch = getCryptoMock(
             Algorithm.EXTERNAL_OLD,
@@ -66,7 +70,7 @@ class OISafeCryptoHelperTest {
         val encryptedMasterKey =
             "065d56a0a3b1c10687af389f213e94997b7d95375da9b76f316f14c60e266b217813acc2263a0f4368c8615074ea7201979a88df2546588205203b6f00844b2041f2c2fc71999743cb58a836e2354e73"
         val unencryptedMasterKey = ch.decrypt(encryptedMasterKey)
-        Assert.assertArrayEquals(
+        assertArrayEquals(
             "d31418ec165a12bd3a69ee59a0910e589dfa79094379233d692d3a7ec03625f8".toByteArray(),
             unencryptedMasterKey
         )

@@ -16,7 +16,4 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.material)
-
-    androidTestImplementation(libs.androidx.test.junit)
-    testImplementation(libs.junit)
 }

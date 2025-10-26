@@ -19,8 +19,4 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.core.ktx)
     implementation(libs.material)
-
-    androidTestImplementation(libs.androidx.test.junit)
-    testImplementation(libs.junit)
-    testImplementation(libs.kxml2)
 }

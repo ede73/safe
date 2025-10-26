@@ -7,23 +7,24 @@ import fi.iki.ede.logger.Logger
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
-import org.junit.After
-import org.junit.Assert.assertArrayEquals
-import org.junit.Assert.assertEquals
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 private const val TAG = "CSVReaderKtTest"
 
 class CSVReaderKtTest {
 
-    @Before
+    @BeforeEach
     fun before() {
         mockkObject(Logger)
         every { Logger.d(any(), any()) } returns 0
     }
 
-    @After
+    @AfterEach
     fun after() {
         unmockkObject(Logger)
     }
@@ -84,11 +85,11 @@ class CSVReaderKtTest {
             d,b,"c,a",
         """.trimIndent()
         val results = readCsv(input.byteInputStream())
-        assert(results.elementAt(0) == makeFromCSVImport("a", "", "c", "d", ""))
-        assert(results.elementAt(1) == makeFromCSVImport("a", "b", "\"c\"", "d", ""))
+        assertTrue(results.elementAt(0) == makeFromCSVImport("a", "", "c", "d", ""))
+        assertTrue(results.elementAt(1) == makeFromCSVImport("a", "b", "\"c\"", "d", ""))
         // TODO: STUPID but documenting
-        assert(results.elementAt(2) == makeFromCSVImport("d", "b", "c,a", "", ""))
-        assert(results.size == 3) { "Expected 3, got ${results.size}" }
+        assertTrue(results.elementAt(2) == makeFromCSVImport("d", "b", "c,a", "", ""))
+        assertTrue(results.size == 3) { "Expected 3, got ${results.size}" }
     }
 
     //    }

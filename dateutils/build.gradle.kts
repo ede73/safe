@@ -5,6 +5,14 @@ plugins {
 
 android {
     namespace = "fi.iki.ede.dateutils"
+    testOptions {
+        unitTests {
+            isReturnDefaultValues = true
+            all {
+                it.useJUnitPlatform()
+            }
+        }
+    }
 }
 
 dependencies {
@@ -14,5 +22,6 @@ dependencies {
     implementation(libs.material)
 
     androidTestImplementation(libs.androidx.test.junit)
-    testImplementation(libs.junit)
+    testImplementation(enforcedPlatform(libs.junit5.bom))
+    testImplementation(libs.junit5.jupiter)
 }

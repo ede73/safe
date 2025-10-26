@@ -1,8 +1,8 @@
 package fi.iki.ede.safe
 
-import org.junit.Assert.assertEquals
-import org.junit.Ignore
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 
 class ApplicationSuffixTest {
 
@@ -20,13 +20,15 @@ tasks.withType<Test> {
         }
     }
 
-    @Ignore
+    @Disabled("fix later")
     fun verifyApplicationIdSuffix() {
         val expectedSuffix = ".test"
         val actualApplicationId = BuildConfig.APPLICATION_ID
         val hasCorrectSuffix = actualApplicationId.endsWith(expectedSuffix)
 
         assertEquals(
+            true,
+            hasCorrectSuffix,
             """
 Current ApplicationId: $actualApplicationId
 To protect debug experience, tests MUST have .safetest suffix.
@@ -43,8 +45,6 @@ android {
     testBuildType = "safetest"
 }
             """,
-            true,
-            hasCorrectSuffix
         )
     }
 }

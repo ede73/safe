@@ -19,7 +19,4 @@ dependencies {
     implementation(libs.androidx.material3.android)
     implementation(libs.androidx.ui.tooling.preview.android)
     implementation(libs.material)
-
-    androidTestImplementation(libs.androidx.test.junit)
-    testImplementation(libs.junit)
 }

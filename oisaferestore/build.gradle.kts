@@ -9,6 +9,11 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        unitTests.all {
+            it.useJUnitPlatform()
+        }
+    }
 }
 
 dependencies {
@@ -32,16 +37,9 @@ dependencies {
 
     // Bring bouncy castle to unit tests
     testImplementation(libs.bcprov.jdk16)
-    testImplementation(libs.junit)
+    testImplementation(enforcedPlatform(libs.junit5.bom))
+    testImplementation(libs.junit5.jupiter)
     testImplementation(libs.kxml2)
     testImplementation(libs.mockk)
     testImplementation(project(":crypto"))
-
-}
-
-tasks.withType<Test> {
-    testLogging {
-        showStandardStreams = true
-        //showExceptions = true
-    }
 }

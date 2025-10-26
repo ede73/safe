@@ -10,11 +10,10 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.cryptoobjects.encrypt
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
-import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.fail
-import org.junit.Before
-import org.junit.Test
-
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 private const val TAG = "SensitiveInformationHandlingTest"
 
@@ -23,7 +22,7 @@ class SensitiveInformationHandlingTest {
     private val uniqueRarePasswordCharacter = 'ä'
     private val password = uniqueRarePasswordCharacter.toString().repeat(5)
 
-    @Before
+    @BeforeEach
     fun before() {
         KeystoreHelperMock4UnitTests.mock()
         ks = KeyStoreHelperFactory.getKeyStoreHelper()
@@ -57,9 +56,10 @@ class SensitiveInformationHandlingTest {
         )
 
         val toString = s.toString()
-        assertEquals("Password exposed",
+        assertEquals(
             false,
-            toString.count { it == uniqueRarePasswordCharacter } != 0)
+            toString.count { it == uniqueRarePasswordCharacter } != 0,
+            "Password exposed")
     }
 
     @Test
@@ -68,18 +68,21 @@ class SensitiveInformationHandlingTest {
             "", "", "", password, "",
         )
         val toString = s.toString()
-        assertEquals("Password exposed",
+        assertEquals(
             false,
-            toString.count { it == uniqueRarePasswordCharacter } != 0)
+            toString.count { it == uniqueRarePasswordCharacter } != 0,
+            "Password exposed")
     }
 
     @Test
     fun passwordToString() {
         val p = Password(password)
         val toString = p.toString()
-        assertEquals("Password exposed",
+        assertEquals(
             false,
-            toString.count { it == uniqueRarePasswordCharacter } != 0)
+            toString.count { it == uniqueRarePasswordCharacter } != 0,
+            "Password exposed",
+        )
     }
 
     @Test
@@ -87,8 +90,10 @@ class SensitiveInformationHandlingTest {
         val p = SaltedPassword(Salt.getEmpty(), Password(password))
         val toString = p.toString()
         println(toString)
-        assertEquals("Password exposed",
+        assertEquals(
             false,
-            toString.count { it == uniqueRarePasswordCharacter } != 0)
+            toString.count { it == uniqueRarePasswordCharacter } != 0,
+            "Password exposed",
+        )
     }
 }

@@ -10,7 +10,12 @@ android {
         compose = true
     }
     testOptions {
-        unitTests.isReturnDefaultValues = true
+        unitTests {
+            isReturnDefaultValues = true
+            all {
+                it.useJUnitPlatform()
+            }
+        }
         packaging {
             resources {
                 excludes += setOf(
@@ -32,6 +37,7 @@ dependencies {
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.mockk.agent)
     androidTestImplementation(libs.mockk.android)
-    testImplementation(libs.junit)
+    testImplementation(enforcedPlatform(libs.junit5.bom))
+    testImplementation(libs.junit5.jupiter)
     testImplementation(libs.mockk)
 }

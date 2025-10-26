@@ -5,9 +5,9 @@ import io.mockk.every
 import io.mockk.mockkConstructor
 import io.mockk.slot
 import io.mockk.verify
-import org.junit.Assert
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class StateMachineTest {
     private fun getStateMachine() = StateMachine.create("solid") {
@@ -82,14 +82,14 @@ class StateMachineTest {
 
     @Test
     fun testInvalidState() {
-        Assert.assertThrows(IllegalStateException::class.java) {
+        assertThrows<IllegalStateException> {
             getStateMachine().injectEvent("non_existent")
         }
     }
 
     @Test
     fun testBrokenStateMachine() {
-        Assert.assertThrows(IllegalStateException::class.java) {
+        assertThrows<IllegalStateException> {
             val s = StateMachine.create("solid") {
                 stateEvent("solid", "melted") {
                     transitionTo("nonExistentState")
@@ -101,7 +101,7 @@ class StateMachineTest {
 
     @Test
     fun testNonAllowedUnknownEventMachine() {
-        Assert.assertThrows(IllegalStateException::class.java) {
+        assertThrows<IllegalStateException> {
             val s = StateMachine.create("solid") {
                 stateEvent("solid", "melted") {
                     dispatchEvent("unknown")
@@ -113,7 +113,7 @@ class StateMachineTest {
 
     @Test
     fun testNonAllowedKnownEventMachine() {
-        Assert.assertThrows(IllegalStateException::class.java) {
+        assertThrows<IllegalStateException> {
             val s = StateMachine.create("solid") {
                 stateEvent("solid", "melted") {
                     dispatchEvent("unknown")

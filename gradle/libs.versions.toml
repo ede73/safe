@@ -11,11 +11,14 @@ cameraCore = "1.5.1"
 coreKtx = "1.17.0"
 documentfile = "1.1.0"
 featureDeliveryKtx = "2.1.0"
+firebaseBom = "34.4.0"
 guava = "33.5.0-android"
 junit = "4.13.2"
+junit5 = "5.11.3"
+junit6 = "6.0.0"
 junitVersion = "1.3.0"
 junitVersionKtx = "1.3.0"
-kotlinStdlib = "2.2.0"
+kotlinStdlib = "2.2.21"
 kotlinxCoroutinesCore = "1.10.2"
 kotlinxSerializationJson = "1.9.0"
 kxml2 = "2.3.0"
@@ -68,9 +71,16 @@ app-update-ktx = { module = "com.google.android.play:app-update-ktx", version.re
 bcprov-jdk16 = { module = "org.bouncycastle:bcprov-jdk16", version.ref = "bcprovJdk16" }
 feature-delivery-ktx = { group = "com.google.android.play", name = "feature-delivery-ktx", version.ref = "featureDeliveryKtx" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
+junit5_bom = { group = "org.junit", name = "junit-bom", version.ref = "junit5" }
+junit5_jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit5" }
+# far in the future
+junit6_bom = { group = "org.junit", name = "junit-bom", version.ref = "junit6" }
+junit6_jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit6" }
+junit6_platform = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junit6" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlinStdlib" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }

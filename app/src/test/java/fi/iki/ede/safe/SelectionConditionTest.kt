@@ -7,8 +7,14 @@ import fi.iki.ede.db.TableColumns
 import fi.iki.ede.db.whereEq
 import fi.iki.ede.db.whereNot
 import fi.iki.ede.db.whereNullOr0
-import junit.framework.TestCase.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+
 
 class SelectionConditionTest {
 

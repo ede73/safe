@@ -6,7 +6,12 @@ plugins {
 android {
     namespace = "fi.iki.ede.logger"
     testOptions {
-        unitTests.isReturnDefaultValues = true
+        unitTests {
+            isReturnDefaultValues = true
+            all {
+                it.useJUnitPlatform()
+            }
+        }
     }
 }
 
@@ -15,11 +20,12 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.material)
     // Don't convert to catalog declaration, something is broken
-    implementation(platform("com.google.firebase:firebase-bom:33.14.0")) // firebase crashlytics
+    implementation(platform(libs.firebase.bom)) // firebase crashlytics
     implementation(libs.firebase.analytics) // firebase crashlytics (breadcrumbs)
     implementation(libs.firebase.crashlytics)
 
     androidTestImplementation(libs.androidx.test.junit)
-    testImplementation(libs.junit)
+    testImplementation(enforcedPlatform(libs.junit5.bom))
+    testImplementation(libs.junit5.jupiter)
     testImplementation(libs.mockk)
 }

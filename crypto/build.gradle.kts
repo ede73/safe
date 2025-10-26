@@ -16,6 +16,12 @@ android {
                 excludes += "META-INF/LICENSE-notice.md"
             }
         }
+        unitTests {
+            isReturnDefaultValues = true
+            all {
+                it.useJUnitPlatform()
+            }
+        }
     }
     testFixtures {
         enable = true
@@ -39,7 +45,8 @@ dependencies {
     testFixturesImplementation(libs.mockk)
     // Bring bouncy castle to unit tests
     testImplementation(libs.bcprov.jdk16)
-    testImplementation(libs.junit)
+    testImplementation(enforcedPlatform(libs.junit5.bom))
+    testImplementation(libs.junit5.jupiter)
     testImplementation(libs.kxml2)
     testImplementation(libs.mockk)
 }

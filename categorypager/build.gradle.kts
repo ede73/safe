@@ -42,16 +42,6 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview.android)
     implementation(libs.material)
 
-
-    androidTestImplementation(libs.androidx.test.core)
-    androidTestImplementation(libs.androidx.test.junit.ktx)
-    androidTestImplementation(libs.androidx.test.rules)
-    androidTestImplementation(libs.androidx.test.runner)
-    androidTestImplementation(libs.androidx.test.uiautomator)
-    androidTestImplementation(libs.mockk.agent)
-    androidTestImplementation(libs.mockk.android)
-    testImplementation(libs.junit)
-
     debugImplementation(libs.androidx.ui.test.manifest)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.test.runner) // fixed 1.6.1 test runner problem

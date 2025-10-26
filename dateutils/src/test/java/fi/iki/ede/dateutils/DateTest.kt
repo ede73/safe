@@ -1,7 +1,7 @@
 package fi.iki.ede.dateutils
 
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -20,7 +20,7 @@ class DateTest {
     fun assertNewProgramCanConvertNonZonedDates() {
         val unixDate = unixTimestampToZonedDateTime(UNIX_STAMP_MILLIS, ZoneId.of("UTC"))
         formats.forEach {
-            Assert.assertEquals(
+            assertEquals(
                 unixDate.toLocalDate(),
                 DateUtils.newParse(it).toLocalDate()
             )

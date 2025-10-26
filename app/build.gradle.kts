@@ -219,6 +219,12 @@ android {
                 )
             }
         }
+        unitTests {
+            isReturnDefaultValues = true
+            all {
+                it.useJUnitPlatform()
+            }
+        }
     }
 
     testFixtures {
@@ -283,7 +289,8 @@ dependencies {
 
     // Bring bouncy castle to unit tests
     testImplementation("org.bouncycastle:bcprov-jdk16:1.46")
-    testImplementation(libs.junit)
+    testImplementation(enforcedPlatform(libs.junit5.bom))
+    testImplementation(libs.junit5.jupiter)
     testImplementation(libs.kxml2)
     testImplementation(libs.mockk)
     testImplementation(project(":crypto"))

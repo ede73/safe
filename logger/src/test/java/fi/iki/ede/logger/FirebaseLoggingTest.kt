@@ -2,24 +2,32 @@ package fi.iki.ede.logger
 
 import com.google.firebase.Firebase
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.mockkStatic
+import io.mockk.unmockkObject
 import io.mockk.unmockkStatic
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
+
+private const val TAG = "FirebaseLoggingTest"
 
 class FirebaseLoggingTest {
 
-    @Before
+    @BeforeEach
     fun before() {
-        io.mockk.mockkObject(Firebase)
+        mockkObject(Firebase)
         mockkStatic(FirebaseCrashlytics::class)
-        io.mockk.every { FirebaseCrashlytics.getInstance() } returns io.mockk.mockk(relaxed = true)
+        every { FirebaseCrashlytics.getInstance() } returns mockk(relaxed = true)
     }
 
-    @After
+    @AfterEach
     fun after() {
-        io.mockk.unmockkObject(Firebase)
+        unmockkObject(Firebase)
         unmockkStatic(FirebaseCrashlytics::class)
     }
 
@@ -44,17 +52,17 @@ class FirebaseLoggingTest {
             Logger.d(TAG, "Must see this! $it")
             2
         }
-        assert(q == 2) { "Didn't go thru catch block" }
+        assertEquals(2, q, "Didn't go thru catch block")
     }
 
     @Test
     fun testThatPlainTryReturnsRightTypeEvenWhenThrowing() {
         var z: Int? = null
-        val h = firebaseJustTry {
+        firebaseJustTry {
             z = 11
             throwException()
         }
-        assert(z == 11) { "oh no" }
+        assertEquals(11, z, "oh no")
     }
 
     @Test
@@ -64,9 +72,9 @@ class FirebaseLoggingTest {
             2.2f
         }.firebaseCatch {
             Logger.d(TAG, this.toString())
-            assert(false) { "This line must never execute" }
+            fail("This line must never execute")
             1.1f
         }
-        assert(t == 2.2f) { "Failure" }
+        assertEquals(2.2f, t, "Failure")
     }
 }

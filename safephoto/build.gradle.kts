@@ -27,7 +27,4 @@ dependencies {
     // uh, guava dependency resolution for CameraX https://github.com/google/ExoPlayer/issues/7993
     implementation(libs.guava)
     implementation(libs.material)
-
-    androidTestImplementation(libs.androidx.test.junit)
-    testImplementation(libs.junit)
 }

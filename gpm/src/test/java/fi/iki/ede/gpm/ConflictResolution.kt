@@ -8,18 +8,19 @@ import fi.iki.ede.gpm.changeset.ScoredMatch
 import fi.iki.ede.gpm.changeset.resolveMatchConflicts
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 class ConflictResolution {
     private val importChangeSet = ImportChangeSet(emptySet(), emptySet())
 
-    @After
+    @AfterEach
     fun afterTests() {
     }
 
-    @Before
+    @BeforeEach
     fun beforeTests() {
         importChangeSet.matchingGPMs.clear()
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
@@ -34,8 +35,8 @@ class ConflictResolution {
 
         resolveMatchConflicts(importChangeSet) { }
         val resolved = importChangeSet.matchingGPMsAsMap
-        assert(resolved.keys.size == 1)
-        assert(resolved.getScoredMatches("A").size == 3)
+        assertTrue(resolved.keys.size == 1)
+        assertTrue(resolved.getScoredMatches("A").size == 3)
     }
 
     @Test
@@ -53,10 +54,10 @@ class ConflictResolution {
         resolveMatchConflicts(importChangeSet) {}
         val resolved = importChangeSet.matchingGPMsAsMap
         print(resolved)
-        assert(resolved.keys.size == 3) { "Expected 3, got ${resolved.keys.size}" }
-        assert(resolved.getScoredMatches("A").size == 1)
-        assert(resolved.getScoredMatches("B").size == 2)
-        assert(resolved.getScoredMatches("C").size == 1)
+        assertTrue(resolved.keys.size == 3) { "Expected 3, got ${resolved.keys.size}" }
+        assertTrue(resolved.getScoredMatches("A").size == 1)
+        assertTrue(resolved.getScoredMatches("B").size == 2)
+        assertTrue(resolved.getScoredMatches("C").size == 1)
     }
 
     @Test
@@ -69,10 +70,10 @@ class ConflictResolution {
 
         resolveMatchConflicts(importChangeSet) {}
         val resolved = importChangeSet.matchingGPMsAsMap
-        assert(resolved.keys.size == 3)
-        assert(resolved.getScoredMatches("A").size == 3)
-        assert(resolved.getScoredMatches("B").size == 2)
-        assert(resolved.getScoredMatches("C").size == 2)
+        assertTrue(resolved.keys.size == 3)
+        assertTrue(resolved.getScoredMatches("A").size == 3)
+        assertTrue(resolved.getScoredMatches("B").size == 2)
+        assertTrue(resolved.getScoredMatches("C").size == 2)
     }
 
     private fun Map<IncomingGPM, Set<ScoredMatch>>.getScoredMatches(name: String) =

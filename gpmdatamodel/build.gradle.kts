@@ -20,7 +20,4 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.material)
-
-    androidTestImplementation(libs.androidx.test.junit)
-    testImplementation(libs.junit)
 }
