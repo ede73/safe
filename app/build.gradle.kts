@@ -135,7 +135,7 @@ android {
 
         val services = "/META-INF/services/fi.iki.ede.safe.splits.RegistrationAPI\$Provider"
 
-        val dynamicFeatureList = setOf(":categorypager", ":oisaferestore", ":hibp")
+        val dynamicFeatureList = setOf(":categorypager", ":hibp")
         dynamicFeatures += dynamicFeatureList
 
         release {
@@ -339,8 +339,8 @@ tasks.configureEach {
                 ":gpmdatamodel:testDebugUnitTest",
                 ":gpmui:testDebugUnitTest",
                 ":hibp:testDebugUnitTest",
+                ":logger:testDebugUnitTest",
                 ":notifications:testDebugUnitTest",
-                ":oisaferestore:testDebugUnitTest",
                 ":safephoto:testDebugUnitTest",
                 ":statemachine:testDebugUnitTest",
             )

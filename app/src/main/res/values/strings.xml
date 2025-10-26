@@ -11,7 +11,6 @@
     <string name="action_bar_import_google_passwordmanager">Import GooglePassword manager</string>
     <string name="action_bar_lock">Lock app</string>
     <string name="action_bar_old_password">Enter current password</string>
-    <string name="action_bar_old_restore">(OISafe compatible) Restore</string>
     <string name="action_bar_password_change_failed">Failed changing password!</string>
     <string name="action_bar_password_changed">Master password changed!</string>
     <string name="action_bar_restore">Restore</string>
@@ -169,7 +168,6 @@
     <string name="preferences_title_time_of_last_backup">Time of last backup</string>
 
     <string name="title_categorypager">Paged Category View</string>
-    <string name="title_oisafeimport">OISafe Import</string>
     <string name="title_hibp">HIBP support</string>
     <string name="preferences_title_make_a_crash">Make application crash</string>
 

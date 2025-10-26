@@ -10,7 +10,6 @@
     <string name="action_bar_import_google_passwordmanager">Tuo salasanat Google salasanamanagerista</string>
     <string name="action_bar_lock">Lukitse</string>
     <string name="action_bar_old_password">Syötä nykyinen salasana</string>
-    <string name="action_bar_old_restore">(OISafe yhteensopiva) palautus</string>
     <string name="action_bar_password_change_failed">Salasanan vaihto epäonnistui!</string>
     <string name="action_bar_password_changed">Pääsalasana vaihdettu!</string>
     <string name="action_bar_restore">Palauta</string>
@@ -127,7 +126,6 @@
     <string name="title_activity_restore_screen">Palauta salasanat</string>
     <string name="title_categorypager">Sivutettu kategorianäyttö</string>
     <string name="title_hibp">HIBP tuki</string>
-    <string name="title_oisafeimport">OISafe salasanojen sisääntuonti</string>
     <string name="google_password_links">Linkitetyt GPM:T</string>
     <string name="preferences_title_soft_delete">Tuhoa poistetut salasanat</string>
     <string name="preferences_summary_soft_delete"><![CDATA[%s. Voit asettaa poistoajan salasanoille, jotka on merkattu poistettavaksi. Jos 0, salasanat tuhotaan heti, jos > 0, poistettavaksi merkatut salasanat tuhotaan näin monen päivän jälkeen.]]></string>
