@@ -23,6 +23,7 @@ import fi.iki.ede.crypto.support.hexToByteArray
 import fi.iki.ede.crypto.support.toHexString
 import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.logger.Logger
+import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.preferences.Preferences.PREFERENCE_BIOMETRICS_ENABLED
 import fi.iki.ede.preferences.Preferences.PREFERENCE_BIO_CIPHER
 import fi.iki.ede.preferences.Preferences.sharedPreferences
@@ -87,6 +88,7 @@ class BiometricsActivity : AppCompatActivity() {
             BiometricManager.BIOMETRIC_STATUS_UNKNOWN -> showMessage("ERROR: Unable to determine whether the user can authenticate")
         }
         setResult(RESULT_CANCELED, Intent().setAction(intent.action))
+        firebaseLog("bioAuthenticateUser: finish()")
         finish()
     }
 
@@ -111,6 +113,7 @@ class BiometricsActivity : AppCompatActivity() {
                         )
                     )
                     setResult(RESULT_CANCELED, Intent().setAction(intent.action))
+                    firebaseLog("biometrics onAuthError: finish()")
                     finish()
                 }
 
@@ -118,12 +121,14 @@ class BiometricsActivity : AppCompatActivity() {
                     super.onAuthenticationFailed()
                     showMessage(getString(R.string.biometrics_authentication_failed))
                     setResult(RESULT_FAILED, Intent().setAction(intent.action))
+                    firebaseLog("biometrics onAuthFailed: finish()")
                     finish()
                 }
 
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
                     setResult(RESULT_OK, Intent().setAction(intent.action))
+                    firebaseLog("biometricsOnAuthSucceeded: finish()")
                     finish()
                 }
             }

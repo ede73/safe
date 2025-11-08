@@ -16,6 +16,7 @@ import fi.iki.ede.autolock.AutolockingFeaturesImpl
 import fi.iki.ede.backup.ExportConfig
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.gpmdatamodel.GPMDataModel
+import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.composable.AskBackupPasswordAndCommence
 import fi.iki.ede.safe.ui.composable.RestoreDatabaseComponent
@@ -49,6 +50,7 @@ class RestoreDatabaseScreen :
                             setupActivityResultLauncher(cancelled = {
                                 resumeInactivity(context, "User cancelled restore selection")
                                 setResult(RESULT_CANCELED)
+                                firebaseLog("restoreDatabase cancel: finish()")
                                 finish()
                             }) {
                                 resumeInactivity(context, "User selected restore document")
@@ -113,11 +115,13 @@ class RestoreDatabaseScreen :
                                 processedMessage.value = "Done!"
                                 IntentManager.startCategoryScreen(context)
                                 setResult(RESULT_OK)
+                                firebaseLog("restoreDbOk: finish()")
                                 finish()
                             } else {
                                 if (ex is CancellationException) {
                                     // user decided to cancel
                                     setResult(RESULT_CANCELED)
+                                    firebaseLog("restoreDBCancel: finish()")
                                     finish()
                                 } else {
                                     // try new password

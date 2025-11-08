@@ -27,6 +27,7 @@ import fi.iki.ede.gpmui.composables.ImportGpmCsvComposable
 import fi.iki.ede.gpmui.composables.VisualizeChangeSetPager
 import fi.iki.ede.gpmui.utilities.makeIncomingForTesting
 import fi.iki.ede.gpmui.utilities.makeSavedForTesting
+import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.theme.SafeTheme
 
 class ImportNewGpmsScreen :
@@ -47,6 +48,7 @@ class ImportNewGpmsScreen :
                     ) {
                         // done!
                         AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesScreen.startMe(this)
+                        firebaseLog("importgpmcsv: finish()")
                         finish()
                     }
                 }

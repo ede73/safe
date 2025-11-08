@@ -57,6 +57,7 @@ class PreferenceActivity :
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == android.R.id.home) {
+            firebaseLog("pref onOptions: finish()")
             finish()
         }
         onUserInteraction()
@@ -158,7 +159,7 @@ class PreferenceActivity :
                 throw RuntimeException("Crash Test from preferences")
             }
 
-            findPreference<Preference>(Preferences.PREFERENCE_LAST_BACKUP_TIME).let { it ->
+            findPreference<Preference>(Preferences.PREFERENCE_LAST_BACKUP_TIME).let {
                 val lb = Preferences.getLastBackupTime()?.toLocalDateTime()
                     ?.toString()
                     ?: resources.getString(R.string.preferences_summary_lastback_never_done)

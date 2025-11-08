@@ -21,6 +21,7 @@ import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.gpmdatamodel.db.GPMDB
 import fi.iki.ede.logger.Logger
+import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.splits.IntentManager
@@ -89,6 +90,7 @@ open class LoginScreen : ComponentActivity() {
             if (intent.getStringExtra("WipeKeyStore") == "true") {
                 val ks = KeyStoreHelperFactory.getKeyStoreHelper()
                 ks.testingDeleteKeys_DO_NOT_USE()
+                firebaseLog("wireKeyStore: finish()")
                 finish()
                 return
             }
@@ -165,6 +167,7 @@ open class LoginScreen : ComponentActivity() {
         if (openCategoryListScreen) {
             IntentManager.startCategoryScreen(this)
         }
+        firebaseLog("finishLoginProcess: finish()")
         finish()
     }
 

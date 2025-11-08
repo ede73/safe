@@ -14,6 +14,7 @@ import fi.iki.ede.backup.ExportConfig
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.gpmdatamodel.db.GPMDB
+import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.utilities.setBackupDueIconEnabled
@@ -33,6 +34,7 @@ fun BackupComposable(toast: MutableState<String>) {
                 withContext(Dispatchers.IO) {
                     initiateBackup(context, it.data?.data!!) {
                         toast.value = backupCompleted
+                        firebaseLog("backupDocumentSelected: finish()")
                         (context as? Activity)?.finish()
                     }.let {
                         Preferences.setLastBackupTime()

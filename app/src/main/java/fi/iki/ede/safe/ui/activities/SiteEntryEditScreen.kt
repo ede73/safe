@@ -12,6 +12,7 @@ import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.db.DBID
+import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.notifications.SetupNotifications
@@ -90,6 +91,7 @@ class SiteEntryEditScreen :
     }
 
     private fun finishActivity() {
+        firebaseLog("finishActivity: finish()")
         finish()
     }
 

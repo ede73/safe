@@ -20,6 +20,7 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.db.DBHelperFactory
+import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.ui.composable.CopyDatabase
 import fi.iki.ede.safe.ui.composable.DualModePreview
@@ -62,6 +63,7 @@ class RecoverDatabase : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (!BuildConfig.DEBUG) {
+            firebaseLog("recoverDatabase: finish()")
             finish()
         }
         setContent {
