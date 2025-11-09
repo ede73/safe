@@ -56,13 +56,17 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
 import java.io.InputStream
 import kotlin.reflect.KFunction1
+import kotlin.time.ExperimentalTime
+import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.Instant
 
 private const val TAG = "ImportScreen"
 
 @Composable
+@ExperimentalTime
 fun ImportGpmCsvComposable(
     avertInactivity: ((Context, String) -> Unit)?,
     hasUnlinkedItemsFromPreviousRound: Boolean,
@@ -322,6 +326,7 @@ fun ImportGpmCsvComposable(
     }
 }
 
+@ExperimentalTime
 fun launchImportGpmCsvFileToAChangeSet(
     context: Context,
     inputStream: InputStream,
@@ -349,6 +354,7 @@ fun launchImportGpmCsvFileToAChangeSet(
 }
 
 
+@ExperimentalTime
 private fun storeChangeSet(importChangeSet: ImportChangeSet) {
     val add = importChangeSet.newAddedOrUnmatchedIncomingGPMs
     // there's no point updating HASH Matches (ie. nothing has changed)
@@ -375,6 +381,7 @@ private fun storeChangeSet(importChangeSet: ImportChangeSet) {
 
 @Preview(showBackground = true)
 @Composable
+@ExperimentalTime
 fun ImportScreenPreview() {
     MaterialTheme {
         ImportGpmCsvComposable(

@@ -5,6 +5,7 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.Composable
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
 import fi.iki.ede.autolock.AutolockingFeaturesImpl
@@ -17,8 +18,10 @@ import fi.iki.ede.safe.notifications.SetupNotifications
 import fi.iki.ede.safe.ui.composable.CategoryListScreenCompose
 import fi.iki.ede.safe.ui.composable.DualModePreview
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlin.time.ExperimentalTime
 
 
+@ExperimentalTime
 class CategoryListScreen :
     AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
     private val requestPermissionLauncher = registerForActivityResult(
@@ -29,6 +32,7 @@ class CategoryListScreen :
         }
     }
 
+    @ExperimentalFoundationApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (Preferences.getNotificationPermissionRequired() &&
@@ -45,6 +49,8 @@ class CategoryListScreen :
 
 @DualModePreview
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun CategoryScreenPreview() {
     KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
     KeyStoreHelperFactory.decrypterProvider = { it.cipherText }

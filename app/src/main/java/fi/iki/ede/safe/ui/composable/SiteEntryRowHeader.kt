@@ -1,5 +1,6 @@
 package fi.iki.ede.safe.ui.composable
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -15,6 +16,7 @@ import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.theme.LocalSafeTheme
 import fi.iki.ede.theme.SafeThemeSurface
+import kotlin.time.ExperimentalTime
 
 fun Color.darken(factor: Float): Color {
     return copy(alpha = alpha * factor)
@@ -40,6 +42,8 @@ fun SiteEntryRowHeader(headerString: String) {
 
 @DualModePreview
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun SiteEntryRowHeaderPreview() {
     SafeThemeSurface {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }

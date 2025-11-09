@@ -7,11 +7,13 @@ import android.os.Environment
 import android.preference.PreferenceManager
 import androidx.core.content.edit
 import fi.iki.ede.dateutils.DateUtils
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
+import kotlin.time.ExperimentalTime
 import kotlin.time.toDuration
 
+@ExperimentalTime
 object Preferences {
     lateinit var sharedPreferences: SharedPreferences
 

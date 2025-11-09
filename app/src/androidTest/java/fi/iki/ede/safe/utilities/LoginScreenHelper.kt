@@ -12,6 +12,7 @@ import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.LoginScreen
 import fi.iki.ede.safe.ui.onAllNodesWithTag
 import fi.iki.ede.safe.ui.onNodeWithTag
+import kotlin.time.ExperimentalTime
 
 interface LoginScreenHelper : NodeHelper {
     fun SemanticsNodeInteraction.assertIsNotChecked(): SemanticsNodeInteraction = assert(
@@ -28,18 +29,23 @@ interface LoginScreenHelper : NodeHelper {
         )
     )
 
+    @ExperimentalTime
     fun getBiometricsCheckbox(componentActivityTestRule: AndroidComposeTestRule<ActivityScenarioRule<LoginScreen>, LoginScreen>) =
         componentActivityTestRule.onNodeWithTag(TestTag.BIOMETRICS_CHECKBOX)
 
+    @ExperimentalTime
     fun getBiometricsButton(componentActivityTestRule: AndroidComposeTestRule<ActivityScenarioRule<LoginScreen>, LoginScreen>) =
         componentActivityTestRule.onNodeWithTag(TestTag.BIOMETRICS_BUTTON)
 
+    @ExperimentalTime
     fun getLoginButton(componentActivityTestRule: AndroidComposeTestRule<ActivityScenarioRule<LoginScreen>, LoginScreen>) =
         componentActivityTestRule.onNodeWithTag(TestTag.LOGIN_BUTTON)
 
+    @ExperimentalTime
     fun getPasswordFields(componentActivityTestRule: AndroidComposeTestRule<ActivityScenarioRule<LoginScreen>, LoginScreen>) =
         componentActivityTestRule.onAllNodesWithTag(TestTag.PASSWORD_PROMPT)
 
+    @ExperimentalTime
     fun getMinimumPasswordLength(componentActivityTestRule: AndroidComposeTestRule<ActivityScenarioRule<LoginScreen>, LoginScreen>) =
         InstrumentationRegistry.getInstrumentation().targetContext.resources.getInteger(R.integer.password_minimum_length)
 }

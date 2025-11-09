@@ -14,7 +14,9 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import fi.iki.ede.preferences.Preferences
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
 actual class MainNotification(
     context: Context,
     private val notificationConfig: NotificationSetup,

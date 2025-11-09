@@ -1,5 +1,6 @@
 package fi.iki.ede.safe.ui.composable
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -15,8 +16,11 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.theme.SafeThemeSurface
+import kotlin.time.ExperimentalTime
 
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun SiteEntryList(siteEntries: List<DecryptableSiteEntry>) {
     val categoriesState by DataModel.categoriesStateFlow.collectAsState(initial = emptyList())
     var previousValue = ""
@@ -41,6 +45,8 @@ fun SiteEntryList(siteEntries: List<DecryptableSiteEntry>) {
 
 @DualModePreview
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun SiteEntryListPreview() {
     SafeThemeSurface {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }

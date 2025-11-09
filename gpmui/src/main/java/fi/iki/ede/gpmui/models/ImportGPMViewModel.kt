@@ -22,7 +22,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
+import kotlin.time.ExperimentalTime
+
 // you have to use factory to instantiate this!
+@ExperimentalTime
 class ImportGPMViewModel : ViewModel() {
     // LiveData to signal the UI to show loading
     private val _isWorkingAndProgress = MutableLiveData(false to null as Float?)
@@ -167,7 +170,8 @@ class ImportGPMViewModel : ViewModel() {
                 importMergeDataRepository.emptySiteEntryDisplayList().await()
                 importMergeDataRepository.emptyGPMDisplayList().await()
 
-                launchIterateLists("applyMatchingPasswords",
+                launchIterateLists(
+                    "applyMatchingPasswords",
                     DataModel.siteEntriesStateFlow.value.map { WrappedDecryptableSiteEntry(it) },
                     GPMDataModel.unprocessedGPMsFlow.value.toList(),
                     compare = { outerEntry, innerEntry ->
@@ -189,7 +193,8 @@ class ImportGPMViewModel : ViewModel() {
                 importMergeDataRepository.emptySiteEntryDisplayList().await()
                 importMergeDataRepository.emptyGPMDisplayList().await()
 
-                launchIterateLists("applyMatchingNames",
+                launchIterateLists(
+                    "applyMatchingNames",
                     DataModel.siteEntriesStateFlow.value.map { WrappedDecryptableSiteEntry(it) },
                     GPMDataModel.unprocessedGPMsFlow.value.toList(),
                     compare = { outerEntry, innerEntry ->

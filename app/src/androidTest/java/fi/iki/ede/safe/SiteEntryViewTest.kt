@@ -3,6 +3,7 @@ package fi.iki.ede.safe
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onFirst
@@ -50,6 +51,7 @@ import org.junit.runner.RunWith
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
 
 
 // Custom helper method to launch the activity with intent extras
@@ -63,6 +65,8 @@ inline fun <reified A : Activity> ComposeTestRule.launchActivityWithIntent(
 }
 
 @RunWith(AndroidJUnit4::class)
+@ExperimentalTime
+@ExperimentalFoundationApi
 class SiteEntryViewTest : NodeHelper {
     @get:Rule
     val testRule = createEmptyComposeRule()

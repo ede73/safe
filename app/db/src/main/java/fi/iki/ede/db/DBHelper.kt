@@ -17,12 +17,13 @@ import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseRecordException
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
 import java.util.UUID
 import kotlin.reflect.KFunction0
+import kotlin.time.ExperimentalTime
 
 typealias DBID = Long
 typealias FileName = String
@@ -37,6 +38,7 @@ private const val TAG = "DBHelper"
  * What ever I tried, the WHOLE database gets close. And is with in-memory DBs
  * once closed, all data is lost :)
  */
+@ExperimentalTime
 class DBHelper(
     context: Context,
     databaseName: String? = DATABASE_NAME,
@@ -683,6 +685,7 @@ class DBHelper(
     }
 }
 
+@ExperimentalTime
 fun Cursor.getUTCDateTimeOfPasswordChange(): Instant? =
     getString(getColumnIndexOrThrow(SiteEntry.Columns.PASSWORD_CHANGE_DATE))?.let { date ->
         date.toLongOrNull()?.let {

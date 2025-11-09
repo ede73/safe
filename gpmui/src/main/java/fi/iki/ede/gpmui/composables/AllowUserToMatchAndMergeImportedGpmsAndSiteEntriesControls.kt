@@ -41,8 +41,10 @@ import fi.iki.ede.gpmui.models.SearchTarget
 import fi.iki.ede.gpmui.testTag
 import fi.iki.ede.theme.TextualCheckbox
 import java.util.regex.PatternSyntaxException
+import kotlin.time.ExperimentalTime
 
 @Composable
+@ExperimentalTime
 fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesControls(viewModel: ImportGPMViewModel) {
     val isWorkingAndProgress by viewModel.isWorkingAndProgress.observeAsState(false to null as Float?)
     val searchPasswords = remember { mutableStateOf(ToggleableState.Indeterminate) }
@@ -245,6 +247,7 @@ fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesControls(viewModel: Import
 
 @Preview(showBackground = true)
 @Composable
+@ExperimentalTime
 fun ImportControlsPreview() {
 
     val fakeViewModel = ImportGPMViewModel().apply {}

@@ -1,6 +1,7 @@
 package fi.iki.ede.safe.login
 
 import android.content.Context
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsFocused
@@ -38,6 +39,7 @@ import org.junit.BeforeClass
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.time.ExperimentalTime
 
 /**
  * Test scenario when app is fresh installed, all defaults apply
@@ -49,6 +51,8 @@ import org.junit.runner.RunWith
  * - TODO: Move to VerifiedPasswordTextFieldTest Verify first login only succeeds with matching passwords [verifyMismatchingPasswordNotAcceptedTest]
  */
 @RunWith(AndroidJUnit4::class)
+@ExperimentalTime
+@ExperimentalFoundationApi
 class LoginScreenFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
     @get:Rule
     val loginActivityTestRule = createAndroidComposeRule<LoginScreen>()

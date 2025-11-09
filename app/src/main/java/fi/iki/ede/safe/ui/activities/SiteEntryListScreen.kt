@@ -2,6 +2,7 @@ package fi.iki.ede.safe.ui.activities
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -19,7 +20,10 @@ import fi.iki.ede.safe.ui.composable.DualModePreview
 import fi.iki.ede.safe.ui.composable.SiteEntryListCompose
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
+@ExperimentalFoundationApi
 class SiteEntryListScreen :
     AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
 
@@ -58,6 +62,8 @@ class SiteEntryListScreen :
 
 @DualModePreview
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun SiteEntryListScreenPreview() {
     KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
     KeyStoreHelperFactory.decrypterProvider = { it.cipherText }

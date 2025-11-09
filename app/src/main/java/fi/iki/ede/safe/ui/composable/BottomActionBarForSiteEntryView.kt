@@ -22,11 +22,13 @@ import fi.iki.ede.safe.SafeApplication
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.theme.SafeTheme
+import kotlin.time.ExperimentalTime
 
 /**
  * Used in password views
  */
 @Composable
+@ExperimentalTime
 fun BottomActionBarForSiteEntryView(
     onGeneratePassword: (custom: Boolean) -> Unit = {},
 ) {
@@ -78,6 +80,7 @@ fun BottomActionBarForSiteEntryView(
 
 @DualModePreview
 @Composable
+@ExperimentalTime
 fun BottomActionBarForSiteEntryViewPreview() {
     BottomActionBarForSiteEntryView {}
 }

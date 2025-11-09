@@ -20,8 +20,10 @@ import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.BiometricsActivity
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.theme.SafeButton
+import kotlin.time.ExperimentalTime
 
 @Composable
+@ExperimentalTime
 fun BiometricsComponent(bioVerify: ActivityResultLauncher<Intent>) {
     val context = LocalContext.current
 

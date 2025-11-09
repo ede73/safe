@@ -3,8 +3,10 @@ package fi.iki.ede.safe.ui.models
 import android.graphics.Bitmap
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.db.DBID
-import kotlinx.datetime.Instant
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
+@ExperimentalTime
 data class EditableSiteEntry(
     val categoryId: DBID,
     val id: DBID? = null,

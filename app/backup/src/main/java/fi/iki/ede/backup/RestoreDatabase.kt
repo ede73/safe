@@ -29,7 +29,9 @@ import org.xmlpull.v1.XmlPullParserFactory
 import java.io.ByteArrayInputStream
 import java.io.StringReader
 import java.time.format.DateTimeParseException
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
 class RestoreDatabase : ExportConfig(ExportVersion.V1) {
     data class BackupEncryptionKeys(val data: List<String>) {
         fun getSalt(): Salt = Salt(data[0].hexToByteArray())

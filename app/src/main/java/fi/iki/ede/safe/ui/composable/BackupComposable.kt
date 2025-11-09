@@ -21,8 +21,10 @@ import fi.iki.ede.safe.ui.utilities.setBackupDueIconEnabled
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.time.ExperimentalTime
 
 @Composable
+@ExperimentalTime
 fun BackupComposable(toast: MutableState<String>) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -51,6 +53,7 @@ fun BackupComposable(toast: MutableState<String>) {
     }
 }
 
+@ExperimentalTime
 private suspend fun initiateBackup(
     context: Context,
     uri: Uri,

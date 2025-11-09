@@ -11,7 +11,9 @@ import android.view.MotionEvent
 import androidx.activity.ComponentActivity
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.preferences.Preferences
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
 interface ScreenOffLocker : AvertInactivityDuringLongTask {
     val mIntentReceiver: BroadcastReceiver
     val mFeatures: AutoLockingFeatures

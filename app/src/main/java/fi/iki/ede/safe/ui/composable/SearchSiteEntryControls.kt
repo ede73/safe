@@ -1,5 +1,6 @@
 package fi.iki.ede.safe.ui.composable
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -50,11 +51,14 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.abs
+import kotlin.time.ExperimentalTime
 
 /**
  * Search view at the top of the PasswordSearchScreen, intrinsic search controls
  */
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun SearchSiteEntryControls(
     matchingSiteEntries: MutableStateFlow<List<DecryptableSiteEntry>>,
     searchTextField: MutableState<TextFieldValue>,
@@ -161,6 +165,8 @@ fun SearchSiteEntryControls(
 private var delayedSearchJob: Job? = null
 private const val TAG = "SearchPasswordAndControls"
 
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun beginSearch(
     coroutineScope: CoroutineScope,
     allSiteEntries: List<DecryptableSiteEntry>,
@@ -254,6 +260,8 @@ fun beginSearch(
     }
 }
 
+@ExperimentalTime
+@ExperimentalFoundationApi
 private fun skippingProgressUpdate(threadIndex: Int, progress: Float) {
     if (threadIndex < searchProgressPerThread.size) {
         val changed =
@@ -265,6 +273,8 @@ private fun skippingProgressUpdate(threadIndex: Int, progress: Float) {
     }
 }
 
+@ExperimentalTime
+@ExperimentalFoundationApi
 private fun asyncFilterChunkOfSiteEntries(
     chunk: Int,
     isActive: () -> Boolean,
@@ -303,6 +313,8 @@ private fun asyncFilterChunkOfSiteEntries(
 
 @DualModePreview
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun SearchSiteEntryPreview() {
     SafeThemeSurface {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }

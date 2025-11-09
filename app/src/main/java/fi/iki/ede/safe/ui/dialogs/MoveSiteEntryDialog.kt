@@ -26,8 +26,10 @@ import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.theme.SafeButton
 import fi.iki.ede.theme.SafeListItem
 import fi.iki.ede.theme.SafeThemeSurface
+import kotlin.time.ExperimentalTime
 
 @Composable
+@ExperimentalTime
 fun MoveSiteEntryDialog(
     targetCategories: List<DecryptableCategoryEntry>,
     onConfirm: (newCategory: DecryptableCategoryEntry) -> Unit,
@@ -103,6 +105,7 @@ fun MoveSiteEntryDialog(
 
 @DualModePreview
 @Composable
+@ExperimentalTime
 fun MoveSiteEntryPreview() {
     SafeThemeSurface {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }

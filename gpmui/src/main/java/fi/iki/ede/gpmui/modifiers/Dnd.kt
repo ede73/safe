@@ -12,9 +12,11 @@ import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import fi.iki.ede.gpmui.models.DNDObject
+import kotlin.time.ExperimentalTime
 
 // TODO: Blind refactor - potentially broken
-@OptIn(ExperimentalFoundationApi::class)
+@ExperimentalFoundationApi
+@ExperimentalTime
 fun Modifier.dnd(
     dragObject: DNDObject,
     onItemDropped: ((Pair<ClipDescription, String>) -> Boolean)?,

@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Environment
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Button
@@ -21,9 +22,12 @@ import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
 import fi.iki.ede.safe.ui.activities.nudepwd
 import fi.iki.ede.safe.ui.activities.reconvertDatabase
 import java.io.File
+import kotlin.time.ExperimentalTime
 
 // only used in debug mode!
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 internal fun CopyDatabase(
     createDocumentLauncher: ActivityResultLauncher<String>?,
     updateOutput: (String) -> Unit

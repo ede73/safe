@@ -1,6 +1,7 @@
 package fi.iki.ede.safe.ui.composable
 
 import android.text.TextUtils
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -24,8 +25,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlin.time.ExperimentalTime
 
+@ExperimentalFoundationApi
 @Composable
+@ExperimentalTime
 @Suppress("FlowOperatorInvokedInComposition")
 internal fun CategoryListScreenCompose(
     flow: StateFlow<List<DecryptableCategoryEntry>> = MutableStateFlow(
@@ -75,8 +79,10 @@ internal fun CategoryListScreenCompose(
     }
 }
 
+@ExperimentalFoundationApi
 @DualModePreview
 @Composable
+@ExperimentalTime
 private fun CategoryListScreenComposePreview() {
     SafeThemeSurface {
         val categories = remember {

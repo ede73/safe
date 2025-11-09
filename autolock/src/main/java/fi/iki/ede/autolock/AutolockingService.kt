@@ -21,10 +21,12 @@ import fi.iki.ede.notifications.MainNotification
 import fi.iki.ede.preferences.Preferences
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.ExperimentalTime
 
 private const val TAG = "AutolockingService"
 
 // TODO: BUG: (minor) If you change the lockout time in prefs, it updates only after app restart
+@ExperimentalTime
 class AutolockingService : Service() {
     private var autoLockCountdownNotifier: CountDownTimer? = null
     private lateinit var mIntentReceiver: BroadcastReceiver

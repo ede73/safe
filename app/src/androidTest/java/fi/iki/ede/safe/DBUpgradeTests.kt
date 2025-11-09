@@ -11,8 +11,10 @@ import fi.iki.ede.logger.Logger
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.time.ExperimentalTime
 
 @RunWith(AndroidJUnit4::class)
+@ExperimentalTime
 class DBUpgradeTests {
     private lateinit var dbHelper: InMemorySQLiteOpenHelper
     private lateinit var context: Context
@@ -290,6 +292,7 @@ class InMemorySQLiteOpenHelper(
         Logger.i("DB", dumpDatabaseSchema(db))
     }
 
+    @ExperimentalTime
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         Logger.i("DB", "onUpgrade from $oldVersion to $newVersion")
         (oldVersion until newVersion).forEach {

@@ -1,5 +1,6 @@
 package fi.iki.ede.safe.ui.composable
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreVert
@@ -23,12 +24,14 @@ import fi.iki.ede.safe.SafeApplication
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.theme.SafeTheme
+import kotlin.time.ExperimentalTime
 
 /**
  * Used in password views
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+@ExperimentalTime
 fun TopActionBarForSiteEntryView(
     onGeneratePassword: (custom: Boolean) -> Unit = {},
 ) {
@@ -86,6 +89,8 @@ fun TopActionBarForSiteEntryView(
 
 @DualModePreview
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun TopActionBarForSiteEntryViewPreview() {
     TopActionBarForSiteEntryView {}
 }

@@ -5,7 +5,9 @@ import fi.iki.ede.safe.utilities.AutoMockingUtilities
 import fi.iki.ede.safe.utilities.LoginScreenHelper
 import org.junit.Ignore
 import org.junit.runner.RunWith
+import kotlin.time.ExperimentalTime
 
 @Ignore("Not yet done")
 @RunWith(AndroidJUnit4::class)
+@ExperimentalTime
 class LoginScreenAfterAutoBackupRestore : AutoMockingUtilities, LoginScreenHelper

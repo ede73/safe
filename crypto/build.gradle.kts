@@ -49,6 +49,11 @@ dependencies {
     testImplementation(libs.junit5.jupiter)
     testImplementation(libs.kxml2)
     testImplementation(libs.mockk)
+
+    // Add the missing runtime dependencies for JUnit 5 to the correct test classpath
+    testRuntimeOnly(enforcedPlatform(libs.junit5.bom))
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.withType<Test> {

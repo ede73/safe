@@ -45,6 +45,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
 
 /**
  * Test plan, verify that...
@@ -57,6 +58,7 @@ import kotlin.time.Duration.Companion.seconds
  * - TODO: test transition to LoginScreen after timeout
  */
 @RunWith(AndroidJUnit4::class)
+@ExperimentalTime
 class CategoryListScreenTest {
     @get:Rule
     val categoryActivityTestRule = createAndroidComposeRule<CategoryListScreen>()

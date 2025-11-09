@@ -2,6 +2,7 @@ package fi.iki.ede.safe
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ActivityScenario.launch
@@ -23,6 +24,7 @@ import org.junit.BeforeClass
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.time.ExperimentalTime
 
 /**
  * Test plan, verify that...
@@ -34,6 +36,8 @@ import org.junit.runner.RunWith
  * - TODO: test transition to LoginScreen after timeout
  */
 @RunWith(AndroidJUnit4::class)
+@ExperimentalTime
+@ExperimentalFoundationApi
 class SiteEntryListScreenTest {
     @get:Rule
     val composeTest = createEmptyComposeRule()

@@ -5,8 +5,10 @@ import androidx.compose.runtime.Composable
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.safe.splits.PluginManager
 import fi.iki.ede.safe.splits.PluginName
+import kotlin.time.ExperimentalTime
 
 @Composable
+@ExperimentalTime
 fun breachCheckButton(
     context: Context,
     encryptedPassword: IVCipherText

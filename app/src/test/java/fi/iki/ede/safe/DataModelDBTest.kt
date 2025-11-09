@@ -1,5 +1,6 @@
 package fi.iki.ede.safe
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import fi.iki.ede.crypto.KeystoreHelperMock4UnitTests
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.datamodel.DataModel
@@ -14,8 +15,11 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import kotlin.time.ExperimentalTime
 
 
+@ExperimentalTime
+@ExperimentalFoundationApi
 class DataModelDBTest {
 
     @BeforeEach

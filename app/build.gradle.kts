@@ -297,6 +297,9 @@ dependencies {
     testImplementation(testFixtures(project(":crypto")))
     testImplementation(project(":app"))
 
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
     // Firebase testlab screenshot ability
     //androidTestImplementation("com.google.firebase:testlab-instr-lib:0.2")
     // needed for val composeTestRule = createComposeRule() but not createComposeRule()<Activity>

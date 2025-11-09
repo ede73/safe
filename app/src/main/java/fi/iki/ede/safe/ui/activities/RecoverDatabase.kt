@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.Composable
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
@@ -32,9 +33,12 @@ import java.nio.channels.FileChannel
 import java.security.Key
 import java.security.KeyStore
 import javax.crypto.spec.SecretKeySpec
+import kotlin.time.ExperimentalTime
 
 
 // am start -n  fi.iki.ede.safe.debug/fi.iki.ede.safe.ui.activities.RecoverDatabase
+@ExperimentalTime
+@ExperimentalFoundationApi
 class RecoverDatabase : ComponentActivity() {
     private var output: String = ""
 //    private val requestPermissionLauncher = registerForActivityResult(
@@ -83,6 +87,7 @@ class RecoverDatabase : ComponentActivity() {
     }
 }
 
+@ExperimentalTime
 fun reconvertDatabase(pwd: String, completed: () -> Unit) {
     val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
     keyStore.load(null)
@@ -171,6 +176,7 @@ fun reconvertDatabase(pwd: String, completed: () -> Unit) {
     completed()
 }
 
+@ExperimentalTime
 private fun encryptMasterPassword(salt: Salt, newPBKDF2Key: SecretKeySpec): String {
     try {
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
@@ -189,6 +195,7 @@ private fun encryptMasterPassword(salt: Salt, newPBKDF2Key: SecretKeySpec): Stri
     }
 }
 
+@ExperimentalTime
 fun nudepwd(): String {
     try {
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
@@ -208,6 +215,8 @@ fun nudepwd(): String {
 
 @DualModePreview
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun RecoverDatabasePreview() {
     SafeThemeSurface {
         CopyDatabase(null) {}

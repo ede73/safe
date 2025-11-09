@@ -19,14 +19,16 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.dateutils.toLocalDate
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import java.time.Year
 import java.time.YearMonth
 import java.util.Locale
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 // TODO: One can select a future date, limit it
 @Composable
+@ExperimentalTime
 fun DatePicker(
     utcInstant: Instant?,
     datePickerFont: TextStyle = MaterialTheme.typography.titleLarge,
@@ -118,6 +120,7 @@ fun DatePicker(
     }
 }
 
+@ExperimentalTime
 private fun hasValueChanged(
     selectedYear: MutableState<String>,
     utcInstant: Instant?,
@@ -158,6 +161,7 @@ private fun daysInSelectedYearAndMonth(
     0
 }
 
+@ExperimentalTime
 private fun quickFormat(
     utcInstant: Instant?,
     format: String,
@@ -169,6 +173,7 @@ private fun quickFormat(
 
 @Preview(showBackground = true)
 @Composable
+@ExperimentalTime
 fun DatePickerPreview() {
     MaterialTheme {
         DatePicker(Clock.System.now()) {}

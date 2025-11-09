@@ -9,7 +9,9 @@ import androidx.compose.ui.platform.LocalContext
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
 import fi.iki.ede.autolock.AutolockingFeaturesImpl
 import fi.iki.ede.safe.ui.composable.BackupComposable
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
 class BackupDatabaseScreen : AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

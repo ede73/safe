@@ -3,6 +3,7 @@ package fi.iki.ede.safe.ui.composable
 import android.graphics.Bitmap
 import android.text.TextUtils
 import android.util.Base64
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.Composable
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
@@ -13,9 +14,11 @@ import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.safe.ui.models.EditableSiteEntry
 import fi.iki.ede.theme.SafeThemeSurface
 import kotlinx.coroutines.runBlocking
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import java.io.ByteArrayOutputStream
+import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class, ExperimentalFoundationApi::class)
 @Composable
 fun PersistPasswordEntryChanges(
     editedSiteEntry: EditableSiteEntry,
@@ -52,6 +55,7 @@ fun PersistPasswordEntryChanges(
     onSaved(true)
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun convertToJpegAndEncrypt(
     plainPhoto: Bitmap,
@@ -62,6 +66,7 @@ private fun convertToJpegAndEncrypt(
 }
 
 
+@OptIn(ExperimentalTime::class)
 @DualModePreview
 @Composable
 fun PersistPasswordEntryChangesPreview() {

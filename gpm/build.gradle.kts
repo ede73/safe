@@ -30,4 +30,7 @@ dependencies {
     testImplementation(libs.junit5.jupiter)
     testImplementation(libs.mockk)
     testImplementation(project(":logger"))
+
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

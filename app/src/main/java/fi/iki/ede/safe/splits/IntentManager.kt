@@ -3,6 +3,7 @@ package fi.iki.ede.safe.splits
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import androidx.compose.foundation.ExperimentalFoundationApi
 import fi.iki.ede.db.DBID
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.preferences.Preferences
@@ -18,9 +19,11 @@ import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen.Companion.CATEGORY_ID
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen.Companion.SITE_ENTRY_ID
 import fi.iki.ede.safe.ui.activities.SiteEntryListScreen
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
+import kotlin.time.ExperimentalTime
 
 private const val TAG = "IntentManager"
 
+@ExperimentalTime
 fun Preferences.getEnabledExperiments(): Set<PluginName> =
     getEnabledExperimentNames()
         .mapNotNull { PluginName.entries.firstOrNull { p -> p.pluginName == it } }
@@ -29,6 +32,7 @@ fun Preferences.getEnabledExperiments(): Set<PluginName> =
 
 // Every intent retrieved/launched in the app go thru IntentManager
 // If a plugin wants to tap into the intent, they can modify or even replace it
+@ExperimentalTime
 object IntentManager {
     fun registerSubMenu(
         plugin: PluginName,
@@ -46,6 +50,7 @@ object IntentManager {
     fun getMenuItems(menu: DropDownMenu) =
         menuAdditions.flatMap { (_, menuMap) -> menuMap[menu]?.toList() ?: listOf() }
 
+    @ExperimentalTime
     private inline fun <reified T> getActivityIntent(
         context: Context,
         activityClass: Class<T>,
@@ -86,16 +91,22 @@ object IntentManager {
     private val menuAdditions =
         mutableMapOf<PluginName, MutableMap<DropDownMenu, MutableList<Pair<Int, (Context) -> Unit>>>>()
 
+    @ExperimentalTime
+    @ExperimentalFoundationApi
     fun getAddSiteEntryIntent(context: Context, siteEntryId: DBID) =
         getActivityIntent(context, SiteEntryEditScreen::class.java, extras = Bundle().apply {
             putLong(CATEGORY_ID, siteEntryId)
         })
 
+    @ExperimentalTime
+    @ExperimentalFoundationApi
     fun getEditSiteEntryIntent(context: Context, siteEntryId: DBID) =
         getActivityIntent(context, SiteEntryEditScreen::class.java, extras = Bundle().apply {
             putLong(SITE_ENTRY_ID, siteEntryId)
         })
 
+    @ExperimentalTime
+    @ExperimentalFoundationApi
     fun startEditSiteEntryScreen(context: Context, siteEntryId: DBID) =
         startActivity(
             context,
@@ -104,9 +115,11 @@ object IntentManager {
             }
         )
 
+    @ExperimentalTime
     fun startRestoreDatabaseScreen(context: Context) =
         startActivity(context, RestoreDatabaseScreen::class.java)
 
+    @ExperimentalTime
     fun startCategoryScreen(context: Context) =
         startActivity(
             context,
@@ -114,6 +127,7 @@ object IntentManager {
             Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
         )
 
+    @ExperimentalTime
     fun startHelpScreen(context: Context) =
         startActivity(context, HelpScreen::class.java)
 
@@ -130,9 +144,12 @@ object IntentManager {
             Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
         )
 
+    @ExperimentalTime
+    @ExperimentalFoundationApi
     fun startSiteEntrySearchScreen(context: Context) =
         startActivity(context, SiteEntrySearchScreen::class.java)
 
+    @ExperimentalFoundationApi
     fun startSiteEntryListScreen(context: Context, id: DBID) =
         startActivity(
             context, SiteEntryListScreen::class.java,
@@ -149,6 +166,7 @@ object IntentManager {
         menuAdditions.remove(pluginName)
     }
 
+    @ExperimentalTime
     private inline fun <reified T> startActivity(
         context: Context,
         activityClass: Class<T>,

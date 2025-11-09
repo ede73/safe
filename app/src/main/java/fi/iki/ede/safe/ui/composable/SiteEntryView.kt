@@ -72,16 +72,18 @@ import fi.iki.ede.theme.SafeButton
 import fi.iki.ede.theme.SafeTextButton
 import fi.iki.ede.theme.SafeThemeSurface
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 inline fun <T, C : Collection<T>> C.ifNotEmpty(block: (C) -> Unit): C {
     if (this.isNotEmpty()) block(this)
     return this
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun SiteEntryView(
     viewModel: EditingSiteEntryViewModel,
     modifier: Modifier = Modifier,
@@ -446,6 +448,8 @@ private fun tryParseUri(website: String): Uri =
 
 @DualModePreview
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun SiteEntryViewPreview() {
     SafeThemeSurface {
         //PopCustomPasswordDialog {}

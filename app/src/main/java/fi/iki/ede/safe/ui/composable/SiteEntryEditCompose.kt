@@ -3,6 +3,7 @@ package fi.iki.ede.safe.ui.composable
 import android.app.Activity
 import android.content.Intent
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -25,8 +26,11 @@ import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.theme.SafeButton
 import fi.iki.ede.theme.SafeTheme
+import kotlin.time.ExperimentalTime
 
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 internal fun SiteEntryEditCompose(
     viewModel: EditingSiteEntryViewModel,
     editingSiteEntryId: DBID?,

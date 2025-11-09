@@ -2,6 +2,7 @@ package fi.iki.ede.safe.ui.composable
 
 import android.content.Context
 import android.net.Uri
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableIntState
@@ -24,9 +25,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.datetime.Instant
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 @Composable
+@ExperimentalTime
 fun RestoreDatabaseComponent(
     processedPasswords: MutableIntState,
     processedCategories: MutableIntState,
@@ -43,6 +46,7 @@ fun RestoreDatabaseComponent(
     val restoreAnywayText = stringResource(R.string.restore_screen_not_most_recent_backup_restore)
     val cancelRestoration = stringResource(R.string.restore_screen_not_most_recent_backup_cancel)
 
+    @ExperimentalTime
     suspend fun verifyUserWantsToRestoreOldBackup(
         coroutineScope: CoroutineScope,
         backupCreationTime: Instant,

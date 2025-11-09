@@ -4,7 +4,9 @@ import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.gpm.changeset.harmonizePotentialDomainName
 import fi.iki.ede.gpm.similarity.LowerCaseTrimmedString
 import fi.iki.ede.gpm.similarity.toLowerCasedTrimmedString
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
 data class WrappedDecryptableSiteEntry(val siteEntry: DecryptableSiteEntry) {
     val cachedDecryptedPassword: String by lazy { siteEntry.plainPassword } // ok
 

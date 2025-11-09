@@ -4,9 +4,11 @@ import android.os.Bundle
 import android.view.MotionEvent
 import androidx.appcompat.app.AppCompatActivity
 import fi.iki.ede.autolock.NavigationBarHelper.enableDrawingBehindNavigationBar
+import kotlin.time.ExperimentalTime
 
 
 @Suppress("LeakingThis")
+@ExperimentalTime
 open class AutoLockingBaseAppCompatActivity(features: AutoLockingFeatures) : AppCompatActivity(),
     ScreenOffLocker {
 

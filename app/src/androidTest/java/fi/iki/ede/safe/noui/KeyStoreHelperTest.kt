@@ -2,6 +2,7 @@ package fi.iki.ede.safe.noui
 
 
 import android.content.Context
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.crypto.Password
@@ -25,9 +26,12 @@ import org.junit.BeforeClass
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.time.ExperimentalTime
 
 @RunWith(AndroidJUnit4::class)
 // TODO: If nothing else, apply change pwd test..
+@ExperimentalTime
+
 class KeyStoreHelperTest {
 
     private val context: Context =
@@ -40,6 +44,8 @@ class KeyStoreHelperTest {
     }
 
     @Test
+    @ExperimentalTime
+    @ExperimentalFoundationApi
     fun changeMasterPassword() {
         val oldPassword: Password = fakePassword
         val newPassword = Password("aaaaaaaa")

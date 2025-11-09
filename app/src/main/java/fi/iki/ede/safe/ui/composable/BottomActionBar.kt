@@ -2,6 +2,7 @@ package fi.iki.ede.safe.ui.composable
 
 import android.content.ActivityNotFoundException
 import android.widget.Toast
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Lock
@@ -35,10 +36,13 @@ import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.theme.SafeTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlin.time.ExperimentalTime
 
 private const val TAG = "BottomActionBar"
 
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun BottomActionBar(
     onAddRequested: () -> Unit = {},
     loginScreen: Boolean = false
@@ -103,6 +107,7 @@ fun BottomActionBar(
 }
 
 @Composable
+@ExperimentalTime
 private fun ShowChangeMasterPasswordDialog(
     showChangePasswordDialog: MutableState<Boolean>
 ) {
@@ -141,6 +146,8 @@ private fun ShowChangeMasterPasswordDialog(
 
 
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 private fun MakeDropdownMenu(
     loginScreen: Boolean,
     displayMenu: MutableState<Boolean>,

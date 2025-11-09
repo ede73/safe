@@ -34,10 +34,12 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.ExperimentalTime
 
 private const val TAG = "AutoLogOutTest"
 
 @RunWith(AndroidJUnit4::class)
+@ExperimentalTime
 class AutoLogOutTest {
 //    @get:Rule(order = 0)
 //    val serviceRule: ServiceTestRule = ServiceTestRule.withTimeout(30, TimeUnit.SECONDS)

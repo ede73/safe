@@ -63,9 +63,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.reflect.KFunction2
+import kotlin.time.ExperimentalTime
 
 
-@OptIn(ExperimentalFoundationApi::class)
+@ExperimentalFoundationApi
+@ExperimentalTime
 @Composable
 fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesList(
     viewModel: ImportGPMViewModel,
@@ -343,6 +345,8 @@ fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesList(
 
 @Preview(showBackground = true)
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun ImportEntryListPreview() {
     MaterialTheme {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }

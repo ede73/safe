@@ -1,5 +1,6 @@
 package fi.iki.ede.safe.ui.composable
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -18,8 +19,11 @@ import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
 import fi.iki.ede.theme.SafeTheme
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlin.time.ExperimentalTime
 
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 internal fun SiteEntrySearchCompose() {
     SafeTheme {
         Surface(

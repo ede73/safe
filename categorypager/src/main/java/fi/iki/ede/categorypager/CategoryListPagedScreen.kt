@@ -3,6 +3,7 @@ package fi.iki.ede.categorypager
 import android.os.Bundle
 import android.text.TextUtils
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
@@ -37,8 +38,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlin.time.ExperimentalTime
 
 
+@ExperimentalTime
+@ExperimentalFoundationApi
 class CategoryListPagedScreen :
     AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,6 +52,8 @@ class CategoryListPagedScreen :
 }
 
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 private fun CategoryListScreenPagedCompose(
     flow: StateFlow<List<DecryptableCategoryEntry>> = MutableStateFlow(
         emptyList()
@@ -87,6 +93,8 @@ private fun CategoryListScreenPagedCompose(
 }
 
 @Composable
+@ExperimentalTime
+
 private fun AddOrEditCategory(
     coroutineScope: CoroutineScope,
     displayAddCategoryDialog: MutableState<Boolean>
@@ -110,6 +118,8 @@ private fun AddOrEditCategory(
 
 @Preview(showBackground = true)
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun CategoryListPagedScreenPreview() {
     KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
     KeyStoreHelperFactory.decrypterProvider = { it.cipherText }

@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -17,7 +18,10 @@ import fi.iki.ede.gpmui.composables.AllowUserToMatchAndMergeImportedGpmsAndSiteE
 import fi.iki.ede.gpmui.composables.AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesList
 import fi.iki.ede.gpmui.models.ImportGPMViewModel
 import fi.iki.ede.theme.SafeTheme
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
+@ExperimentalFoundationApi
 class AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesScreen :
     AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
     private val viewModel: ImportGPMViewModel by viewModels()

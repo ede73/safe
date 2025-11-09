@@ -1,5 +1,6 @@
 package fi.iki.ede.safe.ui.composable
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.produceState
@@ -10,8 +11,11 @@ import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.time.ExperimentalTime
 
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun SiteEntryExtensionList(
     viewModel: EditingSiteEntryViewModel,
 ) {

@@ -38,9 +38,11 @@ import fi.iki.ede.theme.SafeListItem
 import fi.iki.ede.theme.SafeThemeSurface
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalFoundationApi::class)
+@ExperimentalFoundationApi
 @Composable
+@ExperimentalTime
 fun CategoryRow(category: DecryptableCategoryEntry) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -148,6 +150,8 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
     }
 }
 
+@ExperimentalTime
+@ExperimentalFoundationApi
 @DualModePreview
 @Composable
 fun CategoryRowPreview() {

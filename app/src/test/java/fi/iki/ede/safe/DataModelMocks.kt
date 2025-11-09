@@ -20,7 +20,9 @@ import io.mockk.mockkObject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Instant
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
 object DataModelMocks {
     private var masterKeyStore: Pair<Salt, IVCipherText>? = null
 

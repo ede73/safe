@@ -2,7 +2,10 @@ package fi.iki.ede.backup
 
 import android.content.Intent
 import fi.iki.ede.preferences.Preferences
+import kotlin.time.ExperimentalTime
 
+
+@ExperimentalTime
 abstract class ExportConfig(currentCodedVersion: ExportVersion) {
     // IMPORTANT: If you ever introduce a breaking change, make sure to advance the version code
     val currentVersion = currentCodedVersion

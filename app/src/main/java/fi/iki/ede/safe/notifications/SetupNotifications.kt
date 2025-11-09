@@ -8,9 +8,11 @@ import fi.iki.ede.notifications.ConfiguredNotifications
 import fi.iki.ede.notifications.MainNotification
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.ui.utilities.setBackupDueIconEnabled
+import kotlin.time.ExperimentalTime
 
 
 object SetupNotifications {
+    @ExperimentalTime
     fun setup(context: Context) {
         compareAndSetPreferenceWithCallback(
             "notification.getAutoBackupStarts",
@@ -53,6 +55,7 @@ object SetupNotifications {
         }
     }
 
+    @ExperimentalTime
     private fun compareAndSetPreferenceWithCallback(
         key: String,
         value: String?,

@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.fold
 import kotlinx.coroutines.flow.transform
 import org.xmlpull.v1.XmlPullParserFactory
 import java.io.StringWriter
+import kotlin.time.ExperimentalTime
 
 /**
  * TODO: Add HMAC
@@ -27,6 +28,7 @@ import java.io.StringWriter
  * If you EVER introduce a breaking change (namespace, remove elements, rename attributes)
  * Make sure to increase the version code. Linter will highlight places to fix
  */
+@ExperimentalTime
 class BackupDatabase : ExportConfig(ExportVersion.V1) {
     fun generateXMLExport(
         categoriesList: List<DecryptableCategoryEntry>,

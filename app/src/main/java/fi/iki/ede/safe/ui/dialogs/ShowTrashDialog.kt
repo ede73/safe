@@ -1,5 +1,6 @@
 package fi.iki.ede.safe.ui.dialogs
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -36,8 +37,12 @@ import fi.iki.ede.theme.SafeListItem
 import fi.iki.ede.theme.SafeThemeSurface
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlin.time.ExperimentalTime
 
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
+
 fun ShowTrashDialog(
     onDismiss: () -> Unit,
 ) {
@@ -130,6 +135,8 @@ fun ShowTrashDialog(
 
 @DualModePreview
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun ShowTrashPreview() {
     SafeThemeSurface {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }

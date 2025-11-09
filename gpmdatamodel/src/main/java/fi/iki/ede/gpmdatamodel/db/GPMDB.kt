@@ -21,9 +21,11 @@ import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.model.SavedGPM.Companion.makeFromEncryptedStringFields
 import fi.iki.ede.logger.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlin.time.ExperimentalTime
 
 private const val TAG = "GPMDB"
 
+@ExperimentalTime
 object GPMDB {
     private fun getReadableDatabase(): SQLiteDatabase =
         DBHelperFactory.getDBHelper().readableDatabase

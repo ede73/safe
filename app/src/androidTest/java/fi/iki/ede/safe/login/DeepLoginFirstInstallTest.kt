@@ -45,6 +45,7 @@ import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.time.ExperimentalTime
 
 private const val TAG = "DeepLoginFirstInstallTest"
 
@@ -58,6 +59,7 @@ private const val TAG = "DeepLoginFirstInstallTest"
  */
 @Ignore
 @RunWith(AndroidJUnit4::class)
+@ExperimentalTime
 class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
     @get:Rule
     val loginActivityTestRule = createAndroidComposeRule<LoginScreen>()
@@ -101,6 +103,7 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
     }
 
     @Test
+    @ExperimentalTime
     fun newLoginAndBioLaunchedWhenChecked() {
         mockIsBiometricsEnabled { true }
         mockIsBiometricsInitialized { false }
@@ -137,6 +140,7 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
     // TODO: add also test case for failed biometrics
     // TODO: cancelled biometrics
 
+    @ExperimentalTime
     private fun properPasswordLogin(biometricsRegister: Boolean) {
         every { LoginHandler.passwordLogin(any(), any()) } returns true
         // TODO: this should INITIALIZE keystore

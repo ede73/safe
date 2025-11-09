@@ -1,7 +1,7 @@
 plugins {
     kotlin("multiplatform")
     alias(libs.plugins.android.library)
-    id("de.mannodermaus.android-junit5") version "1.11.0.0"
+    id("de.mannodermaus.android-junit5") version "1.14.0.0"
 }
 
 kotlin {
@@ -31,9 +31,10 @@ kotlin {
         val androidUnitTest by getting {
             dependencies {
                 implementation(project.dependencies.platform(libs.junit5.bom))
-                implementation("org.junit.jupiter:junit-jupiter:5.11.3") // explicit version
-                // 1.14.6 doesnt work in KMP
-                implementation("io.mockk:mockk:1.13.8")                 // explicit version
+                implementation(libs.junit5.jupiter)
+                implementation(libs.mockk)
+                runtimeOnly("org.junit.jupiter:junit-jupiter-engine:5.11.3")
+                runtimeOnly("org.junit.platform:junit-platform-launcher")
             }
         }
 //        val commonTest by getting {

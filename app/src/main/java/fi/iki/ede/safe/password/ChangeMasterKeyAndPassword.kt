@@ -14,12 +14,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.time.ExperimentalTime
 
 
 object ChangeMasterKeyAndPassword {
 
     // Change the user password derived (PBKDF2) key that is used to encrypt the actual master key
     // the master key remains unchanged, so no need to 'convert' the database
+    @ExperimentalTime
     fun changeMasterPassword(
         oldPass: Password,
         newPass: Password,

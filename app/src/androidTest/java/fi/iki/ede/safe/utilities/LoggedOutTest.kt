@@ -17,6 +17,7 @@ import io.mockk.unmockkAll
 import org.junit.AfterClass
 import org.junit.Before
 import org.junit.BeforeClass
+import kotlin.time.ExperimentalTime
 
 /**
  * These special scenarios are logged out testing, usually in onCreate
@@ -33,6 +34,7 @@ import org.junit.BeforeClass
  * - modifying site entry works [TODO:]
  * - TODO: test transition to LoginScreen after timeout
  */
+@ExperimentalTime
 open class LoggedOutTest {
     private val context: Context =
         InstrumentationRegistry.getInstrumentation().targetContext.applicationContext

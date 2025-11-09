@@ -45,9 +45,12 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
+import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun SiteEntryRow(
     siteEntry: DecryptableSiteEntry,
     categoriesState: List<DecryptableCategoryEntry>,
@@ -169,6 +172,8 @@ fun SiteEntryRow(
 
 @DualModePreview
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun SiteEntryRowPreview() {
     SafeThemeSurface {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
@@ -176,7 +181,8 @@ fun SiteEntryRowPreview() {
         val encrypter = KeyStoreHelperFactory.getEncrypter()
         val site1 = DecryptableSiteEntry(1).apply {
             description = encrypter("This is lengthy description worth of a king".toByteArray())
-            passwordChangedDate = LocalDateTime(2023, 11, 10, 10, 10, 10).toInstant(TimeZone.currentSystemDefault())
+            passwordChangedDate =
+                LocalDateTime(2023, 11, 10, 10, 10, 10).toInstant(TimeZone.currentSystemDefault())
         }
         val cat = DecryptableCategoryEntry().apply {
             id = 1

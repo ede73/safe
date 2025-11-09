@@ -2,12 +2,14 @@ package fi.iki.ede.safe
 
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.preferences.Preferences
+import kotlin.time.ExperimentalTime
 
 private const val TAG = "MyExceptionHandler"
 
 class MyExceptionHandler(private val defaultHandler: Thread.UncaughtExceptionHandler) :
     Thread.UncaughtExceptionHandler {
 
+    @ExperimentalTime
     override fun uncaughtException(thread: Thread, exception: Throwable) {
         // Log the exception to Crashlytics - shouldn't be needed though
         // FirebaseCrashlytics.getInstance().recordException(exception)

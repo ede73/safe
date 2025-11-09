@@ -1,5 +1,6 @@
 package fi.iki.ede.safe.ui.composable
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Text
@@ -16,8 +17,11 @@ import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.testTag
+import kotlin.time.ExperimentalTime
 
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun SiteEntryExtensionSelector(
     viewModel: EditingSiteEntryViewModel,
     allKnownValues: Set<String>,

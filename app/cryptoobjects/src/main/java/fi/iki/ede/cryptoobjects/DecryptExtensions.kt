@@ -5,7 +5,9 @@ import android.util.Base64
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.support.decrypt
 import fi.iki.ede.logger.Logger
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
 fun DecryptableSiteEntry.decryptPhoto(decrypter: (IVCipherText) -> ByteArray) =
     try {
         val base64Photo = photo.decrypt(decrypter)

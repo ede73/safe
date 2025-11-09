@@ -2,6 +2,7 @@ package fi.iki.ede.safe.ui.composable
 
 import android.content.ActivityNotFoundException
 import android.widget.Toast
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -41,6 +42,7 @@ import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.theme.SafeTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlin.time.ExperimentalTime
 
 private const val TAG = "TopActionBar"
 
@@ -49,6 +51,8 @@ private const val TAG = "TopActionBar"
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun TopActionBar(
     onAddRequested: () -> Unit = {},
     loginScreen: Boolean = false,
@@ -118,6 +122,7 @@ fun TopActionBar(
 }
 
 @Composable
+@ExperimentalTime
 private fun ShowChangeMasterPasswordDialog(
     showChangePasswordDialog: MutableState<Boolean>
 ) {
@@ -155,6 +160,8 @@ private fun ShowChangeMasterPasswordDialog(
 }
 
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 private fun MakeDropdownMenu(
     loginScreen: Boolean,
     displayMenu: MutableState<Boolean>,
@@ -263,6 +270,8 @@ private fun MakeDropdownMenu(
 
 @Preview(showBackground = true)
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun DefaultPreview() {
     SafeTheme {
         Column {

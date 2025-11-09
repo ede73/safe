@@ -2,15 +2,19 @@ package fi.iki.ede.categorypager
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.foundation.ExperimentalFoundationApi
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.splits.RegistrationAPI
 import fi.iki.ede.safe.ui.activities.CategoryListScreen
+import kotlin.time.ExperimentalTime
 
 private val TAG = PluginName.CATEGORY_PAGER.pluginName
 
 class RegistrationAPIImpl : RegistrationAPI {
+    @ExperimentalTime
+    @ExperimentalFoundationApi
     override fun register(context: Context) {
         Logger.e(TAG, "RegistrationAPIImpl::register()")
         val intent = Intent(

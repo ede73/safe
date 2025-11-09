@@ -27,8 +27,10 @@ import fi.iki.ede.statemachine.StateMachine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.ExperimentalTime
 
 
+@ExperimentalTime
 class RestoreDatabaseScreen :
     AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
     private val viewModel: RestoreViewModel by viewModels()

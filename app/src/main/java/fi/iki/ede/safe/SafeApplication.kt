@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.camera.camera2.Camera2Config
 import androidx.camera.core.CameraXConfig
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.preference.PreferenceManager
 import com.google.android.play.core.splitcompat.SplitCompatApplication
 import fi.iki.ede.autolock.AutolockingFeaturesImpl
@@ -25,6 +26,7 @@ import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.splits.getEnabledExperiments
 import fi.iki.ede.safe.ui.activities.LoginScreen
 import fi.iki.ede.safe.ui.utilities.setBackupDueIconEnabled
+import kotlin.time.ExperimentalTime
 
 private val TAG = "SafeApplication"
 
@@ -47,6 +49,8 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
                 ?.let { MyExceptionHandler(it) })
     }
 
+    @ExperimentalTime
+    @ExperimentalFoundationApi
     override fun onCreate() {
         super.onCreate()
         Logger.w(TAG, "onCreate")
@@ -96,6 +100,8 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
 
     companion object {
         private var instance: SafeApplication? = null
+
+        @ExperimentalTime
         fun lockTheApplication(context: Context) {
             // Clear the clipboard, if it contains the last password used
             ClipboardUtils.clearClipboard(context)
@@ -106,6 +112,7 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
     }
 
     // We want to ensure as plugins are loaded/unloaded their registration is correctly removed
+    @ExperimentalTime
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
         if (key == PREFERENCE_EXPERIMENTAL_FEATURES) {
             val enabledExperiments = Preferences.getEnabledExperiments()

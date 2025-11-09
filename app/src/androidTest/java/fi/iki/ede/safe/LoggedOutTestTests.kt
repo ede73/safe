@@ -2,6 +2,7 @@ package fi.iki.ede.safe
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
@@ -20,11 +21,14 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.time.ExperimentalTime
 
 // test that main interfaces support automatic transition to login screen
 // if for what ever reason (backbuffer) launched logged out (auto logout)
 // Alas there isn't easy way to make these dynamic due to @get:Rule)
 @RunWith(AndroidJUnit4::class)
+@ExperimentalTime
+@ExperimentalFoundationApi
 class SiteEntryListScreenStartLoggedOutTest : LoggedOutTest() {
     // TODO: what a work to pass Intent to activity! write a wrapper!
     @get:Rule
@@ -49,6 +53,8 @@ class SiteEntryListScreenStartLoggedOutTest : LoggedOutTest() {
 }
 
 @RunWith(AndroidJUnit4::class)
+@ExperimentalTime
+@ExperimentalFoundationApi
 class CategoryListScreenStartLoggedOutTest : LoggedOutTest() {
     @get:Rule
     val composeTest = createAndroidComposeRule<CategoryListScreen>()
@@ -59,6 +65,8 @@ class CategoryListScreenStartLoggedOutTest : LoggedOutTest() {
 }
 
 @RunWith(AndroidJUnit4::class)
+@ExperimentalTime
+@ExperimentalFoundationApi
 class SiteEntryEditScreenStartLoggedOutTest : LoggedOutTest() {
     @get:Rule
     val composeTest = createAndroidComposeRule<SiteEntryEditScreen>()

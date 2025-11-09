@@ -11,8 +11,10 @@ import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.composable.DualModePreview
 import fi.iki.ede.theme.SafeButton
 import fi.iki.ede.theme.SafeThemeSurface
+import kotlin.time.ExperimentalTime
 
 @Composable
+@ExperimentalTime
 fun DeleteSiteEntryDialog(
     siteEntry: DecryptableSiteEntry,
     onConfirm: () -> Unit,
@@ -42,6 +44,7 @@ fun DeleteSiteEntryDialog(
 
 @DualModePreview
 @Composable
+@ExperimentalTime
 fun DeleteSiteEntryDialogPreview() {
     SafeThemeSurface {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }

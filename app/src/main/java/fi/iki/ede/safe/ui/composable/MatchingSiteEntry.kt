@@ -37,9 +37,11 @@ import fi.iki.ede.theme.LocalSafeTheme
 import fi.iki.ede.theme.SafeListItem
 import fi.iki.ede.theme.SafeThemeSurface
 import kotlinx.coroutines.launch
+import kotlin.time.ExperimentalTime
 
 // TODO: THIS! Should have MUCH more common with SiteEntryRow!
-@OptIn(ExperimentalFoundationApi::class)
+@ExperimentalTime
+@ExperimentalFoundationApi
 @Composable
 fun MatchingSiteEntry(
     siteEntry: DecryptableSiteEntry,
@@ -150,6 +152,8 @@ fun MatchingSiteEntry(
     }
 }
 
+@ExperimentalTime
+@ExperimentalFoundationApi
 @DualModePreview
 @Composable
 fun MatchingSiteEntryPreview() {

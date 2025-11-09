@@ -5,8 +5,10 @@ import fi.iki.ede.notifications.initializeNotifications
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.activities.BackupDatabaseScreen
 import fi.iki.ede.safe.ui.activities.CategoryListScreen
+import kotlin.time.ExperimentalTime
 
 
+@ExperimentalTime
 fun prepareNotifications() = initializeNotifications {
     notification(
         1,

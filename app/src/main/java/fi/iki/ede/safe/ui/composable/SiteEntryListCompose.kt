@@ -1,6 +1,7 @@
 package fi.iki.ede.safe.ui.composable
 
 import android.content.Context
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -16,9 +17,12 @@ import fi.iki.ede.db.DBID
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.theme.SafeTheme
 import fi.iki.ede.theme.SafeThemeSurface
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 internal fun SiteEntryListCompose(
     context: Context?,
     category: DecryptableCategoryEntry,
@@ -52,6 +56,8 @@ internal fun SiteEntryListCompose(
 
 @DualModePreview
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 private fun SiteEntryListComposePreview() {
     SafeThemeSurface {
         val (category, siteEntries) = remember {

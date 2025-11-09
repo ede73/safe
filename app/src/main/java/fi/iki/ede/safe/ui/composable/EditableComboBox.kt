@@ -31,9 +31,12 @@ import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.theme.SafeThemeSurface
+import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun EditableComboBox(
     selectedItems: Set<String>, // SET should suffice! Hoist to top side(.remove)
     allItems: Set<String>,
@@ -150,6 +153,8 @@ fun EditableComboBox(
 
 @DualModePreview
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun EditableComboBoxPreview() {
     SafeThemeSurface {
         EditableComboBox(

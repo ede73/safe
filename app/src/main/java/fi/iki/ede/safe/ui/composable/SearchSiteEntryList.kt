@@ -3,6 +3,7 @@ package fi.iki.ede.safe.ui.composable
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,8 +24,11 @@ import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
 import fi.iki.ede.theme.SafeThemeSurface
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlin.time.ExperimentalTime
 
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun SearchSiteEntryList(
     filteredSiteEntries: MutableStateFlow<List<DecryptableSiteEntry>>
 ) {
@@ -81,6 +85,8 @@ fun SearchSiteEntryList(
 
 @DualModePreview
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun SearchSiteEntryListPreview() {
     SafeThemeSurface {
         KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }

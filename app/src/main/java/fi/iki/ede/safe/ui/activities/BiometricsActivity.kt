@@ -31,12 +31,14 @@ import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.theme.SafeTheme
 import java.time.ZonedDateTime
+import kotlin.time.ExperimentalTime
 
 // TODO: With latest jetpack biometric lib, authentication failed flow seems to have changed
 // Previously there were couple of tries, not it flat out fails
 // End result is login screen activates, but biometric screen still stays on, so user had to
 // navigate back, then enter password or launch biometric again
 // Not a big deal, but feels buggy
+@ExperimentalTime
 class BiometricsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -143,6 +145,7 @@ class BiometricsActivity : AppCompatActivity() {
     companion object {
         const val TAG = "BiometricsActivity"
 
+        @ExperimentalTime
         fun isBiometricEnabled() =
             sharedPreferences.getBoolean(PREFERENCE_BIOMETRICS_ENABLED, false)
 

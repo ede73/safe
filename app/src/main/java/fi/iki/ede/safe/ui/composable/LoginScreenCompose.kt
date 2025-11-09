@@ -3,6 +3,7 @@ package fi.iki.ede.safe.ui.composable
 import android.content.Intent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,7 +26,10 @@ import fi.iki.ede.safe.ui.activities.LoginPrecondition
 import fi.iki.ede.safe.ui.activities.LoginStyle
 import fi.iki.ede.safe.ui.activities.isGoodRestoredContent
 import fi.iki.ede.theme.SafeTheme
+import kotlin.time.ExperimentalTime
 
+@ExperimentalFoundationApi
+@ExperimentalTime
 @Composable
 internal fun LoginScreenCompose(
     loginPrecondition: LoginPrecondition,

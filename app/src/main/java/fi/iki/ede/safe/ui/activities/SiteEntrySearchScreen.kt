@@ -2,6 +2,7 @@ package fi.iki.ede.safe.ui.activities
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
@@ -11,7 +12,10 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.safe.ui.composable.DualModePreview
 import fi.iki.ede.safe.ui.composable.SiteEntrySearchCompose
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
+@ExperimentalFoundationApi
 class SiteEntrySearchScreen :
     AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
 
@@ -32,6 +36,8 @@ class SiteEntrySearchScreen :
 
 @DualModePreview
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun SiteEntrySearchPreview() {
     KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
     KeyStoreHelperFactory.decrypterProvider = { it.cipherText }

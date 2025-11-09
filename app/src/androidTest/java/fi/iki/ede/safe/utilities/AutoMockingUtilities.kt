@@ -2,7 +2,9 @@ package fi.iki.ede.safe.utilities
 
 import fi.iki.ede.safe.ui.activities.BiometricsActivity
 import io.mockk.every
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
 interface AutoMockingUtilities {
     companion object {
         // Not only preferences value, but Biometrics component actually

@@ -6,6 +6,7 @@ import android.content.ServiceConnection
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.Composable
 import fi.iki.ede.autolock.AutolockingFeaturesImpl
 import fi.iki.ede.autolock.AutolockingService
@@ -35,6 +36,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.time.ExperimentalTime
 
 // This login logic is bit complex:
 // But basically there are two outcomes:
@@ -58,6 +60,7 @@ enum class LoginPrecondition {
     FIRST_TIME_LOGIN_RESTORED_DATABASE
 }
 
+@ExperimentalTime
 open class LoginScreen : ComponentActivity() {
     private var openCategoryListScreen: Boolean = true
     private val biometricsFirstTimeRegister = biometricsFirstTimeActivity()
@@ -72,6 +75,8 @@ open class LoginScreen : ComponentActivity() {
         }
     }
 
+    @ExperimentalTime
+    @ExperimentalFoundationApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         openCategoryListScreen = intent.getBooleanExtra(
@@ -117,6 +122,7 @@ open class LoginScreen : ComponentActivity() {
             }
         }
 
+    @ExperimentalTime
     private fun goodPasswordEntered(
         loginStyle: LoginStyle,
         it: Password,
@@ -231,6 +237,7 @@ open class LoginScreen : ComponentActivity() {
     }
 }
 
+@ExperimentalTime
 private fun haveMasterkeyInDatabase(): Boolean {
     val db = DBHelperFactory.getDBHelper()
     val (salt, cipheredMasterKey) = try {
@@ -243,6 +250,7 @@ private fun haveMasterkeyInDatabase(): Boolean {
     return true
 }
 
+@ExperimentalTime
 fun isGoodRestoredContent(context: Context) = try {
     if (!MyBackupAgent.haveRestoreMark(context)) false
     else haveMasterkeyInDatabase()
@@ -253,6 +261,8 @@ fun isGoodRestoredContent(context: Context) = try {
 
 @DualModePreview
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun LoginScreenPreview() {
     KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
     KeyStoreHelperFactory.decrypterProvider = { it.cipherText }

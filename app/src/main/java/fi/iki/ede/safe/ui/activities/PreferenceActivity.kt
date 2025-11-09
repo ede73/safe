@@ -43,9 +43,11 @@ import fi.iki.ede.safe.ui.composable.ExtensionsEditor
 import fi.iki.ede.safe.ui.models.PluginLoaderViewModel
 import fi.iki.ede.safe.ui.utilities.startActivityForResults
 import kotlinx.coroutines.launch
+import kotlin.time.ExperimentalTime
 import fi.iki.ede.preferences.R as prefR
 
 
+@ExperimentalTime
 class PreferenceActivity :
     AutoLockingBaseAppCompatActivity(AutolockingFeaturesImpl) {
     override fun onCreate(savedInstanceState: Bundle?) {

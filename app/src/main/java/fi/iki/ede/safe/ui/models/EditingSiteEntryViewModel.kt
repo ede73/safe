@@ -9,11 +9,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.datetime.Instant
+import kotlin.time.ExperimentalTime
 
 // This will hold COPY of the decryptable password for purposes of editing
 // Once finished, changes are persisted
 // If device is rotated or paused/restarted, killed/restarted
 // We want to KEEP EDITING what ever we were editing until discarded or saved
+@ExperimentalTime
 open class EditingSiteEntryViewModel : ViewModel() {
     private val _editableSiteEntryState = MutableStateFlow(EditableSiteEntry(-1))
     val editableSiteEntryState: StateFlow<EditableSiteEntry> = _editableSiteEntryState.asStateFlow()

@@ -12,7 +12,9 @@ import fi.iki.ede.db.DBID
 import fi.iki.ede.gpm.model.SavedGPM
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlSerializer
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
 internal fun XmlSerializer.encryptedAttribute(
     name: Attributes,
     encryptedValue: IVCipherText,
@@ -30,6 +32,7 @@ internal fun XmlSerializer.encryptedAttribute(
     return this
 }
 
+@ExperimentalTime
 internal fun XmlSerializer.addTagAndCData(
     name: Elements,
     encryptedValue: IVCipherText,
@@ -50,11 +53,17 @@ internal fun XmlSerializer.addTagAndCData(
     .endTag(name)
 
 
+@ExperimentalTime
 internal fun XmlSerializer.endTag(name: Elements) = endTag(null, name.value)
+
+@ExperimentalTime
 internal fun XmlSerializer.startTag(name: Elements) = startTag(null, name.value)
+
+@ExperimentalTime
 internal fun XmlSerializer.plainTextAttribute(name: Attributes, value: String) =
     attribute(null, name.value, value)
 
+@ExperimentalTime
 internal fun XmlSerializer.prefixedPlainTextAttribute(
     name: Attributes,
     prefix: String,
@@ -62,6 +71,7 @@ internal fun XmlSerializer.prefixedPlainTextAttribute(
 ) =
     attribute(null, "${prefix}${name.value}", value)
 
+@ExperimentalTime
 internal fun XmlSerializer.startTagWithIVCipherAttribute(
     name: Elements,
     attr: Pair<Attributes, IVCipherText>? = null
@@ -73,6 +83,7 @@ internal fun XmlSerializer.startTagWithIVCipherAttribute(
         this
     }
 
+@ExperimentalTime
 internal fun XmlSerializer.writeSiteEntry(siteEntry: DecryptableSiteEntry) {
     // needed for GPM mapping, won't break bank nor backwards compatibility
     startTag(Elements.SITE_ENTRY).plainTextAttribute(
@@ -113,6 +124,7 @@ internal fun XmlSerializer.writeSiteEntry(siteEntry: DecryptableSiteEntry) {
     endTag(Elements.SITE_ENTRY)
 }
 
+@ExperimentalTime
 internal fun XmlPullParser.getAttributeValue(
     attribute: Attributes,
     prefix: String? = null
@@ -123,6 +135,7 @@ internal fun XmlPullParser.getAttributeValue(
 
 // After some recent update while restoring, date parsing fails due to non breakable space
 // Wasn't able to track IN THE EMULATOR where it comes from
+@ExperimentalTime
 internal fun XmlPullParser.getTrimmedAttributeValue(
     attribute: Attributes,
     prefix: String? = null
@@ -132,6 +145,7 @@ internal fun XmlPullParser.getTrimmedAttributeValue(
 internal inline fun <reified T : Enum<T>, V> valueOrNull(value: V, valueSelector: (T) -> V): T? =
     enumValues<T>().find { valueSelector(it) == value }
 
+@ExperimentalTime
 internal fun XmlPullParser.getEncryptedAttribute(name: Attributes): IVCipherText {
     val iv = getTrimmedAttributeValue(name, ATTRIBUTE_PREFIX_IV)
     val cipher = getTrimmedAttributeValue(name, ATTRIBUTE_PREFIX_CIPHER)
@@ -141,6 +155,7 @@ internal fun XmlPullParser.getEncryptedAttribute(name: Attributes): IVCipherText
     return IVCipherText.getEmpty()
 }
 
+@ExperimentalTime
 internal fun XmlPullParser.maybeGetText(gotTextNode: (encryptedText: IVCipherText) -> Unit) {
     val iv = getTrimmedAttributeValue(Attributes.IV)
     next()
@@ -154,6 +169,7 @@ internal fun XmlPullParser.maybeGetText(gotTextNode: (encryptedText: IVCipherTex
     }
 }
 
+@ExperimentalTime
 internal fun XmlSerializer.writeGPMEntry(savedGPM: SavedGPM, gpmToPasswords: Set<DBID>) {
     startTag(Elements.IMPORTS_GPM_ITEM)
         .plainTextAttribute(Attributes.IMPORTS_GPM_ITEM_HASH, savedGPM.hash)

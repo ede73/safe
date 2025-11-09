@@ -6,7 +6,9 @@ import android.database.sqlite.SQLiteDatabase
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.CipherUtilities
 import fi.iki.ede.dateutils.DateUtils
-import kotlinx.datetime.Instant
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
+
 
 fun ContentValues.put(column: TableColumns<*>, value: IVCipherText) =
     put(column.columnName, value.combineIVAndCipherText())
@@ -20,6 +22,7 @@ fun ContentValues.put(column: TableColumns<*>, value: ByteArray) =
 fun ContentValues.put(column: TableColumns<*>, value: String) =
     put(column.columnName, value)
 
+@ExperimentalTime
 fun ContentValues.put(column: TableColumns<*>, utcDate: Instant) =
     put(column, DateUtils.toUnixSeconds(utcDate))
 

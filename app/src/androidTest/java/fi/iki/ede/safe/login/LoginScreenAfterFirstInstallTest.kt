@@ -3,6 +3,7 @@ package fi.iki.ede.safe.login
 import android.app.Activity.RESULT_CANCELED
 import android.content.Context
 import androidx.activity.result.ActivityResult
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
@@ -45,6 +46,7 @@ import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.time.ExperimentalTime
 
 private const val TAG = "LoginScreenAfterFirstInstallTest"
 
@@ -60,6 +62,8 @@ private const val TAG = "LoginScreenAfterFirstInstallTest"
  * - biometrics available, must open biometric prompt, but biometrics reading fails, we login with passeord [testLoggingWorksWithFailingBiometrics]
  */
 @RunWith(AndroidJUnit4::class)
+@ExperimentalTime
+@ExperimentalFoundationApi
 class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
     @get:Rule
     val loginActivityTestRule = createAndroidComposeRule<LoginScreen>()

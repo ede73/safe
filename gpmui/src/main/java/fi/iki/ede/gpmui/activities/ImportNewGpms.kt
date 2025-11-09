@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -29,7 +30,10 @@ import fi.iki.ede.gpmui.utilities.makeIncomingForTesting
 import fi.iki.ede.gpmui.utilities.makeSavedForTesting
 import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.theme.SafeTheme
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
+@ExperimentalFoundationApi
 class ImportNewGpmsScreen :
     AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,6 +68,7 @@ class ImportNewGpmsScreen :
 }
 
 @Composable
+@ExperimentalTime
 @Preview(showBackground = true)
 fun ImportGooglePasswordsPreview() {
     KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }

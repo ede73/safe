@@ -14,7 +14,9 @@ import fi.iki.ede.db.DBID
 import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.gpmdatamodel.db.GPMDB
 import kotlinx.coroutines.runBlocking
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
 object DBHelper4AndroidTest {
 
     private fun getDBHelper() = DBHelperFactory.getDBHelper()
@@ -78,6 +80,7 @@ object DBHelper4AndroidTest {
         require(this.isMock) { "You MUST have called mockKeyStore() before calling" }
     }
 
+    @ExperimentalTime
     private fun addPassword(
         description: String,
         forceCategoryId: DBID,

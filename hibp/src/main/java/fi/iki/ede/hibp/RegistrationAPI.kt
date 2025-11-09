@@ -1,6 +1,7 @@
 package fi.iki.ede.hibp
 
 import android.content.Context
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -18,6 +19,7 @@ import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.splits.RegistrationAPI
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
 import fi.iki.ede.theme.SafeButton
+import kotlin.time.ExperimentalTime
 
 private val TAG = PluginName.HIBP.pluginName
 
@@ -49,6 +51,8 @@ class RegistrationAPIProviderImpl : RegistrationAPI.Provider, GetComposable {
     }
 
     @Composable
+    @ExperimentalTime
+    @ExperimentalFoundationApi
     override fun getComposable(
         context: Context,
         encryptedPassword: IVCipherText

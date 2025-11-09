@@ -5,8 +5,9 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.decrypt
 import fi.iki.ede.logger.Logger
-import kotlinx.datetime.Instant
 import kotlinx.serialization.json.Json
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 /**
  * Allows access to EncryptedPassEntry's fields decrypted
@@ -15,6 +16,7 @@ import kotlinx.serialization.json.Json
  *
  * TODO: Doesn't really belong to this project, does it?
  */
+@ExperimentalTime
 class DecryptableSiteEntry(categoryId: Long) {
     companion object {
         const val TAG = "DecryptableSiteEntry"

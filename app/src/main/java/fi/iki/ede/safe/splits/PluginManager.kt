@@ -10,6 +10,7 @@ import fi.iki.ede.safe.BuildConfig
 import java.util.ServiceConfigurationError
 import java.util.ServiceLoader
 import kotlin.reflect.full.createInstance
+import kotlin.time.ExperimentalTime
 
 private const val TAG = "PluginManager"
 
@@ -17,6 +18,7 @@ object PluginManager {
     /* NEVER READ THIS */
     private var _bundleTestMode = false
 
+    @ExperimentalTime
     fun getComposableInterface(plugin: PluginName): GetComposable? = try {
         firebaseLog("Get getComposableInterface for ${plugin.pluginName}")
         getPluginFQCN(plugin)?.let {
@@ -109,6 +111,7 @@ object PluginManager {
         }
     }
 
+    @ExperimentalTime
     fun reinitializePlugins(appContext: Context) {
         val sm = SplitInstallManagerFactory.create(appContext)
         Preferences.getEnabledExperiments().forEach {
@@ -144,6 +147,7 @@ object PluginManager {
 
     private fun getBundleTestMode() = if (BuildConfig.DEBUG) _bundleTestMode else false
 
+    @ExperimentalTime
     fun isPluginEnabled(plugin: PluginName) =
         plugin in Preferences.getEnabledExperiments()
 }

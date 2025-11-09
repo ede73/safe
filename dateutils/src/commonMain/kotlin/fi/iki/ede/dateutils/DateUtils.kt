@@ -1,23 +1,26 @@
 package fi.iki.ede.dateutils
 
 import fi.iki.ede.logger.Logger
-import kotlinx.datetime.Clock
 import kotlinx.datetime.DatePeriod
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.periodUntil
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
+@ExperimentalTime
 object DateUtils {
 
     const val TAG = "DateUtils"
     fun unixEpochSecondsToInstant(unixEpochSeconds: Long): Instant =
         Instant.fromEpochSeconds(unixEpochSeconds)
 
-    fun toUnixSeconds(utcInput: Instant = Clock.System.now()) = utcInput.epochSeconds
+    fun toUnixSeconds(utcInput: Instant = Clock.System.now()) =
+        utcInput.epochSeconds
 
     @Deprecated("DO NOT USE! Only allowed use case is DBHelper and Restore - for backwards compatibility")
     fun newParse(flakyStringDate: String): Instant {
@@ -56,6 +59,11 @@ object DateUtils {
     }
 }
 
+@ExperimentalTime
 fun Instant.toLocalDate() = this.toLocalDateTime(TimeZone.currentSystemDefault()).date
+
+@ExperimentalTime
 fun Instant.toLocalTime() = this.toLocalDateTime(TimeZone.currentSystemDefault()).time
+
+@ExperimentalTime
 fun Instant.toLocalDateTime() = this.toLocalDateTime(TimeZone.currentSystemDefault())

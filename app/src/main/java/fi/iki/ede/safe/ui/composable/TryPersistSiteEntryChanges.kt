@@ -12,8 +12,10 @@ import androidx.compose.ui.res.stringResource
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.models.EditableSiteEntry
 import fi.iki.ede.theme.SafeButton
+import kotlin.time.ExperimentalTime
 
 @Composable
+@ExperimentalTime
 fun TryPersistSiteEntryChanges(
     edits: EditableSiteEntry,
     passwordChanged: Boolean,
@@ -26,10 +28,11 @@ fun TryPersistSiteEntryChanges(
         emptyDescription = true
     }
     if (emptyDescription) {
-        AlertDialog(onDismissRequest = {
-            onDismiss()
-            emptyDescription = false
-        },
+        AlertDialog(
+            onDismissRequest = {
+                onDismiss()
+                emptyDescription = false
+            },
             confirmButton = {
                 SafeButton(onClick = {
                     onDismiss()

@@ -1,10 +1,12 @@
 package fi.iki.ede.dateutils
 
-import kotlinx.datetime.Instant
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
+@ExperimentalTime
 class DateTest {
     @Test
     @Disabled("ZonedDateTime parser was pretty good, kotlin one sucks. Though we should really need this anymore anywhere")

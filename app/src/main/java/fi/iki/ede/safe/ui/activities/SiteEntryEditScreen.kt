@@ -3,6 +3,7 @@ package fi.iki.ede.safe.ui.activities
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.Composable
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
 import fi.iki.ede.autolock.AutolockingFeaturesImpl
@@ -23,10 +24,13 @@ import fi.iki.ede.safe.ui.models.EditableSiteEntry
 import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.utilities.MeasureTime
 import fi.iki.ede.theme.SafeTheme
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.ExperimentalTime
 
 
+@ExperimentalTime
+@ExperimentalFoundationApi
 class SiteEntryEditScreen :
     AutoLockingBaseComponentActivity(AutolockingFeaturesImpl) {
 
@@ -132,6 +136,8 @@ class SiteEntryEditScreen :
 
 @DualModePreview
 @Composable
+@ExperimentalTime
+@ExperimentalFoundationApi
 fun SiteEntryScreenPreview() {
     KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
     KeyStoreHelperFactory.decrypterProvider = { it.cipherText }

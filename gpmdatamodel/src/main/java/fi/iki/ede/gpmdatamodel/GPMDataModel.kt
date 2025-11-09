@@ -22,8 +22,10 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
+import kotlin.time.ExperimentalTime
 
 
+@ExperimentalTime
 object GPMDataModel {
     private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private const val TAG = "DataModelForGPM"

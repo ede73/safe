@@ -7,6 +7,7 @@ import fi.iki.ede.crypto.SaltedPassword
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.safe.R
+import kotlin.time.ExperimentalTime
 
 object LoginHandler {
     private var loggedIn: Boolean = false
@@ -16,6 +17,7 @@ object LoginHandler {
         loggedIn = true
     }
 
+    @ExperimentalTime
     fun firstTimeLogin(password: Password) {
         // this instance has no password (no exported master key!)
         val (salt, cipheredKey) = KeyStoreHelper.createNewKey(password)
@@ -30,6 +32,7 @@ object LoginHandler {
         loggedIn = false
     }
 
+    @ExperimentalTime
     fun passwordLogin(context: Context, password: Password): Boolean {
         // TODO: async
         val (salt, cipheredMasterKey) =
