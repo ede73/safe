@@ -1,29 +1,22 @@
 package fi.iki.ede.hibp
 
-import java.security.MessageDigest
+import okio.ByteString.Companion.encodeUtf8
 
 /**
  * Utility class hiding K-Anonymity
  */
 class KAnonymity(passwordNotToBeStored: String) {
-    private val kanonHash: String
+    private val kanonHash: String = passwordNotToBeStored
+        .encodeUtf8()   // convert to ByteString
+        .sha1()         // SHA-1 hash
+        .hex()          // hex string
+        .lowercase()    // lowercase
 
-    init {
-        val md = MessageDigest.getInstance("SHA-1")
-        val hash = md.digest(passwordNotToBeStored.toByteArray())
-        kanonHash = hash.joinToString("") {
-            "%02x".format(it)
-        }.lowercase()
-    }
+    fun getPrefix(i: Int): String = kanonHash.take(i)
 
-    fun getPrefix(i: Int): String {
-        return kanonHash.substring(0, i)
-    }
-
-    fun isMatch(prefixLength: Int, breachedPasswordHashes: List<String>): Boolean {
-        return breachedPasswordHashes.any {
+    fun isMatch(prefixLength: Int, breachedPasswordHashes: List<String>): Boolean =
+        breachedPasswordHashes.any {
             kanonHash.substring(prefixLength) == it.take(kanonHash.length - prefixLength)
                 .lowercase()
         }
-    }
 }

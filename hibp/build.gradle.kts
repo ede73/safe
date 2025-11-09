@@ -17,6 +17,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.material3.android)
     implementation(libs.material)
+    implementation(libs.okio)
     // Volley for HTTP breach checks
     implementation(libs.volley)
     implementation(project(":app"))
