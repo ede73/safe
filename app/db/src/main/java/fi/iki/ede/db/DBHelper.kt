@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
-import java.util.UUID
+import kotlin.random.Random
 import kotlin.reflect.KFunction0
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -448,7 +448,10 @@ class DBHelper(
 
     fun savePhoto(photo: IVCipherText): FileName? =
         if (photo.isEmpty()) null else
-            (photoDir / "${UUID.randomUUID()}.photo_data").let { path ->
+            (photoDir / "%016x%016x.photo_data".format(
+                Random.nextLong(),
+                Random.nextLong()
+            )).let { path ->
                 runCatching {
                     FileSystem.SYSTEM.write(path) {
                         write(photo.iv)
