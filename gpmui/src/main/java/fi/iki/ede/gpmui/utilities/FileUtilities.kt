@@ -35,19 +35,19 @@ private fun tryToDeleteOriginalGpmCsv(
     }
 }
 
-private const val importedGpmCsv = "import.csv"
+private const val IMPORTED_GPM_CSV = "import.csv"
 fun doesInternalCopyOfGpmCsvImportExist(context: Context) =
-    File(context.filesDir, importedGpmCsv).exists()
+    File(context.filesDir, IMPORTED_GPM_CSV).exists()
 
 fun deleteInternalCopyOfGpmCsvImport(context: Context) =
-    File(context.filesDir, importedGpmCsv).let {
+    File(context.filesDir, IMPORTED_GPM_CSV).let {
         if (it.exists()) {
             it.delete()
         }
     }
 
 fun getInternalCopyOfGpmCsvAsInputStream(context: Context): InputStream? {
-    val file = File(context.filesDir, importedGpmCsv)
+    val file = File(context.filesDir, IMPORTED_GPM_CSV)
     if (file.exists()) {
         return file.inputStream()
     } else {
@@ -58,13 +58,13 @@ fun getInternalCopyOfGpmCsvAsInputStream(context: Context): InputStream? {
 fun copyOriginalGpmCsvToMyAppFolder(context: Context, sourceUri: Uri): InputStream? =
     try {
         val resolver = context.contentResolver
-        val destinationFile = File(context.filesDir, importedGpmCsv)
+        val destinationFile = File(context.filesDir, IMPORTED_GPM_CSV)
         resolver.openInputStream(sourceUri)?.use { inputStream ->
             FileOutputStream(destinationFile).use { outputStream ->
                 inputStream.copyTo(outputStream)
             }
         }
-        val copiedFiled = File(context.filesDir, importedGpmCsv)
+        val copiedFiled = File(context.filesDir, IMPORTED_GPM_CSV)
         // in emulator we will keep this file in app folder
         if (!BuildConfig.DEBUG) {
             copiedFiled.deleteOnExit()
