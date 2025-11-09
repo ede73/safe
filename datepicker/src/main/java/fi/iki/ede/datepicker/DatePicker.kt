@@ -19,10 +19,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.dateutils.toLocalDate
-import java.time.Year
-import java.time.YearMonth
-import java.util.Locale
-import kotlin.time.Clock
+import kotlinx.datetime.LocalDate
+import java.util.Locale // KMP Android
+import kotlin.time.Clock.System.now
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -46,7 +45,7 @@ fun DatePicker(
     // - NumberPicker (pager) state one of year,month,day (or -- placeholders)
     // - Turn NumberPicker red if no date selected
 
-    val currentYear = Year.now().value
+    val currentYear = now().toLocalDate().year
     val years = (currentYear - 10..currentYear).map { it.toString() } + listOf("----")
     val months =
         (1..12).map { String.format(Locale.getDefault(), "%02d", it) } + listOf("--")
@@ -155,8 +154,12 @@ private fun daysInSelectedYearAndMonth(
     selectedYear: MutableState<String>,
     selectedMonth: MutableState<String>
 ) = try {
-    YearMonth.of(selectedYear.value.toInt(), selectedMonth.value.toInt())
-        .lengthOfMonth()
+    val year = selectedYear.value.toInt()
+    val month = selectedMonth.value.toInt()
+    val firstOfMonth = LocalDate(year, month, 1)
+    val firstOfNextMonth =
+        if (month == 12) LocalDate(year + 1, 1, 1) else LocalDate(year, month + 1, 1)
+    (firstOfNextMonth.toEpochDays() - firstOfMonth.toEpochDays()).toInt()
 } catch (ex: Exception) {
     0
 }
@@ -176,6 +179,6 @@ private fun quickFormat(
 @ExperimentalTime
 fun DatePickerPreview() {
     MaterialTheme {
-        DatePicker(Clock.System.now()) {}
+        DatePicker(now()) {}
     }
 }
