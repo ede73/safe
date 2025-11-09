@@ -3,25 +3,27 @@ package fi.iki.ede.gpmui.utilities
 import android.content.Context
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
-import fi.iki.ede.gpmui.BuildConfig
-import java.io.ByteArrayInputStream
-import java.io.File
-import java.io.FileOutputStream
-import java.io.InputStream
+import okio.BufferedSource
+import okio.FileSystem
+import okio.Path.Companion.toPath
+import okio.buffer
+import okio.source
 
 // Google Password Manager exports stuff in plain text (*puke*)
 // let's copy the file to safety inside app folder
-fun getInternalCopyOfGpmCsvAsImportStreamAndDeleteOriginal(
+fun getInternalCopyOfGpmCsvAsBufferedSourceAndDeleteOriginal(
     context: Context,
     selectedDoc: Uri,
     originalNotDeleted: () -> Unit
-): InputStream? = copyOriginalGpmCsvToMyAppFolder(context, selectedDoc).apply {
+): BufferedSource? {
+    val copiedFile = copyOriginalGpmCsvToMyAppFolder(context, selectedDoc)
     tryToDeleteOriginalGpmCsv(context, selectedDoc, originalNotDeleted)
-} ?: run {
-    // oh, we failed to copy..not much we can do here anymore?
-    // Read the INPUT and ask to delete
-    val i = context.contentResolver.openInputStream(selectedDoc)
-    i?.let { ByteArrayInputStream(it.readBytes()) }
+
+    return copiedFile?.let { path ->
+        FileSystem.SYSTEM.source(path.toPath()).buffer()
+    } ?: context.contentResolver.openInputStream(selectedDoc)?.use { inputStream ->
+        inputStream.source().buffer()
+    }
 }
 
 private fun tryToDeleteOriginalGpmCsv(
@@ -29,48 +31,54 @@ private fun tryToDeleteOriginalGpmCsv(
     selectedDoc: Uri,
     originalNotDeleted: () -> Unit
 ) {
-    val document = DocumentFile.fromSingleUri(context, selectedDoc)
-    document?.delete()?.let {
-        if (!it) originalNotDeleted()
+    try {
+        val document = DocumentFile.fromSingleUri(context, selectedDoc)
+        if (document?.delete() == false) { // If delete returns false, it failed
+            originalNotDeleted()
+        }
+    } catch (e: Exception) {
+        // If an exception occurs (e.g. security exception), we also failed to delete.
+        originalNotDeleted()
     }
 }
 
 private const val IMPORTED_GPM_CSV = "import.csv"
-fun doesInternalCopyOfGpmCsvImportExist(context: Context) =
-    File(context.filesDir, IMPORTED_GPM_CSV).exists()
 
-fun deleteInternalCopyOfGpmCsvImport(context: Context) =
-    File(context.filesDir, IMPORTED_GPM_CSV).let {
-        if (it.exists()) {
-            it.delete()
+fun doesInternalCopyOfGpmCsvImportExist(context: Context): Boolean =
+    (context.filesDir.absolutePath.toPath() / IMPORTED_GPM_CSV).let { FileSystem.SYSTEM.exists(it) }
+
+fun deleteInternalCopyOfGpmCsvImport(context: Context): Boolean =
+    (context.filesDir.absolutePath.toPath() / IMPORTED_GPM_CSV).let { path ->
+        if (FileSystem.SYSTEM.exists(path)) {
+            FileSystem.SYSTEM.delete(path)
+            true
+        } else {
+            true // Or false, depending on desired semantics. True seems fine.
         }
     }
 
-fun getInternalCopyOfGpmCsvAsInputStream(context: Context): InputStream? {
-    val file = File(context.filesDir, IMPORTED_GPM_CSV)
-    if (file.exists()) {
-        return file.inputStream()
-    } else {
-        return null
-    }
-}
-
-fun copyOriginalGpmCsvToMyAppFolder(context: Context, sourceUri: Uri): InputStream? =
-    try {
-        val resolver = context.contentResolver
-        val destinationFile = File(context.filesDir, IMPORTED_GPM_CSV)
-        resolver.openInputStream(sourceUri)?.use { inputStream ->
-            FileOutputStream(destinationFile).use { outputStream ->
-                inputStream.copyTo(outputStream)
+fun getInternalCopyOfGpmCsvAsBufferedSource(context: Context): BufferedSource? =
+    (context.filesDir.absolutePath.toPath() / IMPORTED_GPM_CSV).let { path ->
+        if (FileSystem.SYSTEM.exists(path)) {
+            try {
+                FileSystem.SYSTEM.source(path).buffer()
+            } catch (e: Exception) {
+                null
             }
+        } else null
+    }
+
+private fun copyOriginalGpmCsvToMyAppFolder(context: Context, sourceUri: Uri): String? =
+    try {
+        val destinationPath = (context.filesDir.absolutePath.toPath() / IMPORTED_GPM_CSV)
+        context.contentResolver.openInputStream(sourceUri)?.source()?.buffer().use { input ->
+            if (input != null) {
+                FileSystem.SYSTEM.sink(destinationPath).buffer().use { output ->
+                    output.writeAll(input)
+                }
+            } else return null
         }
-        val copiedFiled = File(context.filesDir, IMPORTED_GPM_CSV)
-        // in emulator we will keep this file in app folder
-        if (!BuildConfig.DEBUG) {
-            copiedFiled.deleteOnExit()
-        }
-        copiedFiled.inputStream()
+        destinationPath.toString()
     } catch (ex: Exception) {
-        val i = context.contentResolver.openInputStream(sourceUri)
-        i?.let { ByteArrayInputStream(it.readBytes()) }
+        null
     }

@@ -9,7 +9,8 @@ import android.content.Context
 import android.os.ParcelFileDescriptor
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.preferences.Preferences
-import java.io.File
+import okio.FileSystem
+import okio.Path.Companion.toPath
 import kotlin.time.ExperimentalTime
 
 const val TAG = "MyBackupAgent"
@@ -78,18 +79,27 @@ class MyBackupAgent : BackupAgentHelper() {
     companion object {
         private const val RESTORE_MARK = ".restored"
         fun markRestored(context: Context) {
-            val restored = File(context.filesDir, RESTORE_MARK)
-            restored.createNewFile()
+            (context.filesDir.absolutePath.toPath() / RESTORE_MARK).let { path ->
+                if (!FileSystem.SYSTEM.exists(path)) {
+                    FileSystem.SYSTEM.write(path) {} // creates empty file
+                }
+            }
         }
 
-        fun haveRestoreMark(context: Context) = runCatching {
-            File(context.filesDir, RESTORE_MARK).exists()
-        }.getOrDefault(false)
+        fun haveRestoreMark(context: Context) =
+            runCatching {
+                (context.filesDir.absolutePath.toPath() / RESTORE_MARK).let {
+                    FileSystem.SYSTEM.exists(
+                        it
+                    )
+                }
+            }.getOrDefault(false)
 
         fun removeRestoreMark(context: Context) {
-            val restored = File(context.filesDir, RESTORE_MARK)
-            if (restored.exists()) {
-                restored.delete()
+            (context.filesDir.absolutePath.toPath() / RESTORE_MARK).let { path ->
+                if (FileSystem.SYSTEM.exists(path)) {
+                    FileSystem.SYSTEM.delete(path)
+                }
             }
         }
     }

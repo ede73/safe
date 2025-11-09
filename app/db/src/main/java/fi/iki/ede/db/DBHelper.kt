@@ -17,13 +17,13 @@ import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseRecordException
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlin.time.Instant
-import java.io.File
-import java.io.FileInputStream
-import java.io.IOException
+import okio.FileSystem
+import okio.Path
+import okio.Path.Companion.toPath
 import java.util.UUID
 import kotlin.reflect.KFunction0
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 typealias DBID = Long
 typealias FileName = String
@@ -50,7 +50,8 @@ class DBHelper(
     // Alas API 33:OpenParams.Builder().setJournalMode(JOURNAL_MODE_MEMORY).build()
 ) {
     private val dynamicTables = mutableListOf<Table>()
-    private val photoDir: File = File(context.applicationContext.filesDir, "photos")
+    private val photoDir: Path =
+        context.applicationContext.filesDir.absolutePath.toPath() / "photos"
 
     init {
         if (!regularAppNotATest || System.getProperty("test") == "test") {
@@ -60,7 +61,11 @@ class DBHelper(
             require(databaseName != null) { "Cannot use InMemory DB in prod" }
             require(System.getProperty("test") != "test") { "Test cannot use file DB" }
         }
-        if (!photoDir.exists() && !photoDir.mkdirs()) {
+        if (!FileSystem.SYSTEM.exists(photoDir) && runCatching {
+                FileSystem.SYSTEM.createDirectories(
+                    photoDir
+                )
+            }.isFailure) {
             Logger.e(TAG, "FAILED MAKING PHOTO DIR")
         }
         dynamicTables.addAll(getExternalTables())
@@ -426,37 +431,36 @@ class DBHelper(
         }
     }
 
-    fun loadPhoto(photoName: FileName): IVCipherText? = File(photoDir, photoName).let { photoFile ->
-        if (!photoFile.exists()) null
+    fun loadPhoto(photoName: FileName): IVCipherText? = (photoDir / photoName).let { path ->
+        if (!FileSystem.SYSTEM.exists(path)) null
         else IVCipherText(
             CipherUtilities.IV_LENGTH,
-            FileInputStream(photoFile).use { it.readBytes() })
+            FileSystem.SYSTEM.read(path) { readByteArray() }
+        )
     }
 
-    fun deletePhoto(photoName: FileName) = File(photoDir, photoName).let { photoFile ->
-        if (photoFile.exists())
-            photoFile.delete()
-    }
-
-    fun savePhoto(photo: IVCipherText): FileName? = if (photo.isEmpty()) null else
-        File(photoDir, "${UUID.randomUUID()}.photo_data").let { photoFile ->
-            return try {
-                photoFile.outputStream().use {
-                    it.write(photo.iv)
-                    it.write(photo.cipherText)
-                }
-                photoFile.name
-            } catch (e: IOException) {
-                Logger.e(TAG, "Error saving photo ${photoFile.name}: ${e.message}", e)
-                if (photoFile.exists() && !photoFile.delete()) {
-                    Logger.w(
-                        TAG,
-                        "Failed to delete partially written photo file: ${photoFile.absolutePath}"
-                    )
-                }
-                ""
-            }
+    fun deletePhoto(photoName: FileName) = (photoDir / photoName).let {
+        if (FileSystem.SYSTEM.exists(it)) {
+            FileSystem.SYSTEM.delete(it)
         }
+    }
+
+
+    fun savePhoto(photo: IVCipherText): FileName? =
+        if (photo.isEmpty()) null else
+            (photoDir / "${UUID.randomUUID()}.photo_data").let { path ->
+                runCatching {
+                    FileSystem.SYSTEM.write(path) {
+                        write(photo.iv)
+                        write(photo.cipherText)
+                    }
+                }.onFailure { e ->
+                    Logger.e(TAG, "Error saving photo ${path.name}: ${e.message}", e)
+                    runCatching { if (FileSystem.SYSTEM.exists(path)) FileSystem.SYSTEM.delete(path) }.onFailure {
+                        Logger.w(TAG, "Failed to delete partially written photo file: $path")
+                    }
+                }.getOrNull()?.let { path.name }
+            }
 
     fun restoreSoftDeletedSiteEntry(id: DBID) =
         writableDatabase.update(

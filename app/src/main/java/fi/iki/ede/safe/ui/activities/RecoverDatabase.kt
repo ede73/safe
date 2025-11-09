@@ -26,15 +26,16 @@ import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.ui.composable.CopyDatabase
 import fi.iki.ede.safe.ui.composable.DualModePreview
 import fi.iki.ede.theme.SafeThemeSurface
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.nio.channels.FileChannel
-import java.security.Key
+import okio.FileSystem
+import okio.Path.Companion.toPath
+import okio.Sink
+import okio.buffer
+import okio.sink
+import java.io.FileOutputStream // KMP
 import java.security.KeyStore
 import javax.crypto.spec.SecretKeySpec
 import kotlin.time.ExperimentalTime
-
+import java.security.Key
 
 // am start -n  fi.iki.ede.safe.debug/fi.iki.ede.safe.ui.activities.RecoverDatabase
 @ExperimentalTime
@@ -55,10 +56,10 @@ class RecoverDatabase : ComponentActivity() {
     private val createDocumentLauncher = registerForActivityResult(
         CreateDocument("application/octet-stream")
     ) { uri ->
-        uri?.let {
-            contentResolver.openFileDescriptor(uri, "w")?.use {
-                FileOutputStream(it.fileDescriptor).channel.use { fileChannel ->
-                    copyDatabaseToPublicFolder(fileChannel, output)
+        uri?.let { u ->
+            contentResolver.openFileDescriptor(u, "w")?.use { pfd ->
+                FileOutputStream(pfd.fileDescriptor).sink().buffer().use { sink ->
+                    copyDatabaseToPublicFolder(sink, output)
                 }
             }
         }
@@ -77,11 +78,18 @@ class RecoverDatabase : ComponentActivity() {
         }
     }
 
-    private fun copyDatabaseToPublicFolder(dstChannel: FileChannel, output: String) {
-        val dbFile = File(output)
-        if (dbFile.exists()) {
-            FileInputStream(dbFile).channel.use { srcChannel ->
-                dstChannel.transferFrom(srcChannel, 0, srcChannel.size())
+    private fun copyDatabaseToPublicFolder(dstSink: Sink, output: String) {
+        output.toPath().also { dbPath ->
+            if (FileSystem.SYSTEM.exists(dbPath)) {
+                val source = FileSystem.SYSTEM.source(dbPath)
+                val buffer = dstSink.buffer()
+                try {
+                    buffer.writeAll(source)
+                    buffer.flush()
+                } finally {
+                    source.close()
+                    buffer.close()
+                }
             }
         }
     }
@@ -222,4 +230,3 @@ fun RecoverDatabasePreview() {
         CopyDatabase(null) {}
     }
 }
-

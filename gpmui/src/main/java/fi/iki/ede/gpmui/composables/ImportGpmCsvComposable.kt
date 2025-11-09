@@ -45,8 +45,8 @@ import fi.iki.ede.gpmui.dialogs.UsageInfoDialog
 import fi.iki.ede.gpmui.dialogs.YesNoDialog
 import fi.iki.ede.gpmui.utilities.deleteInternalCopyOfGpmCsvImport
 import fi.iki.ede.gpmui.utilities.doesInternalCopyOfGpmCsvImportExist
-import fi.iki.ede.gpmui.utilities.getInternalCopyOfGpmCsvAsImportStreamAndDeleteOriginal
-import fi.iki.ede.gpmui.utilities.getInternalCopyOfGpmCsvAsInputStream
+import fi.iki.ede.gpmui.utilities.getInternalCopyOfGpmCsvAsBufferedSource
+import fi.iki.ede.gpmui.utilities.getInternalCopyOfGpmCsvAsBufferedSourceAndDeleteOriginal
 import fi.iki.ede.gpmui.utilities.readAndParseCSVToAChangeSet
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.preferences.Preferences
@@ -56,12 +56,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.InputStream
+import okio.BufferedSource
 import kotlin.reflect.KFunction1
-import kotlin.time.ExperimentalTime
 import kotlin.time.Clock
-import kotlin.time.Duration
-import kotlin.time.Instant
+import kotlin.time.ExperimentalTime
 
 private const val TAG = "ImportScreen"
 
@@ -110,7 +108,7 @@ fun ImportGpmCsvComposable(
     val selectGpmCsvExport =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
-                getInternalCopyOfGpmCsvAsImportStreamAndDeleteOriginal(
+                getInternalCopyOfGpmCsvAsBufferedSourceAndDeleteOriginal(
                     context,
                     result.data!!.data!!,
                     originalNotDeleted = {
@@ -118,13 +116,13 @@ fun ImportGpmCsvComposable(
                         addMessageToFlow("Original file not deleted")
                         addMessageToFlow("Original file not deleted")
                     }
-                )?.let { inputStream ->
+                )?.let { bufferedSource ->
                     allowContinuingLastImport.value = false
                     showImportProgress.value = true
                     importDoneCanMoveToMatching.value = false
                     launchImportGpmCsvFileToAChangeSet(
                         context,
-                        inputStream,
+                        bufferedSource,
                         myScope,
                         ::addMessageToFlow,
                         importChangeSet,
@@ -156,7 +154,7 @@ fun ImportGpmCsvComposable(
         )
     ) {
         fun cont() {
-            getInternalCopyOfGpmCsvAsInputStream(context)?.let { inputStream ->
+            getInternalCopyOfGpmCsvAsBufferedSource(context)?.let { inputStream ->
                 allowContinuingLastImport.value = false
                 showImportProgress.value = true
                 importDoneCanMoveToMatching.value = false
@@ -329,7 +327,7 @@ fun ImportGpmCsvComposable(
 @ExperimentalTime
 fun launchImportGpmCsvFileToAChangeSet(
     context: Context,
-    inputStream: InputStream,
+    bufferedSource: BufferedSource,
     myScope: CoroutineScope,
     addMessageToFlow: KFunction1<String, Unit>,
     importChangeSet: MutableState<ImportChangeSet?>,
@@ -338,7 +336,7 @@ fun launchImportGpmCsvFileToAChangeSet(
 ) {
     myScope.launch {
         readAndParseCSVToAChangeSet(
-            inputStream,
+            bufferedSource,
             importChangeSet,
             complete = complete
         ) {

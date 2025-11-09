@@ -276,6 +276,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.ui.test.junit4.android)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.okio)
 
     //androidTestImplementation(libs.androidx.test.junit.ktx)
     androidTestImplementation(libs.androidx.monitor)

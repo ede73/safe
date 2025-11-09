@@ -22,7 +22,7 @@ import fi.iki.ede.logger.firebaseRecordException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.io.InputStream
+import okio.BufferedSource
 import kotlin.time.ExperimentalTime
 
 private const val TAG = "Utilities"
@@ -56,7 +56,7 @@ internal fun combineLists(
 
 @ExperimentalTime
 internal fun readAndParseCSVToAChangeSet(
-    inputStream: InputStream,
+    bufferedSource: BufferedSource,
     importChangeSet: MutableState<ImportChangeSet?>,
     complete: (success: Boolean) -> Unit,
     progressReport: (progress: String) -> Unit,
@@ -64,7 +64,7 @@ internal fun readAndParseCSVToAChangeSet(
     firebaseLog("Read CSV")
     try {
         progressReport("Read and parse CSV")
-        val incomingGPMs = readCsv(inputStream)
+        val incomingGPMs = readCsv(bufferedSource)
         progressReport("Import CSV")
         return importCSV(
             incomingGPMs,

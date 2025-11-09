@@ -2,7 +2,6 @@ package fi.iki.ede.safe
 
 import android.content.Context
 import android.os.Environment
-import androidx.compose.foundation.ExperimentalFoundationApi
 import fi.iki.ede.backup.BackupDatabase
 import fi.iki.ede.backup.RestoreDatabase
 import fi.iki.ede.crypto.IVCipherText
@@ -35,8 +34,6 @@ import io.mockk.unmockkConstructor
 import io.mockk.unmockkObject
 import io.mockk.unmockkStatic
 import kotlinx.coroutines.runBlocking
-import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -46,12 +43,14 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.io.File
+import java.io.File // KMP
 import java.util.concurrent.CancellationException
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.system.measureTimeMillis
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 private const val TAG = "BackupDatabaseAndRestoreDatabaseTest"
 
@@ -185,7 +184,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
 
     private fun mockGetLastBackupTime(unixEpochSeconds: Long?) {
         mockkStatic(Environment::class)
-        every { Environment.getExternalStorageDirectory() } returns File("path/to/fake/directory")
+        every { Environment.getExternalStorageDirectory() } returns File("path/to/fake/directory") // KMP
 
         mockkObject(Preferences)
         every { Preferences.storeAllExtensions(any()) } returns Unit

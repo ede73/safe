@@ -23,13 +23,12 @@ import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseRecordException
 import fi.iki.ede.preferences.Preferences
 import kotlinx.coroutines.CancellationException
-import kotlinx.datetime.Instant
+import okio.Buffer
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
-import java.io.ByteArrayInputStream
-import java.io.StringReader
 import java.time.format.DateTimeParseException
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 @ExperimentalTime
 class RestoreDatabase : ExportConfig(ExportVersion.V1) {
@@ -56,8 +55,9 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         reportProgress(null, null, "Begin restoration")
         val myParser = XmlPullParserFactory.newInstance().newPullParser()
 
-        val backupEncryptionKeys =
-            BackupEncryptionKeys(StringReader(backup.trimIndent().trim()).readLines())
+        val backupEncryptionKeys = BackupEncryptionKeys(
+            backup.trimIndent().trim().lines()
+        )
 
         val db = dbHelper.beginRestoration()
 
@@ -67,9 +67,10 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                 backupEncryptionKeys.getSalt(),
                 backupEncryptionKeys.getEncryptedMasterKey()
             )
-            // body
+            // body (KMP issue)
             myParser.setInput(
-                getDocumentStream(backupEncryptionKeys, userPassword),
+                Buffer().write(getDocumentByteArray(backupEncryptionKeys, userPassword))
+                    .inputStream(),
                 null
             )
 
@@ -94,17 +95,12 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         }
     }
 
-    private fun getDocumentStream(
+    private fun getDocumentByteArray(
         backupEncryptionKeys: BackupEncryptionKeys,
         userPassword: Password
-    ) = ByteArrayInputStream(
-        KeyStoreHelperFactory.getKeyStoreHelper().decryptByteArray( // Keystore needed (new key)
-            backupEncryptionKeys.getEncryptedBackup(),
-            decryptMasterKey(backupEncryptionKeys, userPassword)
-        )
-//        .also { // dump for tests
-//            Logger.d(TAG,"(${String(it)})")
-//        }
+    ) = KeyStoreHelperFactory.getKeyStoreHelper().decryptByteArray( // Keystore needed (new key)
+        backupEncryptionKeys.getEncryptedBackup(),
+        decryptMasterKey(backupEncryptionKeys, userPassword)
     )
 
 

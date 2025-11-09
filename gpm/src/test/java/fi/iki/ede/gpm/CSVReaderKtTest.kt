@@ -6,6 +6,7 @@ import fi.iki.ede.gpm.model.IncomingGPM.Companion.makeFromCSVImport
 import fi.iki.ede.logger.Logger
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
+import okio.Buffer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -54,7 +55,7 @@ class CSVReaderKtTest {
         // this is REAL! 322 -> NAME,https://WEIRD_URL,,/,USER,PASSWORD,
         // https://www.apress.com/customer/account/login/referer/aHR0cHM6Ly93d3cuYXByZXNzLmNvbS9jdXN0b21lci9hY2NvdW50L2luZGV4Lw,,/
         // Also a,b,c,"d""d", (password is d"d
-        val results = readCsv(input.byteInputStream())
+        val results = readCsv(Buffer().writeUtf8(input))
         // yes 2, identical lines compressed
         results.forEach { result ->
             Logger.d(TAG, result.toString())
@@ -83,7 +84,7 @@ class CSVReaderKtTest {
             a,b,""c"",d,
             d,b,"c,a",
         """.trimIndent()
-        val results = readCsv(input.byteInputStream())
+        val results = readCsv(Buffer().writeUtf8(input))
         assertTrue(results.elementAt(0) == makeFromCSVImport("a", "", "c", "d", ""))
         assertTrue(results.elementAt(1) == makeFromCSVImport("a", "b", "\"c\"", "d", ""))
         // TODO: STUPID but documenting

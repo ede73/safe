@@ -29,6 +29,7 @@ material3Android = "1.4.0"
 materialIconsExtendedAndroid = "1.7.8"
 mockk = "1.14.6"
 napier = "2.7.1"
+okio = "3.16.2"
 preferenceKtx = "1.2.1"
 runtimeLivedataVersion = "1.9.4"
 uiTestJunit4Android = "1.9.4"
@@ -94,6 +95,7 @@ mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 mockk-agent = { group = "io.mockk", name = "mockk-agent", version.ref = "mockk" }
 mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
 napier = { group = "io.github.aakira", name = "napier", version.ref = "napier" }
+okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 preference-ktx = { group = "androidx.preference", name = "preference-ktx", version.ref = "preferenceKtx" }
 runtime-livedata = { group = "androidx.compose.runtime", name = "runtime-livedata", version.ref = "runtimeLivedataVersion" }
 ui-test-junit4-android = { group = "androidx.compose.ui", name = "ui-test-junit4-android", version.ref = "uiTestJunit4Android" }

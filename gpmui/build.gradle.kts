@@ -39,6 +39,8 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.runtime.livedata)
 
+    implementation(libs.okio)
+
     androidTestImplementation(libs.androidx.test.junit)
     testImplementation(libs.junit)
 }

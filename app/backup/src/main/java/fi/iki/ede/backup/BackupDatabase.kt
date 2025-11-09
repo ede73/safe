@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.fold
 import kotlinx.coroutines.flow.transform
 import org.xmlpull.v1.XmlPullParserFactory
-import java.io.StringWriter
+import java.io.StringWriter // KMP
 import kotlin.time.ExperimentalTime
 
 /**
@@ -38,7 +38,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
         getSiteEntriesOfCategory: (categoryId: DBID) -> List<DecryptableSiteEntry>
     ): String {
         val serializer = XmlPullParserFactory.newInstance().newSerializer()
-        val xmlStringWriter = StringWriter()
+        val xmlStringWriter = StringWriter() // KMP
         serializer.setOutput(xmlStringWriter)
 
         serializer.startTag(Elements.ROOT_PASSWORD_SAFE)

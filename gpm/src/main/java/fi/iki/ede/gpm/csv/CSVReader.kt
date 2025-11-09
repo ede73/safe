@@ -2,16 +2,16 @@ package fi.iki.ede.gpm.csv
 
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.similarity.toLowerCasedTrimmedString
-import java.io.IOException
-import java.io.InputStream
+import okio.BufferedSource
+import okio.IOException
 
-fun readCsv(inputStream: InputStream): Set<IncomingGPM> =
-    inputStream.bufferedReader().let { reader ->
-        val header = reader.readLine().toLowerCasedTrimmedString()
+fun readCsv(inputStream: BufferedSource): Set<IncomingGPM> =
+    inputStream.let { reader ->
+        val header = reader.readUtf8Line()!!.toLowerCasedTrimmedString()
         if (header == "name,url,username,password,note".toLowerCasedTrimmedString()) {
             throw IOException("Unrecognized Google Password manager format")
         }
-        reader.lineSequence()
+        generateSequence { reader.readUtf8Line() }
             .filter { it.isNotBlank() }
             .map { it ->
                 val (name, url, username, password, note) = processInputLine(it, 5)

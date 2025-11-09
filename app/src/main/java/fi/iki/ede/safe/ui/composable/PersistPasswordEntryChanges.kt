@@ -14,8 +14,8 @@ import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.safe.ui.models.EditableSiteEntry
 import fi.iki.ede.theme.SafeThemeSurface
 import kotlinx.coroutines.runBlocking
+import okio.Buffer
 import kotlin.time.Clock
-import java.io.ByteArrayOutputStream
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class, ExperimentalFoundationApi::class)
@@ -60,9 +60,10 @@ fun PersistPasswordEntryChanges(
 private fun convertToJpegAndEncrypt(
     plainPhoto: Bitmap,
     encrypter: (ByteArray) -> IVCipherText
-) = ByteArrayOutputStream().let {
-    plainPhoto.compress(Bitmap.CompressFormat.JPEG, 60, it)
-    Base64.encodeToString(it.toByteArray(), Base64.DEFAULT).encrypt(encrypter)
+) = Buffer().apply {
+    plainPhoto.compress(Bitmap.CompressFormat.JPEG, 60, this.outputStream())
+}.let { buffer ->
+    Base64.encodeToString(buffer.readByteArray(), Base64.DEFAULT).encrypt(encrypter)
 }
 
 

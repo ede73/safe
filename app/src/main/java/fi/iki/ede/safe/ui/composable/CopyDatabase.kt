@@ -21,7 +21,7 @@ import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
 import fi.iki.ede.safe.ui.activities.nudepwd
 import fi.iki.ede.safe.ui.activities.reconvertDatabase
-import java.io.File
+import okio.Path.Companion.toPath
 import kotlin.time.ExperimentalTime
 
 // only used in debug mode!
@@ -62,7 +62,7 @@ internal fun CopyDatabase(
         val text by remember { mutableStateOf("Copy") }
 
         Button(onClick = {
-            createDocumentLauncher?.launch(File(dbInput.value).name)
+            createDocumentLauncher?.launch(dbInput.value.toPath().name)
         }) {
             Text(text)
         }
