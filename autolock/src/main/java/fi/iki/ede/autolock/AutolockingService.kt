@@ -20,7 +20,8 @@ import fi.iki.ede.notifications.ConfiguredNotifications
 import fi.iki.ede.notifications.MainNotification
 import fi.iki.ede.preferences.Preferences
 import java.time.Duration
-import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.time.ExperimentalTime
 
 private const val TAG = "AutolockingService"
@@ -31,12 +32,15 @@ class AutolockingService : Service() {
     private var autoLockCountdownNotifier: CountDownTimer? = null
     private lateinit var mIntentReceiver: BroadcastReceiver
     private lateinit var autoLockNotification: MainNotification
+
+    @ExperimentalAtomicApi
     private val paused: AtomicBoolean = AtomicBoolean(false)
 
     override fun onBind(intent: Intent): IBinder {
         return LocalBinder()
     }
 
+    @ExperimentalAtomicApi
     override fun onCreate() {
         mIntentReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
@@ -72,6 +76,7 @@ class AutolockingService : Service() {
         autoLockCountdownNotifier?.cancel()
     }
 
+    @ExperimentalAtomicApi
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         initializeAutolockCountdownTimer()
         // We want this service to continue running until it is explicitly
@@ -79,6 +84,7 @@ class AutolockingService : Service() {
         return START_STICKY
     }
 
+    @ExperimentalAtomicApi
     private fun initializeAutolockCountdownTimer() {
         if (mFeatures == null || mFeatures?.isLoggedIn() == false) {
             autoLockNotification.clearNotification()
@@ -86,10 +92,10 @@ class AutolockingService : Service() {
             if (BuildConfig.DEBUG) {
                 Logger.d(TAG, "Inactivity timer pause reset - no longer logger in")
             }
-            paused.set(false)
+            paused.store(false)
             return
         }
-        if (paused.get()) {
+        if (paused.load()) {
             if (BuildConfig.DEBUG) {
                 Logger.d(TAG, "Inactivity timer paused, wont restart")
             }
@@ -175,23 +181,26 @@ class AutolockingService : Service() {
     /**
      * Restart the CountDownTimer()
      */
+    @ExperimentalAtomicApi
     private fun restartTimer() {
         // must be started with startTimer first.
         autoLockCountdownNotifier?.cancel()
         initializeAutolockCountdownTimer()
     }
 
+    @ExperimentalAtomicApi
     private fun pauseTimer() {
         // must be started with startTimer first.
-        paused.set(true)
+        paused.store(true)
         if (BuildConfig.DEBUG) {
             Logger.d(TAG, "Pause inactivity timer")
         }
         autoLockCountdownNotifier?.cancel()
     }
 
+    @ExperimentalAtomicApi
     private fun resumeTimer() {
-        paused.set(false)
+        paused.store(false)
         if (BuildConfig.DEBUG) {
             Logger.d(TAG, "Resume inactivity timer")
         }
@@ -201,6 +210,7 @@ class AutolockingService : Service() {
     var mFeatures: AutoLockingFeatures? = null
 
     inner class LocalBinder : Binder() {
+        @ExperimentalAtomicApi
         fun setAutolockingFeatures(features: AutoLockingFeatures) {
             mFeatures = features
             initializeAutolockCountdownTimer()
@@ -216,6 +226,7 @@ class AutolockingService : Service() {
             activity.startService(Intent(applicationContext, AutolockingService::class.java))
 
             val serviceConnection = object : ServiceConnection {
+                @ExperimentalAtomicApi
                 override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
                     val binder = service as LocalBinder
                     binder.setAutolockingFeatures(features)
