@@ -4,7 +4,7 @@ import fi.iki.ede.gpm.debug
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.logger.Logger
-import java.security.MessageDigest
+import okio.ByteString.Companion.encodeUtf8
 
 private const val TAG = "ImportChangeSet"
 
@@ -87,13 +87,18 @@ fun printImportReport(
 
 fun calculateSha128(fields: List<String>, s: String): String {
     debug {
-        //print("Calculate hash (for $s) of (${fields.joinToString(",")}) =")
+        // print("Calculate hash (for $s) of (${fields.joinToString(",")}) =")
     }
-    val hash =
-        MessageDigest.getInstance("SHA-1").digest(fields.joinToString(separator = "").toByteArray())
-            .joinToString("") { "%02x".format(it) }
+
+    val hash = fields.joinToString(separator = "")
+        .encodeUtf8()   // convert to ByteString
+        .sha1()         // SHA-1 hash
+        .hex()          // hex string
+        .lowercase()    // ensure lowercase
+
     debug {
-        // Logger.d(TAG,hash)
+        // Logger.d(TAG, hash)
     }
+
     return hash
 }
