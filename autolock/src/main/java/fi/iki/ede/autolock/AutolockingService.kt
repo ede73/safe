@@ -19,9 +19,9 @@ import fi.iki.ede.logger.Logger
 import fi.iki.ede.notifications.ConfiguredNotifications
 import fi.iki.ede.notifications.MainNotification
 import fi.iki.ede.preferences.Preferences
-import java.time.Duration
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
 private const val TAG = "AutolockingService"
@@ -116,7 +116,7 @@ class AutolockingService : Service() {
             Preferences.getLockTimeoutDuration().inWholeMilliseconds
 
         autoLockCountdownNotifier =
-            object : CountDownTimer(timeoutUntilStop, Duration.ofSeconds(10L).toMillis()) {
+            object : CountDownTimer(timeoutUntilStop, 10.seconds.inWholeMilliseconds) {
                 override fun onTick(millisUntilFinished: Long) {
                     // doing nothing.
                     millisecondsTillAutoLock = millisUntilFinished
