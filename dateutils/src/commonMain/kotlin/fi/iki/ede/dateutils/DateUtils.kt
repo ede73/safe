@@ -33,7 +33,7 @@ object DateUtils {
         // You will need a library or custom code for robust date string parsing in common code.
         try {
             return LocalDateTime.parse(date).toInstant(TimeZone.UTC)
-        } catch (ex: Exception) {
+        } catch (ex: IllegalArgumentException) {
             Logger.d(TAG, "..Failed $date", ex)
         }
 

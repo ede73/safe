@@ -19,14 +19,12 @@ import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBID
 import fi.iki.ede.gpm.model.SavedGPM
-import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseRecordException
 import fi.iki.ede.preferences.Preferences
 import kotlinx.coroutines.CancellationException
 import okio.Buffer
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
-import java.time.format.DateTimeParseException
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -297,19 +295,11 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                                 it
                                             )
                                         } ?: DateUtils.newParse(changed)
-                                } catch (ex: DateTimeParseException) {
+                                } catch (ex: IllegalArgumentException) {
                                     firebaseRecordException(
                                         "Failed to parse date ($changed)",
                                         ex
                                     )
-                                    // silently fail, parse failure ain't critical
-                                    // and no corrective measure here, passwords are more important
-                                    if (BuildConfig.DEBUG) {
-                                        Logger.e(
-                                            TAG,
-                                            "Failed parsing password change data ($changed)"
-                                        )
-                                    }
                                 }
                             }
                             myParser.maybeGetText {
