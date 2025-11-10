@@ -14,7 +14,6 @@ import fi.iki.ede.safe.splits.PluginManager
 import fi.iki.ede.safe.splits.PluginManager.initializePlugin
 import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.splits.RegistrationAPI
-import java.util.Collections
 
 private const val TAG = "PluginLoaderViewModel"
 
@@ -25,7 +24,7 @@ data class SplitSession(val sessionId: Int, val plugin: PluginName) {
 class PluginLoaderViewModel(app: Application) : AndroidViewModel(app) {
     private val splitInstallManager = SplitInstallManagerFactory.create(getApplication())
 
-    private val sessions = Collections.synchronizedList(mutableListOf<SplitSession>())
+    private val sessions = mutableListOf<SplitSession>()
 
     private fun informUser(message: String) {
         firebaseLog(message)
@@ -35,7 +34,7 @@ class PluginLoaderViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private val listener = SplitInstallStateUpdatedListener { state ->
-        val session = sessions.firstOrNull { it.sessionId == state.sessionId() }
+        val session = synchronized(sessions) { sessions.firstOrNull { it.sessionId == state.sessionId() } }
         if (session == null) return@SplitInstallStateUpdatedListener
 
         when (state.status()) {
