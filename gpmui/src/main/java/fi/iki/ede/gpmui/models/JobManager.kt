@@ -7,10 +7,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.util.concurrent.atomic.AtomicReference
 
 private const val TAG = "JobManager"
 
@@ -23,7 +23,8 @@ class JobManager(private val onWorkingStateChange: (Boolean, percentCompleted: F
     private val jobStateControl = Mutex(false)
 
     @GuardedBy("jobStateControl")
-    private val masterJob = AtomicReference<Job?>(null)
+    @Volatile
+    private var masterJob: Job? = null
 
     private suspend fun maybeChangeWorkingState(
         callingMasterJob: Job?,
@@ -31,7 +32,8 @@ class JobManager(private val onWorkingStateChange: (Boolean, percentCompleted: F
         percentCompleted: Float?
     ) {
         jobStateControl.withLock {
-            if (masterJob.compareAndSet(callingMasterJob, null)) {
+            if (masterJob === callingMasterJob) {
+                masterJob = null
                 onWorkingStateChange(workingState, percentCompleted)
             }
         }
@@ -40,8 +42,8 @@ class JobManager(private val onWorkingStateChange: (Boolean, percentCompleted: F
     suspend fun cancelAllJobs(atomicOnCancellation: () -> Unit = {}) {
         control.withLock {
             jobs.forEach { it.cancel() }
-            jobs.forEach { it.join() }
-            maybeChangeWorkingState(masterJob.get(), false, null)
+            jobs.joinAll()
+            maybeChangeWorkingState(masterJob, false, null)
             atomicOnCancellation()
         }
     }
@@ -49,7 +51,7 @@ class JobManager(private val onWorkingStateChange: (Boolean, percentCompleted: F
     suspend fun cancelAndAddNewJobs(atomicGenerateNewJobs: suspend CoroutineScope.() -> List<Job>): List<Job> =
         control.withLock {
             jobs.forEach { it.cancel() }
-            jobs.forEach { it.join() }
+            jobs.joinAll()
 
             val newJobs = coroutineScope { atomicGenerateNewJobs() }
             onWorkingStateChange(true, 0f)
@@ -72,7 +74,7 @@ class JobManager(private val onWorkingStateChange: (Boolean, percentCompleted: F
                 }
             }
             jobStateControl.withLock {
-                masterJob.set(newMasterJob)
+                masterJob = newMasterJob
             }
             newJobs
         }
@@ -81,6 +83,6 @@ class JobManager(private val onWorkingStateChange: (Boolean, percentCompleted: F
         cancelAndAddNewJobs { listOf(block()) }.first()
 
     fun updateProgress(percentCompleted: Float) {
-        onWorkingStateChange(masterJob.get() != null, percentCompleted)
+        onWorkingStateChange(masterJob != null, percentCompleted)
     }
 }

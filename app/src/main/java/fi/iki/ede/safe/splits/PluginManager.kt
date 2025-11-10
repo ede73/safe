@@ -7,8 +7,8 @@ import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.logger.firebaseRecordException
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.BuildConfig
-import java.util.ServiceConfigurationError
-import java.util.ServiceLoader
+import java.util.ServiceConfigurationError // KMP
+import java.util.ServiceLoader // KMP
 import kotlin.reflect.full.createInstance
 import kotlin.time.ExperimentalTime
 
