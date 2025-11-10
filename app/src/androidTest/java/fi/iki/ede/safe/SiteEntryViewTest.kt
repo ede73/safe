@@ -37,6 +37,7 @@ import io.mockk.unmockkAll
 import io.mockk.unmockkObject
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -48,8 +49,6 @@ import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
@@ -135,23 +134,24 @@ class SiteEntryViewTest : NodeHelper {
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun withNoEditsBackShouldExit() {
+    fun withNoEditsBackShouldExit() = runTest(testDispatcher, timeout = 10.seconds) {
         //scenario.moveToState(Lifecycle.State.CREATED)
         val text = testRule.onNodeWithTag(TestTag.SITE_ENTRY_DESCRIPTION)
         text.performClick()
-        val latch = CountDownLatch(1)
+        val channel = Channel<Unit>(1)
 
         goBack() // actually back out
         scenario.onActivity { lifecycleOwner ->
             lifecycleOwner.lifecycle.addObserver(object : LifecycleObserver {
                 @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
                 fun onDestroy() {
-                    latch.countDown()
+                    channel.trySend(Unit)
                 }
             })
         }
-        latch.await(5, TimeUnit.SECONDS)
+        channel.receive()
         assertTrue(Lifecycle.State.DESTROYED == scenario.state)
     }
 
