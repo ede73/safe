@@ -40,7 +40,6 @@ import fi.iki.ede.gpmui.models.ImportGPMViewModel
 import fi.iki.ede.gpmui.models.SearchTarget
 import fi.iki.ede.gpmui.testTag
 import fi.iki.ede.theme.TextualCheckbox
-import java.util.regex.PatternSyntaxException
 import kotlin.time.ExperimentalTime
 
 @Composable
@@ -86,7 +85,7 @@ fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesControls(viewModel: Import
         try {
             Regex(input)
             false // No error, so return false
-        } catch (e: PatternSyntaxException) {
+        } catch (e: Exception) {
             true // Error exists, so return true
         }
     }
