@@ -1,7 +1,7 @@
 package fi.iki.ede.crypto.keystore
 
 import android.security.keystore.KeyProperties
-import java.security.SecureRandom
+import java.security.SecureRandom // KMP CryptographyRandom.Default should do
 import javax.crypto.Cipher
 
 abstract class CipherUtilities {

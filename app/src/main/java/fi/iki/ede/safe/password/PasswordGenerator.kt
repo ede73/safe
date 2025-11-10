@@ -1,6 +1,6 @@
 package fi.iki.ede.safe.password
 
-import java.security.SecureRandom // KMP
+import java.security.SecureRandom // KMP CryptographyRandom.Default should do
 import kotlin.math.min
 
 const val PG_SYMBOLS = "!@#$%^&*()[]{}:;'\"/><.,-_=+~"

@@ -9,6 +9,7 @@ bcprovJdk16 = "1.46"
 biometricKtx = "1.2.0-alpha05"
 cameraCore = "1.5.1"
 coreKtx = "1.17.0"
+cryptographyCore = "0.5.0"
 documentfile = "1.1.0"
 featureDeliveryKtx = "2.1.0"
 firebaseBom = "34.5.0"
@@ -72,6 +73,7 @@ androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", vers
 androidx-ui-tooling-preview-android = { group = "androidx.compose.ui", name = "ui-tooling-preview-android", version.ref = "uiToolingPreviewAndroid" }
 app-update-ktx = { module = "com.google.android.play:app-update-ktx", version.ref = "featureDeliveryKtx" }
 bcprov-jdk16 = { module = "org.bouncycastle:bcprov-jdk16", version.ref = "bcprovJdk16" }
+cryptography-core = { module = "dev.whyoleg.cryptography:cryptography-core", version.ref = "cryptographyCore" }
 feature-delivery-ktx = { group = "com.google.android.play", name = "feature-delivery-ktx", version.ref = "featureDeliveryKtx" }
 firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
