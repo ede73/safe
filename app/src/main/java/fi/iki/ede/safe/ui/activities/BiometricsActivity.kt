@@ -30,7 +30,7 @@ import fi.iki.ede.preferences.Preferences.sharedPreferences
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.theme.SafeTheme
-import java.time.ZonedDateTime
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 // TODO: With latest jetpack biometric lib, authentication failed flow seems to have changed
@@ -164,11 +164,12 @@ class BiometricsActivity : AppCompatActivity() {
          * We shall store the masterkey to KeyStore (and use it for subsequent biometric
          * verifications)
          */
+        @ExperimentalTime
         fun registerBiometric() {
             // encrypt something funny with biokey
             val ks = KeyStoreHelperFactory.getKeyStoreHelper() // needed, new key
             val biokey = ks.getOrCreateBiokey()
-            val now = ZonedDateTime.now().toEpochSecond().toString()
+            val now = Clock.System.now().epochSeconds.toString()
             val stamp = ks.encryptByteArray(now.toByteArray(), biokey)
             storeBioCipher(stamp)
             LoginHandler.biometricLogin()
