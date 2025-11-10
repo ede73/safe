@@ -6,8 +6,8 @@ import fi.iki.ede.gpm.model.ScoringConfig
 import fi.iki.ede.gpm.similarity.LowerCaseTrimmedString
 import fi.iki.ede.gpm.similarity.findSimilarity
 import fi.iki.ede.gpm.similarity.toLowerCasedTrimmedString
-import java.net.MalformedURLException
-import java.net.URL
+import java.net.MalformedURLException // KMP
+import java.net.URL // KMP
 import kotlin.math.max
 import kotlin.reflect.KProperty1
 
@@ -200,7 +200,7 @@ fun resolveMatchConflicts(
             matches.filter { it.matchScore == highestScore }.toSet()
         }
     progressReport("Remove all IncomingGPMs from the matching GPMs")
-    importChangeSet.matchingGPMs.removeAll { (incomingGPM, scoredMatch) ->
+    importChangeSet.matchingGPMs.removeAll { (incomingGPM, _) ->
         incomingGPM in bestEffortConflictResolution
     }
 
