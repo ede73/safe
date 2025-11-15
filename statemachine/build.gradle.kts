@@ -7,9 +7,9 @@ plugins {
 kotlin {
     androidTarget()
     jvm("desktop")
-    js {
-        browser()
-    }
+//    js {
+//        browser()
+//    }
     iosX64()
     iosArm64()
     iosSimulatorArm64()
