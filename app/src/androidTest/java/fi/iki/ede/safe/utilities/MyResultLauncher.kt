@@ -73,13 +73,10 @@ class MyResultLauncher(
                 // YES! The TestTag is REALLY necessary! Do not remove!
                 registerActivityForResults(any(), any(), any(), any())
             } answers {
-                val instance = it.invocation
-                val testTag = firstArg<TestTag>()
-                val contract = secondArg<ActivityResultContract<Intent, ActivityResult>>()
-                val callback = thirdArg<ActivityResultCallback<ActivityResult>>()
-                val register =
-                    lastArg<(ActivityResultContract<Intent, ActivityResult>, ActivityResultCallback<ActivityResult>) -> ActivityResultLauncher<Intent>>()
-                MyResultLauncher(testTag, callback)
+                MyResultLauncher(
+                    firstArg<TestTag>(),
+                    thirdArg<ActivityResultCallback<ActivityResult>>()
+                )
             }
         }
 
