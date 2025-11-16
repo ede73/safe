@@ -20,7 +20,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.dateutils.toLocalDate
 import kotlinx.datetime.LocalDate
-import java.util.Locale // KMP Android
 import kotlin.time.Clock.System.now
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -48,7 +47,7 @@ fun DatePicker(
     val currentYear = now().toLocalDate().year
     val years = (currentYear - 10..currentYear).map { it.toString() } + listOf("----")
     val months =
-        (1..12).map { String.format(Locale.getDefault(), "%02d", it) } + listOf("--")
+        (1..12).map { String.format("%02d", it) } + listOf("--")
 
     val selectedYear = remember(utcInstant) {
         mutableStateOf(quickFormat(utcInstant, "%04d", "----") { it.toLocalDate().year })
@@ -171,7 +170,7 @@ private fun quickFormat(
     default: String,
     comp: (Instant) -> Int
 ) = utcInstant?.let {
-    String.format(Locale.getDefault(), format, comp(it))
+    String.format(format, comp(it))
 } ?: default
 
 @Preview(showBackground = true)
