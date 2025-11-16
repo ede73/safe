@@ -8,10 +8,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -35,37 +33,38 @@ fun MoveSiteEntryDialog(
     onConfirm: (newCategory: DecryptableCategoryEntry) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var selectedEntry by remember { mutableStateOf<DecryptableCategoryEntry?>(null) }
-    var showDialog by remember { mutableStateOf(false) }
+    val selectedEntry = remember { mutableStateOf<DecryptableCategoryEntry?>(null) }
 
-    if (showDialog) {
+    val showDialog = remember { mutableStateOf(false) }
+
+    if (showDialog.value) {
         AlertDialog(
-            onDismissRequest = { showDialog = false },
+            onDismissRequest = { showDialog.value = false },
             title = {
                 Text(
                     stringResource(
                         id = R.string.move_password_title,
-                        selectedEntry!!.plainName
+                        selectedEntry.value!!.plainName
                     )
                 )
             },
             confirmButton = {
                 SafeButton(
                     onClick = {
-                        selectedEntry?.let { onConfirm(it) }
-                        showDialog = false
+                        selectedEntry.value?.let { onConfirm(it) }
+                        showDialog.value = false
                     }
                 ) {
                     Text(
                         stringResource(
                             id = R.string.move_password_confirm,
-                            selectedEntry!!.plainName
+                            selectedEntry.value!!.plainName
                         )
                     )
                 }
             },
             dismissButton = {
-                SafeButton(onClick = { showDialog = false }) {
+                SafeButton(onClick = { showDialog.value = false }) {
                     Text(stringResource(id = R.string.move_password_cancel))
                 }
             }
@@ -82,8 +81,8 @@ fun MoveSiteEntryDialog(
                                 text = entry.plainName,
                                 modifier = Modifier
                                     .clickable {
-                                        selectedEntry = entry
-                                        showDialog = true
+                                        selectedEntry.value = entry
+                                        showDialog.value = true
                                     }
                                     .fillMaxWidth()
                                     .padding(12.dp)
