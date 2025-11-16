@@ -59,17 +59,18 @@ fun PopCustomPasswordDialog(
             Column {
                 TextualCheckbox(
                     initiallyChecked = upperCases,
-                    textResourceId = R.string.site_entry_uppercases,
-                    checkedChanged = { upperCases.value = it })
+                    textResourceId = R.string.site_entry_uppercases
+                ) { upperCases.value = it }
                 TextualCheckbox(
                     initiallyChecked = lowerCases,
-                    textResourceId = R.string.site_entry_lowercases,
-                    checkedChanged = { lowerCases.value = it })
+                    textResourceId = R.string.site_entry_lowercases
+                ) { lowerCases.value = it }
                 TextualCheckbox(
                     initiallyChecked = numbers,
-                    textResourceId = R.string.site_entry_numbers,
-                    checkedChanged = { numbers.value = it })
-                TextField(value = symbols,
+                    textResourceId = R.string.site_entry_numbers
+                ) { numbers.value = it }
+                TextField(
+                    value = symbols,
                     onValueChange = { newSymbolCandidates ->
                         val filtered =
                             newSymbolCandidates.filter { !it.isLetterOrDigit() && !it.isWhitespace() }

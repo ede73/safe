@@ -12,7 +12,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
@@ -40,7 +39,7 @@ internal fun CategoryListScreenCompose(
     // TODO: Either new kotlin, coroutines or both, this is a linter error now
     val categoriesState by flow.map { categories -> categories.sortedBy { it.plainName.lowercase() } }
         .collectAsState(initial = emptyList())
-    var displayAddCategoryDialog by remember { mutableStateOf(false) }
+    val displayAddCategoryDialog = remember { mutableStateOf(false) }
 
     SafeTheme {
         Scaffold(
@@ -48,7 +47,7 @@ internal fun CategoryListScreenCompose(
             bottomBar = {
                 BottomActionBar(
                     onAddRequested = {
-                        displayAddCategoryDialog = true
+                        displayAddCategoryDialog.value = true
                     },
                 )
             }
@@ -56,7 +55,7 @@ internal fun CategoryListScreenCompose(
             Column(
                 modifier = Modifier.padding(innerPadding),
             ) {
-                if (displayAddCategoryDialog) {
+                if (displayAddCategoryDialog.value) {
                     val encrypter = KeyStoreHelperFactory.getEncrypter()
                     AddOrEditCategory(
                         textId = R.string.category_list_edit_category,
@@ -70,7 +69,7 @@ internal fun CategoryListScreenCompose(
                                     DataModel.addOrEditCategory(entry)
                                 }
                             }
-                            displayAddCategoryDialog = false
+                            displayAddCategoryDialog.value = false
                         })
                 }
                 CategoryList(categoriesState)

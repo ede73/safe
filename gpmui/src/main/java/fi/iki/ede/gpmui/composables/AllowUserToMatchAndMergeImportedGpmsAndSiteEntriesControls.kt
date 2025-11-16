@@ -217,7 +217,6 @@ fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesControls(viewModel: Import
             TextualCheckbox(
                 startSearchingMatchingPasswords,
                 R.string.google_password_import_locate_matching_passwords,
-                modifier = Modifier.weight(1f),
             ) { checked ->
                 if (checked) {
                     viewModel.launchMatchingPasswordSearchAndResetDisplayLists()
@@ -228,7 +227,6 @@ fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesControls(viewModel: Import
             TextualCheckbox(
                 startSearchingMatchingNames,
                 R.string.google_password_import_locate_matching_names,
-                modifier = Modifier.weight(1f),
             ) { checked ->
                 if (checked) {
                     viewModel.launchMatchingNameSearchAndResetDisplayLists(

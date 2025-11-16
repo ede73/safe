@@ -18,11 +18,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -58,9 +56,9 @@ fun SiteEntryRow(
     val context = LocalContext.current
     LocalSafeTheme.current
     val coroutineScope = rememberCoroutineScope()
-    var displayDeleteDialog by remember { mutableStateOf(false) }
-    var displayMenu by remember { mutableStateOf(false) }
-    var displayMoveDialog by remember { mutableStateOf(false) }
+    val displayDeleteDialog = remember { mutableStateOf(false) }
+    val displayMenu = remember { mutableStateOf(false) }
+    val displayMoveDialog = remember { mutableStateOf(false) }
 
     val editCompleted = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult(),
@@ -88,7 +86,7 @@ fun SiteEntryRow(
                     IntentManager.getEditSiteEntryIntent(context, siteEntry.id!!)
                 )
             }, onLongClick = {
-                displayMenu = true
+                displayMenu.value = true
             }),
     ) {
         Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
@@ -120,7 +118,7 @@ fun SiteEntryRow(
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        DropdownMenu(expanded = displayMenu, onDismissRequest = { displayMenu = false }) {
+        DropdownMenu(expanded = displayMenu.value, onDismissRequest = { displayMenu.value = false }) {
             DropdownMenuItem(text = {
                 Text(
                     text = stringResource(
@@ -129,8 +127,8 @@ fun SiteEntryRow(
                     )
                 )
             }, onClick = {
-                displayMenu = false
-                displayDeleteDialog = true
+                displayMenu.value = false
+                displayDeleteDialog.value = true
             })
             DropdownMenuItem(text = {
                 Text(
@@ -140,21 +138,21 @@ fun SiteEntryRow(
                     )
                 )
             }, onClick = {
-                displayMenu = false
-                displayMoveDialog = true
+                displayMenu.value = false
+                displayMoveDialog.value = true
             })
         }
-        if (displayDeleteDialog) {
+        if (displayDeleteDialog.value) {
             DeleteSiteEntryDialog(siteEntry, onConfirm = {
                 coroutineScope.launch {
                     DataModel.deleteSiteEntry(siteEntry)
                 }
-                displayDeleteDialog = false
+                displayDeleteDialog.value = false
             }, onDismiss = {
-                displayDeleteDialog = false
+                displayDeleteDialog.value = false
             })
         }
-        if (displayMoveDialog) {
+        if (displayMoveDialog.value) {
             val filteredCategories = categoriesState.filterNot { it.id == siteEntry.categoryId!! }
                 .sortedBy { it.plainName.lowercase() }
 
@@ -162,9 +160,9 @@ fun SiteEntryRow(
                 coroutineScope.launch {
                     DataModel.moveSiteEntry(siteEntry, newCategory)
                 }
-                displayMoveDialog = false
+                displayMoveDialog.value = false
             }, onDismiss = {
-                displayMoveDialog = false
+                displayMoveDialog.value = false
             })
         }
     }

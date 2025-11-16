@@ -45,8 +45,8 @@ fun EditableComboBox(
     onItemRequestedToDelete: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var selectedText by remember { mutableStateOf("") }
-    var showDeleteDialog by remember { mutableStateOf(false) }
+    val selectedText = remember { mutableStateOf("") }
+    val showDeleteDialog = remember { mutableStateOf(false) }
     var itemToDelete by remember { mutableStateOf("") }
 
     LaunchedEffect(selectedItems) {
@@ -59,9 +59,9 @@ fun EditableComboBox(
             modifier = Modifier
                 .menuAnchor()
                 .testTag(TestTag.SITE_ENTRY_EXTENSION_ENTRY),
-            value = selectedText,
+            value = selectedText.value,
             onValueChange = {
-                selectedText = it
+                selectedText.value = it
                 onItemEdited(it)
             },
             readOnly = expanded,
@@ -87,12 +87,12 @@ fun EditableComboBox(
                             modifier = Modifier
                                 .combinedClickable(
                                     onClick = {
-                                        selectedText = onItemSelected(menuItemText)
+                                        selectedText.value = onItemSelected(menuItemText)
                                         expanded = false
                                     },
                                     onLongClick = {
                                         itemToDelete = menuItemText
-                                        showDeleteDialog = true
+                                        showDeleteDialog.value = true
                                     },
                                 )
                                 .fillMaxWidth()
@@ -111,7 +111,7 @@ fun EditableComboBox(
                         }
                     },
                     onClick = {
-                        selectedText = menuItemText
+                        selectedText.value = menuItemText
                         onItemSelected(menuItemText)
                         expanded = false
                     },
@@ -126,23 +126,23 @@ fun EditableComboBox(
     // Logic for editing and deleting items goes here
     // This can be implemented using a long press gesture on the DropdownMenuItem
     // and showing a context menu with edit and delete options
-    if (showDeleteDialog) {
+    if (showDeleteDialog.value) {
         AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
+            onDismissRequest = { showDeleteDialog.value = false },
             title = { Text(stringResource(id = R.string.site_entry_extension_delete)) },
             text = { Text(stringResource(id = R.string.site_entry_extension_delete_message)) },
             confirmButton = {
                 Button(
                     onClick = {
                         onItemRequestedToDelete(itemToDelete)
-                        showDeleteDialog = false
+                        showDeleteDialog.value = false
                     }
                 ) {
                     Text(stringResource(id = R.string.site_entry_extension_delete))
                 }
             },
             dismissButton = {
-                Button(onClick = { showDeleteDialog = false }) {
+                Button(onClick = { showDeleteDialog.value = false }) {
                     Text(stringResource(id = R.string.site_entry_extension_cancel))
                 }
             }

@@ -14,11 +14,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -46,9 +44,9 @@ import kotlin.time.ExperimentalTime
 fun CategoryRow(category: DecryptableCategoryEntry) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    var displayDeleteCategory by remember { mutableStateOf(false) }
-    var displayEditDialog by remember { mutableStateOf(false) }
-    var displayMenu by remember { mutableStateOf(false) }
+    val displayDeleteCategory = remember { mutableStateOf(false) }
+    val displayEditDialog = remember { mutableStateOf(false) }
+    val displayMenu = remember { mutableStateOf(false) }
 
     SafeListItem {
         Row(
@@ -59,7 +57,7 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
                         IntentManager.startSiteEntryListScreen(context, category.id!!)
                     },
                     onLongClick = {
-                        displayMenu = true
+                        displayMenu.value = true
                     }
                 )
                 .testTag(TestTag.CATEGORY_ROW)
@@ -88,8 +86,8 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
             )
         }
         DropdownMenu(
-            expanded = displayMenu,
-            onDismissRequest = { displayMenu = false }
+            expanded = displayMenu.value,
+            onDismissRequest = { displayMenu.value = false }
         ) {
             if (category.containedSiteEntryCount == 0) {
                 DropdownMenuItem(
@@ -101,8 +99,8 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
                         )
                     },
                     onClick = {
-                        displayMenu = false
-                        displayDeleteCategory = true
+                        displayMenu.value = false
+                        displayDeleteCategory.value = true
                     },
                     modifier = Modifier.testTag(TestTag.CATEGORY_ROW_DELETE)
                 )
@@ -114,13 +112,13 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
                     )
                 },
                 onClick = {
-                    displayMenu = false
-                    displayEditDialog = true
+                    displayMenu.value = false
+                    displayEditDialog.value = true
                 },
                 modifier = Modifier.testTag(TestTag.CATEGORY_ROW_EDIT)
             )
         }
-        if (displayEditDialog) {
+        if (displayEditDialog.value) {
             val encrypter = KeyStoreHelperFactory.getEncrypter()
             AddOrEditCategory(
                 textId = R.string.category_list_edit_category,
@@ -134,17 +132,17 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
                             DataModel.addOrEditCategory(entry)
                         }
                     }
-                    displayEditDialog = false
+                    displayEditDialog.value = false
                 })
         }
-        if (displayDeleteCategory) {
+        if (displayDeleteCategory.value) {
             DeleteCategoryDialog(category, onConfirm = {
                 runBlocking {
                     DataModel.deleteCategory(category)
                 }
-                displayDeleteCategory = false
+                displayDeleteCategory.value = false
             }, onDismiss = {
-                displayDeleteCategory = false
+                displayDeleteCategory.value = false
             })
         }
     }

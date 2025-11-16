@@ -10,7 +10,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import fi.iki.ede.datamodel.DataModel
@@ -51,19 +50,19 @@ fun SiteEntryExtensionSelector(
 
     val allKnownEntries =
         remember { mutableStateListOf<String>().also { it.addAll(allKnownValues) } }
-    var checked by remember { mutableStateOf(false) }
+    val checked = remember { mutableStateOf(false) }
     if (!entry.plainExtension.containsKey(extensionType)) {
         entry.plainExtension = entry.plainExtension.toMutableMap().apply {
             this[extensionType] = setOf()
         }
     }
-    var selectedEntry by remember { mutableStateOf("") }
+    val selectedEntry = remember { mutableStateOf("") }
 
-    if (entry.plainExtension[extensionType]!!.isEmpty() && !checked) {
+    if (entry.plainExtension[extensionType]!!.isEmpty() && !checked.value) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Checkbox(
-                checked = checked,
-                onCheckedChange = { checked = !checked },
+                checked = checked.value,
+                onCheckedChange = { checked.value = !checked.value },
                 modifier = Modifier.testTag(TestTag.SITE_ENTRY_EXTENSION_ENTRY_CHECKBOX)
             )
             Text(text = extensionType)
@@ -100,11 +99,11 @@ fun SiteEntryExtensionSelector(
                 val rem = removeFromMap(
                     entry.plainExtension,
                     extensionType,
-                    selectedEntry
+                    selectedEntry.value
                 )
                 val add = addToMap(rem, extensionType, editedItem)
                 viewModel.updateExtensions(add)
-                selectedEntry = editedItem
+                selectedEntry.value = editedItem
             },
             onItemRequestedToDelete = { itemToDelete ->
                 // ONLY can delete if NOT used anywhere else

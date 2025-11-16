@@ -35,7 +35,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusEvent
@@ -100,23 +99,21 @@ fun SiteEntryView(
     val passEntry by viewModel.editableSiteEntryState.collectAsState()
     val passwordLength = integerResource(id = R.integer.password_default_length)
     val safeTheme = LocalSafeTheme.current
-    var passwordWasUpdated by remember { mutableStateOf(false) }
-    var showLinkedInfo by remember { mutableStateOf<Set<SavedGPM>?>(null) }
-    var showCustomPasswordGenerator by remember {
-        mutableStateOf(false)
-    }
+    val passwordWasUpdated = remember { mutableStateOf(false) }
+    val showLinkedInfo = remember { mutableStateOf<Set<SavedGPM>?>(null) }
+    val showCustomPasswordGenerator = remember { mutableStateOf(false) }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val coroutineScope = rememberCoroutineScope()
 
-    if (showCustomPasswordGenerator) {
+    if (showCustomPasswordGenerator.value) {
         PopCustomPasswordDialog {
             // on dismiss
             if (it != null) {
                 viewModel.updatePassword(it.encrypt(encrypter))
-                passwordWasUpdated = true
+                passwordWasUpdated.value = true
                 viewModel.updatePasswordChangedDate(Clock.System.now())
             }
-            showCustomPasswordGenerator = false
+            showCustomPasswordGenerator.value = false
         }
     }
 
@@ -126,9 +123,9 @@ fun SiteEntryView(
                 if (custom) {
                     // some sites have annoying limits like you cant use this is that special char
                     // or you HAVE to use this or that special char
-                    showCustomPasswordGenerator = true
+                    showCustomPasswordGenerator.value = true
                 } else {
-                    passwordWasUpdated = true
+                    passwordWasUpdated.value = true
                     viewModel.updatePassword(
                         PasswordGenerator.genPassword(
                             passUpper = true,
@@ -316,7 +313,7 @@ fun SiteEntryView(
                     textStyle = safeTheme.customFonts.regularPassword,
                     enableZoom = true
                 )
-                passwordWasUpdated = false
+                passwordWasUpdated.value = false
             }
 
             Row(modifier = padding, verticalAlignment = Alignment.CenterVertically) {
@@ -336,7 +333,7 @@ fun SiteEntryView(
                     passEntry.id?.let { pid ->
                         // TODO: inject from GPMUI rather (yes, gonna be tricky)
                         GPMDataModel.getLinkedGPMs(pid).ifNotEmpty { gpms ->
-                            Box(modifier = Modifier.clickable { showLinkedInfo = gpms })
+                            Box(modifier = Modifier.clickable { showLinkedInfo.value = gpms })
                             { Text(text = "Has ${gpms.size} linked GPMs") }
                         }
                     }
@@ -414,8 +411,8 @@ fun SiteEntryView(
                 )
             }
 
-            if (showLinkedInfo != null) {
-                ShowLinkedGpmsDialog(showLinkedInfo!!, onDismiss = { showLinkedInfo = null })
+            if (showLinkedInfo.value != null) {
+                ShowLinkedGpmsDialog(showLinkedInfo.value!!, onDismiss = { showLinkedInfo.value = null })
             }
         }
     }

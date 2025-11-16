@@ -9,10 +9,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -42,9 +40,9 @@ fun ShowLinkedGpmsDialog(
     },
     title = { Text(stringResource(id = R.string.google_password_links)) },
     text = {
-        var showGpm by remember { mutableStateOf<SavedGPM?>(null) }
-        if (showGpm != null) {
-            ShowInfoDialog(showGpm!!, onDismiss = { showGpm = null })
+        val showGpm = remember { mutableStateOf<SavedGPM?>(null) }
+        if (showGpm.value != null) {
+            ShowInfoDialog(showGpm.value!!, onDismiss = { showGpm.value = null })
         }
         Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
             gpms.forEach {
@@ -53,7 +51,7 @@ fun ShowLinkedGpmsDialog(
                         text = it.cachedDecryptedName,
                         modifier = Modifier
                             .clickable {
-                                showGpm = it
+                                showGpm.value = it
                             }
                             .fillMaxWidth()
                             .padding(12.dp)

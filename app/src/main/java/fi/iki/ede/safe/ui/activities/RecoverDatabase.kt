@@ -31,11 +31,11 @@ import okio.Path.Companion.toPath
 import okio.Sink
 import okio.buffer
 import okio.sink
-import java.io.FileOutputStream // KMP
+import java.io.FileOutputStream
+import java.security.Key
 import java.security.KeyStore
 import javax.crypto.spec.SecretKeySpec
 import kotlin.time.ExperimentalTime
-import java.security.Key
 
 // am start -n  fi.iki.ede.safe.debug/fi.iki.ede.safe.ui.activities.RecoverDatabase
 @ExperimentalTime
@@ -182,25 +182,6 @@ fun reconvertDatabase(pwd: String, completed: () -> Unit) {
 
     importExistingEncryptedMasterKey(saltedPassword, cipheredKey)
     completed()
-}
-
-@ExperimentalTime
-private fun encryptMasterPassword(salt: Salt, newPBKDF2Key: SecretKeySpec): String {
-    try {
-        val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
-        keyStore.load(null)
-        val sm = keyStore.getKey("secret_masterkey", null)!!
-        val ks = KeyStoreHelperFactory.getKeyStoreHelper()
-
-
-        val encryptedMasterKey = ks.encryptByteArray("".toByteArray(), sm)
-
-        val db = DBHelperFactory.getDBHelper()
-        db.storeSaltAndEncryptedMasterKey(salt, encryptedMasterKey)
-        return "Changed"
-    } catch (e: Exception) {
-        return e.toString()
-    }
 }
 
 @ExperimentalTime

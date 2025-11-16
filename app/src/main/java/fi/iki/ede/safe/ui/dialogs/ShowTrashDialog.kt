@@ -18,7 +18,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.res.stringResource
@@ -47,20 +46,16 @@ fun ShowTrashDialog(
     onDismiss: () -> Unit,
 ) {
     val deletedSiteEntries by DataModel.softDeletedStateFlow.collectAsState(initial = emptyList())
-    var restoreSiteEntry by remember {
-        mutableStateOf<DecryptableSiteEntry?>(
-            null
-        )
-    }
-    var showEmptyConfirmation by remember { mutableStateOf(false) }
+    val restoreSiteEntry = remember { mutableStateOf<DecryptableSiteEntry?>(null) }
+    val showEmptyConfirmation = remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
 
-    if (showEmptyConfirmation) {
+    if (showEmptyConfirmation.value) {
         AlertDialog(
             onDismissRequest = {
-                showEmptyConfirmation = false
-                restoreSiteEntry = null
+                showEmptyConfirmation.value = false
+                restoreSiteEntry.value = null
                 onDismiss()
             },
             title = { Text(stringResource(id = R.string.trash_empty_now)) },
@@ -76,7 +71,7 @@ fun ShowTrashDialog(
                 ) { Text(stringResource(id = R.string.trash_do_empty)) }
             },
             dismissButton = {
-                SafeButton(onClick = { showEmptyConfirmation = false }) {
+                SafeButton(onClick = { showEmptyConfirmation.value = false }) {
                     Text(stringResource(id = R.string.trash_cancel))
                 }
             }
@@ -87,11 +82,11 @@ fun ShowTrashDialog(
             title = { Text(stringResource(id = R.string.trash_title)) },
             text = {
                 Column {
-                    if (restoreSiteEntry != null) {
+                    if (restoreSiteEntry.value != null) {
                         SafeButton(onClick = {
                             coroutineScope.launch(Dispatchers.IO) {
-                                DataModel.restoreSiteEntry(restoreSiteEntry!!)
-                                restoreSiteEntry = null
+                                DataModel.restoreSiteEntry(restoreSiteEntry.value!!)
+                                restoreSiteEntry.value = null
                             }
                         }) { Text(stringResource(id = R.string.trash_restore)) }
                     }
@@ -102,12 +97,12 @@ fun ShowTrashDialog(
                                     // TODO: translate to days!
                                     text = "${entry.cachedPlainDescription} (${entry.deleted})",
                                     modifier = Modifier
-                                        .clickable { restoreSiteEntry = entry }
+                                        .clickable { restoreSiteEntry.value = entry }
                                         .fillMaxWidth()
                                         .padding(12.dp)
                                         .testTag(TestTag.TRASH_ITEM)
                                         .let {
-                                            if (entry == restoreSiteEntry) {
+                                            if (entry == restoreSiteEntry.value) {
                                                 it
                                                     .border(2.dp, MaterialTheme.colorScheme.primary)
                                                     .shadow(4.dp, RoundedCornerShape(4.dp))
@@ -121,7 +116,7 @@ fun ShowTrashDialog(
             },
             confirmButton = {
                 SafeButton(onClick = {
-                    showEmptyConfirmation = true
+                    showEmptyConfirmation.value = true
                 }) { Text(stringResource(id = R.string.trash_empty_trash)) }
             },
             dismissButton = {

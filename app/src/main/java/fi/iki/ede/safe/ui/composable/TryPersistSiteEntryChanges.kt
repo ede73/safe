@@ -4,10 +4,8 @@ import android.text.TextUtils
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.models.EditableSiteEntry
@@ -22,21 +20,21 @@ fun TryPersistSiteEntryChanges(
     onDismiss: () -> Unit,
     onSaved: (Boolean) -> Unit
 ) {
-    var emptyDescription by remember { mutableStateOf(false) }
+    val emptyDescription = remember { mutableStateOf(false) }
     // test for empty
     if (TextUtils.isEmpty(edits.description)) {
-        emptyDescription = true
+        emptyDescription.value = true
     }
-    if (emptyDescription) {
+    if (emptyDescription.value) {
         AlertDialog(
             onDismissRequest = {
                 onDismiss()
-                emptyDescription = false
+                emptyDescription.value = false
             },
             confirmButton = {
                 SafeButton(onClick = {
                     onDismiss()
-                    emptyDescription = false
+                    emptyDescription.value = false
                 }) {
                     Text(text = stringResource(id = R.string.generic_ok))
                 }

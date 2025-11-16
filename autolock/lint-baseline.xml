@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.9.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.9.0)" variant="all" version="8.9.0">
+<issues format="6" by="lint 8.13.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.1)" variant="all" version="8.13.1">
 
     <issue
-        id="ImplicitSamInstance"
-        message="This argument is a new instance so `stopService` will not remove anything"
-        errorLine1="            context.stopService(Intent(context, AutolockingService::class.java))"
-        errorLine2="                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="WrongConstant"
+        message="Must be one or more of: "
+        errorLine1="                    if (insets.isVisible(WindowInsetsCompat.Type.navigationBars())) {"
+        errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/fi/iki/ede/autolock/AutolockingService.kt"
-            line="230"
-            column="33"/>
+            file="src/main/java/fi/iki/ede/autolock/NavigationBarHelper.kt"
+            line="25"
+            column="42"/>
     </issue>
 
 </issues>

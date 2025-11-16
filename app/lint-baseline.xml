@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 8.9.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.9.0)" variant="all" version="8.9.0">
+<issues format="6" by="lint 8.13.1" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.1)" variant="all" version="8.13.1">
 
     <issue
         id="ScopedStorage"
@@ -13,25 +13,267 @@
     </issue>
 
     <issue
-        id="UnusedAttribute"
-        message="Attribute `enableOnBackInvokedCallback` is only used in API level 33 and higher (current min is 31)"
-        errorLine1="        android:enableOnBackInvokedCallback=&quot;true&quot;"
-        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        id="PropertyEscape"
+        message="Windows file separators (`\`) and drive letter separators (&apos;:&apos;) must be escaped (`\\`) in property files; use in\\\\instrumentation.keystore"
+        errorLine1="instrumentationKeyPassword=......"
+        errorLine2="                                 ^">
         <location
-            file="src/main/AndroidManifest.xml"
-            line="23"
-            column="9"/>
+            file="$HOME/src/safe/local.properties"
+            line="12"
+            column="34"/>
     </issue>
 
     <issue
         id="GradleDependency"
-        message="A newer version of `compileSdkVersion` than 34 is available: 35"
-        errorLine1="    compileSdk = 34"
-        errorLine2="    ~~~~~~~~~~~~~~~">
+        message="A newer version of com.google.firebase:firebase-bom than 34.5.0 is available: 34.6.0"
+        errorLine1="firebaseBom = &quot;34.5.0&quot;"
+        errorLine2="              ~~~~~~~~">
         <location
-            file="build.gradle.kts"
-            line="9"
-            column="5"/>
+            file="$HOME/src/safe/gradle/libs.versions.toml"
+            line="15"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.junit.jupiter:junit-jupiter than 5.11.3 is available: 6.0.1"
+        errorLine1="junit5 = &quot;5.11.3&quot;"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="$HOME/src/safe/gradle/libs.versions.toml"
+            line="18"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.junit:junit-bom than 5.11.3 is available: 6.0.1"
+        errorLine1="junit5 = &quot;5.11.3&quot;"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="$HOME/src/safe/gradle/libs.versions.toml"
+            line="18"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.junit.jupiter:junit-jupiter than 6.0.0 is available: 6.0.1"
+        errorLine1="junit6 = &quot;6.0.0&quot;"
+        errorLine2="         ~~~~~~~">
+        <location
+            file="$HOME/src/safe/gradle/libs.versions.toml"
+            line="19"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.junit.platform:junit-platform-launcher than 6.0.0 is available: 6.0.1"
+        errorLine1="junit6 = &quot;6.0.0&quot;"
+        errorLine2="         ~~~~~~~">
+        <location
+            file="$HOME/src/safe/gradle/libs.versions.toml"
+            line="19"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.junit:junit-bom than 6.0.0 is available: 6.0.1"
+        errorLine1="junit6 = &quot;6.0.0&quot;"
+        errorLine2="         ~~~~~~~">
+        <location
+            file="$HOME/src/safe/gradle/libs.versions.toml"
+            line="19"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.squareup.okio:okio than 3.16.2 is available: 3.16.3"
+        errorLine1="okio = &quot;3.16.2&quot;"
+        errorLine2="       ~~~~~~~~">
+        <location
+            file="$HOME/src/safe/gradle/libs.versions.toml"
+            line="33"
+            column="8"/>
+    </issue>
+
+    <issue
+        id="SimilarGradleDependency"
+        message="There are multiple dependencies androidx.preference:preference-ktx but with different version"
+        errorLine1="androidx-preference-ktx = { group = &quot;androidx.preference&quot;, name = &quot;preference-ktx&quot;, version.ref = &quot;preferenceKtx&quot; }"
+        errorLine2="                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/src/safe/gradle/libs.versions.toml"
+            line="63"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="SimilarGradleDependency"
+        message="There are multiple dependencies androidx.compose.runtime:runtime-livedata but with different version"
+        errorLine1="androidx-runtime-livedata = { group = &quot;androidx.compose.runtime&quot;, name = &quot;runtime-livedata&quot;, version.ref = &quot;runtimeLivedataVersion&quot; }"
+        errorLine2="                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/src/safe/gradle/libs.versions.toml"
+            line="64"
+            column="30"/>
+    </issue>
+
+    <issue
+        id="SimilarGradleDependency"
+        message="There are multiple dependencies androidx.test.uiautomator:uiautomator but with different version"
+        errorLine1="androidx-test-uiautomator = { module = &quot;androidx.test.uiautomator:uiautomator&quot;, version.ref = &quot;uiautomator&quot; }"
+        errorLine2="                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/src/safe/gradle/libs.versions.toml"
+            line="69"
+            column="30"/>
+    </issue>
+
+    <issue
+        id="SimilarGradleDependency"
+        message="There are multiple dependencies androidx.compose.ui:ui-test-junit4-android but with different version"
+        errorLine1="androidx-ui-test-junit4-android = { group = &quot;androidx.compose.ui&quot;, name = &quot;ui-test-junit4-android&quot;, version.ref = &quot;uiTestJunit4Android&quot; }"
+        errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/src/safe/gradle/libs.versions.toml"
+            line="71"
+            column="36"/>
+    </issue>
+
+    <issue
+        id="SimilarGradleDependency"
+        message="There are multiple dependencies androidx.compose.ui:ui-tooling but with different version"
+        errorLine1="androidx-ui-tooling = { group = &quot;androidx.compose.ui&quot;, name = &quot;ui-tooling&quot;, version.ref = &quot;uiTooling&quot; }"
+        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/src/safe/gradle/libs.versions.toml"
+            line="73"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="SimilarGradleDependency"
+        message="There are multiple dependencies androidx.compose.ui:ui-tooling-preview-android but with different version"
+        errorLine1="androidx-ui-tooling-preview-android = { group = &quot;androidx.compose.ui&quot;, name = &quot;ui-tooling-preview-android&quot;, version.ref = &quot;uiToolingPreviewAndroid&quot; }"
+        errorLine2="                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/src/safe/gradle/libs.versions.toml"
+            line="74"
+            column="40"/>
+    </issue>
+
+    <issue
+        id="SimilarGradleDependency"
+        message="There are multiple dependencies org.junit:junit-bom but with different version"
+        errorLine1="junit5_bom = { group = &quot;org.junit&quot;, name = &quot;junit-bom&quot;, version.ref = &quot;junit5&quot; }"
+        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/src/safe/gradle/libs.versions.toml"
+            line="84"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="SimilarGradleDependency"
+        message="There are multiple dependencies org.junit.jupiter:junit-jupiter but with different version"
+        errorLine1="junit5_jupiter = { group = &quot;org.junit.jupiter&quot;, name = &quot;junit-jupiter&quot;, version.ref = &quot;junit5&quot; }"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/src/safe/gradle/libs.versions.toml"
+            line="85"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="SimilarGradleDependency"
+        message="There are multiple dependencies org.junit:junit-bom but with different version"
+        errorLine1="junit6_bom = { group = &quot;org.junit&quot;, name = &quot;junit-bom&quot;, version.ref = &quot;junit6&quot; }"
+        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/src/safe/gradle/libs.versions.toml"
+            line="87"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="SimilarGradleDependency"
+        message="There are multiple dependencies org.junit.jupiter:junit-jupiter but with different version"
+        errorLine1="junit6_jupiter = { group = &quot;org.junit.jupiter&quot;, name = &quot;junit-jupiter&quot;, version.ref = &quot;junit6&quot; }"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/src/safe/gradle/libs.versions.toml"
+            line="88"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="SimilarGradleDependency"
+        message="There are multiple dependencies androidx.preference:preference-ktx but with different version"
+        errorLine1="preference-ktx = { group = &quot;androidx.preference&quot;, name = &quot;preference-ktx&quot;, version.ref = &quot;preferenceKtx&quot; }"
+        errorLine2="                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/src/safe/gradle/libs.versions.toml"
+            line="102"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="SimilarGradleDependency"
+        message="There are multiple dependencies androidx.compose.runtime:runtime-livedata but with different version"
+        errorLine1="runtime-livedata = { group = &quot;androidx.compose.runtime&quot;, name = &quot;runtime-livedata&quot;, version.ref = &quot;runtimeLivedataVersion&quot; }"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/src/safe/gradle/libs.versions.toml"
+            line="103"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="SimilarGradleDependency"
+        message="There are multiple dependencies androidx.compose.ui:ui-test-junit4-android but with different version"
+        errorLine1="ui-test-junit4-android = { group = &quot;androidx.compose.ui&quot;, name = &quot;ui-test-junit4-android&quot;, version.ref = &quot;uiTestJunit4Android&quot; }"
+        errorLine2="                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/src/safe/gradle/libs.versions.toml"
+            line="104"
+            column="27"/>
+    </issue>
+
+    <issue
+        id="SimilarGradleDependency"
+        message="There are multiple dependencies androidx.compose.ui:ui-tooling but with different version"
+        errorLine1="ui-tooling = { group = &quot;androidx.compose.ui&quot;, name = &quot;ui-tooling&quot;, version.ref = &quot;uiTooling&quot; }"
+        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/src/safe/gradle/libs.versions.toml"
+            line="105"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="SimilarGradleDependency"
+        message="There are multiple dependencies androidx.compose.ui:ui-tooling-preview-android but with different version"
+        errorLine1="ui-tooling-preview-android = { group = &quot;androidx.compose.ui&quot;, name = &quot;ui-tooling-preview-android&quot;, version.ref = &quot;uiToolingPreviewAndroid&quot; }"
+        errorLine2="                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/src/safe/gradle/libs.versions.toml"
+            line="106"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="SimilarGradleDependency"
+        message="There are multiple dependencies androidx.test.uiautomator:uiautomator but with different version"
+        errorLine1="uiautomator = { module = &quot;androidx.test.uiautomator:uiautomator&quot;, version.ref = &quot;uiautomator&quot; }"
+        errorLine2="               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/src/safe/gradle/libs.versions.toml"
+            line="107"
+            column="16"/>
     </issue>
 
     <issue
@@ -41,7 +283,7 @@
         errorLine2="                     ~~~">
         <location
             file="src/main/java/fi/iki/ede/categorypager/CategoryListPagedScreen.kt"
-            line="72"
+            line="78"
             column="22"/>
     </issue>
 
@@ -52,7 +294,7 @@
         errorLine2="                     ~~~">
         <location
             file="src/main/java/fi/iki/ede/categorypager/CategoryListPagedScreen.kt"
-            line="73"
+            line="79"
             column="22"/>
     </issue>
 
@@ -63,7 +305,7 @@
         errorLine2="                     ~~~~~~~~~~~~~">
         <location
             file="src/main/java/fi/iki/ede/categorypager/CategoryListPagedScreen.kt"
-            line="74"
+            line="80"
             column="22"/>
     </issue>
 
@@ -74,7 +316,7 @@
         errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="131"
+            line="130"
             column="5"/>
     </issue>
 
@@ -151,7 +393,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="58"
+            line="57"
             column="13"/>
     </issue>
 
@@ -162,7 +404,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="81"
+            line="80"
             column="13"/>
     </issue>
 
@@ -173,7 +415,29 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
+            line="126"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.restore_screen_restore_failed` appears to be unused"
+        errorLine1="    &lt;string name=&quot;restore_screen_restore_failed&quot;>Restoration failed&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
             line="127"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.restore_screen_restored` appears to be unused"
+        errorLine1="    &lt;string name=&quot;restore_screen_restored&quot;>Restoration complete: %1$d&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="128"
             column="13"/>
     </issue>
 
@@ -184,7 +448,7 @@
         errorLine2="             ~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="143"
+            line="142"
             column="14"/>
     </issue>
 
@@ -195,7 +459,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="151"
+            line="150"
             column="13"/>
     </issue>
 
@@ -206,7 +470,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="152"
+            line="151"
             column="13"/>
     </issue>
 
@@ -217,7 +481,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="153"
+            line="152"
             column="13"/>
     </issue>
 
@@ -228,7 +492,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="154"
+            line="153"
             column="13"/>
     </issue>
 
@@ -239,7 +503,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="155"
+            line="154"
             column="13"/>
     </issue>
 
@@ -250,7 +514,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="156"
+            line="155"
             column="13"/>
     </issue>
 
@@ -261,7 +525,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="157"
+            line="156"
             column="13"/>
     </issue>
 
@@ -272,7 +536,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="158"
+            line="157"
             column="13"/>
     </issue>
 
@@ -283,7 +547,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="160"
+            line="159"
             column="13"/>
     </issue>
 
@@ -294,7 +558,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="161"
+            line="160"
             column="13"/>
     </issue>
 
@@ -305,7 +569,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="162"
+            line="161"
             column="13"/>
     </issue>
 
@@ -316,7 +580,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="163"
+            line="162"
             column="13"/>
     </issue>
 
@@ -327,7 +591,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="164"
+            line="163"
             column="13"/>
     </issue>
 
@@ -338,7 +602,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="165"
+            line="164"
             column="13"/>
     </issue>
 
@@ -349,7 +613,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="166"
+            line="165"
             column="13"/>
     </issue>
 
@@ -360,7 +624,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="167"
+            line="166"
             column="13"/>
     </issue>
 
@@ -371,7 +635,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="168"
+            line="167"
             column="13"/>
     </issue>
 
@@ -382,7 +646,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="169"
+            line="168"
             column="13"/>
     </issue>
 
@@ -393,7 +657,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="174"
+            line="172"
             column="13"/>
     </issue>
 
@@ -404,7 +668,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="177"
+            line="175"
             column="13"/>
     </issue>
 
@@ -415,7 +679,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="178"
+            line="176"
             column="13"/>
     </issue>
 
@@ -426,7 +690,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="179"
+            line="177"
             column="13"/>
     </issue>
 
@@ -437,7 +701,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="180"
+            line="178"
             column="13"/>
     </issue>
 
@@ -448,7 +712,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="184"
+            line="182"
             column="13"/>
     </issue>
 
@@ -459,7 +723,7 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="185"
+            line="183"
             column="13"/>
     </issue>
 
@@ -470,85 +734,8 @@
         errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="src/main/res/values/strings.xml"
-            line="211"
+            line="209"
             column="13"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="            sharedPreferences.edit().putBoolean(PREFERENCE_BIOMETRICS_ENABLED, value).apply()"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/fi/iki/ede/safe/ui/activities/BiometricsActivity.kt"
-            line="144"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="        fun clearBiometricKeys() = sharedPreferences.edit()"
-        errorLine2="                                   ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/fi/iki/ede/safe/ui/activities/BiometricsActivity.kt"
-            line="195"
-            column="36"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="        private fun storeBioCipher(cipher: IVCipherText) = sharedPreferences.edit()"
-        errorLine2="                                                           ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/fi/iki/ede/safe/ui/activities/BiometricsActivity.kt"
-            line="205"
-            column="60"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `SharedPreferences.edit` instead?"
-        errorLine1="                Preferences.sharedPreferences.edit().putString(key, value)"
-        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/fi/iki/ede/safe/notifications/SetupNotifications.kt"
-            line="59"
-            column="17"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="                enabled = !TextUtils.isEmpty(website) &amp;&amp; Uri.parse(website) != null,"
-        errorLine2="                                                         ~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/fi/iki/ede/safe/ui/composable/SiteEntryView.kt"
-            line="168"
-            column="58"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="    ) Uri.parse(website)"
-        errorLine2="      ~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/fi/iki/ede/safe/ui/composable/SiteEntryView.kt"
-            line="432"
-            column="7"/>
-    </issue>
-
-    <issue
-        id="UseKtx"
-        message="Use the KTX extension function `String.toUri` instead?"
-        errorLine1="    else Uri.parse(&quot;https://$website&quot;)"
-        errorLine2="         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/java/fi/iki/ede/safe/ui/composable/SiteEntryView.kt"
-            line="433"
-            column="10"/>
     </issue>
 
     <issue
@@ -558,8 +745,30 @@
         errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
             file="build.gradle.kts"
-            line="301"
+            line="292"
             column="24"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="    testRuntimeOnly(&quot;org.junit.jupiter:junit-jupiter-engine&quot;)"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="301"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead (org.junit.platform:junit-platform-launcher is already available as `junit6_platform`, but using version 6.0.0 instead)"
+        errorLine1="    testRuntimeOnly(&quot;org.junit.platform:junit-platform-launcher&quot;)"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="302"
+            column="21"/>
     </issue>
 
     <issue
@@ -570,17 +779,6 @@
         <location
             file="src/androidTest/java/fi/iki/ede/safe/noui/ApplicationSuffixTest.kt"
             line="16"
-            column="5"/>
-    </issue>
-
-    <issue
-        id="IgnoreWithoutReason"
-        message="Test is ignored without giving any explanation"
-        errorLine1="    @Ignore"
-        errorLine2="    ~~~~~~~">
-        <location
-            file="src/test/java/fi/iki/ede/safe/ApplicationSuffixTest.kt"
-            line="23"
             column="5"/>
     </issue>
 
@@ -602,7 +800,7 @@
         errorLine2="    ~~~~~~~">
         <location
             file="src/androidTest/java/fi/iki/ede/safe/login/LoginScreenAfterFirstInstallTest.kt"
-            line="127"
+            line="131"
             column="5"/>
     </issue>
 
@@ -613,7 +811,7 @@
         errorLine2="    ~~~~~~~">
         <location
             file="src/androidTest/java/fi/iki/ede/safe/login/LoginScreenAfterFirstInstallTest.kt"
-            line="164"
+            line="168"
             column="5"/>
     </issue>
 
@@ -624,7 +822,7 @@
         errorLine2="    ~~~~~~~">
         <location
             file="src/androidTest/java/fi/iki/ede/safe/login/LoginScreenAfterFirstInstallTest.kt"
-            line="206"
+            line="210"
             column="5"/>
     </issue>
 
