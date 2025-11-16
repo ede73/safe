@@ -38,6 +38,7 @@ uiTooling = "1.9.4"
 uiToolingPreviewAndroid = "1.9.4"
 uiautomator = "2.3.0"
 volley = "1.2.1"
+ktor = "3.3.2"
 #plugins
 agp = "8.13.1"
 # see also dependency resolution in settings.gradle.kts for 2.0.21!
@@ -105,6 +106,7 @@ ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version.ref =
 ui-tooling-preview-android = { group = "androidx.compose.ui", name = "ui-tooling-preview-android", version.ref = "uiToolingPreviewAndroid" }
 uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "uiautomator" }
 volley = { module = "com.android.volley:volley", version.ref = "volley" }
+ktor-http = { group = "io.ktor", name = "ktor-http", version.ref = "ktor" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

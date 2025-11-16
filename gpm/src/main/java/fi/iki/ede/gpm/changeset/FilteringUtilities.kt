@@ -6,8 +6,7 @@ import fi.iki.ede.gpm.model.ScoringConfig
 import fi.iki.ede.gpm.similarity.LowerCaseTrimmedString
 import fi.iki.ede.gpm.similarity.findSimilarity
 import fi.iki.ede.gpm.similarity.toLowerCasedTrimmedString
-import java.net.MalformedURLException // KMP
-import java.net.URL // KMP
+import io.ktor.http.Url
 import kotlin.math.max
 import kotlin.reflect.KProperty1
 
@@ -308,13 +307,13 @@ private fun hasOnlyOneFieldChange(
     return isSpecifiedPropertyDifferent && areOtherPropertiesSame
 }
 
-private fun parseUrl(potentialUrl: LowerCaseTrimmedString): URL? {
+private fun parseUrl(potentialUrl: LowerCaseTrimmedString): Url? {
     return try {
-        URL(potentialUrl.lowercasedTrimmed)
-    } catch (e: MalformedURLException) {
+        Url(potentialUrl.lowercasedTrimmed)
+    } catch (e: Exception) {
         try {
-            URL("https://${potentialUrl.lowercasedTrimmed}")
-        } catch (e: MalformedURLException) {
+            Url("https://${potentialUrl.lowercasedTrimmed}")
+        } catch (e: Exception) {
             null
         }
     }

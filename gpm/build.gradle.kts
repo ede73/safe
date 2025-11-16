@@ -24,6 +24,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.material)
     implementation(libs.okio)
+    implementation(libs.ktor.http)
 
     androidTestImplementation(libs.androidx.test.junit)
 
