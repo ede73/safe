@@ -86,8 +86,7 @@ class KeyStoreHelperTest {
         // Maybe sooner?
         val keyStoreHelper = KeyStoreHelper()
         val biokey = "abba"
-        val encrypted =
-            keyStoreHelper.encryptByteArray(biokey.toByteArray())
+        keyStoreHelper.encryptByteArray(biokey.toByteArray())
 
         // Not implemented
         keyStoreHelper.rotateKeys()

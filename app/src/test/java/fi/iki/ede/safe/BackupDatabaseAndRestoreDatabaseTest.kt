@@ -501,32 +501,6 @@ class BackupDatabaseAndRestoreDatabaseTest {
                 Base64.decode("oUDmV4ykP6IObp+nTkpQebaV8cZdd/Ni0IgM424XAgPazzJ4Zk4l6pEJfvEUgIXj")
             )
 
-        // Some old and new date formats to ensure backwards compatibility
-        // Date parsing is already extensively tested elsewhere
-        private val OLD_DATE_FORMATS = listOf(
-            "May 31, 2023, 11:21:12 AM Pacific Daylight Time",
-            "May 31, 2023, 11:21:13",
-            "May 31, 2023, 11:21:14 PM Pacific Standard Time",
-            "12345678"
-        )
-
-        // XPath describing outcome (ie addition of an attribute, element/removal)
-        private val XML_MODIFICATIONS = listOf(
-            // add new proposed creation attribute
-            Pair("/PasswordSafe/", "@changed=\"123456\""),
-            // Future version - we can't parse (we can still try)
-            Pair("/PasswordSafe/@version", "\"666\""),
-            // Delete category name (so it fails to parse)
-            Pair("/PasswordSafe/category[0]/@cipher_name", ""),
-            // Delete item description - we can't add this
-            Pair("/PasswordSafe/category[0]/item[0]/description", ""),
-            // Add a new element, should never happen as
-            // version controls, but still we should just ignore it too
-            Pair("/PasswordSafe/category[0]/item[0]", "new_unknown_field"),
-            // Make an decryption error
-            Pair("/PasswordSafe/category[0]/@cipher_name", "foobar"),
-        )
-
         // TODO: missing changed <item id="2" deleted="1234>
         private const val TOP_LAYER_UNENCRYPTED_BACKUP_XML = """
 <PasswordSafe version="1" created="1234">

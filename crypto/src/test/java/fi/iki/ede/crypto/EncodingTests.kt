@@ -1,6 +1,5 @@
 package fi.iki.ede.crypto
 
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Test
 
@@ -10,7 +9,6 @@ class EncodingTests {
     fun ensurePasswordRemainsDespiteDifferentInputsTest() {
 
         KeystoreHelperMock4UnitTests.mock()
-        val ks = KeyStoreHelperFactory.getKeyStoreHelper()
         // crypto APIs prefer byte[] where ever except when dealing with passwords
         // Their sensitiveness requires char[]
         // Now, this exposes immediate problem, password is a string, is a (usually) UTF-8

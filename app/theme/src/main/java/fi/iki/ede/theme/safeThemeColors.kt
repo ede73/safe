@@ -36,12 +36,6 @@ internal fun SafeTheme.customColors() = SafeColors(
     whiteSpaceL = Color.Yellow.copy(alpha = 0.7f),
 )
 
-// onSurface/dark
-val Neutral90 = Color(red = 230, green = 225, blue = 229)
-
-// onSurface/light
-val Neutral10 = Color(red = 28, green = 27, blue = 31)
-
 val Purple80 = Color(0xFFD0BCFF)
 val PurpleGrey80 = Color(0xFFCCC2DC)
 val Pink80 = Color(0xFFEFB8C8)

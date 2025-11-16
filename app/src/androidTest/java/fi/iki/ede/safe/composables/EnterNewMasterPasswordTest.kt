@@ -36,7 +36,7 @@ class EnterNewMasterPasswordTest : NodeHelper {
         SafeTheme {
             Column {
                 EnterNewMasterPassword {
-                    val (oldPassword, newPassword) = it
+                    val (_, _) = it
                 }
             }
         }

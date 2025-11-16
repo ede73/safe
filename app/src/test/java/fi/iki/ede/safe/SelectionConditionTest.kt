@@ -9,11 +9,6 @@ import fi.iki.ede.db.whereNot
 import fi.iki.ede.db.whereNullOr0
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions.assertArrayEquals
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.BeforeEach
 
 
 class SelectionConditionTest {

@@ -8,7 +8,6 @@ import kotlinx.datetime.periodUntil
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
-import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -53,17 +52,10 @@ object DateUtils {
         val endDate = endDateTime.toLocalDateTime(TimeZone.currentSystemDefault()).date
         return startDate.periodUntil(endDate)
     }
-
-    fun durationBetweenDateAndNow(date: Instant): Duration {
-        return Clock.System.now() - date
-    }
 }
 
 @ExperimentalTime
 fun Instant.toLocalDate() = this.toLocalDateTime(TimeZone.currentSystemDefault()).date
-
-@ExperimentalTime
-fun Instant.toLocalTime() = this.toLocalDateTime(TimeZone.currentSystemDefault()).time
 
 @ExperimentalTime
 fun Instant.toLocalDateTime() = this.toLocalDateTime(TimeZone.currentSystemDefault())

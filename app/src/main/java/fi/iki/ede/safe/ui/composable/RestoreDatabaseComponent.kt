@@ -2,7 +2,6 @@ package fi.iki.ede.safe.ui.composable
 
 import android.content.Context
 import android.net.Uri
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableIntState

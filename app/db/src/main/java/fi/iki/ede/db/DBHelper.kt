@@ -26,9 +26,9 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 typealias DBID = Long
-typealias FileName = String
 
 private const val TAG = "DBHelper"
+typealias FileName = String
 
 /**
  * Bug!? in SQLite? Do not use readableDatabase or writeableDatabase.use!

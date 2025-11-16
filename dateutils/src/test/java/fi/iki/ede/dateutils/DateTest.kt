@@ -30,8 +30,6 @@ class DateTest {
         // Exactly Wed May 31 2023 22:21:47 GMT+0000
         private const val UNIX_STAMP_MILLIS = 1685571707000L
 
-        // Not sure where the non breakable space popped from !?
-        private const val NEW_DATE_FORMAT = "May 31, 2023, 10:21:47 PM Coordinated Universal Time"
         private val formats = listOf(
             "May 31, 2023, 03:22:11 AM",
             "May 31, 2023, 13:22:11",

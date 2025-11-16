@@ -77,7 +77,6 @@ object IntentManager {
             0 -> return askedIntent
             else -> {
                 // oh no we have a conflict!
-                val conflictingPlugins = replacements.keys.joinToString(", ")
                 // TODO: Tell user to fix this (need to deactivate a module)
                 // TODO: Or ask which one to deactivate?
                 // TODO: or just deactivate both(all) and tell user and return default
