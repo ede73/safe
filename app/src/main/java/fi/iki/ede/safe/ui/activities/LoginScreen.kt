@@ -264,7 +264,7 @@ fun isGoodRestoredContent(context: Context) = try {
 @Composable
 @ExperimentalTime
 @ExperimentalFoundationApi
-fun LoginScreenPreview() {
+private fun LoginScreenPreview() {
     MockKeyStoreHelper.init()
     SafeThemeSurface {
         LoginScreenCompose(

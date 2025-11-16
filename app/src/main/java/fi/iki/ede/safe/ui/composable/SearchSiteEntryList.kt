@@ -87,7 +87,7 @@ fun SearchSiteEntryList(
 @Composable
 @ExperimentalTime
 @ExperimentalFoundationApi
-fun SearchSiteEntryListPreview() {
+private fun SearchSiteEntryListPreview() {
     SafeThemeSurface {
         MockKeyStoreHelper.init()
         val site1 = DecryptableSiteEntry(1).apply {

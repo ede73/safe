@@ -72,7 +72,7 @@ fun ZoomableImageViewer(bitmap: Bitmap) {
 
 @Preview(showBackground = true)
 @Composable
-fun ZoomableImageViewerPreview() {
+private fun ZoomableImageViewerPreview() {
     // SafeTheme
     MaterialTheme {
         Column {

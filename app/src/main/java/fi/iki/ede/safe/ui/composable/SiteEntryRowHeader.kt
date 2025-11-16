@@ -44,7 +44,7 @@ fun SiteEntryRowHeader(headerString: String) {
 @Composable
 @ExperimentalTime
 @ExperimentalFoundationApi
-fun SiteEntryRowHeaderPreview() {
+private fun SiteEntryRowHeaderPreview() {
     SafeThemeSurface {
         MockKeyStoreHelper.init()
         val site1 = DecryptableSiteEntry(1).apply {

@@ -56,7 +56,7 @@ fun DeleteCategoryDialog(
 
 @DualModePreview
 @Composable
-fun DeleteCategoryDialogPreview() {
+private fun DeleteCategoryDialogPreview() {
     SafeThemeSurface {
         MockKeyStoreHelper.init()
         val cat = DecryptableCategoryEntry().apply {

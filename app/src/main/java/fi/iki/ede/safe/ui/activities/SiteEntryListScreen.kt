@@ -64,7 +64,7 @@ class SiteEntryListScreen :
 @Composable
 @ExperimentalTime
 @ExperimentalFoundationApi
-fun SiteEntryListScreenPreview() {
+private fun SiteEntryListScreenPreview() {
     MockKeyStoreHelper.init()
     val flow = listOf(DecryptableSiteEntry(1).apply {
         description = KeyStoreHelperFactory.encrypterProvider("Android".toByteArray())

@@ -33,7 +33,7 @@ fun TextualCheckbox(
 
 @Preview(showBackground = true)
 @Composable
-fun TextualCheckboxPreview() {
+private fun TextualCheckboxPreview() {
     MaterialTheme {
         val checked = remember { mutableStateOf(false) }
         TextualCheckbox(

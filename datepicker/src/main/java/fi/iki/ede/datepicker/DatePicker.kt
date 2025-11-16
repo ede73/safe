@@ -176,7 +176,7 @@ private fun quickFormat(
 @Preview(showBackground = true)
 @Composable
 @ExperimentalTime
-fun DatePickerPreview() {
+private fun DatePickerPreview() {
     MaterialTheme {
         DatePicker(now()) {}
     }

@@ -91,6 +91,6 @@ fun TopActionBarForSiteEntryView(
 @Composable
 @ExperimentalTime
 @ExperimentalFoundationApi
-fun TopActionBarForSiteEntryViewPreview() {
+private fun TopActionBarForSiteEntryViewPreview() {
     TopActionBarForSiteEntryView {}
 }

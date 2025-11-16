@@ -272,7 +272,7 @@ private fun MakeDropdownMenu(
 @Composable
 @ExperimentalTime
 @ExperimentalFoundationApi
-fun DefaultPreview() {
+private fun DefaultPreview() {
     SafeTheme {
         Column {
             TopActionBar({}, false)

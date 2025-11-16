@@ -81,6 +81,6 @@ fun BottomActionBarForSiteEntryView(
 @DualModePreview
 @Composable
 @ExperimentalTime
-fun BottomActionBarForSiteEntryViewPreview() {
+private fun BottomActionBarForSiteEntryViewPreview() {
     BottomActionBarForSiteEntryView {}
 }

@@ -38,7 +38,7 @@ class SiteEntrySearchScreen :
 @Composable
 @ExperimentalTime
 @ExperimentalFoundationApi
-fun SiteEntrySearchPreview() {
+private fun SiteEntrySearchPreview() {
     MockKeyStoreHelper.init()
     listOf(DecryptableSiteEntry(1).apply {
         description = KeyStoreHelperFactory.encrypterProvider("Android".toByteArray())

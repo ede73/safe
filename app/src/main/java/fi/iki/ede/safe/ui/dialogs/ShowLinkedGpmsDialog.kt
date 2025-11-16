@@ -64,7 +64,7 @@ fun ShowLinkedGpmsDialog(
 
 @DualModePreview
 @Composable
-fun ShowLinkedGPMsPreview() {
+private fun ShowLinkedGPMsPreview() {
     MockKeyStoreHelper.init()
     SafeThemeSurface {
         val gpms = setOf(

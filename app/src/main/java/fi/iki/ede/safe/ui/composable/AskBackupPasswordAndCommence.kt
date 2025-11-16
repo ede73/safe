@@ -78,21 +78,3 @@ fun AskBackupPasswordAndCommence(
         }
     }
 }
-
-
-//@DualModePreview
-//@Composable
-//fun PrepareDBRestorePreview() {
-//    KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
-//    KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
-//    SafeThemeSurface {
-//        AskBackupPasswordAndCommence(
-//            processedPasswords = remember { mutableIntStateOf(0) },
-//            processedCategories = remember { mutableIntStateOf(0) },
-//            processedMessage = remember { mutableStateOf("") },
-//            selectedDoc = Uri.EMPTY,
-//            context = PrepareDataBaseRestorationScreen(),
-//            { _ -> }
-//        )
-//    }
-//}

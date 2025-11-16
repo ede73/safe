@@ -33,7 +33,7 @@ fun UsageInfoDialog(
 
 @Preview(showBackground = true)
 @Composable
-fun UsageInfoPreview() {
+private fun UsageInfoPreview() {
     MaterialTheme {
         UsageInfoDialog("message") {}
     }

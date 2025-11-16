@@ -156,7 +156,7 @@ fun MatchingSiteEntry(
 @ExperimentalFoundationApi
 @DualModePreview
 @Composable
-fun MatchingSiteEntryPreview() {
+private fun MatchingSiteEntryPreview() {
     SafeThemeSurface {
         MockKeyStoreHelper.init()
         val cat = DecryptableCategoryEntry().apply {

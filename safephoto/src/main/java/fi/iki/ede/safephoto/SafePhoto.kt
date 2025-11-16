@@ -315,7 +315,7 @@ private fun takePhoto(
 
 @Preview(showBackground = true)
 @Composable
-fun SafePhotoPreview() {
+private fun SafePhotoPreview() {
     // SafeTheme
     MaterialTheme {
         val width = 100

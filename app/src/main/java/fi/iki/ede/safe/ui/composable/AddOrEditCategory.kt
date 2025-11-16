@@ -73,7 +73,7 @@ fun AddOrEditCategory(
 
 @DualModePreview
 @Composable
-fun AddOrEditCategoryPreview() {
+private fun AddOrEditCategoryPreview() {
     SafeThemeSurface {
         AddOrEditCategory("Category", R.string.category_list_edit_category) {
         }

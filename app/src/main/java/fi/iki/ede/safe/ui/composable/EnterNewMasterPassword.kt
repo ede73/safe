@@ -72,7 +72,7 @@ fun EnterNewMasterPassword(
 
 @DualModePreview
 @Composable
-fun EnterNewMasterPasswordPreview() {
+private fun EnterNewMasterPasswordPreview() {
     SafeThemeSurface {
         EnterNewMasterPassword {}
     }

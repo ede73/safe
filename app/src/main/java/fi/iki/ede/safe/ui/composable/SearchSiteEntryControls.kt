@@ -315,7 +315,7 @@ private fun asyncFilterChunkOfSiteEntries(
 @Composable
 @ExperimentalTime
 @ExperimentalFoundationApi
-fun SearchSiteEntryPreview() {
+private fun SearchSiteEntryPreview() {
     SafeThemeSurface {
         MockKeyStoreHelper.init()
         val site = DecryptableSiteEntry(1).apply {

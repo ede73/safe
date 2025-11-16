@@ -65,10 +65,3 @@ fun BiometricsComponent(bioVerify: ActivityResultLauncher<Intent>) {
         }
     }
 }
-
-// cant access preferences
-//@DualModePreview
-//@Composable
-//fun BiometricsComponentPreview() {
-//    BiometricsComponent()
-//}

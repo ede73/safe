@@ -155,7 +155,7 @@ fun EditableComboBox(
 @Composable
 @ExperimentalTime
 @ExperimentalFoundationApi
-fun EditableComboBoxPreview() {
+private fun EditableComboBoxPreview() {
     SafeThemeSurface {
         EditableComboBox(
             selectedItems = setOf("previous1"),

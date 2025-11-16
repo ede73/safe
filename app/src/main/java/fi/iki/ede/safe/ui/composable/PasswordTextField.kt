@@ -182,7 +182,7 @@ private fun showOrObfuscatePassword(
 
 @DualModePreview
 @Composable
-fun PasswordTextFieldPreview() {
+private fun PasswordTextFieldPreview() {
     SafeThemeSurface {
         Column {
             PasswordTextField(

@@ -182,7 +182,7 @@ fun nudepwd(): String {
 @Composable
 @ExperimentalTime
 @ExperimentalFoundationApi
-fun RecoverDatabasePreview() {
+private fun RecoverDatabasePreview() {
     MockKeyStoreHelper.init()
     SafeThemeSurface {
         CopyDatabase(null) {}

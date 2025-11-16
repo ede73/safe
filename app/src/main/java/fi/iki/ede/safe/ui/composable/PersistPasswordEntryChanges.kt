@@ -73,7 +73,7 @@ private fun convertToJpegAndEncrypt(
 @OptIn(ExperimentalTime::class)
 @DualModePreview
 @Composable
-fun PersistPasswordEntryChangesPreview() {
+private fun PersistPasswordEntryChangesPreview() {
     MockKeyStoreHelper.init()
     SafeThemeSurface {
         PersistPasswordEntryChanges(

@@ -45,7 +45,7 @@ fun DeleteSiteEntryDialog(
 @DualModePreview
 @Composable
 @ExperimentalTime
-fun DeleteSiteEntryDialogPreview() {
+private fun DeleteSiteEntryDialogPreview() {
     SafeThemeSurface {
         MockKeyStoreHelper.init()
         val site = DecryptableSiteEntry(1).apply {

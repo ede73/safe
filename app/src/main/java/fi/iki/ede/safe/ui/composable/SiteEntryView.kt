@@ -449,7 +449,7 @@ private fun tryParseUri(website: String): Uri =
 @Composable
 @ExperimentalTime
 @ExperimentalFoundationApi
-fun SiteEntryViewPreview() {
+private fun SiteEntryViewPreview() {
     SafeThemeSurface {
         //PopCustomPasswordDialog {}
         MockKeyStoreHelper.init()

@@ -152,7 +152,7 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
 @ExperimentalFoundationApi
 @DualModePreview
 @Composable
-fun CategoryRowPreview() {
+private fun CategoryRowPreview() {
     SafeThemeSurface {
         MockKeyStoreHelper.init()
         val cat = DecryptableCategoryEntry().apply {

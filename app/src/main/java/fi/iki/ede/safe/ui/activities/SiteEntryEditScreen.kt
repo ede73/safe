@@ -139,7 +139,7 @@ class SiteEntryEditScreen :
 @Composable
 @ExperimentalTime
 @ExperimentalFoundationApi
-fun SiteEntryScreenPreview() {
+private fun SiteEntryScreenPreview() {
     MockKeyStoreHelper.init()
     val entry = DecryptableSiteEntry(1)
     entry.id = 1

@@ -25,7 +25,7 @@ fun HelpViewer(sourceString: String, modifier: Modifier = Modifier) {
 
 @DualModePreview
 @Composable
-fun HelpViewerPreview() {
+private fun HelpViewerPreview() {
     SafeThemeSurface {
         HelpViewer("<h1>Hello</h1>")
     }

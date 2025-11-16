@@ -132,7 +132,7 @@ fun ShowTrashDialog(
 @Composable
 @ExperimentalTime
 @ExperimentalFoundationApi
-fun ShowTrashPreview() {
+private fun ShowTrashPreview() {
     SafeThemeSurface {
         MockKeyStoreHelper.init()
         DecryptableCategoryEntry().apply {

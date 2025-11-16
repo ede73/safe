@@ -44,7 +44,7 @@ fun NumberPicker(
 
 @Preview(showBackground = true)
 @Composable
-fun NumberPickerPreview() {
+private fun NumberPickerPreview() {
     MaterialTheme {
         val years = (1990..2023).map { it.toString() }
         val selectedYear = remember { mutableStateOf("2000") }

@@ -44,7 +44,7 @@ class HelpScreen : ComponentActivity() {
 
 @DualModePreview
 @Composable
-fun HelpScreenPreview() {
+private fun HelpScreenPreview() {
     SafeThemeSurface {
         HelpViewer("<html><body>Moro <b>poop</b></body></html>")
     }

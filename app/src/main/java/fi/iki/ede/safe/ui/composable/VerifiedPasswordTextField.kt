@@ -69,7 +69,7 @@ fun VerifiedPasswordTextField(
 
 @DualModePreview
 @Composable
-fun VerifiedPasswordTextFieldPreview() {
+private fun VerifiedPasswordTextFieldPreview() {
     SafeThemeSurface {
         Column {
             VerifiedPasswordTextField(

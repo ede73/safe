@@ -47,7 +47,7 @@ fun SiteEntryList(siteEntries: List<DecryptableSiteEntry>) {
 @Composable
 @ExperimentalTime
 @ExperimentalFoundationApi
-fun SiteEntryListPreview() {
+private fun SiteEntryListPreview() {
     SafeThemeSurface {
         MockKeyStoreHelper.init()
         val lst = mutableListOf(DecryptableSiteEntry(1).apply {

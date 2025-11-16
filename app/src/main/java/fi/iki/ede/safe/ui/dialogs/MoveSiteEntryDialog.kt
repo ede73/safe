@@ -105,7 +105,7 @@ fun MoveSiteEntryDialog(
 @DualModePreview
 @Composable
 @ExperimentalTime
-fun MoveSiteEntryPreview() {
+private fun MoveSiteEntryPreview() {
     SafeThemeSurface {
         MockKeyStoreHelper.init()
         val cat = DecryptableCategoryEntry().apply {

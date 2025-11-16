@@ -134,7 +134,7 @@ fun ExtensionsEditor(
 
 @DualModePreview
 @Composable
-fun ExtensionsEditorPreview() {
+private fun ExtensionsEditorPreview() {
     SafeThemeSurface {
         ExtensionsEditor(listOf("a", "b", "c"))
     }

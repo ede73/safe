@@ -174,7 +174,7 @@ fun SiteEntryRow(
 @Composable
 @ExperimentalTime
 @ExperimentalFoundationApi
-fun SiteEntryRowPreview() {
+private fun SiteEntryRowPreview() {
     SafeThemeSurface {
         MockKeyStoreHelper.init()
         val site1 = DecryptableSiteEntry(1).apply {
