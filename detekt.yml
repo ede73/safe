@@ -1,4 +1,11 @@
 naming:
   FunctionNaming:
+    # Composable functions are an exception to the standard Kotlin naming convention.
+    # The following allows PascalCase for functions annotated with @Composable.
     ignoreAnnotated:
       - 'Composable'
+
+complexity:
+  LongMethod:
+    # Increased from default 60 to allow for longer composable functions.
+    threshold: 80
