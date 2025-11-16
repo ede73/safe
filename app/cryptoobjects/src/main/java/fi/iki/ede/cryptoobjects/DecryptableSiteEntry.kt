@@ -46,7 +46,7 @@ class DecryptableSiteEntry(categoryId: Long) {
             if (extensions.isEmpty()) mapOf()
             else
                 Json.decodeFromString<Map<String, Set<String>>>(
-                    extensions.decrypt(decrypter).trim()
+                    extensions.decrypt(KeyStoreHelperFactory.decrypterProvider).trim()
                 )
         } catch (e: Exception) {
             // TODO: temporarily disabled
@@ -73,7 +73,7 @@ class DecryptableSiteEntry(categoryId: Long) {
     val plainNote: String
         get() = decrypt(note)
     val plainPhoto: Bitmap?
-        get() = if (photo.isEmpty()) null else decryptPhoto(decrypter)
+        get() = if (photo.isEmpty()) null else decryptPhoto(KeyStoreHelperFactory.decrypterProvider)
 
     // plain description is used A LOT everywhere (listing, sorting, displaying)
     // On a large password DB operating on decrypt-on-demand description is just too slow
@@ -150,10 +150,8 @@ class DecryptableSiteEntry(categoryId: Long) {
         description = this@DecryptableSiteEntry.description
     }
 
-    private val decrypter = KeyStoreHelperFactory.getDecrypter()
-
     private fun decrypt(value: IVCipherText) = try {
-        String(decrypter(value))
+        String(KeyStoreHelperFactory.decrypterProvider(value))
     } catch (e: Exception) {
         "Failed decr $e"
     }

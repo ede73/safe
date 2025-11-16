@@ -6,8 +6,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.theme.SafeThemeSurface
 import kotlin.time.ExperimentalTime
@@ -30,13 +30,11 @@ fun CategoryList(categories: List<DecryptableCategoryEntry>) {
 @Composable
 @ExperimentalTime
 @ExperimentalFoundationApi
-fun CategoryListPreview() {
+private fun CategoryListPreview() {
     SafeThemeSurface {
-        KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
-        KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
-        val encrypter = KeyStoreHelperFactory.getEncrypter()
+        MockKeyStoreHelper.init()
         val cat = DecryptableCategoryEntry().apply {
-            encryptedName = encrypter("Category".toByteArray())
+            encryptedName = KeyStoreHelperFactory.encrypterProvider("Category".toByteArray())
         }
         CategoryList(listOf(cat, cat, cat))
     }

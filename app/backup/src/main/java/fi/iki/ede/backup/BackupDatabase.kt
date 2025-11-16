@@ -131,8 +131,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
                 ).toByteArray()
             )
         }.transform { ba ->
-            val encrypter = KeyStoreHelperFactory.getEncrypter()
-            emit(encrypter(ba))
+            emit(KeyStoreHelperFactory.encrypterProvider(ba))
         }.flowOn(Dispatchers.Default).transform { encrypted ->
             val (salt, currentEncryptedMasterKey) = DBHelperFactory.getDBHelper()
                 .fetchSaltAndEncryptedMasterKey()

@@ -13,8 +13,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.safe.R
@@ -56,14 +56,14 @@ internal fun CategoryListScreenCompose(
                 modifier = Modifier.padding(innerPadding),
             ) {
                 if (displayAddCategoryDialog.value) {
-                    val encrypter = KeyStoreHelperFactory.getEncrypter()
                     AddOrEditCategory(
                         textId = R.string.category_list_edit_category,
                         categoryName = "",
                         onSubmit = {
                             if (!TextUtils.isEmpty(it)) {
                                 val entry = DecryptableCategoryEntry().apply {
-                                    encryptedName = encrypter(it.toByteArray())
+                                    encryptedName =
+                                        KeyStoreHelperFactory.encrypterProvider(it.toByteArray())
                                 }
                                 coroutineScope.launch {
                                     DataModel.addOrEditCategory(entry)
@@ -85,23 +85,22 @@ internal fun CategoryListScreenCompose(
 private fun CategoryListScreenComposePreview() {
     SafeThemeSurface {
         val categories = remember {
-            KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
-            KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
-            val encrypter = KeyStoreHelperFactory.getEncrypter()
+            MockKeyStoreHelper.init()
             val fakeCategories = listOf(
                 DecryptableCategoryEntry().apply {
                     id = 1
-                    encryptedName = encrypter("Bank".toByteArray())
+                    encryptedName = KeyStoreHelperFactory.encrypterProvider("Bank".toByteArray())
                     containedSiteEntryCount = 5
                 },
                 DecryptableCategoryEntry().apply {
                     id = 2
-                    encryptedName = encrypter("E-Mail".toByteArray())
+                    encryptedName = KeyStoreHelperFactory.encrypterProvider("E-Mail".toByteArray())
                     containedSiteEntryCount = 3
                 },
                 DecryptableCategoryEntry().apply {
                     id = 3
-                    encryptedName = encrypter("Social Media".toByteArray())
+                    encryptedName =
+                        KeyStoreHelperFactory.encrypterProvider("Social Media".toByteArray())
                     containedSiteEntryCount = 12
                 }
             )

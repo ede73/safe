@@ -7,8 +7,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateListOf
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
 import fi.iki.ede.autolock.AutolockingFeaturesImpl
-import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.safe.ui.composable.DualModePreview
 import fi.iki.ede.safe.ui.composable.SiteEntrySearchCompose
@@ -39,13 +39,11 @@ class SiteEntrySearchScreen :
 @ExperimentalTime
 @ExperimentalFoundationApi
 fun SiteEntrySearchPreview() {
-    KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
-    KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
-
+    MockKeyStoreHelper.init()
     listOf(DecryptableSiteEntry(1).apply {
-        description = KeyStoreHelperFactory.getEncrypter()("Android".toByteArray())
+        description = KeyStoreHelperFactory.encrypterProvider("Android".toByteArray())
     }, DecryptableSiteEntry(1).apply {
-        description = KeyStoreHelperFactory.getEncrypter()("iPhone".toByteArray())
+        description = KeyStoreHelperFactory.encrypterProvider("iPhone".toByteArray())
     })
     SiteEntrySearchCompose()
 }

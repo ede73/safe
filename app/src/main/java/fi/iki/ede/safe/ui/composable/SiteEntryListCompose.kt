@@ -9,8 +9,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.db.DBID
@@ -61,22 +61,23 @@ internal fun SiteEntryListCompose(
 private fun SiteEntryListComposePreview() {
     SafeThemeSurface {
         val (category, siteEntries) = remember {
-            KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
-            KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
-            val encrypter = KeyStoreHelperFactory.getEncrypter()
+            MockKeyStoreHelper.init()
             val category = DecryptableCategoryEntry().apply {
                 id = 1L
-                encryptedName = encrypter("Social Media".toByteArray())
+                encryptedName =
+                    KeyStoreHelperFactory.encrypterProvider("Social Media".toByteArray())
             }
             val siteEntries = listOf(
                 DecryptableSiteEntry(1L).apply {
-                    description = encrypter("Facebook".toByteArray())
-                    username = encrypter("user@example.com".toByteArray())
+                    description = KeyStoreHelperFactory.encrypterProvider("Facebook".toByteArray())
+                    username =
+                        KeyStoreHelperFactory.encrypterProvider("user@example.com".toByteArray())
                     passwordChangedDate = Clock.System.now()
                 },
                 DecryptableSiteEntry(2L).apply {
-                    description = encrypter("Twitter".toByteArray())
-                    username = encrypter("user@example.com".toByteArray())
+                    description = KeyStoreHelperFactory.encrypterProvider("Twitter".toByteArray())
+                    username =
+                        KeyStoreHelperFactory.encrypterProvider("user@example.com".toByteArray())
                 }
             )
             Pair(category, siteEntries)

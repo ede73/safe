@@ -18,6 +18,7 @@ import fi.iki.ede.crypto.keystore.KeyManagement.makeFreshNewKey
 import fi.iki.ede.crypto.keystore.KeyStoreHelper.Companion.ANDROID_KEYSTORE
 import fi.iki.ede.crypto.keystore.KeyStoreHelper.Companion.importExistingEncryptedMasterKey
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.db.DBHelperFactory
@@ -42,16 +43,6 @@ import kotlin.time.ExperimentalTime
 @ExperimentalFoundationApi
 class RecoverDatabase : ComponentActivity() {
     private var output: String = ""
-//    private val requestPermissionLauncher = registerForActivityResult(
-//        ActivityResultContracts.RequestPermission()
-//    ) { isGranted: Boolean ->
-//        if (isGranted) {
-//            // Permission is granted. Continue the action or workflow in your app.
-//        } else {
-//            // Explain to the user that the feature is unavailable because the
-//            // features requires a permission that the user has denied.
-//        }
-//    }
 
     private val createDocumentLauncher = registerForActivityResult(
         CreateDocument("application/octet-stream")
@@ -118,21 +109,6 @@ fun reconvertDatabase(pwd: String, completed: () -> Unit) {
         KEY_LENGTH_BITS,
         pbkdf2key
     )
-
-//    fun generateAESKey(bits: Int): ByteArray =
-//        KeyGenerator.getInstance("AES").let {
-//            it.init(bits)
-//            it.generateKey().encoded
-//        }
-    //val a = existingUnencryptedMasterKey.encoded
-    //val secretKeySpec = SecretKeySpec(existingUnencryptedMasterKey.encoded, "AES")
-
-//    fun encryptWithNewMasterKey(input: ByteArray, sm: SecretKeySpec): IVCipherText {
-//
-//    }
-
-//    encryptWithNewMasterKey("".toByteArray(), secretKeySpec)
-    //val z = ks.encryptByteArray("".toByteArray(), unencryptedKey)
 
     val db = DBHelperFactory.getDBHelper()
     val cats = db.fetchAllCategoryRows()
@@ -207,6 +183,7 @@ fun nudepwd(): String {
 @ExperimentalTime
 @ExperimentalFoundationApi
 fun RecoverDatabasePreview() {
+    MockKeyStoreHelper.init()
     SafeThemeSurface {
         CopyDatabase(null) {}
     }

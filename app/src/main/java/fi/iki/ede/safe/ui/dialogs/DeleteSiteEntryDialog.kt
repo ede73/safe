@@ -4,8 +4,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
-import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.composable.DualModePreview
@@ -47,11 +47,9 @@ fun DeleteSiteEntryDialog(
 @ExperimentalTime
 fun DeleteSiteEntryDialogPreview() {
     SafeThemeSurface {
-        KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
-        KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
-        val encrypter = KeyStoreHelperFactory.getEncrypter()
+        MockKeyStoreHelper.init()
         val site = DecryptableSiteEntry(1).apply {
-            description = encrypter("Description".toByteArray())
+            description = KeyStoreHelperFactory.encrypterProvider("Description".toByteArray())
         }
         DeleteSiteEntryDialog(site, {}, {})
     }

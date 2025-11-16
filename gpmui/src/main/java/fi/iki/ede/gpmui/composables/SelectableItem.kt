@@ -43,7 +43,7 @@ fun SelectableItem(text: String, showInfo: () -> Unit, leftSpacer: Boolean = fal
 
 @Preview(showBackground = true)
 @Composable
-fun SelectableItemPreview() {
+private fun SelectableItemPreview() {
     MaterialTheme {
         SelectableItem("item", {}, true)
     }

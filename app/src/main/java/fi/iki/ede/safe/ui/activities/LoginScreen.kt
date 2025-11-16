@@ -15,6 +15,7 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelper.Companion.DATABASE_NAME
@@ -264,8 +265,7 @@ fun isGoodRestoredContent(context: Context) = try {
 @ExperimentalTime
 @ExperimentalFoundationApi
 fun LoginScreenPreview() {
-    KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
-    KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
+    MockKeyStoreHelper.init()
     SafeThemeSurface {
         LoginScreenCompose(
             LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE,

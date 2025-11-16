@@ -1,5 +1,6 @@
 package fi.iki.ede.categorypager
 
+import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import android.os.Bundle
 import android.text.TextUtils
 import androidx.activity.compose.setContent
@@ -21,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
 import fi.iki.ede.autolock.AutolockingFeaturesImpl
-import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.datamodel.DataModel
@@ -99,14 +99,13 @@ private fun AddOrEditCategory(
     coroutineScope: CoroutineScope,
     displayAddCategoryDialog: MutableState<Boolean>
 ) {
-    val encrypter = KeyStoreHelperFactory.getEncrypter()
     AddOrEditCategory(
         textId = R.string.category_list_edit_category,
         categoryName = "",
         onSubmit = {
             if (!TextUtils.isEmpty(it)) {
                 val entry = DecryptableCategoryEntry().apply {
-                    encryptedName = encrypter(it.toByteArray())
+                    encryptedName = KeyStoreHelperFactory.encrypterProvider(it.toByteArray())
                 }
                 coroutineScope.launch {
                     DataModel.addOrEditCategory(entry)
@@ -121,13 +120,11 @@ private fun AddOrEditCategory(
 @ExperimentalTime
 @ExperimentalFoundationApi
 fun CategoryListPagedScreenPreview() {
-    KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
-    KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
-
+    MockKeyStoreHelper.init()
     val flow = listOf(DecryptableCategoryEntry().apply {
-        encryptedName = KeyStoreHelperFactory.getEncrypter()("Android".toByteArray())
+        encryptedName = KeyStoreHelperFactory.encrypterProvider("Android".toByteArray())
     }, DecryptableCategoryEntry().apply {
-        encryptedName = KeyStoreHelperFactory.getEncrypter()("iPhone".toByteArray())
+        encryptedName = KeyStoreHelperFactory.encrypterProvider("iPhone".toByteArray())
     })
     CategoryListScreenPagedCompose(MutableStateFlow(flow))
 }

@@ -380,7 +380,7 @@ private fun storeChangeSet(importChangeSet: ImportChangeSet) {
 @Preview(showBackground = true)
 @Composable
 @ExperimentalTime
-fun ImportScreenPreview() {
+private fun ImportScreenPreview() {
     MaterialTheme {
         ImportGpmCsvComposable(
             { _, _ -> },

@@ -14,11 +14,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.gpm.changeset.ImportChangeSet
 import fi.iki.ede.gpm.changeset.ScoredMatch
 import fi.iki.ede.gpm.model.IncomingGPM
+import fi.iki.ede.gpmui.GpmUiMockKeyStoreHelper
 import fi.iki.ede.gpmui.dialogs.ShowInfoDialog
 import fi.iki.ede.gpmui.models.ItemWrapper
 import fi.iki.ede.gpmui.utilities.makeFakeImportForTesting
@@ -76,9 +75,8 @@ fun ConflictingGpmsPage(importChangeSet: MutableState<ImportChangeSet?>) =
 
 @Preview(showBackground = true)
 @Composable
-fun Page3Preview() {
-    KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
-    KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
+private fun Page3Preview() {
+    GpmUiMockKeyStoreHelper.init()
     MaterialTheme {
         val m =
             remember { mutableStateOf<ImportChangeSet?>(makeFakeImportForTesting()) }

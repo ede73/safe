@@ -245,8 +245,7 @@ fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesControls(viewModel: Import
 @Preview(showBackground = true)
 @Composable
 @ExperimentalTime
-fun ImportControlsPreview() {
-
+private fun ImportControlsPreview() {
     val fakeViewModel = ImportGPMViewModel().apply {}
     MaterialTheme {
         AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesControls(fakeViewModel)

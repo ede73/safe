@@ -16,7 +16,7 @@ object KeystoreHelperMock4UnitTests {
     fun mock() {
         mockkObject(KeyStoreHelperFactory)
         val p = mockkClass(KeyStoreHelper::class)
-        every { KeyStoreHelperFactory.getKeyStoreHelper() } returns p
+        every { KeyStoreHelperFactory.getKeyStoreHelper } returns { p }
         val encryptionInput = slot<ByteArray>()
         val fakeIV: ByteArray =
             generateSequence<Byte>(1) { (it + 1).toByte() }
@@ -65,6 +65,13 @@ object KeystoreHelperMock4UnitTests {
         }
         every { p.decryptByteArray(capture(decryptionInput), any()) } answers {
             fakeDecrypt(decryptionInput.captured)
+        }
+        every { KeyStoreHelperFactory.encrypterProvider } answers {
+            { encrypted: ByteArray -> fakeEncrypt(encrypted) }
+        }
+
+        every { KeyStoreHelperFactory.decrypterProvider } answers {
+            { cipherText: IVCipherText -> fakeDecrypt(cipherText) }
         }
     }
 }

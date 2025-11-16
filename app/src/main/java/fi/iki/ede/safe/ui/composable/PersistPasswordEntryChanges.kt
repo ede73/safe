@@ -7,6 +7,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.Composable
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.cryptoobjects.encrypt
@@ -26,18 +27,20 @@ fun PersistPasswordEntryChanges(
     onSaved: (Boolean) -> Unit
 ) {
     require(!TextUtils.isEmpty(editedSiteEntry.description)) { "Description must be set" }
-    val encrypter = KeyStoreHelperFactory.getEncrypter()
     val siteEntry = DecryptableSiteEntry(editedSiteEntry.categoryId)
     siteEntry.apply {
         id = editedSiteEntry.id
-        description = editedSiteEntry.description.encrypt(encrypter)
-        website = editedSiteEntry.website.encrypt(encrypter)
+        description = editedSiteEntry.description.encrypt(KeyStoreHelperFactory.encrypterProvider)
+        website = editedSiteEntry.website.encrypt(KeyStoreHelperFactory.encrypterProvider)
         username = editedSiteEntry.username
         password = editedSiteEntry.password
         passwordChangedDate = editedSiteEntry.passwordChangedDate
         note = editedSiteEntry.note
         photo = if (editedSiteEntry.plainPhoto == null) IVCipherText.getEmpty()
-        else convertToJpegAndEncrypt(editedSiteEntry.plainPhoto, encrypter)
+        else convertToJpegAndEncrypt(
+            editedSiteEntry.plainPhoto,
+            KeyStoreHelperFactory.encrypterProvider
+        )
 
         if (passwordChanged) {
             passwordChangedDate = Clock.System.now()
@@ -71,8 +74,7 @@ private fun convertToJpegAndEncrypt(
 @DualModePreview
 @Composable
 fun PersistPasswordEntryChangesPreview() {
-    KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
-    KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
+    MockKeyStoreHelper.init()
     SafeThemeSurface {
         PersistPasswordEntryChanges(
             editedSiteEntry = EditableSiteEntry(

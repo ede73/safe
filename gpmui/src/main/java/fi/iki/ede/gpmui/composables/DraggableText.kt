@@ -154,7 +154,7 @@ fun DraggableText(
 @Composable
 @ExperimentalTime
 @ExperimentalFoundationApi
-fun DraggableTextPreview() {
+private fun DraggableTextPreview() {
     MaterialTheme {
         DraggableText(DNDObject.JustString("Hello"), onItemDropped = {
             Logger.d(TAG, "item dropped")

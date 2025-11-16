@@ -65,9 +65,8 @@ class RegistrationAPIProviderImpl : RegistrationAPI.Provider, GetComposable {
             }
             if (breachCheckResult == BreachCheckEnum.NOT_CHECKED) {
                 SafeButton(onClick = {
-                    val decrypter = KeyStoreHelperFactory.getDecrypter()
                     BreachCheck.doBreachCheck(
-                        KAnonymity(encryptedPassword.decrypt(decrypter)),
+                        KAnonymity(encryptedPassword.decrypt(KeyStoreHelperFactory.decrypterProvider)),
                         context,
                         { breached ->
                             breachCheckResult = when (breached) {
@@ -86,12 +85,3 @@ class RegistrationAPIProviderImpl : RegistrationAPI.Provider, GetComposable {
         }
     }
 }
-
-/*
-                when (breachCheckResult) {
-                    BreachCheckEnum.BREACHED -> Text(stringResource(id = R.string.password_entry_breached))
-                    BreachCheckEnum.NOT_BREACHED -> Text(stringResource(id = R.string.password_entry_not_breached))
-                    else -> {}
-                }
-
- */

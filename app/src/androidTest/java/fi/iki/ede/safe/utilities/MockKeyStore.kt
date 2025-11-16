@@ -20,10 +20,9 @@ object MockKeyStore {
     fun mockKeyStore(): KeyStoreHelper {
         require(!KeyStoreHelper::class.isMock) { "You should not have mockkObject(KeyStoreHelper) - stern warning" }
         val p = mockkClass(KeyStoreHelper::class)
-
         mockkObject(KeyStoreHelperFactory)
         //require(KeyStoreHelperFactory.isMock) { "You MUST have mockkObject(KeyStoreHelperFactory)" }
-        every { KeyStoreHelperFactory.getKeyStoreHelper() } returns p
+        every { KeyStoreHelperFactory.getKeyStoreHelper } returns { p }
 
         val encryptionInput = slot<ByteArray>()
         every { p.encryptByteArray(capture(encryptionInput)) } answers {
@@ -36,6 +35,18 @@ object MockKeyStore {
         }
         assert(p == KeyStoreHelperFactory.getKeyStoreHelper()) {
             "Keystore initialization failed"
+        }
+        every { KeyStoreHelperFactory.encrypterProvider } answers {
+            { encrypted: ByteArray ->
+                IVCipherText(
+                    ByteArray(CipherUtilities.IV_LENGTH),
+                    encrypted
+                )
+            }
+        }
+
+        every { KeyStoreHelperFactory.decrypterProvider } answers {
+            { cipherText: IVCipherText -> cipherText.cipherText }
         }
         return p
     }

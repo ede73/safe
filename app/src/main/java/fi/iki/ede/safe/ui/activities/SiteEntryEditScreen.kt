@@ -9,6 +9,7 @@ import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
 import fi.iki.ede.autolock.AutolockingFeaturesImpl
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.datamodel.DataModel
@@ -37,7 +38,6 @@ class SiteEntryEditScreen :
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         MeasureTime("SiteEntryEditScreen.onCreate").apply {
-            val encrypter = KeyStoreHelperFactory.getEncrypter()
             val viewModel: EditingSiteEntryViewModel by viewModels()
             lap("view model")
 
@@ -66,9 +66,10 @@ class SiteEntryEditScreen :
                     )
 
                     viewModel.addPassword(
-                        newPassword.encrypt(encrypter),
+                        newPassword.encrypt(KeyStoreHelperFactory.encrypterProvider),
                         categoryId,
-                        Preferences.getDefaultUserName().encrypt(encrypter)
+                        Preferences.getDefaultUserName()
+                            .encrypt(KeyStoreHelperFactory.encrypterProvider)
                     )
                     lap("make new password entry")
                 } else {
@@ -139,8 +140,7 @@ class SiteEntryEditScreen :
 @ExperimentalTime
 @ExperimentalFoundationApi
 fun SiteEntryScreenPreview() {
-    KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
-    KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
+    MockKeyStoreHelper.init()
     val entry = DecryptableSiteEntry(1)
     entry.id = 1
     entry.categoryId = 1

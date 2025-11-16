@@ -9,8 +9,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
 import fi.iki.ede.autolock.AutolockingFeaturesImpl
-import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.datamodel.DataModel
@@ -65,17 +65,15 @@ class SiteEntryListScreen :
 @ExperimentalTime
 @ExperimentalFoundationApi
 fun SiteEntryListScreenPreview() {
-    KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
-    KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
-
+    MockKeyStoreHelper.init()
     val flow = listOf(DecryptableSiteEntry(1).apply {
-        description = KeyStoreHelperFactory.getEncrypter()("Android".toByteArray())
+        description = KeyStoreHelperFactory.encrypterProvider("Android".toByteArray())
     }, DecryptableSiteEntry(1).apply {
-        description = KeyStoreHelperFactory.getEncrypter()("iPhone".toByteArray())
+        description = KeyStoreHelperFactory.encrypterProvider("iPhone".toByteArray())
     })
     val category = DecryptableCategoryEntry().apply {
         id = 1
-        encryptedName = KeyStoreHelperFactory.getEncrypter()("Category".toByteArray())
+        encryptedName = KeyStoreHelperFactory.encrypterProvider("Category".toByteArray())
     }
     SiteEntryListCompose(null, category, flow)
 }

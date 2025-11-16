@@ -49,8 +49,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import fi.iki.ede.autolock.AvertInactivityDuringLongTask
 import fi.iki.ede.clipboardutils.ClipboardUtils
-import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.crypto.support.decrypt
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
@@ -93,8 +93,6 @@ fun SiteEntryView(
         focusedIndicatorColor = Color.Transparent,
         unfocusedIndicatorColor = Color.Transparent,
     )
-    val decrypter = KeyStoreHelperFactory.getDecrypter()
-    val encrypter = KeyStoreHelperFactory.getEncrypter()
     val padding = Modifier.padding(6.dp)
     val passEntry by viewModel.editableSiteEntryState.collectAsState()
     val passwordLength = integerResource(id = R.integer.password_default_length)
@@ -109,7 +107,7 @@ fun SiteEntryView(
         PopCustomPasswordDialog {
             // on dismiss
             if (it != null) {
-                viewModel.updatePassword(it.encrypt(encrypter))
+                viewModel.updatePassword(it.encrypt(KeyStoreHelperFactory.encrypterProvider))
                 passwordWasUpdated.value = true
                 viewModel.updatePasswordChangedDate(Clock.System.now())
             }
@@ -133,7 +131,7 @@ fun SiteEntryView(
                             passNum = true,
                             passSymbols = true,
                             length = passwordLength
-                        ).encrypt(encrypter)
+                        ).encrypt(KeyStoreHelperFactory.encrypterProvider)
                     )
                     viewModel.updatePasswordChangedDate(Clock.System.now())
                 }
@@ -197,7 +195,7 @@ fun SiteEntryView(
                     onClick = {
                         ClipboardUtils.addToClipboard(
                             context,
-                            passEntry.username.decrypt(decrypter),
+                            passEntry.username.decrypt(KeyStoreHelperFactory.decrypterProvider),
                             Preferences.getClipboardClearDelaySecs()
                         )
                     },
@@ -215,9 +213,9 @@ fun SiteEntryView(
                         .padding(horizontal = 8.dp)
                         .fillMaxWidth()
                         .testTag(TestTag.SITE_ENTRY_USERNAME),
-                    inputValue = passEntry.username.decrypt(decrypter),
+                    inputValue = passEntry.username.decrypt(KeyStoreHelperFactory.decrypterProvider),
                     onValueChange = {
-                        viewModel.updateUsername(it.encrypt(encrypter))
+                        viewModel.updateUsername(it.encrypt(KeyStoreHelperFactory.encrypterProvider))
                     },
                     highlight = false,
                 )
@@ -250,15 +248,17 @@ fun SiteEntryView(
                 // paste hell, let'''s notice the situation and allow copying original and new separately!
                 // TODO: not good enough
                 Column {
-                    if (viewModel.originalPassword != null && passEntry.password.decrypt(decrypter) != viewModel.originalPassword?.decrypt(
-                            decrypter
+                    if (viewModel.originalPassword != null && passEntry.password.decrypt(
+                            KeyStoreHelperFactory.decrypterProvider
+                        ) != viewModel.originalPassword?.decrypt(
+                            KeyStoreHelperFactory.decrypterProvider
                         )
                     ) {
                         SafeButton(
                             onClick = {
                                 ClipboardUtils.addToClipboard(
                                     context,
-                                    viewModel.originalPassword?.decrypt(decrypter),
+                                    viewModel.originalPassword?.decrypt(KeyStoreHelperFactory.decrypterProvider),
                                     Preferences.getClipboardClearDelaySecs()
                                 )
                             }, contentPadding = PaddingValues(0.dp)
@@ -284,7 +284,7 @@ fun SiteEntryView(
                         onClick = {
                             ClipboardUtils.addToClipboard(
                                 context,
-                                passEntry.password.decrypt(decrypter),
+                                passEntry.password.decrypt(KeyStoreHelperFactory.decrypterProvider),
                                 Preferences.getClipboardClearDelaySecs()
                             )
                         },
@@ -306,9 +306,9 @@ fun SiteEntryView(
                         .padding(horizontal = 8.dp)
                         .fillMaxWidth()
                         .testTag(TestTag.SITE_ENTRY_PASSWORD),
-                    inputValue = passEntry.password.decrypt(decrypter),
+                    inputValue = passEntry.password.decrypt(KeyStoreHelperFactory.decrypterProvider),
                     onValueChange = {
-                        viewModel.updatePassword(it.encrypt(encrypter))
+                        viewModel.updatePassword(it.encrypt(KeyStoreHelperFactory.encrypterProvider))
                     },
                     textStyle = safeTheme.customFonts.regularPassword,
                     enableZoom = true
@@ -355,8 +355,8 @@ fun SiteEntryView(
                             }
                         }
                     },
-                inputValue = passEntry.note.decrypt(decrypter),
-                onValueChange = { viewModel.updateNote(it.encrypt(encrypter)) },
+                inputValue = passEntry.note.decrypt(KeyStoreHelperFactory.decrypterProvider),
+                onValueChange = { viewModel.updateNote(it.encrypt(KeyStoreHelperFactory.encrypterProvider)) },
                 singleLine = false,
                 maxLines = 22,
                 highlight = false,
@@ -412,7 +412,9 @@ fun SiteEntryView(
             }
 
             if (showLinkedInfo.value != null) {
-                ShowLinkedGpmsDialog(showLinkedInfo.value!!, onDismiss = { showLinkedInfo.value = null })
+                ShowLinkedGpmsDialog(
+                    showLinkedInfo.value!!,
+                    onDismiss = { showLinkedInfo.value = null })
             }
         }
     }
@@ -450,16 +452,14 @@ private fun tryParseUri(website: String): Uri =
 fun SiteEntryViewPreview() {
     SafeThemeSurface {
         //PopCustomPasswordDialog {}
-        KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
-        KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
-        val encrypter = KeyStoreHelperFactory.getEncrypter()
+        MockKeyStoreHelper.init()
         val site1 = DecryptableSiteEntry(1).apply {
-            description = encrypter("Description1".toByteArray())
+            description = KeyStoreHelperFactory.encrypterProvider("Description1".toByteArray())
             id = 1
-            website = encrypter("Website".toByteArray())
-            username = encrypter("Username".toByteArray())
-            password = encrypter("Password".toByteArray())
-            note = encrypter("Note".toByteArray())
+            website = KeyStoreHelperFactory.encrypterProvider("Website".toByteArray())
+            username = KeyStoreHelperFactory.encrypterProvider("Username".toByteArray())
+            password = KeyStoreHelperFactory.encrypterProvider("Password".toByteArray())
+            note = KeyStoreHelperFactory.encrypterProvider("Note".toByteArray())
             extensions = encryptExtension(
                 mapOf(
                     "whatever " to setOf("Some card"),
@@ -468,12 +468,12 @@ fun SiteEntryViewPreview() {
             )
         }
         val site2 = DecryptableSiteEntry(1).apply {
-            description = encrypter("Description2".toByteArray())
+            description = KeyStoreHelperFactory.encrypterProvider("Description2".toByteArray())
             id = 2
-            website = encrypter("Website".toByteArray())
-            username = encrypter("Username".toByteArray())
-            password = encrypter("Password".toByteArray())
-            note = encrypter("Note".toByteArray())
+            website = KeyStoreHelperFactory.encrypterProvider("Website".toByteArray())
+            username = KeyStoreHelperFactory.encrypterProvider("Username".toByteArray())
+            password = KeyStoreHelperFactory.encrypterProvider("Password".toByteArray())
+            note = KeyStoreHelperFactory.encrypterProvider("Note".toByteArray())
             extensions = encryptExtension(
                 mapOf(
                     "what" to setOf("Some card2"),
@@ -484,7 +484,7 @@ fun SiteEntryViewPreview() {
         }
         DecryptableCategoryEntry().apply {
             id = 1
-            encryptedName = encrypter("Category".toByteArray())
+            encryptedName = KeyStoreHelperFactory.encrypterProvider("Category".toByteArray())
         }
         mutableListOf(site1, site2)
 

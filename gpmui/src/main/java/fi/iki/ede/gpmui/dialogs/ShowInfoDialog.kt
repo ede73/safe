@@ -3,8 +3,7 @@ package fi.iki.ede.gpmui.dialogs
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.gpm.changeset.ScoredMatch
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
@@ -44,9 +43,8 @@ fun ShowInfoDialog(item: ScoredMatch, onDismiss: () -> Unit) {
 
 @Preview(showBackground = true)
 @Composable
-fun ShowInfoPreview() {
-    KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
-    KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
+private fun ShowInfoPreview() {
+    MockKeyStoreHelper.init()
     val fakeSavedGPM =
         SavedGPM(0, IncomingGPM.makeFromCSVImport("name", "http://acme", "user", "pwd", "note"))
     MaterialTheme {

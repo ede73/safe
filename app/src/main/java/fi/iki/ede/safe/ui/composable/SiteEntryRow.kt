@@ -26,8 +26,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.datamodel.DataModel
@@ -118,7 +118,9 @@ fun SiteEntryRow(
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        DropdownMenu(expanded = displayMenu.value, onDismissRequest = { displayMenu.value = false }) {
+        DropdownMenu(
+            expanded = displayMenu.value,
+            onDismissRequest = { displayMenu.value = false }) {
             DropdownMenuItem(text = {
                 Text(
                     text = stringResource(
@@ -174,17 +176,16 @@ fun SiteEntryRow(
 @ExperimentalFoundationApi
 fun SiteEntryRowPreview() {
     SafeThemeSurface {
-        KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
-        KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
-        val encrypter = KeyStoreHelperFactory.getEncrypter()
+        MockKeyStoreHelper.init()
         val site1 = DecryptableSiteEntry(1).apply {
-            description = encrypter("This is lengthy description worth of a king".toByteArray())
+            description =
+                KeyStoreHelperFactory.encrypterProvider("This is lengthy description worth of a king".toByteArray())
             passwordChangedDate =
                 LocalDateTime(2023, 11, 10, 10, 10, 10).toInstant(TimeZone.currentSystemDefault())
         }
         val cat = DecryptableCategoryEntry().apply {
             id = 1
-            encryptedName = encrypter("Category".toByteArray())
+            encryptedName = KeyStoreHelperFactory.encrypterProvider("Category".toByteArray())
         }
         SiteEntryRow(site1, listOf(cat))
     }

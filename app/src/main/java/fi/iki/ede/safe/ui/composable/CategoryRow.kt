@@ -23,8 +23,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.safe.R
@@ -119,7 +119,6 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
             )
         }
         if (displayEditDialog.value) {
-            val encrypter = KeyStoreHelperFactory.getEncrypter()
             AddOrEditCategory(
                 textId = R.string.category_list_edit_category,
                 categoryName = category.plainName,
@@ -127,7 +126,8 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
                     if (category.plainName != it) {
                         val entry = DecryptableCategoryEntry()
                         entry.id = category.id
-                        entry.encryptedName = encrypter(it.toByteArray())
+                        entry.encryptedName =
+                            KeyStoreHelperFactory.encrypterProvider(it.toByteArray())
                         coroutineScope.launch {
                             DataModel.addOrEditCategory(entry)
                         }
@@ -154,11 +154,9 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
 @Composable
 fun CategoryRowPreview() {
     SafeThemeSurface {
-        KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
-        KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
-        val encrypter = KeyStoreHelperFactory.getEncrypter()
+        MockKeyStoreHelper.init()
         val cat = DecryptableCategoryEntry().apply {
-            encryptedName = encrypter("Social Media".toByteArray())
+            encryptedName = KeyStoreHelperFactory.encrypterProvider("Social Media".toByteArray())
             containedSiteEntryCount = 12
         }
         CategoryRow(category = cat)

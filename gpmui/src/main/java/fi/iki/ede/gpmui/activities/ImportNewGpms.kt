@@ -19,11 +19,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
 import fi.iki.ede.autolock.AutolockingFeaturesImpl
-import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.gpm.changeset.ImportChangeSet
 import fi.iki.ede.gpm.changeset.ScoredMatch
 import fi.iki.ede.gpmdatamodel.GPMDataModel
+import fi.iki.ede.gpmui.GpmUiMockKeyStoreHelper
 import fi.iki.ede.gpmui.composables.ImportGpmCsvComposable
 import fi.iki.ede.gpmui.composables.VisualizeChangeSetPager
 import fi.iki.ede.gpmui.utilities.makeIncomingForTesting
@@ -70,9 +69,8 @@ class ImportNewGpmsScreen :
 @Composable
 @ExperimentalTime
 @Preview(showBackground = true)
-fun ImportGooglePasswordsPreview() {
-    KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
-    KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
+private fun ImportGooglePasswordsPreview() {
+    GpmUiMockKeyStoreHelper.init()
     MaterialTheme {
         Column {
             ImportGpmCsvComposable(null, true) {}

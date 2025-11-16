@@ -37,18 +37,17 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.cryptoobjects.encrypt
-import fi.iki.ede.cryptoobjects.encrypter
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.db.DBID
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.model.SavedGPM.Companion.makeFromEncryptedStringFields
 import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.gpmdatamodel.GPMDataModel.getSavedGPM
+import fi.iki.ede.gpmui.GpmUiMockKeyStoreHelper
 import fi.iki.ede.gpmui.R
 import fi.iki.ede.gpmui.dialogs.ShowInfoDialog
 import fi.iki.ede.gpmui.models.DNDObject
@@ -347,13 +346,13 @@ fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesList(
 @Composable
 @ExperimentalTime
 @ExperimentalFoundationApi
-fun ImportEntryListPreview() {
+private fun ImportEntryListPreview() {
     MaterialTheme {
-        KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
-        KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
+        GpmUiMockKeyStoreHelper.init()
         (1990..2023).map {
             DecryptableSiteEntry(1).apply {
-                description = encrypter("Description $it".toByteArray())
+                description =
+                    KeyStoreHelperFactory.encrypterProvider("Description $it".toByteArray())
             }
         }
         (1..10).map {

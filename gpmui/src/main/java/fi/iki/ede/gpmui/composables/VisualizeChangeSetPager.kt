@@ -16,9 +16,8 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.gpm.changeset.ImportChangeSet
+import fi.iki.ede.gpmui.GpmUiMockKeyStoreHelper
 import fi.iki.ede.gpmui.utilities.makeFakeImportForTesting
 import fi.iki.ede.theme.SafeTheme
 
@@ -57,9 +56,8 @@ fun VisualizeChangeSetPager(importChangeSet: MutableState<ImportChangeSet?>, don
 
 @Preview(showBackground = true)
 @Composable
-fun ImportResultListPagerPreview() {
-    KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
-    KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
+private fun ImportResultListPagerPreview() {
+    GpmUiMockKeyStoreHelper.init()
     MaterialTheme {
         val m =
             remember { mutableStateOf<ImportChangeSet?>(makeFakeImportForTesting()) }

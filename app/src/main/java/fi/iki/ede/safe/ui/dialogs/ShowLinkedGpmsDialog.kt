@@ -14,8 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.cryptoobjects.encrypt
 import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpmui.dialogs.ShowInfoDialog
@@ -66,8 +65,7 @@ fun ShowLinkedGpmsDialog(
 @DualModePreview
 @Composable
 fun ShowLinkedGPMsPreview() {
-    KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
-    KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
+    MockKeyStoreHelper.init()
     SafeThemeSurface {
         val gpms = setOf(
             SavedGPM.makeFromEncryptedStringFields(

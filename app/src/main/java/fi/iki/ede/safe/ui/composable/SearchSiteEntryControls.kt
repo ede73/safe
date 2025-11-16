@@ -28,8 +28,8 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.logger.Logger
@@ -317,11 +317,9 @@ private fun asyncFilterChunkOfSiteEntries(
 @ExperimentalFoundationApi
 fun SearchSiteEntryPreview() {
     SafeThemeSurface {
-        KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
-        KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
-        val encrypter = KeyStoreHelperFactory.getEncrypter()
+        MockKeyStoreHelper.init()
         val site = DecryptableSiteEntry(1).apply {
-            description = encrypter("Description".toByteArray())
+            description = KeyStoreHelperFactory.encrypterProvider("Description".toByteArray())
         }
         val search = remember { mutableStateOf(TextFieldValue()) }
         val stateFlow = MutableStateFlow(listOf(site, site, site))

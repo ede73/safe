@@ -17,10 +17,8 @@ class DecryptableCategoryEntry {
         containedSiteEntryCount = this@DecryptableCategoryEntry.containedSiteEntryCount
     }
 
-    private val decrypter = KeyStoreHelperFactory.getDecrypter()
-
     private fun decrypt(value: IVCipherText): String {
-        return String(decrypter(value))
+        return String(KeyStoreHelperFactory.decrypterProvider(value))
     }
 
     var containedSiteEntryCount = 0
