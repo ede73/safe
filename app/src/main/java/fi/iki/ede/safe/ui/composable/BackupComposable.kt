@@ -70,8 +70,9 @@ private suspend fun initiateBackup(
         GPMDataModel.allSavedGPMsFlow.value.toSet(),
         buffer
     )
-    context.contentResolver.openOutputStream(uri, "wt")?.use { outputStream ->
-        outputStream.write(buffer.readByteArray())
+    val data = buffer.readUtf8()
+    context.contentResolver.openOutputStream(uri)?.use { outputStream ->
+        outputStream.write(data.toByteArray())
     }
     completed()
 }
