@@ -38,13 +38,14 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
+import okio.Buffer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.io.File // KMP
+import java.io.File
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.system.measureTimeMillis
@@ -64,7 +65,6 @@ private const val TAG = "BackupDatabaseAndRestoreDatabaseTest"
 // - from breaking current solution
 @ExperimentalTime
 class BackupDatabaseAndRestoreDatabaseTest {
-
     private val fakeChangedDateTime: Instant =
         LocalDateTime(1999, 12, 31, 1, 2, 3, 0).toInstant(TimeZone.of("America/Los_Angeles"))
     private lateinit var ks: KeyStoreHelper
@@ -137,13 +137,16 @@ class BackupDatabaseAndRestoreDatabaseTest {
         Logger.d(TAG, "Restore: " + (measureTimeMillis {
             (1..count.toInt()).forEach {
                 runBlocking {
+                    val buffer = Buffer()
                     BackupDatabase.backup(
                         DataModel.categoriesStateFlow.value,
                         DataModel.softDeletedStateFlow.value,
                         DataModel::getSiteEntriesOfCategory,
                         GPMDB.fetchAllSiteEntryGPMMappings(),
-                        GPMDataModel.allSavedGPMsFlow.value.toSet()
-                    ).toString()
+                        GPMDataModel.allSavedGPMsFlow.value.toSet(),
+                        buffer
+                    )
+                    buffer.readUtf8()
                 }
             }
         } / count) + " ms")
@@ -161,16 +164,19 @@ class BackupDatabaseAndRestoreDatabaseTest {
     @Test
     fun backupTest() {
         mockClockSystemNow(1234)
-        val out = runBlocking {
+        val finalBuffer = Buffer()
+        runBlocking {
             BackupDatabase.backup(
                 DataModel.categoriesStateFlow.value,
                 DataModel.softDeletedStateFlow.value,
                 DataModel::getSiteEntriesOfCategory,
                 GPMDB.fetchAllSiteEntryGPMMappings(),
-                GPMDataModel.allSavedGPMsFlow.value.toSet()
-            ).toString()
+                GPMDataModel.allSavedGPMsFlow.value.toSet(),
+                finalBuffer
+            )
         }
         unmockkObject(Clock.System)
+        val out = finalBuffer.readUtf8()
         Logger.d(TAG, out)
         assertEquals(
             PASSWORD_ENCRYPTED_BACKUP_AT_1234.trimIndent().trim(),
@@ -209,13 +215,16 @@ class BackupDatabaseAndRestoreDatabaseTest {
         )
 
         val out = runBlocking {
+            val buffer = Buffer()
             BackupDatabase.backup(
                 DataModel.categoriesStateFlow.value,
                 DataModel.softDeletedStateFlow.value,
                 DataModel::getSiteEntriesOfCategory,
                 GPMDB.fetchAllSiteEntryGPMMappings(),
-                GPMDataModel.allSavedGPMsFlow.value.toSet()
-            ).toString()
+                GPMDataModel.allSavedGPMsFlow.value.toSet(),
+                buffer
+            )
+            buffer.readUtf8()
         }
         assertEquals(6, out.lines().size)
         unmockkObject(DataModel)
@@ -361,20 +370,31 @@ class BackupDatabaseAndRestoreDatabaseTest {
         mockkConstructor(BackupDatabase::class)
         every {
             anyConstructed<BackupDatabase>().generateXMLExport(
-                any(),
-                any(),
-                any(), any(), any()
+                buffer = any(),
+                categoriesList = any(),
+                softDeletedEntries = any(),
+                siteEntryGPMMappings = any(),
+                allSavedGPMs = any(),
+                getSiteEntriesOfCategory = any(),
             )
-        } returns TOP_LAYER_UNENCRYPTED_BACKUP_XML.trim()
+        } answers {
+            val buffer = arg<Buffer>(0)
+            buffer.writeUtf8(TOP_LAYER_UNENCRYPTED_BACKUP_XML.trim())
+        }
+
         val finalOutput = runBlocking {
+            val buffer = Buffer()
             BackupDatabase.backup(
                 DataModel.categoriesStateFlow.value,
                 DataModel.softDeletedStateFlow.value,
                 DataModel::getSiteEntriesOfCategory,
                 GPMDB.fetchAllSiteEntryGPMMappings(),
-                GPMDataModel.allSavedGPMsFlow.value.toSet()
-            ).toString()
+                GPMDataModel.allSavedGPMsFlow.value.toSet(),
+                buffer
+            )
+            buffer.readUtf8()
         }
+
         unmockkConstructor(BackupDatabase::class)
 
         val r = RestoreDatabase()

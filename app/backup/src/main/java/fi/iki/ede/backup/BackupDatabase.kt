@@ -1,25 +1,22 @@
 package fi.iki.ede.backup
 
-import android.text.TextUtils
 import fi.iki.ede.backup.ExportConfig.Companion.Attributes
 import fi.iki.ede.backup.ExportConfig.Companion.Elements
 import fi.iki.ede.crypto.IVCipherText
+import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
-import fi.iki.ede.crypto.support.toHexString
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.db.DBID
 import fi.iki.ede.gpm.model.SavedGPM
-import fi.iki.ede.logger.Logger
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.fold
-import kotlinx.coroutines.flow.transform
+import okio.Buffer
+import okio.BufferedSink
+import okio.Sink
+import okio.Timeout
+import okio.buffer
 import org.xmlpull.v1.XmlPullParserFactory
-import java.io.StringWriter // KMP
 import kotlin.time.ExperimentalTime
 
 /**
@@ -31,15 +28,15 @@ import kotlin.time.ExperimentalTime
 @ExperimentalTime
 class BackupDatabase : ExportConfig(ExportVersion.V1) {
     fun generateXMLExport(
+        buffer: Buffer,
         categoriesList: List<DecryptableCategoryEntry>,
         softDeletedEntries: Set<DecryptableSiteEntry>,
         siteEntryGPMMappings: Map<DBID, Set<DBID>>,
         allSavedGPMs: Set<SavedGPM>,
         getSiteEntriesOfCategory: (categoryId: DBID) -> List<DecryptableSiteEntry>
-    ): String {
+    ) {
         val serializer = XmlPullParserFactory.newInstance().newSerializer()
-        val xmlStringWriter = StringWriter() // KMP
-        serializer.setOutput(xmlStringWriter)
+        serializer.setOutput(buffer.outputStream(), "ASCII")
 
         serializer.startTag(Elements.ROOT_PASSWORD_SAFE)
             .plainTextAttribute(
@@ -89,15 +86,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
 
         serializer.endTag(Elements.ROOT_PASSWORD_SAFE)
         serializer.endDocument()
-        val makeThisStreaming = xmlStringWriter.toString()
-        if (BuildConfig.DEBUG) {
-            Logger.d(TAG, makeThisStreaming)
-        }
-        if (makeThisStreaming.contains(" ")) {
-            Logger.e(TAG, "Oh no, XML export has non breakable spaces")
-        }
-        assert(!TextUtils.isEmpty(makeThisStreaming)) { "Something is broken, XML serialization produced empty file" }
-        return makeThisStreaming.trim()
+        buffer.flush()
     }
 
     @Suppress("SameParameterValue")
@@ -113,40 +102,81 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
     companion object {
         const val TAG = "Backup"
         const val MIME_TYPE_BACKUP = "text/xml"
-
-        suspend fun backup(
+        fun backup(
             categoriesList: List<DecryptableCategoryEntry>,
             softDeletedEntries: Set<DecryptableSiteEntry>,
             getSiteEntriesOfCategory: (categoryId: DBID) -> List<DecryptableSiteEntry>,
             siteEntryGPMMappings: Map<DBID, Set<DBID>>,
             allSavedGPMs: Set<SavedGPM>,
-        ) = flow {
-            emit(
-                BackupDatabase().generateXMLExport(
-                    categoriesList,
-                    softDeletedEntries,
-                    siteEntryGPMMappings,
-                    allSavedGPMs,
-                    getSiteEntriesOfCategory
-                ).toByteArray()
+            finalSink: Sink
+        ) {
+            val hexSink = HexEncodingSink(finalSink.buffer())
+
+            val (salt, key) = DBHelperFactory.getDBHelper().fetchSaltAndEncryptedMasterKey()
+
+            hexSink.write(salt)
+            hexSink.write(key)
+            hexSink.flush()
+
+            hexSink.flush()
+
+            val xmlBuf = Buffer()
+            BackupDatabase().generateXMLExport(
+                xmlBuf,
+                categoriesList,
+                softDeletedEntries,
+                siteEntryGPMMappings,
+                allSavedGPMs,
+                getSiteEntriesOfCategory
             )
-        }.transform { ba ->
-            emit(KeyStoreHelperFactory.encrypterProvider(ba))
-        }.flowOn(Dispatchers.Default).transform { encrypted ->
-            val (salt, currentEncryptedMasterKey) = DBHelperFactory.getDBHelper()
-                .fetchSaltAndEncryptedMasterKey()
-            emit(salt.toHex())
-            emit("\n")
-            emit(currentEncryptedMasterKey.iv.toHexString())
-            emit("\n")
-            emit(currentEncryptedMasterKey.cipherText.toHexString())
-            emit("\n")
-            emit(encrypted.iv.toHexString())
-            emit("\n")
-            emit(encrypted.cipherText.toHexString())
-            emit("\n")
-        }.fold(StringBuilder()) { accumulator: StringBuilder, value: String ->
-            accumulator.append(value)
+            val xmlBytes = xmlBuf.readByteArray()
+
+            val encBytes = KeyStoreHelperFactory.encrypterProvider(xmlBytes)
+
+            hexSink.write(encBytes)
+            hexSink.flush()
         }
     }
+}
+
+private class HexEncodingSink(private val out: BufferedSink) : Sink {
+    fun write(salt: Salt) {
+        write(salt.salt)
+        out.writeUtf8("\n")
+    }
+
+    fun write(cipherText: IVCipherText) {
+        write(cipherText.iv)
+        out.writeUtf8("\n")
+        write(cipherText.cipherText)
+        out.writeUtf8("\n")
+    }
+
+    fun write(bytes: ByteArray) {
+        write(Buffer().write(bytes), bytes.size.toLong())
+    }
+
+    override fun write(source: Buffer, byteCount: Long) {
+        // consume the bytes from source, convert to hex, write UTF-8 hex string to out
+        val bytes = source.readByteArray(byteCount)
+        // fast hex conversion
+        val sb = StringBuilder(bytes.size * 2)
+        for (b in bytes) {
+            val v = b.toInt() and 0xFF
+            val hex1 = Character.forDigit((v ushr 4), 16)
+            val hex2 = Character.forDigit((v and 0x0F), 16)
+            sb.append(hex1).append(hex2)
+        }
+        out.writeUtf8(sb.toString())
+    }
+
+    override fun flush() {
+        out.flush()
+    }
+
+    override fun close() {
+        out.close()
+    }
+
+    override fun timeout(): Timeout = out.timeout()
 }

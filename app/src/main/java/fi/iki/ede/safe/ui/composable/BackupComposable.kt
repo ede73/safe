@@ -21,6 +21,7 @@ import fi.iki.ede.safe.ui.utilities.setBackupDueIconEnabled
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okio.Buffer
 import kotlin.time.ExperimentalTime
 
 @Composable
@@ -59,6 +60,7 @@ private suspend fun initiateBackup(
     uri: Uri,
     completed: () -> Unit,
 ) {
+    val buffer = Buffer()
     BackupDatabase.backup(
         DataModel.categoriesStateFlow.value,
         DataModel.softDeletedStateFlow.value,
@@ -66,10 +68,10 @@ private suspend fun initiateBackup(
         /* TODO: NO NO GPMDB */
         GPMDB.fetchAllSiteEntryGPMMappings(),
         GPMDataModel.allSavedGPMsFlow.value.toSet(),
-    ).let { accumulatedStringBuilder: StringBuilder ->
-        context.contentResolver.openOutputStream(uri, "wt")?.use { outputStream ->
-            outputStream.write(accumulatedStringBuilder.toString().toByteArray())
-        }
+        buffer
+    )
+    context.contentResolver.openOutputStream(uri, "wt")?.use { outputStream ->
+        outputStream.write(buffer.readByteArray())
     }
     completed()
 }
