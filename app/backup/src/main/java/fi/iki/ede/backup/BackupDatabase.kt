@@ -1,5 +1,7 @@
 package fi.iki.ede.backup
 
+import androidx.annotation.VisibleForTesting
+import androidx.annotation.VisibleForTesting.Companion.PRIVATE
 import fi.iki.ede.backup.ExportConfig.Companion.Attributes
 import fi.iki.ede.backup.ExportConfig.Companion.Elements
 import fi.iki.ede.crypto.IVCipherText
@@ -27,6 +29,7 @@ import kotlin.time.ExperimentalTime
  */
 @ExperimentalTime
 class BackupDatabase : ExportConfig(ExportVersion.V1) {
+    @VisibleForTesting(PRIVATE)
     fun generateXMLExport(
         buffer: Buffer,
         categoriesList: List<DecryptableCategoryEntry>,
