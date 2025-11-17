@@ -11,13 +11,13 @@ import fi.iki.ede.crypto.SaltedPassword
 import fi.iki.ede.crypto.keystore.KeyManagement.decryptMasterKey
 import fi.iki.ede.crypto.keystore.KeyManagement.generatePBKDF2AESKey
 import fi.iki.ede.crypto.keystore.KeyManagement.makeFreshNewKey
+import korlibs.crypto.AES
+import korlibs.crypto.Padding
 import java.security.Key
 import java.security.KeyStore
-import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
-import javax.crypto.spec.IvParameterSpec
-import javax.crypto.spec.SecretKeySpec
+
 
 // TODO: Missing key rotation
 // Some apps claim android keystore doesn't work with passwords but then
@@ -57,39 +57,42 @@ class KeyStoreHelper(private val keyStore: KeyStore) : CipherUtilities() {
 //        keyStore.deleteEntry(KEY_BIOKEY)
 //    }
 
-    private fun getSecretKey() = keyStore.getKey(KEY_SECRET_MASTERKEY, null)!!
+    private fun getSecretKey(): KMPKey =
+        keyStore.getKey(KEY_SECRET_MASTERKEY, null)!! as KMPKey
 
     internal fun encryptByteArray(
         input: ByteArray,
         secretKey: Key = getSecretKey()
-    ) = if (input.isEmpty()) {
-        IVCipherText(byteArrayOf(), byteArrayOf())
-    } else
-        getAESCipher().let {
-            it.init(
-                Cipher.ENCRYPT_MODE,
-                secretKey,
-                IvParameterSpec(generateRandomBytes(it.blockSize * 8))
-            )
-            IVCipherText(it.iv, it.doFinal(input))
-        }
+    ): IVCipherText {
+        if (input.isEmpty()) return IVCipherText(byteArrayOf(), byteArrayOf())
+        val iv = generateRandomBytes(IV_LENGTH.bytes)
+
+        // korlibs AES-CBC encryption
+        val cipherText = AES.encryptAesCbc(
+            input,
+            secretKey.encoded,
+            iv,
+            Padding.PKCS7Padding
+        )
+
+        return IVCipherText(iv, cipherText)
+    }
 
     internal fun decryptByteArray(
         encrypted: IVCipherText,
         secretKey: Key = getSecretKey()
-    ): ByteArray = if (encrypted.iv.isEmpty()) {
-        byteArrayOf()
-    } else {
-        getAESCipher().let {
-            it.init(
-                Cipher.DECRYPT_MODE,
-                secretKey,
-                IvParameterSpec(encrypted.iv)
+    ): ByteArray =
+        if (encrypted.iv.isEmpty()) {
+            byteArrayOf()
+        } else {
+            AES.decryptAesCbc(
+                encrypted.cipherText,
+                (secretKey as KMPSecretKeySpec).values, // same key type you already have
+                encrypted.iv,
+                Padding.PKCS7Padding
             )
-            // TODO: Combine IV and cipher text?
-            it.doFinal(encrypted.cipherText)
         }
-    }
+
 
     fun rotateKeys() {
         // I'm guessing rotation is re-initialization (unless there's a convenience method)
@@ -177,7 +180,7 @@ class KeyStoreHelper(private val keyStore: KeyStore) : CipherUtilities() {
         }
 
         fun createNewKey(password: Password): Pair<Salt, IVCipherText> =
-            Salt(generateRandomBytes(64)).let { salt ->
+            Salt(generateRandomBytes(64.bits)).let { salt ->
                 generatePBKDF2AESKey(
                     salt,
                     KEY_ITERATION_COUNT,
@@ -198,7 +201,7 @@ class KeyStoreHelper(private val keyStore: KeyStore) : CipherUtilities() {
                     KeyStoreHelper(KeyStore.getInstance(ANDROID_KEYSTORE))
             }
 
-        private fun importANewMasterKey(aesKey: SecretKeySpec) =
+        private fun importANewMasterKey(aesKey: KMPSecretKeySpec) =
             KeyStore.getInstance(ANDROID_KEYSTORE).apply {
                 load(null)
                 setEntry(

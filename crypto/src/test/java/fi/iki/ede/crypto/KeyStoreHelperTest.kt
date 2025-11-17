@@ -1,7 +1,6 @@
-package fi.iki.ede.crypto
+package fi.iki.ede.crypto.keystore
 
-import fi.iki.ede.crypto.keystore.CipherUtilities
-import fi.iki.ede.crypto.keystore.KeyStoreHelper
+import fi.iki.ede.crypto.IVCipherText
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
@@ -15,16 +14,13 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.security.KeyStore
-import javax.crypto.Cipher
-import javax.crypto.spec.SecretKeySpec
 
 class KeyStoreHelperTest {
+
     private lateinit var keyStoreHelper: KeyStoreHelper
 
-    private val testCipher: Cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
-
     // Test Vectors
-    private val V1_KEY = SecretKeySpec(
+    private val V1_KEY = KMPSecretKeySpec(
         "603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4".hexToByteArray(),
         "AES"
     )
@@ -33,15 +29,14 @@ class KeyStoreHelperTest {
     private val V1_CIPHERTEXT =
         "f58c4c04d6e5f1ba779eabfb5f7bfbd6485a5c81519cf378fa36d42b8547edc0".hexToByteArray()
 
-    private val V2_KEY = SecretKeySpec(ByteArray(32) { 0x42.toByte() }, "AES")
+    private val V2_KEY = KMPSecretKeySpec(ByteArray(32) { 0x42.toByte() }, "AES")
     private val V2_IV = ByteArray(16) { 0x11.toByte() }
     private val V2_PLAINTEXT =
         "This is a plaintext message that will require padding.".toByteArray()
     private val V2_CIPHERTEXT =
         "b5467830be36282f104292e0ad094e8a17581c84f34feea917bb2a5d863c5d4387603644a5ef9c39f2bccc01973f494e6ef248beb5d40375fc6535b790b9cfb4".hexToByteArray()
 
-
-    private val V3_KEY = SecretKeySpec(ByteArray(32) { 0x99.toByte() }, "AES")
+    private val V3_KEY = KMPSecretKeySpec(ByteArray(32) { 0x99.toByte() }, "AES")
     private val V3_IV = ByteArray(16) { 0xfe.toByte() }
     private val V3_PLAINTEXT = "1234567890abcdef".toByteArray()
     private val V3_CIPHERTEXT =
@@ -60,7 +55,7 @@ class KeyStoreHelperTest {
 
         // Now it is safe to create a real KeyStoreHelper object and spy on it.
         keyStoreHelper = spyk(KeyStoreHelper(mockKeyStore)) {
-            every { getAESCipher() } returns testCipher
+            //every { getAESCipher() } returns testCipher
         }
     }
 
@@ -69,7 +64,6 @@ class KeyStoreHelperTest {
         // Clean up the static mocks after each test to avoid test leakage.
         unmockkStatic(KeyStore::class)
     }
-
 
     @Test
     fun `encryptByteArray with empty input gives empty result`() {
@@ -88,15 +82,13 @@ class KeyStoreHelperTest {
     @Test
     fun `encryptByteArray returns correct ciphertext for NIST vector`() {
         mockkObject(CipherUtilities.Companion)
-        every { CipherUtilities.Companion.generateRandomBytes(any()) } returns V1_IV
-
+        every { CipherUtilities._generateRandomBytesInternal(any()) } returns V1_IV
         val result = keyStoreHelper.encryptByteArray(V1_PLAINTEXT, V1_KEY)
         assertArrayEquals(V1_IV, result.iv)
         assertArrayEquals(V1_CIPHERTEXT, result.cipherText)
 
         unmockkObject(CipherUtilities.Companion)
     }
-
 
     @Test
     fun `decryptByteArray returns correct plaintext for NIST vector`() {
@@ -107,7 +99,7 @@ class KeyStoreHelperTest {
     @Test
     fun `encryptByteArray returns correct ciphertext for custom vector 2`() {
         mockkObject(CipherUtilities.Companion)
-        every { CipherUtilities.Companion.generateRandomBytes(any()) } returns V2_IV
+        every { CipherUtilities._generateRandomBytesInternal(any()) } returns V2_IV
 
         val result = keyStoreHelper.encryptByteArray(V2_PLAINTEXT, V2_KEY)
         assertArrayEquals(V2_IV, result.iv)
@@ -125,7 +117,7 @@ class KeyStoreHelperTest {
     @Test
     fun `encryptByteArray returns correct ciphertext for single-block vector 3`() {
         mockkObject(CipherUtilities.Companion)
-        every { CipherUtilities.Companion.generateRandomBytes(any()) } returns V3_IV
+        every { CipherUtilities._generateRandomBytesInternal(any()) } returns V3_IV
 
         val result = keyStoreHelper.encryptByteArray(V3_PLAINTEXT, V3_KEY)
         assertArrayEquals(V3_IV, result.iv)
@@ -133,7 +125,6 @@ class KeyStoreHelperTest {
 
         unmockkObject(CipherUtilities.Companion)
     }
-
 
     @Test
     fun `decryptByteArray returns correct plaintext for single-block vector 3`() {

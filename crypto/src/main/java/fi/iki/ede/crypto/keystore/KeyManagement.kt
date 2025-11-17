@@ -1,116 +1,104 @@
 package fi.iki.ede.crypto.keystore
 
-import android.security.keystore.KeyProperties
+import androidx.annotation.VisibleForTesting
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
-import org.jetbrains.annotations.TestOnly
-import javax.crypto.Cipher
-import javax.crypto.KeyGenerator
-import javax.crypto.SecretKeyFactory
-import javax.crypto.spec.IvParameterSpec
-import javax.crypto.spec.PBEKeySpec
-import javax.crypto.spec.SecretKeySpec
+import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.bits
+import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.bytes
+import korlibs.crypto.AES
+import korlibs.crypto.PBKDF2
+import korlibs.crypto.Padding
+import korlibs.crypto.SHA256
 
 object KeyManagement {
 
-    fun generateAESKey(bits: Int): ByteArray =
-        KeyGenerator.getInstance("AES").let {
-            it.init(bits)
-            it.generateKey().encoded
+    // --- Key generation (KMP) ---
+    // Generate AES key (bits = 128/192/256)
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    fun generateAESKey(bits: Int): ByteArray {
+        require(bits == 128 || bits == 192 || bits == 256) {
+            "AES key must be 128/192/256 bits"
         }
+        return CipherUtilities.generateRandomBytes(bits.bits)
+    }
 
     /**
      * Generate a new user password based secret key given the salt
-     * This ALWAYS result in same key
+     * This ALWAYS results in the same key for same inputs
      *
-     * OpenSSL commandline counter part would be:
+     * OpenSSL counter-part:
      * openssl enc -aes-256-cbc -k $PASSWORD -P -md sha256 -S $HEX_SALT -iter $ITERATIONS -pbkdf2
      *
-     * It's KEY will match keyBytes.toHexString()
+     * Returns SecretKeySpec to preserve existing API.
      */
     fun generatePBKDF2AESKey(
         salt: Salt,
         iterationCount: Int,
         password: Password,
         keyLength: Int
-    ): SecretKeySpec {
-        // TODO: Salt should actually be keyLength/8 (ie same size as the key) 32 for 256 AES
+    ): KMPSecretKeySpec {
+        // original code expected salt length 8 (64/8) — keep same check for compatibility
         require(salt.salt.size == 64 / 8) { "Wrong amount of salt, expecting 8 bytes, got ${salt.salt.size}" }
         require(keyLength == 256) { "Only 256 bit keys supported" }
 
-        val keyBytes =
-            SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(
-                PBEKeySpec(
-                    password.utf8password,
-                    salt.salt,
-                    iterationCount,
-                    keyLength
-                )
-            ).encoded
+        // PBKDF2-HMAC-SHA256 derive keyLength bits
+        val hash = PBKDF2.pbkdf2(
+            password.utf8password.concatToString().encodeToByteArray(),
+            salt.salt,
+            iterationCount,
+            keyLength,
+            SHA256.invoke()
+        )
 
-        // 16,24 or 32
-        require(keyBytes.size.let { it == 16 || it == 24 || it == 32 }) { "AES only supports 16,24 or 32 byte keys" }
-        OpenSSLExamples.debugPBKDFAESKey(password, salt, iterationCount, keyBytes)
+        // validate length as before
+        require((hash.bytes.size).let { it == 16 || it == 24 || it == 32 }) {
+            "AES only supports 16,24 or 32 byte keys, you had ${hash.bytes.size}"
+        }
 
-        return SecretKeySpec(keyBytes, "AES")
+        return KMPSecretKeySpec(hash.bytes, "AES")
     }
 
     fun makeFreshNewKey(
         keyLength: Int,
-        pbkdf2key: SecretKeySpec
-    ): Pair<SecretKeySpec, IVCipherText> =
-        // Now generate new AES KEY
+        pbkdf2key: KMPSecretKeySpec
+    ): Pair<KMPSecretKeySpec, IVCipherText> =
+        // Now generate new AES KEY (truly random)
         generateAESKey(keyLength).let { trulySecretAESKey ->
-            OpenSSLExamples.dumpAESKey(trulySecretAESKey)
             encryptMasterKey(pbkdf2key, trulySecretAESKey).let { (iv, ciphertext) ->
-                OpenSSLExamples.makeNewKey(iv, ciphertext)
-                Pair(SecretKeySpec(trulySecretAESKey, "AES"), IVCipherText(iv, ciphertext))
+                Pair(KMPSecretKeySpec(trulySecretAESKey, "AES"), IVCipherText(iv, ciphertext))
             }
         }
 
     /**
      * Encrypt given AES key with PBKDF2 key
      *
-     * Result is ALWAYS totally random
+     * Result is ALWAYS random due to random IV
      */
     fun encryptMasterKey(
-        pbkdf2key: SecretKeySpec,
+        pbkdf2key: KMPSecretKeySpec,
         unencryptedSecretKey: ByteArray,
-    ): IVCipherText =
-        getAESCipher().let { cipher ->
-            cipher.init(
-                Cipher.ENCRYPT_MODE,
-                pbkdf2key,
-                IvParameterSpec(CipherUtilities.generateRandomBytes(cipher.blockSize * 8))
-            )
-            IVCipherText(cipher.iv, cipher.doFinal(unencryptedSecretKey))
-        }
+    ): IVCipherText {
+        // generate IV: AES CBC uses block size 16 bytes
+        val iv = CipherUtilities.generateRandomBytes(CipherUtilities.IV_LENGTH.bytes)
+        // AES CBC PKCS7 encryption via korlibs
+        val cipherText =
+            AES.encryptAesCbc(unencryptedSecretKey, pbkdf2key.values, iv, Padding.PKCS7Padding)
+        return IVCipherText(iv, cipherText)
+    }
 
     fun decryptMasterKey(
-        pbkdf2key: SecretKeySpec,
+        pbkdf2key: KMPSecretKeySpec,
         secretKey: IVCipherText,
-    ): SecretKeySpec {
-        require(secretKey.iv.size == CipherUtilities.IV_LENGTH) { "IV must be exactly keysize/16  ie. ${CipherUtilities.IV_LENGTH}, not ${secretKey.iv.size}" }
-        getAESCipher().let { cipher ->
-            cipher.init(Cipher.DECRYPT_MODE, pbkdf2key, IvParameterSpec(secretKey.iv))
-            return SecretKeySpec(cipher.doFinal(secretKey.cipherText), "AES")
-        }
+    ): KMPSecretKeySpec {
+        require(secretKey.iv.size == CipherUtilities.IV_LENGTH) { "IV must be exactly ${CipherUtilities.IV_LENGTH}, not ${secretKey.iv.size}" }
+        return KMPSecretKeySpec(
+            AES.decryptAesCbc(
+                secretKey.cipherText,
+                pbkdf2key.values,
+                secretKey.iv,
+                Padding.PKCS7Padding
+            ), "AES"
+        )
     }
-
-    private fun getAESCipher(): Cipher = try {
-        Cipher.getInstance(AES_MODE)
-    } catch (ex: Exception) {
-        // NOt used in instrumentation tests at least, TODO: check unint tests use...
-        Cipher.getInstance(AES_MODE_UNITTESTS)
-    }
-
-
-    private const val AES_MODE =
-        "${KeyProperties.KEY_ALGORITHM_AES}/${KeyProperties.BLOCK_MODE_CBC}/${KeyProperties.ENCRYPTION_PADDING_PKCS7}"
-
-    // Java cipher is PKCS#7 cipher, but incorrectly named PKCS5
-    @get:TestOnly
-    private val AES_MODE_UNITTESTS =
-        AES_MODE.replace(KeyProperties.ENCRYPTION_PADDING_PKCS7, "PKCS5Padding")
 }

@@ -1,19 +1,12 @@
 package fi.iki.ede.crypto
 
 import fi.iki.ede.crypto.keystore.KeyManagement
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.mockkStatic
-import io.mockk.unmockkStatic
-import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import javax.crypto.Cipher
 
 class KeyManagementTest {
-
     @Test
     fun `generateAESKey creates key with correct length`() {
         val key128 = KeyManagement.generateAESKey(128)
@@ -97,24 +90,24 @@ class KeyManagementTest {
         }
     }
 
-    @Test
-    fun `getAESCipher prefers PKCS7Padding`() {
-        mockkStatic(Cipher::class)
-        val mockCipher = mockk<Cipher>(relaxed = true)
-        val pkcs7Mode = "AES/CBC/PKCS7Padding"
-        every { Cipher.getInstance(pkcs7Mode) } returns mockCipher
-        every { Cipher.getInstance("AES/CBC/PKCS5Padding") } throws Exception("Should not be called")
-
-        val key = KeyManagement.generatePBKDF2AESKey(
-            Salt(ByteArray(8)),
-            1000,
-            Password(charArrayOf()),
-            256
-        )
-        KeyManagement.encryptMasterKey(key, KeyManagement.generateAESKey(256))
-
-        verify { Cipher.getInstance(pkcs7Mode) }
-        verify(exactly = 0) { Cipher.getInstance("AES/CBC/PKCS5Padding") }
-        unmockkStatic(Cipher::class)
-    }
+//    @Test
+//    fun `getAESCipher prefers PKCS7Padding`() {
+//        mockkStatic(Cipher::class)
+//        val mockCipher = mockk<Cipher>(relaxed = true)
+//        val pkcs7Mode = "AES/CBC/PKCS7Padding"
+//        every { Cipher.getInstance(pkcs7Mode) } returns mockCipher
+//        every { Cipher.getInstance("AES/CBC/PKCS5Padding") } throws Exception("Should not be called")
+//
+//        val key = KeyManagement.generatePBKDF2AESKey(
+//            Salt(ByteArray(8)),
+//            1000,
+//            Password(charArrayOf()),
+//            256
+//        )
+//        KeyManagement.encryptMasterKey(key, KeyManagement.generateAESKey(256))
+//
+//        verify { Cipher.getInstance(pkcs7Mode) }
+//        verify(exactly = 0) { Cipher.getInstance("AES/CBC/PKCS5Padding") }
+//        unmockkStatic(Cipher::class)
+//    }
 }

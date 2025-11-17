@@ -36,6 +36,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.material)
     implementation(libs.okio)
+    api(libs.krypto)
     api(libs.cryptography.core)
 
     androidTestImplementation(libs.androidx.test.rules)
@@ -59,6 +60,9 @@ dependencies {
 }
 
 tasks.withType<Test> {
+    forkEvery = 1 // run each test in a new JVM
+    // fails to work if reused JVM
+    systemProperty("korlibs.crypto.try_prng_fixes", "false")
     testLogging {
         //showStandardStreams = true
         //showExceptions = true

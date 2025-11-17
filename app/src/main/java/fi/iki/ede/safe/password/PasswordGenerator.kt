@@ -1,11 +1,12 @@
 package fi.iki.ede.safe.password
 
-import java.security.SecureRandom // KMP CryptographyRandom.Default should do
+import korlibs.crypto.SecureRandom
 import kotlin.math.min
 
 const val PG_SYMBOLS = "!@#$%^&*()[]{}:;'\"/><.,-_=+~"
 
 object PasswordGenerator {
+
     fun genPassword(
         passUpper: Boolean,
         passLower: Boolean,
@@ -32,12 +33,11 @@ object PasswordGenerator {
         if (charset.isEmpty()) {
             return ""
         }
-        val generator = SecureRandom()
         val pass = StringBuilder()
         do {
             pass.clear()
             for (i in 0 until length) {
-                val pos = generator.nextInt(charset.length)
+                val pos = SecureRandom.nextInt(charset.length)
                 // kinda defeats the randomness, but let's ensure
                 // we've no duplicates
                 val candidate = charset[pos]
