@@ -15,7 +15,7 @@ abstract class CipherUtilities {
         const val KEY_ITERATION_COUNT = 20000
 
         fun generateRandomBytes(bits: Int): ByteArray {
-            require(bits % 8 == 0) { "Salt bits NEED to be divisible by 8" }
+            require(bits % 8 == 0) { "Salt bits NEED to be divisible by 8, was bits=${bits}, bits%8=${bits % 8}" }
             val randomBytes = ByteArray(bits / 8)
             val sr = SecureRandom()
             sr.nextBytes(randomBytes)
