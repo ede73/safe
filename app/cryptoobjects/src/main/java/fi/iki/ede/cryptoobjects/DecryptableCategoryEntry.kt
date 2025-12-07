@@ -1,24 +1,20 @@
 package fi.iki.ede.cryptoobjects
 
 import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.support.decrypt
 
 // TODO: Doesn't really belong to this project, does it?
 class DecryptableCategoryEntry {
     var id: Long? = null
     var encryptedName = IVCipherText.getEmpty()
     val plainName: String
-        get() = decrypt(encryptedName)
+        get() = encryptedName.decrypt()
 
     // Flow state is annoying since it requires NEW ENTITIES for changes to register
     fun copy(): DecryptableCategoryEntry = DecryptableCategoryEntry().apply {
         id = this@DecryptableCategoryEntry.id
         encryptedName = this@DecryptableCategoryEntry.encryptedName
         containedSiteEntryCount = this@DecryptableCategoryEntry.containedSiteEntryCount
-    }
-
-    private fun decrypt(value: IVCipherText): String {
-        return String(KeyStoreHelperFactory.decrypterProvider(value))
     }
 
     var containedSiteEntryCount = 0

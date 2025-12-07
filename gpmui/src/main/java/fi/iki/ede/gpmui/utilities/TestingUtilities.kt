@@ -1,7 +1,7 @@
 package fi.iki.ede.gpmui.utilities
 
 import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.gpm.changeset.ImportChangeSet
 import fi.iki.ede.gpm.changeset.ScoredMatch
 import fi.iki.ede.gpm.model.IncomingGPM
@@ -10,7 +10,7 @@ import fi.iki.ede.gpm.model.SavedGPM
 fun makeSavedForTesting(id: Long, name: String): SavedGPM {
     return SavedGPM.makeFromEncryptedStringFields(
         id,
-        KeyStoreHelperFactory.encrypterProvider(name.toByteArray()),
+        name.encrypt(),
         IVCipherText.getEmpty(),
         IVCipherText.getEmpty(),
         IVCipherText.getEmpty(),

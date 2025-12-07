@@ -10,7 +10,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.decrypt
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.safe.R
@@ -66,7 +65,7 @@ class RegistrationAPIProviderImpl : RegistrationAPI.Provider, GetComposable {
             if (breachCheckResult == BreachCheckEnum.NOT_CHECKED) {
                 SafeButton(onClick = {
                     BreachCheck.doBreachCheck(
-                        KAnonymity(encryptedPassword.decrypt(KeyStoreHelperFactory.decrypterProvider)),
+                        KAnonymity(encryptedPassword.decrypt()),
                         context,
                         { breached ->
                             breachCheckResult = when (breached) {

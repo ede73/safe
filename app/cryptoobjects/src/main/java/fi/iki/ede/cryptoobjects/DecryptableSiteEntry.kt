@@ -2,7 +2,6 @@ package fi.iki.ede.cryptoobjects
 
 import android.graphics.Bitmap
 import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.decrypt
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.logger.Logger
@@ -66,15 +65,15 @@ class DecryptableSiteEntry(categoryId: Long) {
     private var decryptedCachedPlainDescription: String? = null
 
     val plainPassword: String
-        get() = decrypt(password)
+        get() = password.decrypt()
     val plainUsername: String
-        get() = decrypt(username)
+        get() = username.decrypt()
     val plainWebsite: String
-        get() = decrypt(website)
+        get() = website.decrypt()
     val plainNote: String
-        get() = decrypt(note)
+        get() = note.decrypt()
     val plainPhoto: Bitmap?
-        get() = if (photo.isEmpty()) null else decryptPhoto(KeyStoreHelperFactory.decrypterProvider)
+        get() = if (photo.isEmpty()) null else decryptPhoto()
 
     // plain description is used A LOT everywhere (listing, sorting, displaying)
     // On a large password DB operating on decrypt-on-demand description is just too slow
@@ -82,7 +81,7 @@ class DecryptableSiteEntry(categoryId: Long) {
     val cachedPlainDescription: String
         get() {
             if (decryptedCachedPlainDescription == null && description != IVCipherText.getEmpty()) {
-                decryptedCachedPlainDescription = decrypt(description)
+                decryptedCachedPlainDescription = description.decrypt()
             }
             return decryptedCachedPlainDescription ?: ""
         }
@@ -118,10 +117,10 @@ class DecryptableSiteEntry(categoryId: Long) {
         extensions: Map<String, Set<String>>
     ) = cachedPlainDescription == description &&
             plainWebsite == website &&
-            plainUsername == decrypt(username) &&
+            plainUsername == username.decrypt() &&
             isSamePassword(password) &&
             this.passwordChangedDate == passwordChangedDate &&
-            plainNote == decrypt(note) &&
+            plainNote == note.decrypt() &&
             (photo?.sameAs(plainPhoto) ?: (plainPhoto == null)) &&
             !areMapsDifferent(extensions, this.plainExtensions)
 
@@ -144,17 +143,11 @@ class DecryptableSiteEntry(categoryId: Long) {
         }
     }
 
-    fun isSamePassword(comparePassword: IVCipherText) = plainPassword == decrypt(comparePassword)
+    fun isSamePassword(comparePassword: IVCipherText) = plainPassword == comparePassword.decrypt()
 
     // Flow state is annoying since it requires NEW ENTITIES for changes to register
     fun copy(): DecryptableSiteEntry = DecryptableSiteEntry(categoryId!!).apply {
         description = this@DecryptableSiteEntry.description
-    }
-
-    private fun decrypt(value: IVCipherText) = try {
-        String(KeyStoreHelperFactory.decrypterProvider(value))
-    } catch (e: Exception) {
-        "Failed decr $e"
     }
 
     fun encryptExtension(plainExtensions: Map<String, Set<String>>): IVCipherText =

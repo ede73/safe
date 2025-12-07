@@ -6,7 +6,8 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.crypto.Password
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.support.decrypt
+import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
@@ -71,19 +72,19 @@ class KeyStoreHelperTest {
     @Test
     fun testKeyStore() {
         val biokey = "abba"
-        val encryptedBin = KeyStoreHelperFactory.encrypterProvider(biokey.toByteArray())
-        val decrypted = KeyStoreHelperFactory.decrypterProvider(encryptedBin)
-        Assert.assertEquals(biokey, String(decrypted))
+        val encryptedBin = biokey.encrypt()
+        val decrypted = encryptedBin.decrypt()
+        Assert.assertEquals(biokey, decrypted)
     }
 
     @Test
     @Ignore("Not implemented")
     fun testKeyRotation() {
-        // Need to implement keyrotation test as well
+        // Need to implement key rotation test as well
         // Once the X509 expires, we need to reinitialize everything!
         // Maybe sooner?
         val biokey = "abba"
-        KeyStoreHelperFactory.encrypterProvider(biokey.toByteArray())
+        biokey.encrypt()
 
         // Not implemented
         //keyStoreHelper.rotateKeys()
