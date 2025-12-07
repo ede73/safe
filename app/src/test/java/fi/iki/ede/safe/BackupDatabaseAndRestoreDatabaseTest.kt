@@ -8,8 +8,6 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.KeystoreHelperMock4UnitTests
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
-import fi.iki.ede.crypto.keystore.KeyStoreHelper
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.hexToByteArray
 import fi.iki.ede.crypto.support.toHexString
 import fi.iki.ede.datamodel.DataModel
@@ -67,7 +65,6 @@ private const val TAG = "BackupDatabaseAndRestoreDatabaseTest"
 class BackupDatabaseAndRestoreDatabaseTest {
     private val fakeChangedDateTime: Instant =
         LocalDateTime(1999, 12, 31, 1, 2, 3, 0).toInstant(TimeZone.of("America/Los_Angeles"))
-    private lateinit var ks: KeyStoreHelper
     private lateinit var dbHelper: DBHelper
 
     @BeforeEach
@@ -80,7 +77,6 @@ class BackupDatabaseAndRestoreDatabaseTest {
         every { Preferences.getAllExtensions() } returns emptySet()
 
         KeystoreHelperMock4UnitTests.mock()
-        ks = KeyStoreHelperFactory.getKeyStoreHelper()
 
         // not really needed for restore, but here it is...
         dbHelper = mockPasswordObjectForBackup()
@@ -208,7 +204,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         mockDataModelFor_UNIT_TESTS_ONLY(
             linkedMapOf(
                 Pair(
-                    DataModelMocks.makeCat(1, ks),
+                    DataModelMocks.makeCat(1),
                     listOf()
                 )
             )
@@ -348,15 +344,15 @@ class BackupDatabaseAndRestoreDatabaseTest {
         mockDataModelFor_UNIT_TESTS_ONLY(
             linkedMapOf(
                 Pair(
-                    DataModelMocks.makeCat(1, ks), listOf(
-                        DataModelMocks.makePwd(1, 11, ks, changedUtcDate = fakeChangedDateTime),
-                        DataModelMocks.makePwd(1, 12, ks)
+                    DataModelMocks.makeCat(1), listOf(
+                        DataModelMocks.makePwd(1, 11, changedUtcDate = fakeChangedDateTime),
+                        DataModelMocks.makePwd(1, 12)
                     )
                 ),
                 Pair(
-                    DataModelMocks.makeCat(2, ks), listOf(
-                        DataModelMocks.makePwd(2, 21, ks),
-                        DataModelMocks.makePwd(2, 22, ks)
+                    DataModelMocks.makeCat(2), listOf(
+                        DataModelMocks.makePwd(2, 21),
+                        DataModelMocks.makePwd(2, 22)
                     )
                 )
             )

@@ -37,14 +37,14 @@ class DataModelDBTest {
     @Test
     fun dataModel() {
         KeystoreHelperMock4UnitTests.mock()
-        val ks = KeyStoreHelperFactory.getKeyStoreHelper()
+        KeyStoreHelperFactory.getKeyStoreHelper()
         mockDataModelFor_UNIT_TESTS_ONLY(
             linkedMapOf(
                 Pair(
-                    DataModelMocks.makeCat(1, ks),
+                    DataModelMocks.makeCat(1),
                     listOf(
-                        DataModelMocks.makePwd(1, 1, ks),
-                        DataModelMocks.makePwd(1, 2, ks)
+                        DataModelMocks.makePwd(1, 1),
+                        DataModelMocks.makePwd(1, 2)
                     )
                 )
             )
@@ -56,7 +56,7 @@ class DataModelDBTest {
         TestCase.assertEquals(1, DataModel.categoriesStateFlow.value.size)
         runBlocking {
             // ADD a password..this goes to FLOW
-            DataModel.addOrUpdateSiteEntry(DataModelMocks.makePwd(1, null, ks))
+            DataModel.addOrUpdateSiteEntry(DataModelMocks.makePwd(1, null))
         }
         // Ah interesting, runBlocking isn't actually blocking that all since INSIDE the function
         // there's .launch(io thread)

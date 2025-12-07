@@ -14,7 +14,6 @@ import fi.iki.ede.crypto.support.hexToByteArray
 import io.mockk.every
 import io.mockk.mockkClass
 import io.mockk.mockkObject
-import io.mockk.slot
 
 object MockKeyStore {
     fun mockKeyStore(): KeyStoreHelper {
@@ -23,16 +22,7 @@ object MockKeyStore {
         mockkObject(KeyStoreHelperFactory)
         //require(KeyStoreHelperFactory.isMock) { "You MUST have mockkObject(KeyStoreHelperFactory)" }
         every { KeyStoreHelperFactory.getKeyStoreHelper } returns { p }
-
-        val encryptionInput = slot<ByteArray>()
-        every { p.encryptByteArray(capture(encryptionInput)) } answers {
-            IVCipherText(ByteArray(CipherUtilities.IV_LENGTH), encryptionInput.captured)
-        }
-
-        val decryptionInput = slot<IVCipherText>()
-        every { p.decryptByteArray(capture(decryptionInput)) } answers {
-            decryptionInput.captured.cipherText
-        }
+        
         assert(p == KeyStoreHelperFactory.getKeyStoreHelper()) {
             "Keystore initialization failed"
         }

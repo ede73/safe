@@ -68,7 +68,7 @@ object DBHelper4AndroidTest {
     ): DBHelper4AndroidTest {
         val catId = getDBHelper().addCategory(DecryptableCategoryEntry().apply {
             id = forceId
-            encryptedName = getKeyStore().encryptByteArray(name.toByteArray())
+            encryptedName = KeyStoreHelperFactory.encrypterProvider(name.toByteArray())
         })
         require(catId > 0) { "In order to add passwords, you must specify a category id" }
         addPasswords(catId)
@@ -88,7 +88,7 @@ object DBHelper4AndroidTest {
     ): DBHelper4AndroidTest {
         val pwd = DecryptableSiteEntry(forceCategoryId).apply {
             id = forceId
-            this.description = getKeyStore().encryptByteArray(description.toByteArray())
+            this.description = KeyStoreHelperFactory.encrypterProvider(description.toByteArray())
         }
         getDBHelper().addSiteEntry(pwd)
         return this

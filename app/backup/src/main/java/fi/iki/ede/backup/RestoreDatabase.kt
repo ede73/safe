@@ -96,7 +96,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
     private fun getDocumentByteArray(
         backupEncryptionKeys: BackupEncryptionKeys,
         userPassword: Password
-    ) = KeyStoreHelperFactory.getKeyStoreHelper().decryptByteArray( // Keystore needed (new key)
+    ) = KeyStoreHelperFactory.decrypterProviderWithKey( // Keystore needed (new key)
         backupEncryptionKeys.getEncryptedBackup(),
         decryptMasterKey(backupEncryptionKeys, userPassword)
     )

@@ -6,7 +6,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.crypto.Password
-import fi.iki.ede.crypto.keystore.KeyStoreHelper
+import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
@@ -68,13 +68,11 @@ class KeyStoreHelperTest {
         }
     }
 
-    @Ignore // broken june/2024
     @Test
     fun testKeyStore() {
-        val keyStoreHelper = KeyStoreHelper()
         val biokey = "abba"
-        val encryptedBin = keyStoreHelper.encryptByteArray(biokey.toByteArray())
-        val decrypted = keyStoreHelper.decryptByteArray(encryptedBin)
+        val encryptedBin = KeyStoreHelperFactory.encrypterProvider(biokey.toByteArray())
+        val decrypted = KeyStoreHelperFactory.decrypterProvider(encryptedBin)
         Assert.assertEquals(biokey, String(decrypted))
     }
 
@@ -84,12 +82,11 @@ class KeyStoreHelperTest {
         // Need to implement keyrotation test as well
         // Once the X509 expires, we need to reinitialize everything!
         // Maybe sooner?
-        val keyStoreHelper = KeyStoreHelper()
         val biokey = "abba"
-        keyStoreHelper.encryptByteArray(biokey.toByteArray())
+        KeyStoreHelperFactory.encrypterProvider(biokey.toByteArray())
 
         // Not implemented
-        keyStoreHelper.rotateKeys()
+        //keyStoreHelper.rotateKeys()
         // We've lost the ENCRYPTED KEY at this point for sure
         // Can we have access to that via keystore?
     }

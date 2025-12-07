@@ -91,10 +91,12 @@ fun reconvertDatabase(pwd: String, completed: () -> Unit) {
     val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
     keyStore.load(null)
     val existingUnencryptedMasterKey = keyStore.getKey("secret_masterkey", null)!!
-    val ks = KeyStoreHelperFactory.getKeyStoreHelper()
 
     fun decryptWithExistingMasterKey(encrypted: IVCipherText): ByteArray {
-        return ks.decryptByteArray(encrypted, existingUnencryptedMasterKey)
+        return KeyStoreHelperFactory.decrypterProviderWithKey(
+            encrypted,
+            existingUnencryptedMasterKey
+        )
     }
 
     val salt = Salt(generateRandomBytes(64))
@@ -118,8 +120,11 @@ fun reconvertDatabase(pwd: String, completed: () -> Unit) {
         existingUnencryptedMasterKey: Key,
         unencryptedKey: SecretKeySpec
     ): IVCipherText {
-        val decrypted = ks.decryptByteArray(oldEncrypted, existingUnencryptedMasterKey)
-        return ks.encryptByteArray(decrypted, unencryptedKey)
+        val decrypted = KeyStoreHelperFactory.decrypterProviderWithKey(
+            oldEncrypted,
+            existingUnencryptedMasterKey
+        )
+        return KeyStoreHelperFactory.encrypterProviderWithKey(decrypted, unencryptedKey)
     }
 
     val newCategories = cats.map { cat ->
@@ -166,12 +171,11 @@ fun nudepwd(): String {
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
         keyStore.load(null)
         val sm = keyStore.getKey("secret_masterkey", null)!!
-        val ks = KeyStoreHelperFactory.getKeyStoreHelper()
         val db = DBHelperFactory.getDBHelper()
         val cats = db.fetchAllCategoryRows()
 
         val encrypted = cats.first().encryptedName
-        val res = String(ks.decryptByteArray(encrypted, sm))
+        val res = String(KeyStoreHelperFactory.decrypterProviderWithKey(encrypted, sm))
         return res
     } catch (e: Exception) {
         return e.toString()

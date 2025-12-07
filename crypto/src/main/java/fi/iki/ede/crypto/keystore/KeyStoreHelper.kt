@@ -31,10 +31,7 @@ import javax.crypto.spec.SecretKeySpec
  *    new phone, broken KeyStore implementation, accidental data clear, complete uninstall etc.
  *    In this case we will restore provided master key!
  */
-class KeyStoreHelper : CipherUtilities() {
-    // https://developer.android.com/reference/java/security/KeyStore
-    private val keyStore: KeyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
-
+class KeyStoreHelper(private val keyStore: KeyStore) : CipherUtilities() {
     init {
         keyStore.load(null)
         check(keyStore.containsAlias(KEY_SECRET_MASTERKEY)) { "Keystore MUST have been initialized with .importExistingEncryptedMasterKey or .createNewKey" }
@@ -62,7 +59,7 @@ class KeyStoreHelper : CipherUtilities() {
 
     private fun getSecretKey() = keyStore.getKey(KEY_SECRET_MASTERKEY, null)!!
 
-    fun encryptByteArray(
+    internal fun encryptByteArray(
         input: ByteArray,
         secretKey: Key = getSecretKey()
     ) = if (input.isEmpty()) {
@@ -77,7 +74,7 @@ class KeyStoreHelper : CipherUtilities() {
             IVCipherText(it.iv, it.doFinal(input))
         }
 
-    fun decryptByteArray(
+    internal fun decryptByteArray(
         encrypted: IVCipherText,
         secretKey: Key = getSecretKey()
     ): ByteArray = if (encrypted.iv.isEmpty()) {
@@ -157,7 +154,10 @@ class KeyStoreHelper : CipherUtilities() {
                     KEY_LENGTH_BITS
                 ), ivSecretKey
             )
-        )
+        ).also {
+            KeyStoreHelperFactory.provideKeyStoreHelper =
+                KeyStoreHelper(KeyStore.getInstance(ANDROID_KEYSTORE))
+        }
 
         fun createNewKey(password: Password): Pair<Salt, IVCipherText> =
             Salt(generateRandomBytes(64)).let { salt ->
@@ -175,6 +175,9 @@ class KeyStoreHelper : CipherUtilities() {
                         Pair(salt, cipheredKey)
                     }
                 }
+            }.also {
+                KeyStoreHelperFactory.provideKeyStoreHelper =
+                    KeyStoreHelper(KeyStore.getInstance(ANDROID_KEYSTORE))
             }
 
         private fun importANewMasterKey(aesKey: SecretKeySpec) =
