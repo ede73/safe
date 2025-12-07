@@ -28,8 +28,8 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
+import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.logger.Logger
@@ -319,7 +319,7 @@ private fun SearchSiteEntryPreview() {
     SafeThemeSurface {
         MockKeyStoreHelper.init()
         val site = DecryptableSiteEntry(1).apply {
-            description = KeyStoreHelperFactory.encrypterProvider("Description".toByteArray())
+            description = "Description".encrypt()
         }
         val search = remember { mutableStateOf(TextFieldValue()) }
         val stateFlow = MutableStateFlow(listOf(site, site, site))

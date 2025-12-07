@@ -3,7 +3,7 @@ package fi.iki.ede.safe
 import android.database.sqlite.SQLiteDatabase
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.datamodel.DataModel
@@ -31,7 +31,7 @@ object DataModelMocks {
         name: String = "encryptedcat${categoryId}"
     ): DecryptableCategoryEntry {
         val categoryEntry = DecryptableCategoryEntry()
-        categoryEntry.encryptedName = KeyStoreHelperFactory.encrypterProvider(name.toByteArray())
+        categoryEntry.encryptedName = name.encrypt()
         categoryEntry.id = categoryId
         return categoryEntry
     }
@@ -48,11 +48,11 @@ object DataModelMocks {
     ): DecryptableSiteEntry {
         val siteEntry = DecryptableSiteEntry(categoryId)
         siteEntry.id = id
-        siteEntry.description = KeyStoreHelperFactory.encrypterProvider(description.toByteArray())
-        siteEntry.username = KeyStoreHelperFactory.encrypterProvider(username.toByteArray())
-        siteEntry.website = KeyStoreHelperFactory.encrypterProvider(website.toByteArray())
-        siteEntry.note = KeyStoreHelperFactory.encrypterProvider(note.toByteArray())
-        siteEntry.password = KeyStoreHelperFactory.encrypterProvider(password.toByteArray())
+        siteEntry.description = description.encrypt()
+        siteEntry.username = username.encrypt()
+        siteEntry.website = website.encrypt()
+        siteEntry.note = note.encrypt()
+        siteEntry.password = password.encrypt()
         if (changedUtcDate != null) {
             siteEntry.passwordChangedDate = changedUtcDate
             //ZonedDateTime.of(2023, 6, 17, 2, 3, 4, 0, ZoneId.of("UTC"))

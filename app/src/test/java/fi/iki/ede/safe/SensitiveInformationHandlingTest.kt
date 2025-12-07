@@ -7,7 +7,7 @@ import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.SaltedPassword
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
-import fi.iki.ede.cryptoobjects.encrypt
+import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
 import org.junit.jupiter.api.Assertions.assertEquals

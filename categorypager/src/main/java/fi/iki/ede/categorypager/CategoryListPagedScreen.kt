@@ -1,6 +1,5 @@
 package fi.iki.ede.categorypager
 
-import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import android.os.Bundle
 import android.text.TextUtils
 import androidx.activity.compose.setContent
@@ -22,7 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
 import fi.iki.ede.autolock.AutolockingFeaturesImpl
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
+import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.datamodel.DataModel.siteEntriesStateFlow
@@ -105,7 +105,7 @@ private fun AddOrEditCategory(
         onSubmit = {
             if (!TextUtils.isEmpty(it)) {
                 val entry = DecryptableCategoryEntry().apply {
-                    encryptedName = KeyStoreHelperFactory.encrypterProvider(it.toByteArray())
+                    encryptedName = it.encrypt()
                 }
                 coroutineScope.launch {
                     DataModel.addOrEditCategory(entry)
@@ -122,9 +122,9 @@ private fun AddOrEditCategory(
 fun CategoryListPagedScreenPreview() {
     MockKeyStoreHelper.init()
     val flow = listOf(DecryptableCategoryEntry().apply {
-        encryptedName = KeyStoreHelperFactory.encrypterProvider("Android".toByteArray())
+        encryptedName = "Android".encrypt()
     }, DecryptableCategoryEntry().apply {
-        encryptedName = KeyStoreHelperFactory.encrypterProvider("iPhone".toByteArray())
+        encryptedName = "iPhone".encrypt()
     })
     CategoryListScreenPagedCompose(MutableStateFlow(flow))
 }

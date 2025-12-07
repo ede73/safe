@@ -10,8 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
+import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.theme.LocalSafeTheme
@@ -48,13 +48,13 @@ private fun SiteEntryRowHeaderPreview() {
     SafeThemeSurface {
         MockKeyStoreHelper.init()
         val site1 = DecryptableSiteEntry(1).apply {
-            description = KeyStoreHelperFactory.encrypterProvider("Description1".toByteArray())
+            description = "Description1".encrypt()
         }
         val site2 = DecryptableSiteEntry(2).apply {
-            description = KeyStoreHelperFactory.encrypterProvider("Description1".toByteArray())
+            description ="Description1".encrypt()
         }
         val cat = DecryptableCategoryEntry().apply {
-            encryptedName = KeyStoreHelperFactory.encrypterProvider("Category".toByteArray())
+            encryptedName = "Category".encrypt()
         }
         Column {
             SiteEntryRowHeader("Q")

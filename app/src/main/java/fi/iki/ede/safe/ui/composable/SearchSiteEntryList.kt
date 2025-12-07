@@ -14,8 +14,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
+import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.datamodel.DataModel
@@ -91,14 +91,14 @@ private fun SearchSiteEntryListPreview() {
     SafeThemeSurface {
         MockKeyStoreHelper.init()
         val site1 = DecryptableSiteEntry(1).apply {
-            description = KeyStoreHelperFactory.encrypterProvider("Description1".toByteArray())
+            description = "Description1".encrypt()
         }
         val site2 = DecryptableSiteEntry(1).apply {
-            description = KeyStoreHelperFactory.encrypterProvider("Description2".toByteArray())
+            description = "Description2".encrypt()
         }
         DecryptableCategoryEntry().apply {
             id = 1
-            encryptedName = KeyStoreHelperFactory.encrypterProvider("Category".toByteArray())
+            encryptedName = "Category".encrypt()
         }
         val lst = mutableListOf(site1, site2)
         val sitesFlow = MutableStateFlow(lst.toList())

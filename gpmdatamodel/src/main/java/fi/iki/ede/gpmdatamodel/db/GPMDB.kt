@@ -3,7 +3,7 @@ package fi.iki.ede.gpmdatamodel.db
 import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
-import fi.iki.ede.cryptoobjects.encrypt
+import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.db.DBID
 import fi.iki.ede.db.GooglePasswordManager

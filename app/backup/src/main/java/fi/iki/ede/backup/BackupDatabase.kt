@@ -6,7 +6,7 @@ import fi.iki.ede.backup.ExportConfig.Companion.Attributes
 import fi.iki.ede.backup.ExportConfig.Companion.Elements
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.dateutils.DateUtils
@@ -134,7 +134,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
             )
             val xmlBytes = xmlBuf.readByteArray()
 
-            val encBytes = KeyStoreHelperFactory.encrypterProvider(xmlBytes)
+            val encBytes = xmlBytes.encrypt()
 
             hexSink.write(encBytes)
             hexSink.flush()

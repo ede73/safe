@@ -9,8 +9,8 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.Composable
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
 import fi.iki.ede.autolock.AutolockingFeaturesImpl
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
+import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.preferences.Preferences
@@ -54,9 +54,9 @@ class CategoryListScreen :
 fun CategoryScreenPreview() {
     MockKeyStoreHelper.init()
     val flow = listOf(DecryptableCategoryEntry().apply {
-        encryptedName = KeyStoreHelperFactory.encrypterProvider("Android".toByteArray())
+        encryptedName = "Android".encrypt()
     }, DecryptableCategoryEntry().apply {
-        encryptedName = KeyStoreHelperFactory.encrypterProvider("iPhone".toByteArray())
+        encryptedName = "iPhone".encrypt()
     })
     CategoryListScreenCompose(MutableStateFlow(flow))
 }

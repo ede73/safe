@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.decrypt
+import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.logger.Logger
 import kotlinx.serialization.json.Json
 import kotlin.time.ExperimentalTime
@@ -46,7 +47,7 @@ class DecryptableSiteEntry(categoryId: Long) {
             if (extensions.isEmpty()) mapOf()
             else
                 Json.decodeFromString<Map<String, Set<String>>>(
-                    extensions.decrypt(KeyStoreHelperFactory.decrypterProvider).trim()
+                    extensions.decrypt().trim()
                 )
         } catch (e: Exception) {
             // TODO: temporarily disabled

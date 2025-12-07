@@ -13,8 +13,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
+import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.safe.R
@@ -62,8 +62,7 @@ internal fun CategoryListScreenCompose(
                         onSubmit = {
                             if (!TextUtils.isEmpty(it)) {
                                 val entry = DecryptableCategoryEntry().apply {
-                                    encryptedName =
-                                        KeyStoreHelperFactory.encrypterProvider(it.toByteArray())
+                                    encryptedName = it.encrypt()
                                 }
                                 coroutineScope.launch {
                                     DataModel.addOrEditCategory(entry)
@@ -89,18 +88,17 @@ private fun CategoryListScreenComposePreview() {
             val fakeCategories = listOf(
                 DecryptableCategoryEntry().apply {
                     id = 1
-                    encryptedName = KeyStoreHelperFactory.encrypterProvider("Bank".toByteArray())
+                    encryptedName = "Bank".encrypt()
                     containedSiteEntryCount = 5
                 },
                 DecryptableCategoryEntry().apply {
                     id = 2
-                    encryptedName = KeyStoreHelperFactory.encrypterProvider("E-Mail".toByteArray())
+                    encryptedName = "E-Mail".encrypt()
                     containedSiteEntryCount = 3
                 },
                 DecryptableCategoryEntry().apply {
                     id = 3
-                    encryptedName =
-                        KeyStoreHelperFactory.encrypterProvider("Social Media".toByteArray())
+                    encryptedName = "Social Media".encrypt()
                     containedSiteEntryCount = 12
                 }
             )

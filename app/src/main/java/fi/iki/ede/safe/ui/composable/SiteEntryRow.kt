@@ -26,8 +26,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
+import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.datamodel.DataModel
@@ -178,14 +178,13 @@ private fun SiteEntryRowPreview() {
     SafeThemeSurface {
         MockKeyStoreHelper.init()
         val site1 = DecryptableSiteEntry(1).apply {
-            description =
-                KeyStoreHelperFactory.encrypterProvider("This is lengthy description worth of a king".toByteArray())
+            description = "This is lengthy description worth of a king".encrypt()
             passwordChangedDate =
                 LocalDateTime(2023, 11, 10, 10, 10, 10).toInstant(TimeZone.currentSystemDefault())
         }
         val cat = DecryptableCategoryEntry().apply {
             id = 1
-            encryptedName = KeyStoreHelperFactory.encrypterProvider("Category".toByteArray())
+            encryptedName = "Category".encrypt()
         }
         SiteEntryRow(site1, listOf(cat))
     }

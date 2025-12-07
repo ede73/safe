@@ -6,11 +6,9 @@ import android.util.Base64
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.runtime.Composable
 import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
-import fi.iki.ede.cryptoobjects.encrypt
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.safe.ui.models.EditableSiteEntry
 import fi.iki.ede.theme.SafeThemeSurface
@@ -30,17 +28,14 @@ fun PersistPasswordEntryChanges(
     val siteEntry = DecryptableSiteEntry(editedSiteEntry.categoryId)
     siteEntry.apply {
         id = editedSiteEntry.id
-        description = editedSiteEntry.description.encrypt(KeyStoreHelperFactory.encrypterProvider)
-        website = editedSiteEntry.website.encrypt(KeyStoreHelperFactory.encrypterProvider)
+        description = editedSiteEntry.description.encrypt()
+        website = editedSiteEntry.website.encrypt()
         username = editedSiteEntry.username
         password = editedSiteEntry.password
         passwordChangedDate = editedSiteEntry.passwordChangedDate
         note = editedSiteEntry.note
         photo = if (editedSiteEntry.plainPhoto == null) IVCipherText.getEmpty()
-        else convertToJpegAndEncrypt(
-            editedSiteEntry.plainPhoto,
-            KeyStoreHelperFactory.encrypterProvider
-        )
+        else convertToJpegAndEncrypt(editedSiteEntry.plainPhoto)
 
         if (passwordChanged) {
             passwordChangedDate = Clock.System.now()
@@ -62,11 +57,10 @@ fun PersistPasswordEntryChanges(
 @Composable
 private fun convertToJpegAndEncrypt(
     plainPhoto: Bitmap,
-    encrypter: (ByteArray) -> IVCipherText
 ) = Buffer().apply {
     plainPhoto.compress(Bitmap.CompressFormat.JPEG, 60, this.outputStream())
 }.let { buffer ->
-    Base64.encodeToString(buffer.readByteArray(), Base64.DEFAULT).encrypt(encrypter)
+    Base64.encodeToString(buffer.readByteArray(), Base64.DEFAULT).encrypt()
 }
 
 

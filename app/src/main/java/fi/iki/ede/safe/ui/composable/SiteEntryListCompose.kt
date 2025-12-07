@@ -9,8 +9,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
+import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.db.DBID
@@ -64,20 +64,17 @@ private fun SiteEntryListComposePreview() {
             MockKeyStoreHelper.init()
             val category = DecryptableCategoryEntry().apply {
                 id = 1L
-                encryptedName =
-                    KeyStoreHelperFactory.encrypterProvider("Social Media".toByteArray())
+                encryptedName = "Social Media".encrypt()
             }
             val siteEntries = listOf(
                 DecryptableSiteEntry(1L).apply {
-                    description = KeyStoreHelperFactory.encrypterProvider("Facebook".toByteArray())
-                    username =
-                        KeyStoreHelperFactory.encrypterProvider("user@example.com".toByteArray())
+                    description = "Facebook".encrypt()
+                    username = "user@example.com".encrypt()
                     passwordChangedDate = Clock.System.now()
                 },
                 DecryptableSiteEntry(2L).apply {
-                    description = KeyStoreHelperFactory.encrypterProvider("Twitter".toByteArray())
-                    username =
-                        KeyStoreHelperFactory.encrypterProvider("user@example.com".toByteArray())
+                    description = "Twitter".encrypt()
+                    username = "user@example.com".encrypt()
                 }
             )
             Pair(category, siteEntries)

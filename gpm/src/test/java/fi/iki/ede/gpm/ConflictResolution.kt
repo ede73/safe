@@ -2,7 +2,7 @@ package fi.iki.ede.gpm
 
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
-import fi.iki.ede.cryptoobjects.encrypt
+import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.gpm.changeset.ImportChangeSet
 import fi.iki.ede.gpm.changeset.ScoredMatch
 import fi.iki.ede.gpm.changeset.resolveMatchConflicts
@@ -84,7 +84,7 @@ class ConflictResolution {
     private fun makeScoredConflictMap(
         incomingName: String,
         vararg xs: Pair<Double, String>
-    ): Set<Pair<IncomingGPM, ScoredMatch>> = xs.map { it ->
+    ): Set<Pair<IncomingGPM, ScoredMatch>> = xs.map {
         incoming(incomingName) to scored(it.first, it.second)
     }.toSet()
 

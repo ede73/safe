@@ -23,8 +23,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
+import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.safe.R
@@ -126,8 +126,7 @@ fun CategoryRow(category: DecryptableCategoryEntry) {
                     if (category.plainName != it) {
                         val entry = DecryptableCategoryEntry()
                         entry.id = category.id
-                        entry.encryptedName =
-                            KeyStoreHelperFactory.encrypterProvider(it.toByteArray())
+                        entry.encryptedName = it.encrypt()
                         coroutineScope.launch {
                             DataModel.addOrEditCategory(entry)
                         }
@@ -156,7 +155,7 @@ private fun CategoryRowPreview() {
     SafeThemeSurface {
         MockKeyStoreHelper.init()
         val cat = DecryptableCategoryEntry().apply {
-            encryptedName = KeyStoreHelperFactory.encrypterProvider("Social Media".toByteArray())
+            encryptedName = "Social Media".encrypt()
             containedSiteEntryCount = 12
         }
         CategoryRow(category = cat)

@@ -11,8 +11,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
+import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.theme.SafeThemeSurface
@@ -51,11 +51,11 @@ private fun SiteEntryListPreview() {
     SafeThemeSurface {
         MockKeyStoreHelper.init()
         val lst = mutableListOf(DecryptableSiteEntry(1).apply {
-            description = KeyStoreHelperFactory.encrypterProvider("Description1".toByteArray())
+            description = "Description1".encrypt()
         }, DecryptableSiteEntry(1).apply {
-            description = KeyStoreHelperFactory.encrypterProvider("Description2".toByteArray())
+            description = "Description2".encrypt()
         }, DecryptableSiteEntry(1).apply {
-            description = KeyStoreHelperFactory.encrypterProvider("Kuvaus".toByteArray())
+            description = "Kuvaus".encrypt()
         })
         SiteEntryList(lst)
     }

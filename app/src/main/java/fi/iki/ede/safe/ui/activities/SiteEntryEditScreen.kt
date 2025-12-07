@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
 import fi.iki.ede.autolock.AutolockingFeaturesImpl
 import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
@@ -66,10 +65,10 @@ class SiteEntryEditScreen :
                     )
 
                     viewModel.addPassword(
-                        newPassword.encrypt(KeyStoreHelperFactory.encrypterProvider),
+                        newPassword.encrypt(),
                         categoryId,
                         Preferences.getDefaultUserName()
-                            .encrypt(KeyStoreHelperFactory.encrypterProvider)
+                            .encrypt()
                     )
                     lap("make new password entry")
                 } else {

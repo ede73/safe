@@ -37,10 +37,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
-import fi.iki.ede.cryptoobjects.encrypt
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.db.DBID
 import fi.iki.ede.gpm.model.SavedGPM
@@ -351,8 +350,7 @@ private fun ImportEntryListPreview() {
         GpmUiMockKeyStoreHelper.init()
         (1990..2023).map {
             DecryptableSiteEntry(1).apply {
-                description =
-                    KeyStoreHelperFactory.encrypterProvider("Description $it".toByteArray())
+                description = "Description $it".encrypt()
             }
         }
         (1..10).map {
