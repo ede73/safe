@@ -31,7 +31,7 @@ fun SemanticsNodeInteractionsProvider.onNodeWithTag(
 
 internal object GpmUiMockKeyStoreHelper {
     fun init() {
-        KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
-        KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
+        KeyStoreHelperFactory.getKeyStoreHelper().encrypterProvider = { IVCipherText(it, it) }
+        KeyStoreHelperFactory.getKeyStoreHelper().decrypterProvider = { it.cipherText }
     }
 }

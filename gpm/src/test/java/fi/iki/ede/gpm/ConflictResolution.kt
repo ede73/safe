@@ -1,6 +1,6 @@
 package fi.iki.ede.gpm
 
-import fi.iki.ede.crypto.IVCipherText
+import fi.iki.ede.crypto.KeystoreHelperMock4UnitTests
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.gpm.changeset.ImportChangeSet
@@ -8,6 +8,7 @@ import fi.iki.ede.gpm.changeset.ScoredMatch
 import fi.iki.ede.gpm.changeset.resolveMatchConflicts
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
+import io.mockk.unmockkAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -18,13 +19,14 @@ class ConflictResolution {
 
     @AfterEach
     fun afterTests() {
+        unmockkAll()
     }
 
     @BeforeEach
     fun beforeTests() {
+        KeystoreHelperMock4UnitTests.mock()
+        KeyStoreHelperFactory.getKeyStoreHelper()
         importChangeSet.matchingGPMs.clear()
-        KeyStoreHelperFactory.encrypterProvider = { IVCipherText(it, it) }
-        KeyStoreHelperFactory.decrypterProvider = { it.cipherText }
     }
 
     @Test

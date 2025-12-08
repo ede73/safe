@@ -133,6 +133,22 @@ class KeyStoreHelper(private val keyStore: KeyStore) : CipherUtilities() {
                     }
             }
 
+    // settable providers to crypto
+    var decrypterProviderWithKey: (IVCipherText, Key) -> ByteArray = { encrypted, key ->
+        decryptByteArray(encrypted, key)
+    }
+
+    var decrypterProvider: (IVCipherText) -> ByteArray = { encrypted ->
+        decryptByteArray(encrypted)
+    }
+
+    var encrypterProviderWithKey: (ByteArray, Key) -> IVCipherText = { plaintext, key ->
+        encryptByteArray(plaintext, key)
+    }
+    var encrypterProvider: (ByteArray) -> IVCipherText = { plaintext ->
+        encryptByteArray(plaintext)
+    }
+
 
     companion object {
         const val ANDROID_KEYSTORE = "AndroidKeyStore"

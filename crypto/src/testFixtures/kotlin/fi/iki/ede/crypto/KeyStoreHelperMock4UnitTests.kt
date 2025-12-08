@@ -67,12 +67,20 @@ object KeystoreHelperMock4UnitTests {
         every { p.decryptByteArray(capture(decryptionInput), any()) } answers {
             fakeDecrypt(decryptionInput.captured)
         }
-        every { KeyStoreHelperFactory.encrypterProvider } answers {
+
+        every { p.encrypterProvider } answers {
             { plaintext -> fakeEncrypt(plaintext) }
         }
 
-        every { KeyStoreHelperFactory.decrypterProvider } answers {
+        every { p.encrypterProviderWithKey } answers {
+            { plaintext, _ -> fakeEncrypt(plaintext) }
+        }
+
+        every { p.decrypterProvider } answers {
             { encrypted -> fakeDecrypt(encrypted) }
+        }
+        every { p.decrypterProviderWithKey } answers {
+            { encrypted, _ -> fakeDecrypt(encrypted) }
         }
     }
 }

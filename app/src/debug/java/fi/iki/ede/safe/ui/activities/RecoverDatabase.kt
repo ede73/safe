@@ -93,7 +93,7 @@ fun reconvertDatabase(pwd: String, completed: () -> Unit) {
     val existingUnencryptedMasterKey = keyStore.getKey("secret_masterkey", null)!!
 
     fun decryptWithExistingMasterKey(encrypted: IVCipherText): ByteArray {
-        return KeyStoreHelperFactory.decrypterProviderWithKey(
+        return KeyStoreHelperFactory.getKeyStoreHelper().decrypterProviderWithKey(
             encrypted,
             existingUnencryptedMasterKey
         )
@@ -120,11 +120,12 @@ fun reconvertDatabase(pwd: String, completed: () -> Unit) {
         existingUnencryptedMasterKey: Key,
         unencryptedKey: SecretKeySpec
     ): IVCipherText {
-        val decrypted = KeyStoreHelperFactory.decrypterProviderWithKey(
+        val decrypted = KeyStoreHelperFactory.getKeyStoreHelper().decrypterProviderWithKey(
             oldEncrypted,
             existingUnencryptedMasterKey
         )
-        return KeyStoreHelperFactory.encrypterProviderWithKey(decrypted, unencryptedKey)
+        return KeyStoreHelperFactory.getKeyStoreHelper()
+            .encrypterProviderWithKey(decrypted, unencryptedKey)
     }
 
     val newCategories = cats.map { cat ->
@@ -175,7 +176,9 @@ fun nudepwd(): String {
         val cats = db.fetchAllCategoryRows()
 
         val encrypted = cats.first().encryptedName
-        val res = String(KeyStoreHelperFactory.decrypterProviderWithKey(encrypted, sm))
+        val res = String(
+            KeyStoreHelperFactory.getKeyStoreHelper().decrypterProviderWithKey(encrypted, sm)
+        )
         return res
     } catch (e: Exception) {
         return e.toString()

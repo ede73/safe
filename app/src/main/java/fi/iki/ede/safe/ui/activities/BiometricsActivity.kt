@@ -170,7 +170,8 @@ class BiometricsActivity : AppCompatActivity() {
             // needed, new key
             val biokey = KeyStoreHelperFactory.getKeyStoreHelper().getOrCreateBiokey()
             val now = Clock.System.now().epochSeconds.toString()
-            val stamp = KeyStoreHelperFactory.encrypterProviderWithKey(now.toByteArray(), biokey)
+            val stamp = KeyStoreHelperFactory.getKeyStoreHelper()
+                .encrypterProviderWithKey(now.toByteArray(), biokey)
             storeBioCipher(stamp)
             LoginHandler.biometricLogin()
         }
@@ -185,8 +186,7 @@ class BiometricsActivity : AppCompatActivity() {
             val ks = KeyStoreHelperFactory.getKeyStoreHelper() // needed, new key
             val biometricKey = ks.getOrCreateBiokey()
             try {
-                val decrypted =
-                    KeyStoreHelperFactory.decrypterProviderWithKey(stampCipher, biometricKey)
+                val decrypted = ks.decrypterProviderWithKey(stampCipher, biometricKey)
                 val then = DateUtils.newParse(String(decrypted))
                 val age = DateUtils.getPeriodBetweenDates(then)
                 if (age.days < 128) {

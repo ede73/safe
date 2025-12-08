@@ -5,6 +5,7 @@ import android.database.sqlite.SQLiteDatabase
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.datamodel.DataModel
@@ -68,7 +69,7 @@ object DBHelper4AndroidTest {
     ): DBHelper4AndroidTest {
         val catId = getDBHelper().addCategory(DecryptableCategoryEntry().apply {
             id = forceId
-            encryptedName = KeyStoreHelperFactory.encrypterProvider(name.toByteArray())
+            encryptedName = name.encrypt()
         })
         require(catId > 0) { "In order to add passwords, you must specify a category id" }
         addPasswords(catId)
@@ -88,7 +89,7 @@ object DBHelper4AndroidTest {
     ): DBHelper4AndroidTest {
         val pwd = DecryptableSiteEntry(forceCategoryId).apply {
             id = forceId
-            this.description = KeyStoreHelperFactory.encrypterProvider(description.toByteArray())
+            this.description = description.encrypt()
         }
         getDBHelper().addSiteEntry(pwd)
         return this

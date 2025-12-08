@@ -22,11 +22,11 @@ object MockKeyStore {
         mockkObject(KeyStoreHelperFactory)
         //require(KeyStoreHelperFactory.isMock) { "You MUST have mockkObject(KeyStoreHelperFactory)" }
         every { KeyStoreHelperFactory.getKeyStoreHelper } returns { p }
-        
+
         assert(p == KeyStoreHelperFactory.getKeyStoreHelper()) {
             "Keystore initialization failed"
         }
-        every { KeyStoreHelperFactory.encrypterProvider } answers {
+        every { p.encrypterProvider } answers {
             { encrypted: ByteArray ->
                 IVCipherText(
                     ByteArray(CipherUtilities.IV_LENGTH),
@@ -35,7 +35,7 @@ object MockKeyStore {
             }
         }
 
-        every { KeyStoreHelperFactory.decrypterProvider } answers {
+        every { p.decrypterProvider } answers {
             { cipherText: IVCipherText -> cipherText.cipherText }
         }
         return p

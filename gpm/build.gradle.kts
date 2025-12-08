@@ -32,6 +32,8 @@ dependencies {
     testImplementation(libs.junit5.jupiter)
     testImplementation(libs.mockk)
     testImplementation(project(":logger"))
+    testImplementation(project(":crypto"))
+    testImplementation(testFixtures(project(":crypto")))
 
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
