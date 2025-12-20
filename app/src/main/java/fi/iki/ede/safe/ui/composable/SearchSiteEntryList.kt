@@ -20,6 +20,7 @@ import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.datamodel.DataModel.getCategory
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
 import fi.iki.ede.theme.SafeThemeSurface
@@ -68,10 +69,15 @@ fun SearchSiteEntryList(
             // Merge with PasswordRow
             MatchingSiteEntry(
                 siteEntry = filteredItem,
-                categoryEntry = filteredItem.getCategory(), onSiteEntryClick = {
-                    launcher.launch(
-                        IntentManager.getEditSiteEntryIntent(context, it.id!!)
-                    )
+                categoryEntry = filteredItem.getCategory(), onSiteEntryClick = { siteEntry ->
+                    val id = siteEntry.id
+                    if (id != null) {
+                        launcher.launch(
+                            IntentManager.getEditSiteEntryIntent(context, id)
+                        )
+                    } else {
+                        Logger.i("SearchSiteEntryList", "site entry is null")
+                    }
                 }, onDeleteSiteEntry = { deletedEntry ->
                     // it is gone already
                     val newList = filteredSiteEntries.value.filter { it != deletedEntry }
