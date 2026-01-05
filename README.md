@@ -1,7 +1,5 @@
 # Password Safe
 
-Yet another? Yeah, indeed.
-
 This is a simple, as secure as possible, quick, nifty project to store all my passwords, credit card
 details, what not PIIs I need to access every now and then, just a fingerprint away.
 
@@ -21,15 +19,14 @@ and decided 64 is enough for everyone!
 - Dark mode for me!
 - AES-256 all the way
 - Automatic timed lock
-- I currently have Have I Been Pawned breach check for the passwords, but not sure if I'll put it on
-  release version
+- Have I Been Pawned breach check for the passwords, but not sure if I'll put it on release version
 - Plugin modules
 - Trashcan for deleted passwords, and automatic emptying set to user preferred date
 - Passwords can have extensions (tags/shared meta information), like phone number, which
   authenticator used etc.
 - When creating new (updated) password, can copy&paste old & new separately
 - Google Password Manager import - continuous import, with drag and drop (from GPM to Safe) and
-  heuristic autoimport
+  heuristic auto-import
 - Firebase integrated for run time analysis
 - Extensive unit tests, bouncycastle, UI tests
 
@@ -39,7 +36,8 @@ TPM (ie. might not work on cheapo-phones)
 + other hidden gems, like automatically entering PIN to emulator, or running instrumentation tests
   in Windows Subsystem Linux box (check ci folder)
 
-Written in Kotlin, utilizing JetPack/Compose.
+Written in Kotlin, utilizing JetPack/Compose, partially KMP (crypto pending, and alas avoiding
+fragments for KMP)
 
 Building:
 
