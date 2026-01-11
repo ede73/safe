@@ -22,11 +22,9 @@ import fi.iki.ede.db.DBHelper.Companion.DATABASE_NAME
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.gpmdatamodel.db.GPMDB
-import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.model.LoginHandler
-import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.splits.PluginManager
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.composable.DualModePreview
@@ -52,7 +50,7 @@ enum class LoginStyle {
 // - we have no(actually empty) database
 // - we have data base (with masterkey)
 //   - why? because we've gone thru first part and this is 'relogin'
-//   - or! app was perhap uninstalled, reinstalled and Google Autobackup gave us OLD database
+//   - or! app was perhaps uninstalled, reinstalled and Google Autobackup gave us OLD database
 //      - we can accept this and try to login
 //      - or we can just discard it and make totally new one (everyone has backups right?)
 enum class LoginPrecondition {
@@ -63,10 +61,10 @@ enum class LoginPrecondition {
 
 @ExperimentalTime
 open class LoginScreen : ComponentActivity() {
-    private var openCategoryListScreen: Boolean = true
     private val biometricsFirstTimeRegister = biometricsFirstTimeActivity()
     private val biometricsVerify = biometricsVerifyActivity()
     private var serviceConnection: ServiceConnection? = null
+    private var finishWhenCategoryScreenIsRunning = false
 
     override fun onDestroy() {
         super.onDestroy()
@@ -80,9 +78,7 @@ open class LoginScreen : ComponentActivity() {
     @ExperimentalFoundationApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        openCategoryListScreen = intent.getBooleanExtra(
-            OPEN_CATEGORY_SCREEN_AFTER_LOGIN, true
-        )
+        firebaseLog("LoginScreen onCreate")
         if (BuildConfig.DEBUG) {
             val isBundleTest = intent.getStringExtra("isBundleTest") == "true"
             PluginManager.setBundleTestMode(isBundleTest)
@@ -96,7 +92,7 @@ open class LoginScreen : ComponentActivity() {
             if (intent.getStringExtra("WipeKeyStore") == "true") {
                 val ks = KeyStoreHelperFactory.getKeyStoreHelper()
                 ks.testingDeleteKeys_DO_NOT_USE()
-                firebaseLog("wireKeyStore: finish()")
+                firebaseLog("wireKeyStore: finishWithTrace(::finish)")
                 finish()
                 return
             }
@@ -124,10 +120,7 @@ open class LoginScreen : ComponentActivity() {
         }
 
     @ExperimentalTime
-    private fun goodPasswordEntered(
-        loginStyle: LoginStyle,
-        it: Password,
-    ): Boolean {
+    private fun goodPasswordEntered(loginStyle: LoginStyle, it: Password): Boolean {
         val context = this
         val passwordIsAccepted = if (loginStyle == LoginStyle.FIRST_TIME_LOGIN_CLEAR_DATABASE) {
             context.deleteDatabase(DATABASE_NAME)
@@ -171,10 +164,12 @@ open class LoginScreen : ComponentActivity() {
             AutolockingFeaturesImpl,
             applicationContext
         )
-        if (openCategoryListScreen) {
-            IntentManager.startCategoryScreen(this)
+        firebaseLog("Maybe open category screen")
+        firebaseLog("Asked NOT TO OPEN open category screen, taskRoot=${isTaskRoot}")
+        if (isTaskRoot) {
+            firebaseLog("Oh NO! We're ROOT and we're finishing, taskRoot=${isTaskRoot}")
         }
-        firebaseLog("finishLoginProcess: finish()")
+        firebaseLog("finishLoginProcess: finishWithTrace(::finish)")
         finish()
     }
 
@@ -212,10 +207,7 @@ open class LoginScreen : ComponentActivity() {
                 RESULT_OK -> {
                     if (!BiometricsActivity.verificationAccepted()) {
                         // should never happen
-                        Logger.e(
-                            "---",
-                            "Biometric verification NOT accepted - perhaps a new backup?"
-                        )
+                        firebaseLog("Biometric verification NOT accepted - perhaps a new backup?")
                     } else {
                         finishLoginProcess()
                     }
@@ -232,10 +224,6 @@ open class LoginScreen : ComponentActivity() {
                 }
             }
         }
-
-    companion object {
-        const val OPEN_CATEGORY_SCREEN_AFTER_LOGIN = "open_category_screen"
-    }
 }
 
 @ExperimentalTime

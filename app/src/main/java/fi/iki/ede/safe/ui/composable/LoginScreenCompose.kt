@@ -19,6 +19,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.backup.MyBackupAgent
 import fi.iki.ede.crypto.Password
+import fi.iki.ede.crypto.keystore.KeyStoreHelper
+import fi.iki.ede.crypto.keystore.KeyStoreHelper.Companion.ANDROID_KEYSTORE
+import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.dateutils.toLocalDateTime
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.R
@@ -26,6 +29,7 @@ import fi.iki.ede.safe.ui.activities.LoginPrecondition
 import fi.iki.ede.safe.ui.activities.LoginStyle
 import fi.iki.ede.safe.ui.activities.isGoodRestoredContent
 import fi.iki.ede.theme.SafeTheme
+import java.security.KeyStore
 import kotlin.time.ExperimentalTime
 
 @ExperimentalFoundationApi
@@ -51,8 +55,14 @@ internal fun LoginScreenCompose(
                 LoginPasswordPrompts(loginPrecondition) { loginStyle, pwd ->
                     goodPasswordEntered(loginStyle, pwd)
                 }
-                // TODO: if we're fresh from backup - biometrics don't work
-                biometricsVerify?.let { BiometricsComponent(it) }
+                if (loginPrecondition != LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE) {
+                    // TODO: if we're fresh from backup - biometrics don't work
+                    biometricsVerify?.let {
+                        KeyStoreHelperFactory.provideKeyStoreHelper =
+                            KeyStoreHelper(KeyStore.getInstance(ANDROID_KEYSTORE))
+                        BiometricsComponent(it)
+                    }
+                }
 
                 // just FYI
                 if (!LocalInspectionMode.current && MyBackupAgent.haveRestoreMark(context)) {
@@ -70,7 +80,6 @@ internal fun LoginScreenCompose(
                         )
                     )
                 }
-
             }
         }
     }

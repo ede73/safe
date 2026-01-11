@@ -15,6 +15,7 @@ import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.gpmdatamodel.db.GPMDB
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseInitialize
+import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.notifications.ConfiguredNotifications
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.preferences.Preferences.PREFERENCE_EXPERIMENTAL_FEATURES
@@ -67,7 +68,8 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
         AutolockingFeaturesImpl.registerCallbacks({ context ->
             lockTheApplication(context)
         }, { context ->
-            IntentManager.startLoginScreen(context, openCategoryScreenAfterLogin = false)
+            firebaseLog("Opening login screen from startLoginScreen callback")
+            IntentManager.startLoginScreen(context)
         }, { context, siteEntryID ->
             IntentManager.startEditSiteEntryScreen(context, siteEntryID)
         }, {

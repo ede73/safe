@@ -171,6 +171,7 @@ class KeyStoreHelper(private val keyStore: KeyStore) : CipherUtilities() {
                 ), ivSecretKey
             )
         ).also {
+            // import existing encrypted master key
             KeyStoreHelperFactory.provideKeyStoreHelper =
                 KeyStoreHelper(KeyStore.getInstance(ANDROID_KEYSTORE))
         }
@@ -192,6 +193,7 @@ class KeyStoreHelper(private val keyStore: KeyStore) : CipherUtilities() {
                     }
                 }
             }.also {
+                // Create new key
                 KeyStoreHelperFactory.provideKeyStoreHelper =
                     KeyStoreHelper(KeyStore.getInstance(ANDROID_KEYSTORE))
             }

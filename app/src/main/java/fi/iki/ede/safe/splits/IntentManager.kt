@@ -11,7 +11,6 @@ import fi.iki.ede.safe.ui.activities.BackupDatabaseScreen
 import fi.iki.ede.safe.ui.activities.CategoryListScreen
 import fi.iki.ede.safe.ui.activities.HelpScreen
 import fi.iki.ede.safe.ui.activities.LoginScreen
-import fi.iki.ede.safe.ui.activities.LoginScreen.Companion.OPEN_CATEGORY_SCREEN_AFTER_LOGIN
 import fi.iki.ede.safe.ui.activities.PreferenceActivity
 import fi.iki.ede.safe.ui.activities.RestoreDatabaseScreen
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
@@ -130,10 +129,11 @@ object IntentManager {
     fun startHelpScreen(context: Context) =
         startActivity(context, HelpScreen::class.java)
 
-    fun startLoginScreen(context: Context, openCategoryScreenAfterLogin: Boolean = true) =
-        startActivity(context, LoginScreen::class.java, extras = Bundle().apply {
-            putBoolean(OPEN_CATEGORY_SCREEN_AFTER_LOGIN, openCategoryScreenAfterLogin)
-        })
+    /**
+     * Start login screen, DO NOT open main category screen
+     */
+    fun startLoginScreen(context: Context) =
+        startActivity(context, LoginScreen::class.java)
 
     // start
     fun startPreferencesActivity(context: Context) =
