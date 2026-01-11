@@ -26,8 +26,7 @@ plugins {
     kotlin("plugin.serialization")
     // unfortunately for Logger.er module, firebase plugin is not supported in library, only in main build
     id("com.google.gms.google-services") // Firebase crashlytics
-    id("com.google.firebase.crashlytics") // Firebase crashlyticsO
-
+    id("com.google.firebase.crashlytics") // Firebase crashlytics
     //id("fi.iki.ede.safe.SafeLinter")
 }
 
