@@ -81,7 +81,7 @@ class KeyStoreHelperTest {
     @Test
     fun `encryptByteArray returns correct ciphertext for NIST vector`() {
         mockkObject(CipherUtilities.Companion)
-        every { CipherUtilities.generateRandomBytes(any<CipherUtilities.Companion.Bytes>()) } returns V1_IV
+        every { CipherUtilities.generateRandomBytes(CipherUtilities.Companion.Bytes(16)) } returns V1_IV
         val result = keyStoreHelper.encryptByteArray(V1_PLAINTEXT, V1_KEY)
         assertArrayEquals(V1_IV, result.iv)
         assertArrayEquals(V1_CIPHERTEXT, result.cipherText)
@@ -98,7 +98,7 @@ class KeyStoreHelperTest {
     @Test
     fun `encryptByteArray returns correct ciphertext for custom vector 2`() {
         mockkObject(CipherUtilities.Companion)
-        every { CipherUtilities.generateRandomBytes(any<CipherUtilities.Companion.Bytes>()) } returns V2_IV
+        every { CipherUtilities.generateRandomBytes(CipherUtilities.Companion.Bytes(16)) } returns V2_IV
 
         val result = keyStoreHelper.encryptByteArray(V2_PLAINTEXT, V2_KEY)
         assertArrayEquals(V2_IV, result.iv)
@@ -116,7 +116,7 @@ class KeyStoreHelperTest {
     @Test
     fun `encryptByteArray returns correct ciphertext for single-block vector 3`() {
         mockkObject(CipherUtilities.Companion)
-        every { CipherUtilities.generateRandomBytes(any<CipherUtilities.Companion.Bytes>()) } returns V3_IV
+        every { CipherUtilities.generateRandomBytes(CipherUtilities.Companion.Bytes(16)) } returns V3_IV
 
         val result = keyStoreHelper.encryptByteArray(V3_PLAINTEXT, V3_KEY)
         assertArrayEquals(V3_IV, result.iv)
