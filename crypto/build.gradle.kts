@@ -1,9 +1,47 @@
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
+    kotlin("multiplatform")
+    alias(libs.plugins.android.library)
 }
+
+kotlin {
+    androidTarget {
+    }
+    jvm("desktop")
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
+
+    sourceSets {
+        val commonMain by getting {
+            dependencies {
+                implementation(project(":dateutils"))
+                implementation(project(":logger"))
+                implementation(libs.okio)
+                api(libs.krypto)
+                api(libs.cryptography.core)
+            }
+        }
+        val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
+        val androidMain by getting {
+            dependencies {
+                implementation(libs.androidx.appcompat)
+                implementation(libs.androidx.core.ktx)
+                implementation(libs.material)
+            }
+        }
+    }
+}
+
 android {
     namespace = "fi.iki.ede.crypto"
+    compileSdk = 36
+    defaultConfig {
+        minSdk = 26
+    }
     testOptions {
         unitTests.isReturnDefaultValues = true
         packaging {
@@ -29,16 +67,6 @@ android {
 }
 
 dependencies {
-    implementation(project(":dateutils"))
-    implementation(project(":logger"))
-
-    implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.material)
-    implementation(libs.okio)
-    api(libs.krypto)
-    api(libs.cryptography.core)
-
     androidTestImplementation(libs.androidx.test.rules)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.uiautomator)
@@ -63,8 +91,4 @@ tasks.withType<Test> {
     forkEvery = 1 // run each test in a new JVM
     // fails to work if reused JVM
     systemProperty("korlibs.crypto.try_prng_fixes", "false")
-    testLogging {
-        //showStandardStreams = true
-        //showExceptions = true
-    }
 }

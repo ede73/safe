@@ -1,6 +1,5 @@
 package fi.iki.ede.crypto.keystore
 
-import androidx.annotation.VisibleForTesting
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
@@ -15,7 +14,6 @@ object KeyManagement {
 
     // --- Key generation (KMP) ---
     // Generate AES key (bits = 128/192/256)
-    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     fun generateAESKey(bits: Int): ByteArray {
         require(bits == 128 || bits == 192 || bits == 256) {
             "AES key must be 128/192/256 bits"
@@ -56,7 +54,7 @@ object KeyManagement {
             "AES only supports 16,24 or 32 byte keys, you had ${hash.bytes.size}"
         }
 
-        return KMPSecretKeySpec(hash.bytes, "AES")
+        return KMPSecretKeySpec(hash.bytes)
     }
 
     fun makeFreshNewKey(
@@ -66,7 +64,7 @@ object KeyManagement {
         // Now generate new AES KEY (truly random)
         generateAESKey(keyLength).let { trulySecretAESKey ->
             encryptMasterKey(pbkdf2key, trulySecretAESKey).let { (iv, ciphertext) ->
-                Pair(KMPSecretKeySpec(trulySecretAESKey, "AES"), IVCipherText(iv, ciphertext))
+                Pair(KMPSecretKeySpec(trulySecretAESKey), IVCipherText(iv, ciphertext))
             }
         }
 
@@ -98,7 +96,7 @@ object KeyManagement {
                 pbkdf2key.values,
                 secretKey.iv,
                 Padding.PKCS7Padding
-            ), "AES"
+            )
         )
     }
 }

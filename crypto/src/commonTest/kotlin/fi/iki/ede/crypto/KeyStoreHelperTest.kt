@@ -21,22 +21,21 @@ class KeyStoreHelperTest {
 
     // Test Vectors
     private val V1_KEY = KMPSecretKeySpec(
-        "603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4".hexToByteArray(),
-        "AES"
+        "603deb1015ca71be2b73aef0857d77811f352c073b6108d72d9810a30914dff4".hexToByteArray()
     )
     private val V1_IV = "000102030405060708090a0b0c0d0e0f".hexToByteArray()
     private val V1_PLAINTEXT = "6bc1bee22e409f96e93d7e117393172a".hexToByteArray()
     private val V1_CIPHERTEXT =
         "f58c4c04d6e5f1ba779eabfb5f7bfbd6485a5c81519cf378fa36d42b8547edc0".hexToByteArray()
 
-    private val V2_KEY = KMPSecretKeySpec(ByteArray(32) { 0x42.toByte() }, "AES")
+    private val V2_KEY = KMPSecretKeySpec(ByteArray(32) { 0x42.toByte() })
     private val V2_IV = ByteArray(16) { 0x11.toByte() }
     private val V2_PLAINTEXT =
         "This is a plaintext message that will require padding.".toByteArray()
     private val V2_CIPHERTEXT =
         "b5467830be36282f104292e0ad094e8a17581c84f34feea917bb2a5d863c5d4387603644a5ef9c39f2bccc01973f494e6ef248beb5d40375fc6535b790b9cfb4".hexToByteArray()
 
-    private val V3_KEY = KMPSecretKeySpec(ByteArray(32) { 0x99.toByte() }, "AES")
+    private val V3_KEY = KMPSecretKeySpec(ByteArray(32) { 0x99.toByte() })
     private val V3_IV = ByteArray(16) { 0xfe.toByte() }
     private val V3_PLAINTEXT = "1234567890abcdef".toByteArray()
     private val V3_CIPHERTEXT =
@@ -82,7 +81,7 @@ class KeyStoreHelperTest {
     @Test
     fun `encryptByteArray returns correct ciphertext for NIST vector`() {
         mockkObject(CipherUtilities.Companion)
-        every { CipherUtilities._generateRandomBytesInternal(any()) } returns V1_IV
+        every { CipherUtilities.generateRandomBytes(any<CipherUtilities.Companion.Bytes>()) } returns V1_IV
         val result = keyStoreHelper.encryptByteArray(V1_PLAINTEXT, V1_KEY)
         assertArrayEquals(V1_IV, result.iv)
         assertArrayEquals(V1_CIPHERTEXT, result.cipherText)
@@ -99,7 +98,7 @@ class KeyStoreHelperTest {
     @Test
     fun `encryptByteArray returns correct ciphertext for custom vector 2`() {
         mockkObject(CipherUtilities.Companion)
-        every { CipherUtilities._generateRandomBytesInternal(any()) } returns V2_IV
+        every { CipherUtilities.generateRandomBytes(any<CipherUtilities.Companion.Bytes>()) } returns V2_IV
 
         val result = keyStoreHelper.encryptByteArray(V2_PLAINTEXT, V2_KEY)
         assertArrayEquals(V2_IV, result.iv)
@@ -117,7 +116,7 @@ class KeyStoreHelperTest {
     @Test
     fun `encryptByteArray returns correct ciphertext for single-block vector 3`() {
         mockkObject(CipherUtilities.Companion)
-        every { CipherUtilities._generateRandomBytesInternal(any()) } returns V3_IV
+        every { CipherUtilities.generateRandomBytes(any<CipherUtilities.Companion.Bytes>()) } returns V3_IV
 
         val result = keyStoreHelper.encryptByteArray(V3_PLAINTEXT, V3_KEY)
         assertArrayEquals(V3_IV, result.iv)

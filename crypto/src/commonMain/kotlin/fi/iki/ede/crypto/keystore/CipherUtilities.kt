@@ -1,7 +1,6 @@
 package fi.iki.ede.crypto.keystore
 
 import korlibs.crypto.SecureRandom
-import org.jetbrains.annotations.VisibleForTesting
 
 abstract class CipherUtilities {
 
@@ -34,14 +33,9 @@ abstract class CipherUtilities {
         fun generateRandomBytes(bytes: Bytes): ByteArray = _generateRandomBytesInternal(bytes.value)
 
         // Internal helper: fills array cross-platform
-        @VisibleForTesting
         fun _generateRandomBytesInternal(byteSize: Int): ByteArray {
             val key = ByteArray(byteSize)
-            if (System.getProperty("os.name").lowercase().contains("windows")) {
-                java.security.SecureRandom().nextBytes(key)
-            } else {
-                SecureRandom.nextBytes(key)
-            }
+            fillRandomBytes(key)
             return key
         }
     }

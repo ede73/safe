@@ -7,8 +7,6 @@ class EncodingTests {
 
     @Test
     fun ensurePasswordRemainsDespiteDifferentInputsTest() {
-
-        KeystoreHelperMock4UnitTests.mock()
         // crypto APIs prefer byte[] where ever except when dealing with passwords
         // Their sensitiveness requires char[]
         // Now, this exposes immediate problem, password is a string, is a (usually) UTF-8

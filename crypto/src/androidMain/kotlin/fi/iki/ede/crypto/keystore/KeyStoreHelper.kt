@@ -17,7 +17,12 @@ import java.security.Key
 import java.security.KeyStore
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
-
+import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.IV_LENGTH
+import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_ITERATION_COUNT
+import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_LENGTH_BITS
+import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.bits
+import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.bytes
+import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.generateRandomBytes
 
 // TODO: Missing key rotation
 // Some apps claim android keystore doesn't work with passwords but then
@@ -31,14 +36,14 @@ import javax.crypto.SecretKey
  *    new phone, broken KeyStore implementation, accidental data clear, complete uninstall etc.
  *    In this case we will restore provided master key!
  */
-class KeyStoreHelper(private val keyStore: KeyStore) : CipherUtilities() {
+class KeyStoreHelper(private val keyStore: KeyStore) : IKeyStoreHelper {
     init {
         keyStore.load(null)
         check(keyStore.containsAlias(KEY_SECRET_MASTERKEY)) { "Keystore MUST have been initialized with .importExistingEncryptedMasterKey or .createNewKey" }
     }
 
     // never ever in release, only used for testing
-    fun testingDeleteKeys_DO_NOT_USE() {
+    override fun testingDeleteKeys_DO_NOT_USE() {
         if (BuildConfig.DEBUG) {
             keyStore.deleteEntry(KEY_BIOKEY)
             keyStore.deleteEntry(KEY_SECRET_MASTERKEY)
@@ -94,15 +99,15 @@ class KeyStoreHelper(private val keyStore: KeyStore) : CipherUtilities() {
         }
 
 
-    fun rotateKeys() {
+    override fun rotateKeys() {
         // I'm guessing rotation is re-initialization (unless there's a convenience method)
         // If reinit, then all keys need to be re-stored (we have one, so we can just
         // push it to the user to re-enroll)
         throw NotImplementedError("TODO: Keyrotation is mandatory")
     }
 
-    fun getOrCreateBiokey(): SecretKey =
-        keyStore.getKey(KEY_BIOKEY, null)?.let { return it as SecretKey }
+    override fun getOrCreateBiokey(): KMPKey =
+        keyStore.getKey(KEY_BIOKEY, null)?.let { return it as KMPKey }
             ?: KeyGenParameterSpec.Builder(
                 KEY_BIOKEY,
                 KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
@@ -137,18 +142,18 @@ class KeyStoreHelper(private val keyStore: KeyStore) : CipherUtilities() {
             }
 
     // settable providers to crypto
-    var decrypterProviderWithKey: (IVCipherText, Key) -> ByteArray = { encrypted, key ->
+    override var decrypterProviderWithKey: (IVCipherText, KMPKey) -> ByteArray = { encrypted, key ->
         decryptByteArray(encrypted, key)
     }
 
-    var decrypterProvider: (IVCipherText) -> ByteArray = { encrypted ->
+    override var decrypterProvider: (IVCipherText) -> ByteArray = { encrypted ->
         decryptByteArray(encrypted)
     }
 
-    var encrypterProviderWithKey: (ByteArray, Key) -> IVCipherText = { plaintext, key ->
+    override var encrypterProviderWithKey: (ByteArray, KMPKey) -> IVCipherText = { plaintext, key ->
         encryptByteArray(plaintext, key)
     }
-    var encrypterProvider: (ByteArray) -> IVCipherText = { plaintext ->
+    override var encrypterProvider: (ByteArray) -> IVCipherText = { plaintext ->
         encryptByteArray(plaintext)
     }
 
