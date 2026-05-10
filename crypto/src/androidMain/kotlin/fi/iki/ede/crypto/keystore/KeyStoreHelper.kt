@@ -11,12 +11,14 @@ import fi.iki.ede.crypto.SaltedPassword
 import fi.iki.ede.crypto.keystore.KeyManagement.decryptMasterKey
 import fi.iki.ede.crypto.keystore.KeyManagement.generatePBKDF2AESKey
 import fi.iki.ede.crypto.keystore.KeyManagement.makeFreshNewKey
-import korlibs.crypto.AES
-import korlibs.crypto.Padding
 import java.security.Key
 import java.security.KeyStore
+import java.security.NoSuchAlgorithmException
+import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
+import javax.crypto.NoSuchPaddingException
 import javax.crypto.SecretKey
+import javax.crypto.spec.IvParameterSpec
 import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.IV_LENGTH
 import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_ITERATION_COUNT
 import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_LENGTH_BITS
@@ -65,38 +67,38 @@ class KeyStoreHelper(private val keyStore: KeyStore) : IKeyStoreHelper {
     private fun getSecretKey(): KMPKey =
         keyStore.getKey(KEY_SECRET_MASTERKEY, null)!! as KMPKey
 
+    private fun getAESCipher(): Cipher {
+        return try {
+            Cipher.getInstance("AES/CBC/PKCS7Padding")
+        } catch (e: NoSuchAlgorithmException) {
+            Cipher.getInstance("AES/CBC/PKCS5Padding")
+        } catch (e: NoSuchPaddingException) {
+            Cipher.getInstance("AES/CBC/PKCS5Padding")
+        }
+    }
+
     internal fun encryptByteArray(
         input: ByteArray,
         secretKey: Key = getSecretKey()
     ): IVCipherText {
         if (input.isEmpty()) return IVCipherText(byteArrayOf(), byteArrayOf())
-        val iv = generateRandomBytes(IV_LENGTH.bytes)
-
-        // korlibs AES-CBC encryption
-        val cipherText = AES.encryptAesCbc(
-            input,
-            secretKey.encoded,
-            iv,
-            Padding.PKCS7Padding
-        )
-
-        return IVCipherText(iv, cipherText)
+        
+        val cipher = getAESCipher()
+        val iv = generateRandomBytes(cipher.blockSize.bytes)
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey, IvParameterSpec(iv))
+        return IVCipherText(cipher.iv, cipher.doFinal(input))
     }
 
     internal fun decryptByteArray(
         encrypted: IVCipherText,
         secretKey: Key = getSecretKey()
-    ): ByteArray =
-        if (encrypted.iv.isEmpty()) {
-            byteArrayOf()
-        } else {
-            AES.decryptAesCbc(
-                encrypted.cipherText,
-                (secretKey as KMPSecretKeySpec).values, // same key type you already have
-                encrypted.iv,
-                Padding.PKCS7Padding
-            )
-        }
+    ): ByteArray {
+        if (encrypted.iv.isEmpty()) return byteArrayOf()
+        
+        val cipher = getAESCipher()
+        cipher.init(Cipher.DECRYPT_MODE, secretKey, IvParameterSpec(encrypted.iv))
+        return cipher.doFinal(encrypted.cipherText)
+    }
 
 
     override fun rotateKeys() {
