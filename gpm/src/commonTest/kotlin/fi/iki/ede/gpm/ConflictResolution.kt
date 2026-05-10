@@ -1,6 +1,6 @@
 package fi.iki.ede.gpm
 
-import fi.iki.ede.crypto.KeystoreHelperMock4UnitTests
+import fi.iki.ede.crypto.testutils.KeystoreHelperMock4UnitTests
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.gpm.changeset.ImportChangeSet
