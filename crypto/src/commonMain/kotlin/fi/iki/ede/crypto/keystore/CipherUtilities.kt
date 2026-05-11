@@ -1,7 +1,5 @@
 package fi.iki.ede.crypto.keystore
 
-import korlibs.crypto.SecureRandom
-
 abstract class CipherUtilities {
 
     companion object {
