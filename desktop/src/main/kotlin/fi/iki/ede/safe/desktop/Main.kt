@@ -65,13 +65,7 @@ fun LoginScreen() {
     var showAddCategoryDialog by remember { mutableStateOf(false) }
     var newCategoryName by remember { mutableStateOf("") }
 
-    // Add Site Entry Dialog state
-    var showAddSiteEntryDialog by remember { mutableStateOf(false) }
-    var newSiteDesc by remember { mutableStateOf("") }
-    var newSiteUser by remember { mutableStateOf("") }
-    var newSitePass by remember { mutableStateOf("") }
-    var newSiteWeb by remember { mutableStateOf("") }
-    var newSiteNote by remember { mutableStateOf("") }
+
 
     // Password visibility toggle state map (site entry ID -> isVisible)
     val passwordVisibilityMap = remember { mutableStateMapOf<Long, Boolean>() }
@@ -227,7 +221,7 @@ fun LoginScreen() {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Button(
                                     onClick = {
-                                        showAddSiteEntryDialog = true
+                                        DesktopSiteEntryNavigation.activeSiteEntry = DecryptableSiteEntry(currentCategory.id!!)
                                     },
                                     shape = RoundedCornerShape(8.dp),
                                     colors = ButtonDefaults.buttonColors(
@@ -454,157 +448,7 @@ fun LoginScreen() {
             }
         }
 
-        // --- Add Site Entry Dialog Overlay ---
-        if (showAddSiteEntryDialog) {
-            val cat = activeCategory
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.6f))
-                    .clickable(enabled = true, onClick = { showAddSiteEntryDialog = false }),
-                contentAlignment = Alignment.Center
-            ) {
-                Card(
-                    modifier = Modifier
-                        .width(380.dp)
-                        .padding(16.dp)
-                        .clickable(enabled = false, onClick = {}),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFF1e1e2e)
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .padding(20.dp)
-                            .verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Text("Add Password Entry", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                        
-                        OutlinedTextField(
-                            value = newSiteDesc,
-                            onValueChange = { newSiteDesc = it },
-                            label = { Text("Description (e.g. Gmail)") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFe94560),
-                                focusedLabelColor = Color(0xFFe94560),
-                                unfocusedBorderColor = Color(0xFF444466),
-                                unfocusedLabelColor = Color(0xFF8899aa),
-                                cursorColor = Color(0xFFe94560),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
-                            )
-                        )
-                        
-                        OutlinedTextField(
-                            value = newSiteWeb,
-                            onValueChange = { newSiteWeb = it },
-                            label = { Text("Website (e.g. google.com)") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFe94560),
-                                focusedLabelColor = Color(0xFFe94560),
-                                unfocusedBorderColor = Color(0xFF444466),
-                                unfocusedLabelColor = Color(0xFF8899aa),
-                                cursorColor = Color(0xFFe94560),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
-                            )
-                        )
-                        
-                        OutlinedTextField(
-                            value = newSiteUser,
-                            onValueChange = { newSiteUser = it },
-                            label = { Text("Username") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFe94560),
-                                focusedLabelColor = Color(0xFFe94560),
-                                unfocusedBorderColor = Color(0xFF444466),
-                                unfocusedLabelColor = Color(0xFF8899aa),
-                                cursorColor = Color(0xFFe94560),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
-                            )
-                        )
-                        
-                        OutlinedTextField(
-                            value = newSitePass,
-                            onValueChange = { newSitePass = it },
-                            label = { Text("Password") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFe94560),
-                                focusedLabelColor = Color(0xFFe94560),
-                                unfocusedBorderColor = Color(0xFF444466),
-                                unfocusedLabelColor = Color(0xFF8899aa),
-                                cursorColor = Color(0xFFe94560),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
-                            )
-                        )
-                        
-                        OutlinedTextField(
-                            value = newSiteNote,
-                            onValueChange = { newSiteNote = it },
-                            label = { Text("Notes (Optional)") },
-                            modifier = Modifier.fillMaxWidth(),
-                            maxLines = 3,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFe94560),
-                                focusedLabelColor = Color(0xFFe94560),
-                                unfocusedBorderColor = Color(0xFF444466),
-                                unfocusedLabelColor = Color(0xFF8899aa),
-                                cursorColor = Color(0xFFe94560),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
-                            )
-                        )
-                        
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            TextButton(onClick = { showAddSiteEntryDialog = false }) {
-                                Text("Cancel", color = Color(0xFF8899aa))
-                            }
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Button(
-                                onClick = {
-                                    if (newSiteDesc.isNotBlank() && cat != null) {
-                                        db.addSiteEntry(DecryptableSiteEntry(cat.id!!).apply {
-                                            this.description = newSiteDesc.encrypt()
-                                            this.username = newSiteUser.encrypt()
-                                            this.password = newSitePass.encrypt()
-                                            this.website = newSiteWeb.encrypt()
-                                            this.note = newSiteNote.encrypt()
-                                        })
-                                        DesktopNavigation.dbRefreshTrigger++
-                                        newSiteDesc = ""
-                                        newSiteUser = ""
-                                        newSitePass = ""
-                                        newSiteWeb = ""
-                                        newSiteNote = ""
-                                        showAddSiteEntryDialog = false
-                                    }
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFe94560))
-                            ) {
-                                Text("Save")
-                            }
-                        }
-                    }
-                }
-            }
-        }
+
 
         // --- Edit/View Site Entry Dialog Overlay ---
         val activeSiteEntry = DesktopSiteEntryNavigation.activeSiteEntry
@@ -640,7 +484,12 @@ fun LoginScreen() {
                             .verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Text("Password Entry Details", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        Text(
+                            if (activeSiteEntry.id == null) "Add Password Entry" else "Password Entry Details",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
 
                         OutlinedTextField(
                             value = editDesc,
@@ -802,15 +651,19 @@ fun LoginScreen() {
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Button(
-                                onClick = {
-                                    db.hardDeleteSiteEntry(activeSiteEntry.id!!)
-                                    DesktopSiteEntryNavigation.activeSiteEntry = null
-                                    DesktopNavigation.dbRefreshTrigger++
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFe94560))
-                            ) {
-                                Text("Delete")
+                            if (activeSiteEntry.id != null) {
+                                Button(
+                                    onClick = {
+                                        db.hardDeleteSiteEntry(activeSiteEntry.id!!)
+                                        DesktopSiteEntryNavigation.activeSiteEntry = null
+                                        DesktopNavigation.dbRefreshTrigger++
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFe94560))
+                                ) {
+                                    Text("Delete")
+                                }
+                            } else {
+                                Spacer(modifier = Modifier.width(1.dp))
                             }
 
                             Row {
@@ -831,7 +684,11 @@ fun LoginScreen() {
                                                 this.deleted = activeSiteEntry.deleted
                                                 this.passwordChangedDate = activeSiteEntry.passwordChangedDate
                                             }
-                                            db.updateSiteEntry(updated)
+                                            if (updated.id == null) {
+                                                db.addSiteEntry(updated)
+                                            } else {
+                                                db.updateSiteEntry(updated)
+                                            }
                                             DesktopSiteEntryNavigation.activeSiteEntry = null
                                             DesktopNavigation.dbRefreshTrigger++
                                         }
