@@ -6,6 +6,7 @@ plugins {
 
 dependencies {
     implementation(project(":crypto"))
+    implementation(project(":app:db"))
     implementation(project(":dateutils"))
     implementation(project(":logger"))
 

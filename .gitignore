@@ -24,3 +24,5 @@ local.properties
 /in
 .failed
 .last_rev_parse
+desktop/build/
+*.json
