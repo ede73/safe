@@ -1,10 +1,12 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
 package fi.iki.ede.db
 
 import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.support.hexToByteArray
 import fi.iki.ede.crypto.support.toHexString
+import fi.iki.ede.crypto.support.encrypt
+import fi.iki.ede.crypto.support.decrypt
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,6 +46,20 @@ class DBHelper {
         }
     }
 
+    private fun IVCipherText.serialize(): String {
+        if (this.isEmpty()) return ""
+        return Base64.getEncoder().encodeToString(this.iv) + ":" + Base64.getEncoder().encodeToString(this.cipherText)
+    }
+
+    private fun String.deserializeIVCipherText(): IVCipherText {
+        if (this.isEmpty()) return IVCipherText.getEmpty()
+        val parts = this.split(":")
+        if (parts.size != 2) return IVCipherText.getEmpty()
+        val iv = Base64.getDecoder().decode(parts[0])
+        val cipherText = Base64.getDecoder().decode(parts[1])
+        return IVCipherText(iv, cipherText)
+    }
+
     private fun readDb(): Map<String, Map<String, List<String>>> {
         if (!dbFile.exists()) return emptyMap()
         val text = dbFile.readText()
@@ -78,13 +94,11 @@ class DBHelper {
         dbFile.writeText(sb.toString())
     }
 
-    // A very simple JSON parser for the expected structure: { "table": { "id": ["col1", "col2"] } }
     private fun parseSimpleJson(jsonText: String): Map<String, Map<String, List<String>>> {
         val result = mutableMapOf<String, MutableMap<String, List<String>>>()
         val cleaned = jsonText.trim()
         if (cleaned.isEmpty() || cleaned == "{}") return result
 
-        // Regex to extract tables: "tablename": { ... }
         val tableRegex = "\"([a-zA-Z0-9_-]+)\"\\s*:\\s*\\{([^\\}]*)\\}".toRegex()
         val matches = tableRegex.findAll(cleaned)
         for (match in matches) {
@@ -92,13 +106,11 @@ class DBHelper {
             val tableContent = match.groupValues[2]
             
             val rows = mutableMapOf<String, List<String>>()
-            // Regex to extract rows: "rowid": [ ... ]
             val rowRegex = "\"([0-9]+)\"\\s*:\\s*\\[([^\\]]*)\\]".toRegex()
             val rowMatches = rowRegex.findAll(tableContent)
             for (rowMatch in rowMatches) {
                 val rowId = rowMatch.groupValues[1]
                 val colsContent = rowMatch.groupValues[2]
-                // Split columns by comma and trim quotes
                 val cols = colsContent.split(",").map { 
                     it.trim().removeSurrounding("\"") 
                 }
@@ -109,12 +121,40 @@ class DBHelper {
         return result
     }
 
+    private fun checkPrepopulate() {
+        val db = readDb()
+        if (db["categories"] == null || db["categories"]!!.isEmpty()) {
+            val mutableDb = db.toMutableMap()
+            
+            // Add default categories
+            val categoriesTable = mutableMapOf<String, List<String>>()
+            categoriesTable["1"] = listOf("Social Media".encrypt().serialize())
+            categoriesTable["2"] = listOf("Email Accounts".encrypt().serialize())
+            categoriesTable["3"] = listOf("Banking & Finance".encrypt().serialize())
+            mutableDb["categories"] = categoriesTable
+
+            // Add default site entries
+            val siteEntriesTable = mutableMapOf<String, List<String>>()
+            // id, categoryId, description, username, password, website, note, deleted
+            siteEntriesTable["1"] = listOf("1", "Facebook".encrypt().serialize(), "fb_user".encrypt().serialize(), "fb_pass123".encrypt().serialize(), "facebook.com".encrypt().serialize(), "Personal account".encrypt().serialize(), "0")
+            siteEntriesTable["2"] = listOf("1", "Twitter/X".encrypt().serialize(), "x_user".encrypt().serialize(), "x_pass456".encrypt().serialize(), "x.com".encrypt().serialize(), "Work account".encrypt().serialize(), "0")
+            siteEntriesTable["3"] = listOf("2", "Gmail".encrypt().serialize(), "email_user@gmail.com".encrypt().serialize(), "gmail_pass789".encrypt().serialize(), "gmail.com".encrypt().serialize(), "Primary email".encrypt().serialize(), "0")
+            siteEntriesTable["4"] = listOf("3", "Chase Bank".encrypt().serialize(), "banker_joe".encrypt().serialize(), "chase_secure_99".encrypt().serialize(), "chase.com".encrypt().serialize(), "Checking account".encrypt().serialize(), "0")
+            mutableDb["site_entries"] = siteEntriesTable
+
+            writeDb(mutableDb)
+        }
+    }
+
     fun storeSaltAndEncryptedMasterKey(salt: Salt, ivCipher: IVCipherText) {
         val db = readDb().toMutableMap()
         val keysTable = db["keys"]?.toMutableMap() ?: mutableMapOf()
         keysTable["1"] = listOf(salt.salt.toHexString(), ivCipher.cipherText.toHexString(), ivCipher.iv.toHexString())
         db["keys"] = keysTable
         writeDb(db)
+        
+        // Populate default mock data after master key is created
+        checkPrepopulate()
     }
 
     fun fetchSaltAndEncryptedMasterKey(): Pair<Salt, IVCipherText> {
@@ -124,7 +164,7 @@ class DBHelper {
         
         val saltBytes = cols[0].hexToByteArray()
         val cipherBytes = cols[1].hexToByteArray()
-        val ivBytes = if (cols.size > 2) cols[2].hexToByteArray() else ByteArray(16) // Fallback to 16 bytes IV if old format
+        val ivBytes = if (cols.size > 2) cols[2].hexToByteArray() else ByteArray(16)
 
         return Pair(Salt(saltBytes), IVCipherText(ivBytes, cipherBytes))
     }
@@ -144,47 +184,157 @@ class DBHelper {
         return Pair(cols[0], cols[1])
     }
 
-    fun addCategory(entry: DecryptableCategoryEntry): DBID = 1L
-    fun deleteCategory(id: DBID): Int = 0
+    fun addCategory(entry: DecryptableCategoryEntry): DBID {
+        checkPrepopulate()
+        val db = readDb().toMutableMap()
+        val categoriesTable = db["categories"]?.toMutableMap() ?: mutableMapOf()
+        val nextId = ((categoriesTable.keys.mapNotNull { it.toLongOrNull() }.maxOrNull() ?: 0L) + 1L)
+        categoriesTable[nextId.toString()] = listOf(entry.encryptedName.serialize())
+        db["categories"] = categoriesTable
+        writeDb(db)
+        return nextId
+    }
+
+    fun deleteCategory(id: DBID): Int {
+        val db = readDb().toMutableMap()
+        val categoriesTable = db["categories"]?.toMutableMap() ?: return 0
+        if (categoriesTable.remove(id.toString()) != null) {
+            db["categories"] = categoriesTable
+            
+            // Cascading delete site entries in this category
+            val siteEntriesTable = db["site_entries"]?.toMutableMap() ?: mutableMapOf()
+            val keysToRemove = siteEntriesTable.filter { it.value[0] == id.toString() }.keys
+            keysToRemove.forEach { siteEntriesTable.remove(it) }
+            db["site_entries"] = siteEntriesTable
+            
+            writeDb(db)
+            return 1
+        }
+        return 0
+    }
+
     fun fetchAllCategoryRows(categoriesFlow: MutableStateFlow<List<DecryptableCategoryEntry>>? = null): List<DecryptableCategoryEntry> {
-        val list = listOf(
+        checkPrepopulate()
+        val db = readDb()
+        val categoriesTable = db["categories"] ?: return emptyList()
+        val siteEntriesTable = db["site_entries"] ?: emptyMap()
+        
+        val list = categoriesTable.map { (idStr, cols) ->
             DecryptableCategoryEntry().apply {
-                id = 1L
-                encryptedName = "Social Media".encrypt()
-                containedSiteEntryCount = 5
-            },
-            DecryptableCategoryEntry().apply {
-                id = 2L
-                encryptedName = "Email Accounts".encrypt()
-                containedSiteEntryCount = 3
-            },
-            DecryptableCategoryEntry().apply {
-                id = 3L
-                encryptedName = "Banking & Finance".encrypt()
-                containedSiteEntryCount = 2
+                id = idStr.toLongOrNull() ?: 0L
+                encryptedName = cols[0].deserializeIVCipherText()
+                containedSiteEntryCount = siteEntriesTable.values.count { it[0] == idStr }
             }
-        )
+        }
         if (categoriesFlow != null) {
             categoriesFlow.value = list
         }
         return list
     }
-    fun updateCategory(id: DBID, entry: DecryptableCategoryEntry): Long = 0
+
+    fun updateCategory(id: DBID, entry: DecryptableCategoryEntry): Long {
+        val db = readDb().toMutableMap()
+        val categoriesTable = db["categories"]?.toMutableMap() ?: return 0L
+        categoriesTable[id.toString()] = listOf(entry.encryptedName.serialize())
+        db["categories"] = categoriesTable
+        writeDb(db)
+        return id
+    }
+
     fun fetchPhotoOnly(siteEntryID: DBID): IVCipherText? = null
+
     fun fetchAllRows(
         categoryId: DBID? = null,
         softDeletedOnly: Boolean = false,
         siteEntriesFlow: MutableStateFlow<List<DecryptableSiteEntry>>? = null
-    ): List<DecryptableSiteEntry> = emptyList()
+    ): List<DecryptableSiteEntry> {
+        checkPrepopulate()
+        val db = readDb()
+        val siteEntriesTable = db["site_entries"] ?: return emptyList()
+        
+        val list = siteEntriesTable.mapNotNull { (idStr, cols) ->
+            val entryCatId = cols[0].toLongOrNull() ?: 0L
+            if (categoryId != null && entryCatId != categoryId) return@mapNotNull null
+            
+            DecryptableSiteEntry(entryCatId).apply {
+                id = idStr.toLongOrNull() ?: 0L
+                description = cols[1].deserializeIVCipherText()
+                username = cols[2].deserializeIVCipherText()
+                password = cols[3].deserializeIVCipherText()
+                website = cols[4].deserializeIVCipherText()
+                note = cols[5].deserializeIVCipherText()
+                deleted = cols[6].toLongOrNull() ?: 0L
+            }
+        }
+        if (siteEntriesFlow != null) {
+            siteEntriesFlow.value = list
+        }
+        return list
+    }
 
-    fun updateSiteEntry(entry: DecryptableSiteEntry): DBID = 0L
-    fun updateSiteEntryCategory(id: DBID, newCategoryId: DBID): Int = 0
-    fun addSiteEntry(entry: DecryptableSiteEntry): Long = 0
+    fun updateSiteEntry(entry: DecryptableSiteEntry): DBID {
+        val db = readDb().toMutableMap()
+        val siteEntriesTable = db["site_entries"]?.toMutableMap() ?: return 0L
+        val idStr = entry.id.toString()
+        siteEntriesTable[idStr] = listOf(
+            entry.categoryId.toString(),
+            entry.description.serialize(),
+            entry.username.serialize(),
+            entry.password.serialize(),
+            entry.website.serialize(),
+            entry.note.serialize(),
+            entry.deleted.toString()
+        )
+        db["site_entries"] = siteEntriesTable
+        writeDb(db)
+        return entry.id ?: 0L
+    }
+
+    fun updateSiteEntryCategory(id: DBID, newCategoryId: DBID): Int {
+        val db = readDb().toMutableMap()
+        val siteEntriesTable = db["site_entries"]?.toMutableMap() ?: return 0
+        val cols = siteEntriesTable[id.toString()] ?: return 0
+        val newCols = cols.toMutableList()
+        newCols[0] = newCategoryId.toString()
+        siteEntriesTable[id.toString()] = newCols
+        db["site_entries"] = siteEntriesTable
+        writeDb(db)
+        return 1
+    }
+
+    fun addSiteEntry(entry: DecryptableSiteEntry): Long {
+        val db = readDb().toMutableMap()
+        val siteEntriesTable = db["site_entries"]?.toMutableMap() ?: mutableMapOf()
+        val nextId = ((siteEntriesTable.keys.mapNotNull { it.toLongOrNull() }.maxOrNull() ?: 0L) + 1L)
+        siteEntriesTable[nextId.toString()] = listOf(
+            entry.categoryId.toString(),
+            entry.description.serialize(),
+            entry.username.serialize(),
+            entry.password.serialize(),
+            entry.website.serialize(),
+            entry.note.serialize(),
+            entry.deleted.toString()
+        )
+        db["site_entries"] = siteEntriesTable
+        writeDb(db)
+        return nextId
+    }
+
     fun fetchPhotoFilename(siteEntryID: DBID): FileName? = null
     fun loadPhoto(photoName: FileName): IVCipherText? = null
     fun deletePhoto(photoName: FileName) {}
     fun savePhoto(photo: IVCipherText): FileName? = null
     fun restoreSoftDeletedSiteEntry(id: DBID): Int = 0
     fun markSiteEntryDeleted(id: DBID): Int = 0
-    fun hardDeleteSiteEntry(id: DBID): Int = 0
+    
+    fun hardDeleteSiteEntry(id: DBID): Int {
+        val db = readDb().toMutableMap()
+        val siteEntriesTable = db["site_entries"]?.toMutableMap() ?: return 0
+        if (siteEntriesTable.remove(id.toString()) != null) {
+            db["site_entries"] = siteEntriesTable
+            writeDb(db)
+            return 1
+        }
+        return 0
+    }
 }

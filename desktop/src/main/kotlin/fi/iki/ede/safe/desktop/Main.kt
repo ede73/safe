@@ -1,10 +1,23 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
 package fi.iki.ede.safe.desktop
 
 import fi.iki.ede.crypto.support.decrypt
+import fi.iki.ede.crypto.support.encrypt
+import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
+import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.safe.ui.composable.DesktopNavigation
+import fi.iki.ede.safe.ui.composable.DesktopSiteEntryNavigation
+import fi.iki.ede.safe.ui.composable.CategoryList
+import fi.iki.ede.safe.ui.composable.SiteEntryList
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,10 +48,33 @@ fun main() = application {
 
 @Preview
 @Composable
+@OptIn(ExperimentalFoundationApi::class)
 fun LoginScreen() {
     var password by remember { mutableStateOf("") }
     var statusMessage by remember { mutableStateOf("Enter master password") }
     var isLoggedIn by remember { mutableStateOf(false) }
+
+    // Shared DBHelper instance for this screen
+    val db = remember { fi.iki.ede.db.DBHelperFactory.getDBHelper() }
+
+    // Navigation and state variables
+    val activeCategory = DesktopNavigation.activeCategory
+    val dbRefreshTrigger = DesktopNavigation.dbRefreshTrigger
+    
+    // Add Category Dialog state
+    var showAddCategoryDialog by remember { mutableStateOf(false) }
+    var newCategoryName by remember { mutableStateOf("") }
+
+    // Add Site Entry Dialog state
+    var showAddSiteEntryDialog by remember { mutableStateOf(false) }
+    var newSiteDesc by remember { mutableStateOf("") }
+    var newSiteUser by remember { mutableStateOf("") }
+    var newSitePass by remember { mutableStateOf("") }
+    var newSiteWeb by remember { mutableStateOf("") }
+    var newSiteNote by remember { mutableStateOf("") }
+
+    // Password visibility toggle state map (site entry ID -> isVisible)
+    val passwordVisibilityMap = remember { mutableStateMapOf<Long, Boolean>() }
 
     Box(
         modifier = Modifier
@@ -55,9 +91,12 @@ fun LoginScreen() {
         contentAlignment = Alignment.Center
     ) {
         if (isLoggedIn) {
+            val currentCategory = activeCategory
+
             Card(
                 modifier = Modifier
-                    .width(400.dp)
+                    .fillMaxHeight(0.92f)
+                    .width(440.dp)
                     .padding(16.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
@@ -65,83 +104,142 @@ fun LoginScreen() {
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                if (currentCategory == null) {
+                    // --- CATEGORY LIST SCREEN ---
+                    val categories = remember(dbRefreshTrigger) { db.fetchAllCategoryRows() }
+
+                    Column(
+                        modifier = Modifier.padding(24.dp).fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("🔓", fontSize = 24.sp)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Vault", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                        }
-                        
-                        Button(
-                            onClick = {
-                                isLoggedIn = false
-                                password = ""
-                                statusMessage = "Enter master password"
-                            },
-                            shape = RoundedCornerShape(8.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFFe94560)
-                            ),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                        // Category Toolbar
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Lock", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                        }
-                    }
-
-                    HorizontalDivider(color = Color(0xFF444466), thickness = 1.dp)
-
-                    Text(
-                        "Categories",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF8899aa)
-                    )
-
-                    val db = remember { fi.iki.ede.db.DBHelperFactory.getDBHelper() }
-                    val categories = remember { db.fetchAllCategoryRows() }
-
-                    androidx.compose.foundation.lazy.LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.height(300.dp).fillMaxWidth()
-                    ) {
-                        items(categories.size) { index ->
-                            val category = categories[index]
-                            Card(
-                                shape = RoundedCornerShape(8.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = Color(0xFF2a2a40)
-                                ),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("🔓", fontSize = 24.sp)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Vault", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            }
+                            
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Button(
+                                    onClick = {
+                                        showAddCategoryDialog = true
+                                    },
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF4e54c8)
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
                                 ) {
-                                    Column {
-                                        Text(
-                                            category.plainName,
-                                            fontSize = 16.sp,
-                                            fontWeight = FontWeight.Medium,
-                                            color = Color.White
-                                        )
-                                        Text(
-                                            "${category.containedSiteEntryCount} passwords",
-                                            fontSize = 12.sp,
-                                            color = Color(0xFF8899aa)
-                                        )
-                                    }
-                                    Text("➔", color = Color(0xFFe94560), fontSize = 16.sp)
+                                    Text("➕ Add", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Button(
+                                    onClick = {
+                                        isLoggedIn = false
+                                        password = ""
+                                        DesktopNavigation.activeCategory = null
+                                        statusMessage = "Enter master password"
+                                    },
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFFe94560)
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    Text("Lock", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                                 }
                             }
+                        }
+
+                        HorizontalDivider(color = Color(0xFF444466), thickness = 1.dp)
+
+                        Text(
+                            "Categories",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF8899aa)
+                        )
+
+                        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                            CategoryList(categories)
+                        }
+                    }
+                } else {
+                    // --- SITE ENTRY LIST SCREEN (Category Selected) ---
+                    val siteEntries = remember(currentCategory, dbRefreshTrigger) {
+                        db.fetchAllRows(currentCategory.id)
+                    }
+
+                    Column(
+                        modifier = Modifier.padding(24.dp).fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // SiteEntryList Toolbar
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Button(
+                                    onClick = { DesktopNavigation.activeCategory = null },
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF444466)
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    Text("⬅", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    currentCategory.plainName,
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
+                            
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Button(
+                                    onClick = {
+                                        showAddSiteEntryDialog = true
+                                    },
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF4e54c8)
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    Text("➕ Add Pass", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                }
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Button(
+                                    onClick = {
+                                        db.deleteCategory(currentCategory.id!!)
+                                        DesktopNavigation.dbRefreshTrigger++
+                                        DesktopNavigation.activeCategory = null
+                                    },
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFFe94560)
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
+                                ) {
+                                    Text("🗑️ Delete Cat", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+                        }
+
+                        HorizontalDivider(color = Color(0xFF444466), thickness = 1.dp)
+
+                        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                            SiteEntryList(siteEntries)
                         }
                     }
                 }
@@ -204,7 +302,6 @@ fun LoginScreen() {
                         onClick = {
                             statusMessage = "Authenticating..."
                             try {
-                                val db = fi.iki.ede.db.DBHelperFactory.getDBHelper()
                                 val dbFile = java.io.File("safe_db.json")
                                 if (!dbFile.exists()) {
                                     // First time login - setup password and generate keys
@@ -264,5 +361,502 @@ fun LoginScreen() {
                 }
             }
         }
+
+        // --- Add Category Dialog Overlay ---
+        if (showAddCategoryDialog) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.6f))
+                    .clickable(enabled = true, onClick = { showAddCategoryDialog = false }),
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    modifier = Modifier
+                        .width(340.dp)
+                        .padding(16.dp)
+                        .clickable(enabled = false, onClick = {}),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF1e1e2e)
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text("Add Category", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        
+                        OutlinedTextField(
+                            value = newCategoryName,
+                            onValueChange = { newCategoryName = it },
+                            label = { Text("Category Name") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFFe94560),
+                                focusedLabelColor = Color(0xFFe94560),
+                                unfocusedBorderColor = Color(0xFF444466),
+                                unfocusedLabelColor = Color(0xFF8899aa),
+                                cursorColor = Color(0xFFe94560),
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White
+                            )
+                        )
+                        
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            TextButton(onClick = { showAddCategoryDialog = false }) {
+                                Text("Cancel", color = Color(0xFF8899aa))
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Button(
+                                onClick = {
+                                    if (newCategoryName.isNotBlank()) {
+                                        db.addCategory(DecryptableCategoryEntry().apply {
+                                            this.encryptedName = newCategoryName.encrypt()
+                                        })
+                                        DesktopNavigation.dbRefreshTrigger++
+                                        newCategoryName = ""
+                                        showAddCategoryDialog = false
+                                    }
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFe94560))
+                            ) {
+                                Text("Save")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- Add Site Entry Dialog Overlay ---
+        if (showAddSiteEntryDialog) {
+            val cat = activeCategory
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.6f))
+                    .clickable(enabled = true, onClick = { showAddSiteEntryDialog = false }),
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    modifier = Modifier
+                        .width(380.dp)
+                        .padding(16.dp)
+                        .clickable(enabled = false, onClick = {}),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF1e1e2e)
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(20.dp)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text("Add Password Entry", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        
+                        OutlinedTextField(
+                            value = newSiteDesc,
+                            onValueChange = { newSiteDesc = it },
+                            label = { Text("Description (e.g. Gmail)") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFFe94560),
+                                focusedLabelColor = Color(0xFFe94560),
+                                unfocusedBorderColor = Color(0xFF444466),
+                                unfocusedLabelColor = Color(0xFF8899aa),
+                                cursorColor = Color(0xFFe94560),
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White
+                            )
+                        )
+                        
+                        OutlinedTextField(
+                            value = newSiteWeb,
+                            onValueChange = { newSiteWeb = it },
+                            label = { Text("Website (e.g. google.com)") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFFe94560),
+                                focusedLabelColor = Color(0xFFe94560),
+                                unfocusedBorderColor = Color(0xFF444466),
+                                unfocusedLabelColor = Color(0xFF8899aa),
+                                cursorColor = Color(0xFFe94560),
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White
+                            )
+                        )
+                        
+                        OutlinedTextField(
+                            value = newSiteUser,
+                            onValueChange = { newSiteUser = it },
+                            label = { Text("Username") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFFe94560),
+                                focusedLabelColor = Color(0xFFe94560),
+                                unfocusedBorderColor = Color(0xFF444466),
+                                unfocusedLabelColor = Color(0xFF8899aa),
+                                cursorColor = Color(0xFFe94560),
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White
+                            )
+                        )
+                        
+                        OutlinedTextField(
+                            value = newSitePass,
+                            onValueChange = { newSitePass = it },
+                            label = { Text("Password") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFFe94560),
+                                focusedLabelColor = Color(0xFFe94560),
+                                unfocusedBorderColor = Color(0xFF444466),
+                                unfocusedLabelColor = Color(0xFF8899aa),
+                                cursorColor = Color(0xFFe94560),
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White
+                            )
+                        )
+                        
+                        OutlinedTextField(
+                            value = newSiteNote,
+                            onValueChange = { newSiteNote = it },
+                            label = { Text("Notes (Optional)") },
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = 3,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFFe94560),
+                                focusedLabelColor = Color(0xFFe94560),
+                                unfocusedBorderColor = Color(0xFF444466),
+                                unfocusedLabelColor = Color(0xFF8899aa),
+                                cursorColor = Color(0xFFe94560),
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White
+                            )
+                        )
+                        
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            TextButton(onClick = { showAddSiteEntryDialog = false }) {
+                                Text("Cancel", color = Color(0xFF8899aa))
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Button(
+                                onClick = {
+                                    if (newSiteDesc.isNotBlank() && cat != null) {
+                                        db.addSiteEntry(DecryptableSiteEntry(cat.id!!).apply {
+                                            this.description = newSiteDesc.encrypt()
+                                            this.username = newSiteUser.encrypt()
+                                            this.password = newSitePass.encrypt()
+                                            this.website = newSiteWeb.encrypt()
+                                            this.note = newSiteNote.encrypt()
+                                        })
+                                        DesktopNavigation.dbRefreshTrigger++
+                                        newSiteDesc = ""
+                                        newSiteUser = ""
+                                        newSitePass = ""
+                                        newSiteWeb = ""
+                                        newSiteNote = ""
+                                        showAddSiteEntryDialog = false
+                                    }
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFe94560))
+                            ) {
+                                Text("Save")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- Edit/View Site Entry Dialog Overlay ---
+        val activeSiteEntry = DesktopSiteEntryNavigation.activeSiteEntry
+        if (activeSiteEntry != null) {
+            var editDesc by remember(activeSiteEntry) { mutableStateOf(activeSiteEntry.cachedPlainDescription) }
+            var editWeb by remember(activeSiteEntry) { mutableStateOf(activeSiteEntry.plainWebsite) }
+            var editUser by remember(activeSiteEntry) { mutableStateOf(activeSiteEntry.plainUsername) }
+            var editPass by remember(activeSiteEntry) { mutableStateOf(activeSiteEntry.plainPassword) }
+            var editNote by remember(activeSiteEntry) { mutableStateOf(activeSiteEntry.plainNote) }
+            var editPassVisible by remember { mutableStateOf(false) }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.6f))
+                    .clickable(enabled = true, onClick = { DesktopSiteEntryNavigation.activeSiteEntry = null }),
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    modifier = Modifier
+                        .width(400.dp)
+                        .padding(16.dp)
+                        .clickable(enabled = false, onClick = {}),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF1e1e2e)
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(20.dp)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text("Password Entry Details", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+
+                        OutlinedTextField(
+                            value = editDesc,
+                            onValueChange = { editDesc = it },
+                            label = { Text("Description") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFFe94560),
+                                focusedLabelColor = Color(0xFFe94560),
+                                unfocusedBorderColor = Color(0xFF444466),
+                                unfocusedLabelColor = Color(0xFF8899aa),
+                                cursorColor = Color(0xFFe94560),
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White
+                            )
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            OutlinedTextField(
+                                value = editWeb,
+                                onValueChange = { editWeb = it },
+                                label = { Text("Website") },
+                                singleLine = true,
+                                modifier = Modifier.weight(1f),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFFe94560),
+                                    focusedLabelColor = Color(0xFFe94560),
+                                    unfocusedBorderColor = Color(0xFF444466),
+                                    unfocusedLabelColor = Color(0xFF8899aa),
+                                    cursorColor = Color(0xFFe94560),
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White
+                                )
+                            )
+                            if (editWeb.isNotBlank()) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Button(
+                                    onClick = {
+                                        openBrowser(editWeb)
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4e54c8)),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    Text("Visit", fontSize = 12.sp)
+                                }
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            OutlinedTextField(
+                                value = editUser,
+                                onValueChange = { editUser = it },
+                                label = { Text("Username") },
+                                singleLine = true,
+                                modifier = Modifier.weight(1f),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFFe94560),
+                                    focusedLabelColor = Color(0xFFe94560),
+                                    unfocusedBorderColor = Color(0xFF444466),
+                                    unfocusedLabelColor = Color(0xFF8899aa),
+                                    cursorColor = Color(0xFFe94560),
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White
+                                )
+                            )
+                            if (editUser.isNotBlank()) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Button(
+                                    onClick = {
+                                        copyToClipboard(editUser)
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4e54c8)),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    Text("Copy", fontSize = 12.sp)
+                                }
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            OutlinedTextField(
+                                value = if (editPassVisible) editPass else "••••••••",
+                                onValueChange = { if (editPassVisible) editPass = it },
+                                label = { Text("Password") },
+                                singleLine = true,
+                                readOnly = !editPassVisible,
+                                modifier = Modifier.weight(1f),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFFe94560),
+                                    focusedLabelColor = Color(0xFFe94560),
+                                    unfocusedBorderColor = Color(0xFF444466),
+                                    unfocusedLabelColor = Color(0xFF8899aa),
+                                    cursorColor = Color(0xFFe94560),
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White
+                                )
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            IconButton(onClick = { editPassVisible = !editPassVisible }) {
+                                Text(if (editPassVisible) "🙈" else "👁️", fontSize = 14.sp)
+                            }
+                            if (editPass.isNotBlank()) {
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Button(
+                                    onClick = {
+                                        copyToClipboard(editPass)
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4e54c8)),
+                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
+                                ) {
+                                    Text("Copy", fontSize = 12.sp)
+                                }
+                            }
+                        }
+
+                        Button(
+                            onClick = {
+                                val newSecurePass = (1..16).map {
+                                    (('a'..'z') + ('A'..'Z') + ('0'..'9') + listOf('!', '@', '#', '$', '%', '&')).random()
+                                }.joinToString("")
+                                editPass = newSecurePass
+                                editPassVisible = true
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF34b38a)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Generate Secure Password", fontSize = 12.sp)
+                        }
+
+                        OutlinedTextField(
+                            value = editNote,
+                            onValueChange = { editNote = it },
+                            label = { Text("Notes") },
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = 3,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                  focusedBorderColor = Color(0xFFe94560),
+                                  focusedLabelColor = Color(0xFFe94560),
+                                  unfocusedBorderColor = Color(0xFF444466),
+                                  unfocusedLabelColor = Color(0xFF8899aa),
+                                  cursorColor = Color(0xFFe94560),
+                                  focusedTextColor = Color.White,
+                                  unfocusedTextColor = Color.White
+                            )
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Button(
+                                onClick = {
+                                    db.hardDeleteSiteEntry(activeSiteEntry.id!!)
+                                    DesktopSiteEntryNavigation.activeSiteEntry = null
+                                    DesktopNavigation.dbRefreshTrigger++
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFe94560))
+                            ) {
+                                Text("Delete")
+                            }
+
+                            Row {
+                                TextButton(onClick = { DesktopSiteEntryNavigation.activeSiteEntry = null }) {
+                                    Text("Cancel", color = Color(0xFF8899aa))
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Button(
+                                    onClick = {
+                                        if (editDesc.isNotBlank()) {
+                                            val updated = DecryptableSiteEntry(activeSiteEntry.categoryId ?: 0L).apply {
+                                                this.id = activeSiteEntry.id
+                                                this.description = editDesc.encrypt()
+                                                this.username = editUser.encrypt()
+                                                this.password = editPass.encrypt()
+                                                this.website = editWeb.encrypt()
+                                                this.note = editNote.encrypt()
+                                                this.deleted = activeSiteEntry.deleted
+                                                this.passwordChangedDate = activeSiteEntry.passwordChangedDate
+                                            }
+                                            db.updateSiteEntry(updated)
+                                            DesktopSiteEntryNavigation.activeSiteEntry = null
+                                            DesktopNavigation.dbRefreshTrigger++
+                                        }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4e54c8))
+                                ) {
+                                    Text("Save")
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun openBrowser(url: String) {
+    try {
+        val cleanUrl = if (url.startsWith("http://") || url.startsWith("https://")) {
+            url
+        } else {
+            "https://$url"
+        }
+        val os = System.getProperty("os.name").lowercase()
+        val rt = Runtime.getRuntime()
+        if (os.indexOf("win") >= 0) {
+            rt.exec(arrayOf("rundll32", "url.dll,FileProtocolHandler", cleanUrl))
+        } else if (os.indexOf("mac") >= 0) {
+            rt.exec(arrayOf("open", cleanUrl))
+        } else {
+            rt.exec(arrayOf("xdg-open", cleanUrl))
+        }
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
+
+private fun copyToClipboard(text: String) {
+    try {
+        val selection = java.awt.datatransfer.StringSelection(text)
+        val clipboard = java.awt.Toolkit.getDefaultToolkit().systemClipboard
+        clipboard.setContents(selection, selection)
+    } catch (e: Exception) {
+        e.printStackTrace()
     }
 }

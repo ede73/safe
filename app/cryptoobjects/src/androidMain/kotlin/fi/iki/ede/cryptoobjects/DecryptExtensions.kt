@@ -7,14 +7,12 @@ import fi.iki.ede.logger.Logger
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
-fun DecryptableSiteEntry.decryptPhoto() =
+actual fun DecryptableSiteEntry.decryptPhoto(): PlatformBitmap? =
     try {
         val base64Photo = photo.decrypt()
         val bitmapOrJpeg = Base64.decode(base64Photo, Base64.DEFAULT)
         BitmapFactory.decodeByteArray(bitmapOrJpeg, 0, bitmapOrJpeg.size)
     } catch (ex: Exception) {
-        if (BuildConfig.DEBUG) {
-            Logger.e("decryptPhoto", ex.toString())
-        }
+        Logger.e("decryptPhoto", ex.toString())
         null
     }

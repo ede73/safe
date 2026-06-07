@@ -1,11 +1,11 @@
 package fi.iki.ede.cryptoobjects
 
-import android.graphics.Bitmap
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.support.decrypt
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.logger.Logger
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.encodeToString
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -49,8 +49,6 @@ class DecryptableSiteEntry(categoryId: Long) {
                     extensions.decrypt().trim()
                 )
         } catch (e: Exception) {
-            // TODO: temporarily disabled
-            //firebaseRecordException("Failed to import extension", e)
             mutableMapOf()
         }
     var extensions: IVCipherText = IVCipherText.getEmpty()
@@ -72,7 +70,7 @@ class DecryptableSiteEntry(categoryId: Long) {
         get() = website.decrypt()
     val plainNote: String
         get() = note.decrypt()
-    val plainPhoto: Bitmap?
+    val plainPhoto: PlatformBitmap?
         get() = if (photo.isEmpty()) null else decryptPhoto()
 
     // plain description is used A LOT everywhere (listing, sorting, displaying)
@@ -101,47 +99,8 @@ class DecryptableSiteEntry(categoryId: Long) {
                 (searchNotes && plainNote.contains(searchText, true)) ||
                 (searchExtensions && plainExtensions.values.joinToString("")
                     .contains(searchText, true)).also {
-                    if (BuildConfig.DEBUG) {
-                        Logger.i(TAG, plainExtensions.values.joinToString(""))
-                    }
+                    Logger.d(TAG, plainExtensions.values.joinToString(""))
                 }
-
-    fun isSame(
-        description: String,
-        website: String,
-        username: IVCipherText,
-        password: IVCipherText,
-        passwordChangedDate: Instant?,
-        note: IVCipherText,
-        photo: Bitmap?,
-        extensions: Map<String, Set<String>>
-    ) = cachedPlainDescription == description &&
-            plainWebsite == website &&
-            plainUsername == username.decrypt() &&
-            isSamePassword(password) &&
-            this.passwordChangedDate == passwordChangedDate &&
-            plainNote == note.decrypt() &&
-            (photo?.sameAs(plainPhoto) ?: (plainPhoto == null)) &&
-            !areMapsDifferent(extensions, this.plainExtensions)
-
-    private fun areMapsDifferent(
-        map1: Map<String, Set<String>>,
-        map2: Map<String, Set<String>>
-    ): Boolean {
-        // Clean maps from empty strings and empty sets
-        val cleanMap1 = map1.mapValues { (_, value) -> value.filterNot { it.isBlank() }.toSet() }
-            .filterNot { it.value.isEmpty() }
-        val cleanMap2 = map2.mapValues { (_, value) -> value.filterNot { it.isBlank() }.toSet() }
-            .filterNot { it.value.isEmpty() }
-
-        // Check if keys are the same after cleaning
-        if (cleanMap1.keys != cleanMap2.keys) return true
-
-        // Check if values are the same for each key
-        return cleanMap1.any { (key, value) ->
-            value != cleanMap2[key]
-        }
-    }
 
     fun isSamePassword(comparePassword: IVCipherText) = plainPassword == comparePassword.decrypt()
 
@@ -153,3 +112,6 @@ class DecryptableSiteEntry(categoryId: Long) {
     fun encryptExtension(plainExtensions: Map<String, Set<String>>): IVCipherText =
         Json.encodeToString(plainExtensions).encrypt()
 }
+
+@ExperimentalTime
+expect fun DecryptableSiteEntry.decryptPhoto(): PlatformBitmap?

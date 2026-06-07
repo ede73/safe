@@ -11,6 +11,7 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.cryptoobjects.isSame
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.db.DBID
 import fi.iki.ede.logger.firebaseLog
