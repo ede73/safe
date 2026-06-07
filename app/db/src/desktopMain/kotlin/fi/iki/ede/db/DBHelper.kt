@@ -121,7 +121,10 @@ class DBHelper {
         return result
     }
 
+    var skipPrepopulate = false
+
     private fun checkPrepopulate() {
+        if (skipPrepopulate) return
         val db = readDb()
         if (db["categories"] == null || db["categories"]!!.isEmpty()) {
             val mutableDb = db.toMutableMap()
@@ -336,5 +339,12 @@ class DBHelper {
             return 1
         }
         return 0
+    }
+
+    fun clearAllData() {
+        val db = readDb().toMutableMap()
+        db["categories"] = emptyMap()
+        db["site_entries"] = emptyMap()
+        writeDb(db)
     }
 }

@@ -41,7 +41,9 @@ class KeyStoreHelper(
     }
 
     override var decrypterProviderWithKey: (IVCipherText, KMPKey) -> ByteArray = { encrypted, key ->
-        if (key is SecretKeySpec) {
+        if (encrypted.iv.isEmpty()) {
+            byteArrayOf()
+        } else if (key is SecretKeySpec) {
             korlibs.crypto.AES.decryptAesCbc(encrypted.cipherText, key.encoded, encrypted.iv, korlibs.crypto.Padding.PKCS7Padding)
         } else if (key is PrivateKey) {
             val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
@@ -53,7 +55,11 @@ class KeyStoreHelper(
     }
 
     override var decrypterProvider: (IVCipherText) -> ByteArray = { encrypted ->
-        korlibs.crypto.AES.decryptAesCbc(encrypted.cipherText, masterKey.values, encrypted.iv, korlibs.crypto.Padding.PKCS7Padding)
+        if (encrypted.iv.isEmpty()) {
+            byteArrayOf()
+        } else {
+            korlibs.crypto.AES.decryptAesCbc(encrypted.cipherText, masterKey.values, encrypted.iv, korlibs.crypto.Padding.PKCS7Padding)
+        }
     }
 
     override var encrypterProviderWithKey: (ByteArray, KMPKey) -> IVCipherText = { plaintext, key ->

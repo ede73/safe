@@ -76,6 +76,12 @@ fun LoginScreen() {
     // Password visibility toggle state map (site entry ID -> isVisible)
     val passwordVisibilityMap = remember { mutableStateMapOf<Long, Boolean>() }
 
+    // Import Backup Dialog state
+    var showImportDialog by remember { mutableStateOf(false) }
+    var importFilePath by remember { mutableStateOf("") }
+    var importPassword by remember { mutableStateOf("") }
+    var importStatusMessage by remember { mutableStateOf("") }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -136,6 +142,19 @@ fun LoginScreen() {
                                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
                                 ) {
                                     Text("➕ Add", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Button(
+                                    onClick = {
+                                        showImportDialog = true
+                                    },
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF34b38a)
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    Text("📥 Import", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                                 }
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Button(
@@ -821,6 +840,143 @@ fun LoginScreen() {
                                 ) {
                                     Text("Save")
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- Import Backup Dialog Overlay ---
+        if (showImportDialog) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.6f))
+                    .clickable(enabled = true, onClick = { showImportDialog = false }),
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    modifier = Modifier
+                        .width(360.dp)
+                        .padding(16.dp)
+                        .clickable(enabled = false, onClick = {}),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF1e1e2e)
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text("Import Backup XML", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            OutlinedTextField(
+                                value = importFilePath,
+                                onValueChange = { importFilePath = it },
+                                label = { Text("Backup XML File") },
+                                singleLine = true,
+                                modifier = Modifier.weight(1f),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFFe94560),
+                                    focusedLabelColor = Color(0xFFe94560),
+                                    unfocusedBorderColor = Color(0xFF444466),
+                                    unfocusedLabelColor = Color(0xFF8899aa),
+                                    cursorColor = Color(0xFFe94560),
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White
+                                )
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Button(
+                                onClick = {
+                                    try {
+                                        val dialog = java.awt.FileDialog(null as java.awt.Frame?, "Select Backup XML", java.awt.FileDialog.LOAD).apply {
+                                            file = "*.xml"
+                                            isVisible = true
+                                        }
+                                        val file = dialog.file
+                                        if (file != null) {
+                                            importFilePath = java.io.File(dialog.directory, file).absolutePath
+                                        }
+                                    } catch (e: Exception) {
+                                        importStatusMessage = "Failed to open file dialog"
+                                    }
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4e54c8)),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                            ) {
+                                Text("Browse", fontSize = 12.sp)
+                            }
+                        }
+
+                        OutlinedTextField(
+                            value = importPassword,
+                            onValueChange = { importPassword = it },
+                            label = { Text("Backup Password") },
+                            singleLine = true,
+                            visualTransformation = PasswordVisualTransformation(),
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFFe94560),
+                                focusedLabelColor = Color(0xFFe94560),
+                                unfocusedBorderColor = Color(0xFF444466),
+                                unfocusedLabelColor = Color(0xFF8899aa),
+                                cursorColor = Color(0xFFe94560),
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White
+                            )
+                        )
+                        
+                        if (importStatusMessage.isNotBlank()) {
+                            Text(importStatusMessage, color = Color(0xFFe94560), fontSize = 12.sp)
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.End,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            TextButton(onClick = { showImportDialog = false }) {
+                                Text("Cancel", color = Color(0xFF8899aa))
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Button(
+                                onClick = {
+                                    if (importFilePath.isBlank()) {
+                                        importStatusMessage = "Please select a backup file"
+                                        return@Button
+                                    }
+                                    if (importPassword.isBlank()) {
+                                        importStatusMessage = "Please enter backup password"
+                                        return@Button
+                                    }
+                                    try {
+                                        val file = java.io.File(importFilePath)
+                                        if (!file.exists()) {
+                                            importStatusMessage = "File does not exist"
+                                            return@Button
+                                        }
+                                        val content = file.readText()
+                                        val count = BackupImporter.importFromXml(content, importPassword, db)
+                                        DesktopNavigation.dbRefreshTrigger++
+                                        showImportDialog = false
+                                        importFilePath = ""
+                                        importPassword = ""
+                                        importStatusMessage = ""
+                                    } catch (ex: Exception) {
+                                        importStatusMessage = "Import failed: ${ex.message ?: ex.toString()}"
+                                    }
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFe94560))
+                            ) {
+                                Text("Import")
                             }
                         }
                     }
