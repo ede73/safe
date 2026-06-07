@@ -1,5 +1,6 @@
 package fi.iki.ede.safe.desktop
 
+import fi.iki.ede.crypto.support.decrypt
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -56,7 +57,7 @@ fun LoginScreen() {
         if (isLoggedIn) {
             Card(
                 modifier = Modifier
-                    .width(360.dp)
+                    .width(400.dp)
                     .padding(16.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
@@ -65,44 +66,83 @@ fun LoginScreen() {
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Text(
-                        "🔓",
-                        fontSize = 48.sp
-                    )
-
-                    Text(
-                        "Vault Unlocked",
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFF4e9f3d)
-                    )
-
-                    Text(
-                        "Crypto key derived successfully!\nMock DB initialized.",
-                        fontSize = 14.sp,
-                        color = Color(0xFF8899aa),
-                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Button(
-                        onClick = {
-                            isLoggedIn = false
-                            password = ""
-                            statusMessage = "Enter master password"
-                        },
-                        modifier = Modifier.fillMaxWidth().height(48.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFe94560)
-                        )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Lock Vault", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("🔓", fontSize = 24.sp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Vault", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        }
+                        
+                        Button(
+                            onClick = {
+                                isLoggedIn = false
+                                password = ""
+                                statusMessage = "Enter master password"
+                            },
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFe94560)
+                            ),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Text("Lock", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+
+                    HorizontalDivider(color = Color(0xFF444466), thickness = 1.dp)
+
+                    Text(
+                        "Categories",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF8899aa)
+                    )
+
+                    val db = remember { fi.iki.ede.db.DBHelperFactory.getDBHelper() }
+                    val categories = remember { db.fetchAllCategoryRows() }
+
+                    androidx.compose.foundation.lazy.LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.height(300.dp).fillMaxWidth()
+                    ) {
+                        items(categories.size) { index ->
+                            val category = categories[index]
+                            Card(
+                                shape = RoundedCornerShape(8.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFF2a2a40)
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text(
+                                            category.plainName,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = Color.White
+                                        )
+                                        Text(
+                                            "${category.containedSiteEntryCount} passwords",
+                                            fontSize = 12.sp,
+                                            color = Color(0xFF8899aa)
+                                        )
+                                    }
+                                    Text("➔", color = Color(0xFFe94560), fontSize = 16.sp)
+                                }
+                            }
+                        }
                     }
                 }
             }

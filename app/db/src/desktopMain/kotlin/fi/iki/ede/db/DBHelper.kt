@@ -1,6 +1,7 @@
 package fi.iki.ede.db
 
 import fi.iki.ede.crypto.IVCipherText
+import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.support.hexToByteArray
 import fi.iki.ede.crypto.support.toHexString
@@ -145,7 +146,29 @@ class DBHelper {
 
     fun addCategory(entry: DecryptableCategoryEntry): DBID = 1L
     fun deleteCategory(id: DBID): Int = 0
-    fun fetchAllCategoryRows(categoriesFlow: MutableStateFlow<List<DecryptableCategoryEntry>>? = null): List<DecryptableCategoryEntry> = emptyList()
+    fun fetchAllCategoryRows(categoriesFlow: MutableStateFlow<List<DecryptableCategoryEntry>>? = null): List<DecryptableCategoryEntry> {
+        val list = listOf(
+            DecryptableCategoryEntry().apply {
+                id = 1L
+                encryptedName = "Social Media".encrypt()
+                containedSiteEntryCount = 5
+            },
+            DecryptableCategoryEntry().apply {
+                id = 2L
+                encryptedName = "Email Accounts".encrypt()
+                containedSiteEntryCount = 3
+            },
+            DecryptableCategoryEntry().apply {
+                id = 3L
+                encryptedName = "Banking & Finance".encrypt()
+                containedSiteEntryCount = 2
+            }
+        )
+        if (categoriesFlow != null) {
+            categoriesFlow.value = list
+        }
+        return list
+    }
     fun updateCategory(id: DBID, entry: DecryptableCategoryEntry): Long = 0
     fun fetchPhotoOnly(siteEntryID: DBID): IVCipherText? = null
     fun fetchAllRows(
