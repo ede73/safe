@@ -749,6 +749,16 @@ fun LoginScreen() {
             var editPass by remember(activeSiteEntry) { mutableStateOf(activeSiteEntry.plainPassword) }
             var editNote by remember(activeSiteEntry) { mutableStateOf(activeSiteEntry.plainNote) }
             var editPassVisible by remember { mutableStateOf(false) }
+            var editNoteVisible by remember { mutableStateOf(false) }
+            val editExtensions = remember(activeSiteEntry) {
+                mutableStateListOf<Pair<String, String>>().apply {
+                    activeSiteEntry.plainExtensions.forEach { (type, values) ->
+                        values.forEach { value ->
+                            add(Pair(type, value))
+                        }
+                    }
+                }
+            }
 
             Box(
                 modifier = Modifier
@@ -923,6 +933,12 @@ fun LoginScreen() {
                             value = editNote,
                             onValueChange = { editNote = it },
                             label = { Text("Notes") },
+                            visualTransformation = if (editNoteVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
+                            trailingIcon = {
+                                IconButton(onClick = { editNoteVisible = !editNoteVisible }) {
+                                    Text(if (editNoteVisible) "🙈" else "👁️", fontSize = 14.sp)
+                                }
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             maxLines = 3,
                             colors = OutlinedTextFieldDefaults.colors(
@@ -935,6 +951,74 @@ fun LoginScreen() {
                                 unfocusedTextColor = Color.White
                             )
                         )
+
+                        HorizontalDivider(color = Color(0xFF444466), thickness = 1.dp)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Extensions", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            Button(
+                                onClick = { editExtensions.add(Pair("", "")) },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4e54c8)),
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text("➕ Add", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+
+                        editExtensions.forEachIndexed { index, pair ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                OutlinedTextField(
+                                    value = pair.first,
+                                    onValueChange = { newKey ->
+                                        editExtensions[index] = Pair(newKey, pair.second)
+                                    },
+                                    label = { Text("Type") },
+                                    singleLine = true,
+                                    modifier = Modifier.weight(0.4f),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = Color(0xFFe94560),
+                                        focusedLabelColor = Color(0xFFe94560),
+                                        unfocusedBorderColor = Color(0xFF444466),
+                                        unfocusedLabelColor = Color(0xFF8899aa),
+                                        cursorColor = Color(0xFFe94560),
+                                        focusedTextColor = Color.White,
+                                        unfocusedTextColor = Color.White
+                                    )
+                                )
+                                OutlinedTextField(
+                                    value = pair.second,
+                                    onValueChange = { newValue ->
+                                        editExtensions[index] = Pair(pair.first, newValue)
+                                    },
+                                    label = { Text("Value") },
+                                    singleLine = true,
+                                    modifier = Modifier.weight(0.5f),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = Color(0xFFe94560),
+                                        focusedLabelColor = Color(0xFFe94560),
+                                        unfocusedBorderColor = Color(0xFF444466),
+                                        unfocusedLabelColor = Color(0xFF8899aa),
+                                        cursorColor = Color(0xFFe94560),
+                                        focusedTextColor = Color.White,
+                                        unfocusedTextColor = Color.White
+                                    )
+                                )
+                                IconButton(
+                                    onClick = { editExtensions.removeAt(index) },
+                                    modifier = Modifier.weight(0.1f)
+                                ) {
+                                    Text("🗑️", fontSize = 14.sp)
+                                }
+                            }
+                        }
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -973,6 +1057,12 @@ fun LoginScreen() {
                                                 this.note = editNote.encrypt()
                                                 this.deleted = activeSiteEntry.deleted
                                                 this.passwordChangedDate = activeSiteEntry.passwordChangedDate
+
+                                                val extensionsMap = editExtensions
+                                                    .filter { it.first.isNotBlank() && it.second.isNotBlank() }
+                                                    .groupBy({ it.first }, { it.second })
+                                                    .mapValues { it.value.toSet() }
+                                                this.extensions = encryptExtension(extensionsMap)
                                             }
                                             if (updated.id == null) {
                                                 db.addSiteEntry(updated)
