@@ -7,9 +7,10 @@ import java.io.File
 import okio.Path
 import okio.Path.Companion.toPath
 
-actual fun getDatabaseBuilder(context: Any?): RoomDatabase.Builder<SafeDatabase> {
-    // Addressed PR7 comment: Use common DATABASE_NAME constant instead of hardcoding "safe.db"
-    val dbFile = File("$DATABASE_NAME.db")
+import fi.iki.ede.crypto.keystore.KeyStoreHelper
+
+actual fun getDatabaseBuilder(context: Any?, databaseName: String): RoomDatabase.Builder<SafeDatabase> {
+    val dbFile = File("$databaseName.db")
     return Room.databaseBuilder<SafeDatabase>(
         name = dbFile.absolutePath
     ).setDriver(BundledSQLiteDriver())
@@ -29,15 +30,28 @@ actual fun setTransactionSuccessful(database: SafeDatabase) {}
 actual fun endTransaction(database: SafeDatabase) {}
 
 actual fun storeTpmKeys(privateKeyBase64: String, publicKeyBase64: String) {
-    File("tpm_keys.txt").writeText("$privateKeyBase64\n$publicKeyBase64")
+    // Addressed PR7 comment: NEVER write raw private keys to disk. Keep them inside Windows KSP named key.
+    val isWindows = System.getProperty("os.name").lowercase().contains("windows")
+    val privToStore = if (isWindows) "CNG_KEY_CONTAINER_SECURED" else privateKeyBase64
+    val rawText = "$privToStore\n$publicKeyBase64"
+    val encryptedBytes = KeyStoreHelper.encryptWithDPAPI(rawText.toByteArray(Charsets.UTF_8))
+    val tpmFile = File(System.getProperty("user.home"), ".safe_desktop_tpm_keys")
+    tpmFile.writeBytes(encryptedBytes)
 }
 
 actual fun fetchTpmKeys(): Pair<String, String>? {
-    val txtFile = File("tpm_keys.txt")
-    if (txtFile.exists()) {
-        val lines = txtFile.readLines()
-        if (lines.size >= 2) {
-            return Pair(lines[0], lines[1])
+    val tpmFile = File(System.getProperty("user.home"), ".safe_desktop_tpm_keys")
+    if (tpmFile.exists()) {
+        try {
+            val encryptedBytes = tpmFile.readBytes()
+            val decryptedBytes = KeyStoreHelper.decryptWithDPAPI(encryptedBytes)
+            val text = String(decryptedBytes, Charsets.UTF_8)
+            val lines = text.lines()
+            if (lines.size >= 2) {
+                return Pair(lines[0], lines[1])
+            }
+        } catch (e: Exception) {
+            // ignore
         }
     }
     return null

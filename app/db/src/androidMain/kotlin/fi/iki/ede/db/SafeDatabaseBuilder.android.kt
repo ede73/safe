@@ -1,3 +1,4 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
 package fi.iki.ede.db
 
 import android.content.Context
@@ -14,13 +15,12 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import okio.Path
 import okio.Path.Companion.toPath
 
-fun runLegacyDatabaseMigration(context: Context) {
+fun runLegacyDatabaseMigration(context: Context, databaseName: String = DBHelper.DATABASE_NAME) {
     val prefs = context.getSharedPreferences("safe_prefs", Context.MODE_PRIVATE)
     val migrationDone = prefs.getBoolean("room_migration_done", false)
     if (migrationDone) return
 
-    // Addressed PR7 comment: Use common DATABASE_NAME constant
-    val dbFile = context.getDatabasePath(DATABASE_NAME)
+    val dbFile = context.getDatabasePath(databaseName)
     if (dbFile.exists()) {
         var isLegacy = false
         try {
@@ -200,12 +200,12 @@ fun runLegacyDatabaseMigration(context: Context) {
     prefs.edit().putBoolean("room_migration_done", true).apply()
 }
 
-actual fun getDatabaseBuilder(context: Any?): RoomDatabase.Builder<SafeDatabase> {
+actual fun getDatabaseBuilder(context: Any?, databaseName: String): RoomDatabase.Builder<SafeDatabase> {
     val appContext = (context as? Context)?.applicationContext ?: throw IllegalArgumentException("Android Context required")
-    runLegacyDatabaseMigration(appContext)
+    runLegacyDatabaseMigration(appContext, databaseName)
     return Room.databaseBuilder<SafeDatabase>(
         context = appContext,
-        name = DATABASE_NAME
+        name = databaseName
     )
 }
 

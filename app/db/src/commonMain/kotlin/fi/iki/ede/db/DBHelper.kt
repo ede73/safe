@@ -42,11 +42,9 @@ class DBHelper(
         val builder = if (databaseName == null) {
             getInMemoryDatabaseBuilder(context)
         } else {
-            getDatabaseBuilder(context)
+            getDatabaseBuilder(context, databaseName)
         }
-        database = builder
-            .setDriver(androidx.sqlite.driver.bundled.BundledSQLiteDriver())
-            .build()
+        database = builder.build()
 
         if (!FileSystem.SYSTEM.exists(photoDir) && runCatching {
                 FileSystem.SYSTEM.createDirectories(photoDir)
@@ -210,15 +208,20 @@ class DBHelper(
     fun endTransaction() = endTransaction(database)
 
     fun beginRestoration(): DBTransaction {
-        runBlocking {
-            database.categoryDao().getAll().forEach { database.categoryDao().deleteById(it.id!!) }
-            database.siteEntryDao().getAllActive().forEach { database.siteEntryDao().deleteById(it.id!!) }
-            database.siteEntryDao().getAllSoftDeleted().forEach { database.siteEntryDao().deleteById(it.id!!) }
-            database.keyDao().clear()
-            database.gpmDao().deleteAll()
-            database.siteEntryGPMJoinDao().deleteAll()
-        }
         beginTransaction()
+        runBlocking {
+            try {
+                database.categoryDao().getAll().forEach { database.categoryDao().deleteById(it.id!!) }
+                database.siteEntryDao().getAllActive().forEach { database.siteEntryDao().deleteById(it.id!!) }
+                database.siteEntryDao().getAllSoftDeleted().forEach { database.siteEntryDao().deleteById(it.id!!) }
+                database.keyDao().clear()
+                database.gpmDao().deleteAll()
+                database.siteEntryGPMJoinDao().deleteAll()
+            } catch (e: Exception) {
+                endTransaction()
+                throw e
+            }
+        }
         return object : DBTransaction {
             override fun setTransactionSuccessful() {
                 this@DBHelper.setTransactionSuccessful()
