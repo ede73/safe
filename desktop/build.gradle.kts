@@ -17,6 +17,13 @@ dependencies {
     implementation(compose.material)
     implementation(compose.material3)
     implementation(compose.materialIconsExtended)
+
+    testImplementation(libs.junit5.jupiter)
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 val copySharedUi by tasks.registering(Copy::class) {

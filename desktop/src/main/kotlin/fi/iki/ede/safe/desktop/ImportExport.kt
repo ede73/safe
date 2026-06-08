@@ -162,3 +162,71 @@ object BackupImporter {
         return passwordsCount
     }
 }
+
+object BackupExporter {
+    fun exportToXml(db: DBHelper): String {
+        val categories = db.fetchAllCategoryRows()
+        val siteEntries = db.fetchAllRows()
+
+        val sb = java.lang.StringBuilder()
+        sb.append("<PasswordSafe version=\"1\" created=\"${System.currentTimeMillis() / 1000L}\">\n")
+
+        for (category in categories) {
+            val nameIv = category.encryptedName.iv.toHexString()
+            val nameCipher = category.encryptedName.cipherText.toHexString()
+            sb.append("    <category iv_name=\"$nameIv\" cipher_name=\"$nameCipher\">\n")
+
+            val categoryEntries = siteEntries.filter { it.categoryId == category.id }
+            for (entry in categoryEntries) {
+                val deletedAttr = if (entry.deleted > 0) " deleted=\"${entry.deleted}\"" else ""
+                sb.append("        <item ID=\"${entry.id}\"$deletedAttr>\n")
+
+                fun appendTag(tagName: String, value: IVCipherText, extraAttr: String = "") {
+                    if (value.isEmpty()) {
+                        sb.append("            <$tagName$extraAttr></$tagName>\n")
+                    } else {
+                        val ivHex = value.iv.toHexString()
+                        val cipherHex = value.cipherText.toHexString()
+                        sb.append("            <$tagName$extraAttr iv=\"$ivHex\">$cipherHex</$tagName>\n")
+                    }
+                }
+
+                appendTag("description", entry.description)
+                appendTag("website", entry.website)
+                appendTag("username", entry.username)
+
+                val changedAttr = entry.passwordChangedDate?.let { " changed=\"${it.epochSeconds}\"" } ?: ""
+                appendTag("password", entry.password, changedAttr)
+
+                appendTag("note", entry.note)
+
+                if (entry.photo != null && !entry.photo.isEmpty()) {
+                    appendTag("photo", entry.photo)
+                }
+                if (entry.extensions != null && !entry.extensions.isEmpty()) {
+                    appendTag("extension", entry.extensions)
+                }
+
+                sb.append("        </item>\n")
+            }
+            sb.append("    </category>\n")
+        }
+        sb.append("</PasswordSafe>")
+        val xmlContent = sb.toString()
+
+        val (salt, encryptedMasterKey) = db.fetchSaltAndEncryptedMasterKey()
+
+        val helper = fi.iki.ede.crypto.keystore.KeyStoreHelperFactory.getKeyStoreHelper()
+        val xmlBytes = xmlContent.toByteArray(java.nio.charset.StandardCharsets.UTF_8)
+        val encryptedXml = helper.encrypterProvider(xmlBytes)
+
+        val sbBackup = java.lang.StringBuilder()
+        sbBackup.append(salt.salt.toHexString()).append("\n")
+        sbBackup.append(encryptedMasterKey.iv.toHexString()).append("\n")
+        sbBackup.append(encryptedMasterKey.cipherText.toHexString()).append("\n")
+        sbBackup.append(encryptedXml.iv.toHexString()).append("\n")
+        sbBackup.append(encryptedXml.cipherText.toHexString()).append("\n")
+
+        return sbBackup.toString()
+    }
+}

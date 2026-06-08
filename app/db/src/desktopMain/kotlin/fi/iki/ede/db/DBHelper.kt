@@ -267,6 +267,20 @@ class DBHelper {
                 website = cols[4].deserializeIVCipherText()
                 note = cols[5].deserializeIVCipherText()
                 deleted = cols[6].toLongOrNull() ?: 0L
+                if (cols.size > 7) {
+                    photo = cols[7].deserializeIVCipherText()
+                }
+                if (cols.size > 8) {
+                    extensions = cols[8].deserializeIVCipherText()
+                }
+                if (cols.size > 9) {
+                    val dateSec = cols[9]
+                    if (dateSec.isNotEmpty()) {
+                        passwordChangedDate = dateSec.toLongOrNull()?.let {
+                            fi.iki.ede.dateutils.DateUtils.unixEpochSecondsToInstant(it)
+                        }
+                    }
+                }
             }
         }
         if (siteEntriesFlow != null) {
@@ -286,7 +300,10 @@ class DBHelper {
             entry.password.serialize(),
             entry.website.serialize(),
             entry.note.serialize(),
-            entry.deleted.toString()
+            entry.deleted.toString(),
+            entry.photo.serialize(),
+            entry.extensions.serialize(),
+            entry.passwordChangedDate?.epochSeconds?.toString() ?: ""
         )
         db["site_entries"] = siteEntriesTable
         writeDb(db)
@@ -316,7 +333,10 @@ class DBHelper {
             entry.password.serialize(),
             entry.website.serialize(),
             entry.note.serialize(),
-            entry.deleted.toString()
+            entry.deleted.toString(),
+            entry.photo.serialize(),
+            entry.extensions.serialize(),
+            entry.passwordChangedDate?.epochSeconds?.toString() ?: ""
         )
         db["site_entries"] = siteEntriesTable
         writeDb(db)

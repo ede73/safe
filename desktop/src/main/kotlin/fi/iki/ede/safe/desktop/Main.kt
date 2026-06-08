@@ -76,6 +76,9 @@ fun LoginScreen() {
     var importPassword by remember { mutableStateOf("") }
     var importStatusMessage by remember { mutableStateOf("") }
 
+    // Export Backup Dialog state
+    var exportStatusMessage by remember { mutableStateOf("") }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -149,6 +152,33 @@ fun LoginScreen() {
                                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
                                 ) {
                                     Text("📥 Import", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Button(
+                                    onClick = {
+                                        try {
+                                            val dialog = java.awt.FileDialog(null as java.awt.Frame?, "Save Backup XML", java.awt.FileDialog.SAVE).apply {
+                                                file = "safe_backup.xml"
+                                                isVisible = true
+                                            }
+                                            val file = dialog.file
+                                            if (file != null) {
+                                                val targetFile = java.io.File(dialog.directory, file)
+                                                val backupContent = BackupExporter.exportToXml(db)
+                                                targetFile.writeText(backupContent)
+                                                exportStatusMessage = "Backup successfully exported to:\n${targetFile.name}"
+                                            }
+                                        } catch (ex: Exception) {
+                                            exportStatusMessage = "Export failed:\n${ex.message ?: ex.toString()}"
+                                        }
+                                    },
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF3b82f6)
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    Text("📤 Export", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                                 }
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Button(
@@ -835,6 +865,43 @@ fun LoginScreen() {
                             ) {
                                 Text("Import")
                             }
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- Export Backup Status Dialog Overlay ---
+        if (exportStatusMessage.isNotBlank()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.6f))
+                    .clickable(enabled = true, onClick = { exportStatusMessage = "" }),
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    modifier = Modifier
+                        .width(320.dp)
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF1e1e2e)
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text("Export Backup", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        Text(exportStatusMessage, color = Color.White, fontSize = 14.sp)
+                        Button(
+                            onClick = { exportStatusMessage = "" },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4e54c8))
+                        ) {
+                            Text("OK")
                         }
                     }
                 }
