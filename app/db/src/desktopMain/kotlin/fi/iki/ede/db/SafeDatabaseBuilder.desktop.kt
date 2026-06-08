@@ -7,6 +7,8 @@ import java.io.File
 import okio.Path
 import okio.Path.Companion.toPath
 
+import fi.iki.ede.crypto.keystore.KeyStoreHelper
+
 actual fun getDatabaseBuilder(context: Any?): RoomDatabase.Builder<SafeDatabase> {
     val dbFile = File("safe.db")
     return Room.databaseBuilder<SafeDatabase>(
@@ -28,15 +30,25 @@ actual fun setTransactionSuccessful(database: SafeDatabase) {}
 actual fun endTransaction(database: SafeDatabase) {}
 
 actual fun storeTpmKeys(privateKeyBase64: String, publicKeyBase64: String) {
-    File("tpm_keys.txt").writeText("$privateKeyBase64\n$publicKeyBase64")
+    val rawText = "$privateKeyBase64\n$publicKeyBase64"
+    val encryptedBytes = KeyStoreHelper.encryptWithDPAPI(rawText.toByteArray(Charsets.UTF_8))
+    val tpmFile = File(System.getProperty("user.home"), ".safe_desktop_tpm_keys")
+    tpmFile.writeBytes(encryptedBytes)
 }
 
 actual fun fetchTpmKeys(): Pair<String, String>? {
-    val txtFile = File("tpm_keys.txt")
-    if (txtFile.exists()) {
-        val lines = txtFile.readLines()
-        if (lines.size >= 2) {
-            return Pair(lines[0], lines[1])
+    val tpmFile = File(System.getProperty("user.home"), ".safe_desktop_tpm_keys")
+    if (tpmFile.exists()) {
+        try {
+            val encryptedBytes = tpmFile.readBytes()
+            val decryptedBytes = KeyStoreHelper.decryptWithDPAPI(encryptedBytes)
+            val text = String(decryptedBytes, Charsets.UTF_8)
+            val lines = text.lines()
+            if (lines.size >= 2) {
+                return Pair(lines[0], lines[1])
+            }
+        } catch (e: Exception) {
+            // ignore
         }
     }
     return null

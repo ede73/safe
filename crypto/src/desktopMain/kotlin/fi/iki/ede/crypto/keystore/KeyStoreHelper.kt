@@ -95,6 +95,24 @@ class KeyStoreHelper(
             loadedPublicKey = pub
         }
 
+        fun encryptWithDPAPI(data: ByteArray): ByteArray {
+            val isWindows = System.getProperty("os.name").lowercase().contains("windows")
+            return if (isWindows) {
+                com.sun.jna.platform.win32.Crypt32Util.cryptProtectData(data)
+            } else {
+                data
+            }
+        }
+
+        fun decryptWithDPAPI(data: ByteArray): ByteArray {
+            val isWindows = System.getProperty("os.name").lowercase().contains("windows")
+            return if (isWindows) {
+                com.sun.jna.platform.win32.Crypt32Util.cryptUnprotectData(data)
+            } else {
+                data
+            }
+        }
+
         fun importExistingEncryptedMasterKey(
             saltedPassword: SaltedPassword,
             ivSecretKey: IVCipherText
@@ -111,8 +129,14 @@ class KeyStoreHelper(
             val privKey = loadedPrivateKey ?: generateMockPrivateKey()
             val pubKey = loadedPublicKey ?: generateMockPublicKey()
 
-            val helper = KeyStoreHelper(decrypted, privKey, pubKey)
-            KeyStoreHelperFactory.provideKeyStoreHelper = helper
+            val isWindows = System.getProperty("os.name").lowercase().contains("windows")
+            if (isWindows) {
+                val helper = CNGKeyStoreHelper(decrypted.values, privKey, pubKey)
+                KeyStoreHelperFactory.provideKeyStoreHelper = helper
+            } else {
+                val helper = KeyStoreHelper(decrypted, privKey, pubKey)
+                KeyStoreHelperFactory.provideKeyStoreHelper = helper
+            }
 
             val ks = KeyStore.getInstance(KeyStore.getDefaultType())
             ks.load(null, null)
@@ -139,8 +163,14 @@ class KeyStoreHelper(
             loadedPrivateKey = pair.private
             loadedPublicKey = pair.public
 
-            val helper = KeyStoreHelper(unencryptedKey, pair.private, pair.public)
-            KeyStoreHelperFactory.provideKeyStoreHelper = helper
+            val isWindows = System.getProperty("os.name").lowercase().contains("windows")
+            if (isWindows) {
+                val helper = CNGKeyStoreHelper(unencryptedKey.values, pair.private, pair.public)
+                KeyStoreHelperFactory.provideKeyStoreHelper = helper
+            } else {
+                val helper = KeyStoreHelper(unencryptedKey, pair.private, pair.public)
+                KeyStoreHelperFactory.provideKeyStoreHelper = helper
+            }
 
             return Pair(salt, cipheredKey)
         }
