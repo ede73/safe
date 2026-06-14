@@ -45,7 +45,7 @@ fun VerifiedPasswordTextField(
 
     var firstPassword by remember { mutableStateOf(Password.getEmpty()) }
     PasswordTextField(
-        textTip = textTip,
+        label = androidx.compose.ui.res.stringResource(textTip),
         modifier = modifier
             .focusRequester(focusRequester),
         onValueChange = { firstPassword = it }
@@ -54,7 +54,7 @@ fun VerifiedPasswordTextField(
     var secondPassword by remember { mutableStateOf(Password.getEmpty()) }
     if (showVerification) {
         PasswordTextField(
-            textTip = verifyPassword,
+            label = androidx.compose.ui.res.stringResource(verifyPassword),
             modifier = modifier,
             onValueChange = { secondPassword = it }
 //                .semantics { contentDescription = "toka salasana" }

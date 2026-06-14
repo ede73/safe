@@ -33,24 +33,7 @@ private val LightColorScheme = lightColorScheme(
     tertiary = Pink40,
 )
 
-object SafeTheme {
-    var colorScheme = LightColorScheme
-}
 
-data class SafeThemeData(
-    val customFonts: SafeFonts,
-    val customColors: SafeColors,
-    val customShapes: SafeShapes
-)
-
-val LocalSafeTheme =
-    staticCompositionLocalOf {
-        SafeThemeData(
-            SafeTheme.customFonts(),
-            SafeTheme.customColors(),
-            SafeTheme.customShapes()
-        )
-    }
 
 
 @Composable

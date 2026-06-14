@@ -13,6 +13,8 @@ dependencies {
     implementation(project(":dateutils"))
     implementation(project(":logger"))
     implementation(project(":app:preferences"))
+    implementation(project(":shared-ui"))
+
     implementation(libs.okio)
 
     implementation(compose.desktop.currentOs)
@@ -30,26 +32,6 @@ tasks.test {
     useJUnitPlatform()
 }
 
-val copySharedUi by tasks.registering(Copy::class) {
-    from("../app/src/main/java/fi/iki/ede/safe/ui/composable") {
-        include("CategoryList.kt")
-        include("SiteEntryList.kt")
-        include("SiteEntryRowHeader.kt")
-    }
-    into(layout.buildDirectory.dir("generated/sharedUi/fi/iki/ede/safe/ui/composable"))
-}
-
-kotlin {
-    sourceSets {
-        main {
-            kotlin.srcDir(layout.buildDirectory.dir("generated/sharedUi"))
-        }
-    }
-}
-
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-    dependsOn(copySharedUi)
-}
 
 compose.desktop {
     application {

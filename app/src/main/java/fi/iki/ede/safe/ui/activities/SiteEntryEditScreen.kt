@@ -37,6 +37,10 @@ class SiteEntryEditScreen :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (checkShouldLaunchLoginScreen(this)) {
+            finish()
+            return
+        }
         MeasureTime("SiteEntryEditScreen.onCreate").apply {
             val viewModel: EditingSiteEntryViewModel by viewModels()
             lap("view model")

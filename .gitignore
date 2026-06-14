@@ -25,6 +25,7 @@ local.properties
 .failed
 .last_rev_parse
 desktop/build/
+shared-ui/build/
 *.json
 desktop/safe.db*
 desktop/tpm_keys.txt

@@ -32,6 +32,10 @@ class SiteEntryListScreen :
     @Suppress("FlowOperatorInvokedInComposition")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (checkShouldLaunchLoginScreen(this)) {
+            finish()
+            return
+        }
         categoryId =
             savedInstanceState?.getLong(CATEGORY_ID) ?: intent.getLongExtra(CATEGORY_ID, -1)
         require(categoryId != -1L) { "You have to pass a proper category" }

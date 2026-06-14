@@ -9,14 +9,6 @@ import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
 import androidx.compose.ui.test.hasTestTag
 import fi.iki.ede.safe.BuildConfig
 
-fun Modifier.testTag(tag: TestTag) = semantics(
-    properties = {
-        // Make sure we don't leak stuff to production
-        if (BuildConfig.DEBUG) {
-            testTag = tag.name
-        }
-    }
-)
 
 fun SemanticsNodeInteractionsProvider.onAllNodesWithTag(
     testTag: TestTag,

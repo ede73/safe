@@ -20,6 +20,12 @@ import fi.iki.ede.theme.SafeThemeSurface
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
+import fi.iki.ede.datamodel.DataModel
+import kotlinx.coroutines.launch
+
 @Composable
 @ExperimentalTime
 @ExperimentalFoundationApi
@@ -29,6 +35,9 @@ internal fun SiteEntryListCompose(
     siteEntriesState: List<DecryptableSiteEntry>
 ) {
     val add = setupActivityResultLauncher {/*  nothing to do anymore (thanks flow!)*/ }
+    val categoriesState by DataModel.categoriesStateFlow.collectAsState(initial = emptyList())
+    val coroutineScope = rememberCoroutineScope()
+
     SafeTheme {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
@@ -48,7 +57,30 @@ internal fun SiteEntryListCompose(
             Column(
                 modifier = Modifier.padding(innerPadding),
             ) {
-                SiteEntryList(siteEntriesState)
+                SiteEntryList(
+                    siteEntries = siteEntriesState,
+                    categoriesState = categoriesState,
+                    onSiteEntryClick = { siteEntry ->
+                        context?.let { ctx ->
+                            add.launch(
+                                IntentManager.getEditSiteEntryIntent(
+                                    ctx,
+                                    siteEntry.id!!
+                                )
+                            )
+                        }
+                    },
+                    onDeleteSiteEntry = { siteEntry ->
+                        coroutineScope.launch {
+                            DataModel.deleteSiteEntry(siteEntry)
+                        }
+                    },
+                    onMoveSiteEntry = { siteEntry, newCategory ->
+                        coroutineScope.launch {
+                            DataModel.moveSiteEntry(siteEntry, newCategory)
+                        }
+                    }
+                )
             }
         }
     }

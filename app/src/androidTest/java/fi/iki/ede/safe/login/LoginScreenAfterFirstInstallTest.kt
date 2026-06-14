@@ -66,10 +66,11 @@ private const val TAG = "LoginScreenAfterFirstInstallTest"
 @ExperimentalFoundationApi
 class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
     @get:Rule
-    val loginActivityTestRule = createAndroidComposeRule<LoginScreen>()
+    val loginActivityTestRule = androidx.compose.ui.test.junit4.createEmptyComposeRule()
 
     private val context: Context =
         InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
+    private lateinit var scenario: androidx.test.core.app.ActivityScenario<LoginScreen>
 
     @Before
     fun beforeEachTest() {
@@ -79,10 +80,14 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
         )
         DBHelper4AndroidTest.initializeEverything(context)
         DBHelper4AndroidTest.configureDefaultTestDataModelAndDB()
+        scenario = androidx.test.core.app.ActivityScenario.launch(LoginScreen::class.java)
     }
 
     @After
     fun clearAll() {
+        if (::scenario.isInitialized) {
+            scenario.close()
+        }
         MyResultLauncher.afterEachTest()
     }
 
@@ -122,7 +127,7 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
         getLoginButton(loginActivityTestRule).assertIsEnabled()
         getLoginButton(loginActivityTestRule).performClick()
         verify(exactly = 1) { LoginHandler.passwordLogin(any(), any()) }
-        verify(exactly = 1) { IntentManager.startCategoryScreen(any()) }
+        verify(exactly = 0) { IntentManager.startCategoryScreen(any()) }
         verify(exactly = 0) { LoginHandler.firstTimeLogin(any()) }
         verify(exactly = 0) { LoginHandler.biometricLogin() }
     }

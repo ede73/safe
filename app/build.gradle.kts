@@ -255,6 +255,8 @@ dependencies {
     implementation(project(":notifications"))
     implementation(project(":safephoto"))
     implementation(project(":statemachine"))
+    implementation(project(":shared-ui"))
+
 
     lintChecks(project(":app:SafeLinter"))
 

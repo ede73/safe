@@ -26,6 +26,11 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
 
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import fi.iki.ede.safe.splits.IntentManager
+import fi.iki.ede.safe.ui.composable.CategoryList
+
 @ExperimentalFoundationApi
 @Composable
 @ExperimentalTime
@@ -35,6 +40,7 @@ internal fun CategoryListScreenCompose(
         emptyList()
     )
 ) {
+    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     // TODO: Either new kotlin, coroutines or both, this is a linter error now
     val categoriesState by flow.map { categories -> categories.sortedBy { it.plainName.lowercase() } }
@@ -57,7 +63,7 @@ internal fun CategoryListScreenCompose(
             ) {
                 if (displayAddCategoryDialog.value) {
                     AddOrEditCategory(
-                        textId = R.string.category_list_edit_category,
+                        titleText = stringResource(id = R.string.category_list_edit_category),
                         categoryName = "",
                         onSubmit = {
                             if (!TextUtils.isEmpty(it)) {
@@ -71,7 +77,25 @@ internal fun CategoryListScreenCompose(
                             displayAddCategoryDialog.value = false
                         })
                 }
-                CategoryList(categoriesState)
+                CategoryList(
+                    categories = categoriesState,
+                    onCategoryClick = { category ->
+                        IntentManager.startSiteEntryListScreen(context, category.id!!)
+                    },
+                    onRenameCategory = { category, newName ->
+                        val entry = DecryptableCategoryEntry()
+                        entry.id = category.id
+                        entry.encryptedName = newName.encrypt()
+                        coroutineScope.launch {
+                            DataModel.addOrEditCategory(entry)
+                        }
+                    },
+                    onDeleteCategory = { category ->
+                        coroutineScope.launch {
+                            DataModel.deleteCategory(category)
+                        }
+                    }
+                )
             }
         }
     }

@@ -12,12 +12,12 @@ data class IVCipherText(val iv: ByteArray, val cipherText: ByteArray) {
 
     @Deprecated("Try not to use, depends on actual generated keys (IV might be variable in the future)")
     constructor(ivLength: Int, ivAndCipherText: ByteArray) : this(
-        if (ivAndCipherText.isNotEmpty()) {
+        if (ivAndCipherText.size >= ivLength) {
             ivAndCipherText.copyOfRange(0, ivLength)
         } else {
-            byteArrayOf()
+            ivAndCipherText
         },
-        if (ivAndCipherText.isNotEmpty()) {
+        if (ivAndCipherText.size >= ivLength) {
             ivAndCipherText.copyOfRange(ivLength, ivAndCipherText.size)
         } else {
             byteArrayOf()

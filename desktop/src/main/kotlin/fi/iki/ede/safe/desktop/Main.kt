@@ -12,7 +12,10 @@ import fi.iki.ede.safe.ui.composable.DesktopNavigation
 import fi.iki.ede.safe.ui.composable.DesktopSiteEntryNavigation
 import fi.iki.ede.safe.ui.composable.CategoryList
 import fi.iki.ede.safe.ui.composable.SiteEntryList
+import fi.iki.ede.safe.ui.composable.SiteEntryView
+import fi.iki.ede.safe.ui.SharedLoginScreen
 import fi.iki.ede.preferences.Preferences
+
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
@@ -188,6 +191,7 @@ fun LoginScreen() {
     ) {
         if (isLoggedIn) {
             val currentCategory = activeCategory
+            val categories = remember(dbRefreshTrigger) { db.fetchAllCategoryRows() }
 
             Card(
                 modifier = Modifier
@@ -202,7 +206,6 @@ fun LoginScreen() {
             ) {
                 if (currentCategory == null) {
                     // --- CATEGORY LIST SCREEN ---
-                    val categories = remember(dbRefreshTrigger) { db.fetchAllCategoryRows() }
 
                     Column(
                         modifier = Modifier.padding(24.dp).fillMaxSize(),
@@ -303,7 +306,24 @@ fun LoginScreen() {
                         )
 
                         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                            CategoryList(categories)
+                            CategoryList(
+                                categories = categories,
+                                onCategoryClick = { category ->
+                                    DesktopNavigation.activeCategory = category
+                                },
+                                onRenameCategory = { category, newName ->
+                                    val entry = DecryptableCategoryEntry().apply {
+                                        id = category.id
+                                        encryptedName = newName.encrypt()
+                                    }
+                                    db.updateCategory(category.id!!, entry)
+                                    DesktopNavigation.dbRefreshTrigger++
+                                },
+                                onDeleteCategory = { category ->
+                                    db.deleteCategory(category.id!!)
+                                    DesktopNavigation.dbRefreshTrigger++
+                                }
+                            )
                         }
                     }
                 } else {
@@ -376,7 +396,17 @@ fun LoginScreen() {
                         HorizontalDivider(color = Color(0xFF444466), thickness = 1.dp)
 
                         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                            SiteEntryList(siteEntries)
+                            SiteEntryList(
+                                siteEntries = siteEntries,
+                                categoriesState = categories,
+                                onSiteEntryClick = { siteEntry ->
+                                    DesktopSiteEntryNavigation.activeSiteEntry = siteEntry
+                                },
+                                onDeleteSiteEntry = { siteEntry ->
+                                    db.hardDeleteSiteEntry(siteEntry.id!!)
+                                    DesktopNavigation.dbRefreshTrigger++
+                                }
+                            )
                         }
                     }
                 }
@@ -415,260 +445,80 @@ fun LoginScreen() {
                     }
                 }
             } else {
-                Card(
-                    modifier = Modifier
-                        .width(360.dp)
-                        .padding(16.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFF1e1e2e).copy(alpha = 0.9f)
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Text(
-                            "🔐",
-                            fontSize = 48.sp
-                        )
-
-                        Text(
-                            "Safe",
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFFe94560)
-                        )
-
-                        Text(
-                            "Password Manager",
-                            fontSize = 14.sp,
-                            color = Color(0xFF8899aa)
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        if (isFirstTimeLogin) {
-                            OutlinedTextField(
-                                value = password,
-                                onValueChange = { password = it },
-                                label = { Text("Choose Master Password") },
-                                visualTransformation = if (passwordVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
-                                trailingIcon = {
-                                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                        Text(if (passwordVisible) "🙈" else "👁️", fontSize = 14.sp)
-                                    }
-                                },
-                                singleLine = true,
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color(0xFFe94560),
-                                    focusedLabelColor = Color(0xFFe94560),
-                                    unfocusedBorderColor = Color(0xFF444466),
-                                    unfocusedLabelColor = Color(0xFF8899aa),
-                                    cursorColor = Color(0xFFe94560),
-                                    focusedTextColor = Color.White,
-                                    unfocusedTextColor = Color.White
-                                )
-                            )
-
-                            OutlinedTextField(
-                                value = confirmPassword,
-                                onValueChange = { confirmPassword = it },
-                                label = { Text("Confirm Master Password") },
-                                visualTransformation = if (confirmPasswordVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
-                                trailingIcon = {
-                                    IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
-                                        Text(if (confirmPasswordVisible) "🙈" else "👁️", fontSize = 14.sp)
-                                    }
-                                },
-                                singleLine = true,
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color(0xFFe94560),
-                                    focusedLabelColor = Color(0xFFe94560),
-                                    unfocusedBorderColor = Color(0xFF444466),
-                                    unfocusedLabelColor = Color(0xFF8899aa),
-                                    cursorColor = Color(0xFFe94560),
-                                    focusedTextColor = Color.White,
-                                    unfocusedTextColor = Color.White
-                                )
-                            )
-
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Checkbox(
-                                    checked = registerFingerprint,
-                                    onCheckedChange = { registerFingerprint = it },
-                                    colors = CheckboxDefaults.colors(
-                                        checkedColor = Color(0xFFe94560),
-                                        uncheckedColor = Color(0xFF444466),
-                                        checkmarkColor = Color.White
-                                    )
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Register fingerprint after successful login", color = Color(0xFF8899aa), fontSize = 12.sp)
+                SharedLoginScreen(
+                    isFirstTimeLogin = isFirstTimeLogin,
+                    isBiometricsEnabled = isBiometricsEnabled,
+                    statusMessage = statusMessage,
+                    onCreateVault = { pwd, registerBio ->
+                        statusMessage = "Creating vault..."
+                        try {
+                            val (salt, cipheredKey) = fi.iki.ede.crypto.keystore.KeyStoreHelper.createNewKey(fi.iki.ede.crypto.Password(pwd))
+                            db.storeSaltAndEncryptedMasterKey(salt, cipheredKey)
+                            
+                            val privKey = fi.iki.ede.crypto.keystore.KeyStoreHelper.getLoadedPrivateKey()
+                            val pubKey = fi.iki.ede.crypto.keystore.KeyStoreHelper.getLoadedPublicKey()
+                            if (privKey != null && pubKey != null) {
+                                val privateKeyBase64 = java.util.Base64.getEncoder().encodeToString(privKey.encoded)
+                                val publicKeyBase64 = java.util.Base64.getEncoder().encodeToString(pubKey.encoded)
+                                db.storeTpmKeys(privateKeyBase64, publicKeyBase64)
                             }
 
-                            Button(
-                                onClick = {
-                                    statusMessage = "Creating vault..."
-                                    try {
-                                        val (salt, cipheredKey) = fi.iki.ede.crypto.keystore.KeyStoreHelper.createNewKey(fi.iki.ede.crypto.Password(password))
-                                        db.storeSaltAndEncryptedMasterKey(salt, cipheredKey)
-                                        
-                                        val privKey = fi.iki.ede.crypto.keystore.KeyStoreHelper.getLoadedPrivateKey()
-                                        val pubKey = fi.iki.ede.crypto.keystore.KeyStoreHelper.getLoadedPublicKey()
-                                        if (privKey != null && pubKey != null) {
-                                            val privateKeyBase64 = java.util.Base64.getEncoder().encodeToString(privKey.encoded)
-                                            val publicKeyBase64 = java.util.Base64.getEncoder().encodeToString(pubKey.encoded)
-                                            db.storeTpmKeys(privateKeyBase64, publicKeyBase64)
-                                        }
-
-                                        if (registerFingerprint) {
-                                            val encryptedKey = fi.iki.ede.crypto.keystore.KeyStoreHelper.getBiometricEncryptedMasterKey()
-                                            if (encryptedKey != null) {
-                                                DesktopSettings.registerBiometrics(encryptedKey)
-                                                isBiometricsEnabled = true
-                                            }
-                                        }
-
-                                        isLoggedIn = true
-                                        statusMessage = "Unlock successful! Logged in."
-                                        isFirstTimeLogin = false
-                                    } catch (ex: Exception) {
-                                        statusMessage = "Failed to create vault: ${ex.message}"
-                                    }
-                                },
-                                enabled = password.isNotEmpty() && password == confirmPassword && password.length >= 6,
-                                modifier = Modifier.fillMaxWidth().height(48.dp),
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFFe94560)
-                                )
-                            ) {
-                                Text("Create Vault", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                        } else {
-                            if (isBiometricsEnabled) {
-                                Button(
-                                    onClick = {
-                                        showBiometricsScanning = true
-                                    },
-                                    modifier = Modifier.fillMaxWidth().height(48.dp),
-                                    shape = RoundedCornerShape(8.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFF34b38a)
-                                    )
-                                ) {
-                                    Text("👆 Login with biometrics", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                                }
-
-                                Text("OR", color = Color(0xFF8899aa), fontSize = 12.sp)
-                            }
-
-                            OutlinedTextField(
-                                value = password,
-                                onValueChange = { password = it },
-                                label = { Text("Master Password") },
-                                visualTransformation = if (passwordVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
-                                trailingIcon = {
-                                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                                        Text(if (passwordVisible) "🙈" else "👁️", fontSize = 14.sp)
-                                    }
-                                },
-                                singleLine = true,
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color(0xFFe94560),
-                                    focusedLabelColor = Color(0xFFe94560),
-                                    unfocusedBorderColor = Color(0xFF444466),
-                                    unfocusedLabelColor = Color(0xFF8899aa),
-                                    cursorColor = Color(0xFFe94560),
-                                    focusedTextColor = Color.White,
-                                    unfocusedTextColor = Color.White
-                                )
-                            )
-
-                            if (!isBiometricsEnabled) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Checkbox(
-                                        checked = registerFingerprint,
-                                        onCheckedChange = { registerFingerprint = it },
-                                        colors = CheckboxDefaults.colors(
-                                            checkedColor = Color(0xFFe94560),
-                                            uncheckedColor = Color(0xFF444466),
-                                            checkmarkColor = Color.White
-                                        )
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("Register fingerprint after successful login", color = Color(0xFF8899aa), fontSize = 12.sp)
+                            if (registerBio) {
+                                val encryptedKey = fi.iki.ede.crypto.keystore.KeyStoreHelper.getBiometricEncryptedMasterKey()
+                                if (encryptedKey != null) {
+                                    DesktopSettings.registerBiometrics(encryptedKey)
+                                    isBiometricsEnabled = true
                                 }
                             }
 
-                            Button(
-                                onClick = {
-                                    statusMessage = "Authenticating..."
-                                    try {
-                                        // Existing login - fetch and decrypt master key
-                                        val (salt, cipheredKey) = db.fetchSaltAndEncryptedMasterKey()
-                                        
-                                        // Make sure TPM keys are loaded from DB into KeyStoreHelper
-                                        val tpmKeys = db.fetchTpmKeys()
-                                        if (tpmKeys != null) {
-                                            val keyFactory = java.security.KeyFactory.getInstance("RSA")
-                                            val privateKeyBytes = java.util.Base64.getDecoder().decode(tpmKeys.first)
-                                            val publicKeyBytes = java.util.Base64.getDecoder().decode(tpmKeys.second)
-                                            val privateKey = keyFactory.generatePrivate(java.security.spec.PKCS8EncodedKeySpec(privateKeyBytes))
-                                            val publicKey = keyFactory.generatePublic(java.security.spec.X509EncodedKeySpec(publicKeyBytes))
-                                            fi.iki.ede.crypto.keystore.KeyStoreHelper.setLoadedKeys(privateKey, publicKey)
-                                        }
-
-                                        fi.iki.ede.crypto.keystore.KeyStoreHelper.importExistingEncryptedMasterKey(
-                                            fi.iki.ede.crypto.SaltedPassword(salt, fi.iki.ede.crypto.Password(password)),
-                                            cipheredKey
-                                        )
-
-                                        if (registerFingerprint) {
-                                            val encryptedKey = fi.iki.ede.crypto.keystore.KeyStoreHelper.getBiometricEncryptedMasterKey()
-                                            if (encryptedKey != null) {
-                                                DesktopSettings.registerBiometrics(encryptedKey)
-                                                isBiometricsEnabled = true
-                                            }
-                                        }
-
-                                        isLoggedIn = true
-                                        statusMessage = "Unlock successful! Logged in."
-                                    } catch (ex: Exception) {
-                                        statusMessage = "Invalid master password"
-                                    }
-                                },
-                                modifier = Modifier.fillMaxWidth().height(48.dp),
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFFe94560)
-                                )
-                            ) {
-                                Text("Unlock", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                            }
+                            isLoggedIn = true
+                            statusMessage = "Unlock successful! Logged in."
+                            isFirstTimeLogin = false
+                        } catch (ex: Exception) {
+                            statusMessage = "Failed to create vault: ${ex.message}"
                         }
+                    },
+                    onUnlock = { pwd, registerBio ->
+                        statusMessage = "Authenticating..."
+                        try {
+                            val (salt, cipheredKey) = db.fetchSaltAndEncryptedMasterKey()
+                            
+                            val tpmKeys = db.fetchTpmKeys()
+                            if (tpmKeys != null) {
+                                val keyFactory = java.security.KeyFactory.getInstance("RSA")
+                                val privateKeyBytes = java.util.Base64.getDecoder().decode(tpmKeys.first)
+                                val publicKeyBytes = java.util.Base64.getDecoder().decode(tpmKeys.second)
+                                val privateKey = keyFactory.generatePrivate(java.security.spec.PKCS8EncodedKeySpec(privateKeyBytes))
+                                val publicKey = keyFactory.generatePublic(java.security.spec.X509EncodedKeySpec(publicKeyBytes))
+                                fi.iki.ede.crypto.keystore.KeyStoreHelper.setLoadedKeys(privateKey, publicKey)
+                            }
 
-                        Text(
-                            statusMessage,
-                            fontSize = 12.sp,
-                            color = Color(0xFF8899aa)
-                        )
+                            fi.iki.ede.crypto.keystore.KeyStoreHelper.importExistingEncryptedMasterKey(
+                                fi.iki.ede.crypto.SaltedPassword(salt, fi.iki.ede.crypto.Password(pwd)),
+                                cipheredKey
+                            )
+
+                            if (registerBio) {
+                                val encryptedKey = fi.iki.ede.crypto.keystore.KeyStoreHelper.getBiometricEncryptedMasterKey()
+                                if (encryptedKey != null) {
+                                    DesktopSettings.registerBiometrics(encryptedKey)
+                                    isBiometricsEnabled = true
+                                }
+                            }
+
+                            isLoggedIn = true
+                            statusMessage = "Unlock successful! Logged in."
+                        } catch (ex: Exception) {
+                            statusMessage = "Invalid master password"
+                        }
+                    },
+                    onBiometricLogin = {
+                        showBiometricsScanning = true
                     }
-                }
+                )
             }
         }
+
 
         // --- Add Category Dialog Overlay ---
         if (showAddCategoryDialog) {
@@ -774,7 +624,8 @@ fun LoginScreen() {
             ) {
                 Card(
                     modifier = Modifier
-                        .width(400.dp)
+                        .width(440.dp)
+                        .fillMaxHeight(0.9f)
                         .padding(16.dp)
                         .clickable(enabled = false, onClick = {}),
                     shape = RoundedCornerShape(16.dp),
@@ -783,306 +634,161 @@ fun LoginScreen() {
                     ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .padding(20.dp)
-                            .verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
+                    Column(modifier = Modifier.padding(16.dp).weight(1f)) {
                         Text(
                             if (activeSiteEntry.id == null) "Add Password Entry" else "Password Entry Details",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = Color.White,
+                            modifier = Modifier.padding(bottom = 8.dp)
                         )
-
-                        OutlinedTextField(
-                            value = editDesc,
-                            onValueChange = { editDesc = it },
-                            label = { Text("Description") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFe94560),
-                                focusedLabelColor = Color(0xFFe94560),
-                                unfocusedBorderColor = Color(0xFF444466),
-                                unfocusedLabelColor = Color(0xFF8899aa),
-                                cursorColor = Color(0xFFe94560),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
-                            )
-                        )
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            OutlinedTextField(
-                                value = editWeb,
-                                onValueChange = { editWeb = it },
-                                label = { Text("Website") },
-                                singleLine = true,
-                                modifier = Modifier.weight(1f),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color(0xFFe94560),
-                                    focusedLabelColor = Color(0xFFe94560),
-                                    unfocusedBorderColor = Color(0xFF444466),
-                                    unfocusedLabelColor = Color(0xFF8899aa),
-                                    cursorColor = Color(0xFFe94560),
-                                    focusedTextColor = Color.White,
-                                    unfocusedTextColor = Color.White
-                                )
-                            )
-                            if (editWeb.isNotBlank()) {
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Button(
-                                    onClick = {
-                                        openBrowser(editWeb)
-                                    },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4e54c8)),
-                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
-                                ) {
-                                    Text("Visit", fontSize = 12.sp)
-                                }
-                            }
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            OutlinedTextField(
-                                value = editUser,
-                                onValueChange = { editUser = it },
-                                label = { Text("Username") },
-                                singleLine = true,
-                                modifier = Modifier.weight(1f),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color(0xFFe94560),
-                                    focusedLabelColor = Color(0xFFe94560),
-                                    unfocusedBorderColor = Color(0xFF444466),
-                                    unfocusedLabelColor = Color(0xFF8899aa),
-                                    cursorColor = Color(0xFFe94560),
-                                    focusedTextColor = Color.White,
-                                    unfocusedTextColor = Color.White
-                                )
-                            )
-                            if (editUser.isNotBlank()) {
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Button(
-                                    onClick = {
-                                        copyToClipboard(editUser)
-                                    },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4e54c8)),
-                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
-                                ) {
-                                    Text("Copy", fontSize = 12.sp)
-                                }
-                            }
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            OutlinedTextField(
-                                value = if (editPassVisible) editPass else "••••••••",
-                                onValueChange = { if (editPassVisible) editPass = it },
-                                label = { Text("Password") },
-                                singleLine = true,
-                                readOnly = !editPassVisible,
-                                modifier = Modifier.weight(1f),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color(0xFFe94560),
-                                    focusedLabelColor = Color(0xFFe94560),
-                                    unfocusedBorderColor = Color(0xFF444466),
-                                    unfocusedLabelColor = Color(0xFF8899aa),
-                                    cursorColor = Color(0xFFe94560),
-                                    focusedTextColor = Color.White,
-                                    unfocusedTextColor = Color.White
-                                )
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            IconButton(onClick = { editPassVisible = !editPassVisible }) {
-                                Text(if (editPassVisible) "🙈" else "👁️", fontSize = 14.sp)
-                            }
-                            if (editPass.isNotBlank()) {
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Button(
-                                    onClick = {
-                                        copyToClipboard(editPass)
-                                    },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4e54c8)),
-                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
-                                ) {
-                                    Text("Copy", fontSize = 12.sp)
-                                }
-                            }
-                        }
-
-                        Button(
-                            onClick = {
-                                val newSecurePass = (1..16).map {
-                                    (('a'..'z') + ('A'..'Z') + ('0'..'9') + listOf('!', '@', '#', '$', '%', '&')).random()
-                                }.joinToString("")
-                                editPass = newSecurePass
-                                editPassVisible = true
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF34b38a)),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Generate Secure Password", fontSize = 12.sp)
-                        }
-
-                        OutlinedTextField(
-                            value = editNote,
-                            onValueChange = { editNote = it },
-                            label = { Text("Notes") },
-                            visualTransformation = if (editNoteVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
-                            trailingIcon = {
-                                IconButton(onClick = { editNoteVisible = !editNoteVisible }) {
-                                    Text(if (editNoteVisible) "🙈" else "👁️", fontSize = 14.sp)
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            maxLines = 3,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFe94560),
-                                focusedLabelColor = Color(0xFFe94560),
-                                unfocusedBorderColor = Color(0xFF444466),
-                                unfocusedLabelColor = Color(0xFF8899aa),
-                                cursorColor = Color(0xFFe94560),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
-                            )
-                        )
-
-                        HorizontalDivider(color = Color(0xFF444466), thickness = 1.dp)
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("Extensions", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                            Button(
-                                onClick = { editExtensions.add(Pair("", "")) },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4e54c8)),
-                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                                shape = RoundedCornerShape(4.dp)
-                            ) {
-                                Text("➕ Add", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                        }
-
-                        editExtensions.forEachIndexed { index, pair ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                OutlinedTextField(
-                                    value = pair.first,
-                                    onValueChange = { newKey ->
-                                        editExtensions[index] = Pair(newKey, pair.second)
-                                    },
-                                    label = { Text("Type") },
-                                    singleLine = true,
-                                    modifier = Modifier.weight(0.4f),
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = Color(0xFFe94560),
-                                        focusedLabelColor = Color(0xFFe94560),
-                                        unfocusedBorderColor = Color(0xFF444466),
-                                        unfocusedLabelColor = Color(0xFF8899aa),
-                                        cursorColor = Color(0xFFe94560),
-                                        focusedTextColor = Color.White,
-                                        unfocusedTextColor = Color.White
-                                    )
-                                )
-                                OutlinedTextField(
-                                    value = pair.second,
-                                    onValueChange = { newValue ->
-                                        editExtensions[index] = Pair(pair.first, newValue)
-                                    },
-                                    label = { Text("Value") },
-                                    singleLine = true,
-                                    modifier = Modifier.weight(0.5f),
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = Color(0xFFe94560),
-                                        focusedLabelColor = Color(0xFFe94560),
-                                        unfocusedBorderColor = Color(0xFF444466),
-                                        unfocusedLabelColor = Color(0xFF8899aa),
-                                        cursorColor = Color(0xFFe94560),
-                                        focusedTextColor = Color.White,
-                                        unfocusedTextColor = Color.White
-                                    )
-                                )
-                                IconButton(
-                                    onClick = { editExtensions.removeAt(index) },
-                                    modifier = Modifier.weight(0.1f)
-                                ) {
-                                    Text("🗑️", fontSize = 14.sp)
-                                }
-                            }
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            if (activeSiteEntry.id != null) {
-                                Button(
-                                    onClick = {
-                                        db.hardDeleteSiteEntry(activeSiteEntry.id!!)
-                                        DesktopSiteEntryNavigation.activeSiteEntry = null
-                                        DesktopNavigation.dbRefreshTrigger++
-                                    },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFe94560))
-                                ) {
-                                    Text("Delete")
-                                }
-                            } else {
-                                Spacer(modifier = Modifier.width(1.dp))
-                            }
-
-                            Row {
-                                TextButton(onClick = { DesktopSiteEntryNavigation.activeSiteEntry = null }) {
-                                    Text("Cancel", color = Color(0xFF8899aa))
-                                }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Button(
-                                    onClick = {
-                                        if (editDesc.isNotBlank()) {
-                                            val updated = DecryptableSiteEntry(activeSiteEntry.categoryId ?: 0L).apply {
-                                                this.id = activeSiteEntry.id
-                                                this.description = editDesc.encrypt()
-                                                this.username = editUser.encrypt()
-                                                this.password = editPass.encrypt()
-                                                this.website = editWeb.encrypt()
-                                                this.note = editNote.encrypt()
-                                                this.deleted = activeSiteEntry.deleted
-                                                this.passwordChangedDate = activeSiteEntry.passwordChangedDate
-
-                                                val extensionsMap = editExtensions
-                                                    .filter { it.first.isNotBlank() && it.second.isNotBlank() }
-                                                    .groupBy({ it.first }, { it.second })
-                                                    .mapValues { it.value.toSet() }
-                                                this.extensions = encryptExtension(extensionsMap)
+                        Box(modifier = Modifier.weight(1f)) {
+                            SiteEntryView(
+                                description = editDesc,
+                                onDescriptionChange = { editDesc = it },
+                                website = editWeb,
+                                onWebSiteChange = { editWeb = it },
+                                username = editUser,
+                                onUsernameChange = { editUser = it },
+                                password = editPass,
+                                onPasswordChange = { editPass = it },
+                                note = editNote,
+                                onNoteChange = { editNote = it },
+                                onOpenBrowser = { openBrowser(it) },
+                                onCopyToClipboard = { copyToClipboard(it) },
+                                extensionsContent = {
+                                    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                                        HorizontalDivider(color = Color(0xFF444466), thickness = 1.dp)
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text("Extensions", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                            Button(
+                                                onClick = { editExtensions.add(Pair("", "")) },
+                                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4e54c8)),
+                                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                                shape = RoundedCornerShape(4.dp)
+                                            ) {
+                                                Text("Add", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                                             }
-                                            if (updated.id == null) {
-                                                db.addSiteEntry(updated)
-                                            } else {
-                                                db.updateSiteEntry(updated)
-                                            }
-                                            DesktopSiteEntryNavigation.activeSiteEntry = null
-                                            DesktopNavigation.dbRefreshTrigger++
                                         }
-                                    },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4e54c8))
-                                ) {
-                                    Text("Save")
+                                        editExtensions.forEachIndexed { index, pair ->
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                OutlinedTextField(
+                                                    value = pair.first,
+                                                    onValueChange = { newKey ->
+                                                        editExtensions[index] = Pair(newKey, pair.second)
+                                                    },
+                                                    label = { Text("Type") },
+                                                    singleLine = true,
+                                                    modifier = Modifier.weight(0.4f),
+                                                    colors = OutlinedTextFieldDefaults.colors(
+                                                        focusedBorderColor = Color(0xFFe94560),
+                                                        focusedLabelColor = Color(0xFFe94560),
+                                                        unfocusedBorderColor = Color(0xFF444466),
+                                                        unfocusedLabelColor = Color(0xFF8899aa),
+                                                        cursorColor = Color(0xFFe94560),
+                                                        focusedTextColor = Color.White,
+                                                        unfocusedTextColor = Color.White
+                                                    )
+                                                )
+                                                OutlinedTextField(
+                                                    value = pair.second,
+                                                    onValueChange = { newValue ->
+                                                        editExtensions[index] = Pair(pair.first, newValue)
+                                                    },
+                                                    label = { Text("Value") },
+                                                    singleLine = true,
+                                                    modifier = Modifier.weight(0.5f),
+                                                    colors = OutlinedTextFieldDefaults.colors(
+                                                        focusedBorderColor = Color(0xFFe94560),
+                                                        focusedLabelColor = Color(0xFFe94560),
+                                                        unfocusedBorderColor = Color(0xFF444466),
+                                                        unfocusedLabelColor = Color(0xFF8899aa),
+                                                        cursorColor = Color(0xFFe94560),
+                                                        focusedTextColor = Color.White,
+                                                        unfocusedTextColor = Color.White
+                                                    )
+                                                )
+                                                IconButton(
+                                                    onClick = { editExtensions.removeAt(index) },
+                                                    modifier = Modifier.weight(0.1f)
+                                                ) {
+                                                    Text("🗑️", fontSize = 14.sp)
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                bottomBarContent = {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        if (activeSiteEntry.id != null) {
+                                            Button(
+                                                onClick = {
+                                                    db.hardDeleteSiteEntry(activeSiteEntry.id!!)
+                                                    DesktopSiteEntryNavigation.activeSiteEntry = null
+                                                    DesktopNavigation.dbRefreshTrigger++
+                                                },
+                                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFe94560))
+                                            ) {
+                                                Text("Delete")
+                                            }
+                                        } else {
+                                            Spacer(modifier = Modifier.width(1.dp))
+                                        }
+
+                                        Row {
+                                            TextButton(onClick = { DesktopSiteEntryNavigation.activeSiteEntry = null }) {
+                                                Text("Cancel", color = Color(0xFF8899aa))
+                                            }
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Button(
+                                                onClick = {
+                                                    if (editDesc.isNotBlank()) {
+                                                        val updated = DecryptableSiteEntry(activeSiteEntry.categoryId ?: 0L).apply {
+                                                            this.id = activeSiteEntry.id
+                                                            this.description = editDesc.encrypt()
+                                                            this.username = editUser.encrypt()
+                                                            this.password = editPass.encrypt()
+                                                            this.website = editWeb.encrypt()
+                                                            this.note = editNote.encrypt()
+                                                            this.deleted = activeSiteEntry.deleted
+                                                            this.passwordChangedDate = activeSiteEntry.passwordChangedDate
+
+                                                            val extensionsMap = editExtensions
+                                                                .filter { it.first.isNotBlank() && it.second.isNotBlank() }
+                                                                .groupBy({ it.first }, { it.second })
+                                                                .mapValues { it.value.toSet() }
+                                                            this.extensions = encryptExtension(extensionsMap)
+                                                        }
+                                                        if (updated.id == null) {
+                                                            db.addSiteEntry(updated)
+                                                        } else {
+                                                            db.updateSiteEntry(updated)
+                                                        }
+                                                        DesktopSiteEntryNavigation.activeSiteEntry = null
+                                                        DesktopNavigation.dbRefreshTrigger++
+                                                    }
+                                                },
+                                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4e54c8))
+                                            ) {
+                                                Text("Save")
+                                            }
+                                        }
+                                    }
                                 }
-                            }
+                            )
                         }
                     }
                 }

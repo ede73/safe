@@ -55,13 +55,17 @@ import kotlin.time.ExperimentalTime
 @ExperimentalFoundationApi
 class LoginScreenFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
     @get:Rule
-    val loginActivityTestRule = createAndroidComposeRule<LoginScreen>()
+    val loginActivityTestRule = androidx.compose.ui.test.junit4.createEmptyComposeRule()
 
     private val context: Context =
         InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
+    private lateinit var scenario: androidx.test.core.app.ActivityScenario<LoginScreen>
 
     @After
     fun clearAll() {
+        if (::scenario.isInitialized) {
+            scenario.close()
+        }
         MyResultLauncher.afterEachTest()
     }
 
@@ -75,6 +79,7 @@ class LoginScreenFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
         DBHelper4AndroidTest.configureDefaultTestDataModelAndDB()
         DBHelperFactory.getDBHelper()
             .storeSaltAndEncryptedMasterKey(Salt.getEmpty(), IVCipherText.getEmpty())
+        scenario = androidx.test.core.app.ActivityScenario.launch(LoginScreen::class.java)
     }
 
     @Test
