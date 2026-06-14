@@ -121,33 +121,7 @@ class DBHelper {
         return result
     }
 
-    var skipPrepopulate = false
-
-    private fun checkPrepopulate() {
-        if (skipPrepopulate) return
-        val db = readDb()
-        if (db["categories"] == null || db["categories"]!!.isEmpty()) {
-            val mutableDb = db.toMutableMap()
-            
-            // Add default categories
-            val categoriesTable = mutableMapOf<String, List<String>>()
-            categoriesTable["1"] = listOf("Social Media".encrypt().serialize())
-            categoriesTable["2"] = listOf("Email Accounts".encrypt().serialize())
-            categoriesTable["3"] = listOf("Banking & Finance".encrypt().serialize())
-            mutableDb["categories"] = categoriesTable
-
-            // Add default site entries
-            val siteEntriesTable = mutableMapOf<String, List<String>>()
-            // id, categoryId, description, username, password, website, note, deleted
-            siteEntriesTable["1"] = listOf("1", "Facebook".encrypt().serialize(), "fb_user".encrypt().serialize(), "fb_pass123".encrypt().serialize(), "facebook.com".encrypt().serialize(), "Personal account".encrypt().serialize(), "0")
-            siteEntriesTable["2"] = listOf("1", "Twitter/X".encrypt().serialize(), "x_user".encrypt().serialize(), "x_pass456".encrypt().serialize(), "x.com".encrypt().serialize(), "Work account".encrypt().serialize(), "0")
-            siteEntriesTable["3"] = listOf("2", "Gmail".encrypt().serialize(), "email_user@gmail.com".encrypt().serialize(), "gmail_pass789".encrypt().serialize(), "gmail.com".encrypt().serialize(), "Primary email".encrypt().serialize(), "0")
-            siteEntriesTable["4"] = listOf("3", "Chase Bank".encrypt().serialize(), "banker_joe".encrypt().serialize(), "chase_secure_99".encrypt().serialize(), "chase.com".encrypt().serialize(), "Checking account".encrypt().serialize(), "0")
-            mutableDb["site_entries"] = siteEntriesTable
-
-            writeDb(mutableDb)
-        }
-    }
+    // PR 5 Comment addressed: Removed production mock database prepopulation checkPrepopulate() method
 
     fun storeSaltAndEncryptedMasterKey(salt: Salt, ivCipher: IVCipherText) {
         val db = readDb().toMutableMap()
@@ -155,9 +129,6 @@ class DBHelper {
         keysTable["1"] = listOf(salt.salt.toHexString(), ivCipher.cipherText.toHexString(), ivCipher.iv.toHexString())
         db["keys"] = keysTable
         writeDb(db)
-        
-        // Populate default mock data after master key is created
-        checkPrepopulate()
     }
 
     fun fetchSaltAndEncryptedMasterKey(): Pair<Salt, IVCipherText> {
@@ -188,7 +159,6 @@ class DBHelper {
     }
 
     fun addCategory(entry: DecryptableCategoryEntry): DBID {
-        checkPrepopulate()
         val db = readDb().toMutableMap()
         val categoriesTable = db["categories"]?.toMutableMap() ?: mutableMapOf()
         val nextId = ((categoriesTable.keys.mapNotNull { it.toLongOrNull() }.maxOrNull() ?: 0L) + 1L)
@@ -217,7 +187,6 @@ class DBHelper {
     }
 
     fun fetchAllCategoryRows(categoriesFlow: MutableStateFlow<List<DecryptableCategoryEntry>>? = null): List<DecryptableCategoryEntry> {
-        checkPrepopulate()
         val db = readDb()
         val categoriesTable = db["categories"] ?: return emptyList()
         val siteEntriesTable = db["site_entries"] ?: emptyMap()
@@ -251,7 +220,6 @@ class DBHelper {
         softDeletedOnly: Boolean = false,
         siteEntriesFlow: MutableStateFlow<List<DecryptableSiteEntry>>? = null
     ): List<DecryptableSiteEntry> {
-        checkPrepopulate()
         val db = readDb()
         val siteEntriesTable = db["site_entries"] ?: return emptyList()
         

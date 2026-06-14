@@ -102,6 +102,41 @@ class DecryptableSiteEntry(categoryId: Long) {
                     Logger.d(TAG, plainExtensions.values.joinToString(""))
                 }
 
+    // Addressed PR5 comment: Reverted isSame and areMapsDifferent back inside the class definition
+    fun isSame(
+        description: String,
+        website: String,
+        username: IVCipherText,
+        password: IVCipherText,
+        passwordChangedDate: Instant?,
+        note: IVCipherText,
+        photo: PlatformBitmap?,
+        extensions: Map<String, Set<String>>
+    ) = cachedPlainDescription == description &&
+            plainWebsite == website &&
+            plainUsername == username.decrypt() &&
+            isSamePassword(password) &&
+            this.passwordChangedDate == passwordChangedDate &&
+            plainNote == note.decrypt() &&
+            sameAs(photo, plainPhoto) &&
+            !areMapsDifferent(extensions, this.plainExtensions)
+
+    private fun areMapsDifferent(
+        map1: Map<String, Set<String>>,
+        map2: Map<String, Set<String>>
+    ): Boolean {
+        val cleanMap1 = map1.mapValues { (_, value) -> value.filterNot { it.isBlank() }.toSet() }
+            .filterNot { it.value.isEmpty() }
+        val cleanMap2 = map2.mapValues { (_, value) -> value.filterNot { it.isBlank() }.toSet() }
+            .filterNot { it.value.isEmpty() }
+
+        if (cleanMap1.keys != cleanMap2.keys) return true
+
+        return cleanMap1.any { (key, value) ->
+            value != cleanMap2[key]
+        }
+    }
+
     fun isSamePassword(comparePassword: IVCipherText) = plainPassword == comparePassword.decrypt()
 
     // Flow state is annoying since it requires NEW ENTITIES for changes to register
