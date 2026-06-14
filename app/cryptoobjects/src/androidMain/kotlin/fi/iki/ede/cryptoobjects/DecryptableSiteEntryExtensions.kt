@@ -2,10 +2,8 @@ package fi.iki.ede.cryptoobjects
 
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.support.decrypt
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
-@ExperimentalTime
 fun DecryptableSiteEntry.isSame(
     description: String,
     website: String,

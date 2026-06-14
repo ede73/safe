@@ -345,7 +345,7 @@ fun LoginScreen() {
                         onClick = {
                             statusMessage = "Authenticating..."
                             try {
-                                val dbFile = java.io.File("safe_db.json")
+                                val dbFile = java.io.File("safe.db")
                                 if (!dbFile.exists()) {
                                     // First time login - setup password and generate keys
                                     statusMessage = "First run: Creating master and TPM keys..."

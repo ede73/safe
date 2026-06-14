@@ -1,179 +1,77 @@
 package fi.iki.ede.gpmdatamodel.db
 
-import android.content.ContentValues
-import android.database.sqlite.SQLiteDatabase
-import android.database.sqlite.SQLiteException
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.db.DBID
-import fi.iki.ede.db.GooglePasswordManager
-import fi.iki.ede.db.delete
-import fi.iki.ede.db.getDBID
-import fi.iki.ede.db.getIVCipher
-import fi.iki.ede.db.getString
-import fi.iki.ede.db.insert
-import fi.iki.ede.db.put
-import fi.iki.ede.db.query
-import fi.iki.ede.db.update
-import fi.iki.ede.db.whereEq
+import fi.iki.ede.db.SiteEntryGPMJoin
 import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpm.model.SavedGPM
-import fi.iki.ede.gpm.model.SavedGPM.Companion.makeFromEncryptedStringFields
-import fi.iki.ede.logger.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.runBlocking
 import kotlin.time.ExperimentalTime
-
-private const val TAG = "GPMDB"
 
 @ExperimentalTime
 object GPMDB {
-    private fun getReadableDatabase(): SQLiteDatabase =
-        DBHelperFactory.getDBHelper().readableDatabase
+    private val database get() = DBHelperFactory.getDBHelper().database
 
-    private fun getWritableDatabase(): SQLiteDatabase =
-        DBHelperFactory.getDBHelper().writableDatabase
+    fun getExternalTables(): List<Any> = emptyList()
 
-    // must be call early on before OPENING the DB
-    // alas this is now loose contract
-    fun getExternalTables() = listOf(GooglePasswordManager, SiteEntry2GooglePasswordManager)
+    fun upgradeTables(db: Any, upgrade: Int) {}
 
-    fun upgradeTables(db: SQLiteDatabase, upgrade: Int) {
-        if (upgrade == 4) {
-            try {
-                GooglePasswordManager.create().forEach {
-                    db.execSQL(it)
-                }
-                SiteEntry2GooglePasswordManager.create().forEach {
-                    db.execSQL(it)
-                }
-            } catch (ex: SQLiteException) {
-                Logger.i(TAG, "onUpgrade to 5: $ex")
-            }
-        }
+    fun deleteAllSavedGPMs() = runBlocking {
+        database.gpmDao().deleteAll()
+        database.siteEntryGPMJoinDao().deleteAll()
     }
 
-    // if user imports new DB , encryption changes and
-    // we don't currently convert GPMs too..all data in the table is irrevocably lost
-    fun deleteAllSavedGPMs() = getWritableDatabase().let { db ->
-        db.execSQL("DELETE FROM ${GooglePasswordManager.tableName};")
-        db.execSQL("DELETE FROM ${SiteEntry2GooglePasswordManager.tableName};")
+    fun markSavedGPMIgnored(savedGPMID: DBID): Long = runBlocking {
+        database.gpmDao().updateStatus(savedGPMID, 1).toLong()
     }
 
-    fun markSavedGPMIgnored(savedGPMID: DBID) =
-        getWritableDatabase().update(GooglePasswordManager, ContentValues().apply {
-            put(GooglePasswordManager.Columns.STATUS, 1)
-        }, whereEq(GooglePasswordManager.Columns.ID, savedGPMID)).toLong()
+    fun linkSaveGPMAndSiteEntry(siteEntryID: DBID, savedGPMID: DBID) = runBlocking {
+        database.siteEntryGPMJoinDao().insert(SiteEntryGPMJoin(siteEntryID, savedGPMID))
+    }
 
-    fun linkSaveGPMAndSiteEntry(siteEntryID: DBID, savedGPMID: DBID) =
-        getWritableDatabase().apply {
-            insert(SiteEntry2GooglePasswordManager, ContentValues().apply {
-                put(SiteEntry2GooglePasswordManager.Columns.PASSWORD_ID, siteEntryID)
-                put(SiteEntry2GooglePasswordManager.Columns.GOOGLE_ID, savedGPMID)
-            }).let { Logger.w(TAG, "DBLinker $siteEntryID to $savedGPMID") }
-        }
-
-    // TODO: block external access! Should only be accessed via datamodel
-    fun fetchAllSiteEntryGPMMappings(): Map<DBID, Set<DBID>> =
-        getReadableDatabase().let { db ->
-            db.query(
-                SiteEntry2GooglePasswordManager,
-                SiteEntry2GooglePasswordManager.Columns.entries.toSet(),
-            ).use { c ->
-                (0 until c.count)
-                    .map { _ ->
-                        c.moveToNext()
-                        c.getDBID(SiteEntry2GooglePasswordManager.Columns.PASSWORD_ID) to
-                                c.getDBID(SiteEntry2GooglePasswordManager.Columns.GOOGLE_ID)
-                    }
-                    .groupBy({ it.first }, { it.second })
-                    .mapValues { (_, values) -> values.toSet() }
-            }
-        }
+    fun fetchAllSiteEntryGPMMappings(): Map<DBID, Set<DBID>> = runBlocking {
+        database.siteEntryGPMJoinDao().getAll()
+            .groupBy({ it.passwordId }, { it.gpmId })
+            .mapValues { (_, values) -> values.toSet() }
+    }
 
     fun fetchAllSavedGPMsFromDB(
         gpmsFlow: MutableStateFlow<Set<SavedGPM>>? = null
-    ): Set<SavedGPM> =
-        getReadableDatabase().let { db ->
-            db.query(
-                GooglePasswordManager,
-                GooglePasswordManager.Columns.entries.toSet(),
-            ).use {
-                it.moveToFirst()
-                ArrayList<SavedGPM>().apply {
-                    (0 until it.count).forEach { _ ->
-                        val gpm = makeFromEncryptedStringFields(
-                            it.getDBID(GooglePasswordManager.Columns.ID),
-                            it.getIVCipher(GooglePasswordManager.Columns.NAME),
-                            it.getIVCipher(GooglePasswordManager.Columns.URL),
-                            it.getIVCipher(GooglePasswordManager.Columns.USERNAME),
-                            it.getIVCipher(GooglePasswordManager.Columns.PASSWORD),
-                            it.getIVCipher(GooglePasswordManager.Columns.NOTE),
-                            it.getDBID(GooglePasswordManager.Columns.STATUS) == 1L,
-                            it.getString(GooglePasswordManager.Columns.HASH),
-                        )
-                        add(gpm)
-                        if (gpmsFlow != null)
-                            gpmsFlow.value += gpm
-                        it.moveToNext()
-                    }
-                }.toSet()
-            }
+    ): Set<SavedGPM> = runBlocking {
+        val gpms = database.gpmDao().getAll().toSet()
+        if (gpmsFlow != null) {
+            gpmsFlow.value = gpms
         }
+        gpms
+    }
 
-    fun deleteObsoleteSavedGPMs(delete: Set<SavedGPM>) =
-        delete.forEach { savedGPM ->
-            getWritableDatabase().delete(
-                GooglePasswordManager,
-                whereEq(GooglePasswordManager.Columns.ID, savedGPM.id!!)
-            )
-        }
+    fun deleteObsoleteSavedGPMs(delete: Set<SavedGPM>) = runBlocking {
+        delete.forEach { database.gpmDao().delete(it) }
+    }
 
-
-    fun updateSavedGPMByIncomingGPM(update: Map<IncomingGPM, SavedGPM>) =
+    fun updateSavedGPMByIncomingGPM(update: Map<IncomingGPM, SavedGPM>) = runBlocking {
         update.forEach { (incomingGPM, savedGPM) ->
-            getWritableDatabase().update(
-                GooglePasswordManager,
-                ContentValues().apply {
-                    put(GooglePasswordManager.Columns.NAME, incomingGPM.name.encrypt())
-                    put(GooglePasswordManager.Columns.URL, incomingGPM.url.encrypt())
-                    put(GooglePasswordManager.Columns.USERNAME, incomingGPM.username.encrypt())
-                    put(GooglePasswordManager.Columns.PASSWORD, incomingGPM.password.encrypt())
-                    put(GooglePasswordManager.Columns.NOTE, incomingGPM.note.encrypt())
-                    put(GooglePasswordManager.Columns.HASH, incomingGPM.hash)
-                },
-                whereEq(GooglePasswordManager.Columns.ID, savedGPM.id!!)
+            val updated = savedGPM.copy(
+                encryptedName = incomingGPM.name.encrypt(),
+                encryptedUrl = incomingGPM.url.encrypt(),
+                encryptedUsername = incomingGPM.username.encrypt(),
+                encryptedPassword = incomingGPM.password.encrypt(),
+                encryptedNote = incomingGPM.note.encrypt(),
+                hash = incomingGPM.hash
             )
+            database.gpmDao().update(updated)
         }
+    }
 
-    fun addNewIncomingGPM(add: Set<IncomingGPM>) =
+    fun addNewIncomingGPM(add: Set<IncomingGPM>) = runBlocking {
         add.forEach { incomingGPM ->
-            getWritableDatabase().insert(
-                GooglePasswordManager,
-                ContentValues().apply {
-                    put(GooglePasswordManager.Columns.ID, null) // auto increment
-                    put(GooglePasswordManager.Columns.NAME, incomingGPM.name.encrypt())
-                    put(GooglePasswordManager.Columns.URL, incomingGPM.url.encrypt())
-                    put(GooglePasswordManager.Columns.USERNAME, incomingGPM.username.encrypt())
-                    put(GooglePasswordManager.Columns.PASSWORD, incomingGPM.password.encrypt())
-                    put(GooglePasswordManager.Columns.NOTE, incomingGPM.note.encrypt())
-                    put(GooglePasswordManager.Columns.STATUS, 0)
-                    put(GooglePasswordManager.Columns.HASH, incomingGPM.hash)
-                }
-            )
+            database.gpmDao().insert(SavedGPM(importing = incomingGPM))
         }
+    }
 
-    fun addSavedGPM(savedGPM: SavedGPM) =
-        getWritableDatabase().insert(
-            GooglePasswordManager,
-            ContentValues().apply {
-                put(GooglePasswordManager.Columns.ID, savedGPM.id) // auto increment
-                put(GooglePasswordManager.Columns.NAME, savedGPM.encryptedName)
-                put(GooglePasswordManager.Columns.URL, savedGPM.encryptedUrl)
-                put(GooglePasswordManager.Columns.USERNAME, savedGPM.encryptedUsername)
-                put(GooglePasswordManager.Columns.PASSWORD, savedGPM.encryptedPassword)
-                put(GooglePasswordManager.Columns.NOTE, savedGPM.encryptedNote)
-                put(GooglePasswordManager.Columns.STATUS, if (savedGPM.flaggedIgnored) 1 else 0)
-                put(GooglePasswordManager.Columns.HASH, savedGPM.hash)
-            }
-        )
+    fun addSavedGPM(savedGPM: SavedGPM) = runBlocking {
+        database.gpmDao().insert(savedGPM)
+    }
 }
