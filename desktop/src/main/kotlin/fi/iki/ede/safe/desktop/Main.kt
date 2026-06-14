@@ -12,6 +12,7 @@ import fi.iki.ede.safe.ui.composable.DesktopNavigation
 import fi.iki.ede.safe.ui.composable.DesktopSiteEntryNavigation
 import fi.iki.ede.safe.ui.composable.CategoryList
 import fi.iki.ede.safe.ui.composable.SiteEntryList
+import fi.iki.ede.preferences.Preferences
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
@@ -36,59 +37,63 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 
 object DesktopSettings {
-    private val settingsFile = java.io.File(System.getProperty("user.home"), ".safe_desktop_settings")
-
-    fun isBiometricsRegistered(): Boolean {
-        if (!settingsFile.exists()) return false
-        try {
-            val lines = settingsFile.readLines()
-            return lines.isNotEmpty() && lines[0] == "true" && lines.size >= 2
-        } catch (e: Exception) {
-            return false
+    fun initializeMigration() {
+        val oldSettingsFile = java.io.File(System.getProperty("user.home"), ".safe_desktop_settings")
+        if (oldSettingsFile.exists()) {
+            try {
+                val lines = oldSettingsFile.readLines()
+                if (lines.size >= 2 && lines[0] == "true") {
+                    val base64Str = lines[1]
+                    Preferences.registerDesktopBiometrics(base64Str)
+                }
+                oldSettingsFile.delete()
+            } catch (e: Exception) {
+                // ignore
+            }
         }
     }
 
+    fun isBiometricsRegistered(): Boolean = Preferences.isDesktopBiometricsRegistered()
+
     fun getEncryptedMasterKey(): IVCipherText? {
-        if (!settingsFile.exists()) return null
-        try {
-            val lines = settingsFile.readLines()
-            if (lines.size >= 2 && lines[0] == "true") {
-                val combined = java.util.Base64.getDecoder().decode(lines[1])
-                return IVCipherText(16, combined)
-            }
+        val base64Str = Preferences.getDesktopBioCipher() ?: return null
+        return try {
+            val combined = java.util.Base64.getDecoder().decode(base64Str)
+            IVCipherText(16, combined)
         } catch (e: Exception) {
-            // ignore
+            null
         }
-        return null
     }
 
     fun registerBiometrics(encryptedMasterKey: IVCipherText) {
         try {
             val combined = encryptedMasterKey.combineIVAndCipherText()
-            val base64 = java.util.Base64.getEncoder().encodeToString(combined)
-            settingsFile.writeText("true\n$base64")
+            val base64Str = java.util.Base64.getEncoder().encodeToString(combined)
+            Preferences.registerDesktopBiometrics(base64Str)
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
     fun clearBiometrics() {
-        if (settingsFile.exists()) {
-            settingsFile.delete()
-        }
+        Preferences.clearDesktopBiometrics()
     }
 }
 
-fun main() = application {
-    Window(
-        onCloseRequest = ::exitApplication,
-        title = "Safe - Password Manager",
-        state = rememberWindowState(width = 480.dp, height = 640.dp)
-    ) {
-        MaterialTheme(
-            colorScheme = darkColorScheme()
+fun main() {
+    Preferences.initialize(null)
+    DesktopSettings.initializeMigration()
+    application {
+        Window(
+            onCloseRequest = ::exitApplication,
+            title = "Safe - Password Manager",
+            state = rememberWindowState(width = 480.dp, height = 640.dp)
         ) {
-            LoginScreen()
+            MaterialTheme(
+                colorScheme = darkColorScheme()
+            ) {
+                LoginScreen()
+            }
         }
     }
 }

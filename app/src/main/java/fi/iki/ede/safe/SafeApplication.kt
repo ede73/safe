@@ -88,15 +88,16 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
         )
         reinitializePlugins(this)
         setBackupDueIconEnabled(this, false)
-        PreferenceManager.getDefaultSharedPreferences(this)
+        Preferences.sharedPreferences
             .registerOnSharedPreferenceChangeListener(this)
         ConfiguredNotifications.notifications = prepareNotifications()
     }
 
+    @ExperimentalTime
     override fun onTerminate() {
         super.onTerminate()
         Logger.w(TAG, "onTerminate")
-        PreferenceManager.getDefaultSharedPreferences(this)
+        Preferences.sharedPreferences
             .unregisterOnSharedPreferenceChangeListener(this)
     }
 
