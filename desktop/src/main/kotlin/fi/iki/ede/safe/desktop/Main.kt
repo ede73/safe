@@ -3,12 +3,19 @@ package fi.iki.ede.safe.desktop
 
 import fi.iki.ede.crypto.support.decrypt
 import fi.iki.ede.crypto.support.encrypt
+import fi.iki.ede.crypto.IVCipherText
+import fi.iki.ede.crypto.Password
+import fi.iki.ede.crypto.SaltedPassword
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.safe.ui.composable.DesktopNavigation
 import fi.iki.ede.safe.ui.composable.DesktopSiteEntryNavigation
 import fi.iki.ede.safe.ui.composable.CategoryList
 import fi.iki.ede.safe.ui.composable.SiteEntryList
+import fi.iki.ede.safe.ui.composable.SiteEntryView
+import fi.iki.ede.safe.ui.SharedLoginScreen
+import fi.iki.ede.preferences.Preferences
+
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
@@ -32,16 +39,103 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 
-fun main() = application {
-    Window(
-        onCloseRequest = ::exitApplication,
-        title = "Safe - Password Manager",
-        state = rememberWindowState(width = 480.dp, height = 640.dp)
-    ) {
-        MaterialTheme(
-            colorScheme = darkColorScheme()
+import okio.Path.Companion.toPath
+import okio.FileSystem
+import okio.ByteString
+import okio.ByteString.Companion.decodeBase64
+import java.awt.FileDialog
+import java.awt.Frame
+import java.awt.Toolkit
+import java.awt.datatransfer.StringSelection
+import fi.iki.ede.crypto.keystore.KeyStoreHelper
+import fi.iki.ede.db.DBHelperFactory
+import fi.iki.ede.safe.ui.composable.getString
+import java.security.KeyFactory
+import java.security.spec.PKCS8EncodedKeySpec
+import java.security.spec.X509EncodedKeySpec
+
+// Addressed PR9 comment: Centralized desktop UI color scheme to avoid hardcoded definitions puked all over
+object DesktopThemeColors {
+    val PrimaryRed = Color(0xFFe94560)
+    val DarkPurpleBg = Color(0xFF1a1a2e)
+    val NavyBg = Color(0xFF16213e)
+    val BlueBg = Color(0xFF0f3460)
+    val DarkGreyBg = Color(0xFF1e1e2e)
+    val AccentBlue = Color(0xFF3b82f6)
+    val AccentPurple = Color(0xFF4e54c8)
+    val AccentGreen = Color(0xFF34b38a)
+    val BorderGrey = Color(0xFF444466)
+    val TextGrey = Color(0xFF8899aa)
+
+    @Composable
+    fun textFieldColors() = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = PrimaryRed,
+        focusedLabelColor = PrimaryRed,
+        unfocusedBorderColor = BorderGrey,
+        unfocusedLabelColor = TextGrey,
+        cursorColor = PrimaryRed,
+        focusedTextColor = Color.White,
+        unfocusedTextColor = Color.White
+    )
+}
+
+object DesktopSettings {
+    fun initializeMigration() {
+        val oldSettingsPath = System.getProperty("user.home").toPath() / ".safe_desktop_settings"
+        if (FileSystem.SYSTEM.exists(oldSettingsPath)) {
+            try {
+                val content = FileSystem.SYSTEM.read(oldSettingsPath) { readUtf8() }
+                val lines = content.lines()
+                if (lines.size >= 2 && lines[0] == "true") {
+                    val base64Str = lines[1]
+                    Preferences.registerDesktopBiometrics(base64Str)
+                }
+                FileSystem.SYSTEM.delete(oldSettingsPath)
+            } catch (e: Exception) {
+                // ignore
+            }
+        }
+    }
+
+    fun isBiometricsRegistered(): Boolean = Preferences.isDesktopBiometricsRegistered()
+
+    fun getEncryptedMasterKey(): IVCipherText? {
+        val base64Str = Preferences.getDesktopBioCipher() ?: return null
+        return runCatching {
+            val combined = base64Str.decodeBase64()?.toByteArray() ?: throw Exception("Invalid base64")
+            IVCipherText(16, combined)
+        }.getOrNull()
+    }
+
+    fun registerBiometrics(encryptedMasterKey: IVCipherText) {
+        try {
+            val combined = encryptedMasterKey.combineIVAndCipherText()
+            val base64Str = ByteString.of(*combined).base64()
+            Preferences.registerDesktopBiometrics(base64Str)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun clearBiometrics() {
+        Preferences.clearDesktopBiometrics()
+    }
+}
+
+fun main() {
+    Preferences.initialize(null)
+    DesktopSettings.initializeMigration()
+    application {
+        Window(
+            onCloseRequest = ::exitApplication,
+            title = "Safe - Password Manager",
+            state = rememberWindowState(width = 480.dp, height = 640.dp)
         ) {
-            LoginScreen()
+            MaterialTheme(
+                colorScheme = darkColorScheme()
+            ) {
+                LoginScreen()
+            }
         }
     }
 }
@@ -50,12 +144,30 @@ fun main() = application {
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
 fun LoginScreen() {
+    val msgLoginPasswordTip = getString("login_password_tip")
+    val msgLoginTip = getString("login_tip")
+    val msgVerifyingBiometrics = getString("desktop_verifying_biometrics")
+    val msgUnlockSuccessBiometric = getString("desktop_unlock_success_biometric")
+    val msgBiometricAuthFailed = getString("desktop_biometric_auth_failed")
+    val msgNoBiometricKey = getString("desktop_no_biometric_key")
+    val msgBiometricError = getString("desktop_biometric_error")
+    val msgExportBackup = getString("desktop_export_backup")
+
     var password by remember { mutableStateOf("") }
-    var statusMessage by remember { mutableStateOf("Enter master password") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
+    var registerFingerprint by remember { mutableStateOf(false) }
+
+    var isFirstTimeLogin by remember { mutableStateOf(!FileSystem.SYSTEM.exists("safe.db".toPath())) }
+    var isBiometricsEnabled by remember { mutableStateOf(DesktopSettings.isBiometricsRegistered()) }
+    var showBiometricsScanning by remember { mutableStateOf(false) }
+
+    var statusMessage by remember(isFirstTimeLogin, msgLoginPasswordTip, msgLoginTip) { mutableStateOf(if (isFirstTimeLogin) msgLoginPasswordTip else msgLoginTip) }
     var isLoggedIn by remember { mutableStateOf(false) }
 
     // Shared DBHelper instance for this screen
-    val db = remember { fi.iki.ede.db.DBHelperFactory.getDBHelper() }
+    val db = remember { DBHelperFactory.getDBHelper() }
 
     // Navigation and state variables
     val activeCategory = DesktopNavigation.activeCategory
@@ -64,8 +176,6 @@ fun LoginScreen() {
     // Add Category Dialog state
     var showAddCategoryDialog by remember { mutableStateOf(false) }
     var newCategoryName by remember { mutableStateOf("") }
-
-
 
     // Password visibility toggle state map (site entry ID -> isVisible)
     val passwordVisibilityMap = remember { mutableStateMapOf<Long, Boolean>() }
@@ -78,6 +188,48 @@ fun LoginScreen() {
 
     // Export Backup Dialog state
     var exportStatusMessage by remember { mutableStateOf("") }
+
+    if (showBiometricsScanning) {
+        LaunchedEffect(Unit) {
+            statusMessage = msgVerifyingBiometrics
+            kotlinx.coroutines.delay(1000)
+            try {
+                val tpmKeys = db.fetchTpmKeys()
+                if (tpmKeys != null) {
+                    if (tpmKeys.first == "CNG_KEY_CONTAINER_SECURED") {
+                        val mockPriv = KeyStoreHelper.generateMockPrivateKey()
+                        val keyFactory = KeyFactory.getInstance("RSA")
+                        val publicKeyBytes = tpmKeys.second.decodeBase64()?.toByteArray() ?: byteArrayOf()
+                        val publicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyBytes))
+                        KeyStoreHelper.setLoadedKeys(mockPriv, publicKey)
+                    } else {
+                        val keyFactory = KeyFactory.getInstance("RSA")
+                        val privateKeyBytes = tpmKeys.first.decodeBase64()?.toByteArray() ?: byteArrayOf()
+                        val publicKeyBytes = tpmKeys.second.decodeBase64()?.toByteArray() ?: byteArrayOf()
+                        val privateKey = keyFactory.generatePrivate(PKCS8EncodedKeySpec(privateKeyBytes))
+                        val publicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyBytes))
+                        KeyStoreHelper.setLoadedKeys(privateKey, publicKey)
+                    }
+                }
+
+                val encryptedKey = DesktopSettings.getEncryptedMasterKey()
+                if (encryptedKey != null) {
+                    val success = KeyStoreHelper.loginWithBiometricKey(encryptedKey)
+                    if (success) {
+                        isLoggedIn = true
+                        statusMessage = msgUnlockSuccessBiometric
+                    } else {
+                        statusMessage = msgBiometricAuthFailed
+                    }
+                } else {
+                    statusMessage = msgNoBiometricKey
+                }
+            } catch (ex: Exception) {
+                statusMessage = msgBiometricError.replace("%1\$s", ex.message ?: ex.toString()).replace("%s", ex.message ?: ex.toString())
+            }
+            showBiometricsScanning = false
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -95,6 +247,7 @@ fun LoginScreen() {
     ) {
         if (isLoggedIn) {
             val currentCategory = activeCategory
+            val categories = remember(dbRefreshTrigger) { db.fetchAllCategoryRows() }
 
             Card(
                 modifier = Modifier
@@ -109,7 +262,6 @@ fun LoginScreen() {
             ) {
                 if (currentCategory == null) {
                     // --- CATEGORY LIST SCREEN ---
-                    val categories = remember(dbRefreshTrigger) { db.fetchAllCategoryRows() }
 
                     Column(
                         modifier = Modifier.padding(24.dp).fillMaxSize(),
@@ -124,7 +276,7 @@ fun LoginScreen() {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text("🔓", fontSize = 24.sp)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Vault", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                Text(getString("desktop_vault"), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
                             }
                             
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -138,7 +290,7 @@ fun LoginScreen() {
                                     ),
                                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
                                 ) {
-                                    Text("➕ Add", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                    Text("➕ " + getString("generic_add"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                                 }
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Button(
@@ -151,22 +303,22 @@ fun LoginScreen() {
                                     ),
                                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
                                 ) {
-                                    Text("📥 Import", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                    Text("📥 " + getString("action_bar_restore"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                                 }
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Button(
                                     onClick = {
                                         try {
-                                            val dialog = java.awt.FileDialog(null as java.awt.Frame?, "Save Backup XML", java.awt.FileDialog.SAVE).apply {
+                                            val dialog = FileDialog(null as Frame?, msgExportBackup, FileDialog.SAVE).apply {
                                                 file = "safe_backup.xml"
                                                 isVisible = true
                                             }
                                             val file = dialog.file
                                             if (file != null) {
-                                                val targetFile = java.io.File(dialog.directory, file)
+                                                val targetPath = (dialog.directory ?: "").toPath() / file
                                                 val backupContent = BackupExporter.exportToXml(db)
-                                                targetFile.writeText(backupContent)
-                                                exportStatusMessage = "Backup successfully exported to:\n${targetFile.name}"
+                                                FileSystem.SYSTEM.write(targetPath) { writeUtf8(backupContent) }
+                                                exportStatusMessage = "Backup successfully exported to:\n${targetPath.name}"
                                             }
                                         } catch (ex: Exception) {
                                             exportStatusMessage = "Export failed:\n${ex.message ?: ex.toString()}"
@@ -178,15 +330,16 @@ fun LoginScreen() {
                                     ),
                                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
                                 ) {
-                                    Text("📤 Export", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                    Text("📤 " + getString("action_bar_backup"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                                 }
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Button(
                                     onClick = {
                                         isLoggedIn = false
                                         password = ""
+                                        confirmPassword = ""
                                         DesktopNavigation.activeCategory = null
-                                        statusMessage = "Enter master password"
+                                        statusMessage = msgLoginPasswordTip
                                     },
                                     shape = RoundedCornerShape(8.dp),
                                     colors = ButtonDefaults.buttonColors(
@@ -194,22 +347,39 @@ fun LoginScreen() {
                                     ),
                                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
                                 ) {
-                                    Text("Lock", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                    Text(getString("action_bar_lock"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                                 }
                             }
                         }
-
+ 
                         HorizontalDivider(color = Color(0xFF444466), thickness = 1.dp)
-
+ 
                         Text(
-                            "Categories",
+                            getString("title_activity_category_screen"),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = Color(0xFF8899aa)
                         )
 
                         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                            CategoryList(categories)
+                            CategoryList(
+                                categories = categories,
+                                onCategoryClick = { category ->
+                                    DesktopNavigation.activeCategory = category
+                                },
+                                onRenameCategory = { category, newName ->
+                                    val entry = DecryptableCategoryEntry().apply {
+                                        id = category.id
+                                        encryptedName = newName.encrypt()
+                                    }
+                                    db.updateCategory(category.id!!, entry)
+                                    DesktopNavigation.dbRefreshTrigger++
+                                },
+                                onDeleteCategory = { category ->
+                                    db.deleteCategory(category.id!!)
+                                    DesktopNavigation.dbRefreshTrigger++
+                                }
+                            )
                         }
                     }
                 } else {
@@ -259,7 +429,7 @@ fun LoginScreen() {
                                     ),
                                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
                                 ) {
-                                    Text("➕ Add Pass", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                    Text("➕ " + getString("desktop_add_pass"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                                 }
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Button(
@@ -274,7 +444,7 @@ fun LoginScreen() {
                                     ),
                                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
                                 ) {
-                                    Text("🗑️ Delete Cat", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                    Text("🗑️ " + getString("desktop_delete_cat"), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                                 }
                             }
                         }
@@ -282,128 +452,129 @@ fun LoginScreen() {
                         HorizontalDivider(color = Color(0xFF444466), thickness = 1.dp)
 
                         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                            SiteEntryList(siteEntries)
+                            SiteEntryList(
+                                siteEntries = siteEntries,
+                                categoriesState = categories,
+                                onSiteEntryClick = { siteEntry ->
+                                    DesktopSiteEntryNavigation.activeSiteEntry = siteEntry
+                                },
+                                onDeleteSiteEntry = { siteEntry ->
+                                    db.hardDeleteSiteEntry(siteEntry.id!!)
+                                    DesktopNavigation.dbRefreshTrigger++
+                                }
+                            )
                         }
                     }
                 }
             }
         } else {
-            Card(
-                modifier = Modifier
-                    .width(360.dp)
-                    .padding(16.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF1e1e2e).copy(alpha = 0.9f)
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+            if (showBiometricsScanning) {
+                Card(
+                    modifier = Modifier
+                        .width(320.dp)
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF1e1e2e)
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
                 ) {
-                    Text(
-                        "🔐",
-                        fontSize = 48.sp
-                    )
-
-                    Text(
-                        "Safe",
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFe94560)
-                    )
-
-                    Text(
-                        "Password Manager",
-                        fontSize = 14.sp,
-                        color = Color(0xFF8899aa)
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    OutlinedTextField(
-                        value = password,
-                        onValueChange = { password = it },
-                        label = { Text("Master Password") },
-                        visualTransformation = PasswordVisualTransformation(),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFFe94560),
-                            focusedLabelColor = Color(0xFFe94560),
-                            unfocusedBorderColor = Color(0xFF444466),
-                            unfocusedLabelColor = Color(0xFF8899aa),
-                            cursorColor = Color(0xFFe94560),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White
-                        )
-                    )
-
-                    Button(
-                        onClick = {
-                            statusMessage = "Authenticating..."
-                            try {
-                                val dbFile = java.io.File("safe.db")
-                                if (!dbFile.exists()) {
-                                    // First time login - setup password and generate keys
-                                    statusMessage = "First run: Creating master and TPM keys..."
-                                    val (salt, cipheredKey) = fi.iki.ede.crypto.keystore.KeyStoreHelper.createNewKey(fi.iki.ede.crypto.Password(password))
-                                    db.storeSaltAndEncryptedMasterKey(salt, cipheredKey)
-                                    
-                                    val privKey = fi.iki.ede.crypto.keystore.KeyStoreHelper.getLoadedPrivateKey()
-                                    val pubKey = fi.iki.ede.crypto.keystore.KeyStoreHelper.getLoadedPublicKey()
-                                    if (privKey != null && pubKey != null) {
-                                        val privateKeyBase64 = java.util.Base64.getEncoder().encodeToString(privKey.encoded)
-                                        val publicKeyBase64 = java.util.Base64.getEncoder().encodeToString(pubKey.encoded)
-                                        db.storeTpmKeys(privateKeyBase64, publicKeyBase64)
-                                    }
-                                    isLoggedIn = true
-                                    statusMessage = "Unlock successful! Logged in."
-                                } else {
-                                    // Existing login - fetch and decrypt master key
-                                    val (salt, cipheredKey) = db.fetchSaltAndEncryptedMasterKey()
-                                    
-                                    // Make sure TPM keys are loaded from DB into KeyStoreHelper
-                                    val tpmKeys = db.fetchTpmKeys()
-                                    if (tpmKeys != null) {
-                                        val keyFactory = java.security.KeyFactory.getInstance("RSA")
-                                        val privateKeyBytes = java.util.Base64.getDecoder().decode(tpmKeys.first)
-                                        val publicKeyBytes = java.util.Base64.getDecoder().decode(tpmKeys.second)
-                                        val privateKey = keyFactory.generatePrivate(java.security.spec.PKCS8EncodedKeySpec(privateKeyBytes))
-                                        val publicKey = keyFactory.generatePublic(java.security.spec.X509EncodedKeySpec(publicKeyBytes))
-                                        fi.iki.ede.crypto.keystore.KeyStoreHelper.setLoadedKeys(privateKey, publicKey)
-                                    }
-
-                                    fi.iki.ede.crypto.keystore.KeyStoreHelper.importExistingEncryptedMasterKey(
-                                        fi.iki.ede.crypto.SaltedPassword(salt, fi.iki.ede.crypto.Password(password)),
-                                        cipheredKey
-                                    )
-                                    isLoggedIn = true
-                                    statusMessage = "Unlock successful! Logged in."
-                                }
-                            } catch (ex: Exception) {
-                                statusMessage = "Invalid master password"
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth().height(48.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFe94560)
-                        )
+                    Column(
+                        modifier = Modifier.padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Text("Unlock", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                        Text("👆", fontSize = 48.sp)
+                        Text(
+                            "Biometric Unlock",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Text(
+                            "Scanning fingerprint...",
+                            fontSize = 14.sp,
+                            color = Color(0xFF8899aa)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        CircularProgressIndicator(color = Color(0xFF34b38a))
                     }
-
-                    Text(
-                        statusMessage,
-                        fontSize = 12.sp,
-                        color = Color(0xFF8899aa)
-                    )
                 }
+            } else {
+                SharedLoginScreen(
+                    isFirstTimeLogin = isFirstTimeLogin,
+                    isBiometricsEnabled = isBiometricsEnabled,
+                    statusMessage = statusMessage,
+                    onCreateVault = { pwd, registerBio ->
+                        statusMessage = "Creating vault..."
+                        try {
+                            val (salt, cipheredKey) = fi.iki.ede.crypto.keystore.KeyStoreHelper.createNewKey(fi.iki.ede.crypto.Password(pwd))
+                            db.storeSaltAndEncryptedMasterKey(salt, cipheredKey)
+                            
+                            val privKey = fi.iki.ede.crypto.keystore.KeyStoreHelper.getLoadedPrivateKey()
+                            val pubKey = fi.iki.ede.crypto.keystore.KeyStoreHelper.getLoadedPublicKey()
+                            if (privKey != null && pubKey != null) {
+                                val privateKeyBase64 = java.util.Base64.getEncoder().encodeToString(privKey.encoded)
+                                val publicKeyBase64 = java.util.Base64.getEncoder().encodeToString(pubKey.encoded)
+                                db.storeTpmKeys(privateKeyBase64, publicKeyBase64)
+                            }
+
+                            if (registerBio) {
+                                val encryptedKey = fi.iki.ede.crypto.keystore.KeyStoreHelper.getBiometricEncryptedMasterKey()
+                                if (encryptedKey != null) {
+                                    DesktopSettings.registerBiometrics(encryptedKey)
+                                    isBiometricsEnabled = true
+                                }
+                            }
+
+                            isLoggedIn = true
+                            statusMessage = "Unlock successful! Logged in."
+                            isFirstTimeLogin = false
+                        } catch (ex: Exception) {
+                            statusMessage = "Failed to create vault: ${ex.message}"
+                        }
+                    },
+                    onUnlock = { pwd, registerBio ->
+                        statusMessage = "Authenticating..."
+                        try {
+                            val (salt, cipheredKey) = db.fetchSaltAndEncryptedMasterKey()
+                            
+                            val tpmKeys = db.fetchTpmKeys()
+                            if (tpmKeys != null) {
+                                val keyFactory = java.security.KeyFactory.getInstance("RSA")
+                                val privateKeyBytes = java.util.Base64.getDecoder().decode(tpmKeys.first)
+                                val publicKeyBytes = java.util.Base64.getDecoder().decode(tpmKeys.second)
+                                val privateKey = keyFactory.generatePrivate(java.security.spec.PKCS8EncodedKeySpec(privateKeyBytes))
+                                val publicKey = keyFactory.generatePublic(java.security.spec.X509EncodedKeySpec(publicKeyBytes))
+                                fi.iki.ede.crypto.keystore.KeyStoreHelper.setLoadedKeys(privateKey, publicKey)
+                            }
+
+                            fi.iki.ede.crypto.keystore.KeyStoreHelper.importExistingEncryptedMasterKey(
+                                fi.iki.ede.crypto.SaltedPassword(salt, fi.iki.ede.crypto.Password(pwd)),
+                                cipheredKey
+                            )
+
+                            if (registerBio) {
+                                val encryptedKey = fi.iki.ede.crypto.keystore.KeyStoreHelper.getBiometricEncryptedMasterKey()
+                                if (encryptedKey != null) {
+                                    DesktopSettings.registerBiometrics(encryptedKey)
+                                    isBiometricsEnabled = true
+                                }
+                            }
+
+                            isLoggedIn = true
+                            statusMessage = "Unlock successful! Logged in."
+                        } catch (ex: Exception) {
+                            statusMessage = "Invalid master password"
+                        }
+                    },
+                    onBiometricLogin = {
+                        showBiometricsScanning = true
+                    }
+                )
             }
         }
+
 
         // --- Add Category Dialog Overlay ---
         if (showAddCategoryDialog) {
@@ -489,6 +660,16 @@ fun LoginScreen() {
             var editPass by remember(activeSiteEntry) { mutableStateOf(activeSiteEntry.plainPassword) }
             var editNote by remember(activeSiteEntry) { mutableStateOf(activeSiteEntry.plainNote) }
             var editPassVisible by remember { mutableStateOf(false) }
+            var editNoteVisible by remember { mutableStateOf(false) }
+            val editExtensions = remember(activeSiteEntry) {
+                mutableStateListOf<Pair<String, String>>().apply {
+                    activeSiteEntry.plainExtensions.forEach { (type, values) ->
+                        values.forEach { value ->
+                            add(Pair(type, value))
+                        }
+                    }
+                }
+            }
 
             Box(
                 modifier = Modifier
@@ -499,7 +680,8 @@ fun LoginScreen() {
             ) {
                 Card(
                     modifier = Modifier
-                        .width(400.dp)
+                        .width(440.dp)
+                        .fillMaxHeight(0.9f)
                         .padding(16.dp)
                         .clickable(enabled = false, onClick = {}),
                     shape = RoundedCornerShape(16.dp),
@@ -508,226 +690,145 @@ fun LoginScreen() {
                     ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .padding(20.dp)
-                            .verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
+                    Column(modifier = Modifier.padding(16.dp).weight(1f)) {
                         Text(
                             if (activeSiteEntry.id == null) "Add Password Entry" else "Password Entry Details",
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = Color.White,
+                            modifier = Modifier.padding(bottom = 8.dp)
                         )
-
-                        OutlinedTextField(
-                            value = editDesc,
-                            onValueChange = { editDesc = it },
-                            label = { Text("Description") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFFe94560),
-                                focusedLabelColor = Color(0xFFe94560),
-                                unfocusedBorderColor = Color(0xFF444466),
-                                unfocusedLabelColor = Color(0xFF8899aa),
-                                cursorColor = Color(0xFFe94560),
-                                focusedTextColor = Color.White,
-                                unfocusedTextColor = Color.White
-                            )
-                        )
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            OutlinedTextField(
-                                value = editWeb,
-                                onValueChange = { editWeb = it },
-                                label = { Text("Website") },
-                                singleLine = true,
-                                modifier = Modifier.weight(1f),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color(0xFFe94560),
-                                    focusedLabelColor = Color(0xFFe94560),
-                                    unfocusedBorderColor = Color(0xFF444466),
-                                    unfocusedLabelColor = Color(0xFF8899aa),
-                                    cursorColor = Color(0xFFe94560),
-                                    focusedTextColor = Color.White,
-                                    unfocusedTextColor = Color.White
-                                )
-                            )
-                            if (editWeb.isNotBlank()) {
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Button(
-                                    onClick = {
-                                        openBrowser(editWeb)
-                                    },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4e54c8)),
-                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
-                                ) {
-                                    Text("Visit", fontSize = 12.sp)
-                                }
-                            }
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            OutlinedTextField(
-                                value = editUser,
-                                onValueChange = { editUser = it },
-                                label = { Text("Username") },
-                                singleLine = true,
-                                modifier = Modifier.weight(1f),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color(0xFFe94560),
-                                    focusedLabelColor = Color(0xFFe94560),
-                                    unfocusedBorderColor = Color(0xFF444466),
-                                    unfocusedLabelColor = Color(0xFF8899aa),
-                                    cursorColor = Color(0xFFe94560),
-                                    focusedTextColor = Color.White,
-                                    unfocusedTextColor = Color.White
-                                )
-                            )
-                            if (editUser.isNotBlank()) {
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Button(
-                                    onClick = {
-                                        copyToClipboard(editUser)
-                                    },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4e54c8)),
-                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
-                                ) {
-                                    Text("Copy", fontSize = 12.sp)
-                                }
-                            }
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            OutlinedTextField(
-                                value = if (editPassVisible) editPass else "••••••••",
-                                onValueChange = { if (editPassVisible) editPass = it },
-                                label = { Text("Password") },
-                                singleLine = true,
-                                readOnly = !editPassVisible,
-                                modifier = Modifier.weight(1f),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = Color(0xFFe94560),
-                                    focusedLabelColor = Color(0xFFe94560),
-                                    unfocusedBorderColor = Color(0xFF444466),
-                                    unfocusedLabelColor = Color(0xFF8899aa),
-                                    cursorColor = Color(0xFFe94560),
-                                    focusedTextColor = Color.White,
-                                    unfocusedTextColor = Color.White
-                                )
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            IconButton(onClick = { editPassVisible = !editPassVisible }) {
-                                Text(if (editPassVisible) "🙈" else "👁️", fontSize = 14.sp)
-                            }
-                            if (editPass.isNotBlank()) {
-                                Spacer(modifier = Modifier.width(4.dp))
-                                Button(
-                                    onClick = {
-                                        copyToClipboard(editPass)
-                                    },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4e54c8)),
-                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)
-                                ) {
-                                    Text("Copy", fontSize = 12.sp)
-                                }
-                            }
-                        }
-
-                        Button(
-                            onClick = {
-                                val newSecurePass = (1..16).map {
-                                    (('a'..'z') + ('A'..'Z') + ('0'..'9') + listOf('!', '@', '#', '$', '%', '&')).random()
-                                }.joinToString("")
-                                editPass = newSecurePass
-                                editPassVisible = true
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF34b38a)),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Generate Secure Password", fontSize = 12.sp)
-                        }
-
-                        OutlinedTextField(
-                            value = editNote,
-                            onValueChange = { editNote = it },
-                            label = { Text("Notes") },
-                            modifier = Modifier.fillMaxWidth(),
-                            maxLines = 3,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                  focusedBorderColor = Color(0xFFe94560),
-                                  focusedLabelColor = Color(0xFFe94560),
-                                  unfocusedBorderColor = Color(0xFF444466),
-                                  unfocusedLabelColor = Color(0xFF8899aa),
-                                  cursorColor = Color(0xFFe94560),
-                                  focusedTextColor = Color.White,
-                                  unfocusedTextColor = Color.White
-                            )
-                        )
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            if (activeSiteEntry.id != null) {
-                                Button(
-                                    onClick = {
-                                        db.hardDeleteSiteEntry(activeSiteEntry.id!!)
-                                        DesktopSiteEntryNavigation.activeSiteEntry = null
-                                        DesktopNavigation.dbRefreshTrigger++
-                                    },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFe94560))
-                                ) {
-                                    Text("Delete")
-                                }
-                            } else {
-                                Spacer(modifier = Modifier.width(1.dp))
-                            }
-
-                            Row {
-                                TextButton(onClick = { DesktopSiteEntryNavigation.activeSiteEntry = null }) {
-                                    Text("Cancel", color = Color(0xFF8899aa))
-                                }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Button(
-                                    onClick = {
-                                        if (editDesc.isNotBlank()) {
-                                            val updated = DecryptableSiteEntry(activeSiteEntry.categoryId ?: 0L).apply {
-                                                this.id = activeSiteEntry.id
-                                                this.description = editDesc.encrypt()
-                                                this.username = editUser.encrypt()
-                                                this.password = editPass.encrypt()
-                                                this.website = editWeb.encrypt()
-                                                this.note = editNote.encrypt()
-                                                this.deleted = activeSiteEntry.deleted
-                                                this.passwordChangedDate = activeSiteEntry.passwordChangedDate
+                        Box(modifier = Modifier.weight(1f)) {
+                            SiteEntryView(
+                                description = editDesc,
+                                onDescriptionChange = { editDesc = it },
+                                website = editWeb,
+                                onWebSiteChange = { editWeb = it },
+                                username = editUser,
+                                onUsernameChange = { editUser = it },
+                                password = editPass,
+                                onPasswordChange = { editPass = it },
+                                note = editNote,
+                                onNoteChange = { editNote = it },
+                                onOpenBrowser = { openBrowser(it) },
+                                onCopyToClipboard = { copyToClipboard(it) },
+                                extensionsContent = {
+                                    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                                        HorizontalDivider(color = DesktopThemeColors.BorderGrey, thickness = 1.dp)
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text("Extensions", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                            Button(
+                                                onClick = { editExtensions.add(Pair("", "")) },
+                                                colors = ButtonDefaults.buttonColors(containerColor = DesktopThemeColors.AccentPurple),
+                                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                                                shape = RoundedCornerShape(4.dp)
+                                            ) {
+                                                Text("Add", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                                             }
-                                            if (updated.id == null) {
-                                                db.addSiteEntry(updated)
-                                            } else {
-                                                db.updateSiteEntry(updated)
-                                            }
-                                            DesktopSiteEntryNavigation.activeSiteEntry = null
-                                            DesktopNavigation.dbRefreshTrigger++
                                         }
-                                    },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4e54c8))
-                                ) {
-                                    Text("Save")
+                                        editExtensions.forEachIndexed { index, pair ->
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                OutlinedTextField(
+                                                    value = pair.first,
+                                                    onValueChange = { newKey ->
+                                                        editExtensions[index] = Pair(newKey, pair.second)
+                                                    },
+                                                    label = { Text("Type") },
+                                                    singleLine = true,
+                                                    modifier = Modifier.weight(0.4f),
+                                                    colors = DesktopThemeColors.textFieldColors()
+                                                )
+                                                OutlinedTextField(
+                                                    value = pair.second,
+                                                    onValueChange = { newValue ->
+                                                        editExtensions[index] = Pair(pair.first, newValue)
+                                                    },
+                                                    label = { Text("Value") },
+                                                    singleLine = true,
+                                                    modifier = Modifier.weight(0.5f),
+                                                    colors = DesktopThemeColors.textFieldColors()
+                                                )
+                                                IconButton(
+                                                    onClick = { editExtensions.removeAt(index) },
+                                                    modifier = Modifier.weight(0.1f)
+                                                ) {
+                                                    Text("🗑️", fontSize = 14.sp)
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                bottomBarContent = {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        if (activeSiteEntry.id != null) {
+                                            Button(
+                                                onClick = {
+                                                    db.hardDeleteSiteEntry(activeSiteEntry.id!!)
+                                                    DesktopSiteEntryNavigation.activeSiteEntry = null
+                                                    DesktopNavigation.dbRefreshTrigger++
+                                                },
+                                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFe94560))
+                                            ) {
+                                                Text("Delete")
+                                            }
+                                        } else {
+                                            Spacer(modifier = Modifier.width(1.dp))
+                                        }
+
+                                        Row {
+                                            TextButton(onClick = { DesktopSiteEntryNavigation.activeSiteEntry = null }) {
+                                                Text("Cancel", color = Color(0xFF8899aa))
+                                            }
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Button(
+                                                onClick = {
+                                                    if (editDesc.isNotBlank()) {
+                                                        val updated = DecryptableSiteEntry(activeSiteEntry.categoryId ?: 0L).apply {
+                                                            this.id = activeSiteEntry.id
+                                                            this.description = editDesc.encrypt()
+                                                            this.username = editUser.encrypt()
+                                                            this.password = editPass.encrypt()
+                                                            this.website = editWeb.encrypt()
+                                                            this.note = editNote.encrypt()
+                                                            this.deleted = activeSiteEntry.deleted
+                                                            this.passwordChangedDate = activeSiteEntry.passwordChangedDate
+
+                                                            val extensionsMap = editExtensions
+                                                                .filter { it.first.isNotBlank() && it.second.isNotBlank() }
+                                                                .groupBy({ it.first }, { it.second })
+                                                                .mapValues { it.value.toSet() }
+                                                            this.extensions = encryptExtension(extensionsMap)
+                                                        }
+                                                        if (updated.id == null) {
+                                                            db.addSiteEntry(updated)
+                                                        } else {
+                                                            db.updateSiteEntry(updated)
+                                                        }
+                                                        DesktopSiteEntryNavigation.activeSiteEntry = null
+                                                        DesktopNavigation.dbRefreshTrigger++
+                                                    }
+                                                },
+                                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4e54c8))
+                                            ) {
+                                                Text("Save")
+                                            }
+                                        }
+                                    }
                                 }
-                            }
+                            )
                         }
                     }
                 }
