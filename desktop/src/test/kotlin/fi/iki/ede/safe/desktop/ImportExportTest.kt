@@ -9,16 +9,11 @@ import org.junit.jupiter.api.Test
 import java.io.File
 
 class ImportExportTest {
-    private val dbFile = File("safe_db.json")
-    private val backupFile = File("safe_db.json.bak")
     private lateinit var db: DBHelper
 
     @BeforeEach
     fun setUp() {
-        if (dbFile.exists()) {
-            dbFile.renameTo(backupFile)
-        }
-        db = DBHelper()
+        db = DBHelper(databaseName = null)
         // Initialize master password and keys
         val password = "qwertyuiop"
         try {
@@ -32,12 +27,7 @@ class ImportExportTest {
 
     @AfterEach
     fun tearDown() {
-        if (dbFile.exists()) {
-            dbFile.delete()
-        }
-        if (backupFile.exists()) {
-            backupFile.renameTo(dbFile)
-        }
+        db.database.close()
     }
 
     @Test

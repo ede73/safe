@@ -1,7 +1,7 @@
 package fi.iki.ede.backup
 
 import android.content.Context
-import android.database.sqlite.SQLiteDatabase
+import fi.iki.ede.db.DBTransaction
 import fi.iki.ede.backup.ExportConfig.Companion.Attributes
 import fi.iki.ede.backup.ExportConfig.Companion.Elements
 import fi.iki.ede.crypto.IVCipherText
@@ -118,7 +118,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
 
     private fun parseXML(
         dbHelper: DBHelper,
-        db: SQLiteDatabase,
+        db: DBTransaction,
         myParser: XmlPullParser,
         linkSaveGPMAndSiteEntry: (DBID, DBID) -> Unit,
         addSavedGPM: (SavedGPM) -> Unit,

@@ -147,9 +147,7 @@ class LoginScreenFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
                 DBHelper(
                     context,
                     null,
-                    false,
-                    GPMDB::getExternalTables,
-                    GPMDB::upgradeTables
+                    false
                 )
             )
         }

@@ -270,8 +270,7 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
             // we'll overwrite the DBHelper with in-memory one...
             DBHelperFactory.initializeDatabase(
                 DBHelper(
-                    context, null, false, GPMDB::getExternalTables,
-                    GPMDB::upgradeTables
+                    context, null, false
                 )
             )
             DBHelper4AndroidTest.justStoreSaltAndMasterKey(

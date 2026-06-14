@@ -4,9 +4,7 @@ import android.graphics.BitmapFactory
 import android.util.Base64
 import fi.iki.ede.crypto.support.decrypt
 import fi.iki.ede.logger.Logger
-import kotlin.time.ExperimentalTime
 
-@ExperimentalTime
 actual fun DecryptableSiteEntry.decryptPhoto(): PlatformBitmap? =
     try {
         val base64Photo = photo.decrypt()

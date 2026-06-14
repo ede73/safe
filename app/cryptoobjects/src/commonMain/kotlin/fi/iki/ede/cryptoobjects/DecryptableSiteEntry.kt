@@ -6,7 +6,6 @@ import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.logger.Logger
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.encodeToString
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 /**
@@ -16,12 +15,21 @@ import kotlin.time.Instant
  *
  * TODO: Doesn't really belong to this project, does it?
  */
-@ExperimentalTime
-class DecryptableSiteEntry(categoryId: Long) {
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import androidx.room.ColumnInfo
+import androidx.room.Ignore
+
+@Entity(tableName = "passwords")
+class DecryptableSiteEntry(
+    @ColumnInfo(name = "category")
+    var categoryId: Long = 0L
+) {
     companion object {
         const val TAG = "DecryptableSiteEntry"
     }
 
+    @ColumnInfo(name = "description")
     var description: IVCipherText = IVCipherText.getEmpty()
         set(value) {
             if (field != value) {
@@ -34,13 +42,20 @@ class DecryptableSiteEntry(categoryId: Long) {
         this.description = IVCipherText.getEmpty()
     }
 
-    var categoryId: Long? = categoryId
-
     // soft deletion property, mainly used for backup/restore and Trash Can visuals
+    @ColumnInfo(name = "deleted")
     var deleted: Long = 0
+
+    @PrimaryKey(autoGenerate = true)
+    @ColumnInfo(name = "id")
     var id: Long? = null
+
+    @ColumnInfo(name = "note")
     var note: IVCipherText = IVCipherText.getEmpty()
+
+    @ColumnInfo(name = "password")
     var password: IVCipherText = IVCipherText.getEmpty()
+
     val plainExtensions: Map<String, Set<String>>
         get() = try {
             if (extensions.isEmpty()) mapOf()
@@ -51,15 +66,28 @@ class DecryptableSiteEntry(categoryId: Long) {
         } catch (e: Exception) {
             mutableMapOf()
         }
+
+    @ColumnInfo(name = "extensions")
     var extensions: IVCipherText = IVCipherText.getEmpty()
 
     // Password changed date(time) is not privacy critical (hence unencrypted)
     // TODO: LocalDateTime will suffice...
+    @ColumnInfo(name = "passwordchangeddate")
     var passwordChangedDate: Instant? = null
+
+    @ColumnInfo(name = "photo")
+    var photoFilename: String? = null
+
+    @Ignore
     var photo: IVCipherText = IVCipherText.getEmpty()
+
+    @ColumnInfo(name = "username")
     var username: IVCipherText = IVCipherText.getEmpty()
+
+    @ColumnInfo(name = "website")
     var website: IVCipherText = IVCipherText.getEmpty()
 
+    @Ignore
     private var decryptedCachedPlainDescription: String? = null
 
     val plainPassword: String
@@ -148,5 +176,4 @@ class DecryptableSiteEntry(categoryId: Long) {
         Json.encodeToString(plainExtensions).encrypt()
 }
 
-@ExperimentalTime
 expect fun DecryptableSiteEntry.decryptPhoto(): PlatformBitmap?

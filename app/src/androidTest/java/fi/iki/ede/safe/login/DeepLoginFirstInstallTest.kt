@@ -14,7 +14,6 @@ import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.backup.MyBackupAgent
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelperFactory
-import fi.iki.ede.db.Table
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.model.LoginHandler
@@ -203,14 +202,12 @@ class DeepLoginFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
                 InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
             MyBackupAgent.removeRestoreMark(context)
             // we'll overwrite the DBHelper with in-memory one...
-            fun dummy() = listOf<Table>()
             DBHelperFactory.initializeDatabase(
                 DBHelper(
                     context,
                     null,
-                    false,
-                    ::dummy
-                ) { _, _ -> }
+                    false
+                )
             )
         }
 

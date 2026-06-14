@@ -26,3 +26,5 @@ local.properties
 .last_rev_parse
 desktop/build/
 *.json
+desktop/safe.db*
+desktop/tpm_keys.txt

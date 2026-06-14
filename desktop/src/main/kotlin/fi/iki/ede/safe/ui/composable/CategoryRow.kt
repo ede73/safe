@@ -1,3 +1,4 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
 package fi.iki.ede.safe.ui.composable
 
 import androidx.compose.foundation.ExperimentalFoundationApi
