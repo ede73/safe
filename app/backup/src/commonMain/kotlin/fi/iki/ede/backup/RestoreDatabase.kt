@@ -1,6 +1,5 @@
 package fi.iki.ede.backup
 
-import android.content.Context
 import fi.iki.ede.db.DBTransaction
 import fi.iki.ede.backup.ExportConfig.Companion.Attributes
 import fi.iki.ede.backup.ExportConfig.Companion.Elements
@@ -19,8 +18,8 @@ import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBID
 import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseRecordException
-import fi.iki.ede.preferences.Preferences
 import kotlinx.coroutines.CancellationException
 import okio.Buffer
 import org.xmlpull.v1.XmlPullParser
@@ -30,53 +29,74 @@ import kotlin.time.Instant
 
 @ExperimentalTime
 class RestoreDatabase : ExportConfig(ExportVersion.V1) {
-    data class BackupEncryptionKeys(val data: List<String>) {
-        fun getSalt(): Salt = Salt(data[0].hexToByteArray())
-        fun getEncryptedMasterKey(): IVCipherText =
-            IVCipherText(data[1].hexToByteArray(), data[2].hexToByteArray())
-
-        fun getEncryptedBackup(): IVCipherText =
-            IVCipherText(data[3].hexToByteArray(), data[4].hexToByteArray())
-    }
-
     fun doRestore(
-        context: Context,
-        backup: String,
+        context: Any?,
+        backupReader: java.io.Reader,
         userPassword: Password,
         dbHelper: DBHelper,
+        lastBackupDone: Instant?,
         linkSaveGPMAndSiteEntry: (DBID, DBID) -> Unit,
         addSavedGPM: (SavedGPM) -> Unit,
-        passwordLogin: (context: Context, password: Password) -> Boolean,
+        passwordLogin: (context: Any?, password: Password) -> Boolean,
         reportProgress: (categories: Int?, passwords: Int?, message: String?) -> Unit,
         verifyUserWantForOldBackup: (backupCreated: Instant, lastBackupDone: Instant) -> Boolean,
     ): Int {
         reportProgress(null, null, "Begin restoration")
         val myParser = XmlPullParserFactory.newInstance().newPullParser()
 
-        val backupEncryptionKeys = BackupEncryptionKeys(
-            backup.trimIndent().trim().lines()
-        )
+        val bufferedReader = if (backupReader is java.io.BufferedReader) backupReader else java.io.BufferedReader(backupReader)
+        var saltLine = ""
+        while (true) {
+            val l = bufferedReader.readLine() ?: throw IllegalArgumentException("Missing salt")
+            val trimmed = l.trim()
+            if (trimmed.isNotEmpty()) {
+                saltLine = trimmed
+                break
+            }
+        }
+        val ivMasterLine = (bufferedReader.readLine() ?: throw IllegalArgumentException("Missing master key IV")).trim()
+        val cipherMasterLine = (bufferedReader.readLine() ?: throw IllegalArgumentException("Missing master key ciphertext")).trim()
+        val line4 = (bufferedReader.readLine() ?: throw IllegalArgumentException("Missing line 4")).trim()
+
+        val salt = Salt(saltLine.hexToByteArray())
+        val encryptedMasterKey = IVCipherText(ivMasterLine.hexToByteArray(), cipherMasterLine.hexToByteArray())
 
         val db = dbHelper.beginRestoration()
 
         try {
-            // TODO: this also has inner transaction
-            dbHelper.storeSaltAndEncryptedMasterKey(
-                backupEncryptionKeys.getSalt(),
-                backupEncryptionKeys.getEncryptedMasterKey()
-            )
-            // body (KMP issue)
-            myParser.setInput(
-                Buffer().write(getDocumentByteArray(backupEncryptionKeys, userPassword))
-                    .inputStream(),
-                null
-            )
+            dbHelper.storeSaltAndEncryptedMasterKey(salt, encryptedMasterKey)
+
+            // Decrypt the master key using the password
+            val masterKey = decryptMasterKey(salt, encryptedMasterKey, userPassword)
+
+            val xmlInputStream = if (line4 == "STREAMING_CHUNKED_V1") {
+                // Wrap in ChunkingDecryptingInputStream
+                val helper = KeyStoreHelperFactory.getKeyStoreHelper()
+                ChunkingDecryptingInputStream(bufferedReader, masterKey) { encrypted, key ->
+                    helper.decrypterProviderWithKey(encrypted, key)
+                }
+            } else {
+                // Legacy format: line4 is ivBackupLine, line5 is cipherBackupLine
+                val ivBackup = line4.hexToByteArray()
+                val cipherMasterLine2 = bufferedReader.readLine() ?: throw IllegalArgumentException("Missing backup data ciphertext")
+                val cipherBackup = cipherMasterLine2.hexToByteArray()
+                
+                val helper = KeyStoreHelperFactory.getKeyStoreHelper()
+                val decrypted = helper.decrypterProviderWithKey(
+                    IVCipherText(ivBackup, cipherBackup),
+                    masterKey
+                )
+                java.io.ByteArrayInputStream(decrypted)
+            }
+
+            myParser.setInput(xmlInputStream, null)
 
             reportProgress(null, null, "Process backup")
             val passwords = parseXML(
                 dbHelper,
                 db,
                 myParser,
+                lastBackupDone,
                 linkSaveGPMAndSiteEntry,
                 addSavedGPM,
                 verifyUserWantForOldBackup,
@@ -86,6 +106,8 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
             reportProgress(null, null, "Finished with backup")
             return passwords
         } catch (ex: Exception) {
+            Logger.e(TAG, "Restoration failed!", ex)
+            ex.printStackTrace()
             firebaseRecordException("Failed to restore", ex)
             db.endTransaction()
             reportProgress(null, null, "Something failed, rollback")
@@ -93,26 +115,17 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         }
     }
 
-    private fun getDocumentByteArray(
-        backupEncryptionKeys: BackupEncryptionKeys,
-        userPassword: Password
-    ) = KeyStoreHelperFactory.getKeyStoreHelper()
-        .decrypterProviderWithKey( // Keystore needed (new key)
-            backupEncryptionKeys.getEncryptedBackup(),
-            decryptMasterKey(backupEncryptionKeys, userPassword)
-        )
-
-
     private fun decryptMasterKey(
-        backupEncryptionKeys: BackupEncryptionKeys,
+        salt: Salt,
+        encryptedMasterKey: IVCipherText,
         userPassword: Password,
     ) = KeyManagement.decryptMasterKey(
         generatePBKDF2AESKey(
-            backupEncryptionKeys.getSalt(),
+            salt,
             KEY_ITERATION_COUNT,
             userPassword,
             KEY_LENGTH_BITS
-        ), backupEncryptionKeys.getEncryptedMasterKey()
+        ), encryptedMasterKey
     )
 
 
@@ -120,6 +133,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         dbHelper: DBHelper,
         db: DBTransaction,
         myParser: XmlPullParser,
+        lastBackupDone: Instant?,
         linkSaveGPMAndSiteEntry: (DBID, DBID) -> Unit,
         addSavedGPM: (SavedGPM) -> Unit,
         verifyOldBackupRestoration: (backupCreated: Instant, lastBackupDone: Instant) -> Boolean,
@@ -165,8 +179,6 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                     it
                                 )
                             }
-                            val lastBackupDone =
-                                Preferences.getLastBackupTime()
                             // TODO: until above can be mocked..feeling lazy
                             //val creationTime: ZonedDateTime? = null
                             // if we know the backup creation time AND we known when a backup
@@ -359,7 +371,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                         if (passwordId in deletedSiteEntriesToRestore.map { it.id }) {
                                             // this GPM is linked to a deleted site entry!
                                             // we don't know the ID yet!
-                                            gpmLinkedToDeletedSiteEntries.getOrPut(gpmId) { mutableSetOf() }
+                                            gpmLinkedToDeletedSiteEntries.getOrPut(gpmId) { mutableSetOf<DBID>() }
                                                 .add(passwordId)
                                         } else {
                                             linkSaveGPMAndSiteEntry(passwordId, gpmId)
@@ -443,5 +455,69 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
 
     companion object {
         const val TAG = "Restore"
+    }
+}
+
+private class ChunkingDecryptingInputStream(
+    private val reader: java.io.BufferedReader,
+    private val masterKey: fi.iki.ede.crypto.keystore.KMPKey,
+    private val decrypt: (IVCipherText, fi.iki.ede.crypto.keystore.KMPKey) -> ByteArray
+) : java.io.InputStream() {
+    private var buffer = byteArrayOf()
+    private var index = 0
+    private var EOF = false
+
+    override fun read(): Int {
+        if (index >= buffer.size) {
+            if (EOF) return -1
+            if (!fillBuffer()) return -1
+        }
+        return buffer[index++].toInt() and 0xFF
+    }
+
+    override fun read(b: ByteArray, off: Int, len: Int): Int {
+        if (len == 0) return 0
+        var totalRead = 0
+        while (totalRead < len) {
+            if (index >= buffer.size) {
+                if (EOF) {
+                    return if (totalRead > 0) totalRead else -1
+                }
+                if (!fillBuffer()) {
+                    return if (totalRead > 0) totalRead else -1
+                }
+            }
+            val available = buffer.size - index
+            val toWrite = minOf(available, len - totalRead)
+            System.arraycopy(buffer, index, b, off + totalRead, toWrite)
+            index += toWrite
+            totalRead += toWrite
+        }
+        return totalRead
+    }
+
+    private fun fillBuffer(): Boolean {
+        while (true) {
+            val line = reader.readLine()
+            if (line == null) {
+                EOF = true
+                return false
+            }
+            val trimmed = line.trim()
+            if (trimmed.isEmpty()) continue
+            val parts = trimmed.split(':')
+            if (parts.size != 2) {
+                throw java.io.IOException("Malformed chunk line in backup file")
+            }
+            val iv = parts[0].hexToByteArray()
+            val cipherText = parts[1].hexToByteArray()
+            buffer = decrypt(IVCipherText(iv, cipherText), masterKey)
+            index = 0
+            return true
+        }
+    }
+
+    override fun close() {
+        reader.close()
     }
 }

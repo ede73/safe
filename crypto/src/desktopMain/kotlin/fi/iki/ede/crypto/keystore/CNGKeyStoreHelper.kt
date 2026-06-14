@@ -27,6 +27,7 @@ class CNGKeyStoreHelper(
     private val publicKey: PublicKey
 ) : IKeyStoreHelper {
 
+    private val masterKey = masterKeyBytes.clone()
     private val hKey: Pointer
     private val lock = Any()
 
@@ -173,6 +174,8 @@ class CNGKeyStoreHelper(
     override var decrypterProviderWithKey: (IVCipherText, KMPKey) -> ByteArray = { encrypted, key ->
         if (encrypted.iv.isEmpty()) {
             byteArrayOf()
+        } else if (key is javax.crypto.spec.SecretKeySpec) {
+            korlibs.crypto.AES.decryptAesCbc(encrypted.cipherText, key.encoded, encrypted.iv, korlibs.crypto.Padding.PKCS7Padding)
         } else if (key is PrivateKey) {
             val cipher = javax.crypto.Cipher.getInstance("RSA/ECB/PKCS1Padding")
             cipher.init(javax.crypto.Cipher.DECRYPT_MODE, key)
@@ -184,63 +187,19 @@ class CNGKeyStoreHelper(
     }
 
     override var decrypterProvider: (IVCipherText) -> ByteArray = { encrypted ->
-        if (encrypted.iv.isEmpty() || encrypted.cipherText.isEmpty()) {
+        if (encrypted.iv.isEmpty()) {
             byteArrayOf()
         } else {
-            synchronized(lock) {
-                // Set the IV on the key handle
-                val ivMem = Memory(encrypted.iv.size.toLong())
-                ivMem.write(0, encrypted.iv, 0, encrypted.iv.size)
-                var status = NCrypt.INSTANCE.NCryptSetProperty(
-                    hKey,
-                    NCRYPT_INITIALIZATION_VECTOR,
-                    ivMem,
-                    encrypted.iv.size,
-                    0
-                )
-                if (status != ERROR_SUCCESS) {
-                    throw RuntimeException("CNG Decrypt: Failed to set IV property. Status: $status")
-                }
-
-                // Query output size
-                val pcbResult = IntByReference()
-                status = NCrypt.INSTANCE.NCryptDecrypt(
-                    hKey,
-                    encrypted.cipherText,
-                    encrypted.cipherText.size,
-                    null,
-                    null,
-                    0,
-                    pcbResult,
-                    0
-                )
-                if (status != ERROR_SUCCESS) {
-                    throw RuntimeException("CNG Decrypt: Size query failed. Status: $status")
-                }
-
-                // Perform decryption
-                val outputBuffer = ByteArray(pcbResult.value)
-                status = NCrypt.INSTANCE.NCryptDecrypt(
-                    hKey,
-                    encrypted.cipherText,
-                    encrypted.cipherText.size,
-                    null,
-                    outputBuffer,
-                    outputBuffer.size,
-                    pcbResult,
-                    0
-                )
-                if (status != ERROR_SUCCESS) {
-                    throw RuntimeException("CNG Decrypt: Decryption failed. Status: $status")
-                }
-
-                unpadPKCS7(outputBuffer)
-            }
+            korlibs.crypto.AES.decryptAesCbc(encrypted.cipherText, masterKey, encrypted.iv, korlibs.crypto.Padding.PKCS7Padding)
         }
     }
 
     override var encrypterProviderWithKey: (ByteArray, KMPKey) -> IVCipherText = { plaintext, key ->
-        if (key is PublicKey) {
+        if (key is javax.crypto.spec.SecretKeySpec) {
+            val iv = CipherUtilities.generateRandomBytes(CipherUtilities.Companion.Bytes(16))
+            val cipherText = korlibs.crypto.AES.encryptAesCbc(plaintext, key.encoded, iv, korlibs.crypto.Padding.PKCS7Padding)
+            IVCipherText(iv, cipherText)
+        } else if (key is PublicKey) {
             val cipher = javax.crypto.Cipher.getInstance("RSA/ECB/PKCS1Padding")
             cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, key)
             val cipherText = cipher.doFinal(plaintext)
@@ -252,57 +211,8 @@ class CNGKeyStoreHelper(
 
     override var encrypterProvider: (ByteArray) -> IVCipherText = { plaintext ->
         val iv = CipherUtilities.generateRandomBytes(CipherUtilities.Companion.Bytes(16))
-        val paddedPlaintext = padPKCS7(plaintext)
-
-        synchronized(lock) {
-            // Set the IV on the key handle
-            val ivMem = Memory(iv.size.toLong())
-            ivMem.write(0, iv, 0, iv.size)
-            var status = NCrypt.INSTANCE.NCryptSetProperty(
-                hKey,
-                NCRYPT_INITIALIZATION_VECTOR,
-                ivMem,
-                iv.size,
-                0
-            )
-            if (status != ERROR_SUCCESS) {
-                throw RuntimeException("CNG Encrypt: Failed to set IV property. Status: $status")
-            }
-
-            // Query output size
-            val pcbResult = IntByReference()
-            status = NCrypt.INSTANCE.NCryptEncrypt(
-                hKey,
-                paddedPlaintext,
-                paddedPlaintext.size,
-                null,
-                null,
-                0,
-                pcbResult,
-                0
-            )
-            if (status != ERROR_SUCCESS) {
-                throw RuntimeException("CNG Encrypt: Size query failed. Status: $status")
-            }
-
-            // Perform encryption
-            val outputBuffer = ByteArray(pcbResult.value)
-            status = NCrypt.INSTANCE.NCryptEncrypt(
-                hKey,
-                paddedPlaintext,
-                paddedPlaintext.size,
-                null,
-                outputBuffer,
-                outputBuffer.size,
-                pcbResult,
-                0
-            )
-            if (status != ERROR_SUCCESS) {
-                throw RuntimeException("CNG Encrypt: Encryption failed. Status: $status")
-            }
-
-            IVCipherText(iv, outputBuffer)
-        }
+        val cipherText = korlibs.crypto.AES.encryptAesCbc(plaintext, masterKey, iv, korlibs.crypto.Padding.PKCS7Padding)
+        IVCipherText(iv, cipherText)
     }
 
     private fun padPKCS7(input: ByteArray): ByteArray {

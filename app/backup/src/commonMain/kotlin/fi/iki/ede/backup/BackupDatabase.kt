@@ -6,7 +6,7 @@ import fi.iki.ede.backup.ExportConfig.Companion.Attributes
 import fi.iki.ede.backup.ExportConfig.Companion.Elements
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
-import fi.iki.ede.crypto.support.encrypt
+import fi.iki.ede.crypto.support.toHexString
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.dateutils.DateUtils
@@ -31,7 +31,7 @@ import kotlin.time.ExperimentalTime
 class BackupDatabase : ExportConfig(ExportVersion.V1) {
     @VisibleForTesting(PRIVATE)
     fun generateXMLExport(
-        buffer: Buffer,
+        outputStream: java.io.OutputStream,
         categoriesList: List<DecryptableCategoryEntry>,
         softDeletedEntries: Set<DecryptableSiteEntry>,
         siteEntryGPMMappings: Map<DBID, Set<DBID>>,
@@ -39,7 +39,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
         getSiteEntriesOfCategory: (categoryId: DBID) -> List<DecryptableSiteEntry>
     ) {
         val serializer = XmlPullParserFactory.newInstance().newSerializer()
-        serializer.setOutput(buffer.outputStream(), "ASCII")
+        serializer.setOutput(outputStream, "UTF-8")
 
         serializer.startTag(Elements.ROOT_PASSWORD_SAFE)
             .plainTextAttribute(
@@ -61,7 +61,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
             for (encryptedPassword in getSiteEntriesOfCategory(category.id!!)) {
                 serializer.writeSiteEntry(encryptedPassword)
             }
-            softDeletedEntries.toSet().forEach { deletedPassword ->
+            softDeletedEntries.filter { it.categoryId == category.id }.forEach { deletedPassword ->
                 serializer.writeSiteEntry(deletedPassword)
             }
             serializer.endTag(Elements.CATEGORY)
@@ -80,7 +80,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
             allSavedGPMs.forEach { savedGPM ->
                 serializer.writeGPMEntry(
                     savedGPM,
-                    gpmIdToSiteEntry.getOrDefault(savedGPM.id!!, emptySet())
+                    gpmIdToSiteEntry.getOrDefault(savedGPM.id!!, emptySet<DBID>())
                 )
             }
             serializer.endTag(Elements.IMPORTS_GPM)
@@ -89,7 +89,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
 
         serializer.endTag(Elements.ROOT_PASSWORD_SAFE)
         serializer.endDocument()
-        buffer.flush()
+        outputStream.flush()
     }
 
     @Suppress("SameParameterValue")
@@ -113,64 +113,78 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
             allSavedGPMs: Set<SavedGPM>,
             finalSink: Sink
         ) {
-            val hexSink = HexEncodingSink(finalSink.buffer())
+            val outputStream = finalSink.buffer().outputStream()
 
             val (salt, key) = DBHelperFactory.getDBHelper().fetchSaltAndEncryptedMasterKey()
 
-            hexSink.write(salt)
-            hexSink.write(key)
-            hexSink.flush()
+            // 1. Write salt
+            outputStream.write((salt.salt.toHexString() + "\n").toByteArray(Charsets.UTF_8))
+            // 2. Write master key IV + ciphertext
+            outputStream.write((key.iv.toHexString() + "\n").toByteArray(Charsets.UTF_8))
+            outputStream.write((key.cipherText.toHexString() + "\n").toByteArray(Charsets.UTF_8))
 
-            hexSink.flush()
+            // 3. Write chunked marker
+            outputStream.write(("STREAMING_CHUNKED_V1\n").toByteArray(Charsets.UTF_8))
 
-            val xmlBuf = Buffer()
+            // 4. Wrap output in a chunking output stream
+            val helper = fi.iki.ede.crypto.keystore.KeyStoreHelperFactory.getKeyStoreHelper()
+            val chunkingOut = ChunkingEncryptingOutputStream(outputStream) { plaintext ->
+                helper.encrypterProvider(plaintext)
+            }
+
+            // 5. Generate XML directly into chunkingOut
             BackupDatabase().generateXMLExport(
-                xmlBuf,
+                chunkingOut,
                 categoriesList,
                 softDeletedEntries,
                 siteEntryGPMMappings,
                 allSavedGPMs,
                 getSiteEntriesOfCategory
             )
-            val xmlBytes = xmlBuf.readByteArray()
 
-            val encBytes = xmlBytes.encrypt()
-
-            hexSink.write(encBytes)
-            hexSink.flush()
+            chunkingOut.close()
         }
     }
 }
 
-private class HexEncodingSink(private val out: BufferedSink) : Sink {
-    fun write(salt: Salt) {
-        write(salt.salt)
-        out.writeUtf8("\n")
-    }
+private class ChunkingEncryptingOutputStream(
+    private val out: java.io.OutputStream,
+    private val chunkSize: Int = 65536, // 64KB chunks
+    private val encrypt: (ByteArray) -> IVCipherText
+) : java.io.OutputStream() {
+    private val buffer = ByteArray(chunkSize)
+    private var count = 0
 
-    fun write(cipherText: IVCipherText) {
-        write(cipherText.iv)
-        out.writeUtf8("\n")
-        write(cipherText.cipherText)
-        out.writeUtf8("\n")
-    }
-
-    fun write(bytes: ByteArray) {
-        write(Buffer().write(bytes), bytes.size.toLong())
-    }
-
-    override fun write(source: Buffer, byteCount: Long) {
-        // consume the bytes from source, convert to hex, write UTF-8 hex string to out
-        val bytes = source.readByteArray(byteCount)
-        // fast hex conversion
-        val sb = StringBuilder(bytes.size * 2)
-        for (b in bytes) {
-            val v = b.toInt() and 0xFF
-            val hex1 = Character.forDigit((v ushr 4), 16)
-            val hex2 = Character.forDigit((v and 0x0F), 16)
-            sb.append(hex1).append(hex2)
+    override fun write(b: Int) {
+        buffer[count++] = b.toByte()
+        if (count >= chunkSize) {
+            flushBuffer()
         }
-        out.writeUtf8(sb.toString())
+    }
+
+    override fun write(b: ByteArray, off: Int, len: Int) {
+        var bytesWritten = 0
+        while (bytesWritten < len) {
+            val space = chunkSize - count
+            val toWrite = minOf(space, len - bytesWritten)
+            System.arraycopy(b, off + bytesWritten, buffer, count, toWrite)
+            count += toWrite
+            bytesWritten += toWrite
+            if (count >= chunkSize) {
+                flushBuffer()
+            }
+        }
+    }
+
+    private fun flushBuffer() {
+        if (count > 0) {
+            val chunk = ByteArray(count)
+            System.arraycopy(buffer, 0, chunk, 0, count)
+            val encrypted = encrypt(chunk)
+            val line = "${encrypted.iv.toHexString()}:${encrypted.cipherText.toHexString()}\n"
+            out.write(line.toByteArray(Charsets.UTF_8))
+            count = 0
+        }
     }
 
     override fun flush() {
@@ -178,8 +192,8 @@ private class HexEncodingSink(private val out: BufferedSink) : Sink {
     }
 
     override fun close() {
+        flushBuffer()
+        out.flush()
         out.close()
     }
-
-    override fun timeout(): Timeout = out.timeout()
 }

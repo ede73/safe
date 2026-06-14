@@ -8,20 +8,24 @@ kotlin {
     jvm("desktop")
 
     sourceSets {
-        val commonMain by getting
-        val androidMain by getting {
+        val commonMain by getting {
             dependencies {
                 implementation(project(":app:cryptoobjects"))
                 implementation(project(":app:db"))
-                implementation(project(":app:preferences"))
                 implementation(project(":crypto"))
                 implementation(project(":dateutils"))
                 implementation(project(":gpm"))
                 implementation(project(":logger"))
+                implementation(libs.okio)
+                implementation(libs.kxml2)
+            }
+        }
+        val androidMain by getting {
+            dependencies {
+                implementation(project(":app:preferences"))
                 implementation(libs.androidx.appcompat)
                 implementation(libs.androidx.core.ktx)
                 implementation(libs.material)
-                implementation(libs.okio)
             }
         }
     }

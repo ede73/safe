@@ -296,7 +296,6 @@ dependencies {
     testImplementation(project(":crypto"))
     testImplementation(testFixtures(project(":crypto")))
     testImplementation(project(":app"))
-    implementation(libs.krypto)
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 

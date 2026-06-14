@@ -84,12 +84,13 @@ fun RestoreDatabaseComponent(
             try {
                 val passwords = RestoreDatabase().doRestore(
                     ctx,
-                    String(stream.readBytes()),
+                    stream.reader(),
                     backupPassword,
                     dbHelper,
+                    fi.iki.ede.preferences.Preferences.getLastBackupTime(),
                     GPMDB::linkSaveGPMAndSiteEntry,
                     GPMDB::addSavedGPM,
-                    LoginHandler::passwordLogin,
+                    { ctx, pwd -> LoginHandler.passwordLogin(ctx as android.content.Context, pwd) },
                     { categories: Int?, passwords: Int?, message: String? ->
                         categories?.let {
                             processedCategories.intValue = it
@@ -113,6 +114,7 @@ fun RestoreDatabaseComponent(
                 }
                 onFinished(passwords, null)
             } catch (ex: Exception) {
+                ex.printStackTrace()
                 onFinished(0, ex)
             }
         }

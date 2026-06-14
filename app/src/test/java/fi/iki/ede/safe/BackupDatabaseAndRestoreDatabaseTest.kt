@@ -108,9 +108,10 @@ class BackupDatabaseAndRestoreDatabaseTest {
             (1..count.toInt()).forEach {
                 r.doRestore(
                     mockk<Context>(),
-                    PASSWORD_ENCRYPTED_BACKUP_AT_1234,
+                    java.io.StringReader(PASSWORD_ENCRYPTED_BACKUP_AT_1234),
                     backupPassword,
                     dbHelper,
+                    Preferences.getLastBackupTime(),
                     GPMDB::linkSaveGPMAndSiteEntry,
                     GPMDB::addSavedGPM,
                     { _, _ -> true },
@@ -160,6 +161,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
     @Test
     fun backupTest() {
         mockClockSystemNow(1234)
+        mockGetLastBackupTime(1234)
         val finalBuffer = Buffer()
         runBlocking {
             BackupDatabase.backup(
@@ -173,11 +175,22 @@ class BackupDatabaseAndRestoreDatabaseTest {
         }
         unmockkObject(Clock.System)
         val out = finalBuffer.readUtf8()
-        Logger.d(TAG, out)
-        assertEquals(
-            PASSWORD_ENCRYPTED_BACKUP_AT_1234.trimIndent().trim(),
-            out.trimIndent().trim(),
-        )
+        val lines = out.trim().lines()
+        assertTrue(lines.size >= 4)
+        assertEquals("STREAMING_CHUNKED_V1", lines[3])
+
+        val r = RestoreDatabase()
+        r.doRestore(
+            mockk<Context>(),
+            java.io.StringReader(out),
+            backupPassword,
+            dbHelper,
+            Preferences.getLastBackupTime(),
+            GPMDB::linkSaveGPMAndSiteEntry,
+            GPMDB::addSavedGPM,
+            { _, _ -> true },
+            { _, _, _ -> }
+        ) { _, _ -> true }
 
         runBlocking {
             DataModel.dumpModelInDebugMode()
@@ -255,9 +268,10 @@ class BackupDatabaseAndRestoreDatabaseTest {
                 var askedUser = false
                 r.doRestore(
                     context,
-                    PASSWORD_ENCRYPTED_BACKUP_AT_1234,
+                    java.io.StringReader(PASSWORD_ENCRYPTED_BACKUP_AT_1234),
                     backupPassword,
                     dbHelper,
+                    Preferences.getLastBackupTime(),
                     GPMDB::linkSaveGPMAndSiteEntry,
                     GPMDB::addSavedGPM,
                     { _, _ -> true },
@@ -296,9 +310,10 @@ class BackupDatabaseAndRestoreDatabaseTest {
         mockGetLastBackupTime(1234)
         r.doRestore(
             mockk<Context>(),
-            PASSWORD_ENCRYPTED_BACKUP_AT_1234,
+            java.io.StringReader(PASSWORD_ENCRYPTED_BACKUP_AT_1234),
             backupPassword,
             dbHelper,
+            Preferences.getLastBackupTime(),
             GPMDB::linkSaveGPMAndSiteEntry,
             GPMDB::addSavedGPM,
             { _, _ -> true },
@@ -340,6 +355,122 @@ class BackupDatabaseAndRestoreDatabaseTest {
         }
     }
 
+    class KmpKeyStoreHelper(private val masterKey: fi.iki.ede.crypto.keystore.KMPSecretKeySpec) : fi.iki.ede.crypto.keystore.IKeyStoreHelper {
+        override fun testingDeleteKeys_DO_NOT_USE() {}
+        override fun rotateKeys() {}
+        override fun getOrCreateBiokey(): fi.iki.ede.crypto.keystore.KMPKey = masterKey
+
+        override var decrypterProviderWithKey: (IVCipherText, fi.iki.ede.crypto.keystore.KMPKey) -> ByteArray = { encrypted, key ->
+            if (encrypted.iv.isEmpty()) {
+                byteArrayOf()
+            } else {
+                val keyBytes = when (key) {
+                    is fi.iki.ede.crypto.keystore.KMPSecretKeySpec -> key.values
+                    is javax.crypto.spec.SecretKeySpec -> key.encoded
+                    else -> throw IllegalArgumentException("Unsupported key type: ${key::class}")
+                }
+                korlibs.crypto.AES.decryptAesCbc(
+                    encrypted.cipherText,
+                    keyBytes,
+                    encrypted.iv,
+                    korlibs.crypto.Padding.PKCS7Padding
+                )
+            }
+        }
+
+        override var decrypterProvider: (IVCipherText) -> ByteArray = { encrypted ->
+            if (encrypted.iv.isEmpty()) {
+                byteArrayOf()
+            } else {
+                korlibs.crypto.AES.decryptAesCbc(
+                    encrypted.cipherText,
+                    masterKey.values,
+                    encrypted.iv,
+                    korlibs.crypto.Padding.PKCS7Padding
+                )
+            }
+        }
+
+        override var encrypterProviderWithKey: (ByteArray, fi.iki.ede.crypto.keystore.KMPKey) -> IVCipherText = { _, _ ->
+            throw NotImplementedError()
+        }
+
+        override var encrypterProvider: (ByteArray) -> IVCipherText = { _ ->
+            throw NotImplementedError()
+        }
+    }
+
+    @Test
+    fun restore2CategoriesXmlTest() {
+        val possiblePaths = listOf(
+            File("2categories.xml"),
+            File("../2categories.xml"),
+            File("../../2categories.xml"),
+            File("c:/Users/ede/src/safe/2categories.xml")
+        )
+        val file = possiblePaths.firstOrNull { it.exists() }
+            ?: throw AssertionError("Could not find 2categories.xml in any of the search paths: $possiblePaths")
+        val content = file.readText()
+
+        val salt = Salt("818c22df1233c57e".hexToByteArray())
+        val encryptedMasterKey = IVCipherText(
+            "8cd9f9f4dff372cad28e441a4b43a040".hexToByteArray(),
+            "074bc92256f32db4237be0c3c651163a6acdf7515220fd07354ea7d65d5f16d9733fcfb05244a4041ec65e591e6d8bbe".hexToByteArray()
+        )
+        val userPassword = Password("qwertyuiop")
+
+        val derivedKey = fi.iki.ede.crypto.keystore.KeyManagement.generatePBKDF2AESKey(
+            salt,
+            fi.iki.ede.crypto.keystore.CipherUtilities.KEY_ITERATION_COUNT,
+            userPassword,
+            fi.iki.ede.crypto.keystore.CipherUtilities.KEY_LENGTH_BITS
+        )
+        val masterKey = fi.iki.ede.crypto.keystore.KeyManagement.decryptMasterKey(derivedKey, encryptedMasterKey)
+
+        val helper = KmpKeyStoreHelper(masterKey)
+        fi.iki.ede.crypto.keystore.KeyStoreHelperFactory.provideKeyStoreHelper = helper
+        every { fi.iki.ede.crypto.keystore.KeyStoreHelperFactory.getKeyStoreHelper } returns { helper }
+
+        val dbHelper = mockDataModelFor_UNIT_TESTS_ONLY(linkedMapOf())
+        val r = RestoreDatabase()
+        mockClockSystemNow(2000)
+        mockGetLastBackupTime(1234)
+
+        r.doRestore(
+            mockk<Context>(),
+            java.io.StringReader(content),
+            userPassword,
+            dbHelper,
+            Preferences.getLastBackupTime(),
+            GPMDB::linkSaveGPMAndSiteEntry,
+            GPMDB::addSavedGPM,
+            { _, _ -> true },
+            { _, _, _ -> }
+        ) { thisBackupCreationTime, lastBackupDone ->
+            throw Exception("We should not ask user anything, valid backup!")
+        }
+
+        runBlocking {
+            DataModel.loadFromDatabase {
+                GPMDataModel.loadFromDatabase()
+            }
+        }
+
+        val passwords = DataModel.siteEntriesStateFlow.value
+        val categories = DataModel.categoriesStateFlow.value
+
+        assertEquals(2, categories.size, "Should import 2 categories")
+        assertEquals(3, passwords.size, "Should import 3 site entries")
+
+        // Asserting the details of categories and site entries
+        assertTrue(categories.any { it.plainName == "Personal" || it.plainName == "Work" || it.plainName.isNotEmpty() })
+        
+        for (pwd in passwords) {
+            System.err.println("DEBUG: desc='${pwd.cachedPlainDescription}' username='${pwd.plainUsername}' password='${pwd.plainPassword}'")
+            assertTrue(pwd.cachedPlainDescription.isNotEmpty(), "Description should not be empty")
+        }
+    }
+
     private fun mockPasswordObjectForBackup() =
         mockDataModelFor_UNIT_TESTS_ONLY(
             linkedMapOf(
@@ -366,7 +497,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         mockkConstructor(BackupDatabase::class)
         every {
             anyConstructed<BackupDatabase>().generateXMLExport(
-                buffer = any(),
+                outputStream = any(),
                 categoriesList = any(),
                 softDeletedEntries = any(),
                 siteEntryGPMMappings = any(),
@@ -374,8 +505,8 @@ class BackupDatabaseAndRestoreDatabaseTest {
                 getSiteEntriesOfCategory = any(),
             )
         } answers {
-            val buffer = arg<Buffer>(0)
-            buffer.writeUtf8(TOP_LAYER_UNENCRYPTED_BACKUP_XML.trim())
+            val outputStream = arg<java.io.OutputStream>(0)
+            outputStream.write(TOP_LAYER_UNENCRYPTED_BACKUP_XML.trim().toByteArray(Charsets.UTF_8))
         }
 
         val finalOutput = runBlocking {
@@ -398,9 +529,10 @@ class BackupDatabaseAndRestoreDatabaseTest {
         mockGetLastBackupTime(1234)
         r.doRestore(
             mockk<Context>(),
-            finalOutput,
+            java.io.StringReader(finalOutput),
             backupPassword,
             dbHelper,
+            Preferences.getLastBackupTime(),
             GPMDB::linkSaveGPMAndSiteEntry,
             GPMDB::addSavedGPM,
             { _, _ -> true },

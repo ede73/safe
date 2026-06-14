@@ -2,24 +2,18 @@ package fi.iki.ede.crypto.support
 
 import fi.iki.ede.crypto.EncryptedPassword
 import fi.iki.ede.crypto.IVCipherText
+import kotlin.text.HexFormat
 
 typealias HexString = String
 
 // extension functions helping keep classes and code cleaner going between different representations
-fun ByteArray.toHexString(): HexString = joinToString("") {
-    java.lang.Byte.toUnsignedInt(it).toString(radix = 16).padStart(2, '0')
-}
+@OptIn(ExperimentalStdlibApi::class)
+fun ByteArray.toHexString(): HexString = this.toHexString(HexFormat.Default)
 
 fun IVCipherText.toHexString(): HexString =
     "iv:${iv.toHexString()},cipherText:${cipherText.toHexString()}"
 
-fun HexString.hexToByteArray(): ByteArray {
-    require(this.isNotEmpty()) { "Cannot convert empty to hexadecimal" }
-    require(this.matches(Regex("^[0-9a-fA-F]+"))) { "To convert hexadecimal strings, you MUST pass hexadecimal string, not '$this'" }
-    require(this.length % 2 == 0) { "Hexadecimal must be exactly divisible by 2" }
-    return chunked(2)
-        .map { it.toInt(16).toByte() }
-        .toByteArray()
-}
+@OptIn(ExperimentalStdlibApi::class)
+fun HexString.hexToByteArray(): ByteArray = this.hexToByteArray(HexFormat.Default)
 
 fun EncryptedPassword.toHex() = ivCipherText.toHexString()
