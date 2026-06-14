@@ -42,11 +42,41 @@ internal fun LoginScreenCompose(
 ) {
     SafeTheme {
         val context = LocalContext.current
-
         isGoodRestoredContent(context)
         // there is one big caveat now
         // IF our data was indeed restored from backup
         // making NEW login will basically render our database un-readable(???)
+
+        // Check if biometrics should be auto-launched
+        val biometricsActivityEnabled = BiometricsActivity.isBiometricEnabled()
+        val biometricsRecorded = BiometricsActivity.haveRecordedBiometric()
+        val keystoreIsInitialized = remember {
+            try {
+                val ks = KeyStore.getInstance(ANDROID_KEYSTORE)
+                ks.load(null)
+                if (biometricsActivityEnabled && biometricsRecorded && !ks.containsAlias("biokey")) {
+                    BiometricsActivity.clearBiometricKeys()
+                }
+                true
+            } catch (ex: Exception) {
+                BiometricsActivity.clearBiometricKeys()
+                false
+            }
+        }
+
+        // Auto-launch biometrics if enabled
+        var hasLaunchedBiometrics by remember { mutableStateOf(false) }
+        if (loginPrecondition != LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE &&
+            biometricsActivityEnabled && biometricsRecorded && keystoreIsInitialized &&
+            biometricsVerify != null && !hasLaunchedBiometrics
+        ) {
+            LaunchedEffect(Unit) {
+                hasLaunchedBiometrics = true
+                KeyStoreHelperFactory.provideKeyStoreHelper =
+                    KeyStoreHelper(KeyStore.getInstance(ANDROID_KEYSTORE))
+                biometricsVerify.launch(BiometricsActivity.getVerificationIntent(context))
+            }
+        }
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             bottomBar = { BottomActionBar(loginScreen = true) }

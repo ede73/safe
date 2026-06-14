@@ -14,12 +14,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import fi.iki.ede.crypto.keystore.KeyStoreHelper.Companion.ANDROID_KEYSTORE
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.BiometricsActivity
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.theme.SafeButton
+import java.security.KeyStore
 import kotlin.time.ExperimentalTime
 
 @Composable
@@ -27,19 +29,24 @@ import kotlin.time.ExperimentalTime
 fun BiometricsComponent(bioVerify: ActivityResultLauncher<Intent>) {
     val context = LocalContext.current
 
+    // TODO: Should be remembered and based on preferences (and test case should invoke...)
+    val biometricsActivityEnabled = BiometricsActivity.isBiometricEnabled()
+    val biometricsRecorded = BiometricsActivity.haveRecordedBiometric()
+
     // TODO: Don't allow biometrics if keystore doesn't initialize
     // this situation MIGHT happen when app is fresh installed AND google restored backup preferences
     val keystoreIsInitialized = try {
-        KeyStoreHelperFactory.getKeyStoreHelper() // just using to test if were initializer
+        val ks = KeyStore.getInstance(ANDROID_KEYSTORE)
+        ks.load(null)
+        if (biometricsActivityEnabled && biometricsRecorded && !ks.containsAlias("biokey")) {
+            BiometricsActivity.clearBiometricKeys()
+        }
         true
     } catch (ex: Exception) {
         BiometricsActivity.clearBiometricKeys()
         false
     }
 
-    // TODO: Should be remembered and based on preferences (and test case should invoke...)
-    val biometricsActivityEnabled = BiometricsActivity.isBiometricEnabled()
-    val biometricsRecorded = BiometricsActivity.haveRecordedBiometric()
     var registerBiometrics by remember { mutableStateOf(biometricsActivityEnabled) }
 
     if (biometricsActivityEnabled && biometricsRecorded && keystoreIsInitialized) {

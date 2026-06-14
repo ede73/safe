@@ -3,6 +3,9 @@ package fi.iki.ede.safe.desktop
 
 import fi.iki.ede.crypto.support.decrypt
 import fi.iki.ede.crypto.support.encrypt
+import fi.iki.ede.crypto.IVCipherText
+import fi.iki.ede.crypto.Password
+import fi.iki.ede.crypto.SaltedPassword
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.safe.ui.composable.DesktopNavigation
@@ -32,6 +35,50 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 
+object DesktopSettings {
+    private val settingsFile = java.io.File(System.getProperty("user.home"), ".safe_desktop_settings")
+
+    fun isBiometricsRegistered(): Boolean {
+        if (!settingsFile.exists()) return false
+        try {
+            val lines = settingsFile.readLines()
+            return lines.isNotEmpty() && lines[0] == "true" && lines.size >= 2
+        } catch (e: Exception) {
+            return false
+        }
+    }
+
+    fun getEncryptedMasterKey(): IVCipherText? {
+        if (!settingsFile.exists()) return null
+        try {
+            val lines = settingsFile.readLines()
+            if (lines.size >= 2 && lines[0] == "true") {
+                val combined = java.util.Base64.getDecoder().decode(lines[1])
+                return IVCipherText(16, combined)
+            }
+        } catch (e: Exception) {
+            // ignore
+        }
+        return null
+    }
+
+    fun registerBiometrics(encryptedMasterKey: IVCipherText) {
+        try {
+            val combined = encryptedMasterKey.combineIVAndCipherText()
+            val base64 = java.util.Base64.getEncoder().encodeToString(combined)
+            settingsFile.writeText("true\n$base64")
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun clearBiometrics() {
+        if (settingsFile.exists()) {
+            settingsFile.delete()
+        }
+    }
+}
+
 fun main() = application {
     Window(
         onCloseRequest = ::exitApplication,
@@ -51,7 +98,16 @@ fun main() = application {
 @OptIn(ExperimentalFoundationApi::class)
 fun LoginScreen() {
     var password by remember { mutableStateOf("") }
-    var statusMessage by remember { mutableStateOf("Enter master password") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
+    var registerFingerprint by remember { mutableStateOf(false) }
+
+    var isFirstTimeLogin by remember { mutableStateOf(!java.io.File("safe.db").exists()) }
+    var isBiometricsEnabled by remember { mutableStateOf(DesktopSettings.isBiometricsRegistered()) }
+    var showBiometricsScanning by remember { mutableStateOf(false) }
+
+    var statusMessage by remember { mutableStateOf(if (isFirstTimeLogin) "Create your master password" else "Enter master password") }
     var isLoggedIn by remember { mutableStateOf(false) }
 
     // Shared DBHelper instance for this screen
@@ -65,8 +121,6 @@ fun LoginScreen() {
     var showAddCategoryDialog by remember { mutableStateOf(false) }
     var newCategoryName by remember { mutableStateOf("") }
 
-
-
     // Password visibility toggle state map (site entry ID -> isVisible)
     val passwordVisibilityMap = remember { mutableStateMapOf<Long, Boolean>() }
 
@@ -78,6 +132,40 @@ fun LoginScreen() {
 
     // Export Backup Dialog state
     var exportStatusMessage by remember { mutableStateOf("") }
+
+    if (showBiometricsScanning) {
+        LaunchedEffect(Unit) {
+            statusMessage = "Verifying biometrics..."
+            kotlinx.coroutines.delay(1000)
+            try {
+                val tpmKeys = db.fetchTpmKeys()
+                if (tpmKeys != null) {
+                    val keyFactory = java.security.KeyFactory.getInstance("RSA")
+                    val privateKeyBytes = java.util.Base64.getDecoder().decode(tpmKeys.first)
+                    val publicKeyBytes = java.util.Base64.getDecoder().decode(tpmKeys.second)
+                    val privateKey = keyFactory.generatePrivate(java.security.spec.PKCS8EncodedKeySpec(privateKeyBytes))
+                    val publicKey = keyFactory.generatePublic(java.security.spec.X509EncodedKeySpec(publicKeyBytes))
+                    fi.iki.ede.crypto.keystore.KeyStoreHelper.setLoadedKeys(privateKey, publicKey)
+                }
+
+                val encryptedKey = DesktopSettings.getEncryptedMasterKey()
+                if (encryptedKey != null) {
+                    val success = fi.iki.ede.crypto.keystore.KeyStoreHelper.loginWithBiometricKey(encryptedKey)
+                    if (success) {
+                        isLoggedIn = true
+                        statusMessage = "Unlock successful! Logged in via biometrics."
+                    } else {
+                        statusMessage = "Biometric authentication failed"
+                    }
+                } else {
+                    statusMessage = "No registered biometric key found"
+                }
+            } catch (ex: Exception) {
+                statusMessage = "Biometric error: ${ex.message ?: ex.toString()}"
+            }
+            showBiometricsScanning = false
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -185,6 +273,7 @@ fun LoginScreen() {
                                     onClick = {
                                         isLoggedIn = false
                                         password = ""
+                                        confirmPassword = ""
                                         DesktopNavigation.activeCategory = null
                                         statusMessage = "Enter master password"
                                     },
@@ -288,119 +377,290 @@ fun LoginScreen() {
                 }
             }
         } else {
-            Card(
-                modifier = Modifier
-                    .width(360.dp)
-                    .padding(16.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF1e1e2e).copy(alpha = 0.9f)
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+            if (showBiometricsScanning) {
+                Card(
+                    modifier = Modifier
+                        .width(320.dp)
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF1e1e2e)
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
                 ) {
-                    Text(
-                        "🔐",
-                        fontSize = 48.sp
-                    )
-
-                    Text(
-                        "Safe",
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFe94560)
-                    )
-
-                    Text(
-                        "Password Manager",
-                        fontSize = 14.sp,
-                        color = Color(0xFF8899aa)
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    OutlinedTextField(
-                        value = password,
-                        onValueChange = { password = it },
-                        label = { Text("Master Password") },
-                        visualTransformation = PasswordVisualTransformation(),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFFe94560),
-                            focusedLabelColor = Color(0xFFe94560),
-                            unfocusedBorderColor = Color(0xFF444466),
-                            unfocusedLabelColor = Color(0xFF8899aa),
-                            cursorColor = Color(0xFFe94560),
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White
-                        )
-                    )
-
-                    Button(
-                        onClick = {
-                            statusMessage = "Authenticating..."
-                            try {
-                                val dbFile = java.io.File("safe.db")
-                                if (!dbFile.exists()) {
-                                    // First time login - setup password and generate keys
-                                    statusMessage = "First run: Creating master and TPM keys..."
-                                    val (salt, cipheredKey) = fi.iki.ede.crypto.keystore.KeyStoreHelper.createNewKey(fi.iki.ede.crypto.Password(password))
-                                    db.storeSaltAndEncryptedMasterKey(salt, cipheredKey)
-                                    
-                                    val privKey = fi.iki.ede.crypto.keystore.KeyStoreHelper.getLoadedPrivateKey()
-                                    val pubKey = fi.iki.ede.crypto.keystore.KeyStoreHelper.getLoadedPublicKey()
-                                    if (privKey != null && pubKey != null) {
-                                        val privateKeyBase64 = java.util.Base64.getEncoder().encodeToString(privKey.encoded)
-                                        val publicKeyBase64 = java.util.Base64.getEncoder().encodeToString(pubKey.encoded)
-                                        db.storeTpmKeys(privateKeyBase64, publicKeyBase64)
-                                    }
-                                    isLoggedIn = true
-                                    statusMessage = "Unlock successful! Logged in."
-                                } else {
-                                    // Existing login - fetch and decrypt master key
-                                    val (salt, cipheredKey) = db.fetchSaltAndEncryptedMasterKey()
-                                    
-                                    // Make sure TPM keys are loaded from DB into KeyStoreHelper
-                                    val tpmKeys = db.fetchTpmKeys()
-                                    if (tpmKeys != null) {
-                                        val keyFactory = java.security.KeyFactory.getInstance("RSA")
-                                        val privateKeyBytes = java.util.Base64.getDecoder().decode(tpmKeys.first)
-                                        val publicKeyBytes = java.util.Base64.getDecoder().decode(tpmKeys.second)
-                                        val privateKey = keyFactory.generatePrivate(java.security.spec.PKCS8EncodedKeySpec(privateKeyBytes))
-                                        val publicKey = keyFactory.generatePublic(java.security.spec.X509EncodedKeySpec(publicKeyBytes))
-                                        fi.iki.ede.crypto.keystore.KeyStoreHelper.setLoadedKeys(privateKey, publicKey)
-                                    }
-
-                                    fi.iki.ede.crypto.keystore.KeyStoreHelper.importExistingEncryptedMasterKey(
-                                        fi.iki.ede.crypto.SaltedPassword(salt, fi.iki.ede.crypto.Password(password)),
-                                        cipheredKey
-                                    )
-                                    isLoggedIn = true
-                                    statusMessage = "Unlock successful! Logged in."
-                                }
-                            } catch (ex: Exception) {
-                                statusMessage = "Invalid master password"
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth().height(48.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFe94560)
-                        )
+                    Column(
+                        modifier = Modifier.padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Text("Unlock", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                        Text("👆", fontSize = 48.sp)
+                        Text(
+                            "Biometric Unlock",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Text(
+                            "Scanning fingerprint...",
+                            fontSize = 14.sp,
+                            color = Color(0xFF8899aa)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        CircularProgressIndicator(color = Color(0xFF34b38a))
                     }
+                }
+            } else {
+                Card(
+                    modifier = Modifier
+                        .width(360.dp)
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF1e1e2e).copy(alpha = 0.9f)
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(
+                            "🔐",
+                            fontSize = 48.sp
+                        )
 
-                    Text(
-                        statusMessage,
-                        fontSize = 12.sp,
-                        color = Color(0xFF8899aa)
-                    )
+                        Text(
+                            "Safe",
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFe94560)
+                        )
+
+                        Text(
+                            "Password Manager",
+                            fontSize = 14.sp,
+                            color = Color(0xFF8899aa)
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        if (isFirstTimeLogin) {
+                            OutlinedTextField(
+                                value = password,
+                                onValueChange = { password = it },
+                                label = { Text("Choose Master Password") },
+                                visualTransformation = if (passwordVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
+                                trailingIcon = {
+                                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                        Text(if (passwordVisible) "🙈" else "👁️", fontSize = 14.sp)
+                                    }
+                                },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFFe94560),
+                                    focusedLabelColor = Color(0xFFe94560),
+                                    unfocusedBorderColor = Color(0xFF444466),
+                                    unfocusedLabelColor = Color(0xFF8899aa),
+                                    cursorColor = Color(0xFFe94560),
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White
+                                )
+                            )
+
+                            OutlinedTextField(
+                                value = confirmPassword,
+                                onValueChange = { confirmPassword = it },
+                                label = { Text("Confirm Master Password") },
+                                visualTransformation = if (confirmPasswordVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
+                                trailingIcon = {
+                                    IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                                        Text(if (confirmPasswordVisible) "🙈" else "👁️", fontSize = 14.sp)
+                                    }
+                                },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFFe94560),
+                                    focusedLabelColor = Color(0xFFe94560),
+                                    unfocusedBorderColor = Color(0xFF444466),
+                                    unfocusedLabelColor = Color(0xFF8899aa),
+                                    cursorColor = Color(0xFFe94560),
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White
+                                )
+                            )
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Checkbox(
+                                    checked = registerFingerprint,
+                                    onCheckedChange = { registerFingerprint = it },
+                                    colors = CheckboxDefaults.colors(
+                                        checkedColor = Color(0xFFe94560),
+                                        uncheckedColor = Color(0xFF444466),
+                                        checkmarkColor = Color.White
+                                    )
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Register fingerprint after successful login", color = Color(0xFF8899aa), fontSize = 12.sp)
+                            }
+
+                            Button(
+                                onClick = {
+                                    statusMessage = "Creating vault..."
+                                    try {
+                                        val (salt, cipheredKey) = fi.iki.ede.crypto.keystore.KeyStoreHelper.createNewKey(fi.iki.ede.crypto.Password(password))
+                                        db.storeSaltAndEncryptedMasterKey(salt, cipheredKey)
+                                        
+                                        val privKey = fi.iki.ede.crypto.keystore.KeyStoreHelper.getLoadedPrivateKey()
+                                        val pubKey = fi.iki.ede.crypto.keystore.KeyStoreHelper.getLoadedPublicKey()
+                                        if (privKey != null && pubKey != null) {
+                                            val privateKeyBase64 = java.util.Base64.getEncoder().encodeToString(privKey.encoded)
+                                            val publicKeyBase64 = java.util.Base64.getEncoder().encodeToString(pubKey.encoded)
+                                            db.storeTpmKeys(privateKeyBase64, publicKeyBase64)
+                                        }
+
+                                        if (registerFingerprint) {
+                                            val encryptedKey = fi.iki.ede.crypto.keystore.KeyStoreHelper.getBiometricEncryptedMasterKey()
+                                            if (encryptedKey != null) {
+                                                DesktopSettings.registerBiometrics(encryptedKey)
+                                                isBiometricsEnabled = true
+                                            }
+                                        }
+
+                                        isLoggedIn = true
+                                        statusMessage = "Unlock successful! Logged in."
+                                        isFirstTimeLogin = false
+                                    } catch (ex: Exception) {
+                                        statusMessage = "Failed to create vault: ${ex.message}"
+                                    }
+                                },
+                                enabled = password.isNotEmpty() && password == confirmPassword && password.length >= 6,
+                                modifier = Modifier.fillMaxWidth().height(48.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFe94560)
+                                )
+                            ) {
+                                Text("Create Vault", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        } else {
+                            if (isBiometricsEnabled) {
+                                Button(
+                                    onClick = {
+                                        showBiometricsScanning = true
+                                    },
+                                    modifier = Modifier.fillMaxWidth().height(48.dp),
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = Color(0xFF34b38a)
+                                    )
+                                ) {
+                                    Text("👆 Login with biometrics", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                                }
+
+                                Text("OR", color = Color(0xFF8899aa), fontSize = 12.sp)
+                            }
+
+                            OutlinedTextField(
+                                value = password,
+                                onValueChange = { password = it },
+                                label = { Text("Master Password") },
+                                visualTransformation = if (passwordVisible) androidx.compose.ui.text.input.VisualTransformation.None else PasswordVisualTransformation(),
+                                trailingIcon = {
+                                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                        Text(if (passwordVisible) "🙈" else "👁️", fontSize = 14.sp)
+                                    }
+                                },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFFe94560),
+                                    focusedLabelColor = Color(0xFFe94560),
+                                    unfocusedBorderColor = Color(0xFF444466),
+                                    unfocusedLabelColor = Color(0xFF8899aa),
+                                    cursorColor = Color(0xFFe94560),
+                                    focusedTextColor = Color.White,
+                                    unfocusedTextColor = Color.White
+                                )
+                            )
+
+                            if (!isBiometricsEnabled) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Checkbox(
+                                        checked = registerFingerprint,
+                                        onCheckedChange = { registerFingerprint = it },
+                                        colors = CheckboxDefaults.colors(
+                                            checkedColor = Color(0xFFe94560),
+                                            uncheckedColor = Color(0xFF444466),
+                                            checkmarkColor = Color.White
+                                        )
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Register fingerprint after successful login", color = Color(0xFF8899aa), fontSize = 12.sp)
+                                }
+                            }
+
+                            Button(
+                                onClick = {
+                                    statusMessage = "Authenticating..."
+                                    try {
+                                        // Existing login - fetch and decrypt master key
+                                        val (salt, cipheredKey) = db.fetchSaltAndEncryptedMasterKey()
+                                        
+                                        // Make sure TPM keys are loaded from DB into KeyStoreHelper
+                                        val tpmKeys = db.fetchTpmKeys()
+                                        if (tpmKeys != null) {
+                                            val keyFactory = java.security.KeyFactory.getInstance("RSA")
+                                            val privateKeyBytes = java.util.Base64.getDecoder().decode(tpmKeys.first)
+                                            val publicKeyBytes = java.util.Base64.getDecoder().decode(tpmKeys.second)
+                                            val privateKey = keyFactory.generatePrivate(java.security.spec.PKCS8EncodedKeySpec(privateKeyBytes))
+                                            val publicKey = keyFactory.generatePublic(java.security.spec.X509EncodedKeySpec(publicKeyBytes))
+                                            fi.iki.ede.crypto.keystore.KeyStoreHelper.setLoadedKeys(privateKey, publicKey)
+                                        }
+
+                                        fi.iki.ede.crypto.keystore.KeyStoreHelper.importExistingEncryptedMasterKey(
+                                            fi.iki.ede.crypto.SaltedPassword(salt, fi.iki.ede.crypto.Password(password)),
+                                            cipheredKey
+                                        )
+
+                                        if (registerFingerprint) {
+                                            val encryptedKey = fi.iki.ede.crypto.keystore.KeyStoreHelper.getBiometricEncryptedMasterKey()
+                                            if (encryptedKey != null) {
+                                                DesktopSettings.registerBiometrics(encryptedKey)
+                                                isBiometricsEnabled = true
+                                            }
+                                        }
+
+                                        isLoggedIn = true
+                                        statusMessage = "Unlock successful! Logged in."
+                                    } catch (ex: Exception) {
+                                        statusMessage = "Invalid master password"
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth().height(48.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color(0xFFe94560)
+                                )
+                            ) {
+                                Text("Unlock", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                            }
+                        }
+
+                        Text(
+                            statusMessage,
+                            fontSize = 12.sp,
+                            color = Color(0xFF8899aa)
+                        )
+                    }
                 }
             }
         }
@@ -666,13 +926,13 @@ fun LoginScreen() {
                             modifier = Modifier.fillMaxWidth(),
                             maxLines = 3,
                             colors = OutlinedTextFieldDefaults.colors(
-                                  focusedBorderColor = Color(0xFFe94560),
-                                  focusedLabelColor = Color(0xFFe94560),
-                                  unfocusedBorderColor = Color(0xFF444466),
-                                  unfocusedLabelColor = Color(0xFF8899aa),
-                                  cursorColor = Color(0xFFe94560),
-                                  focusedTextColor = Color.White,
-                                  unfocusedTextColor = Color.White
+                                focusedBorderColor = Color(0xFFe94560),
+                                focusedLabelColor = Color(0xFFe94560),
+                                unfocusedBorderColor = Color(0xFF444466),
+                                unfocusedLabelColor = Color(0xFF8899aa),
+                                cursorColor = Color(0xFFe94560),
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White
                             )
                         )
 
