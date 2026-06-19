@@ -24,7 +24,6 @@ local.properties
 /in
 .failed
 .last_rev_parse
-/.agents
 /desktop/build
 /desktop/photos
 /desktop/safe.db
