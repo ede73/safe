@@ -10,6 +10,7 @@ import fi.iki.ede.crypto.keystore.KeyManagement.decryptMasterKey
 import fi.iki.ede.crypto.keystore.KeyManagement.generatePBKDF2AESKey
 import fi.iki.ede.crypto.keystore.KeyManagement.makeFreshNewKey
 import java.security.KeyStore
+import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.PrivateKey
 import java.security.PublicKey
@@ -20,6 +21,8 @@ import java.util.Base64
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
+import korlibs.crypto.AES
+import korlibs.crypto.Padding
 
 class KeyStoreHelper(
     private val masterKey: KMPSecretKeySpec,
@@ -44,7 +47,7 @@ class KeyStoreHelper(
         if (encrypted.iv.isEmpty()) {
             byteArrayOf()
         } else if (key is SecretKeySpec) {
-            korlibs.crypto.AES.decryptAesCbc(encrypted.cipherText, key.encoded, encrypted.iv, korlibs.crypto.Padding.PKCS7Padding)
+            AES.decryptAesCbc(encrypted.cipherText, key.encoded, encrypted.iv, Padding.PKCS7Padding)
         } else if (key is PrivateKey) {
             val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
             cipher.init(Cipher.DECRYPT_MODE, key)
@@ -58,14 +61,14 @@ class KeyStoreHelper(
         if (encrypted.iv.isEmpty()) {
             byteArrayOf()
         } else {
-            korlibs.crypto.AES.decryptAesCbc(encrypted.cipherText, masterKey.values, encrypted.iv, korlibs.crypto.Padding.PKCS7Padding)
+            AES.decryptAesCbc(encrypted.cipherText, masterKey.values, encrypted.iv, Padding.PKCS7Padding)
         }
     }
 
     override var encrypterProviderWithKey: (ByteArray, KMPKey) -> IVCipherText = { plaintext, key ->
         if (key is SecretKeySpec) {
             val iv = CipherUtilities.generateRandomBytes(CipherUtilities.Companion.Bytes(16))
-            val cipherText = korlibs.crypto.AES.encryptAesCbc(plaintext, key.encoded, iv, korlibs.crypto.Padding.PKCS7Padding)
+            val cipherText = AES.encryptAesCbc(plaintext, key.encoded, iv, Padding.PKCS7Padding)
             IVCipherText(iv, cipherText)
         } else if (key is PublicKey) {
             val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
@@ -79,7 +82,7 @@ class KeyStoreHelper(
 
     override var encrypterProvider: (ByteArray) -> IVCipherText = { plaintext ->
         val iv = CipherUtilities.generateRandomBytes(CipherUtilities.Companion.Bytes(16))
-        val cipherText = korlibs.crypto.AES.encryptAesCbc(plaintext, masterKey.values, iv, korlibs.crypto.Padding.PKCS7Padding)
+        val cipherText = AES.encryptAesCbc(plaintext, masterKey.values, iv, Padding.PKCS7Padding)
         IVCipherText(iv, cipherText)
     }
 
@@ -95,6 +98,36 @@ class KeyStoreHelper(
             loadedPublicKey = pub
         }
 
+        private fun generateMockKeyPair(): KeyPair {
+            val keyPairGen = KeyPairGenerator.getInstance("RSA")
+            keyPairGen.initialize(2048)
+            return keyPairGen.generateKeyPair()
+        }
+
+        fun ensureMockKeysLoaded() {
+            if (loadedPrivateKey == null || loadedPublicKey == null) {
+                val pair = generateMockKeyPair()
+                loadedPrivateKey = pair.private
+                loadedPublicKey = pair.public
+            }
+        }
+
+        private fun initializeKeyStoreHelper(
+            masterKey: KMPSecretKeySpec,
+            privKey: PrivateKey,
+            pubKey: PublicKey
+        ) {
+            if (PlatformUtils.isWindows) {
+                KeyStoreHelperFactory.provideKeyStoreHelper = CNGKeyStoreHelper(masterKey.values)
+            } else {
+                KeyStoreHelperFactory.provideKeyStoreHelper = KeyStoreHelper(
+                    masterKey,
+                    privKey,
+                    pubKey
+                )
+            }
+        }
+
         fun importExistingEncryptedMasterKey(
             saltedPassword: SaltedPassword,
             ivSecretKey: IVCipherText
@@ -107,12 +140,11 @@ class KeyStoreHelper(
             )
             val decrypted = decryptMasterKey(derivedKey, ivSecretKey)
             
-            // Reconstruct public/private keys if they were loaded, otherwise generate a mock pair
-            val privKey = loadedPrivateKey ?: generateMockPrivateKey()
-            val pubKey = loadedPublicKey ?: generateMockPublicKey()
+            ensureMockKeysLoaded()
+            val privKey = loadedPrivateKey!!
+            val pubKey = loadedPublicKey!!
 
-            val helper = KeyStoreHelper(decrypted, privKey, pubKey)
-            KeyStoreHelperFactory.provideKeyStoreHelper = helper
+            initializeKeyStoreHelper(decrypted, privKey, pubKey)
 
             val ks = KeyStore.getInstance(KeyStore.getDefaultType())
             ks.load(null, null)
@@ -133,28 +165,13 @@ class KeyStoreHelper(
             )
 
             // Generate TPM-TEE public-private key pair replica
-            val keyPairGen = KeyPairGenerator.getInstance("RSA")
-            keyPairGen.initialize(2048)
-            val pair = keyPairGen.generateKeyPair()
+            val pair = generateMockKeyPair()
             loadedPrivateKey = pair.private
             loadedPublicKey = pair.public
 
-            val helper = KeyStoreHelper(unencryptedKey, pair.private, pair.public)
-            KeyStoreHelperFactory.provideKeyStoreHelper = helper
+            initializeKeyStoreHelper(unencryptedKey, pair.private, pair.public)
 
             return Pair(salt, cipheredKey)
-        }
-
-        private fun generateMockPrivateKey(): PrivateKey {
-            val keyPairGen = KeyPairGenerator.getInstance("RSA")
-            keyPairGen.initialize(2048)
-            return keyPairGen.generateKeyPair().private
-        }
-
-        private fun generateMockPublicKey(): PublicKey {
-            val keyPairGen = KeyPairGenerator.getInstance("RSA")
-            keyPairGen.initialize(2048)
-            return keyPairGen.generateKeyPair().public
         }
     }
 }

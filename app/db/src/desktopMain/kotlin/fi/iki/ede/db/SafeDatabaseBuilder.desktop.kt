@@ -6,9 +6,10 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import java.io.File
 import okio.Path
 import okio.Path.Companion.toPath
+import java.util.Base64
+import fi.iki.ede.crypto.keystore.KeyStoreHelper
 
 actual fun getDatabaseBuilder(context: Any?): RoomDatabase.Builder<SafeDatabase> {
-    // Addressed PR7 comment: Use common DATABASE_NAME constant instead of hardcoding "safe.db"
     val dbFile = File("$DATABASE_NAME.db")
     return Room.databaseBuilder<SafeDatabase>(
         name = dbFile.absolutePath
@@ -29,16 +30,21 @@ actual fun setTransactionSuccessful(database: SafeDatabase) {}
 actual fun endTransaction(database: SafeDatabase) {}
 
 actual fun storeTpmKeys(privateKeyBase64: String, publicKeyBase64: String) {
-    File("tpm_keys.txt").writeText("$privateKeyBase64\n$publicKeyBase64")
+    // On Windows/Desktop, we do not store private keys on disk.
 }
 
 actual fun fetchTpmKeys(): Pair<String, String>? {
-    val txtFile = File("tpm_keys.txt")
-    if (txtFile.exists()) {
-        val lines = txtFile.readLines()
-        if (lines.size >= 2) {
-            return Pair(lines[0], lines[1])
+    try {
+        KeyStoreHelper.ensureMockKeysLoaded()
+        val privKey = KeyStoreHelper.getLoadedPrivateKey()
+        val pubKey = KeyStoreHelper.getLoadedPublicKey()
+        if (privKey != null && pubKey != null) {
+            val privBase64 = Base64.getEncoder().encodeToString(privKey.encoded)
+            val pubBase64 = Base64.getEncoder().encodeToString(pubKey.encoded)
+            return Pair(privBase64, pubBase64)
         }
+    } catch (e: Exception) {
+        // Ignore
     }
     return null
 }
