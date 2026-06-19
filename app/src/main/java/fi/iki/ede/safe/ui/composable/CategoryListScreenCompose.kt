@@ -13,23 +13,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.safe.R
+import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.theme.SafeTheme
 import fi.iki.ede.theme.SafeThemeSurface
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
-
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import fi.iki.ede.safe.splits.IntentManager
-import fi.iki.ede.safe.ui.composable.CategoryList
 
 @ExperimentalFoundationApi
 @Composable
@@ -42,9 +39,10 @@ internal fun CategoryListScreenCompose(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    // TODO: Either new kotlin, coroutines or both, this is a linter error now
-    val categoriesState by flow.map { categories -> categories.sortedBy { it.plainName.lowercase() } }
-        .collectAsState(initial = emptyList())
+    val rawCategories by flow.collectAsState()
+    val categoriesState = remember(rawCategories) {
+        rawCategories.sortedBy { it.plainName.lowercase() }
+    }
     val displayAddCategoryDialog = remember { mutableStateOf(false) }
 
     SafeTheme {

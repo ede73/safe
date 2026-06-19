@@ -33,3 +33,5 @@ local.properties
 /desktop/safe_db.json
 /shared-ui/build
 desktop/tpm_keys.txt
+!app/google-services.json
+desktop/exported_backup.xml

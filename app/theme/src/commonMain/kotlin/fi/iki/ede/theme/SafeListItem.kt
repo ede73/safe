@@ -18,7 +18,7 @@ fun SafeListItem(
     modifier: Modifier = Modifier,
     fillWidthFraction: Float = 1f,
     yOffset: Dp = 0.dp,
-    borderColor: BorderStroke? = null,
+    borderColor: BorderStroke? = BorderStroke(0.8.dp, MaterialTheme.colorScheme.outline),
     color: CardColors = CardDefaults.cardColors(
         containerColor = MaterialTheme.colorScheme.surfaceVariant,
     ),

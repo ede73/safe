@@ -102,13 +102,13 @@ android {
 
     defaultConfig {
         applicationId = "fi.iki.ede.safe"
-        targetSdk = 36
+        targetSdk = 37
 
         val gitRevListCount = gitRevListProvider.get().toInt()
 
         val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(
-            3,
-            6,
+            4,
+            0,
             gitRevListCount / 100,
             gitRevListCount % 100
         )
