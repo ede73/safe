@@ -28,6 +28,7 @@ kotlin {
                 implementation(project(":app:theme"))
                 implementation(project(":dateutils"))
                 implementation(libs.kotlinx.datetime)
+                implementation(libs.okio)
             }
         }
 

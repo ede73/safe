@@ -1,7 +1,9 @@
 package fi.iki.ede.safe.ui.composable
 
 import androidx.compose.runtime.Composable
-import java.io.File
+import okio.FileSystem
+import okio.Path
+import okio.Path.Companion.toPath
 import java.util.Locale
 import javax.xml.parsers.DocumentBuilderFactory
 import org.w3c.dom.Element
@@ -16,26 +18,28 @@ object DesktopResources {
 
     private fun loadResources() {
         val userLang = Locale.getDefault().language
-        val baseDir = File("app/src/main/res")
+        val baseDir = "app/src/main/res".toPath()
         
-        val defaultStringsFile = File(baseDir, "values/strings.xml")
-        if (defaultStringsFile.exists()) {
+        val defaultStringsFile = baseDir / "values/strings.xml"
+        if (FileSystem.SYSTEM.exists(defaultStringsFile)) {
             parseFile(defaultStringsFile)
         }
         
         if (userLang == "fi") {
-            val fiStringsFile = File(baseDir, "values-fi/strings.xml")
-            if (fiStringsFile.exists()) {
+            val fiStringsFile = baseDir / "values-fi/strings.xml"
+            if (FileSystem.SYSTEM.exists(fiStringsFile)) {
                 parseFile(fiStringsFile)
             }
         }
     }
 
-    private fun parseFile(file: File) {
+    private fun parseFile(path: Path) {
         try {
             val factory = DocumentBuilderFactory.newInstance()
             val builder = factory.newDocumentBuilder()
-            val doc = builder.parse(file)
+            val doc = FileSystem.SYSTEM.read(path) {
+                builder.parse(this.inputStream())
+            }
             doc.documentElement.normalize()
             
             val stringNodes = doc.getElementsByTagName("string")

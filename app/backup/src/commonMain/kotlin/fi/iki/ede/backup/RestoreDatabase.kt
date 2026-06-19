@@ -244,7 +244,8 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                 }
                             myParser.getTrimmedAttributeValue(Attributes.SITE_ENTRY_DELETED)
                                 .toLongOrNull()?.let {
-                                    siteEntry!!.deleted = it
+                                    val normalizedDeleted = DateUtils.normalizeTimestampToSeconds(it)
+                                    siteEntry!!.deleted = normalizedDeleted
                                 }
                             passwords++
                         }
