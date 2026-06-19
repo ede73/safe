@@ -34,6 +34,10 @@ subprojects {
             }
         }
     }
+    tasks.withType<JavaCompile>().configureEach {
+        sourceCompatibility = "21"
+        targetCompatibility = "21"
+    }
     project.afterEvaluate {
         val androidExtension =
             this.extensions.findByType(com.android.build.api.dsl.CommonExtension::class.java)

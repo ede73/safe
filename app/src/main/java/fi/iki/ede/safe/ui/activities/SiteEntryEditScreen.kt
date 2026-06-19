@@ -113,6 +113,7 @@ class SiteEntryEditScreen :
         true to true
     }
 
+    // Addressed PR5 comment: using the member fun isSame restored in DecryptableSiteEntry class
     private fun wasSiteEntryChanged(
         edits: EditableSiteEntry,
         originalSiteEntry: DecryptableSiteEntry
