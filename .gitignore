@@ -25,3 +25,11 @@ local.properties
 .failed
 .last_rev_parse
 /.agents
+/desktop/build
+/desktop/photos
+/desktop/safe.db
+/desktop/safe.db-shm
+/desktop/safe.db-wal
+/desktop/safe.db.lck
+/desktop/safe_db.json
+/shared-ui/build

@@ -5,7 +5,7 @@ import android.os.Environment
 import fi.iki.ede.backup.BackupDatabase
 import fi.iki.ede.backup.RestoreDatabase
 import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.KeystoreHelperMock4UnitTests
+import fi.iki.ede.safe.testutils.KeystoreHelperMock4UnitTests
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.support.hexToByteArray

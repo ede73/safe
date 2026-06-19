@@ -1,5 +1,6 @@
-package fi.iki.ede.crypto
+package fi.iki.ede.safe.testutils
 
+import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.CipherUtilities
 import fi.iki.ede.crypto.keystore.IKeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
@@ -36,6 +37,8 @@ object KeystoreHelperMock4UnitTests {
         fun fakeEncrypt(input: ByteArray): IVCipherText {
             return IVCipherText(fakeIV, xorByteArrays(fakeIV, input))
         }
+
+
 
         every { mockKeyStoreHelper.encrypterProvider } answers {
             { plaintext -> fakeEncrypt(plaintext) }

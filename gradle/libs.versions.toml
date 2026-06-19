@@ -38,6 +38,7 @@ uiToolingPreviewAndroid = "1.10.0"
 uiautomator = "2.3.0"
 volley = "1.2.1"
 ktor = "3.3.3"
+krypto = "4.0.10"
 #plugins
 agp = "8.13.2"
 # see also dependency resolution in settings.gradle.kts for 2.0.21!
@@ -99,6 +100,7 @@ napier = { group = "io.github.aakira", name = "napier", version.ref = "napier" }
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 volley = { module = "com.android.volley:volley", version.ref = "volley" }
 ktor-http = { group = "io.ktor", name = "ktor-http", version.ref = "ktor" }
+krypto = { module = "com.soywiz.korlibs.krypto:krypto", version.ref = "krypto" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
