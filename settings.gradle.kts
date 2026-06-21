@@ -11,7 +11,6 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url = uri("https://nodejs.org/dist") }
     }
 }
 
@@ -40,3 +39,6 @@ include(":logger")
 include(":notifications")
 include(":safephoto")
 include(":statemachine")
+include(":shared-ui")
+include(":desktop")
+

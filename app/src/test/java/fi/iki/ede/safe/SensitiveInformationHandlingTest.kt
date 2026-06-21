@@ -5,7 +5,7 @@ import fi.iki.ede.crypto.KeystoreHelperMock4UnitTests
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.SaltedPassword
-import fi.iki.ede.crypto.keystore.KeyStoreHelper
+import fi.iki.ede.crypto.keystore.IKeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.gpm.model.IncomingGPM
@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test
 private const val TAG = "SensitiveInformationHandlingTest"
 
 class SensitiveInformationHandlingTest {
-    lateinit var ks: KeyStoreHelper
+    lateinit var ks: IKeyStoreHelper
     private val uniqueRarePasswordCharacter = 'ä'
     private val password = uniqueRarePasswordCharacter.toString().repeat(5)
 

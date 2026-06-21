@@ -102,13 +102,13 @@ android {
 
     defaultConfig {
         applicationId = "fi.iki.ede.safe"
-        targetSdk = 36
+        targetSdk = 37
 
         val gitRevListCount = gitRevListProvider.get().toInt()
 
         val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(
-            3,
-            6,
+            4,
+            0,
             gitRevListCount / 100,
             gitRevListCount % 100
         )
@@ -126,6 +126,7 @@ android {
 
     sourceSets["main"].manifest.srcFile("src/main/AndroidManifest.xml")
     sourceSets["debug"].manifest.srcFile("src/debug/AndroidManifest.xml")
+    sourceSets["test"].java.srcDir("../crypto/src/testFixtures/kotlin")
 
     // See https://developer.android.com/build/build-variants
     buildTypes {
@@ -255,6 +256,8 @@ dependencies {
     implementation(project(":notifications"))
     implementation(project(":safephoto"))
     implementation(project(":statemachine"))
+    implementation(project(":shared-ui"))
+
 
     lintChecks(project(":app:SafeLinter"))
 
@@ -296,7 +299,6 @@ dependencies {
     testImplementation(project(":crypto"))
     testImplementation(testFixtures(project(":crypto")))
     testImplementation(project(":app"))
-
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 

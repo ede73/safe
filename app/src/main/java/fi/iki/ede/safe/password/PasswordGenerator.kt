@@ -1,11 +1,26 @@
 package fi.iki.ede.safe.password
 
-import java.security.SecureRandom // KMP CryptographyRandom.Default should do
+import fi.iki.ede.crypto.keystore.fillRandomBytes
+import kotlin.math.abs
 import kotlin.math.min
 
 const val PG_SYMBOLS = "!@#$%^&*()[]{}:;'\"/><.,-_=+~"
 
 object PasswordGenerator {
+
+    // korlibs SecureRandom.nextInt() is broken (always returns 0),
+    // but nextBytes() works correctly on all KMP platforms
+    private fun secureNextInt(bound: Int): Int {
+        require(bound > 0)
+        val bytes = ByteArray(4)
+        fillRandomBytes(bytes)
+        val raw = ((bytes[0].toInt() and 0xFF) shl 24) or
+                ((bytes[1].toInt() and 0xFF) shl 16) or
+                ((bytes[2].toInt() and 0xFF) shl 8) or
+                (bytes[3].toInt() and 0xFF)
+        return abs(raw % bound)
+    }
+
     fun genPassword(
         passUpper: Boolean,
         passLower: Boolean,
@@ -32,17 +47,17 @@ object PasswordGenerator {
         if (charset.isEmpty()) {
             return ""
         }
-        val generator = SecureRandom()
+
         val pass = StringBuilder()
         do {
             pass.clear()
             for (i in 0 until length) {
-                val pos = generator.nextInt(charset.length)
+                val pos = secureNextInt(charset.length)
                 // kinda defeats the randomness, but let's ensure
                 // we've no duplicates
                 val candidate = charset[pos]
                 if (!pass.contains(candidate)) {
-                    pass.append(charset[pos])
+                    pass.append(candidate)
                 }
             }
             // also ensure there's at least 2(*) characters from each class

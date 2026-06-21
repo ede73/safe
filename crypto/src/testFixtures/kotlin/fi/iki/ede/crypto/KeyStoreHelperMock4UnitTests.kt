@@ -1,23 +1,20 @@
 package fi.iki.ede.crypto
 
 import fi.iki.ede.crypto.keystore.CipherUtilities
-import fi.iki.ede.crypto.keystore.KeyStoreHelper
+import fi.iki.ede.crypto.keystore.IKeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import io.mockk.every
 import io.mockk.mockkClass
 import io.mockk.mockkObject
 import io.mockk.slot
-import javax.crypto.Cipher
-import javax.crypto.spec.IvParameterSpec
-import javax.crypto.spec.SecretKeySpec
 import kotlin.experimental.xor
 
 object KeystoreHelperMock4UnitTests {
     fun mock() {
         mockkObject(KeyStoreHelperFactory)
-        val p = mockkClass(KeyStoreHelper::class)
-        KeyStoreHelperFactory.provideKeyStoreHelper = p
-        every { KeyStoreHelperFactory.getKeyStoreHelper } returns { p }
+        val mockKeyStoreHelper = mockkClass(IKeyStoreHelper::class)
+        KeyStoreHelperFactory.provideKeyStoreHelper = mockKeyStoreHelper
+        every { KeyStoreHelperFactory.getKeyStoreHelper } returns { mockKeyStoreHelper }
         val encryptionInput = slot<ByteArray>()
         val fakeIV: ByteArray =
             generateSequence<Byte>(1) { (it + 1).toByte() }
@@ -31,7 +28,6 @@ object KeystoreHelperMock4UnitTests {
             return result
         }
 
-
         fun fakeDecrypt(input: IVCipherText): ByteArray {
             // get rid of IV
             return xorByteArrays(input.iv, input.cipherText)
@@ -41,45 +37,18 @@ object KeystoreHelperMock4UnitTests {
             return IVCipherText(fakeIV, xorByteArrays(fakeIV, input))
         }
 
-        val mc = mockkClass(Cipher::class)
-        every { mc.init(any<Int>(), any<SecretKeySpec>(), any<IvParameterSpec>()) } answers {
-        }
-        every { mc.update(any<ByteArray>()) } answers {
-            String(firstArg() as ByteArray).reversed().toByteArray()
-        }
-        every { mc.doFinal() } answers {
-            ByteArray(0)
-        }
-        every { mc.blockSize } answers {
-            16
-        }
-        every { p.getAESCipher() } answers {
-            mc
-        }
-
-        every { p.encryptByteArray(capture(encryptionInput)) } answers {
-            fakeEncrypt(encryptionInput.captured)
-        }
-        val decryptionInput = slot<IVCipherText>()
-        every { p.decryptByteArray(capture(decryptionInput)) } answers {
-            fakeDecrypt(decryptionInput.captured)
-        }
-        every { p.decryptByteArray(capture(decryptionInput), any()) } answers {
-            fakeDecrypt(decryptionInput.captured)
-        }
-
-        every { p.encrypterProvider } answers {
+        every { mockKeyStoreHelper.encrypterProvider } answers {
             { plaintext -> fakeEncrypt(plaintext) }
         }
 
-        every { p.encrypterProviderWithKey } answers {
+        every { mockKeyStoreHelper.encrypterProviderWithKey } answers {
             { plaintext, _ -> fakeEncrypt(plaintext) }
         }
 
-        every { p.decrypterProvider } answers {
+        every { mockKeyStoreHelper.decrypterProvider } answers {
             { encrypted -> fakeDecrypt(encrypted) }
         }
-        every { p.decrypterProviderWithKey } answers {
+        every { mockKeyStoreHelper.decrypterProviderWithKey } answers {
             { encrypted, _ -> fakeDecrypt(encrypted) }
         }
     }

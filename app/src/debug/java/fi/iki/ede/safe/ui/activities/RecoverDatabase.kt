@@ -12,6 +12,7 @@ import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.SaltedPassword
 import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_ITERATION_COUNT
 import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_LENGTH_BITS
+import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.bits
 import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.generateRandomBytes
 import fi.iki.ede.crypto.keystore.KeyManagement.generatePBKDF2AESKey
 import fi.iki.ede.crypto.keystore.KeyManagement.makeFreshNewKey
@@ -99,7 +100,7 @@ fun reconvertDatabase(pwd: String, completed: () -> Unit) {
         )
     }
 
-    val salt = Salt(generateRandomBytes(64))
+    val salt = Salt(generateRandomBytes(64.bits))
     val saltedPassword = SaltedPassword(salt, Password(pwd))
     val pbkdf2key = generatePBKDF2AESKey(
         salt,
@@ -151,8 +152,7 @@ fun reconvertDatabase(pwd: String, completed: () -> Unit) {
         }
     }
 
-    db.writableDatabase.execSQL("DELETE FROM passwords")
-    db.writableDatabase.execSQL("DELETE FROM categories")
+    db.clearAllData()
 
     newCategories.forEach {
         db.addCategory(it)
