@@ -130,6 +130,14 @@
     <string name="restore_screen_not_most_recent_backup_age">Backup is %1$d days older than most recent (backup %2$s vs latest %3$s)</string>
     <string name="restore_screen_not_most_recent_backup_restore">Restore anyway!</string>
     <string name="restore_screen_not_most_recent_backup_cancel">Cancel!</string>
+    <string name="restore_screen_process_backup">Processing backup...</string>
+    <string name="restore_screen_finished_backup">Finished processing backup</string>
+    <string name="restore_screen_restoring_old_backup">Restoring older backup...</string>
+    <string name="restore_screen_reread_database">Re-reading database...</string>
+    <string name="restore_screen_done">Done!</string>
+    <string name="restore_screen_passwords_count">Passwords %1$d</string>
+    <string name="restore_screen_categories_count">Categories %1$d</string>
+    <string name="restore_screen_restore_button">Restore</string>
 
     <!-- search screen -->
     <string name="password_search_notes">+Notes</string>

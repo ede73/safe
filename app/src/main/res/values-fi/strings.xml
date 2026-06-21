@@ -112,6 +112,14 @@
     <string name="restore_screen_not_most_recent_backup_restore">Palauta silti!</string>
     <string name="restore_screen_restore_failed">Palautus epäonnistui</string>
     <string name="restore_screen_restored">Palautus valmis %1$d</string>
+    <string name="restore_screen_process_backup">Käsitellään varmuuskopiota...</string>
+    <string name="restore_screen_finished_backup">Varmuuskopion käsittely valmis</string>
+    <string name="restore_screen_restoring_old_backup">Palautetaan vanhempaa varmuuskopiota...</string>
+    <string name="restore_screen_reread_database">Luetaan tietokantaa uudelleen...</string>
+    <string name="restore_screen_done">Valmis!</string>
+    <string name="restore_screen_passwords_count">Salasanat %1$d</string>
+    <string name="restore_screen_categories_count">Kategoriat %1$d</string>
+    <string name="restore_screen_restore_button">Palauta</string>
     <string name="shortcut_backup_short">Varmuuskopioi</string>
     <string name="shortcut_backup_long">Tee varmuuskopio</string>
     <string name="shortcut_backup_disabled">Varmuuskopiota ei voi tehdä</string>

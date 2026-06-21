@@ -6,7 +6,6 @@ import fi.iki.ede.backup.ExportConfig.Companion.Attributes
 import fi.iki.ede.backup.ExportConfig.Companion.Elements
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
-import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.dateutils.DateUtils
@@ -20,6 +19,7 @@ import okio.Timeout
 import okio.buffer
 import org.xmlpull.v1.XmlPullParserFactory
 import kotlin.time.ExperimentalTime
+import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 
 /**
  * TODO: Add HMAC
@@ -29,9 +29,10 @@ import kotlin.time.ExperimentalTime
  */
 @ExperimentalTime
 class BackupDatabase : ExportConfig(ExportVersion.V1) {
+    // Addressed PR10 comment: Use Okio BufferedSink signature for KMP compliance
     @VisibleForTesting(PRIVATE)
     fun generateXMLExport(
-        buffer: Buffer,
+        outputSink: BufferedSink,
         categoriesList: List<DecryptableCategoryEntry>,
         softDeletedEntries: Set<DecryptableSiteEntry>,
         siteEntryGPMMappings: Map<DBID, Set<DBID>>,
@@ -39,7 +40,8 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
         getSiteEntriesOfCategory: (categoryId: DBID) -> List<DecryptableSiteEntry>
     ) {
         val serializer = XmlPullParserFactory.newInstance().newSerializer()
-        serializer.setOutput(buffer.outputStream(), "ASCII")
+        // Addressed PR10 comment: Convert BufferedSink to java.io.OutputStream at boundary for XMLSerializer, writing in US-ASCII
+        serializer.setOutput(outputSink.outputStream(), "US-ASCII")
 
         serializer.startTag(Elements.ROOT_PASSWORD_SAFE)
             .plainTextAttribute(
@@ -61,7 +63,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
             for (encryptedPassword in getSiteEntriesOfCategory(category.id!!)) {
                 serializer.writeSiteEntry(encryptedPassword)
             }
-            softDeletedEntries.toSet().forEach { deletedPassword ->
+            softDeletedEntries.filter { it.categoryId == category.id }.forEach { deletedPassword ->
                 serializer.writeSiteEntry(deletedPassword)
             }
             serializer.endTag(Elements.CATEGORY)
@@ -80,7 +82,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
             allSavedGPMs.forEach { savedGPM ->
                 serializer.writeGPMEntry(
                     savedGPM,
-                    gpmIdToSiteEntry.getOrDefault(savedGPM.id!!, emptySet())
+                    gpmIdToSiteEntry.getOrDefault(savedGPM.id!!, emptySet<DBID>())
                 )
             }
             serializer.endTag(Elements.IMPORTS_GPM)
@@ -89,7 +91,8 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
 
         serializer.endTag(Elements.ROOT_PASSWORD_SAFE)
         serializer.endDocument()
-        buffer.flush()
+        // Addressed PR10 comment: Flush Okio sink
+        outputSink.flush()
     }
 
     @Suppress("SameParameterValue")
@@ -113,73 +116,38 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
             allSavedGPMs: Set<SavedGPM>,
             finalSink: Sink
         ) {
-            val hexSink = HexEncodingSink(finalSink.buffer())
+            val bufferedSink = finalSink.buffer()
 
             val (salt, key) = DBHelperFactory.getDBHelper().fetchSaltAndEncryptedMasterKey()
 
-            hexSink.write(salt)
-            hexSink.write(key)
-            hexSink.flush()
+            // 1. Write salt
+            bufferedSink.writeUtf8(salt.salt.toHexString() + "\n")
+            // 2. Write master key IV + ciphertext
+            bufferedSink.writeUtf8(key.iv.toHexString() + "\n")
+            bufferedSink.writeUtf8(key.cipherText.toHexString() + "\n")
 
-            hexSink.flush()
-
+            // 3. Generate XML in memory using okio.Buffer
             val xmlBuf = Buffer()
+            val xmlBufferedSink = xmlBuf.buffer()
             BackupDatabase().generateXMLExport(
-                xmlBuf,
+                xmlBufferedSink,
                 categoriesList,
                 softDeletedEntries,
                 siteEntryGPMMappings,
                 allSavedGPMs,
                 getSiteEntriesOfCategory
             )
+            xmlBufferedSink.flush()
             val xmlBytes = xmlBuf.readByteArray()
 
-            val encBytes = xmlBytes.encrypt()
+            // 4. Encrypt the entire XML bytes
+            val helper = KeyStoreHelperFactory.getKeyStoreHelper()
+            val encrypted = helper.encrypterProvider(xmlBytes)
 
-            hexSink.write(encBytes)
-            hexSink.flush()
+            // 5. Write backup data IV + ciphertext
+            bufferedSink.writeUtf8(encrypted.iv.toHexString() + "\n")
+            bufferedSink.writeUtf8(encrypted.cipherText.toHexString() + "\n")
+            bufferedSink.flush()
         }
     }
-}
-
-private class HexEncodingSink(private val out: BufferedSink) : Sink {
-    fun write(salt: Salt) {
-        write(salt.salt)
-        out.writeUtf8("\n")
-    }
-
-    fun write(cipherText: IVCipherText) {
-        write(cipherText.iv)
-        out.writeUtf8("\n")
-        write(cipherText.cipherText)
-        out.writeUtf8("\n")
-    }
-
-    fun write(bytes: ByteArray) {
-        write(Buffer().write(bytes), bytes.size.toLong())
-    }
-
-    override fun write(source: Buffer, byteCount: Long) {
-        // consume the bytes from source, convert to hex, write UTF-8 hex string to out
-        val bytes = source.readByteArray(byteCount)
-        // fast hex conversion
-        val sb = StringBuilder(bytes.size * 2)
-        for (b in bytes) {
-            val v = b.toInt() and 0xFF
-            val hex1 = Character.forDigit((v ushr 4), 16)
-            val hex2 = Character.forDigit((v and 0x0F), 16)
-            sb.append(hex1).append(hex2)
-        }
-        out.writeUtf8(sb.toString())
-    }
-
-    override fun flush() {
-        out.flush()
-    }
-
-    override fun close() {
-        out.close()
-    }
-
-    override fun timeout(): Timeout = out.timeout()
 }

@@ -5,8 +5,6 @@ import fi.iki.ede.backup.ExportConfig.Companion.ATTRIBUTE_PREFIX_IV
 import fi.iki.ede.backup.ExportConfig.Companion.Attributes
 import fi.iki.ede.backup.ExportConfig.Companion.Elements
 import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.support.hexToByteArray
-import fi.iki.ede.crypto.support.toHexString
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.db.DBID
 import fi.iki.ede.gpm.model.SavedGPM

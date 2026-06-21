@@ -8,8 +8,11 @@ dependencies {
     implementation(project(":crypto"))
     implementation(project(":app:db"))
     implementation(project(":app:cryptoobjects"))
+    implementation(project(":app:backup"))
+    implementation(project(":gpm"))
     implementation(project(":dateutils"))
     implementation(project(":logger"))
+    implementation(libs.okio)
 
     implementation(compose.desktop.currentOs)
     implementation(compose.runtime)

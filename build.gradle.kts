@@ -29,6 +29,11 @@ subprojects {
     tasks.withType<Test> {
         jvmArgs("-XX:+EnableDynamicAgentLoading")
     }
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask<*>>().configureEach {
+        compilerOptions {
+            freeCompilerArgs.add("-opt-in=kotlin.ExperimentalStdlibApi")
+        }
+    }
     tasks.withType<KotlinCompile>().configureEach {
         if (project.path != ":app:SafeLinter") {
             compilerOptions {

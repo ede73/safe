@@ -1,6 +1,5 @@
 package fi.iki.ede.backup
 
-import android.content.Context
 import fi.iki.ede.db.DBTransaction
 import fi.iki.ede.backup.ExportConfig.Companion.Attributes
 import fi.iki.ede.backup.ExportConfig.Companion.Elements
@@ -12,17 +11,21 @@ import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_LENGTH_BITS
 import fi.iki.ede.crypto.keystore.KeyManagement
 import fi.iki.ede.crypto.keystore.KeyManagement.generatePBKDF2AESKey
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
-import fi.iki.ede.crypto.support.hexToByteArray
+import fi.iki.ede.crypto.keystore.KMPKey
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBID
 import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseRecordException
-import fi.iki.ede.preferences.Preferences
 import kotlinx.coroutines.CancellationException
 import okio.Buffer
+import okio.BufferedSource
+import okio.Source
+import okio.Timeout
+import okio.buffer
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 import kotlin.time.ExperimentalTime
@@ -30,62 +33,76 @@ import kotlin.time.Instant
 
 @ExperimentalTime
 class RestoreDatabase : ExportConfig(ExportVersion.V1) {
-    data class BackupEncryptionKeys(val data: List<String>) {
-        fun getSalt(): Salt = Salt(data[0].hexToByteArray())
-        fun getEncryptedMasterKey(): IVCipherText =
-            IVCipherText(data[1].hexToByteArray(), data[2].hexToByteArray())
-
-        fun getEncryptedBackup(): IVCipherText =
-            IVCipherText(data[3].hexToByteArray(), data[4].hexToByteArray())
-    }
-
     fun doRestore(
-        context: Context,
-        backup: String,
+        backupSource: Source,
         userPassword: Password,
         dbHelper: DBHelper,
+        lastBackupDone: Instant?,
         linkSaveGPMAndSiteEntry: (DBID, DBID) -> Unit,
         addSavedGPM: (SavedGPM) -> Unit,
-        passwordLogin: (context: Context, password: Password) -> Boolean,
+        passwordLogin: (password: Password) -> Boolean,
         reportProgress: (categories: Int?, passwords: Int?, message: String?) -> Unit,
         verifyUserWantForOldBackup: (backupCreated: Instant, lastBackupDone: Instant) -> Boolean,
     ): Int {
         reportProgress(null, null, "Begin restoration")
         val myParser = XmlPullParserFactory.newInstance().newPullParser()
 
-        val backupEncryptionKeys = BackupEncryptionKeys(
-            backup.trimIndent().trim().lines()
-        )
+        val bufferedSource = backupSource.buffer()
+        var saltLine = ""
+        while (true) {
+            val l = bufferedSource.readUtf8Line() ?: throw IllegalArgumentException("Missing salt")
+            val trimmed = l.trim()
+            if (trimmed.isNotEmpty()) {
+                saltLine = trimmed
+                break
+            }
+        }
+        val ivMasterLine = (bufferedSource.readUtf8Line() ?: throw IllegalArgumentException("Missing master key IV")).trim()
+        val cipherMasterLine = (bufferedSource.readUtf8Line() ?: throw IllegalArgumentException("Missing master key ciphertext")).trim()
+        val line4 = (bufferedSource.readUtf8Line() ?: throw IllegalArgumentException("Missing line 4")).trim()
+
+        val salt = Salt(saltLine.hexToByteArray())
+        val encryptedMasterKey = IVCipherText(ivMasterLine.hexToByteArray(), cipherMasterLine.hexToByteArray())
 
         val db = dbHelper.beginRestoration()
 
         try {
-            // TODO: this also has inner transaction
-            dbHelper.storeSaltAndEncryptedMasterKey(
-                backupEncryptionKeys.getSalt(),
-                backupEncryptionKeys.getEncryptedMasterKey()
+            dbHelper.storeSaltAndEncryptedMasterKey(salt, encryptedMasterKey)
+
+            // Decrypt the master key using the password
+            val masterKey = decryptMasterKey(salt, encryptedMasterKey, userPassword)
+
+            val ivBackup = line4.hexToByteArray()
+            val cipherMasterLine2 = bufferedSource.readUtf8Line() ?: throw IllegalArgumentException("Missing backup data ciphertext")
+            val cipherBackup = cipherMasterLine2.hexToByteArray()
+            
+            val helper = KeyStoreHelperFactory.getKeyStoreHelper()
+            val decrypted = helper.decrypterProviderWithKey(
+                IVCipherText(ivBackup, cipherBackup),
+                masterKey
             )
-            // body (KMP issue)
-            myParser.setInput(
-                Buffer().write(getDocumentByteArray(backupEncryptionKeys, userPassword))
-                    .inputStream(),
-                null
-            )
+            // Addressed PR10 comment: Use Okio Buffer conversion to avoid raw java.io.ByteArrayInputStream
+            val xmlInputStream = Buffer().write(decrypted).inputStream()
+
+            myParser.setInput(xmlInputStream, null)
 
             reportProgress(null, null, "Process backup")
             val passwords = parseXML(
                 dbHelper,
                 db,
                 myParser,
+                lastBackupDone,
                 linkSaveGPMAndSiteEntry,
                 addSavedGPM,
                 verifyUserWantForOldBackup,
                 reportProgress,
             )
-            passwordLogin(context, userPassword)
+            passwordLogin(userPassword)
             reportProgress(null, null, "Finished with backup")
             return passwords
         } catch (ex: Exception) {
+            Logger.e(TAG, "Restoration failed!", ex)
+            ex.printStackTrace()
             firebaseRecordException("Failed to restore", ex)
             db.endTransaction()
             reportProgress(null, null, "Something failed, rollback")
@@ -93,26 +110,17 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         }
     }
 
-    private fun getDocumentByteArray(
-        backupEncryptionKeys: BackupEncryptionKeys,
-        userPassword: Password
-    ) = KeyStoreHelperFactory.getKeyStoreHelper()
-        .decrypterProviderWithKey( // Keystore needed (new key)
-            backupEncryptionKeys.getEncryptedBackup(),
-            decryptMasterKey(backupEncryptionKeys, userPassword)
-        )
-
-
     private fun decryptMasterKey(
-        backupEncryptionKeys: BackupEncryptionKeys,
+        salt: Salt,
+        encryptedMasterKey: IVCipherText,
         userPassword: Password,
     ) = KeyManagement.decryptMasterKey(
         generatePBKDF2AESKey(
-            backupEncryptionKeys.getSalt(),
+            salt,
             KEY_ITERATION_COUNT,
             userPassword,
             KEY_LENGTH_BITS
-        ), backupEncryptionKeys.getEncryptedMasterKey()
+        ), encryptedMasterKey
     )
 
 
@@ -120,6 +128,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         dbHelper: DBHelper,
         db: DBTransaction,
         myParser: XmlPullParser,
+        lastBackupDone: Instant?,
         linkSaveGPMAndSiteEntry: (DBID, DBID) -> Unit,
         addSavedGPM: (SavedGPM) -> Unit,
         verifyOldBackupRestoration: (backupCreated: Instant, lastBackupDone: Instant) -> Boolean,
@@ -165,8 +174,6 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                     it
                                 )
                             }
-                            val lastBackupDone =
-                                Preferences.getLastBackupTime()
                             // TODO: until above can be mocked..feeling lazy
                             //val creationTime: ZonedDateTime? = null
                             // if we know the backup creation time AND we known when a backup
@@ -359,7 +366,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                         if (passwordId in deletedSiteEntriesToRestore.map { it.id }) {
                                             // this GPM is linked to a deleted site entry!
                                             // we don't know the ID yet!
-                                            gpmLinkedToDeletedSiteEntries.getOrPut(gpmId) { mutableSetOf() }
+                                            gpmLinkedToDeletedSiteEntries.getOrPut(gpmId) { mutableSetOf<DBID>() }
                                                 .add(passwordId)
                                         } else {
                                             linkSaveGPMAndSiteEntry(passwordId, gpmId)

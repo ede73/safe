@@ -1,6 +1,6 @@
 package fi.iki.ede.crypto
 
-import fi.iki.ede.crypto.support.toHexString
+
 
 /**
  * Convenience class representing encrypted cipher text with exact knowledge of the IV used
