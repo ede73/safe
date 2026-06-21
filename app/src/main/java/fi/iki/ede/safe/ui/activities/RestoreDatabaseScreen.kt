@@ -24,8 +24,10 @@ import fi.iki.ede.safe.ui.composable.AskBackupPasswordAndCommence
 import fi.iki.ede.safe.ui.composable.RestoreDatabaseComponent
 import fi.iki.ede.safe.ui.composable.setupActivityResultLauncher
 import fi.iki.ede.safe.ui.models.RestoreViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.ExperimentalTime
 
@@ -96,16 +98,18 @@ class RestoreDatabaseScreen :
                         if (ex == null) {
                             viewModel.docUri = null
                             processedMessage.value = context.getString(R.string.restore_screen_reread_database)
-                            coroutineScope.launch(Dispatchers.IO) {
+                            CoroutineScope(Dispatchers.IO).launch {
                                 DataModel.loadFromDatabase {
                                     GPMDataModel.loadFromDatabase()
                                 }
+                                withContext(Dispatchers.Main) {
+                                    processedMessage.value = context.getString(R.string.restore_screen_done)
+                                    IntentManager.startCategoryScreen(context)
+                                    setResult(RESULT_OK)
+                                    firebaseLog("restoreDbOk: finish()")
+                                    finish()
+                                }
                             }
-                            processedMessage.value = context.getString(R.string.restore_screen_done)
-                            IntentManager.startCategoryScreen(context)
-                            setResult(RESULT_OK)
-                            firebaseLog("restoreDbOk: finish()")
-                            finish()
                         } else {
                             if (ex is CancellationException) {
                                 viewModel.docUri = null

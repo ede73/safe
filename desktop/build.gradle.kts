@@ -13,6 +13,7 @@ dependencies {
     implementation(project(":dateutils"))
     implementation(project(":app:preferences"))
     implementation(project(":shared-ui"))
+    implementation(project(":logger"))
 
     implementation(libs.okio)
 

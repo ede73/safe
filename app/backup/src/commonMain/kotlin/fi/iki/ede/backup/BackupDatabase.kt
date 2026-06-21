@@ -125,6 +125,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
             // 2. Write master key IV + ciphertext
             bufferedSink.writeUtf8(key.iv.toHexString() + "\n")
             bufferedSink.writeUtf8(key.cipherText.toHexString() + "\n")
+
             // 3. Generate XML in memory using okio.Buffer
             val xmlBuf = Buffer()
             val xmlBufferedSink = xmlBuf.buffer()
