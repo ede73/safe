@@ -150,8 +150,8 @@ object DataModel {
             DBHelperFactory.getDBHelper()
                 .updateSiteEntryCategory(siteEntry.id!!, targetCategory.id!!)
 
-            val oldCategoryId = siteEntry.categoryId!!
-            siteEntry.categoryId = targetCategory.id
+            val oldCategoryId = siteEntry.categoryId
+            siteEntry.categoryId = targetCategory.id!!
             _siteEntriesStateFlow.updateListItemById(siteEntry, keySelector = { it.id!! })
 
             _categoriesStateFlow.updateListItemById(
@@ -190,7 +190,7 @@ object DataModel {
             // or at worst, we have no categories..in which case restoration is impossible
             if (category != null) {
                 val db = DBHelperFactory.getDBHelper()
-                siteEntry.categoryId = category.id
+                siteEntry.categoryId = category.id!!
                 siteEntry.deleted = 0
                 db.restoreSoftDeletedSiteEntry(siteEntry.id!!)
                 _siteEntriesStateFlow.updateListItemById(

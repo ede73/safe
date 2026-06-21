@@ -1,6 +1,12 @@
 plugins {
     kotlin("multiplatform")
     alias(libs.plugins.android.library)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.room)
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
 }
 
 kotlin {
@@ -14,8 +20,11 @@ kotlin {
                 implementation(project(":crypto"))
                 implementation(project(":dateutils"))
                 implementation(project(":logger"))
+                implementation(project(":gpm"))
                 implementation(libs.okio)
                 implementation(libs.kotlinx.coroutines.core)
+                api(libs.androidx.room.runtime)
+                implementation(libs.androidx.sqlite.bundled)
             }
         }
         val androidMain by getting {
@@ -26,6 +35,11 @@ kotlin {
             }
         }
     }
+}
+
+dependencies {
+    add("kspAndroid", libs.androidx.room.compiler)
+    add("kspDesktop", libs.androidx.room.compiler)
 }
 
 android {

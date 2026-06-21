@@ -32,3 +32,4 @@ local.properties
 /desktop/safe.db.lck
 /desktop/safe_db.json
 /shared-ui/build
+desktop/tpm_keys.txt

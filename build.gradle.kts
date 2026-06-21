@@ -15,6 +15,8 @@ plugins {
     kotlin("plugin.power-assert") version "2.0.0"
     kotlin("plugin.serialization") version "2.0.0"
     alias(libs.plugins.jetbrains.kotlin.jvm) apply false
+    alias(libs.plugins.ksp) apply false
+    alias(libs.plugins.room) apply false
 }
 
 // https://kotlinlang.org/docs/whatsnew20.html#experimental-kotlin-power-assert-compiler-plugin

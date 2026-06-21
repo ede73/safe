@@ -28,7 +28,6 @@ sourceSets {
         java.srcDir("../crypto/src/testFixtures/kotlin")
     }
 }
-
 tasks.test {
     useJUnitPlatform()
 }

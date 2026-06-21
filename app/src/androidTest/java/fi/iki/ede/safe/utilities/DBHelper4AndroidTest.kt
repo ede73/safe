@@ -30,17 +30,13 @@ object DBHelper4AndroidTest {
         this.storedMasterKey = initializeMasterKey
     }
 
-    // you have to KEEP the readable database reference, else in memory database will be destroyed
-    fun initializeEverything(context: Context): SQLiteDatabase {
+    fun initializeEverything(context: Context) {
         val dbHelper = DBHelperFactory.initializeDatabase(
             DBHelper(
-                context, null, false, GPMDB::getExternalTables,
-                GPMDB::upgradeTables
+                context, null, false
             )
         )
-        val writableDatabase = dbHelper.writableDatabase
         dbHelper.storeSaltAndEncryptedMasterKey(storedSalt!!, storedMasterKey!!)
-        return writableDatabase!!
     }
 
     fun configureDefaultTestDataModelAndDB() {

@@ -16,8 +16,7 @@ class ImportExportTest {
     fun setUp() {
         KeystoreHelperMock4UnitTests.mock()
 
-        db = DBHelper()
-        fi.iki.ede.db.DBHelperFactory.initializeDatabase(db)
+        db = DBHelper(databaseName = null)
         val password = "secret"
         try {
             val (salt, cipheredKey) = fi.iki.ede.crypto.keystore.KeyStoreHelper.createNewKey(fi.iki.ede.crypto.Password(password))
@@ -31,6 +30,7 @@ class ImportExportTest {
     @AfterEach
     fun tearDown() {
         unmockkAll()
+        db.database.close()
     }
 
     @Test

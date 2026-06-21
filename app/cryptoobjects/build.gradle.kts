@@ -14,6 +14,7 @@ kotlin {
                 implementation(project(":dateutils"))
                 implementation(project(":logger"))
                 implementation(libs.kotlinx.serialization.json)
+                implementation(libs.androidx.room.runtime)
             }
         }
         val androidMain by getting {

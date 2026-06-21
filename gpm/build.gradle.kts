@@ -22,6 +22,7 @@ kotlin {
                 implementation(project(":logger"))
                 implementation(libs.okio)
                 implementation(libs.ktor.http)
+                implementation(libs.androidx.room.runtime)
             }
         }
         val androidMain by getting {
