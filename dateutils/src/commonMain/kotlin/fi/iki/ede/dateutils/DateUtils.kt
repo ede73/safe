@@ -7,6 +7,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.periodUntil
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.daysUntil
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -15,6 +16,21 @@ import kotlin.time.Instant
 object DateUtils {
 
     const val TAG = "DateUtils"
+    fun daysBetween(startDateTime: Instant, endDateTime: Instant): Int {
+        val startDate = startDateTime.toLocalDateTime(TimeZone.currentSystemDefault()).date
+        val endDate = endDateTime.toLocalDateTime(TimeZone.currentSystemDefault()).date
+        return startDate.daysUntil(endDate)
+    }
+
+    /**
+     * Backward compatibility helper: The old app stored soft-delete timestamps in milliseconds
+     * (System.currentTimeMillis()) in memory and exports, but expected seconds for age calculations.
+     * This function normalizes millisecond timestamps (> 5 billion seconds, i.e. year 2128+) to seconds.
+     */
+    fun normalizeTimestampToSeconds(timestamp: Long): Long {
+        val thresholdSeconds = 5_000_000_000L
+        return if (timestamp > thresholdSeconds) timestamp / 1000 else timestamp
+    }
     fun unixEpochSecondsToInstant(unixEpochSeconds: Long): Instant =
         Instant.fromEpochSeconds(unixEpochSeconds)
 

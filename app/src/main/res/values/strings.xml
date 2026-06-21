@@ -41,6 +41,8 @@
     <string name="generic_dont_delete">Don\'t delete!</string>
     <string name="generic_ok">OK!</string>
     <string name="generic_yes_delete">Do delete!</string>
+    <string name="dropdown_description">Dropdown</string>
+    <string name="remove_description">Remove</string>
 
     <!-- login -->
     <string name="login_button">Login</string>
@@ -103,6 +105,10 @@
         <item quantity="one">%d year</item>
         <item quantity="other">%d years</item>
     </plurals>
+    <plurals name="category_passwords_count">
+        <item quantity="one">%d password</item>
+        <item quantity="other">%d passwords</item>
+    </plurals>
 
     <!-- shortcuts -->
     <string name="shortcut_backup_short">Backup</string>
@@ -130,6 +136,14 @@
     <string name="restore_screen_not_most_recent_backup_age">Backup is %1$d days older than most recent (backup %2$s vs latest %3$s)</string>
     <string name="restore_screen_not_most_recent_backup_restore">Restore anyway!</string>
     <string name="restore_screen_not_most_recent_backup_cancel">Cancel!</string>
+    <string name="restore_screen_process_backup">Processing backup...</string>
+    <string name="restore_screen_finished_backup">Finished processing backup</string>
+    <string name="restore_screen_restoring_old_backup">Restoring older backup...</string>
+    <string name="restore_screen_reread_database">Re-reading database...</string>
+    <string name="restore_screen_done">Done!</string>
+    <string name="restore_screen_passwords_count">Passwords %1$d</string>
+    <string name="restore_screen_categories_count">Categories %1$d</string>
+    <string name="restore_screen_restore_button">Restore</string>
 
     <!-- search screen -->
     <string name="password_search_notes">+Notes</string>
@@ -215,4 +229,55 @@
     <string name="site_entry_numbers">Numbers</string>
     <string name="site_entry_regenerate">Regenerate</string>
     <string name="password_search_extensions">+Extensions</string>
+    <string name="extension_type">Type</string>
+    <string name="extension_value">Value</string>
+    <!-- Desktop specific strings -->
+    <string name="desktop_vault">Vault</string>
+    <string name="desktop_add_category">Add Category</string>
+    <string name="desktop_category_name">Category Name</string>
+    <string name="desktop_add_pass">Add Pass</string>
+    <string name="desktop_delete_cat">Delete Cat</string>
+    <string name="desktop_biometric_unlock">Biometric Unlock</string>
+    <string name="desktop_scanning_fingerprint">Scanning fingerprint...</string>
+    <string name="desktop_verifying_biometrics">Verifying biometrics...</string>
+    <string name="desktop_unlock_success_biometric">Unlock successful! Logged in via biometrics.</string>
+    <string name="desktop_biometric_auth_failed">Biometric authentication failed</string>
+    <string name="desktop_no_biometric_key">No registered biometric key found</string>
+    <string name="desktop_biometric_error">Biometric error: %1$s</string>
+    <string name="desktop_create_vault_msg">Creating vault...</string>
+    <string name="desktop_bio_registered">Biometric credentials registered successfully</string>
+    <string name="desktop_failed_create_vault">Failed to create vault: %1$s</string>
+    <string name="failed_to_create_vault">Failed to create vault</string>
+    <string name="desktop_authenticating">Authenticating...</string>
+    <string name="desktop_unlock_success">Unlock successful! Logged in.</string>
+    <string name="desktop_add_password_entry">Add Password Entry</string>
+    <string name="desktop_password_entry_details">Password Entry Details</string>
+    <string name="desktop_extensions">Extensions</string>
+    <string name="desktop_extension_type">Type</string>
+    <string name="desktop_extension_value">Value</string>
+    <string name="desktop_import_backup_xml">Import Backup XML</string>
+    <string name="desktop_backup_xml_file">Backup XML File</string>
+    <string name="desktop_browse">Browse</string>
+    <string name="desktop_backup_password">Backup Password</string>
+    <string name="desktop_select_backup_file">Please select a backup file</string>
+    <string name="desktop_enter_backup_password">Please enter backup password</string>
+    <string name="desktop_file_not_exist">File does not exist</string>
+    <string name="desktop_import_failed">Import failed: %1$s</string>
+    <string name="desktop_export_backup">Export Backup</string>
+    <!-- Shared Login Screen specific strings -->
+    <string name="login_choose_password_label">Choose Master Password</string>
+    <string name="login_confirm_password_label">Confirm Master Password</string>
+    <string name="login_create_vault_button">Create Vault</string>
+    <string name="login_master_password_label">Master Password</string>
+    <string name="login_unlock_button">Unlock</string>
+    <string name="login_app_title">Safe</string>
+    <string name="login_app_subtitle">Password Manager</string>
+    <string name="login_import_backup_button">📥 Import Backup</string>
+    <string name="login_export_backup_button">📤 Export Backup</string>
+    <string name="login_or_divider">OR</string>
+    <string name="checkmark_description">Selected</string>
+    <plurals name="site_entry_linked_gpms_count">
+        <item quantity="one">Has %1$d linked GPM</item>
+        <item quantity="other">Has %1$d linked GPMs</item>
+    </plurals>
 </resources>

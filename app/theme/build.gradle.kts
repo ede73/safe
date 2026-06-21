@@ -1,6 +1,7 @@
 plugins {
     kotlin("multiplatform")
     alias(libs.plugins.android.library)
+    alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.compose.compiler)
 }
 
@@ -9,7 +10,14 @@ kotlin {
     jvm("desktop")
 
     sourceSets {
-        val commonMain by getting
+        val commonMain by getting {
+            dependencies {
+                implementation(compose.runtime)
+                implementation(compose.foundation)
+                implementation(compose.material)
+                implementation(compose.material3)
+            }
+        }
         val androidMain by getting {
             dependencies {
                 implementation(libs.androidx.activity.compose)

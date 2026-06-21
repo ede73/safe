@@ -33,7 +33,8 @@ object DBHelper4AndroidTest {
     fun initializeEverything(context: Context) {
         val dbHelper = DBHelperFactory.initializeDatabase(
             DBHelper(
-                context, null, false
+                databaseName = null,
+                regularAppNotATest = false
             )
         )
         dbHelper.storeSaltAndEncryptedMasterKey(storedSalt!!, storedMasterKey!!)

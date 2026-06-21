@@ -25,6 +25,8 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
+import androidx.compose.ui.res.stringResource
+
 /**
  * Test plan, verify that...
  * - entered password is hidden [ensurePasswordIsHiddenTest]
@@ -41,7 +43,7 @@ class PasswordTextFieldAsNoteTest : NodeHelper {
         SafeTheme {
             Column {
                 PasswordTextField(
-                    textTip = R.string.password_entry_note_tip,
+                    label = stringResource(id = R.string.password_entry_note_tip),
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag(TestTag.PASSWORD_COMPOSABLE_IN_TESTS),
