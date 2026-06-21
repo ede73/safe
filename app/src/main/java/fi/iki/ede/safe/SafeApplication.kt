@@ -18,6 +18,7 @@ import fi.iki.ede.logger.firebaseInitialize
 import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.notifications.ConfiguredNotifications
 import fi.iki.ede.preferences.Preferences
+import fi.iki.ede.preferences.setPreferencesContext
 import fi.iki.ede.preferences.Preferences.PREFERENCE_EXPERIMENTAL_FEATURES
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.notifications.prepareNotifications
@@ -62,7 +63,8 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
             BuildConfig.VERSION_CODE
         )
 //        throw RuntimeException("Test Crash")
-        Preferences.initialize(this)
+        setPreferencesContext(this)
+        Preferences.initialize()
 
         // TODO: replace with DI once KMP transform done
         AutolockingFeaturesImpl.registerCallbacks({ context ->
@@ -88,15 +90,16 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
         )
         reinitializePlugins(this)
         setBackupDueIconEnabled(this, false)
-        PreferenceManager.getDefaultSharedPreferences(this)
+        Preferences.sharedPreferences
             .registerOnSharedPreferenceChangeListener(this)
         ConfiguredNotifications.notifications = prepareNotifications()
     }
 
+    @ExperimentalTime
     override fun onTerminate() {
         super.onTerminate()
         Logger.w(TAG, "onTerminate")
-        PreferenceManager.getDefaultSharedPreferences(this)
+        Preferences.sharedPreferences
             .unregisterOnSharedPreferenceChangeListener(this)
     }
 

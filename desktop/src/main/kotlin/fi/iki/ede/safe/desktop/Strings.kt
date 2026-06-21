@@ -42,6 +42,8 @@ object DesktopStrings {
         strings["backup_password"] = "Backup Password"
         strings["browse"] = "Browse"
         strings["export_backup"] = "Export Backup"
+        strings["backup_export_success"] = "Backup successfully exported to:\n%s"
+        strings["backup_export_failure"] = "Export failed:\n%s"
         strings["biometrics_verifying"] = "Verifying biometrics..."
         strings["biometrics_unlock_success"] = "Unlock successful! Logged in via biometrics."
         strings["biometrics_scanning"] = "Scanning fingerprint..."

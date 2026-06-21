@@ -12,6 +12,7 @@ dependencies {
     implementation(project(":gpm"))
     implementation(project(":dateutils"))
     implementation(project(":logger"))
+    implementation(project(":app:preferences"))
     implementation(libs.okio)
 
     implementation(compose.desktop.currentOs)

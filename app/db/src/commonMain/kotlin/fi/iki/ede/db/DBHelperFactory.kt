@@ -13,6 +13,11 @@ object DBHelperFactory {
     }
 
     @ExperimentalTime
+    fun clearDatabase() {
+        instance = null
+    }
+
+    @ExperimentalTime
     fun getDBHelper(notUsed: Any? = null): DBHelper {
         if (instance == null) {
             instance = DBHelper()

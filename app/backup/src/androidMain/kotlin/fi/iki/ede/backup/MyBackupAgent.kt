@@ -9,6 +9,7 @@ import android.content.Context
 import android.os.ParcelFileDescriptor
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.preferences.Preferences
+import fi.iki.ede.preferences.setPreferencesContext
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import kotlin.time.ExperimentalTime
@@ -21,7 +22,8 @@ class MyBackupAgent : BackupAgentHelper() {
 
     override fun onCreate() {
         super.onCreate()
-        Preferences.initialize(this.applicationContext)
+        setPreferencesContext(this)
+        Preferences.initialize()
         Logger.e(TAG, "onCreate")
     }
 

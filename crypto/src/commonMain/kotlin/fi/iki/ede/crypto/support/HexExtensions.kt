@@ -2,6 +2,7 @@ package fi.iki.ede.crypto.support
 
 import fi.iki.ede.crypto.EncryptedPassword
 import fi.iki.ede.crypto.IVCipherText
+import kotlin.text.HexFormat
 
 typealias HexString = String
 

@@ -4,6 +4,7 @@ package fi.iki.ede.safe.desktop
 import fi.iki.ede.crypto.support.decrypt
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.crypto.IVCipherText
+import fi.iki.ede.crypto.DesktopPathUtils
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.SaltedPassword
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
@@ -12,6 +13,7 @@ import fi.iki.ede.safe.ui.composable.DesktopNavigation
 import fi.iki.ede.safe.ui.composable.DesktopSiteEntryNavigation
 import fi.iki.ede.safe.ui.composable.CategoryList
 import fi.iki.ede.safe.ui.composable.SiteEntryList
+import fi.iki.ede.preferences.Preferences
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
@@ -50,47 +52,54 @@ import java.awt.FileDialog
 import java.awt.Frame
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.db.DATABASE_NAME
+import fi.iki.ede.db.DBHelper
+import fi.iki.ede.db.DBHelperFactory
+import okio.Path.Companion.toPath
+import okio.FileSystem
 
 object DesktopSettings {
-    private val settingsPath = Path(System.getProperty("user.home")) / ".safe_desktop_settings"
-
-    fun isBiometricsRegistered(): Boolean {
-        if (!settingsPath.exists()) return false
-        return runCatching {
-            val lines = settingsPath.readLines()
-            lines.isNotEmpty() && lines[0] == "true" && lines.size >= 2
-        }.getOrDefault(false)
+    fun initializeMigration() {
+        val oldSettingsFile = DesktopPathUtils.oldSettingsFile
+        if (oldSettingsFile.exists()) {
+            try {
+                val lines = oldSettingsFile.readLines()
+                if (lines.size >= 2 && lines[0] == "true") {
+                    val base64Str = lines[1]
+                    Preferences.registerDesktopBiometrics(base64Str)
+                }
+                oldSettingsFile.delete()
+            } catch (e: Exception) {
+                // ignore
+            }
+        }
     }
 
+    fun isBiometricsRegistered(): Boolean = Preferences.isDesktopBiometricsRegistered()
+
     fun getEncryptedMasterKey(): IVCipherText? {
-        if (!settingsPath.exists()) return null
+        val base64Str = Preferences.getDesktopBioCipher() ?: return null
         return runCatching {
-            val lines = settingsPath.readLines()
-            if (lines.size >= 2 && lines[0] == "true") {
-                val combined = Base64.decode(lines[1])
-                IVCipherText(16, combined)
-            } else {
-                null
-            }
+            val combined = Base64.decode(base64Str)
+            IVCipherText(16, combined)
         }.getOrNull()
     }
 
     fun registerBiometrics(encryptedMasterKey: IVCipherText) {
-        runCatching {
+        try {
             val combined = encryptedMasterKey.combineIVAndCipherText()
-            val base64 = Base64.encode(combined)
-            settingsPath.writeText("true\n$base64")
+            val base64Str = Base64.encode(combined)
+            Preferences.registerDesktopBiometrics(base64Str)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
     fun clearBiometrics() {
-        runCatching {
-            settingsPath.deleteIfExists()
-        }
+        Preferences.clearDesktopBiometrics()
     }
 }
 
-private fun loadTpmKeys(db: fi.iki.ede.db.DBHelper) {
+private fun loadTpmKeys(db: DBHelper) {
     val tpmKeys = db.fetchTpmKeys() ?: return
     val keyFactory = KeyFactory.getInstance("RSA")
     val privateKeyBytes = Base64.decode(tpmKeys.first)
@@ -100,16 +109,20 @@ private fun loadTpmKeys(db: fi.iki.ede.db.DBHelper) {
     KeyStoreHelper.setLoadedKeys(privateKey, publicKey)
 }
 
-fun main() = application {
-    Window(
-        onCloseRequest = ::exitApplication,
-        title = "Safe - Password Manager",
-        state = rememberWindowState(width = 480.dp, height = 640.dp)
-    ) {
-        MaterialTheme(
-            colorScheme = darkColorScheme()
+fun main() {
+    Preferences.initialize()
+    DesktopSettings.initializeMigration()
+    application {
+        Window(
+            onCloseRequest = ::exitApplication,
+            title = DesktopStrings.get("application_name"),
+            state = rememberWindowState(width = 480.dp, height = 640.dp)
         ) {
-            LoginScreen()
+            MaterialTheme(
+                colorScheme = darkColorScheme()
+            ) {
+                LoginScreen()
+            }
         }
     }
 }
@@ -132,7 +145,7 @@ fun LoginScreen() {
     var isLoggedIn by remember { mutableStateOf(false) }
 
     // Shared DBHelper instance for this screen
-    val db = remember { fi.iki.ede.db.DBHelperFactory.getDBHelper() }
+    val db = remember { DBHelperFactory.getDBHelper() }
 
     // Navigation and state variables
     val activeCategory = DesktopNavigation.activeCategory
@@ -264,13 +277,13 @@ fun LoginScreen() {
                                             }
                                             val file = dialog.file
                                             if (file != null) {
-                                                val targetFile = Path(dialog.directory) / file
+                                                val targetFile = (dialog.directory ?: "").toPath() / file
                                                 val backupContent = BackupExporter.exportToXml(db)
-                                                targetFile.toFile().writeText(backupContent)
-                                                exportStatusMessage = "Backup successfully exported to:\n${targetFile.toFile().name}"
+                                                FileSystem.SYSTEM.write(targetFile) { writeUtf8(backupContent) }
+                                                exportStatusMessage = DesktopStrings.get("backup_export_success", targetFile.toNioPath().toAbsolutePath().toString())
                                             }
                                         } catch (ex: Exception) {
-                                            exportStatusMessage = "Export failed:\n${ex.message ?: ex.toString()}"
+                                            exportStatusMessage = DesktopStrings.get("backup_export_failure", ex.message ?: ex.toString())
                                         }
                                     },
                                     shape = RoundedCornerShape(8.dp),
@@ -526,7 +539,7 @@ fun LoginScreen() {
                                 onClick = {
                                     statusMessage = "Creating vault..."
                                     try {
-                                        val (salt, cipheredKey) = KeyStoreHelper.createNewKey(fi.iki.ede.crypto.Password(password))
+                                        val (salt, cipheredKey) = KeyStoreHelper.createNewKey(Password(password))
                                         db.storeSaltAndEncryptedMasterKey(salt, cipheredKey)
                                         
                                         val privKey = KeyStoreHelper.getLoadedPrivateKey()
@@ -625,14 +638,12 @@ fun LoginScreen() {
                                 onClick = {
                                     statusMessage = "Authenticating..."
                                     try {
-                                        // Existing login - fetch and decrypt master key
                                         val (salt, cipheredKey) = db.fetchSaltAndEncryptedMasterKey()
                                         
-                                        // Make sure TPM keys are loaded from DB into KeyStoreHelper
                                         loadTpmKeys(db)
 
                                         KeyStoreHelper.importExistingEncryptedMasterKey(
-                                            fi.iki.ede.crypto.SaltedPassword(salt, fi.iki.ede.crypto.Password(password)),
+                                            SaltedPassword(salt, Password(password)),
                                             cipheredKey
                                         )
 
@@ -1145,7 +1156,7 @@ fun LoginScreen() {
                                         }
                                         val file = dialog.file
                                         if (file != null) {
-                                            importFilePath = java.io.File(dialog.directory, file).absolutePath
+                                            importFilePath = ((dialog.directory ?: "").toPath() / file).toString()
                                         }
                                     } catch (e: Exception) {
                                         importStatusMessage = "Failed to open file dialog"
@@ -1200,12 +1211,12 @@ fun LoginScreen() {
                                         return@Button
                                     }
                                     try {
-                                        val file = java.io.File(importFilePath)
-                                        if (!file.exists()) {
+                                        val path = importFilePath.toPath()
+                                        if (!FileSystem.SYSTEM.exists(path)) {
                                             importStatusMessage = "File does not exist"
                                             return@Button
                                         }
-                                        val content = file.readText()
+                                        val content = FileSystem.SYSTEM.read(path) { readUtf8() }
                                         val count = BackupImporter.importFromXml(content, importPassword, db)
                                         DesktopNavigation.dbRefreshTrigger++
                                         showImportDialog = false

@@ -108,6 +108,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         Logger.d(TAG, "Restore: " + (measureTimeMillis {
             (1..count.toInt()).forEach {
                 r.doRestore(
+
                     Buffer().writeUtf8(PASSWORD_ENCRYPTED_BACKUP_AT_1234),
                     backupPassword,
                     dbHelper,
@@ -255,6 +256,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
             try {
                 var askedUser = false
                 r.doRestore(
+
                     Buffer().writeUtf8(PASSWORD_ENCRYPTED_BACKUP_AT_1234),
                     backupPassword,
                     dbHelper,
@@ -296,6 +298,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         mockClockSystemNow(2000)
         mockGetLastBackupTime(1234)
         r.doRestore(
+
             Buffer().writeUtf8(PASSWORD_ENCRYPTED_BACKUP_AT_1234),
             backupPassword,
             dbHelper,
@@ -445,6 +448,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         mockClockSystemNow(2000)
         mockGetLastBackupTime(1234)
         r.doRestore(
+
             Buffer().writeUtf8(finalOutput),
             backupPassword,
             dbHelper,
