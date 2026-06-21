@@ -7,9 +7,7 @@ import com.sun.jna.platform.win32.Crypt32Util
 import com.sun.jna.ptr.IntByReference
 import com.sun.jna.ptr.PointerByReference
 import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.keystore.NCrypt.Companion.ERROR_SUCCESS
-import fi.iki.ede.crypto.keystore.NCrypt.Companion.MS_KEY_STORAGE_PROVIDER
-import fi.iki.ede.crypto.keystore.NCrypt.Companion.MS_PLATFORM_KEY_STORAGE_PROVIDER
+import fi.iki.ede.crypto.keystore.NCrypt
 import java.io.File
 
 object PlatformUtils {
@@ -41,11 +39,11 @@ object PlatformUtils {
 
     private fun getProviderHandle(): Pointer {
         val phProvider = PointerByReference()
-        var status = NCrypt.INSTANCE.NCryptOpenStorageProvider(phProvider, MS_PLATFORM_KEY_STORAGE_PROVIDER, 0)
-        if (status != ERROR_SUCCESS) {
-            status = NCrypt.INSTANCE.NCryptOpenStorageProvider(phProvider, MS_KEY_STORAGE_PROVIDER, 0)
+        var status = NCrypt.INSTANCE.NCryptOpenStorageProvider(phProvider, NCrypt.MS_PLATFORM_KEY_STORAGE_PROVIDER, 0)
+        if (status != NCrypt.ERROR_SUCCESS) {
+            status = NCrypt.INSTANCE.NCryptOpenStorageProvider(phProvider, NCrypt.MS_KEY_STORAGE_PROVIDER, 0)
         }
-        if (status != ERROR_SUCCESS) {
+        if (status != NCrypt.ERROR_SUCCESS) {
             throw RuntimeException("Failed to open NCrypt storage provider. Status: $status")
         }
         return phProvider.value
@@ -57,7 +55,7 @@ object PlatformUtils {
             val hProvider = getProviderHandle()
             val phKey = PointerByReference()
             val status = NCrypt.INSTANCE.NCryptOpenKey(hProvider, phKey, WString(alias), 0, 0)
-            if (status == ERROR_SUCCESS) {
+            if (status == NCrypt.ERROR_SUCCESS) {
                 NCrypt.INSTANCE.NCryptDeleteKey(phKey.value, 0)
             }
             NCrypt.INSTANCE.NCryptFreeObject(hProvider)
@@ -70,7 +68,7 @@ object PlatformUtils {
         val hProvider = getProviderHandle()
         val phKey = PointerByReference()
         var status = NCrypt.INSTANCE.NCryptOpenKey(hProvider, phKey, WString(alias), 0, 0)
-        if (status == ERROR_SUCCESS) {
+        if (status == NCrypt.ERROR_SUCCESS) {
             NCrypt.INSTANCE.NCryptFreeObject(hProvider)
             return phKey.value
         }
@@ -84,7 +82,7 @@ object PlatformUtils {
             0,
             0
         )
-        if (status != ERROR_SUCCESS) {
+        if (status != NCrypt.ERROR_SUCCESS) {
             NCrypt.INSTANCE.NCryptFreeObject(hProvider)
             throw RuntimeException("Failed to create persisted key. Status: $status")
         }
@@ -99,14 +97,14 @@ object PlatformUtils {
             4,
             0
         )
-        if (status != ERROR_SUCCESS) {
+        if (status != NCrypt.ERROR_SUCCESS) {
             NCrypt.INSTANCE.NCryptFreeObject(phKey.value)
             NCrypt.INSTANCE.NCryptFreeObject(hProvider)
             throw RuntimeException("Failed to set key length. Status: $status")
         }
 
         status = NCrypt.INSTANCE.NCryptFinalizeKey(phKey.value, 0)
-        if (status != ERROR_SUCCESS) {
+        if (status != NCrypt.ERROR_SUCCESS) {
             NCrypt.INSTANCE.NCryptFreeObject(phKey.value)
             NCrypt.INSTANCE.NCryptFreeObject(hProvider)
             throw RuntimeException("Failed to finalize key. Status: $status")
@@ -128,7 +126,7 @@ object PlatformUtils {
             pcbResult,
             flags
         )
-        if (status != ERROR_SUCCESS) {
+        if (status != NCrypt.ERROR_SUCCESS) {
             throw RuntimeException("NCryptEncrypt size query failed. Status: $status")
         }
         val output = ByteArray(pcbResult.value)
@@ -142,7 +140,7 @@ object PlatformUtils {
             pcbResult,
             flags
         )
-        if (status != ERROR_SUCCESS) {
+        if (status != NCrypt.ERROR_SUCCESS) {
             throw RuntimeException("NCryptEncrypt failed. Status: $status")
         }
         return output
@@ -160,7 +158,7 @@ object PlatformUtils {
             pcbResult,
             flags
         )
-        if (status != ERROR_SUCCESS) {
+        if (status != NCrypt.ERROR_SUCCESS) {
             throw RuntimeException("NCryptDecrypt size query failed. Status: $status")
         }
         val output = ByteArray(pcbResult.value)
@@ -174,7 +172,7 @@ object PlatformUtils {
             pcbResult,
             flags
         )
-        if (status != ERROR_SUCCESS) {
+        if (status != NCrypt.ERROR_SUCCESS) {
             throw RuntimeException("NCryptDecrypt failed. Status: $status")
         }
         return output

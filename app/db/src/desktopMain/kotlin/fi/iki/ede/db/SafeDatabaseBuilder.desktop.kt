@@ -9,6 +9,8 @@ import okio.Path.Companion.toPath
 import java.util.Base64
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 
+import java.util.Base64
+
 actual fun getDatabaseBuilder(context: Any?): RoomDatabase.Builder<SafeDatabase> {
     val dbFile = File("$DATABASE_NAME.db")
     return Room.databaseBuilder<SafeDatabase>(
@@ -46,7 +48,6 @@ actual fun fetchTpmKeys(): Pair<String, String>? {
     } catch (e: Exception) {
         // Ignore
     }
-    return null
 }
 
 actual fun initTpmKeys() {}

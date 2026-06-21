@@ -6,21 +6,13 @@ import com.sun.jna.WString
 import com.sun.jna.ptr.IntByReference
 import com.sun.jna.ptr.PointerByReference
 import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.keystore.NCrypt.Companion.ERROR_SUCCESS
-import fi.iki.ede.crypto.keystore.NCrypt.Companion.MS_KEY_STORAGE_PROVIDER
-import fi.iki.ede.crypto.keystore.NCrypt.Companion.MS_PLATFORM_KEY_STORAGE_PROVIDER
-import fi.iki.ede.crypto.keystore.NCrypt.Companion.NCRYPT_CHAINING_MODE_PROPERTY
-import fi.iki.ede.crypto.keystore.NCrypt.Companion.NCRYPT_INITIALIZATION_VECTOR
-import fi.iki.ede.crypto.keystore.NCrypt.Companion.BCRYPT_KEY_DATA_BLOB_MAGIC
-import fi.iki.ede.crypto.keystore.NCrypt.Companion.BCRYPT_KEY_DATA_BLOB_VERSION1
-import fi.iki.ede.crypto.keystore.NCrypt.Companion.NCRYPT_CIPHER_KEY_BLOB_MAGIC
-import fi.iki.ede.crypto.keystore.NCrypt.Companion.NCRYPT_CIPHER_KEY_BLOB
-import fi.iki.ede.crypto.keystore.NCrypt.Companion.BCRYPT_CHAIN_MODE_CBC
+import fi.iki.ede.crypto.keystore.NCrypt
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.security.PrivateKey
 import java.security.PublicKey
 import javax.crypto.Cipher
+import javax.crypto.spec.SecretKeySpec
 import fi.iki.ede.logger.Logger
 import korlibs.crypto.AES
 import korlibs.crypto.Padding
@@ -29,6 +21,7 @@ class CNGKeyStoreHelper(
     masterKeyBytes: ByteArray
 ) : IKeyStoreHelper {
 
+    private val masterKey = masterKeyBytes.clone()
     private val hKey: Pointer
     private val lock = Any()
 
@@ -53,14 +46,14 @@ class CNGKeyStoreHelper(
         val buffer = ByteBuffer.wrap(blobBytes).order(ByteOrder.LITTLE_ENDIAN)
         // NCRYPT_KEY_BLOB_HEADER
         buffer.putInt(headerSize)
-        buffer.putInt(NCRYPT_CIPHER_KEY_BLOB_MAGIC)
+        buffer.putInt(NCrypt.NCRYPT_CIPHER_KEY_BLOB_MAGIC)
         buffer.putInt(algNameBytes.size)
         buffer.putInt(ncryptKeyDataSize)
         // Algorithm Name
         buffer.put(algNameBytes)
         // BCRYPT_KEY_DATA_BLOB_HEADER
-        buffer.putInt(BCRYPT_KEY_DATA_BLOB_MAGIC)
-        buffer.putInt(BCRYPT_KEY_DATA_BLOB_VERSION1)
+        buffer.putInt(NCrypt.BCRYPT_KEY_DATA_BLOB_MAGIC)
+        buffer.putInt(NCrypt.BCRYPT_KEY_DATA_BLOB_VERSION1)
         buffer.putInt(keyDataSize)
         // Raw Key Data
         buffer.put(masterKeyBytes)
@@ -71,7 +64,7 @@ class CNGKeyStoreHelper(
 
         // 1. Try Platform Crypto Provider (TPM)
         var status = openProviderAndImportKey(
-            MS_PLATFORM_KEY_STORAGE_PROVIDER,
+            NCrypt.MS_PLATFORM_KEY_STORAGE_PROVIDER,
             blobBytes,
             { prov, key ->
                 providerPointer = prov
@@ -80,10 +73,10 @@ class CNGKeyStoreHelper(
         )
 
         // 2. Fallback to Software Key Storage Provider (LSASS/DPAPI)
-        if (status != ERROR_SUCCESS || keyPointer == null) {
+        if (status != NCrypt.ERROR_SUCCESS || keyPointer == null) {
             Logger.i("CNGKeyStoreHelper", "TPM KSP not available or doesn't support symmetric keys. Falling back to Software KSP. status=$status")
             status = openProviderAndImportKey(
-                MS_KEY_STORAGE_PROVIDER,
+                NCrypt.MS_KEY_STORAGE_PROVIDER,
                 blobBytes,
                 { prov, key ->
                     providerPointer = prov
@@ -96,7 +89,7 @@ class CNGKeyStoreHelper(
         blobBytes.fill(0)
         masterKeyBytes.fill(0)
 
-        if (status != ERROR_SUCCESS || keyPointer == null) {
+        if (status != NCrypt.ERROR_SUCCESS || keyPointer == null) {
             throw RuntimeException("Failed to import master key into Windows CNG. Status: $status")
         }
 
@@ -108,17 +101,17 @@ class CNGKeyStoreHelper(
         }
 
         // Configure the key: Set chaining mode to CBC
-        val chainModeWStr = BCRYPT_CHAIN_MODE_CBC
+        val chainModeWStr = NCrypt.BCRYPT_CHAIN_MODE_CBC
         val chainModeMem = Memory((chainModeWStr.length + 1) * 2L)
         chainModeMem.setWideString(0, chainModeWStr.toString())
         status = NCrypt.INSTANCE.NCryptSetProperty(
             hKey,
-            NCRYPT_CHAINING_MODE_PROPERTY,
+            NCrypt.NCRYPT_CHAINING_MODE_PROPERTY,
             chainModeMem,
             chainModeMem.size().toInt(),
             0
         )
-        if (status != ERROR_SUCCESS) {
+        if (status != NCrypt.ERROR_SUCCESS) {
             NCrypt.INSTANCE.NCryptFreeObject(hKey)
             throw RuntimeException("Failed to set CBC chaining mode on CNG key. Status: $status")
         }
@@ -131,7 +124,7 @@ class CNGKeyStoreHelper(
     ): Int {
         val phProvider = PointerByReference()
         var status = NCrypt.INSTANCE.NCryptOpenStorageProvider(phProvider, providerName, 0)
-        if (status != ERROR_SUCCESS) {
+        if (status != NCrypt.ERROR_SUCCESS) {
             return status
         }
         val hProvider = phProvider.value
@@ -140,7 +133,7 @@ class CNGKeyStoreHelper(
         status = NCrypt.INSTANCE.NCryptImportKey(
             hProvider,
             null,
-            NCRYPT_CIPHER_KEY_BLOB,
+            NCrypt.NCRYPT_CIPHER_KEY_BLOB,
             null,
             phKey,
             blobBytes,
@@ -148,7 +141,7 @@ class CNGKeyStoreHelper(
             0
         )
 
-        if (status == ERROR_SUCCESS) {
+        if (status == NCrypt.ERROR_SUCCESS) {
             onSuccess(hProvider, phKey.value)
         } else {
             NCrypt.INSTANCE.NCryptFreeObject(hProvider)
@@ -177,6 +170,8 @@ class CNGKeyStoreHelper(
             byteArrayOf()
         } else if (key is CNGKey) {
             PlatformUtils.decryptWithCNG(encrypted, key.alias)
+        } else if (key is SecretKeySpec) {
+            AES.decryptAesCbc(encrypted.cipherText, key.encoded, encrypted.iv, Padding.PKCS7Padding)
         } else if (key is PrivateKey) {
             val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
             cipher.init(Cipher.DECRYPT_MODE, key)
@@ -197,12 +192,12 @@ class CNGKeyStoreHelper(
                 ivMem.write(0, encrypted.iv, 0, encrypted.iv.size)
                 val status = NCrypt.INSTANCE.NCryptSetProperty(
                     hKey,
-                    NCRYPT_INITIALIZATION_VECTOR,
+                    NCrypt.NCRYPT_INITIALIZATION_VECTOR,
                     ivMem,
                     encrypted.iv.size,
                     0
                 )
-                if (status != ERROR_SUCCESS) {
+                if (status != NCrypt.ERROR_SUCCESS) {
                     throw RuntimeException("CNG Decrypt: Failed to set IV property. Status: $status")
                 }
 
@@ -216,6 +211,10 @@ class CNGKeyStoreHelper(
         if (key is CNGKey) {
             val cipherText = PlatformUtils.encryptWithCNG(plaintext, key.alias)
             IVCipherText(ByteArray(16), cipherText)
+        } else if (key is SecretKeySpec) {
+            val iv = CipherUtilities.generateRandomBytes(CipherUtilities.Companion.Bytes(16))
+            val cipherText = AES.encryptAesCbc(plaintext, key.encoded, iv, Padding.PKCS7Padding)
+            IVCipherText(iv, cipherText)
         } else if (key is PublicKey) {
             val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
             cipher.init(Cipher.ENCRYPT_MODE, key)
@@ -236,12 +235,12 @@ class CNGKeyStoreHelper(
             ivMem.write(0, iv, 0, iv.size)
             val status = NCrypt.INSTANCE.NCryptSetProperty(
                 hKey,
-                NCRYPT_INITIALIZATION_VECTOR,
+                NCrypt.NCRYPT_INITIALIZATION_VECTOR,
                 ivMem,
                 iv.size,
                 0
             )
-            if (status != ERROR_SUCCESS) {
+            if (status != NCrypt.ERROR_SUCCESS) {
                 throw RuntimeException("CNG Encrypt: Failed to set IV property. Status: $status")
             }
 

@@ -89,9 +89,11 @@ class KeyStoreHelper(
     companion object {
         private var loadedPrivateKey: PrivateKey? = null
         private var loadedPublicKey: PublicKey? = null
+        private var biometricEncryptedMasterKey: IVCipherText? = null
 
         fun getLoadedPrivateKey(): PrivateKey? = loadedPrivateKey
         fun getLoadedPublicKey(): PublicKey? = loadedPublicKey
+        fun getBiometricEncryptedMasterKey(): IVCipherText? = biometricEncryptedMasterKey
 
         fun setLoadedKeys(priv: PrivateKey, pub: PublicKey) {
             loadedPrivateKey = priv
@@ -128,6 +130,31 @@ class KeyStoreHelper(
             }
         }
 
+        fun loginWithBiometricKey(
+            encryptedMasterKey: IVCipherText
+        ): Boolean {
+            val isWindows = PlatformUtils.isWindows
+            try {
+                val decryptedMasterKeyBytes = if (isWindows) {
+                    PlatformUtils.decryptWithCNG(encryptedMasterKey, "fi.iki.ede.safe.biometrics")
+                } else {
+                    val privKey = loadedPrivateKey ?: return false
+                    val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
+                    cipher.init(Cipher.DECRYPT_MODE, privKey)
+                    cipher.doFinal(encryptedMasterKey.cipherText)
+                }
+                
+                ensureMockKeysLoaded()
+                val mockPrivKey = loadedPrivateKey!!
+                val mockPubKey = loadedPublicKey!!
+                initializeKeyStoreHelper(KMPSecretKeySpec(decryptedMasterKeyBytes), mockPrivKey, mockPubKey)
+                return true
+            } catch (e: Exception) {
+                e.printStackTrace()
+                return false
+            }
+        }
+
         fun importExistingEncryptedMasterKey(
             saltedPassword: SaltedPassword,
             ivSecretKey: IVCipherText
@@ -143,6 +170,21 @@ class KeyStoreHelper(
             ensureMockKeysLoaded()
             val privKey = loadedPrivateKey!!
             val pubKey = loadedPublicKey!!
+
+            // Pre-calculate biometric encrypted master key
+            try {
+                val isWindows = PlatformUtils.isWindows
+                val cipherText = if (isWindows) {
+                    PlatformUtils.encryptWithCNG(decrypted.values, "fi.iki.ede.safe.biometrics")
+                } else {
+                    val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
+                    cipher.init(Cipher.ENCRYPT_MODE, pubKey)
+                    cipher.doFinal(decrypted.values)
+                }
+                biometricEncryptedMasterKey = IVCipherText(ByteArray(16), cipherText)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
 
             initializeKeyStoreHelper(decrypted, privKey, pubKey)
 
@@ -168,6 +210,21 @@ class KeyStoreHelper(
             val pair = generateMockKeyPair()
             loadedPrivateKey = pair.private
             loadedPublicKey = pair.public
+
+            // Pre-calculate biometric encrypted master key
+            try {
+                val isWindows = PlatformUtils.isWindows
+                val cipherText = if (isWindows) {
+                    PlatformUtils.encryptWithCNG(unencryptedKey.values, "fi.iki.ede.safe.biometrics")
+                } else {
+                    val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
+                    cipher.init(Cipher.ENCRYPT_MODE, pair.public)
+                    cipher.doFinal(unencryptedKey.values)
+                }
+                biometricEncryptedMasterKey = IVCipherText(ByteArray(16), cipherText)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
 
             initializeKeyStoreHelper(unencryptedKey, pair.private, pair.public)
 
