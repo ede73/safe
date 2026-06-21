@@ -46,6 +46,8 @@ object DesktopStrings {
         strings["biometrics_unlock_success"] = "Unlock successful! Logged in via biometrics."
         strings["biometrics_scanning"] = "Scanning fingerprint..."
         strings["biometrics_unlock"] = "Biometric Unlock"
+        strings["extension_type"] = "Type"
+        strings["extension_value"] = "Value"
 
         // Load translations from strings.xml
         runCatching {

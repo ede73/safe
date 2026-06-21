@@ -215,4 +215,6 @@
     <string name="site_entry_numbers">Numbers</string>
     <string name="site_entry_regenerate">Regenerate</string>
     <string name="password_search_extensions">+Extensions</string>
+    <string name="extension_type">Type</string>
+    <string name="extension_value">Value</string>
 </resources>
