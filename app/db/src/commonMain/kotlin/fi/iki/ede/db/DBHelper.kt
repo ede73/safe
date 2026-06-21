@@ -194,8 +194,8 @@ class DBHelper(
         database.siteEntryDao().updateDeletedStatus(id, 0L)
     }
 
-    fun markSiteEntryDeleted(id: DBID): Int = runBlocking {
-        database.siteEntryDao().updateDeletedStatus(id, Random.nextLong(1, Long.MAX_VALUE))
+    fun markSiteEntryDeleted(id: DBID, deletedTimeSeconds: Long = fi.iki.ede.dateutils.DateUtils.toUnixSeconds()): Int = runBlocking {
+        database.siteEntryDao().updateDeletedStatus(id, deletedTimeSeconds)
     }
 
     fun hardDeleteSiteEntry(id: DBID): Int = runBlocking {
