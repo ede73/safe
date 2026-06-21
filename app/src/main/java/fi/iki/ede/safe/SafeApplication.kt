@@ -12,12 +12,15 @@ import fi.iki.ede.autolock.AutolockingService
 import fi.iki.ede.clipboardutils.ClipboardUtils
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelperFactory
+import fi.iki.ede.db.setDatabaseContext
+import fi.iki.ede.preferences.setPreferencesContext
 import fi.iki.ede.gpmdatamodel.db.GPMDB
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseInitialize
 import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.notifications.ConfiguredNotifications
 import fi.iki.ede.preferences.Preferences
+import fi.iki.ede.preferences.setPreferencesContext
 import fi.iki.ede.preferences.Preferences.PREFERENCE_EXPERIMENTAL_FEATURES
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.notifications.prepareNotifications
@@ -62,7 +65,8 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
             BuildConfig.VERSION_CODE
         )
 //        throw RuntimeException("Test Crash")
-        Preferences.initialize(this)
+        setPreferencesContext(this)
+        Preferences.initialize()
 
         // TODO: replace with DI once KMP transform done
         AutolockingFeaturesImpl.registerCallbacks({ context ->
@@ -78,9 +82,9 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
             componentActivity is LoginScreen
         }
         )
+        setDatabaseContext(this)
         DBHelperFactory.initializeDatabase(
             DBHelper(
-                this,
                 regularAppNotATest = true,
                 getExternalTables = GPMDB::getExternalTables,
                 upgradeExternalTables = GPMDB::upgradeTables,
@@ -88,15 +92,16 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
         )
         reinitializePlugins(this)
         setBackupDueIconEnabled(this, false)
-        PreferenceManager.getDefaultSharedPreferences(this)
+        Preferences.sharedPreferences
             .registerOnSharedPreferenceChangeListener(this)
         ConfiguredNotifications.notifications = prepareNotifications()
     }
 
+    @ExperimentalTime
     override fun onTerminate() {
         super.onTerminate()
         Logger.w(TAG, "onTerminate")
-        PreferenceManager.getDefaultSharedPreferences(this)
+        Preferences.sharedPreferences
             .unregisterOnSharedPreferenceChangeListener(this)
     }
 

@@ -46,7 +46,7 @@ import fi.iki.ede.gpm.model.SavedGPM
 import fi.iki.ede.gpm.model.SavedGPM.Companion.makeFromEncryptedStringFields
 import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.gpmdatamodel.GPMDataModel.getSavedGPM
-import fi.iki.ede.gpmui.GpmUiMockKeyStoreHelper
+import androidx.compose.ui.platform.LocalContext
 import fi.iki.ede.gpmui.R
 import fi.iki.ede.gpmui.dialogs.ShowInfoDialog
 import fi.iki.ede.gpmui.models.DNDObject
@@ -56,6 +56,7 @@ import fi.iki.ede.gpmui.modifiers.doesItHaveText
 import fi.iki.ede.gpmui.utilities.combineLists
 import fi.iki.ede.logger.firebaseRecordException
 import fi.iki.ede.preferences.Preferences
+import fi.iki.ede.preferences.setPreferencesContext
 import fi.iki.ede.theme.SafeButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -347,7 +348,9 @@ fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesList(
 @ExperimentalFoundationApi
 private fun ImportEntryListPreview() {
     MaterialTheme {
-        GpmUiMockKeyStoreHelper.init()
+        // Addressed PR12 comment: Initialize preferences cleanly without reflection mock helper
+        setPreferencesContext(LocalContext.current)
+        Preferences.initialize()
         (1990..2023).map {
             DecryptableSiteEntry(1).apply {
                 description = "Description $it".encrypt()

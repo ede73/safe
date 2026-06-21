@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import fi.iki.ede.backup.BackupDatabase
 import fi.iki.ede.backup.ExportConfig
+import fi.iki.ede.backup.getCreateDocumentIntent
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.gpmdatamodel.db.GPMDB
@@ -22,6 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okio.Buffer
+import okio.sink
 import kotlin.time.ExperimentalTime
 
 @Composable
@@ -60,19 +62,17 @@ private suspend fun initiateBackup(
     uri: Uri,
     completed: () -> Unit,
 ) {
-    val buffer = Buffer()
-    BackupDatabase.backup(
-        DataModel.categoriesStateFlow.value,
-        DataModel.softDeletedStateFlow.value,
-        DataModel::getSiteEntriesOfCategory,
-        /* TODO: NO NO GPMDB */
-        GPMDB.fetchAllSiteEntryGPMMappings(),
-        GPMDataModel.allSavedGPMsFlow.value.toSet(),
-        buffer
-    )
-    val data = buffer.readUtf8()
     context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-        outputStream.write(data.toByteArray())
+        val sink = outputStream.sink()
+        BackupDatabase.backup(
+            DataModel.categoriesStateFlow.value,
+            DataModel.softDeletedStateFlow.value,
+            DataModel::getSiteEntriesOfCategory,
+            /* TODO: NO NO GPMDB */
+            GPMDB.fetchAllSiteEntryGPMMappings(),
+            GPMDataModel.allSavedGPMsFlow.value.toSet(),
+            sink
+        )
     }
     completed()
 }

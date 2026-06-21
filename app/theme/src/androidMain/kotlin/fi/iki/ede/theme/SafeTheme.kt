@@ -15,16 +15,26 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80,
+    primary = Color(0xFFe94560),          // Rose pink
+    secondary = Color(0xFF34b38a),        // Teal
+    tertiary = Color(0xFF8899aa),         // Slate gray
+    background = Color(0xFF12121c),       // Deep navy background
+    surface = Color(0xFF1e1e2e),          // Card surface background
+    surfaceVariant = Color(0xFF1e1e2e),   // List item background
+    onPrimary = Color.White,
+    onSecondary = Color.White,
+    onBackground = Color.White,
+    onSurface = Color.White,
+    onSurfaceVariant = Color(0xFF8899aa), // Subtexts
+    outline = Color(0xFF444466),          // Outline borders
+    outlineVariant = Color(0xFF444466)    // Matching outline variant
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -32,25 +42,6 @@ private val LightColorScheme = lightColorScheme(
     secondary = PurpleGrey40,
     tertiary = Pink40,
 )
-
-object SafeTheme {
-    var colorScheme = LightColorScheme
-}
-
-data class SafeThemeData(
-    val customFonts: SafeFonts,
-    val customColors: SafeColors,
-    val customShapes: SafeShapes
-)
-
-val LocalSafeTheme =
-    staticCompositionLocalOf {
-        SafeThemeData(
-            SafeTheme.customFonts(),
-            SafeTheme.customColors(),
-            SafeTheme.customShapes()
-        )
-    }
 
 
 @Composable
@@ -91,7 +82,7 @@ fun SafeTheme(
         if (!isInEditMode) {
             SideEffect {
                 val window = (context as Activity).window
-                window.statusBarColor = SafeTheme.colorScheme.primary.toArgb()
+                window.statusBarColor = SafeTheme.colorScheme.background.toArgb()
                 WindowCompat.getInsetsController(window, this).isAppearanceLightStatusBars =
                     !darkTheme
             }

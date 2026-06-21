@@ -4,11 +4,18 @@ import fi.iki.ede.crypto.IVCipherText
 
 object MockKeyStoreHelper {
     fun init() {
-        KeyStoreHelperFactory.getKeyStoreHelper().encrypterProvider = { plaintext: ByteArray ->
-            IVCipherText(plaintext, plaintext)  // just echo input for mock
-        }
-        KeyStoreHelperFactory.getKeyStoreHelper().decrypterProvider = { encrypted: IVCipherText ->
-            encrypted.cipherText  // just return ciphertext for mock
+        KeyStoreHelperFactory.provideKeyStoreHelper = object : IKeyStoreHelper {
+            override fun testingDeleteKeys_DO_NOT_USE() {}
+            override fun rotateKeys() {}
+            override fun getOrCreateBiokey(): KMPKey = object : KMPKey {
+                override fun getAlgorithm(): String = "RAW"
+                override fun getFormat(): String = "RAW"
+                override fun getEncoded(): ByteArray = byteArrayOf()
+            }
+            override var decrypterProviderWithKey: (IVCipherText, KMPKey) -> ByteArray = { iv, _ -> iv.cipherText }
+            override var decrypterProvider: (IVCipherText) -> ByteArray = { it.cipherText }
+            override var encrypterProviderWithKey: (ByteArray, KMPKey) -> IVCipherText = { bytes, _ -> IVCipherText(bytes, bytes) }
+            override var encrypterProvider: (ByteArray) -> IVCipherText = { IVCipherText(it, it) }
         }
     }
 }

@@ -19,8 +19,6 @@ import androidx.core.content.edit
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.CipherUtilities
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
-import fi.iki.ede.crypto.support.hexToByteArray
-import fi.iki.ede.crypto.support.toHexString
 import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseLog

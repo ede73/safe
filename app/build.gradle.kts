@@ -102,13 +102,13 @@ android {
 
     defaultConfig {
         applicationId = "fi.iki.ede.safe"
-        targetSdk = 36
+        targetSdk = 37
 
         val gitRevListCount = gitRevListProvider.get().toInt()
 
         val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(
-            3,
-            6,
+            4,
+            0,
             gitRevListCount / 100,
             gitRevListCount % 100
         )
@@ -256,6 +256,8 @@ dependencies {
     implementation(project(":notifications"))
     implementation(project(":safephoto"))
     implementation(project(":statemachine"))
+    implementation(project(":shared-ui"))
+
 
     lintChecks(project(":app:SafeLinter"))
 
@@ -297,7 +299,6 @@ dependencies {
     testImplementation(project(":crypto"))
     testImplementation(testFixtures(project(":crypto")))
     testImplementation(project(":app"))
-    implementation(libs.krypto)
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 

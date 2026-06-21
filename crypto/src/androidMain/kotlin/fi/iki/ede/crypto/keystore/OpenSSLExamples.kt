@@ -3,7 +3,6 @@ package fi.iki.ede.crypto.keystore
 import fi.iki.ede.crypto.BuildConfig
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
-import fi.iki.ede.crypto.support.toHexString
 import fi.iki.ede.logger.Logger
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
