@@ -108,7 +108,7 @@ android {
 
         val (versionMajor, versionMinor, versionPatch, versionBuild) = listOf(
             4,
-            0,
+            1,
             gitRevListCount / 100,
             gitRevListCount % 100
         )
