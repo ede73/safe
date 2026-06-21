@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package fi.iki.ede.db
 
 import android.content.Context
@@ -14,13 +16,21 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import okio.Path
 import okio.Path.Companion.toPath
 
-fun runLegacyDatabaseMigration(context: Context) {
-    val prefs = context.getSharedPreferences("safe_prefs", Context.MODE_PRIVATE)
-    val migrationDone = prefs.getBoolean("room_migration_done", false)
+internal const val PREFS_NAME = "safe_prefs"
+internal const val PREF_ROOM_MIGRATION_DONE = "room_migration_done"
+
+private var appContext: Context? = null
+
+fun setDatabaseContext(context: Context) {
+    appContext = context.applicationContext
+}
+
+fun runLegacyDatabaseMigration(context: Context, databaseName: String = DBHelper.DATABASE_NAME) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val migrationDone = prefs.getBoolean(PREF_ROOM_MIGRATION_DONE, false)
     if (migrationDone) return
 
-    // Addressed PR7 comment: Use common DATABASE_NAME constant
-    val dbFile = context.getDatabasePath(DATABASE_NAME)
+    val dbFile = context.getDatabasePath(databaseName)
     if (dbFile.exists()) {
         var isLegacy = false
         try {
@@ -197,28 +207,28 @@ fun runLegacyDatabaseMigration(context: Context) {
         }
     }
     
-    prefs.edit().putBoolean("room_migration_done", true).apply()
+    prefs.edit().putBoolean(PREF_ROOM_MIGRATION_DONE, true).apply()
 }
 
-actual fun getDatabaseBuilder(context: Any?): RoomDatabase.Builder<SafeDatabase> {
-    val appContext = (context as? Context)?.applicationContext ?: throw IllegalArgumentException("Android Context required")
-    runLegacyDatabaseMigration(appContext)
+actual fun getDatabaseBuilder(databaseName: String): RoomDatabase.Builder<SafeDatabase> {
+    val context = appContext ?: throw IllegalStateException("Database context not initialized. Call setDatabaseContext(context) first.")
+    runLegacyDatabaseMigration(context, databaseName)
     return Room.databaseBuilder<SafeDatabase>(
-        context = appContext,
-        name = DATABASE_NAME
+        context = context,
+        name = databaseName
     )
 }
 
-actual fun getInMemoryDatabaseBuilder(context: Any?): RoomDatabase.Builder<SafeDatabase> {
-    val appContext = (context as? Context)?.applicationContext ?: throw IllegalArgumentException("Android Context required")
+actual fun getInMemoryDatabaseBuilder(): RoomDatabase.Builder<SafeDatabase> {
+    val context = appContext ?: throw IllegalStateException("Database context not initialized. Call setDatabaseContext(context) first.")
     return Room.inMemoryDatabaseBuilder<SafeDatabase>(
-        context = appContext
+        context = context
     )
 }
 
-actual fun getPhotoDir(context: Any?): Path {
-    val appContext = (context as? Context)?.applicationContext ?: throw IllegalArgumentException("Android Context required")
-    return (appContext.filesDir.absolutePath.toPath() / "photos")
+actual fun getPhotoDir(): Path {
+    val context = appContext ?: throw IllegalStateException("Database context not initialized. Call setDatabaseContext(context) first.")
+    return (context.filesDir.absolutePath.toPath() / "photos")
 }
 
 actual fun beginTransaction(database: SafeDatabase) {

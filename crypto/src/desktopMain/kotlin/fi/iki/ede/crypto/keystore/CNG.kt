@@ -46,6 +46,28 @@ interface NCrypt : StdCallLibrary {
         dwFlags: Int
     ): Int
 
+    fun NCryptOpenKey(
+        hProvider: Pointer,
+        phKey: PointerByReference,
+        pszKeyName: WString,
+        dwLegacyKeySpec: Int,
+        dwFlags: Int
+    ): Int
+
+    fun NCryptCreatePersistedKey(
+        hProvider: Pointer,
+        phKey: PointerByReference,
+        pszAlgId: WString,
+        pszKeyName: WString?,
+        dwLegacyKeySpec: Int,
+        dwFlags: Int
+    ): Int
+
+    fun NCryptFinalizeKey(
+        hKey: Pointer,
+        dwFlags: Int
+    ): Int
+
     fun NCryptImportKey(
         hProvider: Pointer,
         hImportKey: Pointer?,
@@ -93,28 +115,6 @@ interface NCrypt : StdCallLibrary {
 
     fun NCryptDeleteKey(
         hKey: Pointer,
-        dwFlags: Int
-    ): Int
-
-    fun NCryptCreatePersistedKey(
-        hProvider: Pointer,
-        phKey: PointerByReference,
-        pszAlgId: WString,
-        pszKeyName: WString?,
-        dwLegacyKeySpec: Int,
-        dwFlags: Int
-    ): Int
-
-    fun NCryptFinalizeKey(
-        hKey: Pointer,
-        dwFlags: Int
-    ): Int
-
-    fun NCryptOpenKey(
-        hProvider: Pointer,
-        phKey: PointerByReference,
-        pszKeyName: WString,
-        dwLegacyKeySpec: Int,
         dwFlags: Int
     ): Int
 }

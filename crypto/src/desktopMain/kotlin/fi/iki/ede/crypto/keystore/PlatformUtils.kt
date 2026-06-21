@@ -8,15 +8,9 @@ import com.sun.jna.ptr.IntByReference
 import com.sun.jna.ptr.PointerByReference
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.NCrypt
-import java.io.File
-
 object PlatformUtils {
     val isWindows: Boolean by lazy {
         System.getProperty("os.name").lowercase().contains("windows")
-    }
-
-    val tpmKeysFile: File by lazy {
-        File(System.getProperty("user.home"), ".safe_desktop_tpm_keys")
     }
 
     fun encryptWithDPAPI(data: ByteArray): ByteArray {

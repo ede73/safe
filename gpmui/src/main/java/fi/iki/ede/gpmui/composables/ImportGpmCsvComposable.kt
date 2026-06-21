@@ -353,7 +353,7 @@ fun launchImportGpmCsvFileToAChangeSet(
 
 
 @ExperimentalTime
-private fun storeChangeSet(importChangeSet: ImportChangeSet) {
+private suspend fun storeChangeSet(importChangeSet: ImportChangeSet) {
     val add = importChangeSet.newAddedOrUnmatchedIncomingGPMs
     // there's no point updating HASH Matches (ie. nothing has changed)
     val update = importChangeSet.getNonConflictingGPMs.mapNotNull { (incomingGPM, scoredMatch) ->
@@ -371,8 +371,7 @@ private fun storeChangeSet(importChangeSet: ImportChangeSet) {
     // There must be no overlap between ones we delete/we update!
     assert(update.map { it.value }.toSet().intersect(delete).isEmpty())
 
-    // Should be fine to run async, next screen will pick up changes when DataModel reloads
-    CoroutineScope(Dispatchers.IO).launch {
+    withContext(Dispatchers.IO) {
         GPMDataModel.storeNewGpmsAndReload(delete, update, add)
     }
 }
