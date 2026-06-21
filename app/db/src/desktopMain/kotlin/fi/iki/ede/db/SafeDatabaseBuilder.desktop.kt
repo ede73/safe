@@ -17,25 +17,28 @@ import java.util.Base64
 
 import java.util.Base64
 
-actual fun getDatabaseBuilder(context: Any?): RoomDatabase.Builder<SafeDatabase> {
-    val dbFile = File("$DATABASE_NAME.db")
+
+actual fun getDatabaseBuilder(databaseName: String): RoomDatabase.Builder<SafeDatabase> {
+    val dbFile = File("$databaseName.db")
     return Room.databaseBuilder<SafeDatabase>(
         name = dbFile.absolutePath
     ).setDriver(BundledSQLiteDriver())
 }
 
-actual fun getInMemoryDatabaseBuilder(context: Any?): RoomDatabase.Builder<SafeDatabase> {
+actual fun getInMemoryDatabaseBuilder(): RoomDatabase.Builder<SafeDatabase> {
     return Room.inMemoryDatabaseBuilder<SafeDatabase>()
         .setDriver(BundledSQLiteDriver())
 }
 
-actual fun getPhotoDir(context: Any?): Path {
+actual fun getPhotoDir(): Path {
     return "photos".toPath()
 }
 
 actual fun beginTransaction(database: SafeDatabase) {}
 actual fun setTransactionSuccessful(database: SafeDatabase) {}
 actual fun endTransaction(database: SafeDatabase) {}
+
+private fun getTpmFile() = File(System.getProperty("user.home"), ".safe_desktop_tpm_keys")
 
 actual fun storeTpmKeys(privateKeyBase64: String, publicKeyBase64: String) {
     // On Windows/Desktop, we do not store private keys on disk.

@@ -90,7 +90,7 @@ fun PopCustomPasswordDialog(
                     Text(stringResource(id = R.string.site_entry_regenerate))
                 }
                 PasswordTextField(
-                    textTip = R.string.site_entry_generated_password,
+                    label = stringResource(R.string.site_entry_generated_password),
                     inputValue = password,
                     enableZoom = true
                 )

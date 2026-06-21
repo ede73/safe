@@ -126,7 +126,7 @@ open class LoginScreen : ComponentActivity() {
             context.deleteDatabase(DATABASE_NAME)
             DBHelperFactory.initializeDatabase(
                 DBHelper(
-                    context, regularAppNotATest = true,
+                    DATABASE_NAME, regularAppNotATest = true,
                     getExternalTables = GPMDB::getExternalTables,
                     upgradeExternalTables = GPMDB::upgradeTables,
                 )

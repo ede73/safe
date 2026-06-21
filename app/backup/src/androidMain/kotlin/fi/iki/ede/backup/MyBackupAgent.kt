@@ -22,7 +22,7 @@ class MyBackupAgent : BackupAgentHelper() {
 
     override fun onCreate() {
         super.onCreate()
-        setPreferencesContext(this)
+        setPreferencesContext(this.applicationContext)
         Preferences.initialize()
         Logger.e(TAG, "onCreate")
     }

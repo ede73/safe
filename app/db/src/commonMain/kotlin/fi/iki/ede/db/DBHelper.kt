@@ -22,7 +22,6 @@ interface DBTransaction {
 
 @ExperimentalTime
 class DBHelper(
-    val context: Any? = null,
     val databaseName: String? = "safe",
     val regularAppNotATest: Boolean = false,
     val getExternalTables: Any? = null,
@@ -34,15 +33,15 @@ class DBHelper(
     }
 
     val database: SafeDatabase
-    private val photoDir: Path = getPhotoDir(context)
+    private val photoDir: Path = getPhotoDir()
     var skipPrepopulate: Boolean = false
 
     init {
         initTpmKeys()
         val builder = if (databaseName == null) {
-            getInMemoryDatabaseBuilder(context)
+            getInMemoryDatabaseBuilder()
         } else {
-            getDatabaseBuilder(context)
+            getDatabaseBuilder(databaseName)
         }
         database = builder.build()
 

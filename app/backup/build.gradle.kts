@@ -17,7 +17,7 @@ kotlin {
                 implementation(project(":gpm"))
                 implementation(project(":logger"))
                 implementation(libs.okio)
-                implementation(libs.kxml2)
+                compileOnly(libs.kxml2)
             }
         }
         val androidMain by getting {
@@ -26,6 +26,11 @@ kotlin {
                 implementation(libs.androidx.appcompat)
                 implementation(libs.androidx.core.ktx)
                 implementation(libs.material)
+            }
+        }
+        val desktopMain by getting {
+            dependencies {
+                implementation(libs.kxml2)
             }
         }
     }

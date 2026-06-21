@@ -14,7 +14,6 @@ object BackupImporter {
     fun importFromXml(backupContent: String, passwordStr: String, db: DBHelper): Int {
         val restorer = RestoreDatabase()
         return restorer.doRestore(
-
             backupSource = Buffer().writeUtf8(backupContent),
             userPassword = Password(passwordStr),
             dbHelper = db,

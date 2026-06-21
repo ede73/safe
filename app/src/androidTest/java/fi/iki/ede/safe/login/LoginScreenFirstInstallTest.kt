@@ -7,15 +7,18 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.core.app.ActivityScenario
 import fi.iki.ede.backup.MyBackupAgent
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelperFactory
+import fi.iki.ede.db.setDatabaseContext
 import fi.iki.ede.gpmdatamodel.db.GPMDB
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.model.LoginHandler
@@ -55,13 +58,17 @@ import kotlin.time.ExperimentalTime
 @ExperimentalFoundationApi
 class LoginScreenFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
     @get:Rule
-    val loginActivityTestRule = createAndroidComposeRule<LoginScreen>()
+    val loginActivityTestRule = createEmptyComposeRule()
 
     private val context: Context =
         InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
+    private lateinit var scenario: ActivityScenario<LoginScreen>
 
     @After
     fun clearAll() {
+        if (::scenario.isInitialized) {
+            scenario.close()
+        }
         MyResultLauncher.afterEachTest()
     }
 
@@ -75,6 +82,7 @@ class LoginScreenFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
         DBHelper4AndroidTest.configureDefaultTestDataModelAndDB()
         DBHelperFactory.getDBHelper()
             .storeSaltAndEncryptedMasterKey(Salt.getEmpty(), IVCipherText.getEmpty())
+        scenario = ActivityScenario.launch(LoginScreen::class.java)
     }
 
     @Test
@@ -142,12 +150,12 @@ class LoginScreenFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
             val context =
                 InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
             MyBackupAgent.removeRestoreMark(context)
+            setDatabaseContext(context)
             // we'll overwrite the DBHelper with in-memory one...
             DBHelperFactory.initializeDatabase(
                 DBHelper(
-                    context,
-                    null,
-                    false
+                    databaseName = null,
+                    regularAppNotATest = false
                 )
             )
         }

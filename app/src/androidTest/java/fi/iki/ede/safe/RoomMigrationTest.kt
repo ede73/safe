@@ -10,6 +10,7 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.runLegacyDatabaseMigration
+import fi.iki.ede.db.setDatabaseContext
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -19,18 +20,22 @@ import kotlin.time.ExperimentalTime
 @RunWith(AndroidJUnit4::class)
 @ExperimentalTime
 class RoomMigrationTest {
+    private val PREFS_NAME = "safe_prefs"
+    private val PREF_ROOM_MIGRATION_DONE = "room_migration_done"
     private lateinit var context: Context
 
     @Before
     fun setUp() {
         context = InstrumentationRegistry.getInstrumentation().targetContext
         
+        setDatabaseContext(context)
+        
         // Clean up any existing database states
         context.deleteDatabase("safe")
         context.deleteDatabase("safe_legacy")
         
-        val prefs = context.getSharedPreferences("safe_prefs", Context.MODE_PRIVATE)
-        prefs.edit().remove("room_migration_done").apply()
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().remove(PREF_ROOM_MIGRATION_DONE).apply()
     }
 
     @Test
@@ -65,7 +70,7 @@ class RoomMigrationTest {
         assertFalse(legacyDbFile.exists())
 
         // 4. Open with DBHelper and assert parity
-        val dbHelper = DBHelper(context = context)
+        val dbHelper = DBHelper()
         
         // Verify Categories
         val categories = dbHelper.fetchAllCategoryRows()
@@ -146,7 +151,7 @@ class RoomMigrationTest {
         runLegacyDatabaseMigration(context)
 
         // 3. Open with DBHelper and assert parity
-        val dbHelper = DBHelper(context = context)
+        val dbHelper = DBHelper()
         val siteEntries = dbHelper.fetchAllRows()
         assertEquals(1, siteEntries.size)
         val entry = siteEntries[0]

@@ -52,7 +52,7 @@ fun AskBackupPasswordAndCommence(
                     )
                 )
                 PasswordTextField(
-                    textTip = R.string.restore_screen_backups_password,
+                    label = stringResource(R.string.restore_screen_backups_password),
                     onValueChange = {
                         backupPassword = it
                     })

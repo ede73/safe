@@ -90,9 +90,8 @@ class CategoryListScreenTest {
         categoryActivityTestRule.onAllNodesWithTag(TestTag.CATEGORY_ROW)[1].assertIsDisplayed()
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun addCategory() = runTest(testDispatcher, timeout = 10.seconds) {
+    fun addCategory() {
         val newCategory = "newCategory"
         categoryActivityTestRule.onNodeWithTag(TestTag.TOP_ACTION_BAR_ADD)
             .performClick()
@@ -106,11 +105,11 @@ class CategoryListScreenTest {
             .performClick()
         categoryActivityTestRule.onNodeWithTag(TestTag.CATEGORY_TEXT_FIELD)
             .performTextInput(newCategory)
-        advanceUntilIdle()
+        categoryActivityTestRule.waitForIdle()
         categoryActivityTestRule.onNodeWithTag(TestTag.CATEGORY_BUTTON)
             .performClick()
 
-        advanceUntilIdle()
+        categoryActivityTestRule.waitForIdle()
         assert(
             categoryActivityTestRule.onAllNodesWithTag(
                 TestTag.CATEGORY_ROW,

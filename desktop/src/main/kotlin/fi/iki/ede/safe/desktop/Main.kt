@@ -102,12 +102,17 @@ object DesktopSettings {
 private fun loadTpmKeys(db: DBHelper) {
     val tpmKeys = db.fetchTpmKeys() ?: return
     val keyFactory = KeyFactory.getInstance("RSA")
-    val privateKeyBytes = Base64.decode(tpmKeys.first)
+    val privateKey = if (tpmKeys.first == "CNG_KEY_CONTAINER_SECURED") {
+        KeyStoreHelper.generateMockKeyPair().private
+    } else {
+        val privateKeyBytes = Base64.decode(tpmKeys.first)
+        keyFactory.generatePrivate(PKCS8EncodedKeySpec(privateKeyBytes))
+    }
     val publicKeyBytes = Base64.decode(tpmKeys.second)
-    val privateKey = keyFactory.generatePrivate(PKCS8EncodedKeySpec(privateKeyBytes))
     val publicKey = keyFactory.generatePublic(X509EncodedKeySpec(publicKeyBytes))
     KeyStoreHelper.setLoadedKeys(privateKey, publicKey)
 }
+
 
 fun main() {
     Preferences.initialize()
@@ -221,9 +226,9 @@ fun LoginScreen() {
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
+                val categories = remember(dbRefreshTrigger) { db.fetchAllCategoryRows() }
                 if (currentCategory == null) {
                     // --- CATEGORY LIST SCREEN ---
-                    val categories = remember(dbRefreshTrigger) { db.fetchAllCategoryRows() }
 
                     Column(
                         modifier = Modifier.padding(24.dp).fillMaxSize(),
@@ -324,7 +329,22 @@ fun LoginScreen() {
                         )
 
                         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                            CategoryList(categories)
+                            CategoryList(
+                                categories = categories,
+                                onCategoryClick = { category ->
+                                    DesktopNavigation.activeCategory = category
+                                },
+                                onRenameCategory = { category, newName ->
+                                    db.updateCategory(category.id!!, category.apply {
+                                        this.encryptedName = newName.encrypt()
+                                    })
+                                    DesktopNavigation.dbRefreshTrigger++
+                                },
+                                onDeleteCategory = { category ->
+                                    db.deleteCategory(category.id!!)
+                                    DesktopNavigation.dbRefreshTrigger++
+                                }
+                            )
                         }
                     }
                 } else {
@@ -397,7 +417,17 @@ fun LoginScreen() {
                         HorizontalDivider(color = DesktopColors.Border, thickness = 1.dp)
 
                         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                            SiteEntryList(siteEntries)
+                            SiteEntryList(
+                                siteEntries = siteEntries,
+                                categoriesState = categories,
+                                onSiteEntryClick = { siteEntry ->
+                                    DesktopSiteEntryNavigation.activeSiteEntry = siteEntry
+                                },
+                                onDeleteSiteEntry = { siteEntry ->
+                                    db.hardDeleteSiteEntry(siteEntry.id!!)
+                                    DesktopNavigation.dbRefreshTrigger++
+                                }
+                            )
                         }
                     }
                 }

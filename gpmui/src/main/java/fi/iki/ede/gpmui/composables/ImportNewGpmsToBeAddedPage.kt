@@ -12,7 +12,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.gpm.changeset.ImportChangeSet
 import fi.iki.ede.gpm.model.IncomingGPM
-import fi.iki.ede.gpmui.GpmUiMockKeyStoreHelper
+import androidx.compose.ui.platform.LocalContext
+import fi.iki.ede.preferences.Preferences
+import fi.iki.ede.preferences.setPreferencesContext
 import fi.iki.ede.gpmui.dialogs.ShowInfoDialog
 import fi.iki.ede.gpmui.models.ItemWrapper
 import fi.iki.ede.gpmui.utilities.makeFakeImportForTesting
@@ -36,10 +38,13 @@ fun ImportNewGpmsToBeAddedPage(importChangeSet: MutableState<ImportChangeSet?>) 
         }
     }
 
+@OptIn(kotlin.time.ExperimentalTime::class)
 @Preview(showBackground = true)
 @Composable
 private fun Page1Preview() {
-    GpmUiMockKeyStoreHelper.init()
+    // Addressed PR12 comment: Initialize preferences cleanly without reflection mock helper
+    setPreferencesContext(LocalContext.current)
+    Preferences.initialize()
     MaterialTheme {
         val m =
             remember { mutableStateOf<ImportChangeSet?>(makeFakeImportForTesting()) }
