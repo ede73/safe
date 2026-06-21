@@ -1,7 +1,7 @@
 package fi.iki.ede.safe
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import fi.iki.ede.safe.testutils.KeystoreHelperMock4UnitTests
+import fi.iki.ede.crypto.KeystoreHelperMock4UnitTests
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.preferences.Preferences
