@@ -10,7 +10,6 @@ import fi.iki.ede.crypto.keystore.KeyManagement
 import fi.iki.ede.crypto.keystore.KeyManagement.generatePBKDF2AESKey
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
-import fi.iki.ede.crypto.support.hexToByteArray
 import io.mockk.every
 import io.mockk.mockkClass
 import io.mockk.mockkObject

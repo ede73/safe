@@ -51,7 +51,8 @@ fun SafePhoto(
     onBitmapCaptured: (Bitmap?) -> Unit,
     photoPermissionRequiredContent: @Composable (oldPhoto: Bitmap?, onBitmapCaptured: (Bitmap?) -> Unit, askPermission: MutableState<Boolean>) -> Unit,
     takePhotoContent: @Composable (oldPhoto: Bitmap?, onBitmapCaptured: (Bitmap?) -> Unit, takePhoto: MutableState<Boolean>) -> Unit,
-    composeTakePhoto: @Composable (takePhoto: () -> Unit) -> Unit
+    composeTakePhoto: @Composable (takePhoto: () -> Unit) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
@@ -62,7 +63,7 @@ fun SafePhoto(
             Manifest.permission.CAMERA
         ) == PackageManager.PERMISSION_GRANTED
 
-    Column {
+    Column(modifier = modifier) {
         StateMachine.Create("beforePhotoPreview") {
             StateEvent(
                 "beforePhotoPreview",
@@ -120,13 +121,12 @@ fun SafePhoto(
                 }
             }
             StateEvent(
-                "beforePhotoPreview", "DidNotGetPermission",
-                AllowedEvents(INITIAL)
+                "verifyingPermissionBeforePreview", "DidNotGetPermission",
             ) {
                 // explain to user why permission is required!
                 // TODO:
                 Logger.e(TAG, "Explain to user why permission is required")
-                DispatchEvent(INITIAL)
+                TransitionTo("beforePhotoPreview")
             }
             StateEvent(
                 "showingPhotoPreview",
@@ -203,15 +203,26 @@ private fun ShowPhotoPreview(
     composeTakePhoto: @Composable (takePhoto: () -> Unit) -> Unit
 ) {
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
+    var cameraProvider by remember { mutableStateOf<ProcessCameraProvider?>(null) }
     val preview = remember { CameraXPreview.Builder().build() }
     val previewView = remember { PreviewView(context) }
     val imageCapture = remember { ImageCapture.Builder().build() }
 
-    cameraProviderFuture.get().let { cameraProvider ->
+    LaunchedEffect(cameraProviderFuture) {
+        cameraProviderFuture.addListener({
+            try {
+                cameraProvider = cameraProviderFuture.get()
+            } catch (e: Exception) {
+                pictureFailure(e)
+            }
+        }, ContextCompat.getMainExecutor(context))
+    }
+
+    cameraProvider?.let { provider ->
         val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
         preview.surfaceProvider = previewView.surfaceProvider
-        cameraProvider.unbindAll()
-        cameraProvider.bindToLifecycle(
+        provider.unbindAll()
+        provider.bindToLifecycle(
             lifecycleOwner, cameraSelector, preview, imageCapture
         )
     }

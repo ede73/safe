@@ -142,7 +142,7 @@ fun MatchingSiteEntry(
                     }
                     displayMoveDialog = false
                     val z = siteEntry.copy()
-                    z.categoryId = newCategory.id
+                    z.categoryId = newCategory.id!!
                     onUpdateSiteEntry(z)
                 }, onDismiss = {
                     displayMoveDialog = false

@@ -52,7 +52,7 @@ fun AskBackupPasswordAndCommence(
                     )
                 )
                 PasswordTextField(
-                    textTip = R.string.restore_screen_backups_password,
+                    label = stringResource(R.string.restore_screen_backups_password),
                     onValueChange = {
                         backupPassword = it
                     })
@@ -64,11 +64,11 @@ fun AskBackupPasswordAndCommence(
                     },
                     enabled = !doRestore
                 ) {
-                    Text(text = "Restore")
+                    Text(text = stringResource(id = R.string.restore_screen_restore_button))
                 }
                 Column {
-                    Text("Passwords ${processedPasswords.intValue}")
-                    Text("Categories ${processedCategories.intValue}")
+                    Text(stringResource(id = R.string.restore_screen_passwords_count, processedPasswords.intValue))
+                    Text(stringResource(id = R.string.restore_screen_categories_count, processedCategories.intValue))
                     Text(processedMessage.value)
                 }
                 if (doRestore) {

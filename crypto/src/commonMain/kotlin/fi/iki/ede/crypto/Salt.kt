@@ -1,7 +1,6 @@
 package fi.iki.ede.crypto
 
 import fi.iki.ede.crypto.support.DisallowedFunctions
-import fi.iki.ede.crypto.support.toHexString
 
 
 /**

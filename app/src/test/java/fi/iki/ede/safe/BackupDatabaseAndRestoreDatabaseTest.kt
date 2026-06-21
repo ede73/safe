@@ -8,8 +8,9 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.safe.testutils.KeystoreHelperMock4UnitTests
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
-import fi.iki.ede.crypto.support.hexToByteArray
-import fi.iki.ede.crypto.support.toHexString
+import fi.iki.ede.crypto.keystore.IKeyStoreHelper
+import fi.iki.ede.crypto.keystore.KMPKey
+import fi.iki.ede.crypto.keystore.KMPSecretKeySpec
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelper
@@ -22,7 +23,6 @@ import fi.iki.ede.safe.DataModelMocks.mockDataModelFor_UNIT_TESTS_ONLY
 import fi.iki.ede.safe.model.LoginHandler
 import io.mockk.every
 import io.mockk.isMockKMock
-import io.mockk.mockk
 import io.mockk.mockkClass
 import io.mockk.mockkConstructor
 import io.mockk.mockkObject
@@ -44,6 +44,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.File
+import javax.crypto.spec.SecretKeySpec
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.system.measureTimeMillis
@@ -107,13 +108,13 @@ class BackupDatabaseAndRestoreDatabaseTest {
         Logger.d(TAG, "Restore: " + (measureTimeMillis {
             (1..count.toInt()).forEach {
                 r.doRestore(
-                    mockk<Context>(),
-                    PASSWORD_ENCRYPTED_BACKUP_AT_1234,
+                    Buffer().writeUtf8(PASSWORD_ENCRYPTED_BACKUP_AT_1234),
                     backupPassword,
                     dbHelper,
+                    Preferences.getLastBackupTime(),
                     GPMDB::linkSaveGPMAndSiteEntry,
                     GPMDB::addSavedGPM,
-                    { _, _ -> true },
+                    { _ -> true },
                     { _, _, _ -> }
                 ) { thisBackupCreationTime, lastBackupDone ->
                     throw Exception("We should not ask user anything, valid backup!")
@@ -160,6 +161,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
     @Test
     fun backupTest() {
         mockClockSystemNow(1234)
+        mockGetLastBackupTime(1234)
         val finalBuffer = Buffer()
         runBlocking {
             BackupDatabase.backup(
@@ -230,7 +232,6 @@ class BackupDatabaseAndRestoreDatabaseTest {
     fun testUserCanCancelOldBackupRestoration() {
         val dbHelper = mockDataModelFor_UNIT_TESTS_ONLY(linkedMapOf())
         val r = RestoreDatabase()
-        val context = mockkClass(Context::class)
 
         listOf(
             // TODO: don't have mocks in place to mimic no changed date...
@@ -254,13 +255,13 @@ class BackupDatabaseAndRestoreDatabaseTest {
             try {
                 var askedUser = false
                 r.doRestore(
-                    context,
-                    PASSWORD_ENCRYPTED_BACKUP_AT_1234,
+                    Buffer().writeUtf8(PASSWORD_ENCRYPTED_BACKUP_AT_1234),
                     backupPassword,
                     dbHelper,
+                    Preferences.getLastBackupTime(),
                     GPMDB::linkSaveGPMAndSiteEntry,
                     GPMDB::addSavedGPM,
-                    { _, _ -> true },
+                    { _ -> true },
                     { _, _, _ -> }
                 ) { thisBackupCreationTime, lastBackupDone ->
                     askedUser = true
@@ -295,15 +296,15 @@ class BackupDatabaseAndRestoreDatabaseTest {
         mockClockSystemNow(2000)
         mockGetLastBackupTime(1234)
         r.doRestore(
-            mockk<Context>(),
-            PASSWORD_ENCRYPTED_BACKUP_AT_1234,
+            Buffer().writeUtf8(PASSWORD_ENCRYPTED_BACKUP_AT_1234),
             backupPassword,
             dbHelper,
+            Preferences.getLastBackupTime(),
             GPMDB::linkSaveGPMAndSiteEntry,
             GPMDB::addSavedGPM,
-            { _, _ -> true },
+            { _ -> true },
             { _, _, _ -> }
-        ) { thisBackupCreationTime, lastBackupDone ->
+        ) { _, _ ->
             throw Exception("We should not ask user anything, valid backup!")
         }
         runBlocking {
@@ -340,6 +341,52 @@ class BackupDatabaseAndRestoreDatabaseTest {
         }
     }
 
+    class KmpKeyStoreHelper(private val masterKey: KMPSecretKeySpec) : IKeyStoreHelper {
+        override fun testingDeleteKeys_DO_NOT_USE() {}
+        override fun rotateKeys() {}
+        override fun getOrCreateBiokey(): KMPKey = masterKey
+
+        override var decrypterProviderWithKey: (IVCipherText, KMPKey) -> ByteArray =
+            { encrypted, key ->
+                if (encrypted.iv.isEmpty()) {
+                    byteArrayOf()
+                } else {
+                    val keyBytes = when (key) {
+                        is KMPSecretKeySpec -> key.values
+                        is SecretKeySpec -> key.encoded
+                        else -> throw IllegalArgumentException("Unsupported key type: ${key::class}")
+                    }
+                    korlibs.crypto.AES.decryptAesCbc(
+                        encrypted.cipherText,
+                        keyBytes,
+                        encrypted.iv,
+                        korlibs.crypto.Padding.PKCS7Padding
+                    )
+                }
+            }
+
+        override var decrypterProvider: (IVCipherText) -> ByteArray = { encrypted ->
+            if (encrypted.iv.isEmpty()) {
+                byteArrayOf()
+            } else {
+                korlibs.crypto.AES.decryptAesCbc(
+                    encrypted.cipherText,
+                    masterKey.values,
+                    encrypted.iv,
+                    korlibs.crypto.Padding.PKCS7Padding
+                )
+            }
+        }
+
+        override var encrypterProviderWithKey: (ByteArray, KMPKey) -> IVCipherText = { _, _ ->
+            throw NotImplementedError()
+        }
+
+        override var encrypterProvider: (ByteArray) -> IVCipherText = { _ ->
+            throw NotImplementedError()
+        }
+    }
+
     private fun mockPasswordObjectForBackup() =
         mockDataModelFor_UNIT_TESTS_ONLY(
             linkedMapOf(
@@ -366,7 +413,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         mockkConstructor(BackupDatabase::class)
         every {
             anyConstructed<BackupDatabase>().generateXMLExport(
-                buffer = any(),
+                outputSink = any(),
                 categoriesList = any(),
                 softDeletedEntries = any(),
                 siteEntryGPMMappings = any(),
@@ -374,8 +421,8 @@ class BackupDatabaseAndRestoreDatabaseTest {
                 getSiteEntriesOfCategory = any(),
             )
         } answers {
-            val buffer = arg<Buffer>(0)
-            buffer.writeUtf8(TOP_LAYER_UNENCRYPTED_BACKUP_XML.trim())
+            val outputSink = arg<okio.BufferedSink>(0)
+            outputSink.writeUtf8(TOP_LAYER_UNENCRYPTED_BACKUP_XML.trim())
         }
 
         val finalOutput = runBlocking {
@@ -397,13 +444,13 @@ class BackupDatabaseAndRestoreDatabaseTest {
         mockClockSystemNow(2000)
         mockGetLastBackupTime(1234)
         r.doRestore(
-            mockk<Context>(),
-            finalOutput,
+            Buffer().writeUtf8(finalOutput),
             backupPassword,
             dbHelper,
+            Preferences.getLastBackupTime(),
             GPMDB::linkSaveGPMAndSiteEntry,
             GPMDB::addSavedGPM,
-            { _, _ -> true },
+            { _ -> true },
             { _, _, _ -> }
         ) { thisBackupCreationTime, lastBackupDone ->
             throw Exception("We should not ask user anything, valid backup!")

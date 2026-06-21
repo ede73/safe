@@ -10,6 +10,7 @@ biometricKtx = "1.2.0-alpha05"
 cameraCore = "1.5.2"
 coreKtx = "1.17.0"
 cryptographyCore = "0.5.0"
+datastore = "1.1.2"
 documentfile = "1.1.0"
 featureDeliveryKtx = "2.1.0"
 firebaseBom = "34.7.0"
@@ -41,12 +42,23 @@ ktor = "3.3.3"
 krypto = "4.0.10"
 #plugins
 agp = "8.13.2"
+jna = "5.14.0"
 # see also dependency resolution in settings.gradle.kts for 2.0.21!
 jetbrainsKotlinJvm = "2.3.0"
 kotlin = "2.3.0"
 uiTestAndroid = "1.10.0"
+room = "2.7.0"
+ksp = "2.3.0"
+sqlite = "2.5.0"
+jetbrainsCompose = "1.11.0"
+
 
 [libraries]
+androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+androidx-sqlite-bundled = { group = "androidx.sqlite", name = "sqlite-bundled", version.ref = "sqlite" }
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+androidx-datastore-core = { group = "androidx.datastore", name = "datastore-core", version.ref = "datastore" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 androidx-biometric-ktx = { group = "androidx.biometric", name = "biometric-ktx", version.ref = "biometricKtx" }
@@ -94,6 +106,7 @@ kxml2 = { group = "net.sf.kxml", name = "kxml2", version.ref = "kxml2" }
 lint-tests-v3000 = { module = "com.android.tools.lint:lint-tests", version.ref = "lintTestsVersion" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "jetbrainsCompose" }
 mockk-agent = { group = "io.mockk", name = "mockk-agent", version.ref = "mockk" }
 mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
 napier = { group = "io.github.aakira", name = "napier", version.ref = "napier" }
@@ -101,6 +114,8 @@ okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
 volley = { module = "com.android.volley:volley", version.ref = "volley" }
 ktor-http = { group = "io.ktor", name = "ktor-http", version.ref = "ktor" }
 krypto = { module = "com.soywiz.korlibs.krypto:krypto", version.ref = "krypto" }
+jna = { group = "net.java.dev.jna", name = "jna", version.ref = "jna" }
+jna-platform = { group = "net.java.dev.jna", name = "jna-platform", version.ref = "jna" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -110,3 +125,6 @@ compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "
 jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 org-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+room = { id = "androidx.room", version.ref = "room" }
+jetbrains-compose = { id = "org.jetbrains.compose", version.ref = "jetbrainsCompose" }
