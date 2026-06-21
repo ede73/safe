@@ -33,6 +33,7 @@ class ImportExportTest {
     fun tearDown() {
         unmockkAll()
         db.database.close()
+        DBHelperFactory.clearDatabase()
     }
 
     @Test

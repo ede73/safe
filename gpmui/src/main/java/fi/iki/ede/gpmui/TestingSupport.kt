@@ -3,12 +3,6 @@ package fi.iki.ede.gpmui
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTag
-import androidx.compose.ui.test.SemanticsNodeInteraction
-import androidx.compose.ui.test.SemanticsNodeInteractionCollection
-import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
-import androidx.compose.ui.test.hasTestTag
-import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 
 fun Modifier.testTag(tag: TestTag) = semantics(
     properties = {
@@ -18,20 +12,3 @@ fun Modifier.testTag(tag: TestTag) = semantics(
         }
     }
 )
-
-fun SemanticsNodeInteractionsProvider.onAllNodesWithTag(
-    testTag: TestTag,
-    useUnmergedTree: Boolean = false
-): SemanticsNodeInteractionCollection = onAllNodes(hasTestTag(testTag.name), useUnmergedTree)
-
-fun SemanticsNodeInteractionsProvider.onNodeWithTag(
-    testTag: TestTag,
-    useUnmergedTree: Boolean = false
-): SemanticsNodeInteraction = onNode(hasTestTag(testTag.name), useUnmergedTree)
-
-internal object GpmUiMockKeyStoreHelper {
-    fun init() {
-        KeyStoreHelperFactory.getKeyStoreHelper().encrypterProvider = { IVCipherText(it, it) }
-        KeyStoreHelperFactory.getKeyStoreHelper().decrypterProvider = { it.cipherText }
-    }
-}

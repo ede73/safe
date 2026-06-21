@@ -22,7 +22,6 @@ interface DBTransaction {
 
 @ExperimentalTime
 class DBHelper(
-    val context: Any? = null,
     val databaseName: String? = "safe",
     val regularAppNotATest: Boolean = false,
     val getExternalTables: Any? = null,
@@ -34,15 +33,15 @@ class DBHelper(
     }
 
     val database: SafeDatabase
-    private val photoDir: Path = getPhotoDir(context)
+    private val photoDir: Path = getPhotoDir()
     var skipPrepopulate: Boolean = false
 
     init {
         initTpmKeys()
         val builder = if (databaseName == null) {
-            getInMemoryDatabaseBuilder(context)
+            getInMemoryDatabaseBuilder()
         } else {
-            getDatabaseBuilder(context)
+            getDatabaseBuilder(databaseName)
         }
         database = builder.build()
 
@@ -195,8 +194,8 @@ class DBHelper(
         database.siteEntryDao().updateDeletedStatus(id, 0L)
     }
 
-    fun markSiteEntryDeleted(id: DBID): Int = runBlocking {
-        database.siteEntryDao().updateDeletedStatus(id, Random.nextLong(1, Long.MAX_VALUE))
+    fun markSiteEntryDeleted(id: DBID, deletedTimeSeconds: Long = fi.iki.ede.dateutils.DateUtils.toUnixSeconds()): Int = runBlocking {
+        database.siteEntryDao().updateDeletedStatus(id, deletedTimeSeconds)
     }
 
     fun hardDeleteSiteEntry(id: DBID): Int = runBlocking {

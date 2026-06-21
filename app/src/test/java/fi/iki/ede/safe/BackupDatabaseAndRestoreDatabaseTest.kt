@@ -341,7 +341,6 @@ class BackupDatabaseAndRestoreDatabaseTest {
         }
     }
 
-    // Addressed PR10 comment: Clean up FQDNs for KeyStoreHelper and related classes
     class KmpKeyStoreHelper(private val masterKey: KMPSecretKeySpec) : IKeyStoreHelper {
         override fun testingDeleteKeys_DO_NOT_USE() {}
         override fun rotateKeys() {}

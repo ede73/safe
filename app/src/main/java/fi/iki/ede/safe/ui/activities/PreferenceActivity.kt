@@ -28,6 +28,8 @@ import fi.iki.ede.logger.firebaseCollectCrashlytics
 import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.logger.firebaseRecordException
 import fi.iki.ede.preferences.Preferences
+import fi.iki.ede.preferences.DataStorePreferenceBridge
+import fi.iki.ede.preferences.DataStoreSharedPreferences
 import fi.iki.ede.preferences.Preferences.PREFERENCE_AUTOBACKUP_QUOTA_EXCEEDED
 import fi.iki.ede.preferences.Preferences.PREFERENCE_AUTOBACKUP_RESTORE_FINISHED
 import fi.iki.ede.preferences.Preferences.PREFERENCE_AUTOBACKUP_RESTORE_STARTED
@@ -112,6 +114,7 @@ class PreferenceActivity :
         }
 
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+            preferenceManager.preferenceDataStore = DataStorePreferenceBridge(Preferences.sharedPreferences as DataStoreSharedPreferences)
             addPreferencesFromResource(prefR.xml.preferences)
 
             val versionPreference = Preference(requireContext()).apply {
@@ -152,7 +155,7 @@ class PreferenceActivity :
             }
 
             addChangeListener<Preference, Boolean>(Preferences.PREFERENCE_BIOMETRICS_ENABLED) { enabledOrDisabled ->
-                if (enabledOrDisabled) {
+                if (!enabledOrDisabled) {
                     BiometricsActivity.clearBiometricKeys()
                 }
             }
@@ -272,12 +275,12 @@ class PreferenceActivity :
 
         override fun onResume() {
             super.onResume()
-            preferenceScreen.sharedPreferences?.registerOnSharedPreferenceChangeListener(this)
+            Preferences.sharedPreferences.registerOnSharedPreferenceChangeListener(this)
         }
 
         override fun onPause() {
             super.onPause()
-            preferenceScreen.sharedPreferences?.unregisterOnSharedPreferenceChangeListener(this)
+            Preferences.sharedPreferences.unregisterOnSharedPreferenceChangeListener(this)
         }
 
         override fun onSharedPreferenceChanged(

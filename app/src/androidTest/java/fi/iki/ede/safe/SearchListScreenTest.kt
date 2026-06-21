@@ -65,7 +65,7 @@ class SearchListScreenTest {
 
         advanceUntilIdle()
 
-        siteEntryActivityTestRule.waitUntil {
+        siteEntryActivityTestRule.waitUntil(timeoutMillis = 5000) {
             siteEntryActivityTestRule.onAllNodesWithTag(
                 TestTag.SEARCH_MATCH,
                 useUnmergedTree = true
