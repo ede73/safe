@@ -40,10 +40,5 @@ class SiteEntrySearchScreen :
 @ExperimentalFoundationApi
 private fun SiteEntrySearchPreview() {
     MockKeyStoreHelper.init()
-    listOf(DecryptableSiteEntry(1).apply {
-        description = "Android".encrypt()
-    }, DecryptableSiteEntry(1).apply {
-        description = "iPhone".encrypt()
-    })
     SiteEntrySearchCompose()
 }

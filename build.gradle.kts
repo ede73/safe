@@ -15,6 +15,9 @@ plugins {
     kotlin("plugin.power-assert") version "2.0.0"
     kotlin("plugin.serialization") version "2.0.0"
     alias(libs.plugins.jetbrains.kotlin.jvm) apply false
+    alias(libs.plugins.ksp) apply false
+    alias(libs.plugins.room) apply false
+    alias(libs.plugins.jetbrains.compose) apply false
 }
 
 // https://kotlinlang.org/docs/whatsnew20.html#experimental-kotlin-power-assert-compiler-plugin
@@ -26,6 +29,11 @@ powerAssert {
 subprojects {
     tasks.withType<Test> {
         jvmArgs("-XX:+EnableDynamicAgentLoading")
+    }
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask<*>>().configureEach {
+        compilerOptions {
+            freeCompilerArgs.add("-opt-in=kotlin.ExperimentalStdlibApi")
+        }
     }
     tasks.withType<KotlinCompile>().configureEach {
         if (project.path != ":app:SafeLinter") {

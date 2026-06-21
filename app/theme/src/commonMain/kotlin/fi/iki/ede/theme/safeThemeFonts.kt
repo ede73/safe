@@ -1,0 +1,89 @@
+package fi.iki.ede.theme
+
+import androidx.compose.material3.Typography
+import androidx.compose.runtime.Immutable
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+
+@Immutable
+class SafeFonts(
+    val regularPassword: TextStyle,
+    val zoomedPassword: TextStyle,
+    val listHeaders: TextStyle,
+    val listEntries: TextStyle,
+    val datePicker: TextStyle,
+    val smallNote: TextStyle
+) {
+    override fun hashCode(): Int {
+        var result = regularPassword.hashCode()
+        result = 31 * result + zoomedPassword.hashCode()
+        result = 31 * result + zoomedPassword.hashCode()
+        result = 31 * result + listHeaders.hashCode()
+        result = 31 * result + listEntries.hashCode()
+        result = 31 * result + datePicker.hashCode()
+        result = 31 * result + smallNote.hashCode()
+        return result
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (this::class != other?.let { it::class }) return false
+
+        other as SafeFonts
+
+        if (regularPassword != other.regularPassword) return false
+        if (zoomedPassword != other.zoomedPassword) return false
+        if (listHeaders != other.listHeaders) return false
+        if (listEntries != other.listEntries) return false
+        if (datePicker != other.datePicker) return false
+        if (smallNote != other.smallNote) return false
+
+        return true
+    }
+}
+
+fun SafeTheme.customFonts() = SafeFonts(
+    regularPassword = TextStyle(
+        fontFamily = FontFamily.Default,
+        letterSpacing = 1.sp,
+        fontSize = 20.sp,
+    ), zoomedPassword = TextStyle(
+        fontFamily = FontFamily.Default,
+        letterSpacing = 2.sp,
+        fontSize = 25.sp,
+    ), listHeaders = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = 54.sp
+    ), listEntries = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontSize = 16.sp,
+    ), datePicker = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.Bold,
+        fontSize = 30.sp
+    ), smallNote = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.Light,
+        fontSize = 12.sp
+    )
+)
+
+fun SafeTheme.typography() = Typography(
+    bodyLarge = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontSize = 16.sp
+    ),
+    headlineMedium = customFonts().listHeaders,
+    labelLarge = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = 19.sp,
+    ),
+    titleLarge = TextStyle(
+        fontFamily = FontFamily.Default,
+        fontSize = 25.sp,
+    ),
+)

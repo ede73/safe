@@ -8,17 +8,32 @@ import fi.iki.ede.gpm.changeset.harmonizePotentialDomainName
 import fi.iki.ede.gpm.similarity.LowerCaseTrimmedString
 import fi.iki.ede.gpm.similarity.toLowerCasedTrimmedString
 
-data class SavedGPM private constructor(
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import androidx.room.ColumnInfo
+import androidx.room.Ignore
+
+@Entity(tableName = "googlepasswords")
+data class SavedGPM(
+    @PrimaryKey(autoGenerate = true)
+    @ColumnInfo(name = "id")
     val id: Long? = null,
     // often decrypted, decryptedName to cache
+    @ColumnInfo(name = "name")
     val encryptedName: IVCipherText,
     // often decrypted, decryptedUrl to cache
+    @ColumnInfo(name = "url")
     val encryptedUrl: IVCipherText,
     // often decrypted, decryptedUsername to cache
+    @ColumnInfo(name = "username")
     val encryptedUsername: IVCipherText,
+    @ColumnInfo(name = "password")
     val encryptedPassword: IVCipherText,
+    @ColumnInfo(name = "note")
     val encryptedNote: IVCipherText,
+    @ColumnInfo(name = "status")
     val flaggedIgnored: Boolean,
+    @ColumnInfo(name = "hash")
     val hash: String
 ) : DisallowedFunctions {
     val cachedDecryptedName: String by lazy { encryptedName.decrypt() } // ok
@@ -30,6 +45,7 @@ data class SavedGPM private constructor(
         harmonizePotentialDomainName(cachedDecryptedName).toLowerCasedTrimmedString()
     }
 
+    @Ignore
     constructor(id: Long? = null, importing: IncomingGPM) : this(
         id,
         importing.name.encrypt(),

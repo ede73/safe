@@ -1,9 +1,11 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
 package fi.iki.ede.categorypager
 
 import android.os.Bundle
 import android.text.TextUtils
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.pager.HorizontalPager
@@ -41,6 +43,9 @@ import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
 
 
+import androidx.compose.ui.platform.LocalContext
+import fi.iki.ede.safe.splits.IntentManager
+
 @ExperimentalTime
 @ExperimentalFoundationApi
 class CategoryListPagedScreen :
@@ -60,6 +65,7 @@ private fun CategoryListScreenPagedCompose(
     )
 ) {
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     @Suppress("FlowOperatorInvokedInComposition")
     val categoriesState by flow.map { categories -> categories.sortedBy { it.plainName.lowercase() } }
@@ -84,8 +90,42 @@ private fun CategoryListScreenPagedCompose(
                     if (displayAddCategoryDialog.value) {
                         AddOrEditCategory(coroutineScope, displayAddCategoryDialog)
                     }
-                    CategoryRow(category)
-                    SiteEntryList(passwordsState)
+                    CategoryRow(
+                        category = category,
+                        onCategoryClick = { cat ->
+                            IntentManager.startSiteEntryListScreen(context, cat.id!!)
+                        },
+                        onRenameCategory = { cat, newName ->
+                            val entry = DecryptableCategoryEntry()
+                            entry.id = cat.id
+                            entry.encryptedName = newName.encrypt()
+                            coroutineScope.launch {
+                                DataModel.addOrEditCategory(entry)
+                            }
+                        },
+                        onDeleteCategory = { cat ->
+                            coroutineScope.launch {
+                                DataModel.deleteCategory(cat)
+                            }
+                        }
+                    )
+                    SiteEntryList(
+                        siteEntries = passwordsState,
+                        categoriesState = categoriesState,
+                        onSiteEntryClick = { siteEntry ->
+                            context.startActivity(IntentManager.getEditSiteEntryIntent(context, siteEntry.id!!))
+                        },
+                        onDeleteSiteEntry = { siteEntry ->
+                            coroutineScope.launch {
+                                DataModel.deleteSiteEntry(siteEntry)
+                            }
+                        },
+                        onMoveSiteEntry = { siteEntry, newCategory ->
+                            coroutineScope.launch {
+                                DataModel.moveSiteEntry(siteEntry, newCategory)
+                            }
+                        }
+                    )
                 }
             }
         }
@@ -93,14 +133,13 @@ private fun CategoryListScreenPagedCompose(
 }
 
 @Composable
-@ExperimentalTime
-
 private fun AddOrEditCategory(
     coroutineScope: CoroutineScope,
     displayAddCategoryDialog: MutableState<Boolean>
 ) {
     AddOrEditCategory(
-        textId = R.string.category_list_edit_category,
+        // Addressed PR12 comment: Cleaned up FQCN and imported stringResource
+        titleText = stringResource(id = R.string.category_list_edit_category),
         categoryName = "",
         onSubmit = {
             if (!TextUtils.isEmpty(it)) {

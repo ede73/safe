@@ -33,6 +33,8 @@
     <string name="generic_dont_delete">Älä poista!</string>
     <string name="generic_ok">OK!</string>
     <string name="generic_yes_delete">Poista!</string>
+    <string name="dropdown_description">Pudotusvalikko</string>
+    <string name="remove_description">Poista</string>
     <string name="login_anew_button">Hylkää varmuuskopio, aloita alusta</string>
     <string name="login_anew_retry_button">Kokeile kuitenkin perussisäänkirjausta</string>
     <string name="login_button">Kirjaudu</string>
@@ -112,6 +114,14 @@
     <string name="restore_screen_not_most_recent_backup_restore">Palauta silti!</string>
     <string name="restore_screen_restore_failed">Palautus epäonnistui</string>
     <string name="restore_screen_restored">Palautus valmis %1$d</string>
+    <string name="restore_screen_process_backup">Käsitellään varmuuskopiota...</string>
+    <string name="restore_screen_finished_backup">Varmuuskopion käsittely valmis</string>
+    <string name="restore_screen_restoring_old_backup">Palautetaan vanhempaa varmuuskopiota...</string>
+    <string name="restore_screen_reread_database">Luetaan tietokantaa uudelleen...</string>
+    <string name="restore_screen_done">Valmis!</string>
+    <string name="restore_screen_passwords_count">Salasanat %1$d</string>
+    <string name="restore_screen_categories_count">Kategoriat %1$d</string>
+    <string name="restore_screen_restore_button">Palauta</string>
     <string name="shortcut_backup_short">Varmuuskopioi</string>
     <string name="shortcut_backup_long">Tee varmuuskopio</string>
     <string name="shortcut_backup_disabled">Varmuuskopiota ei voi tehdä</string>
@@ -163,4 +173,59 @@
     <string name="site_entry_numbers">Numerot</string>
     <string name="site_entry_regenerate">Luo uusi</string>
     <string name="password_search_extensions">+Laajennukset</string>
+    <string name="extension_type">Tyyppi</string>
+    <string name="extension_value">Arvo</string>
+    <plurals name="category_passwords_count">
+        <item quantity="one">%d salasana</item>
+        <item quantity="other">%d salasanaa</item>
+    </plurals>
+    <!-- Desktop specific strings -->
+    <string name="desktop_vault">Holvi</string>
+    <string name="desktop_add_category">Lisää kategoria</string>
+    <string name="desktop_category_name">Kategorian nimi</string>
+    <string name="desktop_add_pass">Lisää salasana</string>
+    <string name="desktop_delete_cat">Poista kategoria</string>
+    <string name="desktop_biometric_unlock">Biometrinen avaus</string>
+    <string name="desktop_scanning_fingerprint">Luetaan sormenjälkeä...</string>
+    <string name="desktop_verifying_biometrics">Varmentaa biometriikkaa...</string>
+    <string name="desktop_unlock_success_biometric">Avaus onnistui! Kirjauduttu biometriikalla.</string>
+    <string name="desktop_biometric_auth_failed">Biometrinen tunnistus epäonnistui</string>
+    <string name="desktop_no_biometric_key">Rekisteröityä biometristä avainta ei löytynyt</string>
+    <string name="desktop_biometric_error">Biometrinen virhe: %1$s</string>
+    <string name="desktop_create_vault_msg">Luodaan holvia...</string>
+    <string name="desktop_bio_registered">Biometriset tunnukset rekisteröity onnistuneesti</string>
+    <string name="desktop_failed_create_vault">Holvin luonti epäonnistui: %1$s</string>
+    <string name="failed_to_create_vault">Holvin luonti epäonnistui</string>
+    <string name="desktop_authenticating">Tunnistautuu...</string>
+    <string name="desktop_unlock_success">Avaus onnistui! Kirjauduttu.</string>
+    <string name="desktop_add_password_entry">Lisää salasanamerkintä</string>
+    <string name="desktop_password_entry_details">Salasanamerkinnän tiedot</string>
+    <string name="desktop_extensions">Laajennukset</string>
+    <string name="desktop_extension_type">Tyyppi</string>
+    <string name="desktop_extension_value">Arvo</string>
+    <string name="desktop_import_backup_xml">Tuo varmuuskopio XML</string>
+    <string name="desktop_backup_xml_file">Varmuuskopio XML tiedosto</string>
+    <string name="desktop_browse">Selaa</string>
+    <string name="desktop_backup_password">Varmuuskopion salasana</string>
+    <string name="desktop_select_backup_file">Valitse varmuuskopiotiedosto</string>
+    <string name="desktop_enter_backup_password">Syötä varmuuskopion salasana</string>
+    <string name="desktop_file_not_exist">Tiedostoa ei ole olemassa</string>
+    <string name="desktop_import_failed">Tuonti epäonnistui: %1$s</string>
+    <string name="desktop_export_backup">Vie varmuuskopio</string>
+    <!-- Shared Login Screen specific strings -->
+    <string name="login_choose_password_label">Valitse pääsalasana</string>
+    <string name="login_confirm_password_label">Vahvista pääsalasana</string>
+    <string name="login_create_vault_button">Luo holvi</string>
+    <string name="login_master_password_label">Pääsalasana</string>
+    <string name="login_unlock_button">Avaa lukitus</string>
+    <string name="login_app_title">Safe</string>
+    <string name="login_app_subtitle">Salasanaholvi</string>
+    <string name="login_import_backup_button">📥 Tuo varmuuskopio</string>
+    <string name="login_export_backup_button">📤 Vie varmuuskopio</string>
+    <string name="login_or_divider">TAI</string>
+    <string name="checkmark_description">Valittu</string>
+    <plurals name="site_entry_linked_gpms_count">
+        <item quantity="one">Linkitetty %1$d GPM-tunnus</item>
+        <item quantity="other">Linkitetty %1$d GPM-tunnusta</item>
+    </plurals>
 </resources>

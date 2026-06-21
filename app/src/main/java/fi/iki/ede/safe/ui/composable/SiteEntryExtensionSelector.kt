@@ -33,9 +33,10 @@ fun SiteEntryExtensionSelector(
         type: String,
         value: String
     ): Map<String, Set<String>> {
+        if (value.isBlank()) return map
         val mutableMap = map.toMutableMap()
-        mutableMap[type] = mutableMap[type]?.plus(value) ?: setOf(value)
-        return mutableMap.toMap()
+        mutableMap[type] = (mutableMap[type] ?: emptySet()) + value
+        return mutableMap
     }
 
     fun removeFromMap(
@@ -44,7 +45,7 @@ fun SiteEntryExtensionSelector(
         value: String
     ): Map<String, Set<String>> {
         val mutableMap = map.toMutableMap()
-        mutableMap[type] = mutableMap[type]?.minus(value) ?: emptySet()
+        mutableMap[type] = (mutableMap[type] ?: emptySet()) - value - ""
         return mutableMap
     }
 
@@ -124,6 +125,9 @@ fun SiteEntryExtensionSelector(
                     }
                     allKnownEntries.remove(itemToDelete)
                 }
+            },
+            onItemCommitted = {
+                selectedEntry.value = ""
             })
     }
 }

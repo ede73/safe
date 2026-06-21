@@ -24,6 +24,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import okio.source
+import fi.iki.ede.preferences.Preferences
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -83,14 +85,14 @@ fun RestoreDatabaseComponent(
         launch(Dispatchers.IO + CoroutineName("DATABASE_RESTORATION")) {
             try {
                 val passwords = RestoreDatabase().doRestore(
-                    ctx,
-                    String(stream.readBytes()),
-                    backupPassword,
-                    dbHelper,
-                    GPMDB::linkSaveGPMAndSiteEntry,
-                    GPMDB::addSavedGPM,
-                    LoginHandler::passwordLogin,
-                    { categories: Int?, passwords: Int?, message: String? ->
+                    backupSource = stream.source(),
+                    userPassword = backupPassword,
+                    dbHelper = dbHelper,
+                    lastBackupDone = Preferences.getLastBackupTime(),
+                    linkSaveGPMAndSiteEntry = GPMDB::linkSaveGPMAndSiteEntry,
+                    addSavedGPM = GPMDB::addSavedGPM,
+                    passwordLogin = { pwd -> LoginHandler.passwordLogin(ctx, pwd) },
+                    reportProgress = { categories: Int?, passwords: Int?, message: String? ->
                         categories?.let {
                             processedCategories.intValue = it
                         }
@@ -98,7 +100,15 @@ fun RestoreDatabaseComponent(
                             processedPasswords.intValue = it
                         }
                         message?.let {
-                            processedMessage.value = it
+                            val localized = when (it) {
+                                "Begin restoration" -> context.getString(R.string.restore_screen_begin_restore)
+                                "Process backup" -> context.getString(R.string.restore_screen_process_backup)
+                                "Finished with backup" -> context.getString(R.string.restore_screen_finished_backup)
+                                "Something failed, rollback" -> context.getString(R.string.restore_screen_restore_failed)
+                                "Restoring old backup" -> context.getString(R.string.restore_screen_restoring_old_backup)
+                                else -> it
+                            }
+                            processedMessage.value = localized
                         }
                     }
                 ) { backupCreationTime, lastBackupDone ->
@@ -113,6 +123,7 @@ fun RestoreDatabaseComponent(
                 }
                 onFinished(passwords, null)
             } catch (ex: Exception) {
+                ex.printStackTrace()
                 onFinished(0, ex)
             }
         }

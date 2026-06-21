@@ -22,6 +22,7 @@ kotlin {
                 implementation(project(":logger"))
                 implementation(libs.okio)
                 implementation(libs.ktor.http)
+                implementation(libs.androidx.room.runtime)
             }
         }
         val androidMain by getting {
@@ -60,6 +61,11 @@ android {
             all {
                 it.useJUnitPlatform()
             }
+        }
+    }
+    sourceSets {
+        getByName("test") {
+            java.srcDir("../crypto/src/testFixtures/kotlin")
         }
     }
 }

@@ -150,8 +150,8 @@ object DataModel {
             DBHelperFactory.getDBHelper()
                 .updateSiteEntryCategory(siteEntry.id!!, targetCategory.id!!)
 
-            val oldCategoryId = siteEntry.categoryId!!
-            siteEntry.categoryId = targetCategory.id
+            val oldCategoryId = siteEntry.categoryId
+            siteEntry.categoryId = targetCategory.id!!
             _siteEntriesStateFlow.updateListItemById(siteEntry, keySelector = { it.id!! })
 
             _categoriesStateFlow.updateListItemById(
@@ -190,7 +190,7 @@ object DataModel {
             // or at worst, we have no categories..in which case restoration is impossible
             if (category != null) {
                 val db = DBHelperFactory.getDBHelper()
-                siteEntry.categoryId = category.id
+                siteEntry.categoryId = category.id!!
                 siteEntry.deleted = 0
                 db.restoreSoftDeletedSiteEntry(siteEntry.id!!)
                 _siteEntriesStateFlow.updateListItemById(
@@ -214,8 +214,8 @@ object DataModel {
             val db = DBHelperFactory.getDBHelper()
             Preferences.getSoftDeleteDays().let {
                 if (it > 0) {
-                    siteEntry.deleted = System.currentTimeMillis()
-                    db.markSiteEntryDeleted(siteEntry.id!!)
+                    siteEntry.deleted = Clock.System.now().epochSeconds
+                    db.markSiteEntryDeleted(siteEntry.id!!, siteEntry.deleted)
                     _softDeletedStateFlow.value = _softDeletedStateFlow.value + siteEntry
                 } else {
                     db.hardDeleteSiteEntry(siteEntry.id!!)
@@ -254,11 +254,12 @@ object DataModel {
             // are we past deletion time here?
             val softDeletedMaxAge = softDeletedMaxAgeProvider()
             val expiredSoftDeletedSiteEntries = softDeletedSiteEntries.filter {
-                val softDeletedAge = DateUtils.getPeriodBetweenDates(
+                val deletedSeconds = DateUtils.normalizeTimestampToSeconds(it.deleted)
+                val softDeletedAge = DateUtils.daysBetween(
+                    DateUtils.unixEpochSecondsToInstant(deletedSeconds),
                     Clock.System.now(),
-                    DateUtils.unixEpochSecondsToInstant(it.deleted),
                 )
-                if (softDeletedAge.days > softDeletedMaxAge) {
+                if (softDeletedAge > softDeletedMaxAge) {
                     Preferences.setLastModified()
                     db.hardDeleteSiteEntry(it.id!!)
                     true
