@@ -18,7 +18,7 @@ object DBHelperFactory {
     }
 
     @ExperimentalTime
-    fun getDBHelper(notUsed: Any? = null): DBHelper {
+    fun getDBHelper(): DBHelper {
         if (instance == null) {
             instance = DBHelper()
         }

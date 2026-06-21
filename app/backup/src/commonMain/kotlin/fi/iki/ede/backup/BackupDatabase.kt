@@ -6,7 +6,6 @@ import fi.iki.ede.backup.ExportConfig.Companion.Attributes
 import fi.iki.ede.backup.ExportConfig.Companion.Elements
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
-
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.dateutils.DateUtils
@@ -126,74 +125,29 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
             // 2. Write master key IV + ciphertext
             bufferedSink.writeUtf8(key.iv.toHexString() + "\n")
             bufferedSink.writeUtf8(key.cipherText.toHexString() + "\n")
-            // 3. Write chunked marker
-            bufferedSink.writeUtf8("STREAMING_CHUNKED_V1\n")
 
-            // Addressed PR10 comment: Use imported KeyStoreHelperFactory instead of FQDN
-            val helper = KeyStoreHelperFactory.getKeyStoreHelper()
-            // Addressed PR10 comment: Use pure Okio ChunkingEncryptingSink with okio.Buffer decoration
-            val chunkingSink = ChunkingEncryptingSink(bufferedSink) { plaintext ->
-                helper.encrypterProvider(plaintext)
-            }.buffer()
-
-            // 5. Generate XML directly into chunkingSink
+            // 3. Generate XML in memory using okio.Buffer
+            val xmlBuf = Buffer()
+            val xmlBufferedSink = xmlBuf.buffer()
             BackupDatabase().generateXMLExport(
-                chunkingSink,
+                xmlBufferedSink,
                 categoriesList,
                 softDeletedEntries,
                 siteEntryGPMMappings,
                 allSavedGPMs,
                 getSiteEntriesOfCategory
             )
+            xmlBufferedSink.flush()
+            val xmlBytes = xmlBuf.readByteArray()
 
-            chunkingSink.close()
+            // 4. Encrypt the entire XML bytes
+            val helper = KeyStoreHelperFactory.getKeyStoreHelper()
+            val encrypted = helper.encrypterProvider(xmlBytes)
+
+            // 5. Write backup data IV + ciphertext
+            bufferedSink.writeUtf8(encrypted.iv.toHexString() + "\n")
+            bufferedSink.writeUtf8(encrypted.cipherText.toHexString() + "\n")
+            bufferedSink.flush()
         }
-    }
-}
-
-// Addressed PR10 comment: Custom chunking Sink utilizing okio.Buffer, avoiding raw arraycopy and java.io streams
-private class ChunkingEncryptingSink(
-    private val delegate: BufferedSink,
-    private val chunkSize: Long = 65536, // 64KB chunks
-    private val encrypt: (ByteArray) -> IVCipherText
-) : Sink {
-    private val buffer = Buffer()
-
-    override fun write(source: Buffer, byteCount: Long) {
-        var remaining = byteCount
-        while (remaining > 0) {
-            val space = chunkSize - buffer.size
-            if (space <= 0) {
-                flushBuffer()
-                continue
-            }
-            val toWrite = minOf(remaining, space)
-            buffer.write(source, toWrite)
-            remaining -= toWrite
-            if (buffer.size >= chunkSize) {
-                flushBuffer()
-            }
-        }
-    }
-
-    private fun flushBuffer() {
-        if (buffer.size > 0) {
-            val plaintext = buffer.readByteArray()
-            val encrypted = encrypt(plaintext)
-            val line = "${encrypted.iv.toHexString()}:${encrypted.cipherText.toHexString()}\n"
-            delegate.writeUtf8(line)
-        }
-    }
-
-    override fun flush() {
-        delegate.flush()
-    }
-
-    override fun timeout(): Timeout = delegate.timeout()
-
-    override fun close() {
-        flushBuffer()
-        delegate.flush()
-        delegate.close()
     }
 }

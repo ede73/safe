@@ -1,4 +1,5 @@
 @file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package fi.iki.ede.preferences
 
 import android.content.Context
@@ -39,7 +40,9 @@ actual fun createDataStore(): DataStore<DataStorePreferences> {
 }
 
 actual fun notifyPlatformListeners(key: String) {
-    (Preferences.sharedPreferences as? DataStoreSharedPreferences)?.notifyListeners(key)
+    if (Preferences.isSharedPreferencesInitialized()) {
+        (Preferences.sharedPreferences as? DataStoreSharedPreferences)?.notifyListeners(key)
+    }
 }
 
 actual fun initializePlatform() {

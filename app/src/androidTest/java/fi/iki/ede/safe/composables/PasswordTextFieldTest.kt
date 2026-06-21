@@ -22,6 +22,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 
+import androidx.compose.ui.res.stringResource
+
 /**
  * Test plan, verify that...
  * - entered password is hidden [ensurePasswordIsHiddenTest]
@@ -38,7 +40,7 @@ class PasswordTextFieldTest : NodeHelper {
         SafeTheme {
             Column {
                 PasswordTextField(
-                    textTip = R.string.login_password_tip,
+                    label = stringResource(id = R.string.login_password_tip),
                     enableZoom = true,
                     modifier = Modifier.testTag(TestTag.PASSWORD_COMPOSABLE_IN_TESTS)
                 )

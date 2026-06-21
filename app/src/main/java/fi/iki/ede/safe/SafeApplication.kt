@@ -12,6 +12,8 @@ import fi.iki.ede.autolock.AutolockingService
 import fi.iki.ede.clipboardutils.ClipboardUtils
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelperFactory
+import fi.iki.ede.db.setDatabaseContext
+import fi.iki.ede.preferences.setPreferencesContext
 import fi.iki.ede.gpmdatamodel.db.GPMDB
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseInitialize
@@ -80,9 +82,9 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
             componentActivity is LoginScreen
         }
         )
+        setDatabaseContext(this)
         DBHelperFactory.initializeDatabase(
             DBHelper(
-                this,
                 regularAppNotATest = true,
                 getExternalTables = GPMDB::getExternalTables,
                 upgradeExternalTables = GPMDB::upgradeTables,

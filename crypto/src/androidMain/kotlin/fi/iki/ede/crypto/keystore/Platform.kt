@@ -13,3 +13,6 @@ private val secureRandom = SecureRandom()
 actual fun fillRandomBytes(array: ByteArray) {
     secureRandom.nextBytes(array)
 }
+
+actual val isWindows: Boolean = false
+

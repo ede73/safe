@@ -38,7 +38,7 @@ fun BiometricsComponent(bioVerify: ActivityResultLauncher<Intent>) {
     val keystoreIsInitialized = try {
         val ks = KeyStore.getInstance(ANDROID_KEYSTORE)
         ks.load(null)
-        if (biometricsActivityEnabled && biometricsRecorded && !ks.containsAlias("biokey")) {
+        if (biometricsActivityEnabled && biometricsRecorded && !ks.containsAlias("biometrics")) {
             BiometricsActivity.clearBiometricKeys()
         }
         true

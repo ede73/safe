@@ -108,7 +108,6 @@ class BackupDatabaseAndRestoreDatabaseTest {
         Logger.d(TAG, "Restore: " + (measureTimeMillis {
             (1..count.toInt()).forEach {
                 r.doRestore(
-
                     Buffer().writeUtf8(PASSWORD_ENCRYPTED_BACKUP_AT_1234),
                     backupPassword,
                     dbHelper,
@@ -256,7 +255,6 @@ class BackupDatabaseAndRestoreDatabaseTest {
             try {
                 var askedUser = false
                 r.doRestore(
-
                     Buffer().writeUtf8(PASSWORD_ENCRYPTED_BACKUP_AT_1234),
                     backupPassword,
                     dbHelper,
@@ -298,7 +296,6 @@ class BackupDatabaseAndRestoreDatabaseTest {
         mockClockSystemNow(2000)
         mockGetLastBackupTime(1234)
         r.doRestore(
-
             Buffer().writeUtf8(PASSWORD_ENCRYPTED_BACKUP_AT_1234),
             backupPassword,
             dbHelper,
@@ -344,7 +341,6 @@ class BackupDatabaseAndRestoreDatabaseTest {
         }
     }
 
-    // Addressed PR10 comment: Clean up FQDNs for KeyStoreHelper and related classes
     class KmpKeyStoreHelper(private val masterKey: KMPSecretKeySpec) : IKeyStoreHelper {
         override fun testingDeleteKeys_DO_NOT_USE() {}
         override fun rotateKeys() {}
@@ -448,7 +444,6 @@ class BackupDatabaseAndRestoreDatabaseTest {
         mockClockSystemNow(2000)
         mockGetLastBackupTime(1234)
         r.doRestore(
-
             Buffer().writeUtf8(finalOutput),
             backupPassword,
             dbHelper,

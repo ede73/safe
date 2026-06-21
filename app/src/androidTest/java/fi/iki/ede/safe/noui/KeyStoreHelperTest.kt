@@ -51,7 +51,7 @@ class KeyStoreHelperTest {
         val oldPassword: Password = fakePassword
         val newPassword = Password("aaaaaaaa")
 
-        val db = DBHelperFactory.getDBHelper(mockk<Context>())
+        val db = DBHelperFactory.getDBHelper()
 
         val oldOnes = db.fetchSaltAndEncryptedMasterKey()
         assert(oldOnes.first == fakeSalt) { "Wrong salt from the start" }

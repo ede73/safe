@@ -17,7 +17,9 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.gpm.changeset.ImportChangeSet
-import fi.iki.ede.gpmui.GpmUiMockKeyStoreHelper
+import androidx.compose.ui.platform.LocalContext
+import fi.iki.ede.preferences.Preferences
+import fi.iki.ede.preferences.setPreferencesContext
 import fi.iki.ede.gpmui.utilities.makeFakeImportForTesting
 import fi.iki.ede.theme.SafeTheme
 
@@ -54,10 +56,13 @@ fun VisualizeChangeSetPager(importChangeSet: MutableState<ImportChangeSet?>, don
     }
 }
 
+@OptIn(kotlin.time.ExperimentalTime::class)
 @Preview(showBackground = true)
 @Composable
 private fun ImportResultListPagerPreview() {
-    GpmUiMockKeyStoreHelper.init()
+    // Addressed PR12 comment: Initialize preferences cleanly without reflection mock helper
+    setPreferencesContext(LocalContext.current)
+    Preferences.initialize()
     MaterialTheme {
         val m =
             remember { mutableStateOf<ImportChangeSet?>(makeFakeImportForTesting()) }

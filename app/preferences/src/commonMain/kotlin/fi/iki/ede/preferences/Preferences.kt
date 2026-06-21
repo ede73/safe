@@ -34,6 +34,9 @@ object Preferences {
     lateinit var dataStore: DataStore<DataStorePreferences>
     lateinit var sharedPreferences: SharedPreferences
 
+    fun isSharedPreferencesInitialized() = ::sharedPreferences.isInitialized
+    fun isDataStoreInitialized() = ::dataStore.isInitialized
+
     private val cache = mutableMapOf<String, PreferenceValue>()
     private val cacheLock = Any()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -133,17 +136,19 @@ object Preferences {
                 }
             }
         }
-        scope.launch {
-            try {
-                dataStore.edit { preferences ->
-                    if (value == null) {
-                        preferences.remove(keyObj)
-                    } else {
-                        preferences[keyObj] = value
+        if (::dataStore.isInitialized) {
+            scope.launch {
+                try {
+                    dataStore.edit { preferences ->
+                        if (value == null) {
+                            preferences.remove(keyObj)
+                        } else {
+                            preferences[keyObj] = value
+                        }
                     }
+                } catch (e: Exception) {
+                    // Ignore or log background save error
                 }
-            } catch (e: Exception) {
-                // Ignore or log background save error
             }
         }
         notifyPlatformListeners(keyStr)

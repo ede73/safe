@@ -155,7 +155,7 @@ class PreferenceActivity :
             }
 
             addChangeListener<Preference, Boolean>(Preferences.PREFERENCE_BIOMETRICS_ENABLED) { enabledOrDisabled ->
-                if (enabledOrDisabled) {
+                if (!enabledOrDisabled) {
                     BiometricsActivity.clearBiometricKeys()
                 }
             }

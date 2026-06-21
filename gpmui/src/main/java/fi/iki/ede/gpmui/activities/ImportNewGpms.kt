@@ -22,7 +22,9 @@ import fi.iki.ede.autolock.AutolockingFeaturesImpl
 import fi.iki.ede.gpm.changeset.ImportChangeSet
 import fi.iki.ede.gpm.changeset.ScoredMatch
 import fi.iki.ede.gpmdatamodel.GPMDataModel
-import fi.iki.ede.gpmui.GpmUiMockKeyStoreHelper
+import androidx.compose.ui.platform.LocalContext
+import fi.iki.ede.preferences.Preferences
+import fi.iki.ede.preferences.setPreferencesContext
 import fi.iki.ede.gpmui.composables.ImportGpmCsvComposable
 import fi.iki.ede.gpmui.composables.VisualizeChangeSetPager
 import fi.iki.ede.gpmui.utilities.makeIncomingForTesting
@@ -70,7 +72,9 @@ class ImportNewGpmsScreen :
 @ExperimentalTime
 @Preview(showBackground = true)
 private fun ImportGooglePasswordsPreview() {
-    GpmUiMockKeyStoreHelper.init()
+    // Addressed PR12 comment: Initialize preferences cleanly without reflection mock helper
+    setPreferencesContext(LocalContext.current)
+    Preferences.initialize()
     MaterialTheme {
         Column {
             ImportGpmCsvComposable(null, true) {}

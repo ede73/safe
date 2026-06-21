@@ -50,6 +50,8 @@ uiTestAndroid = "1.10.0"
 room = "2.7.0"
 ksp = "2.3.0"
 sqlite = "2.5.0"
+jetbrainsCompose = "1.11.0"
+
 
 [libraries]
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
@@ -104,6 +106,7 @@ kxml2 = { group = "net.sf.kxml", name = "kxml2", version.ref = "kxml2" }
 lint-tests-v3000 = { module = "com.android.tools.lint:lint-tests", version.ref = "lintTestsVersion" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+compose-ui-tooling-preview = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "jetbrainsCompose" }
 mockk-agent = { group = "io.mockk", name = "mockk-agent", version.ref = "mockk" }
 mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
 napier = { group = "io.github.aakira", name = "napier", version.ref = "napier" }
@@ -124,3 +127,4 @@ kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref 
 org-jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 room = { id = "androidx.room", version.ref = "room" }
+jetbrains-compose = { id = "org.jetbrains.compose", version.ref = "jetbrainsCompose" }
