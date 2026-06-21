@@ -36,6 +36,7 @@ class SiteEntryEditScreen :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Addressed PR12 comment: Removed redundant checkShouldLaunchLoginScreen check as it is handled by the base activity
         MeasureTime("SiteEntryEditScreen.onCreate").apply {
             val viewModel: EditingSiteEntryViewModel by viewModels()
             lap("view model")
@@ -113,6 +114,7 @@ class SiteEntryEditScreen :
         true to true
     }
 
+    // Addressed PR5 comment: using the member fun isSame restored in DecryptableSiteEntry class
     private fun wasSiteEntryChanged(
         edits: EditableSiteEntry,
         originalSiteEntry: DecryptableSiteEntry

@@ -33,6 +33,12 @@ kotlin {
                 implementation(libs.material)
             }
         }
+        val desktopMain by getting {
+            dependencies {
+                implementation(libs.jna)
+                implementation(libs.jna.platform)
+            }
+        }
     }
 }
 

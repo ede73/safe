@@ -1,6 +1,6 @@
 package fi.iki.ede.crypto
 
-import fi.iki.ede.crypto.support.toHexString
+
 
 /**
  * Convenience class representing encrypted cipher text with exact knowledge of the IV used
@@ -12,12 +12,13 @@ data class IVCipherText(val iv: ByteArray, val cipherText: ByteArray) {
 
     @Deprecated("Try not to use, depends on actual generated keys (IV might be variable in the future)")
     constructor(ivLength: Int, ivAndCipherText: ByteArray) : this(
-        if (ivAndCipherText.isNotEmpty()) {
+        if (ivAndCipherText.size >= ivLength) {
             ivAndCipherText.copyOfRange(0, ivLength)
         } else {
+            // Addressed PR12 comment: return empty bytearray if input is too short to extract IV
             byteArrayOf()
         },
-        if (ivAndCipherText.isNotEmpty()) {
+        if (ivAndCipherText.size >= ivLength) {
             ivAndCipherText.copyOfRange(ivLength, ivAndCipherText.size)
         } else {
             byteArrayOf()

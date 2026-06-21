@@ -12,40 +12,37 @@ import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.activities.LoginScreen
 import fi.iki.ede.safe.ui.onAllNodesWithTag
 import fi.iki.ede.safe.ui.onNodeWithTag
+import androidx.compose.ui.state.ToggleableState
+import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
 import kotlin.time.ExperimentalTime
 
 interface LoginScreenHelper : NodeHelper {
     fun SemanticsNodeInteraction.assertIsNotChecked(): SemanticsNodeInteraction = assert(
         SemanticsMatcher.expectValue(
             SemanticsProperties.ToggleableState,
-            androidx.compose.ui.state.ToggleableState.Off
+            ToggleableState.Off
         )
     )
 
     fun SemanticsNodeInteraction.assertIsChecked(): SemanticsNodeInteraction = assert(
         SemanticsMatcher.expectValue(
             SemanticsProperties.ToggleableState,
-            androidx.compose.ui.state.ToggleableState.On
+            ToggleableState.On
         )
     )
 
-    @ExperimentalTime
-    fun getBiometricsCheckbox(componentActivityTestRule: AndroidComposeTestRule<ActivityScenarioRule<LoginScreen>, LoginScreen>) =
+    fun getBiometricsCheckbox(componentActivityTestRule: SemanticsNodeInteractionsProvider) =
         componentActivityTestRule.onNodeWithTag(TestTag.BIOMETRICS_CHECKBOX)
 
-    @ExperimentalTime
-    fun getBiometricsButton(componentActivityTestRule: AndroidComposeTestRule<ActivityScenarioRule<LoginScreen>, LoginScreen>) =
+    fun getBiometricsButton(componentActivityTestRule: SemanticsNodeInteractionsProvider) =
         componentActivityTestRule.onNodeWithTag(TestTag.BIOMETRICS_BUTTON)
 
-    @ExperimentalTime
-    fun getLoginButton(componentActivityTestRule: AndroidComposeTestRule<ActivityScenarioRule<LoginScreen>, LoginScreen>) =
+    fun getLoginButton(componentActivityTestRule: SemanticsNodeInteractionsProvider) =
         componentActivityTestRule.onNodeWithTag(TestTag.LOGIN_BUTTON)
 
-    @ExperimentalTime
-    fun getPasswordFields(componentActivityTestRule: AndroidComposeTestRule<ActivityScenarioRule<LoginScreen>, LoginScreen>) =
+    fun getPasswordFields(componentActivityTestRule: SemanticsNodeInteractionsProvider) =
         componentActivityTestRule.onAllNodesWithTag(TestTag.PASSWORD_PROMPT)
 
-    @ExperimentalTime
-    fun getMinimumPasswordLength(componentActivityTestRule: AndroidComposeTestRule<ActivityScenarioRule<LoginScreen>, LoginScreen>) =
+    fun getMinimumPasswordLength(componentActivityTestRule: SemanticsNodeInteractionsProvider) =
         InstrumentationRegistry.getInstrumentation().targetContext.resources.getInteger(R.integer.password_minimum_length)
 }

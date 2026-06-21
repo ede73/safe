@@ -24,7 +24,6 @@ local.properties
 /in
 .failed
 .last_rev_parse
-/.agents
 /desktop/build
 /desktop/photos
 /desktop/safe.db
@@ -33,3 +32,6 @@ local.properties
 /desktop/safe.db.lck
 /desktop/safe_db.json
 /shared-ui/build
+/desktop/tpm_keys.txt
+/app/google-services.json
+/desktop/exported_backup.xml

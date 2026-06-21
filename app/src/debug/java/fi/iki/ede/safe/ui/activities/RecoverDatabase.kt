@@ -152,8 +152,7 @@ fun reconvertDatabase(pwd: String, completed: () -> Unit) {
         }
     }
 
-    db.writableDatabase.execSQL("DELETE FROM passwords")
-    db.writableDatabase.execSQL("DELETE FROM categories")
+    db.clearAllData()
 
     newCategories.forEach {
         db.addCategory(it)

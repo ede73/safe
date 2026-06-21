@@ -1,6 +1,6 @@
 package fi.iki.ede.safe
 
-import android.database.sqlite.SQLiteDatabase
+import fi.iki.ede.db.DBTransaction
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.support.encrypt
@@ -84,8 +84,6 @@ object DataModelMocks {
         require(isMockKMock(db)) { "Mocking failed somehow" }
         DBHelperFactory.initializeDatabase(db)
         mockkObject(GPMDB)
-        every { db.readableDatabase } answers { _ -> mockkClass(SQLiteDatabase::class) }
-        every { db.writableDatabase } answers { _ -> mockkClass(SQLiteDatabase::class) }
         every { db.addSiteEntry(any<DecryptableSiteEntry>()) } answers { _ ->
             val id: DBID =
                 if (firstArg<DecryptableSiteEntry>().id != null) firstArg<DecryptableSiteEntry>().id!!
@@ -167,7 +165,7 @@ object DataModelMocks {
             linkedMapOf<DBID, DecryptableSiteEntry>()
         val categoryTableBackup = linkedMapOf<DBID, DecryptableCategoryEntry>()
         var masterKeyStoreBackup: Pair<Salt, IVCipherText>? = null
-        val sql = mockkClass(SQLiteDatabase::class)
+        val sql = mockkClass(DBTransaction::class)
         var transactionSuccess = false
         var inTransaction = false
         every { db.beginRestoration() } answers {
@@ -182,9 +180,6 @@ object DataModelMocks {
             masterKeyStoreBackup = masterKeyStore
             masterKeyStore = null
             sql
-        }
-        every { sql.inTransaction() } answers { _ ->
-            inTransaction
         }
         every { sql.setTransactionSuccessful() } answers { _ ->
             transactionSuccess = true
@@ -241,7 +236,6 @@ object DataModelMocks {
             val gpmId = secondArg<DBID>()
             gpmTable2SiteEntryLink[seid] =
                 gpmTable2SiteEntryLink.getOrDefault(seid, emptySet()).toMutableSet() + gpmId
-            mockkClass(SQLiteDatabase::class)
         }
 
         every { GPMDB.fetchAllSiteEntryGPMMappings() } answers { _ ->
