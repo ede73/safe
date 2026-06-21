@@ -17,10 +17,16 @@ import java.security.PublicKey
 import java.security.KeyFactory
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
-import java.util.Base64
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
+import com.sun.jna.Pointer
+import com.sun.jna.WString
+import com.sun.jna.ptr.IntByReference
+import com.sun.jna.ptr.PointerByReference
+import fi.iki.ede.crypto.keystore.NCrypt.Companion.MS_KEY_STORAGE_PROVIDER
+import fi.iki.ede.crypto.keystore.NCrypt.Companion.MS_PLATFORM_KEY_STORAGE_PROVIDER
+import fi.iki.ede.crypto.keystore.NCrypt.Companion.ERROR_SUCCESS
 import korlibs.crypto.AES
 import korlibs.crypto.Padding
 
@@ -100,7 +106,7 @@ class KeyStoreHelper(
             loadedPublicKey = pub
         }
 
-        private fun generateMockKeyPair(): KeyPair {
+        fun generateMockKeyPair(): KeyPair {
             val keyPairGen = KeyPairGenerator.getInstance("RSA")
             keyPairGen.initialize(2048)
             return keyPairGen.generateKeyPair()
@@ -127,6 +133,140 @@ class KeyStoreHelper(
                     privKey,
                     pubKey
                 )
+            }
+        }
+
+        private fun getBiometricKeyHandle(createIfNeeded: Boolean): Pointer? {
+            val phProvider = PointerByReference()
+            var status = NCrypt.INSTANCE.NCryptOpenStorageProvider(
+                phProvider,
+                MS_PLATFORM_KEY_STORAGE_PROVIDER,
+                0
+            )
+            if (status != ERROR_SUCCESS) {
+                status = NCrypt.INSTANCE.NCryptOpenStorageProvider(
+                    phProvider,
+                    MS_KEY_STORAGE_PROVIDER,
+                    0
+                )
+            }
+            if (status != ERROR_SUCCESS) {
+                return null
+            }
+            val hProvider = phProvider.value
+
+            val phKey = PointerByReference()
+            val keyName = WString("SafeBiometricKey")
+            
+            status = NCrypt.INSTANCE.NCryptOpenKey(
+                hProvider,
+                phKey,
+                keyName,
+                0,
+                0
+            )
+            
+            if (status != ERROR_SUCCESS && createIfNeeded) {
+                status = NCrypt.INSTANCE.NCryptCreatePersistedKey(
+                    hProvider,
+                    phKey,
+                    WString("RSA"),
+                    keyName,
+                    0,
+                    0
+                )
+                if (status == ERROR_SUCCESS) {
+                    status = NCrypt.INSTANCE.NCryptFinalizeKey(phKey.value, 0)
+                    if (status != ERROR_SUCCESS) {
+                        NCrypt.INSTANCE.NCryptFreeObject(phKey.value)
+                        NCrypt.INSTANCE.NCryptFreeObject(hProvider)
+                        return null
+                    }
+                }
+            }
+            
+            NCrypt.INSTANCE.NCryptFreeObject(hProvider)
+            return if (status == ERROR_SUCCESS) phKey.value else null
+        }
+
+        private fun generateCNGBiometricKeyIfNeeded() {
+            val handle = getBiometricKeyHandle(true)
+            if (handle != null) {
+                NCrypt.INSTANCE.NCryptFreeObject(handle)
+            }
+        }
+
+        private fun encryptMasterKeyWithCNG(masterKeyBytes: ByteArray): ByteArray {
+            val hKey = getBiometricKeyHandle(true) ?: throw RuntimeException("Failed to get CNG biometric key handle")
+            try {
+                val pcbResult = IntByReference()
+                var status = NCrypt.INSTANCE.NCryptEncrypt(
+                    hKey,
+                    masterKeyBytes,
+                    masterKeyBytes.size,
+                    null,
+                    null,
+                    0,
+                    pcbResult,
+                    2 // NCRYPT_PAD_PKCS1_FLAG
+                )
+                if (status != ERROR_SUCCESS) {
+                    throw RuntimeException("CNG NCryptEncrypt failed to get size: $status")
+                }
+                val output = ByteArray(pcbResult.value)
+                status = NCrypt.INSTANCE.NCryptEncrypt(
+                    hKey,
+                    masterKeyBytes,
+                    masterKeyBytes.size,
+                    null,
+                    output,
+                    output.size,
+                    pcbResult,
+                    2 // NCRYPT_PAD_PKCS1_FLAG
+                )
+                if (status != ERROR_SUCCESS) {
+                    throw RuntimeException("CNG NCryptEncrypt failed: $status")
+                }
+                return output
+            } finally {
+                NCrypt.INSTANCE.NCryptFreeObject(hKey)
+            }
+        }
+
+        private fun decryptMasterKeyWithCNG(encryptedBytes: ByteArray): ByteArray {
+            val hKey = getBiometricKeyHandle(false) ?: throw RuntimeException("Biometric key not found in Windows CNG")
+            try {
+                val pcbResult = IntByReference()
+                var status = NCrypt.INSTANCE.NCryptDecrypt(
+                    hKey,
+                    encryptedBytes,
+                    encryptedBytes.size,
+                    null,
+                    null,
+                    0,
+                    pcbResult,
+                    2 // NCRYPT_PAD_PKCS1_FLAG
+                )
+                if (status != ERROR_SUCCESS) {
+                    throw RuntimeException("CNG NCryptDecrypt failed to get size: $status")
+                }
+                val output = ByteArray(pcbResult.value)
+                status = NCrypt.INSTANCE.NCryptDecrypt(
+                    hKey,
+                    encryptedBytes,
+                    encryptedBytes.size,
+                    null,
+                    output,
+                    output.size,
+                    pcbResult,
+                    2 // NCRYPT_PAD_PKCS1_FLAG
+                )
+                if (status != ERROR_SUCCESS) {
+                    throw RuntimeException("CNG NCryptDecrypt failed: $status")
+                }
+                return output
+            } finally {
+                NCrypt.INSTANCE.NCryptFreeObject(hKey)
             }
         }
 
@@ -230,5 +370,6 @@ class KeyStoreHelper(
 
             return Pair(salt, cipheredKey)
         }
+
     }
 }

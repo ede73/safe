@@ -1,43 +1,121 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><!-- Created with Inkscape (http://www.inkscape.org/) -->
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+    width="48"
+    height="48"
+    viewBox="0 0 48 48"
+    version="1.1"
+    xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <!-- Shackle gradient -->
+        <linearGradient id="shackle_grad" x1="14.5" y1="22" x2="25.5" y2="6.4" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#78909C" />
+            <stop offset="30%" stop-color="#B0BEC5" />
+            <stop offset="60%" stop-color="#ECEFF1" />
+            <stop offset="80%" stop-color="#90CAF9" />
+            <stop offset="100%" stop-color="#64B5F6" />
+        </linearGradient>
 
-<svg height="51.939213mm" id="svg5" version="1.1" viewBox="0 0 45.764153 51.939213"
-    width="45.764153mm" xmlns="http://www.w3.org/2000/svg">
-    <defs id="defs2" />
-    <g id="layer1" transform="translate(-63.858618,-110.16722)">
-        <path style="fill:#e9e9ff;fill-rule:evenodd;stroke:none;stroke-linejoin:round"
-            d="m 93.728166,113.20029 15.894494,-1.15024 v 45.10348 l -15.894494,-2.68257 z"
-            id="path6303" />
-        <path style="fill:#353564;fill-rule:evenodd;stroke:none;stroke-linejoin:round"
-            d="m 63.858618,111.65685 v 46.9212 l 29.869548,-4.10709 v -41.27067 z"
-            id="path6305" />
-        <path style="fill:#afafde;fill-rule:evenodd;stroke:none;stroke-linejoin:round"
-            d="m 63.858618,158.57805 15.108998,3.52838 30.655044,-4.9529 -15.894494,-2.68257 z"
-            id="path6307" />
-        <path style="fill:#4d4d9f;fill-rule:evenodd;stroke:none;stroke-linejoin:round"
-            d="m 63.858618,111.65685 15.108998,-1.48963 30.655044,1.88283 -15.894494,1.15024 z"
-            id="path6309" />
-        <path style="fill:#d7d7ff;fill-rule:evenodd;stroke:none;stroke-linejoin:round" d="m 78.96779,110.16744 v 51.93894 l 30.65498,-4.95266 v -45.10371 z m 5.202783,26.91412 1.159619,0.0894 v 2.14095 l -1.159619,0.23513 z"
-            id="path6311" />
-        <path style="fill:#8686bf;fill-rule:evenodd;stroke:none;stroke-linejoin:round"
-            d="m 63.858618,111.65685 15.108998,-1.48963 v 51.93921 l -15.108998,-3.52838 z"
-            id="path6313" />
-        <path style="fill:#e9e9ff;fill-rule:evenodd;stroke:none;stroke-linejoin:round"
-            d="m 89.791732,133.34717 1.400294,0.065 v 1.98772 l -1.400294,-0.0815 z"
-            id="path4931" />
-        <path style="fill:#353564;fill-rule:evenodd;stroke:none;stroke-linejoin:round"
-            d="m 83.648335,133.59262 v 2.02574 l 6.143397,-0.29998 v -1.97121 z"
-            id="path4933" />
-        <path style="fill:#afafde;fill-rule:evenodd;stroke:none;stroke-linejoin:round"
-            d="m 83.648335,135.61836 1.386478,0.0864 6.157213,-0.30484 -1.400294,-0.0815 z"
-            id="path4935" />
-        <path style="fill:#2f2f60;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-linejoin:round"
-            d="m 83.648335,133.59262 1.386478,0.0689 6.157213,-0.24939 -1.400294,-0.065 z"
-            id="path4937" />
-        <path style="fill:#6262ff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-linejoin:round"
-            d="m 85.034813,133.66155 v 2.04317 l 6.157213,-0.30484 v -1.98772 z"
-            id="path4939" />
-        <path style="fill:#7878b8;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-linejoin:round"
-            d="m 83.648335,133.59262 1.386478,0.0689 v 2.04317 l -1.386478,-0.0864 z"
-            id="path4941" />
+        <!-- Padlock Cylinder Body gradient -->
+        <linearGradient id="body_grad" x1="8" y1="30.5" x2="32" y2="30.5" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#B57C00" />
+            <stop offset="20%" stop-color="#FFCA28" />
+            <stop offset="50%" stop-color="#FFD54F" />
+            <stop offset="80%" stop-color="#FFB300" />
+            <stop offset="100%" stop-color="#B57C00" />
+        </linearGradient>
+
+        <!-- Padlock Cylinder Top Surface gradient -->
+        <linearGradient id="top_grad" x1="20" y1="19.5" x2="20" y2="24.5" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#FFE082" />
+            <stop offset="100%" stop-color="#FFCA28" />
+        </linearGradient>
+
+        <!-- Key Head gradient -->
+        <linearGradient id="key_head_grad" x1="26" y1="10.5" x2="38" y2="22.5" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#FFF59D" />
+            <stop offset="25%" stop-color="#FFD54F" />
+            <stop offset="65%" stop-color="#FFC107" />
+            <stop offset="100%" stop-color="#FF8F00" />
+        </linearGradient>
+
+        <!-- Key Shaft/Teeth gradient -->
+        <linearGradient id="key_shaft_grad" x1="30.5" y1="28.75" x2="36.3" y2="28.75" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#FFE082" />
+            <stop offset="50%" stop-color="#FFC107" />
+            <stop offset="100%" stop-color="#FF8F00" />
+        </linearGradient>
+    </defs>
+
+    <g id="padlock_and_key">
+        <!-- Shackle of the padlock -->
+        <path
+            fill="none"
+            stroke="url(#shackle_grad)"
+            stroke-width="4.5"
+            stroke-linecap="round"
+            d="M 14.5,22 V 12 C 14.5,8.9 17,6.4 20,6.4 C 23,6.4 25.5,8.9 25.5,12 V 22" />
+
+        <!-- White metallic shine/highlight on the shackle -->
+        <path
+            fill="none"
+            stroke="#FFFFFF"
+            stroke-width="1.0"
+            stroke-linecap="round"
+            d="M 15.5,14 A 4.5,4.5 0 0 1 20,7.5" />
+
+        <!-- Padlock Cylinder Body -->
+        <path
+            fill="url(#body_grad)"
+            d="M 8,22 L 8,39 C 8,40.4 13.4,41.5 20,41.5 C 26.6,41.5 32,40.4 32,39 L 32,22 C 32,23.4 26.6,24.5 20,24.5 C 13.4,24.5 8,23.4 8,22 Z" />
+
+        <!-- Padlock Cylinder Top Surface -->
+        <path
+            fill="url(#top_grad)"
+            d="M 20,24.5 C 26.6,24.5 32,23.4 32,22 C 32,20.6 26.6,19.5 20,19.5 C 13.4,19.5 8,20.6 8,22 C 8,23.4 13.4,24.5 20,24.5 Z" />
+
+        <!-- Top rim highlight on the cylinder -->
+        <path
+            fill="none"
+            stroke="#FFF9C4"
+            stroke-width="0.5"
+            d="M 8.5,22 C 8.5,23.2 13.6,24 20,24 C 26.4,24 31.5,23.2 31.5,22" />
+
+        <!-- Keyhole -->
+        <path
+            fill="#1E120C"
+            d="M 20,27.5 C 19.2,27.5 18.5,28.2 18.5,29 C 18.5,29.6 18.9,30.1 19.4,30.3 L 18.5,34.5 H 21.5 L 20.6,30.3 C 21.1,30.1 21.5,29.6 21.5,29 C 21.5,28.2 20.8,27.5 20,27.5 Z" />
+
+        <!-- Keyhole subtle 3D highlight edge -->
+        <path
+            fill="none"
+            stroke="#FFF59D"
+            stroke-width="0.4"
+            d="M 18.5,34.5 H 21.5" />
+
+        <!-- The Key -->
+        <!-- Head/Ring of the key -->
+        <path
+            fill="url(#key_head_grad)"
+            d="M 32,10.5 C 28.7,10.5 26,13.2 26,16.5 C 26,19.8 28.7,22.5 32,22.5 C 35.3,22.5 38,19.8 38,16.5 C 38,13.2 35.3,10.5 32,10.5 Z M 32,13.8 C 33.5,13.8 34.7,15 34.7,16.5 C 34.7,18 33.5,19.2 32,19.2 C 30.5,19.2 29.3,18 29.3,16.5 C29.3,15 30.5,13.8 32,13.8 Z" />
+
+        <!-- Key Shaft and Teeth -->
+        <path
+            fill="url(#key_shaft_grad)"
+            d="M 30.5,22.5 H 33.5 V 25 H 36.3 V 28 H 33.5 V 29 H 35.7 V 32 H 33.5 V 35 H 30.5 Z" />
+
+        <!-- Key shaft left-edge vertical highlight -->
+        <path
+            fill="none"
+            stroke="#FFF9C4"
+            stroke-width="0.5"
+            d="M 31.0,22.5 V 34.5" />
+
+        <!-- Key head top-left curved highlight -->
+        <path
+            fill="none"
+            stroke="#FFFFFF"
+            stroke-width="0.8"
+            stroke-linecap="round"
+            d="M 27.5,14.5 A 4.5,4.5 0 0 1 32.5,11.5" />
     </g>
 </svg>

@@ -10,6 +10,7 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.runLegacyDatabaseMigration
+import fi.iki.ede.db.setDatabaseContext
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -19,18 +20,22 @@ import kotlin.time.ExperimentalTime
 @RunWith(AndroidJUnit4::class)
 @ExperimentalTime
 class RoomMigrationTest {
+    private val PREFS_NAME = "safe_prefs"
+    private val PREF_ROOM_MIGRATION_DONE = "room_migration_done"
     private lateinit var context: Context
 
     @Before
     fun setUp() {
         context = InstrumentationRegistry.getInstrumentation().targetContext
         
+        setDatabaseContext(context)
+        
         // Clean up any existing database states
         context.deleteDatabase("safe")
         context.deleteDatabase("safe_legacy")
         
-        val prefs = context.getSharedPreferences("safe_prefs", Context.MODE_PRIVATE)
-        prefs.edit().remove("room_migration_done").apply()
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().remove(PREF_ROOM_MIGRATION_DONE).apply()
     }
 
     @Test
@@ -45,7 +50,7 @@ class RoomMigrationTest {
         // Insert a test password
         legacyDb.execSQL("""
             INSERT INTO passwords (id, category, password, description, username, website, note, photo, passwordchangeddate, deleted, extensions)
-            VALUES (10, 1, X'0102030405060708090a0b0c0d0e0f10', X'aabbccddeeff00112233445566778899', X'001122', X'334455', X'667788', 'photo_filename.jpg', '1600000000', 0, X'ffeedd')
+            VALUES (10, 1, X'0102030405060708090a0b0c0d0e0f10', X'aabbccddeeff00112233445566778899', X'00000000000000000000000000000000001122', X'00000000000000000000000000000000334455', X'00000000000000000000000000000000667788', 'photo_filename.jpg', '1600000000', 0, X'00000000000000000000000000000000ffeedd')
         """.trimIndent())
         
         // Insert a test key
@@ -65,7 +70,7 @@ class RoomMigrationTest {
         assertFalse(legacyDbFile.exists())
 
         // 4. Open with DBHelper and assert parity
-        val dbHelper = DBHelper(context = context)
+        val dbHelper = DBHelper()
         
         // Verify Categories
         val categories = dbHelper.fetchAllCategoryRows()
@@ -91,22 +96,22 @@ class RoomMigrationTest {
             entry.description.combineIVAndCipherText()
         )
         assertArrayEquals(
-            byteArrayOf(0x00, 0x11, 0x22),
+            byteArrayOf(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x11, 0x22),
             entry.username.combineIVAndCipherText()
         )
         assertArrayEquals(
-            byteArrayOf(0x33, 0x44, 0x55),
+            byteArrayOf(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x33, 0x44, 0x55),
             entry.website.combineIVAndCipherText()
         )
         assertArrayEquals(
-            byteArrayOf(0x66, 0x77, 0x88.toByte()),
+            byteArrayOf(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x66, 0x77, 0x88.toByte()),
             entry.note.combineIVAndCipherText()
         )
         assertEquals("photo_filename.jpg", entry.photoFilename)
         assertEquals(1600000000L, entry.passwordChangedDate?.epochSeconds)
         assertEquals(0L, entry.deleted)
         assertArrayEquals(
-            byteArrayOf(0xff.toByte(), 0xee.toByte(), 0xdd.toByte()),
+            byteArrayOf(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff.toByte(), 0xee.toByte(), 0xdd.toByte()),
             entry.extensions.combineIVAndCipherText()
         )
 
@@ -134,7 +139,7 @@ class RoomMigrationTest {
         // Insert a test password with binary BLOB photo
         legacyDb.execSQL("""
             INSERT INTO passwords (id, category, password, description, username, website, note, photo, passwordchangeddate, deleted, extensions)
-            VALUES (10, 1, X'0102030405060708090a0b0c0d0e0f10', X'aabbccddeeff00112233445566778899', X'001122', X'334455', X'667788', X'99887766554433221100', '1600000000', 0, X'ffeedd')
+            VALUES (10, 1, X'0102030405060708090a0b0c0d0e0f10', X'aabbccddeeff00112233445566778899', X'00000000000000000000000000000000001122', X'00000000000000000000000000000000334455', X'00000000000000000000000000000000667788', X'99887766554433221100', '1600000000', 0, X'00000000000000000000000000000000ffeedd')
         """.trimIndent())
         
         // Insert a test key
@@ -146,7 +151,7 @@ class RoomMigrationTest {
         runLegacyDatabaseMigration(context)
 
         // 3. Open with DBHelper and assert parity
-        val dbHelper = DBHelper(context = context)
+        val dbHelper = DBHelper()
         val siteEntries = dbHelper.fetchAllRows()
         assertEquals(1, siteEntries.size)
         val entry = siteEntries[0]
@@ -174,7 +179,7 @@ class RoomMigrationTest {
         // Passwords has category = 1, but we don't insert a key or categories correctly to force a constraint crash, or insert null into non-null column
         legacyDb.execSQL("""
             INSERT INTO passwords (id, category, password, description, username, website, note, photo, passwordchangeddate, deleted, extensions)
-            VALUES (10, 1, NULL, X'aabbccddeeff00112233445566778899', X'001122', X'334455', X'667788', 'photo.jpg', '1600000000', 0, X'ffeedd')
+            VALUES (10, 1, NULL, X'aabbccddeeff00112233445566778899', X'00000000000000000000000000000000001122', X'00000000000000000000000000000000334455', X'00000000000000000000000000000000667788', 'photo.jpg', '1600000000', 0, X'00000000000000000000000000000000ffeedd')
         """.trimIndent())
         
         legacyHelper.close()
@@ -218,7 +223,7 @@ class LegacyOpenHelper(
             CREATE TABLE passwords (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 category INTEGER NOT NULL,
-                password TEXT NOT NULL,
+                password TEXT,
                 description TEXT NOT NULL,
                 username TEXT,
                 website TEXT,

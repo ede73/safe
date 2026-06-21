@@ -11,3 +11,6 @@ actual fun fillRandomBytes(array: ByteArray) {
         korlibs.crypto.SecureRandom.nextBytes(array)
     }
 }
+
+actual val isWindows: Boolean = System.getProperty("os.name").lowercase().contains("windows")
+

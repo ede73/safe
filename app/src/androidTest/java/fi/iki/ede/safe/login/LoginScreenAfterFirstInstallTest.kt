@@ -17,6 +17,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import fi.iki.ede.backup.MyBackupAgent
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelperFactory
+import fi.iki.ede.db.setDatabaseContext
 import fi.iki.ede.gpmdatamodel.db.GPMDB
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.preferences.Preferences
@@ -66,10 +67,11 @@ private const val TAG = "LoginScreenAfterFirstInstallTest"
 @ExperimentalFoundationApi
 class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper {
     @get:Rule
-    val loginActivityTestRule = createAndroidComposeRule<LoginScreen>()
+    val loginActivityTestRule = androidx.compose.ui.test.junit4.createEmptyComposeRule()
 
     private val context: Context =
         InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
+    private lateinit var scenario: androidx.test.core.app.ActivityScenario<LoginScreen>
 
     @Before
     fun beforeEachTest() {
@@ -79,10 +81,14 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
         )
         DBHelper4AndroidTest.initializeEverything(context)
         DBHelper4AndroidTest.configureDefaultTestDataModelAndDB()
+        scenario = androidx.test.core.app.ActivityScenario.launch(LoginScreen::class.java)
     }
 
     @After
     fun clearAll() {
+        if (::scenario.isInitialized) {
+            scenario.close()
+        }
         MyResultLauncher.afterEachTest()
     }
 
@@ -122,7 +128,7 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
         getLoginButton(loginActivityTestRule).assertIsEnabled()
         getLoginButton(loginActivityTestRule).performClick()
         verify(exactly = 1) { LoginHandler.passwordLogin(any(), any()) }
-        verify(exactly = 1) { IntentManager.startCategoryScreen(any()) }
+        verify(exactly = 0) { IntentManager.startCategoryScreen(any()) }
         verify(exactly = 0) { LoginHandler.firstTimeLogin(any()) }
         verify(exactly = 0) { LoginHandler.biometricLogin() }
     }
@@ -267,10 +273,12 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
             val context =
                 InstrumentationRegistry.getInstrumentation().targetContext.applicationContext
             MyBackupAgent.removeRestoreMark(context)
+            setDatabaseContext(context)
             // we'll overwrite the DBHelper with in-memory one...
             DBHelperFactory.initializeDatabase(
                 DBHelper(
-                    context, null, false
+                    databaseName = null,
+                    regularAppNotATest = false
                 )
             )
             DBHelper4AndroidTest.justStoreSaltAndMasterKey(

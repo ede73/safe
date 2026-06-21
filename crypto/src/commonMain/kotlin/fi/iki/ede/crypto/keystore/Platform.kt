@@ -7,3 +7,6 @@ expect class KMPSecretKeySpec(values: ByteArray) {
 }
 
 expect fun fillRandomBytes(array: ByteArray)
+
+expect val isWindows: Boolean
+

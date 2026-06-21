@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.safe.R
 import fi.iki.ede.theme.SafeThemeSurface
@@ -45,7 +46,8 @@ fun VerifiedPasswordTextField(
 
     var firstPassword by remember { mutableStateOf(Password.getEmpty()) }
     PasswordTextField(
-        textTip = textTip,
+        // Addressed PR12 comment: Cleaned up FQCN and imported stringResource
+        label = stringResource(textTip),
         modifier = modifier
             .focusRequester(focusRequester),
         onValueChange = { firstPassword = it }
@@ -54,7 +56,8 @@ fun VerifiedPasswordTextField(
     var secondPassword by remember { mutableStateOf(Password.getEmpty()) }
     if (showVerification) {
         PasswordTextField(
-            textTip = verifyPassword,
+            // Addressed PR12 comment: Cleaned up FQCN and imported stringResource
+            label = stringResource(verifyPassword),
             modifier = modifier,
             onValueChange = { secondPassword = it }
 //                .semantics { contentDescription = "toka salasana" }

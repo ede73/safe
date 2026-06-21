@@ -31,6 +31,7 @@ dependencies {
     implementation(project(":autolock"))
     implementation(project(":crypto"))
     implementation(project(":logger"))
+    implementation(project(":shared-ui"))
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.appcompat)

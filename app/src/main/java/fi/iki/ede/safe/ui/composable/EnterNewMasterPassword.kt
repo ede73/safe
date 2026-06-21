@@ -37,7 +37,7 @@ fun EnterNewMasterPassword(
                 var oldPassword by remember { mutableStateOf(Password.getEmpty()) }
                 var newPassword by remember { mutableStateOf(Password.getEmpty()) }
                 PasswordTextField(
-                    textTip = R.string.action_bar_old_password,
+                    label = stringResource(R.string.action_bar_old_password),
                     onValueChange = { oldPassword = it },
                     modifier = Modifier.focusRequester(focusRequester)
                 )
