@@ -185,7 +185,7 @@ class BiometricsActivity : AppCompatActivity() {
             val biometricKey = ks.getOrCreateBiokey()
             try {
                 val decrypted = ks.decrypterProviderWithKey(stampCipher, biometricKey)
-                val then = DateUtils.newParse(String(decrypted))
+                val then = kotlin.time.Instant.fromEpochSeconds(String(decrypted).toLong())
                 val age = DateUtils.getPeriodBetweenDates(then)
                 if (age.days < 128) {
                     LoginHandler.biometricLogin()
@@ -210,12 +210,14 @@ class BiometricsActivity : AppCompatActivity() {
             remove(PREFERENCE_BIO_CIPHER)
         }
 
+        @Suppress("DEPRECATION")
         private fun getBioCipher(): IVCipherText {
             val pm = sharedPreferences
                 .getString(PREFERENCE_BIO_CIPHER, null) ?: return IVCipherText.getEmpty()
             return IVCipherText(CipherUtilities.IV_LENGTH, pm.hexToByteArray())
         }
 
+        @Suppress("DEPRECATION")
         private fun storeBioCipher(cipher: IVCipherText) = sharedPreferences.edit(commit = true) {
             putString(PREFERENCE_BIO_CIPHER, cipher.combineIVAndCipherText().toHexString())
         }
