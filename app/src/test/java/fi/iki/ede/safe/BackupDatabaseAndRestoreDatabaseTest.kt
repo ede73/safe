@@ -81,7 +81,6 @@ class BackupDatabaseAndRestoreDatabaseTest {
 
         // not really needed for restore, but here it is...
         dbHelper = mockPasswordObjectForBackup()
-        require(dbHelper != null) { "DBHelper initializing failed" }
         require(isMockKMock(dbHelper)) { "DBHelper is not mocked" }
         dbHelper.storeSaltAndEncryptedMasterKey(salt, cipheredMasterKey)
         mockkObject(LoginHandler)
@@ -452,7 +451,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
             GPMDB::addSavedGPM,
             { _ -> true },
             { _, _, _ -> }
-        ) { thisBackupCreationTime, lastBackupDone ->
+        ) { _, _ ->
             throw Exception("We should not ask user anything, valid backup!")
         }
 

@@ -19,7 +19,7 @@ import io.mockk.mockkClass
 import io.mockk.mockkObject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
@@ -167,10 +167,8 @@ object DataModelMocks {
         var masterKeyStoreBackup: Pair<Salt, IVCipherText>? = null
         val sql = mockkClass(DBTransaction::class)
         var transactionSuccess = false
-        var inTransaction = false
         every { db.beginRestoration() } answers {
             transactionSuccess = false
-            inTransaction = true
             siteEntriesTableBackup.clear()
             siteEntriesTableBackup.putAll(siteEntryTable)
             siteEntryTable.clear()
@@ -185,7 +183,6 @@ object DataModelMocks {
             transactionSuccess = true
         }
         every { sql.endTransaction() } answers { _ ->
-            inTransaction = false
             if (transactionSuccess) {
                 // retain current tables
                 siteEntriesTableBackup.clear()
