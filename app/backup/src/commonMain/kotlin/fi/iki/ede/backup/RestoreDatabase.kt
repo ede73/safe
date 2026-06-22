@@ -124,6 +124,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
     )
 
 
+    @Suppress("DEPRECATION")
     private fun parseXML(
         dbHelper: DBHelper,
         db: DBTransaction,
@@ -240,12 +241,12 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             siteEntry = DecryptableSiteEntry(category.id!!)
                             myParser.getTrimmedAttributeValue(Attributes.SITE_ENTRY_ID)
                                 .toLongOrNull()?.let {
-                                    siteEntry!!.id = it
+                                    siteEntry.id = it
                                 }
                             myParser.getTrimmedAttributeValue(Attributes.SITE_ENTRY_DELETED)
                                 .toLongOrNull()?.let {
                                     val normalizedDeleted = DateUtils.normalizeTimestampToSeconds(it)
-                                    siteEntry!!.deleted = normalizedDeleted
+                                    siteEntry.deleted = normalizedDeleted
                                 }
                             passwords++
                         }
