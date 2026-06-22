@@ -8,6 +8,7 @@ import kotlin.time.Instant
 @OptIn(ExperimentalTime::class)
 object RoomConverters {
     @TypeConverter
+    @Suppress("DEPRECATION")
     fun toByteArray(value: IVCipherText?): ByteArray? {
         if (value == null) return null
         if (value.isEmpty()) return ByteArray(0)
@@ -15,6 +16,7 @@ object RoomConverters {
     }
 
     @TypeConverter
+    @Suppress("DEPRECATION")
     fun fromByteArray(value: ByteArray?): IVCipherText? {
         if (value == null || value.isEmpty()) return IVCipherText.getEmpty()
         return IVCipherText(16, value)

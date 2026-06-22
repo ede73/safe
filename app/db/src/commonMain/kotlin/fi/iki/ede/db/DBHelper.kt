@@ -60,6 +60,7 @@ class DBHelper(
         return fi.iki.ede.db.fetchTpmKeys()
     }
 
+    @Suppress("DEPRECATION")
     fun storeSaltAndEncryptedMasterKey(salt: Salt, ivCipher: IVCipherText) = runBlocking {
         database.keyDao().clear()
         database.keyDao().insert(
@@ -70,6 +71,7 @@ class DBHelper(
         )
     }
 
+    @Suppress("DEPRECATION")
     fun fetchSaltAndEncryptedMasterKey(): Pair<Salt, IVCipherText> = runBlocking {
         val key = database.keyDao().getFirst() ?: throw Exception("No master key")
         Pair(Salt(key.salt), IVCipherText(16, key.encryptedKey))
@@ -138,7 +140,6 @@ class DBHelper(
 
     fun updateSiteEntry(entry: DecryptableSiteEntry): DBID = runBlocking {
         require(entry.id != null) { "Cannot update SiteEntry without ID" }
-        require(entry.categoryId != null) { "Cannot update SiteEntry without Category ID" }
         database.siteEntryDao().getPhotoFilenameById(entry.id!!)?.let { deletePhoto(it) }
         entry.photoFilename = savePhoto(entry.photo)
         database.siteEntryDao().update(entry)
@@ -158,6 +159,7 @@ class DBHelper(
         database.siteEntryDao().getPhotoFilenameById(siteEntryID)
     }
 
+    @Suppress("DEPRECATION")
     fun loadPhoto(photoName: FileName): IVCipherText? = (photoDir / photoName).let { path ->
         if (!FileSystem.SYSTEM.exists(path)) null
         else IVCipherText(

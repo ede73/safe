@@ -10,6 +10,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 
+@Suppress("DEPRECATION")
 fun ContentValues.put(column: TableColumns<*>, value: IVCipherText) =
     put(column.columnName, value.combineIVAndCipherText())
 
@@ -29,6 +30,7 @@ fun ContentValues.put(column: TableColumns<*>, utcDate: Instant) =
 fun Cursor.getColumnIndexOrThrow(column: TableColumns<*>) =
     getColumnIndexOrThrow(column.columnName)
 
+@Suppress("DEPRECATION")
 fun Cursor.getIVCipher(
     column: TableColumns<*>,
     updateOnlyIfColumnExists: (IVCipherText) -> Unit
@@ -40,6 +42,7 @@ fun Cursor.getIVCipher(
         )
     }
 
+@Suppress("DEPRECATION")
 fun Cursor.getIVCipher(column: TableColumns<*>) =
     IVCipherText(
         CipherUtilities.IV_LENGTH,
