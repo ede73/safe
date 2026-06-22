@@ -108,9 +108,9 @@ fun LoginPasswordPrompts(
                     wrongPassword = true
                 }
             },
-            enabled = /*!loginInProgress &&*/ (if (loginStyle == LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE)
-                verifiedPassword != null && verifiedPassword.length >= passwordMinimumLength
-            else !(verifiedPassword == null || verifiedPassword.isEmpty()))
+            enabled = (if (loginStyle == LoginPrecondition.FIRST_TIME_LOGIN_EMPTY_DATABASE)
+                verifiedPassword.length >= passwordMinimumLength
+            else !verifiedPassword.isEmpty())
         ) {
             when (loginStyle) {
                 LoginPrecondition.FIRST_TIME_LOGIN_RESTORED_DATABASE -> Text(stringResource(id = R.string.login_button))

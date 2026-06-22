@@ -42,7 +42,6 @@ class RestoreDatabaseScreen :
 
         val context: Context = this
         setContent {
-            val coroutineScope = rememberCoroutineScope()
             var currentScreenState by remember { mutableStateOf("selectingDocument") }
 
             when (currentScreenState) {
