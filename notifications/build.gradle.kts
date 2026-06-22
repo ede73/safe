@@ -1,11 +1,12 @@
 plugins {
     kotlin("multiplatform")
-    alias(libs.plugins.android.library)
+    alias(libs.plugins.android.kotlin.multiplatform.library)
 }
 
 kotlin {
-    @Suppress("DEPRECATION")
-    androidTarget()
+    androidLibrary {
+        namespace = "fi.iki.ede.notifications"
+    }
     jvm("desktop")
 //    js {
 //        browser()
@@ -27,10 +28,3 @@ kotlin {
     }
 }
 
-android {
-    namespace = "fi.iki.ede.notifications"
-    compileSdk = 36
-    defaultConfig {
-        minSdk = 26
-    }
-}

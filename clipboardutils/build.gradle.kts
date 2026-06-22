@@ -1,11 +1,12 @@
 plugins {
     kotlin("multiplatform")
-    alias(libs.plugins.android.library)
+    alias(libs.plugins.android.kotlin.multiplatform.library)
 }
 
 kotlin {
-    @Suppress("DEPRECATION")
-    androidTarget()
+    androidLibrary {
+        namespace = "fi.iki.ede.clipboardutils"
+    }
     jvm("desktop")
     iosX64()
     iosArm64()
@@ -23,10 +24,3 @@ kotlin {
     }
 }
 
-android {
-    namespace = "fi.iki.ede.clipboardutils"
-    compileSdk = 36
-    defaultConfig {
-        minSdk = 26
-    }
-}

@@ -1,9 +1,13 @@
 package fi.iki.ede.crypto.keystore
 
 import fi.iki.ede.crypto.IVCipherText
+import fi.iki.ede.crypto.BuildConfig
 
 object MockKeyStoreHelper {
     fun init() {
+        if (!BuildConfig.DEBUG) {
+            throw Exception("MockKeyStoreHelper init is not allowed in release build")
+        }
         KeyStoreHelperFactory.provideKeyStoreHelper = object : IKeyStoreHelper {
             override fun testingDeleteKeys_DO_NOT_USE() {}
             override fun rotateKeys() {}

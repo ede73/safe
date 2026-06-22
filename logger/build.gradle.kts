@@ -1,12 +1,12 @@
 plugins {
     kotlin("multiplatform")
-    alias(libs.plugins.android.library)
-    id("de.mannodermaus.android-junit5") version "1.14.0.0"
+    alias(libs.plugins.android.kotlin.multiplatform.library)
 }
 
 kotlin {
-    @Suppress("DEPRECATION")
-    androidTarget {
+    androidLibrary {
+        namespace = "fi.iki.ede.logger"
+        withHostTestBuilder { }
     }
     jvm("desktop")
 //    js(IR) {
@@ -29,7 +29,7 @@ kotlin {
                 implementation(libs.firebase.crashlytics)
             }
         }
-        val androidUnitTest by getting {
+        val androidHostTest by getting {
             dependencies {
                 implementation(project.dependencies.platform(libs.junit5.bom))
                 implementation(libs.junit5.jupiter)
@@ -49,18 +49,3 @@ kotlin {
     }
 }
 
-android {
-    namespace = "fi.iki.ede.logger"
-    compileSdk = 36
-    defaultConfig {
-        minSdk = 26
-    }
-    testOptions {
-        unitTests {
-            isReturnDefaultValues = true
-            all {
-                it.useJUnitPlatform()
-            }
-        }
-    }
-}

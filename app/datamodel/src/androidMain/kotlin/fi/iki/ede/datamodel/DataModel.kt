@@ -5,6 +5,7 @@ import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
 import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.db.DBID
+import fi.iki.ede.datamodel.BuildConfig
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.preferences.Preferences
 import kotlinx.coroutines.CoroutineScope

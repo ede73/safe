@@ -1,5 +1,6 @@
 package fi.iki.ede.autolock
 
+import fi.iki.ede.autolock.BuildConfig
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.BroadcastReceiver

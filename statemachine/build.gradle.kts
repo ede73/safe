@@ -1,16 +1,20 @@
 plugins {
     kotlin("multiplatform")
-    alias(libs.plugins.android.library)
+    alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.compose.compiler)
 }
 
 kotlin {
-    @Suppress("DEPRECATION")
-    androidTarget()
+    androidLibrary {
+        namespace = "fi.iki.ede.statemachine"
+        /*
+        buildFeatures {
+            compose = true
+        }
+        */
+        withHostTestBuilder { }
+    }
     jvm("desktop")
-//    js {
-//        browser()
-//    }
     iosX64()
     iosArm64()
     iosSimulatorArm64()
@@ -22,6 +26,7 @@ kotlin {
             }
         }
         val androidMain by getting {
+            kotlin.srcDirs("src/main/java")
             dependencies {
                 implementation(libs.androidx.activity.compose)
                 implementation(libs.androidx.appcompat)
@@ -34,30 +39,12 @@ kotlin {
                 implementation(kotlin("test"))
             }
         }
-        val androidUnitTest by getting {
+        val androidHostTest by getting {
+            kotlin.srcDirs("src/test/java")
             dependencies {
                 implementation(project.dependencies.platform(libs.junit5.bom))
                 implementation(libs.junit5.jupiter)
                 implementation(libs.mockk)
-            }
-        }
-    }
-}
-
-android {
-    namespace = "fi.iki.ede.statemachine"
-    compileSdk = 36
-    defaultConfig {
-        minSdk = 26
-    }
-    buildFeatures {
-        compose = true
-    }
-    testOptions {
-        unitTests {
-            isReturnDefaultValues = true
-            all {
-                it.useJUnitPlatform()
             }
         }
     }

@@ -1,11 +1,12 @@
 plugins {
     kotlin("multiplatform")
-    alias(libs.plugins.android.library)
+    alias(libs.plugins.android.kotlin.multiplatform.library)
 }
 
 kotlin {
-    @Suppress("DEPRECATION")
-    androidTarget {
+    androidLibrary {
+        namespace = "fi.iki.ede.dateutils"
+        withHostTestBuilder { }
     }
     jvm("desktop")
 //    js(IR) {
@@ -23,6 +24,7 @@ kotlin {
             }
         }
         val commonTest by getting {
+            kotlin.srcDirs("src/test/java")
             dependencies {
                 implementation(kotlin("test"))
             }
@@ -36,18 +38,3 @@ kotlin {
     }
 }
 
-android {
-    namespace = "fi.iki.ede.dateutils"
-    compileSdk = 36
-    defaultConfig {
-        minSdk = 26
-    }
-    testOptions {
-        unitTests {
-            isReturnDefaultValues = true
-            all {
-                it.useJUnitPlatform()
-            }
-        }
-    }
-}

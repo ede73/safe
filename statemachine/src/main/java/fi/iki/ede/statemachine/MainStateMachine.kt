@@ -1,5 +1,6 @@
 package fi.iki.ede.statemachine
 
+import fi.iki.ede.statemachine.BuildConfig
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.statemachine.StateMachine.StateEvent
 
