@@ -6,6 +6,7 @@ plugins {
 }
 
 kotlin {
+    @Suppress("DEPRECATION")
     androidTarget()
     jvm("desktop")
 
