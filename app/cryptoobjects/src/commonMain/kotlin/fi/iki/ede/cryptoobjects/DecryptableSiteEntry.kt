@@ -168,7 +168,7 @@ class DecryptableSiteEntry(
     fun isSamePassword(comparePassword: IVCipherText) = plainPassword == comparePassword.decrypt()
 
     // Flow state is annoying since it requires NEW ENTITIES for changes to register
-    fun copy(): DecryptableSiteEntry = DecryptableSiteEntry(categoryId!!).apply {
+    fun copy(): DecryptableSiteEntry = DecryptableSiteEntry(categoryId).apply {
         description = this@DecryptableSiteEntry.description
     }
 
