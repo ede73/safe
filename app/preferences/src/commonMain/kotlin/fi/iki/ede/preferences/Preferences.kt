@@ -29,6 +29,7 @@ expect fun notifyPlatformListeners(key: String)
 
 expect fun initializePlatform()
 
+@Suppress("DEPRECATION")
 @ExperimentalTime
 object Preferences {
     lateinit var dataStore: DataStore<DataStorePreferences>
