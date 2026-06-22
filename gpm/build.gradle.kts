@@ -63,9 +63,4 @@ android {
             }
         }
     }
-    sourceSets {
-        getByName("test") {
-            java.srcDir("../crypto/src/testFixtures/kotlin")
-        }
-    }
 }
