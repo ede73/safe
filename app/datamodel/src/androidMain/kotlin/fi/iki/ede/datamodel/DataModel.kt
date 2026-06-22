@@ -122,7 +122,6 @@ object DataModel {
         siteEntry: DecryptableSiteEntry,
         onAdd: suspend (DecryptableSiteEntry) -> Unit = {}
     ) {
-        require(siteEntry.categoryId != null) { "SiteEntry's category must be known" }
         runCatching { Preferences.setLastModified() }
         CoroutineScope(Dispatchers.IO).launch {
             val db = DBHelperFactory.getDBHelper()
@@ -144,7 +143,6 @@ object DataModel {
         siteEntry: DecryptableSiteEntry,
         targetCategory: DecryptableCategoryEntry
     ) {
-        require(siteEntry.categoryId != null) { "SiteEntry's category must be known" }
         Preferences.setLastModified()
         CoroutineScope(Dispatchers.IO).launch {
             DBHelperFactory.getDBHelper()
@@ -197,7 +195,7 @@ object DataModel {
                     siteEntry,
                     keySelector = { it.id!! })
                 _categoriesStateFlow.updateListItemById(
-                    siteEntry.categoryId!!,
+                    siteEntry.categoryId,
                     keySelector = { it.id!! }) { old ->
                     old.apply {
                         containedSiteEntryCount = old.containedSiteEntryCount + 1
@@ -208,7 +206,6 @@ object DataModel {
     }
 
     fun deleteSiteEntry(siteEntry: DecryptableSiteEntry) {
-        require(siteEntry.categoryId != null) { "SiteEntry's category must be known" }
         Preferences.setLastModified()
         CoroutineScope(Dispatchers.IO).launch {
             val db = DBHelperFactory.getDBHelper()
@@ -226,7 +223,7 @@ object DataModel {
                 it.filterNot { entry -> entry.id == siteEntry.id }
             }
             _categoriesStateFlow.updateListItemById(
-                siteEntry.categoryId!!,
+                siteEntry.categoryId,
                 keySelector = { it.id!! }) { old ->
                 old.apply {
                     containedSiteEntryCount = old.containedSiteEntryCount - 1
@@ -280,7 +277,7 @@ object DataModel {
                     _siteEntriesStateFlow.value.groupBy { it.categoryId }
                         .forEach { (categoryId, siteEntries) ->
                             _categoriesStateFlow.updateListItemById(
-                                categoryId!!,
+                                categoryId,
                                 keySelector = { it.id!! }) {
                                 it.apply {
                                     containedSiteEntryCount = siteEntries.size
