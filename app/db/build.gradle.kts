@@ -1,17 +1,17 @@
 plugins {
     kotlin("multiplatform")
-    alias(libs.plugins.android.library)
+    alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.ksp)
-    alias(libs.plugins.room)
 }
 
-room {
-    schemaDirectory("$projectDir/schemas")
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 kotlin {
-    @Suppress("DEPRECATION")
-    androidTarget()
+    androidLibrary {
+        namespace = "fi.iki.ede.db"
+    }
     jvm("desktop")
 
     sourceSets {
@@ -38,13 +38,11 @@ kotlin {
     }
 }
 
-dependencies {
-    add("kspAndroid", libs.androidx.room.compiler)
-    add("kspDesktop", libs.androidx.room.compiler)
+configurations.matching { it.name == "kspAndroid" }.configureEach {
+    project.dependencies.add(this.name, libs.androidx.room.compiler)
 }
 
-android {
-    namespace = "fi.iki.ede.db"
-    compileSdk = 36
-    defaultConfig { minSdk = 26 }
+configurations.matching { it.name == "kspDesktop" }.configureEach {
+    project.dependencies.add(this.name, libs.androidx.room.compiler)
 }
+

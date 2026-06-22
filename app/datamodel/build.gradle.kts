@@ -1,11 +1,13 @@
 plugins {
     kotlin("multiplatform")
-    alias(libs.plugins.android.library)
+    alias(libs.plugins.android.kotlin.multiplatform.library)
 }
 
 kotlin {
-    @Suppress("DEPRECATION")
-    androidTarget()
+    androidLibrary {
+        namespace = "fi.iki.ede.datamodel"
+        withHostTestBuilder { }
+    }
     jvm("desktop")
 
     sourceSets {
@@ -24,23 +26,11 @@ kotlin {
                 implementation(libs.material)
             }
         }
-    }
-}
-
-android {
-    namespace = "fi.iki.ede.datamodel"
-    compileSdk = 36
-    defaultConfig { minSdk = 26 }
-    testOptions {
-        unitTests {
-            isReturnDefaultValues = true
-            all { it.useJUnitPlatform() }
+        val androidHostTest by getting {
+            dependencies {
+                implementation(project.dependencies.platform(libs.junit5.bom))
+                implementation(libs.junit5.jupiter)
+            }
         }
     }
-}
-
-dependencies {
-    androidTestImplementation(libs.androidx.test.junit)
-    testImplementation(enforcedPlatform(libs.junit5.bom))
-    testImplementation(libs.junit5.jupiter)
 }

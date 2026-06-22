@@ -1,11 +1,12 @@
 plugins {
     kotlin("multiplatform")
-    alias(libs.plugins.android.library)
+    alias(libs.plugins.android.kotlin.multiplatform.library)
 }
 
 kotlin {
-    @Suppress("DEPRECATION")
-    androidTarget()
+    androidLibrary {
+        namespace = "fi.iki.ede.autolock"
+    }
     jvm("desktop")
 
     sourceSets {
@@ -24,8 +25,3 @@ kotlin {
     }
 }
 
-android {
-    namespace = "fi.iki.ede.autolock"
-    compileSdk = 36
-    defaultConfig { minSdk = 26 }
-}

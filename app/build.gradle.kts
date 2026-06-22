@@ -22,7 +22,6 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.org.jetbrains.kotlin.android)
     kotlin("plugin.serialization")
     // unfortunately for Logger.er module, firebase plugin is not supported in library, only in main build
     id("com.google.gms.google-services") // Firebase crashlytics
@@ -126,7 +125,7 @@ android {
 
     sourceSets["main"].manifest.srcFile("src/main/AndroidManifest.xml")
     sourceSets["debug"].manifest.srcFile("src/debug/AndroidManifest.xml")
-    sourceSets["test"].java.srcDir("../crypto/src/testFixtures/kotlin")
+    sourceSets["test"].kotlin.srcDir("../crypto/src/testFixtures/kotlin")
 
     // See https://developer.android.com/build/build-variants
     buildTypes {
@@ -297,7 +296,6 @@ dependencies {
     testImplementation(libs.kxml2)
     testImplementation(libs.mockk)
     testImplementation(project(":crypto"))
-    testImplementation(testFixtures(project(":crypto")))
     testImplementation(project(":app"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -326,29 +324,17 @@ tasks.configureEach {
 
         "assembleDebug" -> {
             // UNIT TESTS
-            dependsOn(
-                "testDebugUnitTest",
-                ":app:backup:testDebugUnitTest",
-                ":app:cryptoobjects:testDebugUnitTest",
-                ":app:datamodel:testDebugUnitTest",
-                ":app:db:testDebugUnitTest",
-                ":app:preferences:testDebugUnitTest",
-                ":app:theme:testDebugUnitTest",
-                ":autolock:testDebugUnitTest",
-                ":categorypager:testDebugUnitTest",
-                ":clipboardutils:testDebugUnitTest",
-                ":crypto:testDebugUnitTest",
-                ":datepicker:testDebugUnitTest",
-                ":dateutils:testDebugUnitTest",
-                ":gpm:testDebugUnitTest",
-                ":gpmdatamodel:testDebugUnitTest",
-                ":gpmui:testDebugUnitTest",
-                ":hibp:testDebugUnitTest",
-                ":logger:testDebugUnitTest",
-                ":notifications:testDebugUnitTest",
-                ":safephoto:testDebugUnitTest",
-                ":statemachine:testDebugUnitTest",
-            )
+            dependsOn("testDebugUnitTest")
+            val assembleDebugTask = this
+            rootProject.subprojects {
+                if (path != project.path) {
+                    tasks.matching {
+                        name == "testAndroidHostTest" || name == "testDebugUnitTest"
+                    }.configureEach {
+                        assembleDebugTask.dependsOn(this)
+                    }
+                }
+            }
             // INSTRUMENTED TESTS, takes long time
             //task.dependsOn("connectedAndroidTest")
         }
@@ -407,7 +393,7 @@ tasks.withType<Test> {
 tasks.register("fullBuild") {
     dependsOn(
         "compileReleaseKotlin",
-        "compileReleaseUnitTestKotlin",
+        "compileDebugUnitTestKotlin",
         "compileDebugAndroidTestKotlin"
     )
 }
