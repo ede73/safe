@@ -15,7 +15,6 @@ object KeystoreHelperMock4UnitTests {
         val mockKeyStoreHelper = mockkClass(IKeyStoreHelper::class)
         KeyStoreHelperFactory.provideKeyStoreHelper = mockKeyStoreHelper
         every { KeyStoreHelperFactory.getKeyStoreHelper } returns { mockKeyStoreHelper }
-        val encryptionInput = slot<ByteArray>()
         val fakeIV: ByteArray =
             generateSequence<Byte>(1) { (it + 1).toByte() }
                 .take(CipherUtilities.IV_LENGTH).toList().toByteArray()

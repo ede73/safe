@@ -15,7 +15,7 @@ import fi.iki.ede.safe.ui.composable.CategoryList
 import fi.iki.ede.safe.ui.composable.SiteEntryList
 import fi.iki.ede.preferences.Preferences
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -76,6 +76,7 @@ object DesktopSettings {
 
     fun isBiometricsRegistered(): Boolean = Preferences.isDesktopBiometricsRegistered()
 
+    @Suppress("DEPRECATION")
     fun getEncryptedMasterKey(): IVCipherText? {
         val base64Str = Preferences.getDesktopBioCipher() ?: return null
         return runCatching {
@@ -84,6 +85,7 @@ object DesktopSettings {
         }.getOrNull()
     }
 
+    @Suppress("DEPRECATION")
     fun registerBiometrics(encryptedMasterKey: IVCipherText) {
         try {
             val combined = encryptedMasterKey.combineIVAndCipherText()
@@ -1094,7 +1096,7 @@ fun LoginScreen() {
                                 Button(
                                     onClick = {
                                         if (editDesc.isNotBlank()) {
-                                            val updated = DecryptableSiteEntry(activeSiteEntry.categoryId ?: 0L).apply {
+                                            val updated = DecryptableSiteEntry(activeSiteEntry.categoryId).apply {
                                                 this.id = activeSiteEntry.id
                                                 this.description = editDesc.encrypt()
                                                 this.username = editUser.encrypt()

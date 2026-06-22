@@ -25,6 +25,7 @@ fun setDatabaseContext(context: Context) {
     appContext = context.applicationContext
 }
 
+@Suppress("DEPRECATION")
 fun runLegacyDatabaseMigration(context: Context, databaseName: String = DBHelper.DATABASE_NAME) {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     val migrationDone = prefs.getBoolean(PREF_ROOM_MIGRATION_DONE, false)
@@ -231,14 +232,17 @@ actual fun getPhotoDir(): Path {
     return (context.filesDir.absolutePath.toPath() / "photos")
 }
 
+@Suppress("DEPRECATION")
 actual fun beginTransaction(database: SafeDatabase) {
     database.beginTransaction()
 }
 
+@Suppress("DEPRECATION")
 actual fun setTransactionSuccessful(database: SafeDatabase) {
     database.setTransactionSuccessful()
 }
 
+@Suppress("DEPRECATION")
 actual fun endTransaction(database: SafeDatabase) {
     database.endTransaction()
 }

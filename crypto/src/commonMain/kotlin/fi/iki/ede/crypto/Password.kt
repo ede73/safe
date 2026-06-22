@@ -15,6 +15,7 @@ import fi.iki.ede.crypto.support.DisallowedFunctions
  *
  * Avoid using, prefer SaltedEncryptedPassword
  */
+@ConsistentCopyVisibility
 data class Password internal constructor(
     // TODO: make private and only allow getting EncryptedPassword out of it(or salted password)
     val utf8password: CharArray

@@ -53,6 +53,7 @@ fun SafeThemeSurface(
     }
 }
 
+@Suppress("DEPRECATION")
 @Composable
 fun SafeTheme(
     content: @Composable () -> Unit

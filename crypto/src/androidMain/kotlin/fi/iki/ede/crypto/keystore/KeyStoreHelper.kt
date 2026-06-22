@@ -68,7 +68,7 @@ class KeyStoreHelper(private val keyStore: KeyStore) : IKeyStoreHelper {
 //    }
 
     private fun getSecretKey(): KMPKey =
-        keyStore.getKey(KEY_SECRET_MASTERKEY, null)!! as KMPKey
+        keyStore.getKey(KEY_SECRET_MASTERKEY, null)!!
 
     private fun getAESCipher(): Cipher {
         return try {
@@ -117,7 +117,7 @@ class KeyStoreHelper(private val keyStore: KeyStore) : IKeyStoreHelper {
     }
 
     override fun getOrCreateBiokey(): KMPKey =
-        keyStore.getKey(KEY_BIOKEY, null)?.let { return it as KMPKey }
+        keyStore.getKey(KEY_BIOKEY, null)?.let { return it }
             ?: KeyGenParameterSpec.Builder(
                 KEY_BIOKEY,
                 KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT

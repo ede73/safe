@@ -35,6 +35,7 @@ object NavigationBarHelper {
         }
     }
 
+    @Suppress("DEPRECATION")
     private fun hideNavigationBar(window: Window) {
         val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {

@@ -69,7 +69,7 @@ fun PasswordTextField(
         onValueChange = {
             password = if (isPasswordZoomed.value) splitPassword(it, splitAt) else it
             val joined = if (isPasswordZoomed.value) joinPassword(password) else password
-            onValueChange(Password(joined.text.encodeToByteArray()))
+            onValueChange(Password(joined.text))
         },
         label = { Text(label) },
         visualTransformation = showOrObfuscatePassword(

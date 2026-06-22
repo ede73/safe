@@ -109,14 +109,14 @@ internal fun LoginScreenCompose(
                     statusMessage = statusMessage,
                     onCreateVault = { pwd, registerBio ->
                         BiometricsActivity.setBiometricEnabled(registerBio)
-                        val accepted = goodPasswordEntered(LoginStyle.FIRST_TIME_LOGIN_CLEAR_DATABASE, Password(pwd.toByteArray()))
+                        val accepted = goodPasswordEntered(LoginStyle.FIRST_TIME_LOGIN_CLEAR_DATABASE, Password(pwd))
                         if (!accepted) {
                             statusMessage = context.getString(R.string.failed_to_create_vault)
                         }
                     },
                     onUnlock = { pwd, registerBio ->
                         BiometricsActivity.setBiometricEnabled(registerBio)
-                        val accepted = goodPasswordEntered(LoginStyle.EXISTING_LOGIN, Password(pwd.toByteArray()))
+                        val accepted = goodPasswordEntered(LoginStyle.EXISTING_LOGIN, Password(pwd))
                         if (!accepted) {
                             statusMessage = context.getString(R.string.login_invalid_password)
                         }

@@ -33,14 +33,14 @@ fun ExtensionsEditor(
     extensions: List<String>,
     done: (List<String?>) -> Unit = {},
 ) {
-    var showDialog by remember { mutableStateOf(true) }
+    val showDialog = remember { mutableStateOf(true) }
     val itemsList = remember { mutableStateListOf(*extensions.toTypedArray()) }
     var textFieldValue by remember { mutableStateOf("") }
     var selectedItem by remember { mutableIntStateOf(-1) }
 
-    if (showDialog) {
+    if (showDialog.value) {
         AlertDialog(
-            onDismissRequest = { showDialog = false },
+            onDismissRequest = { showDialog.value = false },
             title = { Text("Extensions") },
             text = {
                 Row {
@@ -115,7 +115,7 @@ fun ExtensionsEditor(
                     onClick = {
                         // return edits in EXACT order present in the list
                         done(itemsList)
-                        showDialog = false
+                        showDialog.value = false
                     }
                 ) {
                     Text(stringResource(R.string.extension_preferences_apply))
@@ -123,7 +123,7 @@ fun ExtensionsEditor(
             },
             dismissButton = {
                 Button(
-                    onClick = { showDialog = false }
+                    onClick = { showDialog.value = false }
                 ) {
                     Text(stringResource(R.string.extension_preferences_cancel))
                 }

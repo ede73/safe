@@ -33,6 +33,7 @@ subprojects {
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask<*>>().configureEach {
         compilerOptions {
             freeCompilerArgs.add("-opt-in=kotlin.ExperimentalStdlibApi")
+            freeCompilerArgs.add("-Xexpect-actual-classes")
         }
     }
     tasks.withType<KotlinCompile>().configureEach {

@@ -139,7 +139,7 @@ fun reconvertDatabase(pwd: String, completed: () -> Unit) {
 
     val pwds = db.fetchAllRows()
     val newPwds = pwds.map { pwd ->
-        DecryptableSiteEntry(pwd.categoryId!!).apply {
+        DecryptableSiteEntry(pwd.categoryId).apply {
             id = pwd.id
             categoryId = pwd.categoryId
             description = reEncrypt(pwd.description, existingUnencryptedMasterKey, unencryptedKey)

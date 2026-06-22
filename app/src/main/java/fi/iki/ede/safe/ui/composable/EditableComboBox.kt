@@ -50,6 +50,7 @@ import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.theme.SafeThemeSurface
 import kotlin.time.ExperimentalTime
 
+@Suppress("DEPRECATION")
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 @ExperimentalTime

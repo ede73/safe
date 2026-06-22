@@ -3,6 +3,7 @@ package fi.iki.ede.gpm.model
 import fi.iki.ede.crypto.support.DisallowedFunctions
 import fi.iki.ede.gpm.changeset.calculateSha128
 
+@ConsistentCopyVisibility
 data class IncomingGPM private constructor(
     val name: String,
     val url: String,

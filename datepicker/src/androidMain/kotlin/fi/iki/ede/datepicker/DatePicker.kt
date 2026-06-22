@@ -20,6 +20,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.dateutils.toLocalDate
 import kotlinx.datetime.LocalDate
+import kotlinx.datetime.Month
+import kotlinx.datetime.number
 import kotlin.time.Clock.System.now
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -53,10 +55,10 @@ fun DatePicker(
         mutableStateOf(quickFormat(utcInstant, "%04d", "----") { it.toLocalDate().year })
     }
     val selectedMonth = remember(utcInstant) {
-        mutableStateOf(quickFormat(utcInstant, "%02d", "--") { it.toLocalDate().monthNumber })
+        mutableStateOf(quickFormat(utcInstant, "%02d", "--") { it.toLocalDate().month.number })
     }
     val selectedDay = remember(utcInstant) {
-        mutableStateOf(quickFormat(utcInstant, "%02d", "--") { it.toLocalDate().dayOfMonth })
+        mutableStateOf(quickFormat(utcInstant, "%02d", "--") { it.toLocalDate().day })
     }
     val days = remember(selectedYear, selectedDay) {
         derivedStateOf {
@@ -128,8 +130,8 @@ private fun hasValueChanged(
 ) {
     val localDate = utcInstant?.toLocalDate()
     if (selectedYear.value != (localDate?.year ?: "----") &&
-        (selectedMonth.value != (localDate?.monthNumber ?: "--")) &&
-        (selectedDay.value != (localDate?.dayOfMonth ?: "--"))
+        (selectedMonth.value != (localDate?.month?.number ?: "--")) &&
+        (selectedDay.value != (localDate?.day ?: "--"))
     ) {
         val selectedInstant = try {
             if (selectedYear.value.contains("-") ||

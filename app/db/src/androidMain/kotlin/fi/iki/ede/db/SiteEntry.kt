@@ -1,5 +1,6 @@
 package fi.iki.ede.db
 
+@Suppress("DEPRECATION")
 object SiteEntry : Table {
     override val tableName: String
         get() = "passwords"

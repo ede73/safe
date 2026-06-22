@@ -132,7 +132,7 @@ fun SiteEntryRow(
             )
         }
         if (displayMoveDialog.value && onMoveSiteEntry != null) {
-            val filteredCategories = categoriesState.filterNot { it.id == siteEntry.categoryId!! }
+            val filteredCategories = categoriesState.filterNot { it.id == siteEntry.categoryId }
                 .sortedBy { it.plainName.lowercase() }
 
             MoveSiteEntryDialog(

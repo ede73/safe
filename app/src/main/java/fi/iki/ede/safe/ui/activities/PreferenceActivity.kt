@@ -113,6 +113,7 @@ class PreferenceActivity :
             }
         }
 
+        @Suppress("DEPRECATION")
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             preferenceManager.preferenceDataStore = DataStorePreferenceBridge(Preferences.sharedPreferences as DataStoreSharedPreferences)
             addPreferencesFromResource(prefR.xml.preferences)

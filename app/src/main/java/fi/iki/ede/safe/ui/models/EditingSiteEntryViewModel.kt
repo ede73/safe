@@ -8,7 +8,7 @@ import fi.iki.ede.db.DBID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlin.time.ExperimentalTime
 
 // This will hold COPY of the decryptable password for purposes of editing
@@ -24,7 +24,7 @@ open class EditingSiteEntryViewModel : ViewModel() {
     fun editSiteEntry(siteEntry: DecryptableSiteEntry) {
         originalPassword = siteEntry.password
         _editableSiteEntryState.value = EditableSiteEntry(
-            siteEntry.categoryId as DBID,
+            siteEntry.categoryId,
             siteEntry.id as DBID,
             siteEntry.cachedPlainDescription,
             siteEntry.plainWebsite,
