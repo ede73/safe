@@ -12,9 +12,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: set up JDK 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '21'
           distribution: 'zulu'
@@ -34,8 +34,7 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Build with Gradle
-        # disabled ./gradlew build until KMP completion
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug :desktop:test
       - name: Upload test reports
         if: failure()
         uses: actions/upload-artifact@v4
