@@ -226,24 +226,25 @@ private fun doesUserNameOrDomainNameMatch(
     }
     val incomingUrl = parseUrl(incomingGPM.url.toLowerCasedTrimmedString())
     val savedUrl = parseUrl(scoredSavedGPM.item.cachedDecryptedUrl.toLowerCasedTrimmedString())
-    val bothHaveDomains = (incomingUrl != null && savedUrl != null)
 
-    val domainMatchSimilarityScore = if (bothHaveDomains) findSimilarity(
-        incomingUrl!!.host.toLowerCasedTrimmedString(),
-        savedUrl!!.host.toLowerCasedTrimmedString(),
-    ) else 0.0
-
-    if (domainMatchSimilarityScore > scoringConfig.urlDomainMatchThresholdIfUsernameMatches) {
-        // username AND the domain part parsed from URL matches
-        // including call site name (similarity) match, let's increase odds by 10%
-        // so username matches as well as URL domain part, including fact that both have URL set
-        return ScoredMatch(
-            max(
-                1.0,
-                scoredSavedGPM.matchScore + scoringConfig.scoreIncrementIfUsernameAndUrlDomainMatch
-            ),
-            scoredSavedGPM.item
+    if (incomingUrl != null && savedUrl != null) {
+        val domainMatchSimilarityScore = findSimilarity(
+            incomingUrl.host.toLowerCasedTrimmedString(),
+            savedUrl.host.toLowerCasedTrimmedString(),
         )
+
+        if (domainMatchSimilarityScore > scoringConfig.urlDomainMatchThresholdIfUsernameMatches) {
+            // username AND the domain part parsed from URL matches
+            // including call site name (similarity) match, let's increase odds by 10%
+            // so username matches as well as URL domain part, including fact that both have URL set
+            return ScoredMatch(
+                max(
+                    1.0,
+                    scoredSavedGPM.matchScore + scoringConfig.scoreIncrementIfUsernameAndUrlDomainMatch
+                ),
+                scoredSavedGPM.item
+            )
+        }
     }
     return scoredSavedGPM
 }
