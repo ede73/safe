@@ -51,7 +51,7 @@ subprojects {
         val libraryExtension =
             extensions.getByType(com.android.build.api.dsl.LibraryExtension::class.java)
         libraryExtension.apply {
-            compileSdk = 36
+            compileSdk = 37
             defaultConfig {
                 minSdk = 26
                 testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -82,7 +82,7 @@ subprojects {
         val appExtension =
             extensions.getByType(com.android.build.api.dsl.ApplicationExtension::class.java)
         appExtension.apply {
-            compileSdk = 36
+            compileSdk = 37
             defaultConfig {
                 minSdk = 26
                 testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -112,7 +112,7 @@ subprojects {
         val dynamicFeatureExtension =
             extensions.getByType(com.android.build.api.dsl.DynamicFeatureExtension::class.java)
         dynamicFeatureExtension.apply {
-            compileSdk = 36
+            compileSdk = 37
             defaultConfig {
                 minSdk = 26
             }
@@ -164,21 +164,22 @@ subprojects {
 
         val kotlinExtension =
             extensions.getByType(org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension::class.java)
-        kotlinExtension.targets.withType(com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryTarget::class.java).configureEach {
-            compileSdk = 36
-            minSdk = 26
-            androidResources {
-                enable = true
-            }
-            val moduleProguardRules = project.file("proguard-rules.pro")
-            if (moduleProguardRules.exists()) {
-                optimization {
-                    consumerKeepRules.publish = true
-                    consumerKeepRules.files.add(moduleProguardRules)
+        kotlinExtension.targets.withType(com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryTarget::class.java)
+            .configureEach {
+                compileSdk = 37
+                minSdk = 26
+                androidResources {
+                    enable = true
                 }
-                println("Applied module-specific 'proguard-rules.pro' as consumer rules to :${project.name}")
+                val moduleProguardRules = project.file("proguard-rules.pro")
+                if (moduleProguardRules.exists()) {
+                    optimization {
+                        consumerKeepRules.publish = true
+                        consumerKeepRules.files.add(moduleProguardRules)
+                    }
+                    println("Applied module-specific 'proguard-rules.pro' as consumer rules to :${project.name}")
+                }
             }
-        }
     }
 }
 
@@ -188,4 +189,4 @@ configurations.all {
             useVersion("5.11.3") // match your BOM version exactly
         }
     }
-}
+}

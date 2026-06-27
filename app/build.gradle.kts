@@ -125,7 +125,7 @@ android {
 
     sourceSets["main"].manifest.srcFile("src/main/AndroidManifest.xml")
     sourceSets["debug"].manifest.srcFile("src/debug/AndroidManifest.xml")
-    sourceSets["test"].kotlin.srcDir("../crypto/src/testFixtures/kotlin")
+    sourceSets["test"].kotlin.directories += "../crypto/src/testFixtures/kotlin"
 
     // See https://developer.android.com/build/build-variants
     buildTypes {
@@ -231,9 +231,6 @@ android {
     }
 }
 
-composeCompiler {
-    enableStrongSkippingMode = true
-}
 
 dependencies {
     implementation(kotlin("reflect"))
