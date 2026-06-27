@@ -1,7 +1,7 @@
 package fi.iki.ede.crypto
 
-import org.junit.jupiter.api.Assertions.assertArrayEquals
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
+import kotlin.test.assertContentEquals
 
 class EncodingTests {
 
@@ -16,9 +16,9 @@ class EncodingTests {
 
         val password = "TässäpäSalasana-كلمة المرور"
         val p1 = Password(password.toCharArray())
-        val p2 = Password(password.toByteArray())
+        val p2 = Password(password.encodeToByteArray())
         val p3 = Password(password)
-        assertArrayEquals(p1.utf8password, p2.utf8password)
-        assertArrayEquals(p1.utf8password, p3.utf8password)
+        assertContentEquals(p1.utf8password, p2.utf8password)
+        assertContentEquals(p1.utf8password, p3.utf8password)
     }
 }

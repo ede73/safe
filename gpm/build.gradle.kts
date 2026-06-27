@@ -46,9 +46,6 @@ kotlin {
             kotlin.srcDir("../crypto/src/testFixtures/kotlin")
             dependencies {
                 implementation(kotlin("test"))
-                implementation(project.dependencies.platform(libs.junit5.bom))
-                implementation(libs.junit5.jupiter)
-                implementation(libs.mockk)
                 implementation(project(":logger"))
             }
         }
