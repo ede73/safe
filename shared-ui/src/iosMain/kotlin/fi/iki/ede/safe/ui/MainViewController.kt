@@ -354,7 +354,19 @@ fun MainViewController(): UIViewController {
                                     onPasswordChange = { pass = it.utf8password.concatToString() },
                                     note = note,
                                     onNoteChange = { note = it.utf8password.concatToString() },
-                                    onCopyToClipboard = { },
+                                    onOpenBrowser = { browserUrl ->
+                                        val nsUrl = platform.Foundation.NSURL.URLWithString(browserUrl)
+                                        if (nsUrl != null) {
+                                            platform.UIKit.UIApplication.sharedApplication.openURL(
+                                                nsUrl,
+                                                options = emptyMap<Any?, Any?>(),
+                                                completionHandler = null
+                                            )
+                                        }
+                                    },
+                                    onCopyToClipboard = { text ->
+                                        platform.UIKit.UIPasteboard.generalPasteboard.string = text
+                                    },
                                     bottomBarContent = {
                                         Button(
                                             onClick = {
