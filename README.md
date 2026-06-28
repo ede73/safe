@@ -1,4 +1,4 @@
-# Password Safe
+# Password Safe (Kotlin Multiplatform now, Android, Desktop, iOS)
 
 This is a simple, as secure as possible, quick, nifty project to store all my passwords, credit card
 details, what not PIIs I need to access every now and then, just a fingerprint away.
@@ -55,12 +55,11 @@ You need:
     - content of those is irrelevant, only used during unit/instrumentation testing
 
 Actual client is in [playstore](https://play.google.com/store/apps/details?id=fi.iki.ede.safe&hl=en_US), but for sake
-of crypto export regulations, I'm keeping it private currently.
+of crypto export regulations, I'm keeping it private currently. [Android screenshots](https://github.com/ede73/safe/tree/main/playstore/screenshots/phone)
 
 Inspiration from ancient (and insecure) OISafe
 
 Check docs:
-
 - [Crypto](docs/Crypto.md) - short summary of cipher & details
 - [Export format](docs/ExportFormat.md) - export file is documented here, with OpenSSL CLI
   instructions
