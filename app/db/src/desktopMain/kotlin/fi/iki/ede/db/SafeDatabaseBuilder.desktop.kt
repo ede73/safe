@@ -11,7 +11,8 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 
 actual fun getDatabaseBuilder(databaseName: String): RoomDatabase.Builder<SafeDatabase> {
-    val dbPath = FileSystem.SYSTEM.canonicalize("$databaseName.db".toPath())
+    val parent = FileSystem.SYSTEM.canonicalize(".".toPath())
+    val dbPath = parent / "$databaseName.db"
     return Room.databaseBuilder<SafeDatabase>(
         name = dbPath.toString()
     ).setDriver(BundledSQLiteDriver())
