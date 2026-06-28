@@ -8,7 +8,6 @@ kotlin {
         namespace = "fi.iki.ede.backup"
     }
     jvm("desktop")
-    iosX64()
     iosArm64()
     iosSimulatorArm64()
 
@@ -22,7 +21,6 @@ kotlin {
                 implementation(project(":gpm"))
                 implementation(project(":logger"))
                 implementation(libs.okio)
-                compileOnly(libs.kxml2)
             }
         }
         val androidMain by getting {
@@ -35,7 +33,6 @@ kotlin {
         }
         val desktopMain by getting {
             dependencies {
-                implementation(libs.kxml2)
             }
         }
     }

@@ -34,9 +34,26 @@ import fi.iki.ede.safe.ui.composable.getString
 import platform.UIKit.UIViewController
 import fi.iki.ede.crypto.support.encrypt
 import kotlinx.coroutines.launch
+import fi.iki.ede.backup.RestoreDatabase
+import fi.iki.ede.db.SiteEntryGPMJoin
+import kotlinx.coroutines.runBlocking
+import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.usePinned
+import kotlinx.cinterop.ExperimentalForeignApi
+import platform.UIKit.UIDocumentPickerViewController
+import platform.UIKit.UIDocumentPickerDelegateProtocol
+import platform.UIKit.UIDocumentPickerMode
+import platform.Foundation.NSURL
+import platform.Foundation.NSData
+import platform.Foundation.dataWithContentsOfURL
+import platform.darwin.NSObject
+import platform.posix.memcpy
+import androidx.compose.ui.draw.rotate
 
 @OptIn(ExperimentalMaterial3Api::class)
-fun MainViewController(): UIViewController = ComposeUIViewController {
+fun MainViewController(): UIViewController {
+    lateinit var viewController: UIViewController
+    viewController = ComposeUIViewController {
     if (!Preferences.isDataStoreInitialized()) {
         Preferences.initialize()
     }
@@ -66,6 +83,27 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
 
     // Dialog state for adding Category
     var showAddCategoryDialog by remember { mutableStateOf(false) }
+
+    // Backup restore states
+    var showImportPasswordDialog by remember { mutableStateOf(false) }
+    var importedBackupXml by remember { mutableStateOf<String?>(null) }
+    var activeDelegate by remember { mutableStateOf<Any?>(null) }
+
+    val launchDocumentPicker = remember {
+        { onFilePicked: (String) -> Unit ->
+            val delegate = XMLDocumentPickerDelegate { content ->
+                activeDelegate = null
+                onFilePicked(content)
+            }
+            activeDelegate = delegate
+            val picker = UIDocumentPickerViewController(
+                documentTypes = listOf("public.xml", "public.text", "public.data"),
+                inMode = UIDocumentPickerMode.UIDocumentPickerModeImport
+            )
+            picker.delegate = delegate
+            viewController.presentViewController(picker, animated = true, completion = null)
+        }
+    }
 
     val categories = remember(refreshTrigger, isLoggedIn) {
         if (isLoggedIn) db.fetchAllCategoryRows() else emptyList()
@@ -128,6 +166,12 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
                         } catch (e: Exception) {
                             statusMessage = "Invalid password!"
                         }
+                    },
+                    onImportBackup = {
+                        launchDocumentPicker { content ->
+                            importedBackupXml = content
+                            showImportPasswordDialog = true
+                        }
                     }
                 )
             }
@@ -168,6 +212,20 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
                                     }
                                 ) {
                                     Icon(Icons.Default.Add, contentDescription = "Add Category")
+                                }
+                                IconButton(
+                                    onClick = {
+                                        launchDocumentPicker { content ->
+                                            importedBackupXml = content
+                                            showImportPasswordDialog = true
+                                        }
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.ExitToApp,
+                                        contentDescription = "Import Backup",
+                                        modifier = Modifier.rotate(90f)
+                                    )
                                 }
                             } else if (activeCategory != null && activeSiteEntry == null) {
                                 IconButton(
@@ -322,7 +380,123 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
                             }
                         )
                     }
+
+                    if (showImportPasswordDialog && importedBackupXml != null) {
+                        var backupPasswordInput by remember { mutableStateOf("") }
+                        var importErrorMsg by remember { mutableStateOf("") }
+                        AlertDialog(
+                            onDismissRequest = {
+                                showImportPasswordDialog = false
+                                importedBackupXml = null
+                                importErrorMsg = ""
+                            },
+                            title = { Text("Restore XML Backup") },
+                            text = {
+                                Column {
+                                    Text("Enter the password that was used to encrypt this backup:")
+                                    Spacer(Modifier.height(8.dp))
+                                    TextField(
+                                        value = backupPasswordInput,
+                                        onValueChange = { backupPasswordInput = it },
+                                        placeholder = { Text("Backup Password") },
+                                        singleLine = true
+                                    )
+                                    if (importErrorMsg.isNotEmpty()) {
+                                        Spacer(Modifier.height(8.dp))
+                                        Text(importErrorMsg, color = MaterialTheme.colorScheme.error)
+                                    }
+                                }
+                            },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            try {
+                                                val restorer = RestoreDatabase()
+                                                restorer.doRestore(
+                                                    backupSource = okio.Buffer().writeUtf8(importedBackupXml!!),
+                                                    userPassword = Password(backupPasswordInput),
+                                                    dbHelper = db,
+                                                    lastBackupDone = null,
+                                                    linkSaveGPMAndSiteEntry = { siteId, gpmId ->
+                                                        runBlocking {
+                                                            db.database.siteEntryGPMJoinDao().insert(SiteEntryGPMJoin(siteId, gpmId))
+                                                        }
+                                                    },
+                                                    addSavedGPM = { savedGpm ->
+                                                        runBlocking {
+                                                            db.database.gpmDao().insert(savedGpm)
+                                                        }
+                                                    },
+                                                    passwordLogin = { password ->
+                                                        val (salt, encryptedKey) = db.fetchSaltAndEncryptedMasterKey()
+                                                        val saltedPassword = SaltedPassword(salt, password)
+                                                        KeyStoreHelper.importExistingEncryptedMasterKey(saltedPassword, encryptedKey)
+                                                        true
+                                                    },
+                                                    reportProgress = { _, _, msg ->
+                                                        if (msg != null) {
+                                                            statusMessage = msg
+                                                        }
+                                                    },
+                                                    verifyUserWantForOldBackup = { _, _ -> true }
+                                                )
+                                                isFirstTimeLogin = false
+                                                isLoggedIn = true
+                                                showImportPasswordDialog = false
+                                                importedBackupXml = null
+                                                refreshTrigger++
+                                            } catch (e: Exception) {
+                                                importErrorMsg = "Failed to restore: ${e.message}"
+                                            }
+                                        }
+                                    }
+                                ) {
+                                    Text("Restore")
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(
+                                    onClick = {
+                                        showImportPasswordDialog = false
+                                        importedBackupXml = null
+                                        importErrorMsg = ""
+                                    }
+                                ) {
+                                    Text("Cancel")
+                                }
+                            }
+                        )
+                    }
                 }
+            }
+        }
+    }
+    }
+    return viewController
+}
+
+@OptIn(ExperimentalForeignApi::class)
+class XMLDocumentPickerDelegate(
+    private val onFilePicked: (String) -> Unit
+) : NSObject(), UIDocumentPickerDelegateProtocol {
+    override fun documentPicker(controller: UIDocumentPickerViewController, didPickDocumentsAtURLs: List<*>) {
+        val url = didPickDocumentsAtURLs.firstOrNull() as? NSURL ?: return
+        val secured = url.startAccessingSecurityScopedResource()
+        try {
+            val nsData = NSData.dataWithContentsOfURL(url)
+            if (nsData != null) {
+                val bytes = ByteArray(nsData.length.toInt())
+                if (nsData.length > 0u) {
+                    bytes.usePinned { pinned ->
+                        memcpy(pinned.addressOf(0), nsData.bytes, nsData.length)
+                    }
+                }
+                onFilePicked(bytes.decodeToString())
+            }
+        } finally {
+            if (secured) {
+                url.stopAccessingSecurityScopedResource()
             }
         }
     }
