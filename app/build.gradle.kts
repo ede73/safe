@@ -78,6 +78,7 @@ abstract class GitRevListCountValueSource : ValueSource<String, ValueSourceParam
 val gitRevListProvider = providers.of(GitRevListCountValueSource::class) {}
 
 android {
+    compileSdk = 37
 //    lint {
 //        // Only check for issues from your custom linter
 //        checkOnly.add("DisallowedImplicitToString") // Replace with your issue ID
@@ -162,6 +163,15 @@ android {
             }
             buildConfigField("String", "GIT_COMMIT_HASH", "\"${gitCommitHash}\"")
         }
+
+        create("releaseEmulator") {
+            initWith(getByName("release"))
+            matchingFallbacks += listOf("release")
+            signingConfig = signingConfigs.getByName("debug")
+            // This build type allows testing the release version (minified/obfuscated)
+            // on an emulator without needing production keys.
+            // Note: Cannot add applicationIdSuffix here because Dynamic Features don't support it.
+        }
         debug {
             applicationIdSuffix = ".debug"
             buildConfigField("String", "GIT_COMMIT_HASH", "\"${gitCommitHash}\"")
@@ -203,6 +213,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     testOptions {
