@@ -13,6 +13,8 @@ kotlin {
         namespace = "fi.iki.ede.db"
     }
     jvm("desktop")
+    iosArm64()
+    iosSimulatorArm64()
 
     sourceSets {
         val commonMain by getting {
@@ -45,4 +47,9 @@ configurations.matching { it.name == "kspAndroid" }.configureEach {
 configurations.matching { it.name == "kspDesktop" }.configureEach {
     project.dependencies.add(this.name, libs.androidx.room.compiler)
 }
+
+configurations.matching { it.name.startsWith("kspIos") }.configureEach {
+    project.dependencies.add(this.name, libs.androidx.room.compiler)
+}
+
 

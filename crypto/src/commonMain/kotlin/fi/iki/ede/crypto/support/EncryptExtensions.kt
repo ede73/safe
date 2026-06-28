@@ -6,10 +6,10 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 
 // Addressed PR12 comment: Restored EncryptExtensions.kt for encryption helper extensions
 fun Password.encrypt(encrypter: (ByteArray) -> IVCipherText = KeyStoreHelperFactory.getKeyStoreHelper().encrypterProvider) =
-    encrypter(String(this.utf8password).toByteArray())
+    encrypter(this.utf8password.concatToString().encodeToByteArray())
 
 fun String.encrypt(encrypter: (ByteArray) -> IVCipherText = KeyStoreHelperFactory.getKeyStoreHelper().encrypterProvider) =
-    encrypter(this.trim().toByteArray())
+    encrypter(this.trim().encodeToByteArray())
 
 fun ByteArray.encrypt(encrypter: (ByteArray) -> IVCipherText = KeyStoreHelperFactory.getKeyStoreHelper().encrypterProvider) =
     encrypter(this)
