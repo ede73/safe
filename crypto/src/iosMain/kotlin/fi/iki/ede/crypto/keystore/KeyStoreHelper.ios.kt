@@ -33,11 +33,29 @@ class KeyStoreHelper(
     }
 
     override var decrypterProviderWithKey: (IVCipherText, KMPKey) -> ByteArray = { encrypted, key ->
-        AES.decryptAesCbc(encrypted.cipherText, key.getEncoded(), encrypted.iv, Padding.PKCS7Padding)
+        if (encrypted.iv.isEmpty() || encrypted.cipherText.isEmpty()) {
+            byteArrayOf()
+        } else {
+            try {
+                AES.decryptAesCbc(encrypted.cipherText, key.getEncoded(), encrypted.iv, Padding.PKCS7Padding)
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                byteArrayOf()
+            }
+        }
     }
     
     override var decrypterProvider: (IVCipherText) -> ByteArray = { encrypted ->
-        AES.decryptAesCbc(encrypted.cipherText, masterKey.values, encrypted.iv, Padding.PKCS7Padding)
+        if (encrypted.iv.isEmpty() || encrypted.cipherText.isEmpty()) {
+            byteArrayOf()
+        } else {
+            try {
+                AES.decryptAesCbc(encrypted.cipherText, masterKey.values, encrypted.iv, Padding.PKCS7Padding)
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                byteArrayOf()
+            }
+        }
     }
     
     override var encrypterProviderWithKey: (ByteArray, KMPKey) -> IVCipherText = { plaintext, key ->
