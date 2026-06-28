@@ -1,11 +1,11 @@
 package fi.iki.ede.crypto
 
-import org.junit.jupiter.api.Assertions.assertArrayEquals
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotEquals
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
+import kotlin.test.assertContentEquals
 
 class IVCipherTextTest {
 
@@ -15,8 +15,8 @@ class IVCipherTextTest {
         val cipherText = byteArrayOf(4, 5, 6)
         val ivCipherText = IVCipherText(iv, cipherText)
 
-        assertArrayEquals(iv, ivCipherText.iv)
-        assertArrayEquals(cipherText, ivCipherText.cipherText)
+        assertContentEquals(iv, ivCipherText.iv)
+        assertContentEquals(cipherText, ivCipherText.cipherText)
     }
 
     @Test

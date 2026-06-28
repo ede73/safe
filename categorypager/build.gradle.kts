@@ -8,6 +8,14 @@ android {
     buildFeatures {
         compose = true
     }
+
+    buildTypes {
+        create("releaseEmulator") {
+            initWith(getByName("release"))
+            matchingFallbacks += listOf("release")
+        }
+    }
+
     testOptions {
         unitTests.isReturnDefaultValues = true
         packaging {

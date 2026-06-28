@@ -27,7 +27,7 @@ data class Password internal constructor(
 
     @Deprecated("Please don't use, there should be no need to convert strings to bytes")
     constructor(utf8PasswordAsByteArray: ByteArray) : this(
-        String(utf8PasswordAsByteArray, Charsets.UTF_8).toCharArray()
+        utf8PasswordAsByteArray.decodeToString().toCharArray()
     )
 
     constructor(utf8PasswordAsString: String) : this(

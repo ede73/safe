@@ -69,9 +69,7 @@ object DesktopResources {
         }
     }
 
-    fun getString(id: String): String {
-        return strings[id] ?: getFallbackString(id)
-    }
+    fun getString(id: String): String = strings[id] ?: getFallbackString(id)
 
     fun getPluralString(id: String, quantity: Int): String {
         val itemMap = plurals[id]
@@ -116,18 +114,12 @@ object DesktopResources {
 }
 
 @Composable
-actual fun getString(id: String): String {
-    return DesktopResources.getString(id)
-}
+actual fun getString(id: String): String = DesktopResources.getString(id)
 
 @Composable
-actual fun getString(id: String, formatArg: String): String {
-    val raw = DesktopResources.getString(id)
-    return raw.replace("%s", formatArg).replace("%1\$s", formatArg)
-}
+actual fun getString(id: String, formatArg: String): String = 
+    DesktopResources.getString(id).replace("%s", formatArg).replace("%1\$s", formatArg)
 
 @Composable
-actual fun getPluralString(id: String, quantity: Int, formatArg: Int): String {
-    val raw = DesktopResources.getPluralString(id, quantity)
-    return raw.replace("%d", formatArg.toString()).replace("%1\$d", formatArg.toString())
-}
+actual fun getPluralString(id: String, quantity: Int, formatArg: Int): String = 
+    DesktopResources.getPluralString(id, quantity).replace("%d", formatArg.toString()).replace("%1\$d", formatArg.toString())

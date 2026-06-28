@@ -78,6 +78,7 @@ abstract class GitRevListCountValueSource : ValueSource<String, ValueSourceParam
 val gitRevListProvider = providers.of(GitRevListCountValueSource::class) {}
 
 android {
+    compileSdk = 37
 //    lint {
 //        // Only check for issues from your custom linter
 //        checkOnly.add("DisallowedImplicitToString") // Replace with your issue ID
@@ -125,7 +126,7 @@ android {
 
     sourceSets["main"].manifest.srcFile("src/main/AndroidManifest.xml")
     sourceSets["debug"].manifest.srcFile("src/debug/AndroidManifest.xml")
-    sourceSets["test"].kotlin.srcDir("../crypto/src/testFixtures/kotlin")
+    sourceSets["test"].kotlin.directories += "../crypto/src/testFixtures/kotlin"
 
     // See https://developer.android.com/build/build-variants
     buildTypes {
@@ -161,6 +162,15 @@ android {
                 }
             }
             buildConfigField("String", "GIT_COMMIT_HASH", "\"${gitCommitHash}\"")
+        }
+
+        create("releaseEmulator") {
+            initWith(getByName("release"))
+            matchingFallbacks += listOf("release")
+            signingConfig = signingConfigs.getByName("debug")
+            // This build type allows testing the release version (minified/obfuscated)
+            // on an emulator without needing production keys.
+            // Note: Cannot add applicationIdSuffix here because Dynamic Features don't support it.
         }
         debug {
             applicationIdSuffix = ".debug"
@@ -203,6 +213,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     testOptions {
@@ -231,9 +242,6 @@ android {
     }
 }
 
-composeCompiler {
-    enableStrongSkippingMode = true
-}
 
 dependencies {
     implementation(kotlin("reflect"))

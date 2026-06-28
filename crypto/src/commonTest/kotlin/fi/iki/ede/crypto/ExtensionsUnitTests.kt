@@ -2,8 +2,9 @@ package fi.iki.ede.crypto
 
 import fi.iki.ede.crypto.support.decrypt
 import fi.iki.ede.crypto.support.encrypt
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertContentEquals
 
 class ExtensionsUnitTests {
 
@@ -21,8 +22,8 @@ class ExtensionsUnitTests {
 
         val result = password.encrypt(encrypter)
 
-        Assertions.assertEquals(expectedResult, result)
-        Assertions.assertArrayEquals("pass".toByteArray(), capturedBytes)
+        assertEquals(expectedResult, result)
+        assertContentEquals("pass".encodeToByteArray(), capturedBytes)
     }
 
     @Test
@@ -38,22 +39,22 @@ class ExtensionsUnitTests {
 
         val result = input.encrypt(encrypter)
 
-        Assertions.assertEquals(expectedResult, result)
-        Assertions.assertArrayEquals("text to encrypt".toByteArray(), capturedBytes)
+        assertEquals(expectedResult, result)
+        assertContentEquals("text to encrypt".encodeToByteArray(), capturedBytes)
     }
 
     @Test
     fun `IVCipherText_decrypt should return string from decrypted bytes`() {
         val ivCipherText = IVCipherText(byteArrayOf(1), byteArrayOf(2))
-        val expectedDecryptedBytes = "decrypted".toByteArray()
+        val expectedDecryptedBytes = "decrypted".encodeToByteArray()
 
         val decrypter: (IVCipherText) -> ByteArray = {
-            Assertions.assertEquals(ivCipherText, it)
+            assertEquals(ivCipherText, it)
             expectedDecryptedBytes
         }
 
         val result = ivCipherText.decrypt(decrypter)
 
-        Assertions.assertEquals("decrypted", result)
+        assertEquals("decrypted", result)
     }
 }

@@ -1,10 +1,32 @@
 package fi.iki.ede.safe.ui
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -90,7 +112,8 @@ fun SharedLoginScreen(
                         }
                     },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth().focusRequester(focusRequester).testTag(TestTag.PASSWORD_PROMPT),
+                    modifier = Modifier.fillMaxWidth().focusRequester(focusRequester)
+                        .testTag(TestTag.PASSWORD_PROMPT),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFFe94560),
                         focusedLabelColor = Color(0xFFe94560),
@@ -140,7 +163,11 @@ fun SharedLoginScreen(
                         )
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(getString("biometrics_register"), color = Color(0xFF8899aa), fontSize = 12.sp)
+                    Text(
+                        getString("biometrics_register"),
+                        color = Color(0xFF8899aa),
+                        fontSize = 12.sp
+                    )
                 }
 
                 Button(
@@ -156,19 +183,28 @@ fun SharedLoginScreen(
                         containerColor = Color(0xFFe94560)
                     )
                 ) {
-                    Text(getString("login_create_vault_button"), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        getString("login_create_vault_button"),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             } else {
                 if (isBiometricsEnabled && onBiometricLogin != null) {
                     Button(
                         onClick = onBiometricLogin,
-                        modifier = Modifier.fillMaxWidth().height(48.dp).testTag(TestTag.BIOMETRICS_BUTTON),
+                        modifier = Modifier.fillMaxWidth().height(48.dp)
+                            .testTag(TestTag.BIOMETRICS_BUTTON),
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFF34b38a)
                         )
                     ) {
-                        Text("👆 " + getString("login_with_biometrics"), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                        Text(
+                            "👆 " + getString("login_with_biometrics"),
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
                     }
 
                     Text(getString("login_or_divider"), color = Color(0xFF8899aa), fontSize = 12.sp)
@@ -185,7 +221,8 @@ fun SharedLoginScreen(
                         }
                     },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth().focusRequester(focusRequester).testTag(TestTag.PASSWORD_PROMPT),
+                    modifier = Modifier.fillMaxWidth().focusRequester(focusRequester)
+                        .testTag(TestTag.PASSWORD_PROMPT),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color(0xFFe94560),
                         focusedLabelColor = Color(0xFFe94560),
@@ -213,7 +250,11 @@ fun SharedLoginScreen(
                             )
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(getString("biometrics_register"), color = Color(0xFF8899aa), fontSize = 12.sp)
+                        Text(
+                            getString("biometrics_register"),
+                            color = Color(0xFF8899aa),
+                            fontSize = 12.sp
+                        )
                     }
                 }
 
@@ -230,7 +271,11 @@ fun SharedLoginScreen(
                         containerColor = Color(0xFFe94560)
                     )
                 ) {
-                    Text(getString("login_unlock_button"), fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        getString("login_unlock_button"),
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
 
@@ -250,12 +295,20 @@ fun SharedLoginScreen(
                 ) {
                     if (onImportBackup != null) {
                         TextButton(onClick = onImportBackup) {
-                            Text(getString("login_import_backup_button"), color = Color(0xFF34b38a), fontSize = 12.sp)
+                            Text(
+                                getString("login_import_backup_button"),
+                                color = Color(0xFF34b38a),
+                                fontSize = 12.sp
+                            )
                         }
                     }
                     if (onExportBackup != null) {
                         TextButton(onClick = onExportBackup) {
-                            Text(getString("login_export_backup_button"), color = Color(0xFF3b82f6), fontSize = 12.sp)
+                            Text(
+                                getString("login_export_backup_button"),
+                                color = Color(0xFF3b82f6),
+                                fontSize = 12.sp
+                            )
                         }
                     }
                 }
