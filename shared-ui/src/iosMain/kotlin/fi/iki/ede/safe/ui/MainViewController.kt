@@ -90,11 +90,11 @@ fun MainViewController(): UIViewController {
     var showAddCategoryDialog by remember { mutableStateOf(false) }
 
     // Backup restore states
-    var importedBackupXml by remember { mutableStateOf<String?>(null) }
+    var importedBackupXml by remember { mutableStateOf<ByteArray?>(null) }
     var activeDelegate by remember { mutableStateOf<Any?>(null) }
 
     val launchDocumentPicker = remember {
-        { onFilePicked: (String) -> Unit ->
+        { onFilePicked: (ByteArray) -> Unit ->
             val delegate = XMLDocumentPickerDelegate { content ->
                 activeDelegate = null
                 onFilePicked(content)
@@ -153,7 +153,7 @@ fun MainViewController(): UIViewController {
                         processedCategories = processedCategories,
                         processedMessage = processedMessage,
                         backupPassword = backupPasswordInput,
-                        backupSource = okio.Buffer().writeUtf8(importedBackupXml!!),
+                        backupSource = okio.Buffer().write(importedBackupXml!!),
                         passwordLogin = { password ->
                             val (salt, encryptedKey) = db.fetchSaltAndEncryptedMasterKey()
                             val saltedPassword = SaltedPassword(salt, password)
@@ -228,11 +228,6 @@ fun MainViewController(): UIViewController {
                             statusMessage = "Invalid password!"
                         }
                     },
-                    onImportBackup = {
-                        launchDocumentPicker { content ->
-                            importedBackupXml = content
-                        }
-                    }
                 )
             }
         } else {
@@ -434,7 +429,7 @@ fun MainViewController(): UIViewController {
 
 @OptIn(ExperimentalForeignApi::class)
 class XMLDocumentPickerDelegate(
-    private val onFilePicked: (String) -> Unit
+    private val onFilePicked: (ByteArray) -> Unit
 ) : NSObject(), UIDocumentPickerDelegateProtocol {
     override fun documentPicker(controller: UIDocumentPickerViewController, didPickDocumentsAtURLs: List<*>) {
         val url = didPickDocumentsAtURLs.firstOrNull() as? NSURL ?: return
@@ -448,7 +443,7 @@ class XMLDocumentPickerDelegate(
                         memcpy(pinned.addressOf(0), nsData.bytes, nsData.length)
                     }
                 }
-                onFilePicked(bytes.decodeToString())
+                onFilePicked(bytes)
             }
         } finally {
             if (secured) {
