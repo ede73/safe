@@ -30,7 +30,16 @@ object IosResources {
         "restore_screen_process_backup" -> "Process backup"
         "restore_screen_finished_backup" -> "Finished with backup"
         "restore_screen_restore_failed" -> "Something failed, rollback"
-        "restore_screen_restoring_old_backup" -> "Restoring old backup"
+        "generic_add" -> "Add"
+        "action_bar_lock" -> "Lock"
+        "action_bar_search" -> "Search"
+        "action_bar_settings" -> "Settings"
+        "action_bar_help" -> "Help"
+        "action_bar_change_master_password" -> "Change Master Password"
+        "action_bar_show_trash" -> "Show Trash"
+        "action_bar_import_export" -> "Export & Import"
+        "action_bar_backup" -> "Export Backup"
+        "action_bar_restore" -> "Import Backup"
         else -> id
     }
 

@@ -1,4 +1,7 @@
-@file:OptIn(kotlin.time.ExperimentalTime::class)
+@file:OptIn(
+    kotlin.time.ExperimentalTime::class,
+    kotlin.experimental.ExperimentalNativeApi::class
+)
 
 package fi.iki.ede.safe.ui
 
@@ -51,12 +54,20 @@ import platform.UIKit.UIDocumentPickerMode
 import platform.Foundation.NSURL
 import platform.Foundation.NSData
 import platform.Foundation.dataWithContentsOfURL
+import platform.Foundation.valueForKey
+import platform.Foundation.setValue
 import platform.darwin.NSObject
 import platform.posix.memcpy
 import androidx.compose.ui.draw.rotate
+import okio.Path.Companion.toPath
 
 @OptIn(ExperimentalMaterial3Api::class)
 fun MainViewController(): UIViewController {
+    kotlin.native.setUnhandledExceptionHook { throwable ->
+        println("UNCAUGHT EXCEPTION ON IOS: ${throwable.message}")
+        throwable.printStackTrace()
+    }
+
     lateinit var viewController: UIViewController
     viewController = ComposeUIViewController {
     if (!Preferences.isDataStoreInitialized()) {
@@ -88,6 +99,7 @@ fun MainViewController(): UIViewController {
 
     // Dialog state for adding Category
     var showAddCategoryDialog by remember { mutableStateOf(false) }
+    var showImportExportChoiceDialog by remember { mutableStateOf(false) }
 
     // Backup restore states
     var importedBackupXml by remember { mutableStateOf<ByteArray?>(null) }
@@ -106,6 +118,23 @@ fun MainViewController(): UIViewController {
             )
             picker.delegate = delegate
             viewController.presentViewController(picker, animated = true, completion = null)
+        }
+    }
+
+    val shareBackupFile = remember {
+        { bytes: ByteArray, filename: String ->
+            val tempPath = (platform.Foundation.NSTemporaryDirectory() + "/" + filename).toPath()
+            okio.FileSystem.SYSTEM.write(tempPath) {
+                write(bytes)
+            }
+            val fileURL = platform.Foundation.NSURL.fileURLWithPath(tempPath.toString())
+            val activityVC = platform.UIKit.UIActivityViewController(
+                activityItems = listOf(fileURL),
+                applicationActivities = null
+            )
+            val popover = activityVC.valueForKey("popoverPresentationController") as? platform.darwin.NSObject
+            popover?.setValue(viewController.view, forKey = "sourceView")
+            viewController.presentViewController(activityVC, animated = true, completion = null)
         }
     }
 
@@ -289,9 +318,7 @@ fun MainViewController(): UIViewController {
                                 activeSiteEntry = null
                             },
                             onImportExportRequested = {
-                                launchDocumentPicker { content ->
-                                    importedBackupXml = content
-                                }
+                                showImportExportChoiceDialog = true
                             }
                         )
                     }
@@ -314,9 +341,7 @@ fun MainViewController(): UIViewController {
                             var url by remember { mutableStateOf(siteEntry.plainWebsite) }
 
                             Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .verticalScroll(rememberScrollState())
+                                modifier = Modifier.fillMaxSize()
                             ) {
                                 SiteEntryView(
                                     description = desc,
@@ -330,47 +355,48 @@ fun MainViewController(): UIViewController {
                                     note = note,
                                     onNoteChange = { note = it.utf8password.concatToString() },
                                     onOpenBrowser = { },
-                                    onCopyToClipboard = { }
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Button(
-                                    onClick = {
-                                        coroutineScope.launch {
-                                            try {
-                                                siteEntry.cachedPlainDescription = desc
-                                                siteEntry.plainUsername = user
-                                                siteEntry.plainPassword = pass
-                                                siteEntry.plainNote = note
-                                                siteEntry.plainWebsite = url
-                                                
-                                                // Encrypt values back before writing
-                                                siteEntry.description = desc.encrypt()
-                                                siteEntry.username = user.encrypt()
-                                                siteEntry.password = pass.encrypt()
-                                                siteEntry.note = note.encrypt()
-                                                siteEntry.website = url.encrypt()
-                                                
-                                                if (siteEntry.id == null) {
-                                                    db.addSiteEntry(siteEntry)
-                                                } else {
-                                                    db.updateSiteEntry(siteEntry)
+                                    onCopyToClipboard = { },
+                                    bottomBarContent = {
+                                        Button(
+                                            onClick = {
+                                                coroutineScope.launch {
+                                                    try {
+                                                        siteEntry.cachedPlainDescription = desc
+                                                        siteEntry.plainUsername = user
+                                                        siteEntry.plainPassword = pass
+                                                        siteEntry.plainNote = note
+                                                        siteEntry.plainWebsite = url
+                                                        
+                                                        // Encrypt values back before writing
+                                                        siteEntry.description = desc.encrypt()
+                                                        siteEntry.username = user.encrypt()
+                                                        siteEntry.password = pass.encrypt()
+                                                        siteEntry.note = note.encrypt()
+                                                        siteEntry.website = url.encrypt()
+                                                        
+                                                        if (siteEntry.id == null) {
+                                                            db.addSiteEntry(siteEntry)
+                                                        } else {
+                                                            db.updateSiteEntry(siteEntry)
+                                                        }
+                                                        activeSiteEntry = null
+                                                        refreshTrigger++
+                                                    } catch (e: Throwable) {
+                                                        e.printStackTrace()
+                                                    }
                                                 }
-                                                activeSiteEntry = null
-                                                refreshTrigger++
-                                            } catch (e: Throwable) {
-                                                e.printStackTrace()
-                                            }
+                                            },
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = Color(0xFFe94560)
+                                            )
+                                        ) {
+                                            Text("Save Changes", fontWeight = FontWeight.Bold)
                                         }
-                                    },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFFe94560)
-                                    )
-                                ) {
-                                    Text("Save Changes", fontWeight = FontWeight.Bold)
-                                }
+                                    }
+                                )
                             }
                         }
                         activeCategory != null -> {
@@ -416,6 +442,60 @@ fun MainViewController(): UIViewController {
                                     refreshTrigger++
                                 }
                                 showAddCategoryDialog = false
+                            }
+                        )
+                    }
+
+                    if (showImportExportChoiceDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showImportExportChoiceDialog = false },
+                            title = { Text(getString("action_bar_import_export")) },
+                            text = { Text("Select backup operation:") },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        showImportExportChoiceDialog = false
+                                        coroutineScope.launch {
+                                            try {
+                                                val categoriesList = db.fetchAllCategoryRows()
+                                                val softDeletedEntries = db.database.siteEntryDao().getAllSoftDeleted().toSet()
+                                                val getSiteEntriesOfCategory = { categoryId: Long -> db.fetchAllRows(categoryId) }
+                                                val siteEntryGPMMappings = db.database.siteEntryGPMJoinDao().getAll()
+                                                    .groupBy({ it.passwordId }, { it.gpmId })
+                                                    .mapValues { (_, v) -> v.toSet() }
+                                                val allSavedGPMs = db.database.gpmDao().getAll().toSet()
+
+                                                val buffer = okio.Buffer()
+                                                fi.iki.ede.backup.BackupDatabase.backup(
+                                                    categoriesList = categoriesList,
+                                                    softDeletedEntries = softDeletedEntries,
+                                                    getSiteEntriesOfCategory = getSiteEntriesOfCategory,
+                                                    siteEntryGPMMappings = siteEntryGPMMappings,
+                                                    allSavedGPMs = allSavedGPMs,
+                                                    finalSink = buffer
+                                                )
+                                                val bytes = buffer.readByteArray()
+                                                shareBackupFile(bytes, "safe_backup.xml")
+                                            } catch (e: Throwable) {
+                                                e.printStackTrace()
+                                            }
+                                        }
+                                    }
+                                ) {
+                                    Text(getString("action_bar_backup"))
+                                }
+                            },
+                            dismissButton = {
+                                Button(
+                                    onClick = {
+                                        showImportExportChoiceDialog = false
+                                        launchDocumentPicker { content ->
+                                            importedBackupXml = content
+                                        }
+                                    }
+                                ) {
+                                    Text(getString("action_bar_restore"))
+                                }
                             }
                         )
                     }
