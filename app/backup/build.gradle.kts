@@ -8,6 +8,9 @@ kotlin {
         namespace = "fi.iki.ede.backup"
     }
     jvm("desktop")
+    iosX64()
+    iosArm64()
+    iosSimulatorArm64()
 
     sourceSets {
         val commonMain by getting {

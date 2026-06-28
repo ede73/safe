@@ -1,5 +1,7 @@
 package fi.iki.ede.crypto.keystore
 
+import kotlin.jvm.JvmInline
+
 abstract class CipherUtilities {
 
     companion object {

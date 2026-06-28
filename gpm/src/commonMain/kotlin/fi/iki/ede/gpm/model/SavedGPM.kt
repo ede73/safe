@@ -36,14 +36,72 @@ data class SavedGPM(
     @ColumnInfo(name = "hash")
     val hash: String
 ) : DisallowedFunctions {
-    val cachedDecryptedName: String by lazy { encryptedName.decrypt() } // ok
-    val cachedDecryptedUsername: String by lazy { encryptedUsername.decrypt() } // ok
-    val cachedDecryptedUrl: String by lazy { encryptedUrl.decrypt() } // ok
-    val cachedDecryptedPassword: String by lazy { encryptedPassword.decrypt() } // ok
-    val cachedDecryptedNote: String by lazy { encryptedNote.decrypt() } // ok
-    val harmonizedName: LowerCaseTrimmedString by lazy {
-        harmonizePotentialDomainName(cachedDecryptedName).toLowerCasedTrimmedString()
-    }
+    @Ignore
+    var cachedDecryptedName: String = ""
+        get() {
+            if (field.isEmpty() && encryptedName.isNotEmpty()) {
+                field = encryptedName.decrypt()
+            }
+            return field
+        }
+        set(value) {
+            field = value
+        }
+    @Ignore
+    var cachedDecryptedUsername: String = ""
+        get() {
+            if (field.isEmpty() && encryptedUsername.isNotEmpty()) {
+                field = encryptedUsername.decrypt()
+            }
+            return field
+        }
+        set(value) {
+            field = value
+        }
+    @Ignore
+    var cachedDecryptedUrl: String = ""
+        get() {
+            if (field.isEmpty() && encryptedUrl.isNotEmpty()) {
+                field = encryptedUrl.decrypt()
+            }
+            return field
+        }
+        set(value) {
+            field = value
+        }
+    @Ignore
+    var cachedDecryptedPassword: String = ""
+        get() {
+            if (field.isEmpty() && encryptedPassword.isNotEmpty()) {
+                field = encryptedPassword.decrypt()
+            }
+            return field
+        }
+        set(value) {
+            field = value
+        }
+    @Ignore
+    var cachedDecryptedNote: String = ""
+        get() {
+            if (field.isEmpty() && encryptedNote.isNotEmpty()) {
+                field = encryptedNote.decrypt()
+            }
+            return field
+        }
+        set(value) {
+            field = value
+        }
+    @Ignore
+    var harmonizedName: LowerCaseTrimmedString = "".toLowerCasedTrimmedString()
+        get() {
+            if (field.lowercasedTrimmed.isEmpty() && cachedDecryptedName.isNotEmpty()) {
+                field = harmonizePotentialDomainName(cachedDecryptedName).toLowerCasedTrimmedString()
+            }
+            return field
+        }
+        set(value) {
+            field = value
+        }
 
     @Ignore
     constructor(id: Long? = null, importing: IncomingGPM) : this(
