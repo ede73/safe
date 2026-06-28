@@ -7,8 +7,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Backup
-import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,6 +35,10 @@ import fi.iki.ede.safe.ui.composable.getString
 import platform.UIKit.UIViewController
 import fi.iki.ede.crypto.support.encrypt
 import kotlinx.coroutines.launch
+import fi.iki.ede.safe.ui.composable.AskBackupPasswordAndCommence
+import fi.iki.ede.safe.ui.composable.RestoreDatabaseComponent
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import fi.iki.ede.backup.RestoreDatabase
 import fi.iki.ede.db.SiteEntryGPMJoin
 import kotlinx.coroutines.runBlocking
@@ -86,7 +90,6 @@ fun MainViewController(): UIViewController {
     var showAddCategoryDialog by remember { mutableStateOf(false) }
 
     // Backup restore states
-    var showImportPasswordDialog by remember { mutableStateOf(false) }
     var importedBackupXml by remember { mutableStateOf<String?>(null) }
     var activeDelegate by remember { mutableStateOf<Any?>(null) }
 
@@ -125,7 +128,64 @@ fun MainViewController(): UIViewController {
             surface = Color(0xFF16213e)
         )
     ) {
-        if (!isLoggedIn) {
+        if (importedBackupXml != null) {
+            var currentRestoreScreenState by remember { mutableStateOf("askBackupPassword") }
+            var backupPasswordInput by remember { mutableStateOf(Password.getEmpty()) }
+            val processedPasswords = remember { mutableIntStateOf(0) }
+            val processedCategories = remember { mutableIntStateOf(0) }
+            val processedMessage = remember { mutableStateOf("") }
+
+            when (currentRestoreScreenState) {
+                "askBackupPassword" -> {
+                    AskBackupPasswordAndCommence(
+                        processedPasswords = processedPasswords,
+                        processedCategories = processedCategories,
+                        processedMessage = processedMessage,
+                        selectedDocName = "Backup XML File",
+                    ) { password ->
+                        backupPasswordInput = password
+                        currentRestoreScreenState = "restoration"
+                    }
+                }
+                "restoration" -> {
+                    RestoreDatabaseComponent(
+                        processedPasswords = processedPasswords,
+                        processedCategories = processedCategories,
+                        processedMessage = processedMessage,
+                        backupPassword = backupPasswordInput,
+                        backupSource = okio.Buffer().writeUtf8(importedBackupXml!!),
+                        passwordLogin = { password ->
+                            val (salt, encryptedKey) = db.fetchSaltAndEncryptedMasterKey()
+                            val saltedPassword = SaltedPassword(salt, password)
+                            KeyStoreHelper.importExistingEncryptedMasterKey(saltedPassword, encryptedKey)
+                            true
+                        },
+                        linkSaveGPMAndSiteEntry = { siteId, gpmId ->
+                            runBlocking {
+                                db.database.siteEntryGPMJoinDao().insert(SiteEntryGPMJoin(siteId, gpmId))
+                            }
+                        },
+                        addSavedGPM = { savedGpm ->
+                            runBlocking {
+                                db.database.gpmDao().insert(savedGpm)
+                            }
+                        },
+                        onFinished = { count, ex ->
+                            backupPasswordInput = Password.getEmpty()
+                            if (ex == null) {
+                                importedBackupXml = null
+                                isFirstTimeLogin = false
+                                isLoggedIn = true
+                                refreshTrigger++
+                            } else {
+                                currentRestoreScreenState = "askBackupPassword"
+                            }
+                        },
+                        verifyUserWantForOldBackup = { _, _ -> true }
+                    )
+                }
+            }
+        } else if (!isLoggedIn) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -171,7 +231,6 @@ fun MainViewController(): UIViewController {
                     onImportBackup = {
                         launchDocumentPicker { content ->
                             importedBackupXml = content
-                            showImportPasswordDialog = true
                         }
                     }
                 )
@@ -218,12 +277,11 @@ fun MainViewController(): UIViewController {
                                     onClick = {
                                         launchDocumentPicker { content ->
                                             importedBackupXml = content
-                                            showImportPasswordDialog = true
                                         }
                                     }
                                 ) {
                                     Icon(
-                                        imageVector = Icons.Default.Backup,
+                                        imageVector = Icons.Default.Download,
                                         contentDescription = "Import Backup"
                                     )
                                 }
@@ -249,7 +307,7 @@ fun MainViewController(): UIViewController {
                                     activeSiteEntry = null
                                 }
                             ) {
-                                Icon(Icons.Default.Logout, contentDescription = "Logout")
+                                Icon(Icons.Default.Lock, contentDescription = "Lock Vault")
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
@@ -277,23 +335,26 @@ fun MainViewController(): UIViewController {
                             var note by remember { mutableStateOf(siteEntry.plainNote) }
                             var url by remember { mutableStateOf(siteEntry.plainWebsite) }
 
-                            Column(modifier = Modifier.fillMaxSize()) {
-                                Box(modifier = Modifier.weight(1f)) {
-                                    SiteEntryView(
-                                        description = desc,
-                                        onDescriptionChange = { desc = it },
-                                        website = url,
-                                        onWebSiteChange = { url = it },
-                                        username = user,
-                                        onUsernameChange = { user = it.utf8password.concatToString() },
-                                        password = pass,
-                                        onPasswordChange = { pass = it.utf8password.concatToString() },
-                                        note = note,
-                                        onNoteChange = { note = it.utf8password.concatToString() },
-                                        onOpenBrowser = { },
-                                        onCopyToClipboard = { }
-                                    )
-                                }
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .verticalScroll(rememberScrollState())
+                            ) {
+                                SiteEntryView(
+                                    description = desc,
+                                    onDescriptionChange = { desc = it },
+                                    website = url,
+                                    onWebSiteChange = { url = it },
+                                    username = user,
+                                    onUsernameChange = { user = it.utf8password.concatToString() },
+                                    password = pass,
+                                    onPasswordChange = { pass = it.utf8password.concatToString() },
+                                    note = note,
+                                    onNoteChange = { note = it.utf8password.concatToString() },
+                                    onOpenBrowser = { },
+                                    onCopyToClipboard = { }
+                                )
+                                Spacer(modifier = Modifier.height(16.dp))
                                 Button(
                                     onClick = {
                                         coroutineScope.launch {
@@ -377,94 +438,6 @@ fun MainViewController(): UIViewController {
                                     refreshTrigger++
                                 }
                                 showAddCategoryDialog = false
-                            }
-                        )
-                    }
-
-                    if (showImportPasswordDialog && importedBackupXml != null) {
-                        var backupPasswordInput by remember { mutableStateOf("") }
-                        var importErrorMsg by remember { mutableStateOf("") }
-                        AlertDialog(
-                            onDismissRequest = {
-                                showImportPasswordDialog = false
-                                importedBackupXml = null
-                                importErrorMsg = ""
-                            },
-                            title = { Text("Restore XML Backup") },
-                            text = {
-                                Column {
-                                    Text("Enter the password that was used to encrypt this backup:")
-                                    Spacer(Modifier.height(8.dp))
-                                    TextField(
-                                        value = backupPasswordInput,
-                                        onValueChange = { backupPasswordInput = it },
-                                        placeholder = { Text("Backup Password") },
-                                        singleLine = true
-                                    )
-                                    if (importErrorMsg.isNotEmpty()) {
-                                        Spacer(Modifier.height(8.dp))
-                                        Text(importErrorMsg, color = MaterialTheme.colorScheme.error)
-                                    }
-                                }
-                            },
-                            confirmButton = {
-                                Button(
-                                    onClick = {
-                                        coroutineScope.launch {
-                                            try {
-                                                val restorer = RestoreDatabase()
-                                                restorer.doRestore(
-                                                    backupSource = okio.Buffer().writeUtf8(importedBackupXml!!),
-                                                    userPassword = Password(backupPasswordInput),
-                                                    dbHelper = db,
-                                                    lastBackupDone = null,
-                                                    linkSaveGPMAndSiteEntry = { siteId, gpmId ->
-                                                        runBlocking {
-                                                            db.database.siteEntryGPMJoinDao().insert(SiteEntryGPMJoin(siteId, gpmId))
-                                                        }
-                                                    },
-                                                    addSavedGPM = { savedGpm ->
-                                                        runBlocking {
-                                                            db.database.gpmDao().insert(savedGpm)
-                                                        }
-                                                    },
-                                                    passwordLogin = { password ->
-                                                        val (salt, encryptedKey) = db.fetchSaltAndEncryptedMasterKey()
-                                                        val saltedPassword = SaltedPassword(salt, password)
-                                                        KeyStoreHelper.importExistingEncryptedMasterKey(saltedPassword, encryptedKey)
-                                                        true
-                                                    },
-                                                    reportProgress = { _, _, msg ->
-                                                        if (msg != null) {
-                                                            statusMessage = msg
-                                                        }
-                                                    },
-                                                    verifyUserWantForOldBackup = { _, _ -> true }
-                                                )
-                                                isFirstTimeLogin = false
-                                                isLoggedIn = true
-                                                showImportPasswordDialog = false
-                                                importedBackupXml = null
-                                                refreshTrigger++
-                                            } catch (e: Exception) {
-                                                importErrorMsg = "Failed to restore: ${e.message}"
-                                            }
-                                        }
-                                    }
-                                ) {
-                                    Text("Restore")
-                                }
-                            },
-                            dismissButton = {
-                                TextButton(
-                                    onClick = {
-                                        showImportPasswordDialog = false
-                                        importedBackupXml = null
-                                        importErrorMsg = ""
-                                    }
-                                ) {
-                                    Text("Cancel")
-                                }
                             }
                         )
                     }
