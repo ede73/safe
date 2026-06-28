@@ -26,8 +26,8 @@ import okio.BufferedSource
 import okio.Source
 import okio.Timeout
 import okio.buffer
-import org.xmlpull.v1.XmlPullParser
-import org.xmlpull.v1.XmlPullParserFactory
+import fi.iki.ede.backup.xml.XmlPullParser
+import fi.iki.ede.backup.xml.XmlPullParserFactory
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -81,10 +81,8 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                 IVCipherText(ivBackup, cipherBackup),
                 masterKey
             )
-            // Addressed PR10 comment: Use Okio Buffer conversion to avoid raw java.io.ByteArrayInputStream
-            val xmlInputStream = Buffer().write(decrypted).inputStream()
-
-            myParser.setInput(xmlInputStream, null)
+            val xmlInputStream = Buffer().write(decrypted)
+            myParser.setInput(xmlInputStream)
 
             reportProgress(null, null, "Process backup")
             val passwords = parseXML(
@@ -149,7 +147,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         while (myParser.eventType != XmlPullParser.END_DOCUMENT) {
             when (myParser.eventType) {
                 XmlPullParser.START_TAG -> {
-                    path.add(valueOrNull<Elements, String>(myParser.name) { it.value })
+                    path.add(valueOrNull<Elements, String>(myParser.name ?: "") { it.value })
                     when (path) {
                         listOf(Elements.ROOT_PASSWORD_SAFE) -> {
                             val rawVersion = myParser.getTrimmedAttributeValue(
@@ -384,7 +382,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                     val oldId = deletedSiteEntry.id!!
                                     deletedSiteEntry.id = null
                                     val newId = dbHelper.addSiteEntry(deletedSiteEntry)
-                                    gpmLinkedToDeletedSiteEntries.forEach { gpmId, deletedSiteEntryIds ->
+                                    gpmLinkedToDeletedSiteEntries.forEach { (gpmId, deletedSiteEntryIds) ->
                                         if (oldId in deletedSiteEntryIds) {
                                             linkSaveGPMAndSiteEntry(newId, gpmId)
                                         }

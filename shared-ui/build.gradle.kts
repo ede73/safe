@@ -45,6 +45,7 @@ kotlin {
                 implementation(project(":app:cryptoobjects"))
                 implementation(project(":app:preferences"))
                 implementation(project(":app:theme"))
+                implementation(project(":app:backup"))
                 implementation(project(":dateutils"))
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.okio)
