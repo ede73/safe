@@ -415,6 +415,13 @@ fun MainViewController(): UIViewController {
                                                 onClick = {
                                                     coroutineScope.launch {
                                                         try {
+                                                            // Update cache
+                                                            siteEntry.cachedPlainDescription = desc
+                                                            siteEntry.plainUsername = user
+                                                            siteEntry.plainPassword = pass
+                                                            siteEntry.plainNote = note
+                                                            siteEntry.plainWebsite = url
+                                                            
                                                             // Encrypt values back before writing
                                                             siteEntry.description = desc.encrypt()
                                                             siteEntry.username = user.encrypt()
