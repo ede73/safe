@@ -44,7 +44,7 @@ Building:
 - ```./gradlew :app:assembleDebug``` (see notes about you need obv. **local.properties** and a fake app/google-services.json just for firebase, for debug builds no real keys needed)
 - There's working WiP desktop client  ```./gradlew :desktop:run```
   - works on Windows/Mac/Linux, missing biometrics, TPM, some other integrations, but UI, import/export/cryptos all there
-- There's working WiP iOS build too (merging soon, during July/2026)
+- There's working [WiP iOS](https://github.com/ede73/safe/pull/new/ios_import_restore) build too (merging soon, during July/2026)
   - missing biometrics, TPM, some other integrations, but UI, import/export/cryptos all there
 
 You need:
@@ -55,7 +55,13 @@ You need:
     - content of those is irrelevant, only used during unit/instrumentation testing
 
 Actual client is in [playstore](https://play.google.com/store/apps/details?id=fi.iki.ede.safe&hl=en_US), but for sake
-of crypto export regulations, I'm keeping it private currently. [Android screenshots](https://github.com/ede73/safe/tree/main/playstore/screenshots/phone)
+of crypto export regulations, I'm keeping it private currently.
+
+| What | Android | iOS | Desktop |
+| :--- | :--- | :--- | :--- |
+| **Login** |Same, just f-print view <br/> <img width="100" height="300" alt="image" src="https://github.com/ede73/safe/blob/main/playstore/screenshots/phone/fingerprint.png" /> | <img width="100" height="300" alt="image" src="https://github.com/user-attachments/assets/39c5b3e3-d799-44b2-adb2-388ef121fefa" /> | <img width="100" height="300" alt="image" src="https://github.com/user-attachments/assets/727cf7fa-48cb-4f4a-bd8a-ce73f5f6dfbd" /> |
+| **Categories** | <img width="100" height="300" alt="image" src="https://github.com/ede73/safe/blob/main/playstore/screenshots/phone/category_view.png"/> | <img width="100" height="300" alt="image" src="https://github.com/user-attachments/assets/6e19507a-9655-43f8-a18c-320fef98a6ca" /> | <img width="100" height="300" alt="image" src="https://github.com/user-attachments/assets/ab85d965-2ab1-47d9-8681-31751bbd7fe8" /> |
+| **SiteEntries** | <img width="100" height="300" alt="image" src="https://github.com/ede73/safe/blob/main/playstore/screenshots/phone/password_list.png"/> | you get the | point already..|
 
 Inspiration from ancient (and insecure) OISafe
 
