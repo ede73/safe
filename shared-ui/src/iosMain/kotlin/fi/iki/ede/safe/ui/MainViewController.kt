@@ -258,6 +258,11 @@ fun MainViewController(): UIViewController {
                             statusMessage = "Invalid password!"
                         }
                     },
+                    onImportBackup = {
+                        launchDocumentPicker { content ->
+                            importedBackupXml = content
+                        }
+                    }
                 )
             }
         } else {
@@ -339,7 +344,9 @@ fun MainViewController(): UIViewController {
                             var url by remember { mutableStateOf(siteEntry.plainWebsite) }
 
                             Column(
-                                modifier = Modifier.fillMaxSize()
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .verticalScroll(rememberScrollState())
                             ) {
                                 SiteEntryView(
                                     description = desc,
@@ -454,7 +461,6 @@ fun MainViewController(): UIViewController {
                             }
                         )
                     }
-
                     if (showImportExportChoiceDialog) {
                         AlertDialog(
                             onDismissRequest = { showImportExportChoiceDialog = false },
