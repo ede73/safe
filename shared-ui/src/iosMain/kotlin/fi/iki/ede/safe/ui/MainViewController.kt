@@ -344,9 +344,7 @@ fun MainViewController(): UIViewController {
                             var url by remember { mutableStateOf(siteEntry.plainWebsite) }
 
                             Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .verticalScroll(rememberScrollState())
+                                modifier = Modifier.fillMaxSize()
                             ) {
                                 SiteEntryView(
                                     description = desc,
@@ -461,6 +459,7 @@ fun MainViewController(): UIViewController {
                             }
                         )
                     }
+
                     if (showImportExportChoiceDialog) {
                         AlertDialog(
                             onDismissRequest = { showImportExportChoiceDialog = false },
