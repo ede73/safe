@@ -34,26 +34,27 @@ Code, showcasing asynchronous database access, every lengthy operation runs in a
 TPM (ie. might not work on cheapo-phones)
 
 + other hidden gems, like automatically entering PIN to emulator, or running instrumentation tests
-  in Windows Subsystem Linux box (check ci folder)
+  in Windows Subsystem Linux box (check CI folder)
 
 Written in Kotlin, utilizing JetPack/Compose, partially KMP (crypto pending, and alas avoiding
 fragments for KMP)
 
 Building:
-
 - Use Android Studio
-- ./gradlew build
+- ```./gradlew :app:assembleDebug``` (see notes about you need obv. **local.properties** and a fake app/google-services.json just for firebase, for debug builds no real keys needed)
+- There's working WiP desktop client  ```./gradlew :desktop:run```
+  - works on Windows/Mac/Linux, missing biometrics, TPM, some other integrations, but UI, import/export/cryptos all there
+- There's working WiP iOS build too (merging soon, during July/2026)
+  - missing biometrics, TPM, some other integrations, but UI, import/export/cryptos all there
 
 You need:
-
 - Java 21+ (linter JAR built on 21)
-- app/google-service.json - firebase config
-- local.properties w/
+- **app/google-service.json** - firebase config
+- **local.properties** w/
   instrumentationStorePassword,instrumentationKeyPassword,instrumentationKeyStore,instrumentationStoreKeyAlias
     - content of those is irrelevant, only used during unit/instrumentation testing
 
-Actual client is
-in [playstore](https://play.google.com/store/apps/details?id=fi.iki.ede.safe&hl=en_US), but for sake
+Actual client is in [playstore](https://play.google.com/store/apps/details?id=fi.iki.ede.safe&hl=en_US), but for sake
 of crypto export regulations, I'm keeping it private currently.
 
 Inspiration from ancient (and insecure) OISafe
