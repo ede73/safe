@@ -46,6 +46,7 @@ kotlin {
                 implementation(project(":app:preferences"))
                 implementation(project(":app:theme"))
                 implementation(project(":app:backup"))
+                implementation(project(":gpm"))
                 implementation(project(":dateutils"))
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.okio)
