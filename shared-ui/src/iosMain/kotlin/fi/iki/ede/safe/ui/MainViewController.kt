@@ -33,6 +33,7 @@ import fi.iki.ede.safe.ui.composable.AddOrEditCategory
 import fi.iki.ede.safe.ui.composable.getString
 import platform.UIKit.UIViewController
 import fi.iki.ede.crypto.support.encrypt
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 fun MainViewController(): UIViewController = ComposeUIViewController {
@@ -41,6 +42,7 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
     }
 
     val db = remember { DBHelperFactory.getDBHelper() }
+    val coroutineScope = rememberCoroutineScope()
 
     // State checking if vault is created in DB
     var isFirstTimeLogin by remember {
@@ -236,22 +238,32 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
                                 }
                                 Button(
                                     onClick = {
-                                        siteEntry.cachedPlainDescription = desc
-                                        siteEntry.plainUsername = user
-                                        siteEntry.plainPassword = pass
-                                        siteEntry.plainNote = note
-                                        siteEntry.plainWebsite = url
-                                        
-                                        // Encrypt values back before writing
-                                        siteEntry.description = desc.encrypt()
-                                        siteEntry.username = user.encrypt()
-                                        siteEntry.password = pass.encrypt()
-                                        siteEntry.note = note.encrypt()
-                                        siteEntry.website = url.encrypt()
-                                        
-                                        db.updateSiteEntry(siteEntry)
-                                        activeSiteEntry = null
-                                        refreshTrigger++
+                                        coroutineScope.launch {
+                                            try {
+                                                siteEntry.cachedPlainDescription = desc
+                                                siteEntry.plainUsername = user
+                                                siteEntry.plainPassword = pass
+                                                siteEntry.plainNote = note
+                                                siteEntry.plainWebsite = url
+                                                
+                                                // Encrypt values back before writing
+                                                siteEntry.description = desc.encrypt()
+                                                siteEntry.username = user.encrypt()
+                                                siteEntry.password = pass.encrypt()
+                                                siteEntry.note = note.encrypt()
+                                                siteEntry.website = url.encrypt()
+                                                
+                                                if (siteEntry.id == null) {
+                                                    db.addSiteEntry(siteEntry)
+                                                } else {
+                                                    db.updateSiteEntry(siteEntry)
+                                                }
+                                                activeSiteEntry = null
+                                                refreshTrigger++
+                                            } catch (e: Throwable) {
+                                                e.printStackTrace()
+                                            }
+                                        }
                                     },
                                     modifier = Modifier
                                         .fillMaxWidth()
