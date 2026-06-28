@@ -29,6 +29,8 @@ import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.ui.composable.CategoryList
 import fi.iki.ede.safe.ui.composable.SiteEntryList
 import fi.iki.ede.safe.ui.composable.SiteEntryView
+import fi.iki.ede.safe.ui.composable.AddOrEditCategory
+import fi.iki.ede.safe.ui.composable.getString
 import platform.UIKit.UIViewController
 import fi.iki.ede.crypto.support.encrypt
 
@@ -62,14 +64,6 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
 
     // Dialog state for adding Category
     var showAddCategoryDialog by remember { mutableStateOf(false) }
-    var newCategoryName by remember { mutableStateOf("") }
-
-    // Dialog state for adding Site Entry
-    var showAddSiteEntryDialog by remember { mutableStateOf(false) }
-    var newSiteEntryTitle by remember { mutableStateOf("") }
-    var newSiteEntryUsername by remember { mutableStateOf("") }
-    var newSiteEntryPassword by remember { mutableStateOf("") }
-    var newSiteEntryUrl by remember { mutableStateOf("") }
 
     val categories = remember(refreshTrigger, isLoggedIn) {
         if (isLoggedIn) db.fetchAllCategoryRows() else emptyList()
@@ -176,7 +170,13 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
                             } else if (activeCategory != null && activeSiteEntry == null) {
                                 IconButton(
                                     onClick = {
-                                        showAddSiteEntryDialog = true
+                                        activeSiteEntry = DecryptableSiteEntry(categoryId = activeCategory!!.id!!).apply {
+                                            description = "".encrypt()
+                                            username = "".encrypt()
+                                            password = "".encrypt()
+                                            website = "".encrypt()
+                                            note = "".encrypt()
+                                        }
                                     }
                                 ) {
                                     Icon(Icons.Default.Add, contentDescription = "Add Entry")
@@ -295,102 +295,18 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
 
                     // Dialogs
                     if (showAddCategoryDialog) {
-                        AlertDialog(
-                            onDismissRequest = { showAddCategoryDialog = false },
-                            title = { Text("Add Category") },
-                            text = {
-                                OutlinedTextField(
-                                    value = newCategoryName,
-                                    onValueChange = { newCategoryName = it },
-                                    label = { Text("Category Name") },
-                                    singleLine = true
-                                )
-                            },
-                            confirmButton = {
-                                Button(
-                                    onClick = {
-                                        if (newCategoryName.isNotBlank()) {
-                                            db.addCategory(DecryptableCategoryEntry().apply {
-                                                plainName = newCategoryName
-                                                encryptedName = newCategoryName.encrypt()
-                                            })
-                                            newCategoryName = ""
-                                            showAddCategoryDialog = false
-                                            refreshTrigger++
-                                        }
-                                    }
-                                ) {
-                                    Text("Add")
+                        AddOrEditCategory(
+                            titleText = getString("category_list_add_category"),
+                            categoryName = "",
+                            onSubmit = { name ->
+                                if (name.isNotBlank()) {
+                                    db.addCategory(DecryptableCategoryEntry().apply {
+                                        plainName = name
+                                        encryptedName = name.encrypt()
+                                    })
+                                    refreshTrigger++
                                 }
-                            },
-                            dismissButton = {
-                                TextButton(onClick = { showAddCategoryDialog = false }) {
-                                    Text("Cancel")
-                                }
-                            }
-                        )
-                    }
-
-                    if (showAddSiteEntryDialog) {
-                        AlertDialog(
-                            onDismissRequest = { showAddSiteEntryDialog = false },
-                            title = { Text("Add Entry") },
-                            text = {
-                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    OutlinedTextField(
-                                        value = newSiteEntryTitle,
-                                        onValueChange = { newSiteEntryTitle = it },
-                                        label = { Text("Title") },
-                                        singleLine = true
-                                    )
-                                    OutlinedTextField(
-                                        value = newSiteEntryUsername,
-                                        onValueChange = { newSiteEntryUsername = it },
-                                        label = { Text("Username") },
-                                        singleLine = true
-                                    )
-                                    OutlinedTextField(
-                                        value = newSiteEntryPassword,
-                                        onValueChange = { newSiteEntryPassword = it },
-                                        label = { Text("Password") },
-                                        singleLine = true
-                                    )
-                                    OutlinedTextField(
-                                        value = newSiteEntryUrl,
-                                        onValueChange = { newSiteEntryUrl = it },
-                                        label = { Text("URL") },
-                                        singleLine = true
-                                    )
-                                }
-                            },
-                            confirmButton = {
-                                Button(
-                                    onClick = {
-                                        if (newSiteEntryTitle.isNotBlank() && activeCategory != null) {
-                                            val entry = DecryptableSiteEntry(categoryId = activeCategory!!.id!!).apply {
-                                                description = newSiteEntryTitle.encrypt()
-                                                username = newSiteEntryUsername.encrypt()
-                                                password = newSiteEntryPassword.encrypt()
-                                                website = newSiteEntryUrl.encrypt()
-                                                note = "".encrypt()
-                                            }
-                                            db.addSiteEntry(entry)
-                                            newSiteEntryTitle = ""
-                                            newSiteEntryUsername = ""
-                                            newSiteEntryPassword = ""
-                                            newSiteEntryUrl = ""
-                                            showAddSiteEntryDialog = false
-                                            refreshTrigger++
-                                        }
-                                    }
-                                ) {
-                                    Text("Add")
-                                }
-                            },
-                            dismissButton = {
-                                TextButton(onClick = { showAddSiteEntryDialog = false }) {
-                                    Text("Cancel")
-                                }
+                                showAddCategoryDialog = false
                             }
                         )
                     }
