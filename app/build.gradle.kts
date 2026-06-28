@@ -1,7 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
 import java.io.ByteArrayOutputStream
-import java.io.FileInputStream
 import java.nio.charset.Charset
 import java.util.Properties
 
@@ -84,8 +83,14 @@ android {
 //        checkOnly.add("DisallowedImplicitToString") // Replace with your issue ID
 //    }
 
+    val localPropertiesFile = rootProject.file("local.properties")
     val localProperties = Properties().apply {
-        load(FileInputStream(rootProject.file("local.properties")))
+        if (localPropertiesFile.exists()) {
+            localPropertiesFile.inputStream().use { load(it) }
+        } else {
+            // No local.properties present (CI / fresh checkout). Continue with empty properties.
+            println("local.properties not found; continuing without it.")
+        }
     }
     // TODO: if I cant make quick 'release build' instrumentation tests to work, remove all
     // instrumentationTest configs
