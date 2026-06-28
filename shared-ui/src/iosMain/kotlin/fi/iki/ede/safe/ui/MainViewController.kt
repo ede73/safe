@@ -264,52 +264,6 @@ fun MainViewController(): UIViewController {
                                 }
                             }
                         },
-                        actions = {
-                            if (activeSiteEntry == null && activeCategory == null) {
-                                IconButton(
-                                    onClick = {
-                                        showAddCategoryDialog = true
-                                    }
-                                ) {
-                                    Icon(Icons.Default.Add, contentDescription = "Add Category")
-                                }
-                                IconButton(
-                                    onClick = {
-                                        launchDocumentPicker { content ->
-                                            importedBackupXml = content
-                                        }
-                                    }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Download,
-                                        contentDescription = "Import Backup"
-                                    )
-                                }
-                            } else if (activeCategory != null && activeSiteEntry == null) {
-                                IconButton(
-                                    onClick = {
-                                        activeSiteEntry = DecryptableSiteEntry(categoryId = activeCategory!!.id!!).apply {
-                                            description = "".encrypt()
-                                            username = "".encrypt()
-                                            password = "".encrypt()
-                                            website = "".encrypt()
-                                            note = "".encrypt()
-                                        }
-                                    }
-                                ) {
-                                    Icon(Icons.Default.Add, contentDescription = "Add Entry")
-                                }
-                            }
-                            IconButton(
-                                onClick = {
-                                    isLoggedIn = false
-                                    activeCategory = null
-                                    activeSiteEntry = null
-                                }
-                            ) {
-                                Icon(Icons.Default.Lock, contentDescription = "Lock Vault")
-                            }
-                        },
                         colors = TopAppBarDefaults.topAppBarColors(
                             containerColor = Color(0xFF16213e),
                             titleContentColor = Color.White,
@@ -317,6 +271,35 @@ fun MainViewController(): UIViewController {
                             actionIconContentColor = Color.White
                         )
                     )
+                },
+                bottomBar = {
+                    if (activeSiteEntry == null) {
+                        fi.iki.ede.safe.ui.composable.SharedBottomActionBar(
+                            onAddRequested = {
+                                if (activeCategory == null) {
+                                    showAddCategoryDialog = true
+                                } else {
+                                    activeSiteEntry = DecryptableSiteEntry(categoryId = activeCategory!!.id!!).apply {
+                                        description = "".encrypt()
+                                        username = "".encrypt()
+                                        password = "".encrypt()
+                                        website = "".encrypt()
+                                        note = "".encrypt()
+                                    }
+                                }
+                            },
+                            onLockRequested = {
+                                isLoggedIn = false
+                                activeCategory = null
+                                activeSiteEntry = null
+                            },
+                            onImportExportRequested = {
+                                launchDocumentPicker { content ->
+                                    importedBackupXml = content
+                                }
+                            }
+                        )
+                    }
                 },
                 containerColor = Color(0xFF1a1a2e)
             ) { paddingValues ->
