@@ -13,17 +13,7 @@ import androidx.room.PrimaryKey
 import androidx.room.ColumnInfo
 import androidx.room.Ignore
 
-@Entity(
-    tableName = "googlepasswords",
-    ignoredColumns = [
-        "cachedDecryptedName",
-        "cachedDecryptedUsername",
-        "cachedDecryptedUrl",
-        "cachedDecryptedPassword",
-        "cachedDecryptedNote",
-        "harmonizedName"
-    ]
-)
+@Entity(tableName = "googlepasswords")
 data class SavedGPM(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
