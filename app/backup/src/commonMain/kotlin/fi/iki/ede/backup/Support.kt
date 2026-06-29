@@ -157,14 +157,15 @@ internal fun XmlPullParser.getEncryptedAttribute(name: Attributes): IVCipherText
 internal fun XmlPullParser.maybeGetText(gotTextNode: (encryptedText: IVCipherText) -> Unit) {
     val iv = getTrimmedAttributeValue(Attributes.IV)
     next()
-    val parserText = text
-    if (eventType == XmlPullParser.TEXT && parserText != null && iv.isNotBlank()) {
-        gotTextNode.invoke(
-            IVCipherText(
-                iv.trim().hexToByteArray(),
-                parserText.trim().hexToByteArray()
+    text?.let { parserText ->
+        if (eventType == XmlPullParser.TEXT && iv.isNotBlank()) {
+            gotTextNode.invoke(
+                IVCipherText(
+                    iv.trim().hexToByteArray(),
+                    parserText.trim().hexToByteArray()
+                )
             )
-        )
+        }
     }
 }
 
