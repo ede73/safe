@@ -119,6 +119,7 @@ class DecryptableSiteEntry(
             return decryptedCachedPlainDescription ?: ""
         }
 
+
     fun contains(
         searchText: String,
         searchWebsites: Boolean,
