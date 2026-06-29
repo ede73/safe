@@ -9,7 +9,7 @@ import fi.iki.ede.crypto.keystore.IKeyStoreHelper
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.gpm.model.IncomingGPM
-import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.gpm.model.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach

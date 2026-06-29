@@ -16,7 +16,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.crypto.support.encrypt
-import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.gpm.model.*
 import fi.iki.ede.gpmui.dialogs.ShowInfoDialog
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag

@@ -20,8 +20,7 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelper.Companion.ANDROID_KEYSTORE
 import fi.iki.ede.crypto.keystore.KeyStoreHelper.Companion.importExistingEncryptedMasterKey
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
-import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
-import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.cryptoobjects.*
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.safe.BuildConfig

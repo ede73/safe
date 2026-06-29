@@ -17,7 +17,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.crypto.support.encrypt
-import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
+import fi.iki.ede.cryptoobjects.*
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.splits.IntentManager

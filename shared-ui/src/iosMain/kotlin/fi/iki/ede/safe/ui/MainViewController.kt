@@ -9,7 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.*
@@ -26,8 +26,7 @@ import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.SaltedPassword
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
-import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
-import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.cryptoobjects.*
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.ui.composable.CategoryList
@@ -40,6 +39,7 @@ import fi.iki.ede.crypto.support.encrypt
 import kotlinx.coroutines.launch
 import fi.iki.ede.safe.ui.composable.AskBackupPasswordAndCommence
 import fi.iki.ede.safe.ui.composable.RestoreDatabaseComponent
+import fi.iki.ede.safe.ui.composable.SharedBottomActionBar
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import fi.iki.ede.backup.RestoreDatabase
@@ -274,19 +274,16 @@ fun MainViewController(): UIViewController {
                             )
                         },
                         navigationIcon = {
-                            if (activeCategory != null || activeSiteEntry != null) {
-                                IconButton(
-                                    onClick = {
-                                        when {
-                                            activeSiteEntry != null -> activeSiteEntry = null
-                                            activeCategory != null -> activeCategory = null
-                                        }
-                                        refreshTrigger++
+                            NavigationBackIcon(
+                                hasBackNavigation = (activeCategory != null || activeSiteEntry != null),
+                                onBack = {
+                                    when {
+                                        activeSiteEntry != null -> activeSiteEntry = null
+                                        activeCategory != null -> activeCategory = null
                                     }
-                                ) {
-                                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                                    refreshTrigger++
                                 }
-                            }
+                            )
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
                             containerColor = Color(0xFF16213e),
@@ -298,7 +295,7 @@ fun MainViewController(): UIViewController {
                 },
                 bottomBar = {
                     if (activeSiteEntry == null) {
-                        fi.iki.ede.safe.ui.composable.SharedBottomActionBar(
+                        SharedBottomActionBar(
                             onAddRequested = {
                                 if (activeCategory == null) {
                                     showAddCategoryDialog = true
@@ -386,7 +383,6 @@ fun MainViewController(): UIViewController {
                                                             siteEntry.password = pass.encrypt()
                                                             siteEntry.note = note.encrypt()
                                                             siteEntry.website = url.encrypt()
-                                                            
                                                             if (siteEntry.id == null) {
                                                                 db.addSiteEntry(siteEntry)
                                                             } else {
@@ -541,6 +537,21 @@ class XMLDocumentPickerDelegate(
             if (secured) {
                 url.stopAccessingSecurityScopedResource()
             }
+        }
+    }
+}
+
+@Composable
+private fun NavigationBackIcon(
+    hasBackNavigation: Boolean,
+    onBack: () -> Unit
+) {
+    if (hasBackNavigation) {
+        IconButton(onClick = onBack) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back"
+            )
         }
     }
 }

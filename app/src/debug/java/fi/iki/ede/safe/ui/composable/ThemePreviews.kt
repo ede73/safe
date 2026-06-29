@@ -12,8 +12,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.crypto.support.encrypt
-import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
-import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.cryptoobjects.*
 import fi.iki.ede.safe.ui.SharedLoginScreen
 import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
 import fi.iki.ede.theme.SafeTheme

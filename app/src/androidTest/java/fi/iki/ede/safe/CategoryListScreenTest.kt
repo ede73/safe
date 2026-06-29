@@ -12,7 +12,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
-import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
+import fi.iki.ede.cryptoobjects.*
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.preferences.Preferences

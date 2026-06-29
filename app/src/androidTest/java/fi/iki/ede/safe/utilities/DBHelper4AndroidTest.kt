@@ -6,8 +6,7 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.support.encrypt
-import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
-import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.cryptoobjects.*
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelperFactory

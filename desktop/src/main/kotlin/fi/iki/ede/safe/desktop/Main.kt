@@ -7,8 +7,7 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.DesktopPathUtils
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.SaltedPassword
-import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
-import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.cryptoobjects.*
 import fi.iki.ede.safe.ui.composable.DesktopNavigation
 import fi.iki.ede.safe.ui.composable.DesktopSiteEntryNavigation
 import fi.iki.ede.safe.ui.composable.CategoryList
@@ -157,7 +156,7 @@ fun LoginScreen() {
     // Navigation and state variables
     val activeCategory = DesktopNavigation.activeCategory
     val dbRefreshTrigger = DesktopNavigation.dbRefreshTrigger
-    
+
     // Add Category Dialog state
     var showAddCategoryDialog by remember { mutableStateOf(false) }
     var newCategoryName by remember { mutableStateOf("") }
@@ -247,7 +246,7 @@ fun LoginScreen() {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(DesktopStrings.get("vault"), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
                             }
-                            
+
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Button(
                                     onClick = {
@@ -384,7 +383,7 @@ fun LoginScreen() {
                                     color = Color.White
                                 )
                             }
-                            
+
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Button(
                                     onClick = {
@@ -573,7 +572,7 @@ fun LoginScreen() {
                                     try {
                                         val (salt, cipheredKey) = KeyStoreHelper.createNewKey(Password(password))
                                         db.storeSaltAndEncryptedMasterKey(salt, cipheredKey)
-                                        
+
                                         val privKey = KeyStoreHelper.getLoadedPrivateKey()
                                         val pubKey = KeyStoreHelper.getLoadedPublicKey()
                                         if (privKey != null && pubKey != null) {
@@ -671,7 +670,7 @@ fun LoginScreen() {
                                     statusMessage = "Authenticating..."
                                     try {
                                         val (salt, cipheredKey) = db.fetchSaltAndEncryptedMasterKey()
-                                        
+
                                         loadTpmKeys(db)
 
                                         KeyStoreHelper.importExistingEncryptedMasterKey(
@@ -738,7 +737,7 @@ fun LoginScreen() {
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Text(DesktopStrings.get("add_category"), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                        
+
                         OutlinedTextField(
                             value = newCategoryName,
                             onValueChange = { newCategoryName = it },
@@ -755,7 +754,7 @@ fun LoginScreen() {
                                 unfocusedTextColor = Color.White
                             )
                         )
-                        
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.End,
@@ -1157,7 +1156,7 @@ fun LoginScreen() {
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Text("Import Backup XML", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                        
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically
@@ -1218,7 +1217,7 @@ fun LoginScreen() {
                                 unfocusedTextColor = Color.White
                             )
                         )
-                        
+
                         if (importStatusMessage.isNotBlank()) {
                             Text(importStatusMessage, color = Color(0xFFe94560), fontSize = 12.sp)
                         }

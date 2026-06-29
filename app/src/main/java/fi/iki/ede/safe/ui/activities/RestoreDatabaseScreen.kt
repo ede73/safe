@@ -50,7 +50,6 @@ class RestoreDatabaseScreen :
         val context: Context = this
         setContent {
             val coroutineScope = rememberCoroutineScope()
-            
             suspend fun verifyUserWantsToRestoreOldBackup(
                 backupCreationTime: Instant,
                 lastBackupDone: Instant
@@ -107,7 +106,7 @@ class RestoreDatabaseScreen :
                     val processedPasswords = remember { mutableIntStateOf(0) }
                     val processedCategories = remember { mutableIntStateOf(0) }
                     val processedMessage = remember { mutableStateOf("") }
-                    
+
                     AskBackupPasswordAndCommence(
                         processedPasswords = processedPasswords,
                         processedCategories = processedCategories,
@@ -122,7 +121,7 @@ class RestoreDatabaseScreen :
                     val processedPasswords = remember { mutableIntStateOf(0) }
                     val processedCategories = remember { mutableIntStateOf(0) }
                     val processedMessage = remember { mutableStateOf("") }
-                    
+
                     RestoreDatabaseComponent(
                         processedPasswords = processedPasswords,
                         processedCategories = processedCategories,
@@ -133,34 +132,12 @@ class RestoreDatabaseScreen :
                         linkSaveGPMAndSiteEntry = fi.iki.ede.gpmdatamodel.db.GPMDB::linkSaveGPMAndSiteEntry,
                         addSavedGPM = fi.iki.ede.gpmdatamodel.db.GPMDB::addSavedGPM,
                         onFinished = { restoredPasswords, ex ->
-                            viewModel.backupPassword = null
-                            if (ex == null) {
-                                viewModel.docUri = null
-                                processedMessage.value = context.getString(R.string.restore_screen_reread_database)
-                                CoroutineScope(Dispatchers.IO).launch {
-                                    DataModel.loadFromDatabase {
-                                        GPMDataModel.loadFromDatabase()
-                                    }
-                                    withContext(Dispatchers.Main) {
-                                        processedMessage.value = context.getString(R.string.restore_screen_done)
-                                        IntentManager.startCategoryScreen(context)
-                                        setResult(RESULT_OK)
-                                        firebaseLog("restoreDbOk: finish()")
-                                        finish()
-                                    }
-                                }
-                            } else {
-                                if (ex is CancellationException) {
-                                    viewModel.docUri = null
-                                    // user decided to cancel
-                                    setResult(RESULT_CANCELED)
-                                    firebaseLog("restoreDBCancel: finish()")
-                                    finish()
-                                } else {
-                                    // try new password
-                                    currentScreenState = "askBackupPassword"
-                                }
-                            }
+                            onRestoreFinished(
+                                restoredPasswords = restoredPasswords,
+                                ex = ex,
+                                processedMessage = processedMessage,
+                                onAskNewPassword = { currentScreenState = "askBackupPassword" }
+                            )
                         },
                         verifyUserWantForOldBackup = { backupCreationTime, lastBackupDone ->
                             kotlinx.coroutines.runBlocking {
@@ -172,6 +149,40 @@ class RestoreDatabaseScreen :
                         }
                     )
                 }
+            }
+        }
+    }
+
+    private fun onRestoreFinished(
+        restoredPasswords: Int,
+        ex: Throwable?,
+        processedMessage: androidx.compose.runtime.MutableState<String>,
+        onAskNewPassword: () -> Unit
+    ) {
+        viewModel.backupPassword = null
+        if (ex == null) {
+            viewModel.docUri = null
+            processedMessage.value = getString(R.string.restore_screen_reread_database)
+            CoroutineScope(Dispatchers.IO).launch {
+                DataModel.loadFromDatabase {
+                    GPMDataModel.loadFromDatabase()
+                }
+                withContext(Dispatchers.Main) {
+                    processedMessage.value = getString(R.string.restore_screen_done)
+                    IntentManager.startCategoryScreen(this@RestoreDatabaseScreen)
+                    setResult(RESULT_OK)
+                    firebaseLog("restoreDbOk: finish()")
+                    finish()
+                }
+            }
+        } else {
+            if (ex is CancellationException) {
+                viewModel.docUri = null
+                setResult(RESULT_CANCELED)
+                firebaseLog("restoreDBCancel: finish()")
+                finish()
+            } else {
+                onAskNewPassword()
             }
         }
     }

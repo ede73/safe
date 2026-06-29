@@ -30,6 +30,8 @@ import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import fi.iki.ede.gpmui.BuildConfig
+import fi.iki.ede.cryptoobjects.*
+import fi.iki.ede.gpm.model.*
 import fi.iki.ede.gpmui.models.DNDObject
 import fi.iki.ede.gpmui.modifiers.dnd
 import fi.iki.ede.gpmui.modifiers.getClipData

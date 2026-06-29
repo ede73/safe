@@ -1,6 +1,6 @@
 package fi.iki.ede.gpmui.models
 
-import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.cryptoobjects.*
 import fi.iki.ede.gpm.changeset.harmonizePotentialDomainName
 import fi.iki.ede.gpm.similarity.LowerCaseTrimmedString
 import fi.iki.ede.gpm.similarity.toLowerCasedTrimmedString

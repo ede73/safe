@@ -1,9 +1,9 @@
 package fi.iki.ede.gpmdatamodel
 
-import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.cryptoobjects.*
 import fi.iki.ede.db.DBID
 import fi.iki.ede.gpm.model.IncomingGPM
-import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.gpm.model.*
 import fi.iki.ede.gpmdatamodel.db.GPMDB
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseRecordException

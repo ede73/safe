@@ -37,7 +37,7 @@ import fi.iki.ede.crypto.support.decrypt
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.datepicker.DatePicker
 import fi.iki.ede.db.DBID
-import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.gpm.model.*
 import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.R

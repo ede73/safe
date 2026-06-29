@@ -6,7 +6,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.gpm.changeset.ScoredMatch
 import fi.iki.ede.gpm.model.IncomingGPM
-import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.gpm.model.*
 import fi.iki.ede.gpmui.BuildConfig
 
 @Composable

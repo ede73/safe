@@ -2,7 +2,7 @@ package fi.iki.ede.gpm.changeset
 
 import fi.iki.ede.gpm.debug
 import fi.iki.ede.gpm.model.IncomingGPM
-import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.gpm.model.*
 import fi.iki.ede.logger.Logger
 import okio.ByteString.Companion.encodeUtf8
 

@@ -12,12 +12,11 @@ import fi.iki.ede.crypto.keystore.KeyManagement
 import fi.iki.ede.crypto.keystore.KeyManagement.generatePBKDF2AESKey
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.keystore.KMPKey
-import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
-import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.cryptoobjects.*
 import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBID
-import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.gpm.model.*
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseRecordException
 import kotlinx.coroutines.CancellationException
@@ -75,7 +74,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
             val ivBackup = line4.hexToByteArray()
             val cipherMasterLine2 = bufferedSource.readUtf8Line() ?: throw IllegalArgumentException("Missing backup data ciphertext")
             val cipherBackup = cipherMasterLine2.hexToByteArray()
-            
+
             val helper = KeyStoreHelperFactory.getKeyStoreHelper()
             val decrypted = helper.decrypterProviderWithKey(
                 IVCipherText(ivBackup, cipherBackup),

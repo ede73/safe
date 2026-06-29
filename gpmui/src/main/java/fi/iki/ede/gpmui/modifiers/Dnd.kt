@@ -12,6 +12,7 @@ import androidx.compose.ui.draganddrop.DragAndDropTransferData
 import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import fi.iki.ede.gpmui.models.DNDObject
+import fi.iki.ede.gpm.model.*
 import kotlin.time.ExperimentalTime
 
 // TODO: Blind refactor - potentially broken

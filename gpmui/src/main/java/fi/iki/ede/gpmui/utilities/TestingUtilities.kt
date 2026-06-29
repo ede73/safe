@@ -5,7 +5,7 @@ import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.gpm.changeset.ImportChangeSet
 import fi.iki.ede.gpm.changeset.ScoredMatch
 import fi.iki.ede.gpm.model.IncomingGPM
-import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.gpm.model.*
 
 fun makeSavedForTesting(id: Long, name: String): SavedGPM {
     return SavedGPM.makeFromEncryptedStringFields(

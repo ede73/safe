@@ -25,7 +25,7 @@ import fi.iki.ede.autolock.AutoLockingBaseComponentActivity
 import fi.iki.ede.autolock.AutolockingFeaturesImpl
 import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.crypto.support.encrypt
-import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
+import fi.iki.ede.cryptoobjects.*
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.datamodel.DataModel.siteEntriesStateFlow
 import fi.iki.ede.safe.R

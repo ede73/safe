@@ -1,7 +1,6 @@
 package fi.iki.ede.datamodel
 
-import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
-import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.cryptoobjects.*
 import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.db.DBID

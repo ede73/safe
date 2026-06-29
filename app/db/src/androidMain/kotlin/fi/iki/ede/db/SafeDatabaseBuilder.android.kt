@@ -9,8 +9,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import java.io.File
 import kotlinx.coroutines.runBlocking
-import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
-import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.cryptoobjects.*
 import fi.iki.ede.crypto.IVCipherText
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import okio.Path
@@ -49,7 +48,7 @@ fun runLegacyDatabaseMigration(context: Context, databaseName: String = DBHelper
             val journalFile = File(dbFile.absolutePath + "-journal")
             val walFile = File(dbFile.absolutePath + "-wal")
             val shmFile = File(dbFile.absolutePath + "-shm")
-            
+
             val legacyJournalFile = File(legacyDbFile.absolutePath + "-journal")
             val legacyWalFile = File(legacyDbFile.absolutePath + "-wal")
             val legacyShmFile = File(legacyDbFile.absolutePath + "-shm")
@@ -77,7 +76,7 @@ fun runLegacyDatabaseMigration(context: Context, databaseName: String = DBHelper
                 var migrationSuccessful = false
                 try {
                     val legacyDb = SQLiteDatabase.openDatabase(legacyDbFile.absolutePath, null, SQLiteDatabase.OPEN_READONLY)
-                    
+
                     runBlocking {
                         // 1. Copy categories
                         legacyDb.rawQuery("SELECT * FROM categories", null).use { cursor ->
@@ -178,7 +177,7 @@ fun runLegacyDatabaseMigration(context: Context, databaseName: String = DBHelper
                             }
                         }
                     }
-                    
+
                     legacyDb.close()
                     migrationSuccessful = true
                 } catch (t: Throwable) {
@@ -207,7 +206,7 @@ fun runLegacyDatabaseMigration(context: Context, databaseName: String = DBHelper
             }
         }
     }
-    
+
     prefs.edit().putBoolean(PREF_ROOM_MIGRATION_DONE, true).apply()
 }
 

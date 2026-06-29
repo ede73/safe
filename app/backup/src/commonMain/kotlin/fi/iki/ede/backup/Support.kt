@@ -5,9 +5,9 @@ import fi.iki.ede.backup.ExportConfig.Companion.ATTRIBUTE_PREFIX_IV
 import fi.iki.ede.backup.ExportConfig.Companion.Attributes
 import fi.iki.ede.backup.ExportConfig.Companion.Elements
 import fi.iki.ede.crypto.IVCipherText
-import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.cryptoobjects.*
 import fi.iki.ede.db.DBID
-import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.gpm.model.*
 import fi.iki.ede.backup.xml.XmlPullParser
 import fi.iki.ede.backup.xml.XmlSerializer
 import kotlin.time.ExperimentalTime
@@ -157,15 +157,13 @@ internal fun XmlPullParser.getEncryptedAttribute(name: Attributes): IVCipherText
 internal fun XmlPullParser.maybeGetText(gotTextNode: (encryptedText: IVCipherText) -> Unit) {
     val iv = getTrimmedAttributeValue(Attributes.IV)
     next()
-    text?.let { parserText ->
-        if (eventType == XmlPullParser.TEXT && iv.isNotBlank()) {
-            gotTextNode.invoke(
-                IVCipherText(
-                    iv.trim().hexToByteArray(),
-                    parserText.trim().hexToByteArray()
-                )
+    if (eventType == XmlPullParser.TEXT && text != null && iv.isNotBlank()) {
+        gotTextNode.invoke(
+            IVCipherText(
+                iv.trim().hexToByteArray(),
+                text!!.trim().hexToByteArray()
             )
-        }
+        )
     }
 }
 
