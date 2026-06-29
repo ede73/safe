@@ -368,37 +368,46 @@ fun MainViewController(): UIViewController {
                                         platform.UIKit.UIPasteboard.generalPasteboard.string = text
                                     },
                                     bottomBarContent = {
-                                        Button(
-                                            onClick = {
-                                                coroutineScope.launch {
-                                                    try {
-                                                        // Encrypt values back before writing
-                                                        siteEntry.description = desc.encrypt()
-                                                        siteEntry.username = user.encrypt()
-                                                        siteEntry.password = pass.encrypt()
-                                                        siteEntry.note = note.encrypt()
-                                                        siteEntry.website = url.encrypt()
-                                                        
-                                                        if (siteEntry.id == null) {
-                                                            db.addSiteEntry(siteEntry)
-                                                        } else {
-                                                            db.updateSiteEntry(siteEntry)
+                                        val hasChanges = siteEntry.id == null ||
+                                                desc != siteEntry.cachedPlainDescription ||
+                                                user != siteEntry.plainUsername ||
+                                                pass != siteEntry.plainPassword ||
+                                                note != siteEntry.plainNote ||
+                                                url != siteEntry.plainWebsite
+
+                                        if (hasChanges) {
+                                            Button(
+                                                onClick = {
+                                                    coroutineScope.launch {
+                                                        try {
+                                                            // Encrypt values back before writing
+                                                            siteEntry.description = desc.encrypt()
+                                                            siteEntry.username = user.encrypt()
+                                                            siteEntry.password = pass.encrypt()
+                                                            siteEntry.note = note.encrypt()
+                                                            siteEntry.website = url.encrypt()
+                                                            
+                                                            if (siteEntry.id == null) {
+                                                                db.addSiteEntry(siteEntry)
+                                                            } else {
+                                                                db.updateSiteEntry(siteEntry)
+                                                            }
+                                                            activeSiteEntry = null
+                                                            refreshTrigger++
+                                                        } catch (e: Throwable) {
+                                                            e.printStackTrace()
                                                         }
-                                                        activeSiteEntry = null
-                                                        refreshTrigger++
-                                                    } catch (e: Throwable) {
-                                                        e.printStackTrace()
                                                     }
-                                                }
-                                            },
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(16.dp),
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = Color(0xFFe94560)
-                                            )
-                                        ) {
-                                            Text("Save Changes", fontWeight = FontWeight.Bold)
+                                                },
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(16.dp),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = Color(0xFFe94560)
+                                                )
+                                            ) {
+                                                Text("Save Changes", fontWeight = FontWeight.Bold)
+                                            }
                                         }
                                     }
                                 )
