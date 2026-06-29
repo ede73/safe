@@ -30,9 +30,7 @@ data class IVCipherText(val iv: ByteArray, val cipherText: ByteArray) {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (this::class != other?.let { it::class }) return false
-
-        other as IVCipherText
+        if (other !is IVCipherText) return false
 
         if (!iv.contentEquals(other.iv)) return false
         if (!cipherText.contentEquals(other.cipherText)) return false
