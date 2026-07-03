@@ -278,6 +278,21 @@ object Preferences {
     fun getSoftDeleteDays(): Int =
         getCached(softDeleteDaysKey, 30)
 
+    fun setSoftDeleteDays(days: Int) =
+        setCached(softDeleteDaysKey, days)
+
+    fun setLockTimeoutMinutes(minutes: String) =
+        setCached(lockTimeoutMinutesKey, minutes)
+
+    fun setClipboardClearDelaySecs(seconds: String) =
+        setCached(clipboardClearDelayKey, seconds)
+
+    fun setLockOnScreenLock(value: Boolean) =
+        setCached(lockOnScreenLockKey, value)
+
+    fun setDefaultUserName(username: String) =
+        setCached(defaultUserNameKey, username)
+
     fun gpmImportUsageShown() = storeTimestamp(gpmImportUsageShownKey)
     fun getGpmImportUsageShown(): Long =
         getCached(gpmImportUsageShownKey, 0L)

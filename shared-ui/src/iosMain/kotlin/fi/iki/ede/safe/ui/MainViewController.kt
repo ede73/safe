@@ -35,12 +35,16 @@ import fi.iki.ede.safe.ui.composable.SiteEntryList
 import fi.iki.ede.safe.ui.composable.SiteEntryView
 import fi.iki.ede.safe.ui.composable.AddOrEditCategory
 import fi.iki.ede.safe.ui.composable.getString
+import fi.iki.ede.safe.password.PasswordGenerator
 import platform.UIKit.UIViewController
 import fi.iki.ede.crypto.support.encrypt
 import kotlinx.coroutines.launch
 import fi.iki.ede.safe.ui.composable.AskBackupPasswordAndCommence
 import fi.iki.ede.safe.ui.composable.RestoreDatabaseComponent
 import fi.iki.ede.safe.ui.composable.SharedBottomActionBar
+import fi.iki.ede.safe.ui.composable.SettingsScreen
+import fi.iki.ede.safe.ui.composable.ExtensionsEditor
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import fi.iki.ede.backup.RestoreDatabase
@@ -102,6 +106,10 @@ fun MainViewController(): UIViewController {
     var showAddCategoryDialog by remember { mutableStateOf(false) }
     var showImportExportChoiceDialog by remember { mutableStateOf(false) }
 
+    // Settings Screen states
+    var showSettingsScreen by remember { mutableStateOf(false) }
+    var showExtensionsEditor by remember { mutableStateOf(false) }
+
     // Backup restore states
     var importedBackupXml by remember { mutableStateOf<ByteArray?>(null) }
     var activeDelegate by remember { mutableStateOf<Any?>(null) }
@@ -158,7 +166,12 @@ fun MainViewController(): UIViewController {
             surface = Color(0xFF16213e)
         )
     ) {
-        if (importedBackupXml != null) {
+        if (showSettingsScreen) {
+            SettingsScreen(
+                onBack = { showSettingsScreen = false },
+                onEditExtensions = { showExtensionsEditor = true }
+            )
+        } else if (importedBackupXml != null) {
             var currentRestoreScreenState by remember { mutableStateOf("askBackupPassword") }
             var backupPasswordInput by remember { mutableStateOf(Password.getEmpty()) }
             val processedPasswords = remember { mutableIntStateOf(0) }
@@ -291,6 +304,16 @@ fun MainViewController(): UIViewController {
                                 }
                             )
                         },
+                        actions = {
+                            if (activeCategory == null && activeSiteEntry == null) {
+                                IconButton(onClick = { showSettingsScreen = true }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Settings,
+                                        contentDescription = "Settings"
+                                    )
+                                }
+                            }
+                        },
                         colors = TopAppBarDefaults.topAppBarColors(
                             containerColor = Color(0xFF16213e),
                             titleContentColor = Color.White,
@@ -308,21 +331,30 @@ fun MainViewController(): UIViewController {
                                 } else {
                                     activeSiteEntry = DecryptableSiteEntry(categoryId = activeCategory!!.id!!).apply {
                                         description = "".encrypt()
-                                        username = "".encrypt()
-                                        password = "".encrypt()
+                                        username = Preferences.getDefaultUserName().encrypt()
+                                        password = PasswordGenerator.genPassword(
+                                            passUpper = true,
+                                            passLower = true,
+                                            passNum = true,
+                                            passSymbols = true,
+                                            length = PasswordGenerator.PASSWORD_DEFAULT_LENGTH
+                                        ).encrypt()
                                         website = "".encrypt()
                                         note = "".encrypt()
                                     }
                                 }
                             },
-                            onLockRequested = {
-                                isLoggedIn = false
-                                activeCategory = null
-                                activeSiteEntry = null
-                            },
-                            onImportExportRequested = {
-                                showImportExportChoiceDialog = true
-                            }
+                             onLockRequested = {
+                                 isLoggedIn = false
+                                 activeCategory = null
+                                 activeSiteEntry = null
+                             },
+                             onSettingsRequested = {
+                                 showSettingsScreen = true
+                             },
+                             onImportExportRequested = {
+                                 showImportExportChoiceDialog = true
+                             }
                         )
                     }
                 },
@@ -510,6 +542,61 @@ fun MainViewController(): UIViewController {
                                 ) {
                                     Text(getString("action_bar_restore"))
                                 }
+                            }
+                        )
+                    }
+
+                    if (showExtensionsEditor) {
+                        val allUsedExtensionsAndOnesInPreferences = remember(refreshTrigger) {
+                            (db.fetchAllRows(null, false).flatMap {
+                                it.plainExtensions.keys
+                            }.toSet() + Preferences.getAllExtensions()).toList()
+                        }
+                        ExtensionsEditor(
+                            extensions = allUsedExtensionsAndOnesInPreferences,
+                            onDismiss = { showExtensionsEditor = false },
+                            done = { editedList ->
+                                val newList = mutableListOf<String>()
+                                val editedEntries = mutableSetOf<DecryptableSiteEntry>()
+
+                                val maxSize = maxOf(allUsedExtensionsAndOnesInPreferences.size, editedList.size)
+                                val extendedList1 = allUsedExtensionsAndOnesInPreferences + List(maxSize - allUsedExtensionsAndOnesInPreferences.size) { null }
+                                val extendedList2 = editedList + List(maxSize - editedList.size) { null }
+                                val combined = extendedList1.zip(editedList)
+
+                                combined.forEach { (old, new) ->
+                                    if (old != null && new != null && old != new) {
+                                        newList.add(new)
+                                        val list = db.fetchAllRows(null, false)
+                                        list.forEach { siteEntry ->
+                                            val map = siteEntry.plainExtensions.toMutableMap()
+                                            if (map.containsKey(old)) {
+                                                val values = map[old] ?: emptySet()
+                                                map[new] = values
+                                                map.remove(old)
+                                                siteEntry.extensions = siteEntry.encryptExtension(map.toMap())
+                                                editedEntries.add(siteEntry)
+                                            }
+                                        }
+                                    } else if (new == null) {
+                                        val list = db.fetchAllRows(null, false)
+                                        list.forEach { siteEntry ->
+                                            val map = siteEntry.plainExtensions.toMutableMap()
+                                            if (map.containsKey(old)) {
+                                                map.remove(old)
+                                                siteEntry.extensions = siteEntry.encryptExtension(map.toMap())
+                                                editedEntries.add(siteEntry)
+                                            }
+                                        }
+                                    } else if (old == null) {
+                                        newList.add(new)
+                                    }
+                                }
+                                Preferences.storeAllExtensions(newList.toSet())
+                                editedEntries.forEach { siteEntry ->
+                                    db.updateSiteEntry(siteEntry)
+                                }
+                                refreshTrigger++
                             }
                         )
                     }

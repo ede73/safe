@@ -208,7 +208,10 @@ class PreferenceActivity :
                                 it.plainExtensions.keys
                             }.flatten()
                                 .toSet() + Preferences.getAllExtensions()).toList()
-                        ExtensionsEditor(allUsedExtensionsAndOnesInPreferences) {
+                        ExtensionsEditor(
+                            extensions = allUsedExtensionsAndOnesInPreferences,
+                            onDismiss = { showDialog.value = false }
+                        ) {
                             // we should have two lists, original and modifications
                             // empty items represent DELETIONS
                             // new items represent ADDITIONS
