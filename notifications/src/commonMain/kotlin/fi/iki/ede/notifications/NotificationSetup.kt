@@ -6,7 +6,7 @@ data class NotificationSetup(
     val channelName: Int,
     val channelDescription: Int,
     val category: String,
-    val activityToStartOnClick: Class<*>,
+    val activityToStartOnClick: kotlin.reflect.KClass<*>,
     val icon: Int,
     val importance: NotificationImportance = NotificationImportance.Low // NotificationManager.IMPORTANCE_LOW
 )

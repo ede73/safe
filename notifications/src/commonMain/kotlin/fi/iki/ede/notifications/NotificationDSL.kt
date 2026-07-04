@@ -16,7 +16,7 @@ class NotificationDSL {
         channelName: Int,
         channelDescription: Int,
         category: String,
-        activityToStartOnClick: Class<* >,
+        activityToStartOnClick: kotlin.reflect.KClass<*>,
         icon: Int,
         importance: NotificationImportance = NotificationImportance.Low
     ) {

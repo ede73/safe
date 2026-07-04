@@ -1,15 +1,15 @@
 package fi.iki.ede.dateutils
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
+import kotlin.test.Ignore
+import kotlin.test.assertEquals
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 @ExperimentalTime
 class DateTest {
     @Test
-    @Disabled("ZonedDateTime parser was pretty good, kotlin one sucks. Though we should really need this anymore anywhere")
+    @Ignore // ZonedDateTime parser was pretty good, kotlin one sucks. Though we should really need this anymore anywhere
     fun assertNewProgramCanConvertNonZonedDates() {
         val unixDate = Instant.fromEpochMilliseconds(UNIX_STAMP_MILLIS)
         formats.forEach {
@@ -21,7 +21,7 @@ class DateTest {
     }
 
     @Test
-    @Disabled("ZonedDateTime parser was pretty good, kotlin one sucks. Though we should really need this anymore anywhere")
+    @Ignore // ZonedDateTime parser was pretty good, kotlin one sucks. Though we should really need this anymore anywhere
     fun failedOnceBeforeDateTest() {
         DateUtils.newParse("Jan 12, 2024, 12:44:37")
     }

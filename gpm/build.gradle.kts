@@ -34,6 +34,7 @@ kotlin {
             }
         }
         val androidHostTest by getting {
+            kotlin.srcDir("../crypto/src/testFixtures/kotlin")
             dependencies {
                 implementation(project.dependencies.platform(libs.junit5.bom))
                 implementation(libs.junit5.jupiter)
@@ -43,7 +44,6 @@ kotlin {
             }
         }
         val commonTest by getting {
-            kotlin.srcDir("../crypto/src/testFixtures/kotlin")
             dependencies {
                 implementation(kotlin("test"))
                 implementation(project(":logger"))
@@ -52,3 +52,6 @@ kotlin {
     }
 }
 
+tasks.withType<Test> {
+    useJUnitPlatform()
+}

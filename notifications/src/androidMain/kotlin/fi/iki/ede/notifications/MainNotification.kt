@@ -14,6 +14,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import fi.iki.ede.preferences.Preferences
+import kotlin.jvm.java
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime
@@ -106,10 +107,10 @@ actual class MainNotification(
 
     private fun getPendingIntent(
         context: Context,
-        activityToStartOnClick: Class<*>
+        activityToStartOnClick: kotlin.reflect.KClass<*>
     ): PendingIntent = PendingIntent.getActivity(
         context, 0,
-        Intent(context, activityToStartOnClick),
+        Intent(context, activityToStartOnClick.java),
         PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
