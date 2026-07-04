@@ -112,9 +112,11 @@ fun runLegacyDatabaseMigration(context: Context, databaseName: String = DBHelper
                                 val siteId = if (idIdx != -1) cursor.getLong(idIdx) else continue
                                 val catId = if (categoryIdx != -1) cursor.getLong(categoryIdx) else 0L
                                 val pwdBytes = if (passwordIdx != -1 && !cursor.isNull(passwordIdx)) cursor.getBlob(passwordIdx) else null
+                                    ?: throw IllegalArgumentException("Migration failed: password is null on row $siteId")
                                 val descBytes = if (descriptionIdx != -1 && !cursor.isNull(descriptionIdx)) cursor.getBlob(descriptionIdx) else null
+                                    ?: throw IllegalArgumentException("Migration failed: description is null on row $siteId")
 
-                                if (pwdBytes != null && descBytes != null) {
+                                if (true) {
                                     val userBytes = if (usernameIdx != -1 && !cursor.isNull(usernameIdx)) cursor.getBlob(usernameIdx) else null
                                     val webBytes = if (websiteIdx != -1 && !cursor.isNull(websiteIdx)) cursor.getBlob(websiteIdx) else null
                                     val noteBytes = if (noteIdx != -1 && !cursor.isNull(noteIdx)) cursor.getBlob(noteIdx) else null
