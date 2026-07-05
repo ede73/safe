@@ -185,37 +185,3 @@ class DecryptableSiteEntry(
 }
 
 expect fun DecryptableSiteEntry.decryptPhoto(): PlatformBitmap?
-
-val DecryptableSiteEntry.plainExtensions: Map<String, Set<String>>
-    get() = try {
-        if (extensions.isEmpty()) mapOf()
-        else
-            Json.decodeFromString<Map<String, Set<String>>>(
-                extensions.decrypt().trim()
-            )
-    } catch (e: Exception) {
-        mutableMapOf()
-    }
-
-val DecryptableSiteEntry.plainPassword: String
-    get() = password.decrypt()
-
-val DecryptableSiteEntry.plainUsername: String
-    get() = username.decrypt()
-
-val DecryptableSiteEntry.plainWebsite: String
-    get() = website.decrypt()
-
-val DecryptableSiteEntry.plainNote: String
-    get() = note.decrypt()
-
-val DecryptableSiteEntry.plainPhoto: PlatformBitmap?
-    get() = if (photo.isEmpty()) null else decryptPhoto()
-
-val DecryptableSiteEntry.cachedPlainDescription: String
-    get() {
-        if (decryptedCachedPlainDescription == null && description != IVCipherText.getEmpty()) {
-            decryptedCachedPlainDescription = description.decrypt()
-        }
-        return decryptedCachedPlainDescription ?: ""
-    }

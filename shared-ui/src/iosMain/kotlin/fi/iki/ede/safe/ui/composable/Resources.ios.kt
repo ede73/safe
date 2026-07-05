@@ -5,11 +5,7 @@ import platform.Foundation.NSLocale
 import platform.Foundation.currentLocale
 import platform.Foundation.languageCode
 
-import platform.Foundation.NSLocale
-import platform.Foundation.preferredLanguages
-
 object IosResources {
-<<<<<<< HEAD
     private val enStrings = mapOf(
         "action_bar_backup" to "Backup",
         "action_bar_backup_completed" to "Backup completed",
@@ -503,50 +499,23 @@ object IosResources {
             fiStrings[id] ?: enStrings[id] ?: id
         } else {
             enStrings[id] ?: id
-=======
-    private fun getIosLanguage(): String {
-        val pref = NSLocale.preferredLanguages.firstOrNull() as? String ?: ""
-        return if (pref.startsWith("fi")) "fi" else "en"
-    }
-
-    fun getString(id: String): String {
-        val lang = getIosLanguage()
-        return if (lang == "fi") {
-            GeneratedStrings.fiStrings[id] ?: GeneratedStrings.defaultStrings[id] ?: id
-        } else {
-            GeneratedStrings.defaultStrings[id] ?: id
->>>>>>> 989afa93 (Restore original XML pull parser conditional logic using standard Kotlin non-null assertion)
         }
     }
 
     fun getPluralString(id: String, quantity: Int): String {
-<<<<<<< HEAD
         val lang = getLanguage()
-=======
-        val lang = getIosLanguage()
-        val itemMap = if (lang == "fi") {
-            GeneratedStrings.fiPlurals[id] ?: GeneratedStrings.defaultPlurals[id]
-        } else {
-            GeneratedStrings.defaultPlurals[id]
-        }
-
->>>>>>> 989afa93 (Restore original XML pull parser conditional logic using standard Kotlin non-null assertion)
         val quantityStr = when (quantity) {
             0 -> "zero"
             1 -> "one"
             2 -> "two"
             else -> "other"
         }
-<<<<<<< HEAD
         val pluralsMap = if (lang == "fi") {
             fiPlurals[id] ?: enPlurals[id]
         } else {
             enPlurals[id]
         }
         return pluralsMap?.get(quantityStr) ?: pluralsMap?.get("other") ?: "%d $id"
-=======
-        return itemMap?.get(quantityStr) ?: itemMap?.get("other") ?: "$quantity $id"
->>>>>>> 989afa93 (Restore original XML pull parser conditional logic using standard Kotlin non-null assertion)
     }
 }
 

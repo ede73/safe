@@ -55,8 +55,8 @@ else
     while ! $ADB devices 2>/dev/null | grep "$EMU_SERIAL" | grep -q -w "device"; do
         sleep 2
         COUNT=$((COUNT + 1))
-        if [ $COUNT -gt 30 ]; then
-            echo "Timeout waiting for emulator to show up online in adb."
+        if [ $COUNT -gt 60 ]; then
+            echo "Timeout waiting for emulator to show up online in adb (120 seconds)."
             kill $EMU_PID 2>/dev/null
             exit 1
         fi
@@ -68,8 +68,8 @@ else
     while [ "$($ADB -s "$EMU_SERIAL" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' | xargs)" != "1" ]; do
         sleep 2
         COUNT=$((COUNT + 1))
-        if [ $COUNT -gt 60 ]; then
-            echo "Timeout waiting for emulator to boot."
+        if [ $COUNT -gt 90 ]; then
+            echo "Timeout waiting for emulator to boot (180 seconds)."
             $ADB -s "$EMU_SERIAL" emu kill 2>/dev/null
             kill $EMU_PID 2>/dev/null
             exit 1
@@ -79,9 +79,66 @@ else
 fi
 
 # Run the instrumentation tests
-echo "Running Android Instrumentation Tests..."
-./gradlew :app:connectedAndroidTest
-TEST_RESULT=$?
+echo "Installing debug and test APKs to grant permissions..."
+./gradlew :app:installDebug :app:installDebugAndroidTest
+
+echo "Granting POST_NOTIFICATIONS permission to prevent prompts..."
+# Get active device serials and grant permission to all of them
+DEVICE_LIST=$($ADB devices 2>/dev/null | grep -v "List of devices attached" | grep -v "^$" | grep -v "offline" | grep -v "unauthorized" | cut -f1)
+for DEV in $DEVICE_LIST; do
+    echo "Granting permission on device: $DEV"
+    $ADB -s "$DEV" shell pm grant fi.iki.ede.safe.debug android.permission.POST_NOTIFICATIONS 2>/dev/null || true
+done
+
+# Find all test classes dynamically under app/src/androidTest/java
+TEST_CLASSES=()
+while read -r FILE; do
+    if grep -q -E '@Test|@RunWith' "$FILE"; then
+        PKG=$(grep "^package " "$FILE" | head -n 1 | cut -d' ' -f2 | tr -d '\r' | tr -d ';')
+        while read -r CLS; do
+            CLS_CLEAN=$(echo "$CLS" | tr -d '\r')
+            if [[ "$CLS_CLEAN" =~ [Tt]est$ || "$CLS_CLEAN" == "LoginScreenAfterAutoBackupRestore" ]]; then
+                TEST_CLASSES+=("$PKG.$CLS_CLEAN")
+            fi
+        done < <(grep -E '^[[:space:]]*(class|object)[[:space:]]+[A-Za-z0-9_]+' "$FILE" | sed -E 's/^[[:space:]]*(class|object)[[:space:]]+([A-Za-z0-9_]+).*/\2/')
+    fi
+done < <(find app/src/androidTest/java -name "*.kt")
+
+FAILED_CLASSES=()
+for TEST_CLASS in "${TEST_CLASSES[@]}"; do
+    echo "=================================================="
+    echo "Running Test Class: $TEST_CLASS"
+    echo "=================================================="
+    # If EMU_SERIAL is set, use it. Otherwise, target default device.
+    if [ -n "$EMU_SERIAL" ]; then
+        $ADB -s "$EMU_SERIAL" shell am instrument -w -e class "$TEST_CLASS" fi.iki.ede.safe.debug.test/androidx.test.runner.AndroidJUnitRunner
+    else
+        $ADB shell am instrument -w -e class "$TEST_CLASS" fi.iki.ede.safe.debug.test/androidx.test.runner.AndroidJUnitRunner
+    fi
+    RET=$?
+    if [ $RET -ne 0 ]; then
+        echo "Test class $TEST_CLASS returned exit code $RET. Retrying once in case of temporary ADB drop..."
+        sleep 3
+        if [ -n "$EMU_SERIAL" ]; then
+            $ADB -s "$EMU_SERIAL" shell am instrument -w -e class "$TEST_CLASS" fi.iki.ede.safe.debug.test/androidx.test.runner.AndroidJUnitRunner
+        else
+            $ADB shell am instrument -w -e class "$TEST_CLASS" fi.iki.ede.safe.debug.test/androidx.test.runner.AndroidJUnitRunner
+        fi
+        RET=$?
+    fi
+    if [ $RET -ne 0 ]; then
+        FAILED_CLASSES+=("$TEST_CLASS")
+    fi
+    sleep 3
+done
+
+if [ ${#FAILED_CLASSES[@]} -eq 0 ]; then
+    echo "All tests passed successfully!"
+    TEST_RESULT=0
+else
+    echo "The following test classes failed: ${FAILED_CLASSES[*]}"
+    TEST_RESULT=1
+fi
 
 # Cleanup emulator if we started it
 if [ -n "$EMU_PID" ]; then

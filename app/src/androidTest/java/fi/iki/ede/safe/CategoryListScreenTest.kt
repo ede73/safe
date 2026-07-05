@@ -28,6 +28,8 @@ import fi.iki.ede.safe.utilities.MockKeyStore.fakeSalt
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
+import io.mockk.mockkStatic
+import kotlinx.coroutines.Dispatchers
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -273,6 +275,9 @@ class CategoryListScreenTest {
 
             mockkObject(LoginHandler)
             every { LoginHandler.isLoggedIn() } returns true
+
+            mockkStatic(Dispatchers::class)
+            every { Dispatchers.Default } returns Dispatchers.Main
         }
 
         @AfterClass

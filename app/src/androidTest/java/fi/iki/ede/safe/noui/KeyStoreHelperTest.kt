@@ -40,6 +40,10 @@ class KeyStoreHelperTest {
 
     @Before
     fun beforeEachTest() {
+        DBHelper4AndroidTest.justStoreSaltAndMasterKey(
+            initializeMasterKey = fakeEncryptedMasterKey,
+            initializeSalt = fakeSalt,
+        )
         DBHelper4AndroidTest.initializeEverything(context)
         DBHelper4AndroidTest.configureDefaultTestDataModelAndDB()
     }
