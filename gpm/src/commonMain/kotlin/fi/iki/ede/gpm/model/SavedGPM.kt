@@ -36,78 +36,14 @@ data class SavedGPM(
     @ColumnInfo(name = "hash")
     val hash: String
 ) : DisallowedFunctions {
-    @Ignore
-    private var decryptedName: String? = null
-    @Ignore
-    private var decryptedUsername: String? = null
-    @Ignore
-    private var decryptedUrl: String? = null
-    @Ignore
-    private var decryptedPassword: String? = null
-    @Ignore
-    private var decryptedNote: String? = null
-    @Ignore
-    private var cachedHarmonizedName: LowerCaseTrimmedString? = null
-
-    @Ignore
-    val cachedDecryptedName: String = ""
-        get() {
-            val dummy = field
-            if (decryptedName == null && encryptedName.isNotEmpty()) {
-                decryptedName = encryptedName.decrypt()
-            }
-            return decryptedName ?: ""
-        }
-
-    @Ignore
-    val cachedDecryptedUsername: String = ""
-        get() {
-            val dummy = field
-            if (decryptedUsername == null && encryptedUsername.isNotEmpty()) {
-                decryptedUsername = encryptedUsername.decrypt()
-            }
-            return decryptedUsername ?: ""
-        }
-
-    @Ignore
-    val cachedDecryptedUrl: String = ""
-        get() {
-            val dummy = field
-            if (decryptedUrl == null && encryptedUrl.isNotEmpty()) {
-                decryptedUrl = encryptedUrl.decrypt()
-            }
-            return decryptedUrl ?: ""
-        }
-
-    @Ignore
-    val cachedDecryptedPassword: String = ""
-        get() {
-            val dummy = field
-            if (decryptedPassword == null && encryptedPassword.isNotEmpty()) {
-                decryptedPassword = encryptedPassword.decrypt()
-            }
-            return decryptedPassword ?: ""
-        }
-
-    @Ignore
-    val cachedDecryptedNote: String = ""
-        get() {
-            val dummy = field
-            if (decryptedNote == null && encryptedNote.isNotEmpty()) {
-                decryptedNote = encryptedNote.decrypt()
-            }
-            return decryptedNote ?: ""
-        }
-
-    @Ignore
-    val harmonizedName: LowerCaseTrimmedString = "".toLowerCasedTrimmedString()
-        get() {
-            val dummy = field
-            if (cachedHarmonizedName == null && cachedDecryptedName.isNotEmpty()) {
-                cachedHarmonizedName = harmonizePotentialDomainName(cachedDecryptedName).toLowerCasedTrimmedString()
-            }
-            return cachedHarmonizedName ?: "".toLowerCasedTrimmedString()
-        }
+    val cachedDecryptedName: String by lazy { encryptedName.decrypt() }
+    val cachedDecryptedUsername: String by lazy { encryptedUsername.decrypt() }
+    val cachedDecryptedUrl: String by lazy { encryptedUrl.decrypt() }
+    val cachedDecryptedPassword: String by lazy { encryptedPassword.decrypt() }
+    val cachedDecryptedNote: String by lazy { encryptedNote.decrypt() }
+    val harmonizedName: LowerCaseTrimmedString by lazy {
+        harmonizePotentialDomainName(cachedDecryptedName).toLowerCasedTrimmedString()
+    }
 
     @Ignore
     constructor(id: Long? = null, importing: IncomingGPM) : this(
