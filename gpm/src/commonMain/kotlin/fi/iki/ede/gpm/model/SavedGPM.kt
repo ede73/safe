@@ -37,70 +37,76 @@ data class SavedGPM(
     val hash: String
 ) : DisallowedFunctions {
     @Ignore
-    var cachedDecryptedName: String = ""
-        get() {
-            if (field.isEmpty() && encryptedName.isNotEmpty()) {
-                field = encryptedName.decrypt()
-            }
-            return field
-        }
-        set(value) {
-            field = value
-        }
+    private var decryptedName: String? = null
     @Ignore
-    var cachedDecryptedUsername: String = ""
-        get() {
-            if (field.isEmpty() && encryptedUsername.isNotEmpty()) {
-                field = encryptedUsername.decrypt()
-            }
-            return field
-        }
-        set(value) {
-            field = value
-        }
+    private var decryptedUsername: String? = null
     @Ignore
-    var cachedDecryptedUrl: String = ""
-        get() {
-            if (field.isEmpty() && encryptedUrl.isNotEmpty()) {
-                field = encryptedUrl.decrypt()
-            }
-            return field
-        }
-        set(value) {
-            field = value
-        }
+    private var decryptedUrl: String? = null
     @Ignore
-    var cachedDecryptedPassword: String = ""
-        get() {
-            if (field.isEmpty() && encryptedPassword.isNotEmpty()) {
-                field = encryptedPassword.decrypt()
-            }
-            return field
-        }
-        set(value) {
-            field = value
-        }
+    private var decryptedPassword: String? = null
     @Ignore
-    var cachedDecryptedNote: String = ""
-        get() {
-            if (field.isEmpty() && encryptedNote.isNotEmpty()) {
-                field = encryptedNote.decrypt()
-            }
-            return field
-        }
-        set(value) {
-            field = value
-        }
+    private var decryptedNote: String? = null
     @Ignore
-    var harmonizedName: LowerCaseTrimmedString = "".toLowerCasedTrimmedString()
+    private var cachedHarmonizedName: LowerCaseTrimmedString? = null
+
+    @Ignore
+    val cachedDecryptedName: String = ""
         get() {
-            if (field.lowercasedTrimmed.isEmpty() && cachedDecryptedName.isNotEmpty()) {
-                field = harmonizePotentialDomainName(cachedDecryptedName).toLowerCasedTrimmedString()
+            val dummy = field
+            if (decryptedName == null && encryptedName.isNotEmpty()) {
+                decryptedName = encryptedName.decrypt()
             }
-            return field
+            return decryptedName ?: ""
         }
-        set(value) {
-            field = value
+
+    @Ignore
+    val cachedDecryptedUsername: String = ""
+        get() {
+            val dummy = field
+            if (decryptedUsername == null && encryptedUsername.isNotEmpty()) {
+                decryptedUsername = encryptedUsername.decrypt()
+            }
+            return decryptedUsername ?: ""
+        }
+
+    @Ignore
+    val cachedDecryptedUrl: String = ""
+        get() {
+            val dummy = field
+            if (decryptedUrl == null && encryptedUrl.isNotEmpty()) {
+                decryptedUrl = encryptedUrl.decrypt()
+            }
+            return decryptedUrl ?: ""
+        }
+
+    @Ignore
+    val cachedDecryptedPassword: String = ""
+        get() {
+            val dummy = field
+            if (decryptedPassword == null && encryptedPassword.isNotEmpty()) {
+                decryptedPassword = encryptedPassword.decrypt()
+            }
+            return decryptedPassword ?: ""
+        }
+
+    @Ignore
+    val cachedDecryptedNote: String = ""
+        get() {
+            val dummy = field
+            if (decryptedNote == null && encryptedNote.isNotEmpty()) {
+                decryptedNote = encryptedNote.decrypt()
+            }
+            return decryptedNote ?: ""
+        }
+
+    @Ignore
+    val harmonizedName: LowerCaseTrimmedString = "".toLowerCasedTrimmedString()
+        get() {
+            val dummy = field
+            if (cachedHarmonizedName == null && cachedDecryptedName.isNotEmpty()) {
+                cachedHarmonizedName = harmonizePotentialDomainName(cachedDecryptedName).toLowerCasedTrimmedString()
+            }
+            return cachedHarmonizedName ?: "".toLowerCasedTrimmedString()
         }
 
     @Ignore

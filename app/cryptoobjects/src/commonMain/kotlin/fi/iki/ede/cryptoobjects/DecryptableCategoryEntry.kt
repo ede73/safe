@@ -18,17 +18,8 @@ class DecryptableCategoryEntry {
     @ColumnInfo(name = "name")
     var encryptedName = IVCipherText.getEmpty()
 
-    @Ignore
-    var plainName: String = ""
-        get() {
-            if (field.isEmpty()) {
-                field = encryptedName.decrypt()
-            }
-            return field
-        }
-        set(value) {
-            field = value
-        }
+    val plainName: String
+        get() = encryptedName.decrypt()
 
     // Flow state is annoying since it requires NEW ENTITIES for changes to register
     // Addressed PR5 comment: Restored original comment above

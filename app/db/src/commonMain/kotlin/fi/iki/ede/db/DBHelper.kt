@@ -177,9 +177,8 @@ class DBHelper(
 
     fun savePhoto(photo: IVCipherText): FileName? {
         if (photo.isEmpty()) return null
-        val r1 = Random.nextLong().toULong().toString(16).padStart(16, '0')
-        val r2 = Random.nextLong().toULong().toString(16).padStart(16, '0')
-        val path = photoDir / "$r1$r2.photo_data"
+        val path = photoDir / (Random.nextLong().toULong().toString(16).padStart(16, '0') +
+                Random.nextLong().toULong().toString(16).padStart(16, '0') + ".photo_data")
         return runCatching {
             FileSystem.SYSTEM.write(path) {
                 write(photo.iv)

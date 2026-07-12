@@ -35,17 +35,17 @@ class KeyStoreHelper(
     override var decrypterProviderWithKey: (IVCipherText, KMPKey) -> ByteArray = { encrypted, key ->
         AES.decryptAesCbc(encrypted.cipherText, key.getEncoded(), encrypted.iv, Padding.PKCS7Padding)
     }
-    
+
     override var decrypterProvider: (IVCipherText) -> ByteArray = { encrypted ->
         AES.decryptAesCbc(encrypted.cipherText, masterKey.values, encrypted.iv, Padding.PKCS7Padding)
     }
-    
+
     override var encrypterProviderWithKey: (ByteArray, KMPKey) -> IVCipherText = { plaintext, key ->
         val iv = CipherUtilities.generateRandomBytes(CipherUtilities.IV_LENGTH.bytes)
         val cipherText = AES.encryptAesCbc(plaintext, key.getEncoded(), iv, Padding.PKCS7Padding)
         IVCipherText(iv, cipherText)
     }
-    
+
     override var encrypterProvider: (ByteArray) -> IVCipherText = { plaintext ->
         val iv = CipherUtilities.generateRandomBytes(CipherUtilities.IV_LENGTH.bytes)
         val cipherText = AES.encryptAesCbc(plaintext, masterKey.values, iv, Padding.PKCS7Padding)
@@ -53,6 +53,11 @@ class KeyStoreHelper(
     }
 
     companion object {
+        // Keychain static tag identifier for retrieving the Secure Enclave P-256 key.
+        // This is a static reverse-DNS identifier for keychain lookup, not a classpath reference,
+        // which makes it safe from class obfuscation.
+        private const val KEYCHAIN_TAG = "fi.iki.ede.safe.masterkey"
+
         private var biometricEncryptedMasterKey: IVCipherText? = null
 
         fun getBiometricEncryptedMasterKey(): IVCipherText? = biometricEncryptedMasterKey
@@ -61,19 +66,19 @@ class KeyStoreHelper(
             val saltBytes = ByteArray(8)
             SecureRandom.nextBytes(saltBytes)
             val salt = Salt(saltBytes)
-            
+
             val derivedKey = generatePBKDF2AESKey(
                 salt,
                 KEY_ITERATION_COUNT,
                 password,
                 KEY_LENGTH_BITS
             )
-            
+
             val (unencryptedKey, cipheredKey) = makeFreshNewKey(
                 KEY_LENGTH_BITS,
                 derivedKey
             )
-            
+
             // Generate Secure Enclave key and encrypt master key
             try {
                 biometricEncryptedMasterKey = encryptWithEnclave(unencryptedKey.values)
@@ -95,7 +100,7 @@ class KeyStoreHelper(
                 saltedPassword.password,
                 KEY_LENGTH_BITS
             )
-            
+
             val decrypted = decryptMasterKey(derivedKey, encryptedKey)
 
             // Generate Secure Enclave key and encrypt master key
@@ -122,7 +127,7 @@ class KeyStoreHelper(
         }
 
         private fun getOrCreateKey(): SecKeyRef? {
-            val tag = "fi.iki.ede.safe.masterkey".encodeToByteArray()
+            val tag = KEYCHAIN_TAG.encodeToByteArray()
             val tagData = tag.usePinned { pinned ->
                 CFDataCreate(kCFAllocatorDefault, pinned.addressOf(0).reinterpret(), tag.size.toLong())
             }
@@ -148,7 +153,7 @@ class KeyStoreHelper(
             // Generate new EC key pair
             return memScoped {
                 val errorPtr = alloc<COpaquePointerVar>()
-                
+
                 val privateKeyAttrs = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, null, null)
                 CFDictionarySetValue(privateKeyAttrs, kSecAttrIsPermanent, kCFBooleanTrue)
                 CFDictionarySetValue(privateKeyAttrs, kSecAttrApplicationTag, tagData)
@@ -162,7 +167,7 @@ class KeyStoreHelper(
                 CFDictionarySetValue(parameters, kSecPrivateKeyAttrs, privateKeyAttrs)
 
                 var key = SecKeyCreateRandomKey(parameters, errorPtr.ptr.reinterpret())
-                
+
                 // Fall back to standard CPU key if Secure Enclave is unavailable (e.g. simulator)
                 if (key == null) {
                     val fallbackParams = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, null, null)
@@ -171,7 +176,7 @@ class KeyStoreHelper(
                     CFDictionarySetValue(fallbackParams, kSecPrivateKeyAttrs, privateKeyAttrs)
                     key = SecKeyCreateRandomKey(fallbackParams, errorPtr.ptr.reinterpret())
                 }
-                
+
                 key
             }
         }
@@ -179,7 +184,7 @@ class KeyStoreHelper(
         private fun encryptWithEnclave(plainText: ByteArray): IVCipherText {
             val key = getOrCreateKey() ?: throw IllegalStateException("Could not get or create secure key")
             val publicKey = SecKeyCopyPublicKey(key) ?: throw IllegalStateException("Could not copy public key")
-            
+
             return memScoped {
                 val errorPtr = alloc<COpaquePointerVar>()
                 val plainCFData = plainText.toCFData()
@@ -189,7 +194,7 @@ class KeyStoreHelper(
                     plainCFData,
                     errorPtr.ptr.reinterpret()
                 ) ?: throw IllegalStateException("SecKeyCreateEncryptedData failed")
-                
+
                 val cipherBytes = cipherCFData.toByteArray()
                 IVCipherText(ByteArray(16), cipherBytes)
             }
@@ -197,7 +202,7 @@ class KeyStoreHelper(
 
         private fun decryptWithEnclave(cipherText: ByteArray): ByteArray {
             val key = getOrCreateKey() ?: throw IllegalStateException("Could not get or create secure key")
-            
+
             return memScoped {
                 val errorPtr = alloc<COpaquePointerVar>()
                 val cipherCFData = cipherText.toCFData()
@@ -207,7 +212,7 @@ class KeyStoreHelper(
                     cipherCFData,
                     errorPtr.ptr.reinterpret()
                 ) ?: throw IllegalStateException("SecKeyCreateDecryptedData failed")
-                
+
                 plainCFData.toByteArray()
             }
         }

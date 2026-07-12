@@ -56,22 +56,15 @@ class DecryptableSiteEntry(
     @ColumnInfo(name = "password")
     var password: IVCipherText = IVCipherText.getEmpty()
 
-    @Ignore
-    var plainExtensions: Map<String, Set<String>> = mapOf()
-        get() {
-            if (field.isEmpty() && extensions.isNotEmpty()) {
-                field = try {
-                    Json.decodeFromString<Map<String, Set<String>>>(
-                        extensions.decrypt().trim()
-                    )
-                } catch (e: Exception) {
-                    mapOf()
-                }
-            }
-            return field
-        }
-        set(value) {
-            field = value
+    val plainExtensions: Map<String, Set<String>>
+        get() = try {
+            if (extensions.isEmpty()) mapOf()
+            else
+                Json.decodeFromString<Map<String, Set<String>>>(
+                    extensions.decrypt().trim()
+                )
+        } catch (e: Exception) {
+            mutableMapOf()
         }
 
     @ColumnInfo(name = "extensions")
@@ -97,75 +90,26 @@ class DecryptableSiteEntry(
     @Ignore
     private var decryptedCachedPlainDescription: String? = null
 
-    @Ignore
-    var plainPassword: String = ""
-        get() {
-            if (field.isEmpty() && password.isNotEmpty()) {
-                field = password.decrypt()
-            }
-            return field
-        }
-        set(value) {
-            field = value
-        }
-    @Ignore
-    var plainUsername: String = ""
-        get() {
-            if (field.isEmpty() && username.isNotEmpty()) {
-                field = username.decrypt()
-            }
-            return field
-        }
-        set(value) {
-            field = value
-        }
-    @Ignore
-    var plainWebsite: String = ""
-        get() {
-            if (field.isEmpty() && website.isNotEmpty()) {
-                field = website.decrypt()
-            }
-            return field
-        }
-        set(value) {
-            field = value
-        }
-    @Ignore
-    var plainNote: String = ""
-        get() {
-            if (field.isEmpty() && note.isNotEmpty()) {
-                field = note.decrypt()
-            }
-            return field
-        }
-        set(value) {
-            field = value
-        }
-    @Ignore
-    var plainPhoto: PlatformBitmap? = null
-        get() {
-            if (field == null && photo.isNotEmpty()) {
-                field = decryptPhoto()
-            }
-            return field
-        }
-        set(value) {
-            field = value
-        }
+    val plainPassword: String
+        get() = password.decrypt()
+    val plainUsername: String
+        get() = username.decrypt()
+    val plainWebsite: String
+        get() = website.decrypt()
+    val plainNote: String
+        get() = note.decrypt()
+    val plainPhoto: PlatformBitmap?
+        get() = if (photo.isEmpty()) null else decryptPhoto()
 
     // plain description is used A LOT everywhere (listing, sorting, displaying)
     // On a large password DB operating on decrypt-on-demand description is just too slow
     // Hence once description is decrypted, we'll keep it (unless encrypted description changes)
-    @Ignore
-    var cachedPlainDescription: String = ""
+    val cachedPlainDescription: String
         get() {
             if (decryptedCachedPlainDescription == null && description != IVCipherText.getEmpty()) {
                 decryptedCachedPlainDescription = description.decrypt()
             }
             return decryptedCachedPlainDescription ?: ""
-        }
-        set(value) {
-            field = value
         }
 
     fun contains(
