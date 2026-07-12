@@ -292,7 +292,6 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
                                 categories = categories,
                                 onCategoryClick = { activeCategory = it },
                                 onRenameCategory = { category, newName ->
-                                    category.plainName = newName
                                     category.encryptedName = newName.encrypt()
                                     db.updateCategory(category.id!!, category)
                                     refreshTrigger++
@@ -313,7 +312,6 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
                             onSubmit = { name ->
                                 if (name.isNotBlank()) {
                                     db.addCategory(DecryptableCategoryEntry().apply {
-                                        plainName = name
                                         encryptedName = name.encrypt()
                                     })
                                     refreshTrigger++
