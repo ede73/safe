@@ -36,14 +36,42 @@ data class SavedGPM(
     @ColumnInfo(name = "hash")
     val hash: String
 ) : DisallowedFunctions {
-    val cachedDecryptedName: String by lazy { encryptedName.decrypt() }
-    val cachedDecryptedUsername: String by lazy { encryptedUsername.decrypt() }
-    val cachedDecryptedUrl: String by lazy { encryptedUrl.decrypt() }
-    val cachedDecryptedPassword: String by lazy { encryptedPassword.decrypt() }
-    val cachedDecryptedNote: String by lazy { encryptedNote.decrypt() }
-    val harmonizedName: LowerCaseTrimmedString by lazy {
-        harmonizePotentialDomainName(cachedDecryptedName).toLowerCasedTrimmedString()
-    }
+    @Ignore
+    val cachedDecryptedName: String = ""
+        get() {
+            val dummy = field
+            return encryptedName.decrypt()
+        }
+    @Ignore
+    val cachedDecryptedUsername: String = ""
+        get() {
+            val dummy = field
+            return encryptedUsername.decrypt()
+        }
+    @Ignore
+    val cachedDecryptedUrl: String = ""
+        get() {
+            val dummy = field
+            return encryptedUrl.decrypt()
+        }
+    @Ignore
+    val cachedDecryptedPassword: String = ""
+        get() {
+            val dummy = field
+            return encryptedPassword.decrypt()
+        }
+    @Ignore
+    val cachedDecryptedNote: String = ""
+        get() {
+            val dummy = field
+            return encryptedNote.decrypt()
+        }
+    @Ignore
+    val harmonizedName: LowerCaseTrimmedString = "".toLowerCasedTrimmedString()
+        get() {
+            val dummy = field
+            return harmonizePotentialDomainName(cachedDecryptedName).toLowerCasedTrimmedString()
+        }
 
     @Ignore
     constructor(id: Long? = null, importing: IncomingGPM) : this(

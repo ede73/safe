@@ -240,12 +240,6 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
                                     onClick = {
                                         coroutineScope.launch {
                                             try {
-                                                siteEntry.cachedPlainDescription = desc
-                                                siteEntry.plainUsername = user
-                                                siteEntry.plainPassword = pass
-                                                siteEntry.plainNote = note
-                                                siteEntry.plainWebsite = url
-                                                
                                                 // Encrypt values back before writing
                                                 siteEntry.description = desc.encrypt()
                                                 siteEntry.username = user.encrypt()
