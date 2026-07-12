@@ -463,9 +463,9 @@ fun MainViewController(): UIViewController {
                                 categories = categories,
                                 onCategoryClick = { activeCategory = it },
                                 onRenameCategory = { category, newName ->
-                                    category.encryptedName = newName.encrypt()
-                                    db.updateCategory(category.id!!, category)
-                                    refreshTrigger++
+                                     category.encryptedName = newName.encrypt()
+                                     db.updateCategory(category.id!!, category)
+                                     refreshTrigger++
                                 },
                                 onDeleteCategory = {
                                     db.deleteCategory(it.id!!)
@@ -483,7 +483,7 @@ fun MainViewController(): UIViewController {
                             onSubmit = { name ->
                                 if (name.isNotBlank()) {
                                     db.addCategory(DecryptableCategoryEntry().apply {
-                                        encryptedName = name.encrypt()
+                                         encryptedName = name.encrypt()
                                     })
                                     refreshTrigger++
                                 }
