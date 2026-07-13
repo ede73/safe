@@ -13,7 +13,10 @@ import androidx.room.PrimaryKey
 import androidx.room.ColumnInfo
 import androidx.room.Ignore
 
-@Entity(tableName = "googlepasswords")
+@Entity(
+    tableName = "googlepasswords",
+    ignoredColumns = ["cachedDecryptedName", "cachedDecryptedUsername", "cachedDecryptedUrl", "cachedDecryptedPassword", "cachedDecryptedNote", "harmonizedName"]
+)
 data class SavedGPM(
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
@@ -36,42 +39,14 @@ data class SavedGPM(
     @ColumnInfo(name = "hash")
     val hash: String
 ) : DisallowedFunctions {
-    @Ignore
-    val cachedDecryptedName: String = ""
-        get() {
-            val dummy = field
-            return encryptedName.decrypt()
-        }
-    @Ignore
-    val cachedDecryptedUsername: String = ""
-        get() {
-            val dummy = field
-            return encryptedUsername.decrypt()
-        }
-    @Ignore
-    val cachedDecryptedUrl: String = ""
-        get() {
-            val dummy = field
-            return encryptedUrl.decrypt()
-        }
-    @Ignore
-    val cachedDecryptedPassword: String = ""
-        get() {
-            val dummy = field
-            return encryptedPassword.decrypt()
-        }
-    @Ignore
-    val cachedDecryptedNote: String = ""
-        get() {
-            val dummy = field
-            return encryptedNote.decrypt()
-        }
-    @Ignore
-    val harmonizedName: LowerCaseTrimmedString = "".toLowerCasedTrimmedString()
-        get() {
-            val dummy = field
-            return harmonizePotentialDomainName(cachedDecryptedName).toLowerCasedTrimmedString()
-        }
+    val cachedDecryptedName: String by lazy { encryptedName.decrypt() } // ok
+    val cachedDecryptedUsername: String by lazy { encryptedUsername.decrypt() } // ok
+    val cachedDecryptedUrl: String by lazy { encryptedUrl.decrypt() } // ok
+    val cachedDecryptedPassword: String by lazy { encryptedPassword.decrypt() } // ok
+    val cachedDecryptedNote: String by lazy { encryptedNote.decrypt() } // ok
+    val harmonizedName: LowerCaseTrimmedString by lazy {
+        harmonizePotentialDomainName(cachedDecryptedName).toLowerCasedTrimmedString()
+    }
 
     @Ignore
     constructor(id: Long? = null, importing: IncomingGPM) : this(
