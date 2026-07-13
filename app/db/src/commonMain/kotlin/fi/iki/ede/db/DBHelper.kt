@@ -177,17 +177,19 @@ class DBHelper(
 
     fun savePhoto(photo: IVCipherText): FileName? {
         if (photo.isEmpty()) return null
-        val path = photoDir / (Random.nextLong().toULong().toString(16).padStart(16, '0') +
-                Random.nextLong().toULong().toString(16).padStart(16, '0') + ".photo_data")
+        val path = photoDir / "%016x%016x.photo_data".format(
+            Random.nextLong(),
+            Random.nextLong()
+        )
         return runCatching {
             FileSystem.SYSTEM.write(path) {
                 write(photo.iv)
                 write(photo.cipherText)
             }
         }.onFailure { e ->
-            Logger.e(TAG, "Error saving photo ${path.segments.last()}: ${e.message}", e)
+            Logger.e(TAG, "Error saving photo ${path.name}: ${e.message}", e)
             runCatching { if (FileSystem.SYSTEM.exists(path)) FileSystem.SYSTEM.delete(path) }
-        }.getOrNull()?.let { path.segments.last() }
+        }.getOrNull()?.let { path.name }
     }
 
     fun restoreSoftDeletedSiteEntry(id: DBID): Int = runBlocking {
