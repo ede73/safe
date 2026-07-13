@@ -10,7 +10,7 @@ import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkObject
 import junit.framework.TestCase
-import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -57,11 +57,9 @@ class DataModelDBTest {
         runBlocking {
             // ADD a password..this goes to FLOW
             DataModel.addOrUpdateSiteEntry(DataModelMocks.makePwd(1, null))
+            // wait for the emit
+            DataModel.siteEntriesStateFlow.first { it.size == 3 }
         }
-        // Ah interesting, runBlocking isn't actually blocking that all since INSIDE the function
-        // there's .launch(io thread)
-        // we should wait for the emit
-        DataModel.siteEntriesStateFlow.take(1)
         TestCase.assertEquals(3, DataModel.siteEntriesStateFlow.value.size)
     }
 }

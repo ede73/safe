@@ -16,7 +16,7 @@ class ExtensionsUnitTests {
 
         var capturedBytes: ByteArray? = null
         val encrypter: (ByteArray) -> IVCipherText = {
-            capturedBytes = it
+            capturedBytes = it.copyOf()
             expectedResult
         }
 
