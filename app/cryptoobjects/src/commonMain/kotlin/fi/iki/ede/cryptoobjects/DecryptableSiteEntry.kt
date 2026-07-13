@@ -56,6 +56,17 @@ class DecryptableSiteEntry(
     @ColumnInfo(name = "password")
     var password: IVCipherText = IVCipherText.getEmpty()
 
+    @get:Ignore
+    val plainExtensions: Map<String, Set<String>>
+        get() = try {
+            if (extensions.isEmpty()) mapOf()
+            else
+                Json.decodeFromString<Map<String, Set<String>>>(
+                    extensions.decrypt().trim()
+                )
+        } catch (e: Exception) {
+            mutableMapOf()
+        }
 
     @ColumnInfo(name = "extensions")
     var extensions: IVCipherText = IVCipherText.getEmpty()
@@ -76,18 +87,6 @@ class DecryptableSiteEntry(
 
     @ColumnInfo(name = "website")
     var website: IVCipherText = IVCipherText.getEmpty()
-
-    @get:Ignore
-    val plainExtensions: Map<String, Set<String>>
-        get() = try {
-            if (extensions.isEmpty()) mapOf()
-            else
-                Json.decodeFromString<Map<String, Set<String>>>(
-                    extensions.decrypt().trim()
-                )
-        } catch (e: Exception) {
-            mutableMapOf()
-        }
 
     @Ignore
     private var decryptedCachedPlainDescription: String? = null
