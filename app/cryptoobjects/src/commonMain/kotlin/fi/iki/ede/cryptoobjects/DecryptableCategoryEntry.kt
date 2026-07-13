@@ -9,7 +9,7 @@ import fi.iki.ede.crypto.support.decrypt
 
 // TODO: Doesn't really belong to this project, does it?
 // Addressed PR5 comment: Restored original comment above
-@Entity(tableName = "categories", ignoredColumns = ["plainName"])
+@Entity(tableName = "categories")
 class DecryptableCategoryEntry {
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
@@ -18,6 +18,7 @@ class DecryptableCategoryEntry {
     @ColumnInfo(name = "name")
     var encryptedName = IVCipherText.getEmpty()
 
+    @get:Ignore
     val plainName: String
         get() = encryptedName.decrypt()
 

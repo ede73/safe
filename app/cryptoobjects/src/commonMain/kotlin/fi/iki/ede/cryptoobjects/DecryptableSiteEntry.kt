@@ -20,10 +20,7 @@ import androidx.room.PrimaryKey
 import androidx.room.ColumnInfo
 import androidx.room.Ignore
 
-@Entity(
-    tableName = "passwords",
-    ignoredColumns = ["plainExtensions", "plainPassword", "plainUsername", "plainWebsite", "plainNote", "plainPhoto", "cachedPlainDescription"]
-)
+@Entity(tableName = "passwords")
 class DecryptableSiteEntry(
     @ColumnInfo(name = "category")
     var categoryId: Long = 0L
@@ -80,6 +77,7 @@ class DecryptableSiteEntry(
     @ColumnInfo(name = "website")
     var website: IVCipherText = IVCipherText.getEmpty()
 
+    @get:Ignore
     val plainExtensions: Map<String, Set<String>>
         get() = try {
             if (extensions.isEmpty()) mapOf()
@@ -94,20 +92,26 @@ class DecryptableSiteEntry(
     @Ignore
     private var decryptedCachedPlainDescription: String? = null
 
+    @get:Ignore
     val plainPassword: String
         get() = password.decrypt()
+    @get:Ignore
     val plainUsername: String
         get() = username.decrypt()
+    @get:Ignore
     val plainWebsite: String
         get() = website.decrypt()
+    @get:Ignore
     val plainNote: String
         get() = note.decrypt()
+    @get:Ignore
     val plainPhoto: PlatformBitmap?
         get() = if (photo.isEmpty()) null else decryptPhoto()
 
     // plain description is used A LOT everywhere (listing, sorting, displaying)
     // On a large password DB operating on decrypt-on-demand description is just too slow
     // Hence once description is decrypted, we'll keep it (unless encrypted description changes)
+    @get:Ignore
     val cachedPlainDescription: String
         get() {
             if (decryptedCachedPlainDescription == null && description != IVCipherText.getEmpty()) {
