@@ -20,6 +20,7 @@ import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.safe.splits.IntentManager
+import fi.iki.ede.backup.RestorationProgress
 import fi.iki.ede.safe.ui.composable.AskBackupPasswordAndCommence
 import fi.iki.ede.safe.ui.composable.RestoreDatabaseComponent
 import fi.iki.ede.safe.ui.composable.setupActivityResultLauncher
@@ -105,7 +106,7 @@ class RestoreDatabaseScreen :
                 "askBackupPassword" -> {
                     val processedPasswords = remember { mutableIntStateOf(0) }
                     val processedCategories = remember { mutableIntStateOf(0) }
-                    val processedMessage = remember { mutableStateOf("") }
+                    val processedMessage = remember { mutableStateOf<RestorationProgress?>(null) }
 
                     AskBackupPasswordAndCommence(
                         processedPasswords = processedPasswords,
@@ -120,7 +121,7 @@ class RestoreDatabaseScreen :
                 "restoration" -> {
                     val processedPasswords = remember { mutableIntStateOf(0) }
                     val processedCategories = remember { mutableIntStateOf(0) }
-                    val processedMessage = remember { mutableStateOf("") }
+                    val processedMessage = remember { mutableStateOf<RestorationProgress?>(null) }
 
                     RestoreDatabaseComponent(
                         processedPasswords = processedPasswords,
@@ -156,19 +157,19 @@ class RestoreDatabaseScreen :
     private fun onRestoreFinished(
         restoredPasswords: Int,
         ex: Throwable?,
-        processedMessage: androidx.compose.runtime.MutableState<String>,
+        processedMessage: androidx.compose.runtime.MutableState<RestorationProgress?>,
         onAskNewPassword: () -> Unit
     ) {
         viewModel.backupPassword = null
         if (ex == null) {
             viewModel.docUri = null
-            processedMessage.value = getString(R.string.restore_screen_reread_database)
+            processedMessage.value = RestorationProgress.REREAD_DATABASE
             CoroutineScope(Dispatchers.IO).launch {
                 DataModel.loadFromDatabase {
                     GPMDataModel.loadFromDatabase()
                 }
                 withContext(Dispatchers.Main) {
-                    processedMessage.value = getString(R.string.restore_screen_done)
+                    processedMessage.value = RestorationProgress.DONE
                     IntentManager.startCategoryScreen(this@RestoreDatabaseScreen)
                     setResult(RESULT_OK)
                     firebaseLog("restoreDbOk: finish()")

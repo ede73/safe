@@ -19,36 +19,26 @@ val generateIosStrings = tasks.register("generateIosStrings") {
 
     doLast {
         fun parseStrings(xmlFile: File): Pair<Map<String, String>, Map<String, Map<String, String>>> {
-            val strings = mutableMapOf<String, String>()
-            val plurals = mutableMapOf<String, Map<String, String>>()
-            if (!xmlFile.exists()) return Pair(strings, plurals)
-            val dbFactory = DocumentBuilderFactory.newInstance()
-            val dBuilder = dbFactory.newDocumentBuilder()
-            val doc = dBuilder.parse(xmlFile)
-            doc.documentElement.normalize()
-
-            val stringNodes = doc.getElementsByTagName("string")
-            for (i in 0 until stringNodes.length) {
-                val element = stringNodes.item(i) as Element
-                val name = element.getAttribute("name")
-                val value = element.textContent
-                strings[name] = value
+            if (!xmlFile.exists()) return Pair(emptyMap(), emptyMap())
+            val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(xmlFile).apply {
+                documentElement.normalize()
             }
 
-            val pluralNodes = doc.getElementsByTagName("plurals")
-            for (i in 0 until pluralNodes.length) {
-                val element = pluralNodes.item(i) as Element
-                val name = element.getAttribute("name")
-                val itemMap = mutableMapOf<String, String>()
-                val itemNodes = element.getElementsByTagName("item")
-                for (j in 0 until itemNodes.length) {
-                    val itemElement = itemNodes.item(j) as Element
-                    val quantity = itemElement.getAttribute("quantity")
-                    val value = itemElement.textContent
-                    itemMap[quantity] = value
+            fun org.w3c.dom.NodeList.toElementSequence() = (0 until length).asSequence()
+                .map { item(it) }
+                .filterIsInstance<Element>()
+
+            val strings = doc.getElementsByTagName("string").toElementSequence()
+                .associate { el -> el.getAttribute("name") to el.textContent }
+
+            val plurals = doc.getElementsByTagName("plurals").toElementSequence()
+                .associate { el ->
+                    val name = el.getAttribute("name")
+                    val items = el.getElementsByTagName("item").toElementSequence()
+                        .associate { itemEl -> itemEl.getAttribute("quantity") to itemEl.textContent }
+                    name to items
                 }
-                plurals[name] = itemMap
-            }
+
             return Pair(strings, plurals)
         }
 
@@ -58,11 +48,11 @@ val generateIosStrings = tasks.register("generateIosStrings") {
         outputFile.parentFile.mkdirs()
 
         fun escapeString(str: String): String =
-            str.replace("\\", "\\\\")
-               .replace("\"", "\\\"")
-               .replace("\n", "\\n")
+            str.replace("""\"""", """\\""")
+               .replace("\"", """\"""")
+               .replace("\n", """\n""")
                .replace("\r", "")
-               .replace("$", "\\$")
+               .replace("$", """\$""")
 
         val sb = StringBuilder()
         sb.append("package fi.iki.ede.safe.ui.composable\n\n")

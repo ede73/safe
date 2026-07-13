@@ -40,10 +40,10 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         linkSaveGPMAndSiteEntry: (DBID, DBID) -> Unit,
         addSavedGPM: (SavedGPM) -> Unit,
         passwordLogin: (password: Password) -> Boolean,
-        reportProgress: (categories: Int?, passwords: Int?, message: String?) -> Unit,
+        reportProgress: (categories: Int?, passwords: Int?, message: RestorationProgress?) -> Unit,
         verifyUserWantForOldBackup: (backupCreated: Instant, lastBackupDone: Instant) -> Boolean,
     ): Int {
-        reportProgress(null, null, "Begin restoration")
+        reportProgress(null, null, RestorationProgress.BEGIN_RESTORATION)
         val myParser = XmlPullParserFactory.newInstance().newPullParser()
 
         val bufferedSource = backupSource.buffer()
@@ -83,7 +83,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
             val xmlInputStream = Buffer().write(decrypted)
             myParser.setInput(xmlInputStream)
 
-            reportProgress(null, null, "Process backup")
+            reportProgress(null, null, RestorationProgress.PROCESS_BACKUP)
             val passwords = parseXML(
                 dbHelper,
                 db,
@@ -95,14 +95,14 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                 reportProgress,
             )
             passwordLogin(userPassword)
-            reportProgress(null, null, "Finished with backup")
+            reportProgress(null, null, RestorationProgress.FINISHED_WITH_BACKUP)
             return passwords
         } catch (ex: Exception) {
             Logger.e(TAG, "Restoration failed!", ex)
             ex.printStackTrace()
             firebaseRecordException("Failed to restore", ex)
             db.endTransaction()
-            reportProgress(null, null, "Something failed, rollback")
+            reportProgress(null, null, RestorationProgress.FAILED_ROLLBACK)
             throw ex
         }
     }
@@ -130,7 +130,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         linkSaveGPMAndSiteEntry: (DBID, DBID) -> Unit,
         addSavedGPM: (SavedGPM) -> Unit,
         verifyOldBackupRestoration: (backupCreated: Instant, lastBackupDone: Instant) -> Boolean,
-        reportProgress: (categories: Int?, passwords: Int?, message: String?) -> Unit,
+        reportProgress: (categories: Int?, passwords: Int?, message: RestorationProgress?) -> Unit,
     ): Int {
         val path = mutableListOf<Elements?>()
         var category: DecryptableCategoryEntry? = null
@@ -180,7 +180,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                     lastBackupDone
                                         ?.let { lastBackupTime -> backupCreatedTime < lastBackupTime }
                                 } == true) {
-                                reportProgress(null, null, "Restoring old backup")
+                                reportProgress(null, null, RestorationProgress.RESTORING_OLD_BACKUP)
                                 if (!verifyOldBackupRestoration(creationTime, lastBackupDone!!)) {
                                     // user wants to cancel
                                     throw CancellationException()

@@ -5,6 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.rememberCoroutineScope
+import fi.iki.ede.backup.RestorationProgress
 import fi.iki.ede.backup.RestoreDatabase
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.db.DBHelperFactory
@@ -21,7 +22,7 @@ import kotlin.time.Instant
 fun RestoreDatabaseComponent(
     processedPasswords: MutableIntState,
     processedCategories: MutableIntState,
-    processedMessage: MutableState<String>,
+    processedMessage: MutableState<RestorationProgress?>,
     backupPassword: Password,
     backupSource: Source,
     passwordLogin: (Password) -> Boolean,
@@ -35,7 +36,7 @@ fun RestoreDatabaseComponent(
     LaunchedEffect(Unit) {
         launch(Dispatchers.Default + CoroutineName("DATABASE_RESTORATION")) {
             try {
-                val passwords = RestoreDatabase().doRestore(
+                RestoreDatabase().doRestore(
                     backupSource = backupSource,
                     userPassword = backupPassword,
                     dbHelper = dbHelper,
@@ -43,7 +44,7 @@ fun RestoreDatabaseComponent(
                     linkSaveGPMAndSiteEntry = linkSaveGPMAndSiteEntry,
                     addSavedGPM = addSavedGPM,
                     passwordLogin = passwordLogin,
-                    reportProgress = { categories: Int?, passwords: Int?, message: String? ->
+                    reportProgress = { categories: Int?, passwords: Int?, message: RestorationProgress? ->
                         categories?.let {
                             processedCategories.intValue = it
                         }
@@ -55,8 +56,9 @@ fun RestoreDatabaseComponent(
                         }
                     },
                     verifyUserWantForOldBackup = verifyUserWantForOldBackup
-                )
-                onFinished(passwords, null)
+                ).let { passwords ->
+                    onFinished(passwords, null)
+                }
             } catch (ex: Exception) {
                 ex.printStackTrace()
                 onFinished(0, ex)

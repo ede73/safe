@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import fi.iki.ede.backup.RestorationProgress
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.theme.SafeButton
 import fi.iki.ede.theme.SafeTheme
@@ -21,7 +22,7 @@ import fi.iki.ede.theme.SafeTheme
 fun AskBackupPasswordAndCommence(
     processedPasswords: MutableIntState,
     processedCategories: MutableIntState,
-    processedMessage: MutableState<String>,
+    processedMessage: MutableState<RestorationProgress?>,
     selectedDocName: String,
     doBackup: @Composable (backupPassword: Password) -> Unit
 ) {
@@ -53,12 +54,14 @@ fun AskBackupPasswordAndCommence(
                 Text(getString("restore_screen_categories_count").replace("%d", processedCategories.intValue.toString()))
                 val msg = processedMessage.value
                 val localizedMessage = when (msg) {
-                    "Begin restoration" -> getString("restore_screen_begin_restore")
-                    "Process backup" -> getString("restore_screen_process_backup")
-                    "Finished with backup" -> getString("restore_screen_finished_backup")
-                    "Something failed, rollback" -> getString("restore_screen_restore_failed")
-                    "Restoring old backup" -> getString("restore_screen_restoring_old_backup")
-                    else -> msg
+                    RestorationProgress.BEGIN_RESTORATION -> getString("restore_screen_begin_restore")
+                    RestorationProgress.PROCESS_BACKUP -> getString("restore_screen_process_backup")
+                    RestorationProgress.FINISHED_WITH_BACKUP -> getString("restore_screen_finished_backup")
+                    RestorationProgress.FAILED_ROLLBACK -> getString("restore_screen_restore_failed")
+                    RestorationProgress.RESTORING_OLD_BACKUP -> getString("restore_screen_restoring_old_backup")
+                    RestorationProgress.REREAD_DATABASE -> getString("restore_screen_reread_database")
+                    RestorationProgress.DONE -> getString("restore_screen_done")
+                    null -> ""
                 }
                 Text(localizedMessage)
             }

@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ComposeUIViewController
+import fi.iki.ede.backup.RestorationProgress
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
@@ -162,7 +163,7 @@ fun MainViewController(): UIViewController {
             var backupPasswordInput by remember { mutableStateOf(Password.getEmpty()) }
             val processedPasswords = remember { mutableIntStateOf(0) }
             val processedCategories = remember { mutableIntStateOf(0) }
-            val processedMessage = remember { mutableStateOf("") }
+            val processedMessage = remember { mutableStateOf<RestorationProgress?>(null) }
 
             when (currentRestoreScreenState) {
                 "askBackupPassword" -> {

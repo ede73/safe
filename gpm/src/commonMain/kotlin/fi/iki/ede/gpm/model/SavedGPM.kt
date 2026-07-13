@@ -101,20 +101,4 @@ data class SavedGPM(
     }
 }
 
-val SavedGPM.cachedDecryptedName: String
-    get() = encryptedName.decrypt()
 
-val SavedGPM.cachedDecryptedUsername: String
-    get() = encryptedUsername.decrypt()
-
-val SavedGPM.cachedDecryptedUrl: String
-    get() = encryptedUrl.decrypt()
-
-val SavedGPM.cachedDecryptedPassword: String
-    get() = encryptedPassword.decrypt()
-
-val SavedGPM.cachedDecryptedNote: String
-    get() = encryptedNote.decrypt()
-
-val SavedGPM.harmonizedName: LowerCaseTrimmedString
-    get() = harmonizePotentialDomainName(cachedDecryptedName).toLowerCasedTrimmedString()
