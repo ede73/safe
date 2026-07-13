@@ -225,10 +225,9 @@ class KeyStoreHelper(
 
         private fun CFDataRef.toByteArray(): ByteArray {
             val length = CFDataGetLength(this).toInt()
-            val bytesPtr = CFDataGetBytePtr(this) ?: return ByteArray(0)
             val byteArray = ByteArray(length)
             byteArray.usePinned { pinned ->
-                memcpy(pinned.addressOf(0), bytesPtr, length.toULong())
+                memcpy(pinned.addressOf(0), CFDataGetBytePtr(this), length.toULong())
             }
             return byteArray
         }
