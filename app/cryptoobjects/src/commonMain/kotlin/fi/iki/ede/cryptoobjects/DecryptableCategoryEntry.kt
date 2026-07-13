@@ -9,7 +9,7 @@ import fi.iki.ede.crypto.support.decrypt
 
 // TODO: Doesn't really belong to this project, does it?
 // Addressed PR5 comment: Restored original comment above
-@Entity(tableName = "categories")
+@Entity(tableName = "categories", ignoredColumns = ["plainName"])
 class DecryptableCategoryEntry {
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
@@ -18,6 +18,8 @@ class DecryptableCategoryEntry {
     @ColumnInfo(name = "name")
     var encryptedName = IVCipherText.getEmpty()
 
+    val plainName: String
+        get() = encryptedName.decrypt()
 
     // Flow state is annoying since it requires NEW ENTITIES for changes to register
     // Addressed PR5 comment: Restored original comment above
@@ -30,6 +32,3 @@ class DecryptableCategoryEntry {
     @Ignore
     var containedSiteEntryCount = 0
 }
-
-val DecryptableCategoryEntry.plainName: String
-    get() = encryptedName.decrypt()
