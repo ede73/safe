@@ -49,10 +49,15 @@ import fi.iki.ede.safe.ui.models.EditableSiteEntry
 import fi.iki.ede.safe.ui.models.EditingSiteEntryViewModel
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.safephoto.SafePhoto
+import fi.iki.ede.safe.password.PasswordGenerator
+import fi.iki.ede.safe.ui.composable.BottomActionBarForSiteEntryView
+import fi.iki.ede.safe.ui.composable.PopCustomPasswordDialog
+import fi.iki.ede.safe.SafeApplication
 import fi.iki.ede.theme.SafeButton
 import fi.iki.ede.theme.SafeTextButton
 import fi.iki.ede.theme.SafeTheme
 import kotlinx.coroutines.launch
+import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 @Composable
@@ -120,10 +125,10 @@ internal fun SiteEntryEditCompose(
                         finnishTheActivity.value = true
                     }
                 )
-            }
-            if (finnishTheActivity.value) {
+            } else if (finnishTheActivity.value) {
                 finishActivity()
             } else {
+                val showCustomPasswordGenerator = remember { mutableStateOf(false) }
                 SiteEntryView(
                     description = edits.description,
                     onDescriptionChange = { viewModel.updateDescription(it) },
@@ -149,6 +154,38 @@ internal fun SiteEntryEditCompose(
                         )
                     },
                     originalPassword = viewModel.originalPassword?.decrypt(),
+                    customPasswordGeneratorContent = {
+                        if (showCustomPasswordGenerator.value) {
+                            PopCustomPasswordDialog { customPassword ->
+                                if (customPassword != null) {
+                                    viewModel.updatePassword(customPassword.encrypt())
+                                    viewModel.updatePasswordChangedDate(Clock.System.now())
+                                }
+                                showCustomPasswordGenerator.value = false
+                            }
+                        }
+                    },
+                    bottomBarContent = {
+                        BottomActionBarForSiteEntryView(
+                            onLock = { SafeApplication.lockTheApplication(context) },
+                            onGeneratePassword = { custom ->
+                                if (custom) {
+                                    showCustomPasswordGenerator.value = true
+                                } else {
+                                    viewModel.updatePassword(
+                                        PasswordGenerator.genPassword(
+                                            passUpper = true,
+                                            passLower = true,
+                                            passNum = true,
+                                            passSymbols = true,
+                                            length = PasswordGenerator.PASSWORD_DEFAULT_LENGTH
+                                        ).encrypt()
+                                    )
+                                       viewModel.updatePasswordChangedDate(Clock.System.now())
+                                }
+                            }
+                        )
+                    },
                     breachCheckButtonContent = if (skipForPreviewToWork) null else {
                         @Composable {
                             breachCheckButton(context, edits.password)()
