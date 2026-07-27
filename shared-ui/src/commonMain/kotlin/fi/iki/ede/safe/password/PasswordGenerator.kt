@@ -7,6 +7,9 @@ import kotlin.math.min
 const val PG_SYMBOLS = "!@#$%^&*()[]{}:;'\"/><.,-_=+~"
 
 object PasswordGenerator {
+    const val PASSWORD_DEFAULT_LENGTH = 18
+    const val PASSWORD_MINIMUM_LENGTH = 8
+
 
     // korlibs SecureRandom.nextInt() is broken (always returns 0),
     // but nextBytes() works correctly on all KMP platforms
@@ -34,7 +37,7 @@ object PasswordGenerator {
         val numbers = "0123456789"
         val minSymbols = if (passSymbols) min(2, symbols.length) else 0
         // just refuse to make less than 8 char passwords
-        if (length < 8) {
+        if (length < PASSWORD_MINIMUM_LENGTH) {
             return ""
         }
         val charset = buildString {

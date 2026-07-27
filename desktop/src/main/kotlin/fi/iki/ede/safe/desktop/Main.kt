@@ -13,6 +13,7 @@ import fi.iki.ede.safe.ui.composable.DesktopSiteEntryNavigation
 import fi.iki.ede.safe.ui.composable.CategoryList
 import fi.iki.ede.safe.ui.composable.SiteEntryList
 import fi.iki.ede.preferences.Preferences
+import fi.iki.ede.safe.password.PasswordGenerator
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
@@ -792,8 +793,30 @@ fun LoginScreen() {
         if (activeSiteEntry != null) {
             var editDesc by remember(activeSiteEntry) { mutableStateOf(activeSiteEntry.cachedPlainDescription) }
             var editWeb by remember(activeSiteEntry) { mutableStateOf(activeSiteEntry.plainWebsite) }
-            var editUser by remember(activeSiteEntry) { mutableStateOf(activeSiteEntry.plainUsername) }
-            var editPass by remember(activeSiteEntry) { mutableStateOf(activeSiteEntry.plainPassword) }
+            var editUser by remember(activeSiteEntry) {
+                val initialUser = if (activeSiteEntry.id == null) {
+                    activeSiteEntry.plainUsername.ifBlank { Preferences.getDefaultUserName() }
+                } else {
+                    activeSiteEntry.plainUsername
+                }
+                mutableStateOf(initialUser)
+            }
+            var editPass by remember(activeSiteEntry) {
+                val initialPass = if (activeSiteEntry.id == null) {
+                    activeSiteEntry.plainPassword.ifBlank {
+                        PasswordGenerator.genPassword(
+                            passUpper = true,
+                            passLower = true,
+                            passNum = true,
+                            passSymbols = true,
+                            length = PasswordGenerator.PASSWORD_DEFAULT_LENGTH
+                        )
+                    }
+                } else {
+                    activeSiteEntry.plainPassword
+                }
+                mutableStateOf(initialPass)
+            }
             var editNote by remember(activeSiteEntry) { mutableStateOf(activeSiteEntry.plainNote) }
             var editPassVisible by remember { mutableStateOf(false) }
             var editNoteVisible by remember { mutableStateOf(false) }

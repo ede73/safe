@@ -16,7 +16,7 @@ fun prepareNotifications() = initializeNotifications {
         R.string.notification_lock_title,
         R.string.notification_lock_description,
         Notification.CATEGORY_SERVICE,
-        CategoryListScreen::class.java,
+        CategoryListScreen::class,
         R.drawable.passicon
     )
     notification(
@@ -25,7 +25,7 @@ fun prepareNotifications() = initializeNotifications {
         R.string.notification_backup_reminder_title,
         R.string.notification_backup_reminder_description,
         Notification.CATEGORY_REMINDER,
-        BackupDatabaseScreen::class.java,
+        BackupDatabaseScreen::class,
         R.drawable.passicon
     )
     notification(
@@ -34,7 +34,7 @@ fun prepareNotifications() = initializeNotifications {
         R.string.notification_google_autobackup_title,
         R.string.notification_google_autobackup_description,
         Notification.CATEGORY_STATUS,
-        CategoryListScreen::class.java,
+        CategoryListScreen::class,
         R.drawable.passicon
     )
     notification(
@@ -43,7 +43,7 @@ fun prepareNotifications() = initializeNotifications {
         R.string.notification_google_autobackup_quota_exceeded_title,
         R.string.notification_google_autobackup_quota_exceeded_description,
         Notification.CATEGORY_ERROR,
-        CategoryListScreen::class.java,
+        CategoryListScreen::class,
         R.drawable.passicon
     )
 }

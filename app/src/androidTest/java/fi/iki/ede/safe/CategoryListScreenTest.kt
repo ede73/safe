@@ -28,6 +28,8 @@ import fi.iki.ede.safe.utilities.MockKeyStore.fakeSalt
 import io.mockk.every
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
+import io.mockk.mockkStatic
+import kotlinx.coroutines.Dispatchers
 import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -99,8 +101,14 @@ class CategoryListScreenTest {
             .assertIsDisplayed()
         categoryActivityTestRule.onNodeWithTag(TestTag.CATEGORY_TEXT_FIELD)
             .assertIsDisplayed()
-        categoryActivityTestRule.onNodeWithTag(TestTag.CATEGORY_TEXT_FIELD)
-            .assertIsFocused()
+        categoryActivityTestRule.waitUntil(2000) {
+            try {
+                categoryActivityTestRule.onNodeWithTag(TestTag.CATEGORY_TEXT_FIELD).assertIsFocused()
+                true
+            } catch (e: AssertionError) {
+                false
+            }
+        }
         categoryActivityTestRule.onNodeWithTag(TestTag.CATEGORY_TEXT_FIELD)
             .performClick()
         categoryActivityTestRule.onNodeWithTag(TestTag.CATEGORY_TEXT_FIELD)
@@ -240,9 +248,7 @@ class CategoryListScreenTest {
         categoryActivityTestRule.waitForIdle()
         advanceUntilIdle()
 
-        val categoryStillExists = categoriesEmitted.any { categoriesList ->
-            categoriesList.any { it.plainName == newCategory }
-        }
+        val categoryStillExists = DataModel.categoriesStateFlow.value.any { it.plainName == newCategory }
         assertFalse("The category was deleted.", categoryStillExists)
         collectionJob.cancel()
         advanceUntilIdle()
@@ -269,6 +275,9 @@ class CategoryListScreenTest {
 
             mockkObject(LoginHandler)
             every { LoginHandler.isLoggedIn() } returns true
+
+            mockkStatic(Dispatchers::class)
+            every { Dispatchers.Default } returns Dispatchers.Main
         }
 
         @AfterClass

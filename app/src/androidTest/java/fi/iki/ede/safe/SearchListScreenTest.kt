@@ -49,6 +49,10 @@ class SearchListScreenTest {
 
     @Before
     fun beforeEachTest() {
+        DBHelper4AndroidTest.justStoreSaltAndMasterKey(
+            initializeMasterKey = MockKeyStore.fakeEncryptedMasterKey,
+            initializeSalt = MockKeyStore.fakeSalt,
+        )
         DBHelper4AndroidTest.initializeEverything(context)
         DBHelper4AndroidTest.configureDefaultTestDataModelAndDB()
     }
