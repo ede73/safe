@@ -14,6 +14,9 @@ import fi.iki.ede.safe.ui.composable.CategoryList
 import fi.iki.ede.safe.ui.composable.SiteEntryList
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.password.PasswordGenerator
+import fi.iki.ede.safe.ui.composable.PopCustomPasswordDialog
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.background
@@ -820,6 +823,7 @@ fun LoginScreen() {
             var editNote by remember(activeSiteEntry) { mutableStateOf(activeSiteEntry.plainNote) }
             var editPassVisible by remember { mutableStateOf(false) }
             var editNoteVisible by remember { mutableStateOf(false) }
+            var showCustomPasswordGenerator by remember { mutableStateOf(false) }
             val editExtensions = remember(activeSiteEntry) {
                 mutableStateListOf<Pair<String, String>>().apply {
                     activeSiteEntry.plainExtensions.forEach { (type, values) ->
@@ -983,20 +987,54 @@ fun LoginScreen() {
                                     Text(DesktopStrings.get("password_entry_password_label"), fontSize = 12.sp)
                                 }
                             }
+                            Spacer(modifier = Modifier.width(4.dp))
+                            var displayMenu by remember { mutableStateOf(false) }
+                            Box {
+                                IconButton(onClick = { displayMenu = !displayMenu }) {
+                                    Icon(
+                                        Icons.Default.MoreVert,
+                                        contentDescription = "Password Options",
+                                        tint = Color.White
+                                    )
+                                }
+                                DropdownMenu(
+                                    expanded = displayMenu,
+                                    onDismissRequest = { displayMenu = false }
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text(DesktopStrings.get("action_bar_generate_password")) },
+                                        onClick = {
+                                            displayMenu = false
+                                            val newSecurePass = PasswordGenerator.genPassword(
+                                                passUpper = true,
+                                                passLower = true,
+                                                passNum = true,
+                                                passSymbols = true,
+                                                length = PasswordGenerator.PASSWORD_DEFAULT_LENGTH
+                                            )
+                                            editPass = newSecurePass
+                                            editPassVisible = true
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(DesktopStrings.get("action_bar_generate_custom_password")) },
+                                        onClick = {
+                                            displayMenu = false
+                                            showCustomPasswordGenerator = true
+                                        }
+                                    )
+                                }
+                            }
                         }
 
-                        Button(
-                            onClick = {
-                                val newSecurePass = (1..16).map {
-                                    (('a'..'z') + ('A'..'Z') + ('0'..'9') + listOf('!', '@', '#', '$', '%', '&')).random()
-                                }.joinToString("")
-                                editPass = newSecurePass
-                                editPassVisible = true
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = DesktopColors.Success),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(DesktopStrings.get("action_bar_generate_password"), fontSize = 12.sp)
+                        if (showCustomPasswordGenerator) {
+                            PopCustomPasswordDialog { customPassword ->
+                                if (customPassword != null) {
+                                    editPass = customPassword.utf8password.concatToString()
+                                    editPassVisible = true
+                                }
+                                showCustomPasswordGenerator = false
+                            }
                         }
 
                         OutlinedTextField(
