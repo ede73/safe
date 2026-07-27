@@ -1,9 +1,8 @@
 package fi.iki.ede.db
 
 import androidx.room.*
-import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
-import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
-import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.cryptoobjects.*
+import fi.iki.ede.gpm.model.*
 import kotlin.time.ExperimentalTime
 
 @Dao

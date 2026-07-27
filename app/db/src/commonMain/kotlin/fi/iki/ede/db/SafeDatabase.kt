@@ -5,9 +5,8 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
-import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
-import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
-import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.cryptoobjects.*
+import fi.iki.ede.gpm.model.*
 import fi.iki.ede.db.RoomConverters
 import kotlin.time.ExperimentalTime
 

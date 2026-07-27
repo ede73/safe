@@ -20,7 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
+import fi.iki.ede.cryptoobjects.*
 import fi.iki.ede.safe.ui.dialogs.DeleteCategoryDialog
 import fi.iki.ede.theme.SafeListItem
 import fi.iki.ede.safe.ui.TestTag

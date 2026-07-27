@@ -11,34 +11,31 @@ import platform.Foundation.NSFileManager
 import platform.Foundation.NSUserDomainMask
 
 actual val preferenceBackupPathDefaultValue: String
-    get() {
-        val documentDirectory = NSFileManager.defaultManager.URLForDirectory(
-            directory = NSDocumentDirectory,
-            inDomain = NSUserDomainMask,
-            appropriateForURL = null,
-            create = false,
-            error = null
-        )
-        return (documentDirectory?.path ?: "") + "/${Preferences.PASSWORDSAFE_EXPORT_FILE}"
-    }
+    get() = (NSFileManager.defaultManager.URLForDirectory(
+        directory = NSDocumentDirectory,
+        inDomain = NSUserDomainMask,
+        appropriateForURL = null,
+        create = false,
+        error = null
+    )?.path ?: "") + "/${Preferences.PASSWORDSAFE_EXPORT_FILE}"
 
-actual fun createDataStore(): DataStore<DataStorePreferences> {
-    return PreferenceDataStoreFactory.createWithPath(
+actual fun createDataStore(): DataStore<DataStorePreferences> =
+    PreferenceDataStoreFactory.createWithPath(
         produceFile = {
-            val documentDirectory = NSFileManager.defaultManager.URLForDirectory(
-                directory = NSDocumentDirectory,
-                inDomain = NSUserDomainMask,
-                appropriateForURL = null,
-                create = false,
-                error = null
-            )
-            val path = requireNotNull(documentDirectory?.path) {
+            val path = requireNotNull(
+                NSFileManager.defaultManager.URLForDirectory(
+                    directory = NSDocumentDirectory,
+                    inDomain = NSUserDomainMask,
+                    appropriateForURL = null,
+                    create = false,
+                    error = null
+                )?.path
+            ) {
                 "Could not find iOS documents directory for DataStore"
             }
             "$path/safe_preferences.preferences_pb".toPath()
         }
     )
-}
 
 actual fun notifyPlatformListeners(key: String) {
     // No-op

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import fi.iki.ede.crypto.KeystoreHelperMock4UnitTests
 import io.mockk.unmockkAll
+import fi.iki.ede.cryptoobjects.*
 
 class ImportExportTest {
     private lateinit var db: DBHelper
@@ -65,10 +66,10 @@ class ImportExportTest {
 
         // 3. Clear database
         db.clearAllData()
-        
+
         assertEquals(0, db.fetchAllCategoryRows().size)
         assertEquals(0, db.fetchAllRows().size)
-        
+
 
         // 4. Import the exported backup XML
         val reImportedCount = BackupImporter.importFromXml(exportedBackupContent, password, db)
@@ -90,7 +91,7 @@ class ImportExportTest {
             val after = requireNotNull(siteEntriesAfter.firstOrNull { it.cachedPlainDescription == before.cachedPlainDescription }) {
                 "Site entry '${before.cachedPlainDescription}' was not preserved"
             }
-            
+
             assertEquals(before.plainUsername, after.plainUsername)
             assertEquals(before.plainPassword, after.plainPassword)
             assertEquals(before.plainWebsite, after.plainWebsite)

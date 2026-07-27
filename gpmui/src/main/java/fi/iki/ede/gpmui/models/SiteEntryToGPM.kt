@@ -1,7 +1,7 @@
 package fi.iki.ede.gpmui.models
 
-import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
-import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.cryptoobjects.*
+import fi.iki.ede.gpm.model.*
 import kotlin.time.ExperimentalTime
 
 @ExperimentalTime

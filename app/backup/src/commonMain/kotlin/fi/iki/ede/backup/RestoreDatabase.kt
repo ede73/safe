@@ -12,12 +12,11 @@ import fi.iki.ede.crypto.keystore.KeyManagement
 import fi.iki.ede.crypto.keystore.KeyManagement.generatePBKDF2AESKey
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.keystore.KMPKey
-import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
-import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.cryptoobjects.*
 import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBID
-import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.gpm.model.*
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseRecordException
 import kotlinx.coroutines.CancellationException
@@ -26,8 +25,8 @@ import okio.BufferedSource
 import okio.Source
 import okio.Timeout
 import okio.buffer
-import org.xmlpull.v1.XmlPullParser
-import org.xmlpull.v1.XmlPullParserFactory
+import fi.iki.ede.backup.xml.XmlPullParser
+import fi.iki.ede.backup.xml.XmlPullParserFactory
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -41,10 +40,10 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         linkSaveGPMAndSiteEntry: (DBID, DBID) -> Unit,
         addSavedGPM: (SavedGPM) -> Unit,
         passwordLogin: (password: Password) -> Boolean,
-        reportProgress: (categories: Int?, passwords: Int?, message: String?) -> Unit,
+        reportProgress: (categories: Int?, passwords: Int?, message: RestorationProgress?) -> Unit,
         verifyUserWantForOldBackup: (backupCreated: Instant, lastBackupDone: Instant) -> Boolean,
     ): Int {
-        reportProgress(null, null, "Begin restoration")
+        reportProgress(null, null, RestorationProgress.BEGIN_RESTORATION)
         val myParser = XmlPullParserFactory.newInstance().newPullParser()
 
         val bufferedSource = backupSource.buffer()
@@ -75,18 +74,16 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
             val ivBackup = line4.hexToByteArray()
             val cipherMasterLine2 = bufferedSource.readUtf8Line() ?: throw IllegalArgumentException("Missing backup data ciphertext")
             val cipherBackup = cipherMasterLine2.hexToByteArray()
-            
+
             val helper = KeyStoreHelperFactory.getKeyStoreHelper()
             val decrypted = helper.decrypterProviderWithKey(
                 IVCipherText(ivBackup, cipherBackup),
                 masterKey
             )
-            // Addressed PR10 comment: Use Okio Buffer conversion to avoid raw java.io.ByteArrayInputStream
-            val xmlInputStream = Buffer().write(decrypted).inputStream()
+            val xmlInputStream = Buffer().write(decrypted)
+            myParser.setInput(xmlInputStream)
 
-            myParser.setInput(xmlInputStream, null)
-
-            reportProgress(null, null, "Process backup")
+            reportProgress(null, null, RestorationProgress.PROCESS_BACKUP)
             val passwords = parseXML(
                 dbHelper,
                 db,
@@ -98,14 +95,14 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                 reportProgress,
             )
             passwordLogin(userPassword)
-            reportProgress(null, null, "Finished with backup")
+            reportProgress(null, null, RestorationProgress.FINISHED_WITH_BACKUP)
             return passwords
         } catch (ex: Exception) {
             Logger.e(TAG, "Restoration failed!", ex)
             ex.printStackTrace()
             firebaseRecordException("Failed to restore", ex)
             db.endTransaction()
-            reportProgress(null, null, "Something failed, rollback")
+            reportProgress(null, null, RestorationProgress.FAILED_ROLLBACK)
             throw ex
         }
     }
@@ -133,7 +130,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         linkSaveGPMAndSiteEntry: (DBID, DBID) -> Unit,
         addSavedGPM: (SavedGPM) -> Unit,
         verifyOldBackupRestoration: (backupCreated: Instant, lastBackupDone: Instant) -> Boolean,
-        reportProgress: (categories: Int?, passwords: Int?, message: String?) -> Unit,
+        reportProgress: (categories: Int?, passwords: Int?, message: RestorationProgress?) -> Unit,
     ): Int {
         val path = mutableListOf<Elements?>()
         var category: DecryptableCategoryEntry? = null
@@ -149,7 +146,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         while (myParser.eventType != XmlPullParser.END_DOCUMENT) {
             when (myParser.eventType) {
                 XmlPullParser.START_TAG -> {
-                    path.add(valueOrNull<Elements, String>(myParser.name) { it.value })
+                    path.add(valueOrNull<Elements, String>(myParser.name ?: "") { it.value })
                     when (path) {
                         listOf(Elements.ROOT_PASSWORD_SAFE) -> {
                             val rawVersion = myParser.getTrimmedAttributeValue(
@@ -183,7 +180,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                     lastBackupDone
                                         ?.let { lastBackupTime -> backupCreatedTime < lastBackupTime }
                                 } == true) {
-                                reportProgress(null, null, "Restoring old backup")
+                                reportProgress(null, null, RestorationProgress.RESTORING_OLD_BACKUP)
                                 if (!verifyOldBackupRestoration(creationTime, lastBackupDone!!)) {
                                     // user wants to cancel
                                     throw CancellationException()
@@ -384,7 +381,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                     val oldId = deletedSiteEntry.id!!
                                     deletedSiteEntry.id = null
                                     val newId = dbHelper.addSiteEntry(deletedSiteEntry)
-                                    gpmLinkedToDeletedSiteEntries.forEach { gpmId, deletedSiteEntryIds ->
+                                    gpmLinkedToDeletedSiteEntries.forEach { (gpmId, deletedSiteEntryIds) ->
                                         if (oldId in deletedSiteEntryIds) {
                                             linkSaveGPMAndSiteEntry(newId, gpmId)
                                         }

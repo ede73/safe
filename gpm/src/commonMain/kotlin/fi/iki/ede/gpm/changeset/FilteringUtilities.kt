@@ -1,8 +1,6 @@
 package fi.iki.ede.gpm.changeset
 
-import fi.iki.ede.gpm.model.IncomingGPM
-import fi.iki.ede.gpm.model.SavedGPM
-import fi.iki.ede.gpm.model.ScoringConfig
+import fi.iki.ede.gpm.model.*
 import fi.iki.ede.gpm.similarity.LowerCaseTrimmedString
 import fi.iki.ede.gpm.similarity.findSimilarity
 import fi.iki.ede.gpm.similarity.toLowerCasedTrimmedString

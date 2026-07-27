@@ -6,7 +6,11 @@ actual interface KMPKey {
     actual fun getEncoded(): ByteArray
 }
 
-actual class KMPSecretKeySpec actual constructor(actual val values: ByteArray)
+actual class KMPSecretKeySpec actual constructor(actual val values: ByteArray) : KMPKey {
+    override fun getAlgorithm(): String = "AES"
+    override fun getFormat(): String = "RAW"
+    override fun getEncoded(): ByteArray = values
+}
 
 actual fun fillRandomBytes(array: ByteArray) {
     korlibs.crypto.SecureRandom.nextBytes(array)

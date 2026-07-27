@@ -6,18 +6,17 @@ import fi.iki.ede.backup.ExportConfig.Companion.Attributes
 import fi.iki.ede.backup.ExportConfig.Companion.Elements
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
-import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
-import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.cryptoobjects.*
 import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.db.DBID
-import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.gpm.model.*
 import okio.Buffer
 import okio.BufferedSink
 import okio.Sink
 import okio.Timeout
 import okio.buffer
-import org.xmlpull.v1.XmlPullParserFactory
+import fi.iki.ede.backup.xml.XmlPullParserFactory
 import kotlin.time.ExperimentalTime
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 
@@ -40,8 +39,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
         getSiteEntriesOfCategory: (categoryId: DBID) -> List<DecryptableSiteEntry>
     ) {
         val serializer = XmlPullParserFactory.newInstance().newSerializer()
-        // Addressed PR10 comment: Convert BufferedSink to java.io.OutputStream at boundary for XMLSerializer, writing in US-ASCII
-        serializer.setOutput(outputSink.outputStream(), "US-ASCII")
+        serializer.setOutput(outputSink, "US-ASCII")
 
         serializer.startTag(Elements.ROOT_PASSWORD_SAFE)
             .plainTextAttribute(
@@ -82,7 +80,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
             allSavedGPMs.forEach { savedGPM ->
                 serializer.writeGPMEntry(
                     savedGPM,
-                    gpmIdToSiteEntry.getOrDefault(savedGPM.id!!, emptySet<DBID>())
+                    gpmIdToSiteEntry[savedGPM.id!!] ?: emptySet()
                 )
             }
             serializer.endTag(Elements.IMPORTS_GPM)
@@ -128,16 +126,14 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
 
             // 3. Generate XML in memory using okio.Buffer
             val xmlBuf = Buffer()
-            val xmlBufferedSink = xmlBuf.buffer()
             BackupDatabase().generateXMLExport(
-                xmlBufferedSink,
+                xmlBuf,
                 categoriesList,
                 softDeletedEntries,
                 siteEntryGPMMappings,
                 allSavedGPMs,
                 getSiteEntriesOfCategory
             )
-            xmlBufferedSink.flush()
             val xmlBytes = xmlBuf.readByteArray()
 
             // 4. Encrypt the entire XML bytes

@@ -1,4 +1,7 @@
-@file:OptIn(kotlin.time.ExperimentalTime::class)
+@file:OptIn(
+    kotlin.time.ExperimentalTime::class,
+    kotlin.experimental.ExperimentalNativeApi::class
+)
 
 package fi.iki.ede.safe.ui
 
@@ -6,8 +9,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,13 +21,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ComposeUIViewController
+import fi.iki.ede.backup.RestorationProgress
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.SaltedPassword
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
-import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
-import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.cryptoobjects.*
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.ui.composable.CategoryList
@@ -34,9 +38,39 @@ import fi.iki.ede.safe.ui.composable.getString
 import platform.UIKit.UIViewController
 import fi.iki.ede.crypto.support.encrypt
 import kotlinx.coroutines.launch
+import fi.iki.ede.safe.ui.composable.AskBackupPasswordAndCommence
+import fi.iki.ede.safe.ui.composable.RestoreDatabaseComponent
+import fi.iki.ede.safe.ui.composable.SharedBottomActionBar
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import fi.iki.ede.backup.RestoreDatabase
+import fi.iki.ede.db.SiteEntryGPMJoin
+import kotlinx.coroutines.runBlocking
+import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.usePinned
+import kotlinx.cinterop.ExperimentalForeignApi
+import platform.UIKit.UIDocumentPickerViewController
+import platform.UIKit.UIDocumentPickerDelegateProtocol
+import platform.UIKit.UIDocumentPickerMode
+import platform.Foundation.NSURL
+import platform.Foundation.NSData
+import platform.Foundation.dataWithContentsOfURL
+import platform.Foundation.valueForKey
+import platform.Foundation.setValue
+import platform.darwin.NSObject
+import platform.posix.memcpy
+import androidx.compose.ui.draw.rotate
+import okio.Path.Companion.toPath
 
 @OptIn(ExperimentalMaterial3Api::class)
-fun MainViewController(): UIViewController = ComposeUIViewController {
+fun MainViewController(): UIViewController {
+    kotlin.native.setUnhandledExceptionHook { throwable ->
+        println("UNCAUGHT EXCEPTION ON IOS: ${throwable.message}")
+        throwable.printStackTrace()
+    }
+
+    lateinit var viewController: UIViewController
+    viewController = ComposeUIViewController {
     if (!Preferences.isDataStoreInitialized()) {
         Preferences.initialize()
     }
@@ -66,6 +100,44 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
 
     // Dialog state for adding Category
     var showAddCategoryDialog by remember { mutableStateOf(false) }
+    var showImportExportChoiceDialog by remember { mutableStateOf(false) }
+
+    // Backup restore states
+    var importedBackupXml by remember { mutableStateOf<ByteArray?>(null) }
+    var activeDelegate by remember { mutableStateOf<Any?>(null) }
+
+    val launchDocumentPicker = remember {
+        { onFilePicked: (ByteArray) -> Unit ->
+            val delegate = XMLDocumentPickerDelegate { content ->
+                activeDelegate = null
+                onFilePicked(content)
+            }
+            activeDelegate = delegate
+            val picker = UIDocumentPickerViewController(
+                documentTypes = listOf("public.xml", "public.text", "public.data"),
+                inMode = UIDocumentPickerMode.UIDocumentPickerModeImport
+            )
+            picker.delegate = delegate
+            viewController.presentViewController(picker, animated = true, completion = null)
+        }
+    }
+
+    val shareBackupFile = remember {
+        { bytes: ByteArray, filename: String ->
+            val tempPath = (platform.Foundation.NSTemporaryDirectory() + "/" + filename).toPath()
+            okio.FileSystem.SYSTEM.write(tempPath) {
+                write(bytes)
+            }
+            val fileURL = platform.Foundation.NSURL.fileURLWithPath(tempPath.toString())
+            val activityVC = platform.UIKit.UIActivityViewController(
+                activityItems = listOf(fileURL),
+                applicationActivities = null
+            )
+            val popover = activityVC.valueForKey("popoverPresentationController") as? platform.darwin.NSObject
+            popover?.setValue(viewController.view, forKey = "sourceView")
+            viewController.presentViewController(activityVC, animated = true, completion = null)
+        }
+    }
 
     val categories = remember(refreshTrigger, isLoggedIn) {
         if (isLoggedIn) db.fetchAllCategoryRows() else emptyList()
@@ -86,7 +158,64 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
             surface = Color(0xFF16213e)
         )
     ) {
-        if (!isLoggedIn) {
+        if (importedBackupXml != null) {
+            var currentRestoreScreenState by remember { mutableStateOf("askBackupPassword") }
+            var backupPasswordInput by remember { mutableStateOf(Password.getEmpty()) }
+            val processedPasswords = remember { mutableIntStateOf(0) }
+            val processedCategories = remember { mutableIntStateOf(0) }
+            val processedMessage = remember { mutableStateOf<RestorationProgress?>(null) }
+
+            when (currentRestoreScreenState) {
+                "askBackupPassword" -> {
+                    AskBackupPasswordAndCommence(
+                        processedPasswords = processedPasswords,
+                        processedCategories = processedCategories,
+                        processedMessage = processedMessage,
+                        selectedDocName = "Backup XML File",
+                    ) { password ->
+                        backupPasswordInput = password
+                        currentRestoreScreenState = "restoration"
+                    }
+                }
+                "restoration" -> {
+                    RestoreDatabaseComponent(
+                        processedPasswords = processedPasswords,
+                        processedCategories = processedCategories,
+                        processedMessage = processedMessage,
+                        backupPassword = backupPasswordInput,
+                        backupSource = okio.Buffer().write(importedBackupXml!!),
+                        passwordLogin = { password ->
+                            val (salt, encryptedKey) = db.fetchSaltAndEncryptedMasterKey()
+                            val saltedPassword = SaltedPassword(salt, password)
+                            KeyStoreHelper.importExistingEncryptedMasterKey(saltedPassword, encryptedKey)
+                            true
+                        },
+                        linkSaveGPMAndSiteEntry = { siteId, gpmId ->
+                            runBlocking {
+                                db.database.siteEntryGPMJoinDao().insert(SiteEntryGPMJoin(siteId, gpmId))
+                            }
+                        },
+                        addSavedGPM = { savedGpm ->
+                            runBlocking {
+                                db.database.gpmDao().insert(savedGpm)
+                            }
+                        },
+                        onFinished = { count, ex ->
+                            backupPasswordInput = Password.getEmpty()
+                            if (ex == null) {
+                                importedBackupXml = null
+                                isFirstTimeLogin = false
+                                isLoggedIn = true
+                                refreshTrigger++
+                            } else {
+                                currentRestoreScreenState = "askBackupPassword"
+                            }
+                        },
+                        verifyUserWantForOldBackup = { _, _ -> true }
+                    )
+                }
+            }
+        } else if (!isLoggedIn) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -128,7 +257,7 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
                         } catch (e: Exception) {
                             statusMessage = "Invalid password!"
                         }
-                    }
+                    },
                 )
             }
         } else {
@@ -146,53 +275,16 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
                             )
                         },
                         navigationIcon = {
-                            if (activeCategory != null || activeSiteEntry != null) {
-                                IconButton(
-                                    onClick = {
-                                        when {
-                                            activeSiteEntry != null -> activeSiteEntry = null
-                                            activeCategory != null -> activeCategory = null
-                                        }
-                                        refreshTrigger++
+                            NavigationBackIcon(
+                                hasBackNavigation = (activeCategory != null || activeSiteEntry != null),
+                                onBack = {
+                                    when {
+                                        activeSiteEntry != null -> activeSiteEntry = null
+                                        activeCategory != null -> activeCategory = null
                                     }
-                                ) {
-                                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                                    refreshTrigger++
                                 }
-                            }
-                        },
-                        actions = {
-                            if (activeSiteEntry == null && activeCategory == null) {
-                                IconButton(
-                                    onClick = {
-                                        showAddCategoryDialog = true
-                                    }
-                                ) {
-                                    Icon(Icons.Default.Add, contentDescription = "Add Category")
-                                }
-                            } else if (activeCategory != null && activeSiteEntry == null) {
-                                IconButton(
-                                    onClick = {
-                                        activeSiteEntry = DecryptableSiteEntry(categoryId = activeCategory!!.id!!).apply {
-                                            description = "".encrypt()
-                                            username = "".encrypt()
-                                            password = "".encrypt()
-                                            website = "".encrypt()
-                                            note = "".encrypt()
-                                        }
-                                    }
-                                ) {
-                                    Icon(Icons.Default.Add, contentDescription = "Add Entry")
-                                }
-                            }
-                            IconButton(
-                                onClick = {
-                                    isLoggedIn = false
-                                    activeCategory = null
-                                    activeSiteEntry = null
-                                }
-                            ) {
-                                Icon(Icons.Default.ExitToApp, contentDescription = "Logout")
-                            }
+                            )
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
                             containerColor = Color(0xFF16213e),
@@ -201,6 +293,33 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
                             actionIconContentColor = Color.White
                         )
                     )
+                },
+                bottomBar = {
+                    if (activeSiteEntry == null) {
+                        SharedBottomActionBar(
+                            onAddRequested = {
+                                if (activeCategory == null) {
+                                    showAddCategoryDialog = true
+                                } else {
+                                    activeSiteEntry = DecryptableSiteEntry(categoryId = activeCategory!!.id!!).apply {
+                                        description = "".encrypt()
+                                        username = "".encrypt()
+                                        password = "".encrypt()
+                                        website = "".encrypt()
+                                        note = "".encrypt()
+                                    }
+                                }
+                            },
+                            onLockRequested = {
+                                isLoggedIn = false
+                                activeCategory = null
+                                activeSiteEntry = null
+                            },
+                            onImportExportRequested = {
+                                showImportExportChoiceDialog = true
+                            }
+                        )
+                    }
                 },
                 containerColor = Color(0xFF1a1a2e)
             ) { paddingValues ->
@@ -219,55 +338,76 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
                             var note by remember { mutableStateOf(siteEntry.plainNote) }
                             var url by remember { mutableStateOf(siteEntry.plainWebsite) }
 
-                            Column(modifier = Modifier.fillMaxSize()) {
-                                Box(modifier = Modifier.weight(1f)) {
-                                    SiteEntryView(
-                                        description = desc,
-                                        onDescriptionChange = { desc = it },
-                                        website = url,
-                                        onWebSiteChange = { url = it },
-                                        username = user,
-                                        onUsernameChange = { user = it.utf8password.concatToString() },
-                                        password = pass,
-                                        onPasswordChange = { pass = it.utf8password.concatToString() },
-                                        note = note,
-                                        onNoteChange = { note = it.utf8password.concatToString() },
-                                        onOpenBrowser = { },
-                                        onCopyToClipboard = { }
-                                    )
-                                }
-                                Button(
-                                    onClick = {
-                                        coroutineScope.launch {
-                                            try {
-                                                // Encrypt values back before writing
-                                                siteEntry.description = desc.encrypt()
-                                                siteEntry.username = user.encrypt()
-                                                siteEntry.password = pass.encrypt()
-                                                siteEntry.note = note.encrypt()
-                                                siteEntry.website = url.encrypt()
-                                                
-                                                if (siteEntry.id == null) {
-                                                    db.addSiteEntry(siteEntry)
-                                                } else {
-                                                    db.updateSiteEntry(siteEntry)
-                                                }
-                                                activeSiteEntry = null
-                                                refreshTrigger++
-                                            } catch (e: Throwable) {
-                                                e.printStackTrace()
-                                            }
+                            Column(
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                SiteEntryView(
+                                    description = desc,
+                                    onDescriptionChange = { desc = it },
+                                    website = url,
+                                    onWebSiteChange = { url = it },
+                                    username = user,
+                                    onUsernameChange = { user = it.utf8password.concatToString() },
+                                    password = pass,
+                                    onPasswordChange = { pass = it.utf8password.concatToString() },
+                                    note = note,
+                                    onNoteChange = { note = it.utf8password.concatToString() },
+                                    onOpenBrowser = { browserUrl ->
+                                        val nsUrl = platform.Foundation.NSURL.URLWithString(browserUrl)
+                                        if (nsUrl != null) {
+                                            platform.UIKit.UIApplication.sharedApplication.openURL(
+                                                nsUrl,
+                                                options = emptyMap<Any?, Any?>(),
+                                                completionHandler = null
+                                            )
                                         }
                                     },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color(0xFFe94560)
-                                    )
-                                ) {
-                                    Text("Save Changes", fontWeight = FontWeight.Bold)
-                                }
+                                    onCopyToClipboard = { text ->
+                                        platform.UIKit.UIPasteboard.generalPasteboard.string = text
+                                    },
+                                    bottomBarContent = {
+                                        val hasChanges = siteEntry.id == null ||
+                                                desc != siteEntry.cachedPlainDescription ||
+                                                user != siteEntry.plainUsername ||
+                                                pass != siteEntry.plainPassword ||
+                                                note != siteEntry.plainNote ||
+                                                url != siteEntry.plainWebsite
+
+                                        if (hasChanges) {
+                                            Button(
+                                                onClick = {
+                                                    coroutineScope.launch {
+                                                        try {
+                                                            // Encrypt values back before writing
+                                                            siteEntry.description = desc.encrypt()
+                                                            siteEntry.username = user.encrypt()
+                                                            siteEntry.password = pass.encrypt()
+                                                            siteEntry.note = note.encrypt()
+                                                            siteEntry.website = url.encrypt()
+                                                            if (siteEntry.id == null) {
+                                                                db.addSiteEntry(siteEntry)
+                                                            } else {
+                                                                db.updateSiteEntry(siteEntry)
+                                                            }
+                                                            activeSiteEntry = null
+                                                            refreshTrigger++
+                                                        } catch (e: Throwable) {
+                                                            e.printStackTrace()
+                                                        }
+                                                    }
+                                                },
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(16.dp),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = Color(0xFFe94560)
+                                                )
+                                            ) {
+                                                Text("Save Changes", fontWeight = FontWeight.Bold)
+                                            }
+                                        }
+                                    }
+                                )
                             }
                         }
                         activeCategory != null -> {
@@ -314,8 +454,105 @@ fun MainViewController(): UIViewController = ComposeUIViewController {
                             }
                         )
                     }
+
+                    if (showImportExportChoiceDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showImportExportChoiceDialog = false },
+                            title = { Text(getString("action_bar_import_export")) },
+                            text = { Text("Select backup operation:") },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        showImportExportChoiceDialog = false
+                                        coroutineScope.launch {
+                                            try {
+                                                val categoriesList = db.fetchAllCategoryRows()
+                                                val softDeletedEntries = db.database.siteEntryDao().getAllSoftDeleted().toSet()
+                                                val getSiteEntriesOfCategory = { categoryId: Long -> db.fetchAllRows(categoryId) }
+                                                val siteEntryGPMMappings = db.database.siteEntryGPMJoinDao().getAll()
+                                                    .groupBy({ it.passwordId }, { it.gpmId })
+                                                    .mapValues { (_, v) -> v.toSet() }
+                                                val allSavedGPMs = db.database.gpmDao().getAll().toSet()
+
+                                                val buffer = okio.Buffer()
+                                                fi.iki.ede.backup.BackupDatabase.backup(
+                                                    categoriesList = categoriesList,
+                                                    softDeletedEntries = softDeletedEntries,
+                                                    getSiteEntriesOfCategory = getSiteEntriesOfCategory,
+                                                    siteEntryGPMMappings = siteEntryGPMMappings,
+                                                    allSavedGPMs = allSavedGPMs,
+                                                    finalSink = buffer
+                                                )
+                                                val bytes = buffer.readByteArray()
+                                                shareBackupFile(bytes, "safe_backup.xml")
+                                            } catch (e: Throwable) {
+                                                e.printStackTrace()
+                                            }
+                                        }
+                                    }
+                                ) {
+                                    Text(getString("action_bar_backup"))
+                                }
+                            },
+                            dismissButton = {
+                                Button(
+                                    onClick = {
+                                        showImportExportChoiceDialog = false
+                                        launchDocumentPicker { content ->
+                                            importedBackupXml = content
+                                        }
+                                    }
+                                ) {
+                                    Text(getString("action_bar_restore"))
+                                }
+                            }
+                        )
+                    }
                 }
             }
+        }
+    }
+    }
+    return viewController
+}
+
+@OptIn(ExperimentalForeignApi::class)
+class XMLDocumentPickerDelegate(
+    private val onFilePicked: (ByteArray) -> Unit
+) : NSObject(), UIDocumentPickerDelegateProtocol {
+    override fun documentPicker(controller: UIDocumentPickerViewController, didPickDocumentsAtURLs: List<*>) {
+        val url = didPickDocumentsAtURLs.firstOrNull() as? NSURL ?: return
+        val secured = url.startAccessingSecurityScopedResource()
+        try {
+            val nsData = NSData.dataWithContentsOfURL(url)
+            if (nsData != null) {
+                val bytes = ByteArray(nsData.length.toInt())
+                if (nsData.length > 0u) {
+                    bytes.usePinned { pinned ->
+                        memcpy(pinned.addressOf(0), nsData.bytes, nsData.length)
+                    }
+                }
+                onFilePicked(bytes)
+            }
+        } finally {
+            if (secured) {
+                url.stopAccessingSecurityScopedResource()
+            }
+        }
+    }
+}
+
+@Composable
+private fun NavigationBackIcon(
+    hasBackNavigation: Boolean,
+    onBack: () -> Unit
+) {
+    if (hasBackNavigation) {
+        IconButton(onClick = onBack) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Back"
+            )
         }
     }
 }

@@ -21,6 +21,8 @@ import fi.iki.ede.logger.firebaseRecordException
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.DataModelMocks.mockDataModelFor_UNIT_TESTS_ONLY
 import fi.iki.ede.safe.model.LoginHandler
+import fi.iki.ede.cryptoobjects.*
+import fi.iki.ede.gpm.model.*
 import io.mockk.every
 import io.mockk.isMockKMock
 import io.mockk.mockkClass

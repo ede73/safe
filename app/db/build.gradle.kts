@@ -2,10 +2,11 @@ plugins {
     kotlin("multiplatform")
     alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.room)
 }
 
-ksp {
-    arg("room.schemaLocation", "$projectDir/schemas")
+room {
+    schemaDirectory("$projectDir/schemas")
 }
 
 kotlin {
@@ -40,16 +41,11 @@ kotlin {
     }
 }
 
-configurations.matching { it.name == "kspAndroid" }.configureEach {
-    project.dependencies.add(this.name, libs.androidx.room.compiler)
-}
-
-configurations.matching { it.name == "kspDesktop" }.configureEach {
-    project.dependencies.add(this.name, libs.androidx.room.compiler)
-}
-
-configurations.matching { it.name.startsWith("kspIos") }.configureEach {
-    project.dependencies.add(this.name, libs.androidx.room.compiler)
+dependencies {
+    add("kspAndroid", libs.androidx.room.compiler)
+    add("kspDesktop", libs.androidx.room.compiler)
+    add("kspIosSimulatorArm64", libs.androidx.room.compiler)
+    add("kspIosArm64", libs.androidx.room.compiler)
 }
 
 
