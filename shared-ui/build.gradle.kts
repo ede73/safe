@@ -155,6 +155,18 @@ kotlin {
                 implementation(compose.desktop.currentOs)
             }
         }
+        val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+                @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
+                implementation(compose.uiTest)
+            }
+        }
+        val desktopTest by getting {
+            dependencies {
+                implementation(compose.desktop.uiTestJUnit4)
+            }
+        }
         val iosMain by creating {
             kotlin.srcDirs(generateIosStrings)
         }

@@ -119,7 +119,6 @@ class DecryptableSiteEntry(
             return decryptedCachedPlainDescription ?: ""
         }
 
-
     fun contains(
         searchText: String,
         searchWebsites: Boolean,
@@ -185,3 +184,16 @@ class DecryptableSiteEntry(
 }
 
 expect fun DecryptableSiteEntry.decryptPhoto(): PlatformBitmap?
+
+val DecryptableSiteEntry.plainExtensions: Map<String, Set<String>>
+    get() = try {
+        if (extensions.isEmpty()) mapOf()
+        else
+            Json.decodeFromString<Map<String, Set<String>>>(
+                extensions.decrypt().trim()
+            )
+    } catch (e: Exception) {
+        mutableMapOf()
+    }
+
+
