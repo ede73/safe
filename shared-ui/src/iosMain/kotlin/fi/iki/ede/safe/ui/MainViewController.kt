@@ -32,10 +32,12 @@ import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.ui.composable.CategoryList
 import fi.iki.ede.safe.ui.composable.SiteEntryList
+import fi.iki.ede.safe.ui.composable.getString
 import fi.iki.ede.safe.ui.composable.SiteEntryView
 import fi.iki.ede.safe.ui.composable.AddOrEditCategory
-import fi.iki.ede.safe.ui.composable.getString
 import fi.iki.ede.safe.password.PasswordGenerator
+import fi.iki.ede.safe.ui.composable.BottomActionBarForSiteEntryView
+import fi.iki.ede.safe.ui.composable.PopCustomPasswordDialog
 import platform.UIKit.UIViewController
 import fi.iki.ede.crypto.support.encrypt
 import kotlinx.coroutines.launch
@@ -374,6 +376,7 @@ fun MainViewController(): UIViewController {
                             var pass by remember { mutableStateOf(siteEntry.plainPassword) }
                             var note by remember { mutableStateOf(siteEntry.plainNote) }
                             var url by remember { mutableStateOf(siteEntry.plainWebsite) }
+                            val showCustomPasswordGenerator = remember { mutableStateOf(false) }
 
                             Column(
                                 modifier = Modifier.fillMaxSize()
@@ -402,6 +405,16 @@ fun MainViewController(): UIViewController {
                                     onCopyToClipboard = { text ->
                                         platform.UIKit.UIPasteboard.generalPasteboard.string = text
                                     },
+                                    customPasswordGeneratorContent = {
+                                        if (showCustomPasswordGenerator.value) {
+                                            PopCustomPasswordDialog { customPassword ->
+                                                if (customPassword != null) {
+                                                    pass = customPassword.utf8password.concatToString()
+                                                }
+                                                showCustomPasswordGenerator.value = false
+                                            }
+                                        }
+                                    },
                                     bottomBarContent = {
                                         val hasChanges = siteEntry.id == null ||
                                                 desc != siteEntry.cachedPlainDescription ||
@@ -410,38 +423,56 @@ fun MainViewController(): UIViewController {
                                                 note != siteEntry.plainNote ||
                                                 url != siteEntry.plainWebsite
 
-                                        if (hasChanges) {
-                                            Button(
-                                                onClick = {
-                                                    coroutineScope.launch {
-                                                        try {
-                                                            // Encrypt values back before writing
-                                                            siteEntry.description = desc.encrypt()
-                                                            siteEntry.username = user.encrypt()
-                                                            siteEntry.password = pass.encrypt()
-                                                            siteEntry.note = note.encrypt()
-                                                            siteEntry.website = url.encrypt()
-                                                            if (siteEntry.id == null) {
-                                                                db.addSiteEntry(siteEntry)
-                                                            } else {
-                                                                db.updateSiteEntry(siteEntry)
+                                        Column(modifier = Modifier.fillMaxWidth()) {
+                                            if (hasChanges) {
+                                                Button(
+                                                    onClick = {
+                                                        coroutineScope.launch {
+                                                            try {
+                                                                // Encrypt values back before writing
+                                                                siteEntry.description = desc.encrypt()
+                                                                siteEntry.username = user.encrypt()
+                                                                siteEntry.password = pass.encrypt()
+                                                                siteEntry.note = note.encrypt()
+                                                                siteEntry.website = url.encrypt()
+                                                                if (siteEntry.id == null) {
+                                                                    db.addSiteEntry(siteEntry)
+                                                                } else {
+                                                                    db.updateSiteEntry(siteEntry)
+                                                                }
+                                                                activeSiteEntry = null
+                                                                refreshTrigger++
+                                                            } catch (e: Throwable) {
+                                                                e.printStackTrace()
                                                             }
-                                                            activeSiteEntry = null
-                                                            refreshTrigger++
-                                                        } catch (e: Throwable) {
-                                                            e.printStackTrace()
                                                         }
-                                                    }
-                                                },
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(16.dp),
-                                                colors = ButtonDefaults.buttonColors(
-                                                    containerColor = Color(0xFFe94560)
-                                                )
-                                            ) {
-                                                Text("Save Changes", fontWeight = FontWeight.Bold)
+                                                    },
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(16.dp),
+                                                    colors = ButtonDefaults.buttonColors(
+                                                        containerColor = Color(0xFFe94560)
+                                                    )
+                                                ) {
+                                                    Text(getString("password_entry_save"), fontWeight = FontWeight.Bold)
+                                                }
                                             }
+                                            BottomActionBarForSiteEntryView(
+                                                onLock = {},
+                                                onGeneratePassword = { custom ->
+                                                    if (custom) {
+                                                        showCustomPasswordGenerator.value = true
+                                                    } else {
+                                                        pass = PasswordGenerator.genPassword(
+                                                            passUpper = true,
+                                                            passLower = true,
+                                                            passNum = true,
+                                                            passSymbols = true,
+                                                            length = PasswordGenerator.PASSWORD_DEFAULT_LENGTH
+                                                        )
+                                                    }
+                                                }
+                                            )
                                         }
                                     }
                                 )
