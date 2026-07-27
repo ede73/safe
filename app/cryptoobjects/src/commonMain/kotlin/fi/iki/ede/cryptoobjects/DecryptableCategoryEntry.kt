@@ -18,6 +18,7 @@ class DecryptableCategoryEntry {
     @ColumnInfo(name = "name")
     var encryptedName = IVCipherText.getEmpty()
 
+    @get:Ignore
     val plainName: String
         get() = encryptedName.decrypt()
 

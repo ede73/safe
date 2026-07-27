@@ -36,11 +36,17 @@ data class SavedGPM(
     @ColumnInfo(name = "hash")
     val hash: String
 ) : DisallowedFunctions {
+    @get:Ignore
     val cachedDecryptedName: String by lazy { encryptedName.decrypt() } // ok
+    @get:Ignore
     val cachedDecryptedUsername: String by lazy { encryptedUsername.decrypt() } // ok
+    @get:Ignore
     val cachedDecryptedUrl: String by lazy { encryptedUrl.decrypt() } // ok
+    @get:Ignore
     val cachedDecryptedPassword: String by lazy { encryptedPassword.decrypt() } // ok
+    @get:Ignore
     val cachedDecryptedNote: String by lazy { encryptedNote.decrypt() } // ok
+    @get:Ignore
     val harmonizedName: LowerCaseTrimmedString by lazy {
         harmonizePotentialDomainName(cachedDecryptedName).toLowerCasedTrimmedString()
     }

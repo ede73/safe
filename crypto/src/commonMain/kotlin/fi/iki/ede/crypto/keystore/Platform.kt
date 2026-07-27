@@ -1,6 +1,10 @@
 package fi.iki.ede.crypto.keystore
 
-expect interface KMPKey
+expect interface KMPKey {
+    fun getAlgorithm(): String
+    fun getFormat(): String
+    fun getEncoded(): ByteArray
+}
 
 expect class KMPSecretKeySpec(values: ByteArray) {
     val values: ByteArray

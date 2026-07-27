@@ -15,6 +15,18 @@ kotlin {
         */
     }
     jvm("desktop")
+    iosArm64 {
+        binaries.framework {
+            baseName = "ComposeApp"
+            isStatic = true
+        }
+    }
+    iosSimulatorArm64 {
+        binaries.framework {
+            baseName = "ComposeApp"
+            isStatic = true
+        }
+    }
 
     sourceSets {
         val commonMain by getting {
