@@ -58,6 +58,7 @@ fun SiteEntryView(
     linkedGpmContent: (@Composable () -> Unit)? = null,
     bottomBarContent: (@Composable () -> Unit)? = null
 ) {
+    customPasswordGeneratorContent?.invoke()
     val hideFocusLine = TextFieldDefaults.colors(
         focusedIndicatorColor = Color.Transparent,
         unfocusedIndicatorColor = Color.Transparent,
