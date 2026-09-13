@@ -90,13 +90,15 @@ object KeyManagement {
         secretKey: IVCipherText,
     ): KMPSecretKeySpec {
         require(secretKey.iv.size == CipherUtilities.IV_LENGTH) { "IV must be exactly ${CipherUtilities.IV_LENGTH}, not ${secretKey.iv.size}" }
-        return KMPSecretKeySpec(
-            AES.decryptAesCbc(
-                secretKey.cipherText,
-                pbkdf2key.values,
-                secretKey.iv,
-                Padding.PKCS7Padding
-            )
+        val decrypted = AES.decryptAesCbc(
+            secretKey.cipherText,
+            pbkdf2key.values,
+            secretKey.iv,
+            Padding.PKCS7Padding
         )
+        require(decrypted.size == 16 || decrypted.size == 24 || decrypted.size == 32) {
+            "Decrypted master key length is invalid: ${decrypted.size} bytes (invalid password)"
+        }
+        return KMPSecretKeySpec(decrypted)
     }
 }

@@ -12,6 +12,7 @@ import java.nio.ByteOrder
 import java.security.PrivateKey
 import java.security.PublicKey
 import javax.crypto.Cipher
+import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 import fi.iki.ede.logger.Logger
 import korlibs.crypto.AES
@@ -171,7 +172,9 @@ class CNGKeyStoreHelper(
         } else if (key is CNGKey) {
             PlatformUtils.decryptWithCNG(encrypted, key.alias)
         } else if (key is SecretKeySpec) {
-            AES.decryptAesCbc(encrypted.cipherText, key.encoded, encrypted.iv, Padding.PKCS7Padding)
+            val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+            cipher.init(Cipher.DECRYPT_MODE, key, IvParameterSpec(encrypted.iv))
+            cipher.doFinal(encrypted.cipherText)
         } else if (key is PrivateKey) {
             val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
             cipher.init(Cipher.DECRYPT_MODE, key)
@@ -212,8 +215,10 @@ class CNGKeyStoreHelper(
             val cipherText = PlatformUtils.encryptWithCNG(plaintext, key.alias)
             IVCipherText(ByteArray(16), cipherText)
         } else if (key is SecretKeySpec) {
+            val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
             val iv = CipherUtilities.generateRandomBytes(CipherUtilities.Companion.Bytes(16))
-            val cipherText = AES.encryptAesCbc(plaintext, key.encoded, iv, Padding.PKCS7Padding)
+            cipher.init(Cipher.ENCRYPT_MODE, key, IvParameterSpec(iv))
+            val cipherText = cipher.doFinal(plaintext)
             IVCipherText(iv, cipherText)
         } else if (key is PublicKey) {
             val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
