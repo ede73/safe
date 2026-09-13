@@ -1,14 +1,30 @@
 package fi.iki.ede.notifications
 
-actual class MainNotification {
-    actual fun clearNotification() {}
+import fi.iki.ede.logger.Logger
+
+private const val TAG = "MainNotification"
+
+actual class MainNotification actual constructor(
+    private val notificationConfig: NotificationSetup,
+    private val descriptionParam: String?
+) {
+    actual fun clearNotification() {
+        Logger.d(TAG, "iOS clearNotification: ${notificationConfig.notificationID}")
+    }
+
     actual fun setNotification(
-        getContext: () -> Any,
         customSetup: ((mainNotification: MainNotification) -> Unit)?
-    ) {}
+    ) {
+        if (customSetup == null) {
+            notify()
+        } else {
+            customSetup(this)
+        }
+    }
 
     actual fun notify(
-        getContext: () -> Any,
-        augmentNotificationBuilder: (Any) -> Unit
-    ) {}
+        augmentNotificationBuilder: ((Any) -> Unit)?
+    ) {
+        Logger.i(TAG, "iOS notify: ${notificationConfig.channel} ($descriptionParam)")
+    }
 }

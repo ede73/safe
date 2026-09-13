@@ -19,9 +19,10 @@ import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseInitialize
 import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.notifications.ConfiguredNotifications
+import fi.iki.ede.notifications.setNotificationsContext
 import fi.iki.ede.preferences.Preferences
-import fi.iki.ede.preferences.setPreferencesContext
 import fi.iki.ede.preferences.Preferences.PREFERENCE_EXPERIMENTAL_FEATURES
+import fi.iki.ede.preferences.setPreferencesContext
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.notifications.prepareNotifications
 import fi.iki.ede.safe.splits.IntentManager
@@ -65,6 +66,7 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
             BuildConfig.VERSION_CODE
         )
 //        throw RuntimeException("Test Crash")
+        setNotificationsContext(this)
         setPreferencesContext(this)
         Preferences.initialize()
 

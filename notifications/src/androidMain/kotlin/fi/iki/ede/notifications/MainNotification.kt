@@ -13,66 +13,82 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.preferences.Preferences
 import kotlin.jvm.java
 import kotlin.time.ExperimentalTime
 
-@ExperimentalTime
-actual class MainNotification(
-    context: Context,
-    private val notificationConfig: NotificationSetup,
-    private val descriptionParam: String? = null
-) {
+private const val TAG = "MainNotification"
 
-    private val mNotifyManager: NotificationManagerCompat = NotificationManagerCompat.from(context)
-    private val notificationBuilder: NotificationCompat.Builder
+@ExperimentalTime
+actual class MainNotification actual constructor(
+    private val notificationConfig: NotificationSetup,
+    private val descriptionParam: String?
+) {
+    constructor(
+        context: Context,
+        notificationConfig: NotificationSetup,
+        descriptionParam: String? = null
+    ) : this(notificationConfig, descriptionParam) {
+        setNotificationsContext(context)
+    }
+
+    private val context: Context?
+        get() = getNotificationsContext()
+
+    private val mNotifyManager: NotificationManagerCompat?
+        get() = context?.let { NotificationManagerCompat.from(it) }
+
+    private var notificationBuilder: NotificationCompat.Builder? = null
 
     init {
-        createChannel(context)
-        notificationBuilder = getNotificationBuilder(
-            context,
-            getPendingIntent(context, notificationConfig.activityToStartOnClick),
-            context.getString(notificationConfig.channelDescription, descriptionParam)
-        ).apply {
-            // Extension point (just make public)
-            augmentNotificationBuilder(this)
+        val ctx = context
+        if (ctx != null) {
+            createChannel(ctx)
+            notificationBuilder = getNotificationBuilder(
+                ctx,
+                getPendingIntent(ctx, notificationConfig.activityToStartOnClick),
+                ctx.getString(notificationConfig.channelDescription, descriptionParam)
+            )
+        } else {
+            Logger.w(TAG, "Notifications context not initialized during MainNotification initialization.")
         }
     }
 
     actual fun clearNotification() {
-        mNotifyManager.cancel(notificationConfig.notificationID)
+        mNotifyManager?.cancel(notificationConfig.notificationID)
     }
 
     actual fun setNotification(
-        getContext: () -> Any,
         customSetup: ((mainNotification: MainNotification) -> Unit)?
     ) {
-        val context = getContext() as Context
-        if (!isNotificationPermissionGranted(context)) return
+        val ctx = context ?: return
+        if (!isNotificationPermissionGranted(ctx)) return
         if (customSetup == null) {
-            notify({ context })
+            notify()
         } else {
             customSetup(this)
         }
     }
 
-    @SuppressLint("MissingPermission", "Broken linter")
+    @SuppressLint("MissingPermission")
     actual fun notify(
-        getContext: () -> Any,
-        augmentNotificationBuilder: (Any) -> Unit
+        augmentNotificationBuilder: ((Any) -> Unit)?
     ) {
-        val context = getContext() as Context
-        if (!isNotificationPermissionGranted(context)) return
-        mNotifyManager.notify(
+        val ctx = context ?: return
+        if (!isNotificationPermissionGranted(ctx)) return
+        val builder = notificationBuilder ?: getNotificationBuilder(
+            ctx,
+            getPendingIntent(ctx, notificationConfig.activityToStartOnClick),
+            ctx.getString(notificationConfig.channelDescription, descriptionParam)
+        ).also { notificationBuilder = it }
+
+        augmentNotificationBuilder?.invoke(builder)
+
+        mNotifyManager?.notify(
             notificationConfig.notificationID,
-            notificationBuilder.apply {
-                augmentNotificationBuilder(this)
-            }.build()
+            builder.build()
         )
-    }
-
-
-    private fun augmentNotificationBuilder(augmentNotificationBuilder: NotificationCompat.Builder) {
     }
 
     private fun getNotificationManager(context: Context) =
@@ -97,7 +113,7 @@ actual class MainNotification(
     ) = NotificationCompat.Builder(context, notificationConfig.channel)
         .setContentTitle(context.getString(notificationConfig.channelName))
         .setContentText(content)
-        .setChannelId(notificationConfig.channel) // TODO: REMOVE
+        .setChannelId(notificationConfig.channel)
         .setSmallIcon(notificationConfig.icon)
         .setContentIntent(pendingIntent)
         .setCategory(notificationConfig.category).apply {
@@ -117,23 +133,17 @@ actual class MainNotification(
     private fun isNotificationPermissionGranted(context: Context) =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
             isNotificationPermissionGrantedTiraMisu(context)
-        else mNotifyManager.areNotificationsEnabled()
+        else mNotifyManager?.areNotificationsEnabled() ?: true
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     private fun isNotificationPermissionGrantedTiraMisu(context: Context) =
         (ActivityCompat.checkSelfPermission(
             context,
             Manifest.permission.POST_NOTIFICATIONS
-        ) == PackageManager.PERMISSION_GRANTED).also {
-            Preferences.setNotificationPermissionRequired(!it)
-            if (!it) flagToRequestNotificationPermission()
+        ) == PackageManager.PERMISSION_GRANTED).also { granted ->
+            Preferences.setNotificationPermissionRequired(!granted)
         }
-
-    private fun flagToRequestNotificationPermission() {
-        Preferences.setNotificationPermissionRequired(true)
-    }
 }
-
 
 fun NotificationImportance.toAndroid() = when (this) {
     NotificationImportance.Low -> NotificationManager.IMPORTANCE_LOW

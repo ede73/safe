@@ -86,7 +86,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         require(isMockKMock(dbHelper)) { "DBHelper is not mocked" }
         dbHelper.storeSaltAndEncryptedMasterKey(salt, cipheredMasterKey)
         mockkObject(LoginHandler)
-        every { LoginHandler.passwordLogin(any(), any()) } returns true
+        every { LoginHandler.passwordLogin(any()) } returns true
     }
 
     @AfterEach

@@ -135,7 +135,7 @@ open class LoginScreen : ComponentActivity() {
             LoginHandler.firstTimeLogin(it)
             true
         } else {
-            LoginHandler.passwordLogin(context, it)
+            LoginHandler.passwordLogin(it)
         }
 
         if (passwordIsAccepted) {

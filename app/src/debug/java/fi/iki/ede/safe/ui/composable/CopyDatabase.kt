@@ -2,7 +2,6 @@ package fi.iki.ede.safe.ui.composable
 
 import android.content.Context
 import android.os.Environment
-import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
@@ -17,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import fi.iki.ede.db.DBHelper
+import fi.iki.ede.notifications.showToast
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
 import fi.iki.ede.safe.ui.activities.nudepwd
@@ -72,7 +72,7 @@ internal fun CopyDatabase(
             TextField(value = pwd, onValueChange = { pwd = it })
             Button(onClick = {
                 reconvertDatabase(pwd) {
-                    Toast.makeText(context, "Reset", Toast.LENGTH_SHORT).show()
+                    showToast("Reset")
                 }
             }) {
                 Text("Reset DB Password")

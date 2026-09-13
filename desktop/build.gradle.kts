@@ -14,6 +14,7 @@ dependencies {
     implementation(project(":app:preferences"))
     implementation(project(":shared-ui"))
     implementation(project(":logger"))
+    implementation(project(":notifications"))
 
     implementation(libs.okio)
 

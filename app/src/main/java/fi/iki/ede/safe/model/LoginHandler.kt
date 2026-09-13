@@ -1,11 +1,10 @@
 package fi.iki.ede.safe.model
 
-import android.content.Context
-import android.widget.Toast
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.SaltedPassword
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
 import fi.iki.ede.db.DBHelperFactory
+import fi.iki.ede.notifications.showToast
 import fi.iki.ede.safe.R
 import kotlin.time.ExperimentalTime
 
@@ -33,7 +32,7 @@ object LoginHandler {
     }
 
     @ExperimentalTime
-    fun passwordLogin(context: Context, password: Password): Boolean {
+    fun passwordLogin(password: Password): Boolean {
         // TODO: async
         val (salt, cipheredMasterKey) =
             DBHelperFactory.getDBHelper().fetchSaltAndEncryptedMasterKey()
@@ -46,10 +45,7 @@ object LoginHandler {
             true
         } catch (ex: Exception) {
             try {
-                Toast.makeText(
-                    context, context.getString(R.string.login_invalid_password),
-                    Toast.LENGTH_SHORT
-                ).show()
+                showToast(R.string.login_invalid_password)
             } catch (ex: Exception) {
                 // TODO: unit test context dies on resource fetch
             }

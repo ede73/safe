@@ -50,17 +50,22 @@ object DesktopStrings {
         strings["biometrics_unlock"] = "Biometric Unlock"
         strings["extension_type"] = "Type"
         strings["extension_value"] = "Value"
+        strings["clipboard_cleared"] = "Clipboard cleared!"
 
         // Load translations from strings.xml
         runCatching {
             val userLanguage = Locale.getDefault().language
             val paths = listOf(
                 "app/src/main/res/values/strings.xml",
-                "../app/src/main/res/values/strings.xml"
+                "../app/src/main/res/values/strings.xml",
+                "clipboardutils/src/androidMain/res/values/strings.xml",
+                "../clipboardutils/src/androidMain/res/values/strings.xml"
             )
             val fiPaths = listOf(
                 "app/src/main/res/values-fi/strings.xml",
-                "../app/src/main/res/values-fi/strings.xml"
+                "../app/src/main/res/values-fi/strings.xml",
+                "clipboardutils/src/androidMain/res/values-fi/strings.xml",
+                "../clipboardutils/src/androidMain/res/values-fi/strings.xml"
             )
             val selectedPaths = if (userLanguage == "fi") fiPaths + paths else paths
 

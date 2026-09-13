@@ -13,6 +13,9 @@ kotlin {
     iosSimulatorArm64()
 
     sourceSets {
+        commonMain.dependencies {
+            implementation(project(":notifications"))
+        }
         androidMain.dependencies {
             implementation(libs.androidx.appcompat)
             implementation(libs.androidx.core.ktx)
