@@ -18,25 +18,21 @@ kotlin {
     iosSimulatorArm64()
 
     sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation(project(":app:cryptoobjects"))
-                implementation(project(":crypto"))
-                implementation(project(":dateutils"))
-                implementation(project(":logger"))
-                implementation(project(":gpm"))
-                implementation(libs.okio)
-                implementation(libs.kotlinx.coroutines.core)
-                api(libs.androidx.room.runtime)
-                implementation(libs.androidx.sqlite.bundled)
-            }
+        commonMain.dependencies {
+            implementation(project(":app:cryptoobjects"))
+            implementation(project(":crypto"))
+            implementation(project(":dateutils"))
+            implementation(project(":logger"))
+            implementation(project(":gpm"))
+            implementation(libs.okio)
+            implementation(libs.kotlinx.coroutines.core)
+            api(libs.androidx.room.runtime)
+            implementation(libs.androidx.sqlite.bundled)
         }
-        val androidMain by getting {
-            dependencies {
-                implementation(libs.androidx.appcompat)
-                implementation(libs.androidx.core.ktx)
-                implementation(libs.material)
-            }
+        androidMain.dependencies {
+            implementation(libs.androidx.appcompat)
+            implementation(libs.androidx.core.ktx)
+            implementation(libs.material)
         }
     }
 }

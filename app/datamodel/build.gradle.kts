@@ -13,22 +13,19 @@ kotlin {
     iosSimulatorArm64()
 
     sourceSets {
-        val commonMain by getting
-        val androidMain by getting {
-            dependencies {
-                implementation(project(":app:cryptoobjects"))
-                implementation(project(":app:db"))
-                implementation(project(":app:preferences"))
-                implementation(project(":dateutils"))
-                implementation(project(":crypto"))
-                implementation(project(":logger"))
-                implementation(libs.androidx.appcompat)
-                implementation(libs.androidx.core.ktx)
-                implementation(libs.kotlinx.coroutines.core)
-                implementation(libs.material)
-            }
+        androidMain.dependencies {
+            implementation(project(":app:cryptoobjects"))
+            implementation(project(":app:db"))
+            implementation(project(":app:preferences"))
+            implementation(project(":dateutils"))
+            implementation(project(":crypto"))
+            implementation(project(":logger"))
+            implementation(libs.androidx.appcompat)
+            implementation(libs.androidx.core.ktx)
+            implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.material)
         }
-        val androidHostTest by getting {
+        named("androidHostTest") {
             dependencies {
                 implementation(project.dependencies.platform(libs.junit5.bom))
                 implementation(libs.junit5.jupiter)

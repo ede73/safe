@@ -17,19 +17,15 @@ kotlin {
     iosSimulatorArm64()
 
     sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation(libs.napier)
-            }
+        commonMain.dependencies {
+            implementation(libs.napier)
         }
-        val androidMain by getting {
-            dependencies {
-                implementation(project.dependencies.platform(libs.firebase.bom))
-                implementation(libs.firebase.analytics)
-                implementation(libs.firebase.crashlytics)
-            }
+        androidMain.dependencies {
+            implementation(project.dependencies.platform(libs.firebase.bom))
+            implementation(libs.firebase.analytics)
+            implementation(libs.firebase.crashlytics)
         }
-        val androidHostTest by getting {
+        named("androidHostTest") {
             dependencies {
                 implementation(project.dependencies.platform(libs.junit5.bom))
                 implementation(libs.junit5.jupiter)
@@ -38,14 +34,6 @@ kotlin {
                 runtimeOnly("org.junit.platform:junit-platform-launcher")
             }
         }
-//        val commonTest by getting {
-//            dependencies {
-//                implementation(kotlin("test"))
-//                implementation(project.dependencies.platform(libs.junit5.bom))
-//                implementation(libs.junit5.jupiter)
-//                implementation(libs.mockk)
-//            }
-//        }
     }
 }
 

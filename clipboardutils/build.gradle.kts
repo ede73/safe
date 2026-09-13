@@ -13,13 +13,10 @@ kotlin {
     iosSimulatorArm64()
 
     sourceSets {
-        val commonMain by getting
-        val androidMain by getting {
-            dependencies {
-                implementation(libs.androidx.appcompat)
-                implementation(libs.androidx.core.ktx)
-                implementation(libs.material)
-            }
+        androidMain.dependencies {
+            implementation(libs.androidx.appcompat)
+            implementation(libs.androidx.core.ktx)
+            implementation(libs.material)
         }
     }
 }

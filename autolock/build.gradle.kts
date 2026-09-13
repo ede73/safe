@@ -13,17 +13,14 @@ kotlin {
     iosSimulatorArm64()
 
     sourceSets {
-        val commonMain by getting
-        val androidMain by getting {
-            dependencies {
-                implementation(project(":app:preferences"))
-                implementation(project(":notifications"))
-                implementation(project(":logger"))
-                implementation(libs.androidx.appcompat)
-                implementation(libs.androidx.core.ktx)
-                implementation(libs.material)
-                implementation(libs.kotlin.stdlib)
-            }
+        androidMain.dependencies {
+            implementation(project(":app:preferences"))
+            implementation(project(":notifications"))
+            implementation(project(":logger"))
+            implementation(libs.androidx.appcompat)
+            implementation(libs.androidx.core.ktx)
+            implementation(libs.material)
+            implementation(libs.kotlin.stdlib)
         }
     }
 }

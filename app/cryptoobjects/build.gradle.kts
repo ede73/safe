@@ -13,21 +13,17 @@ kotlin {
     iosSimulatorArm64()
 
     sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation(project(":crypto"))
-                implementation(project(":dateutils"))
-                implementation(project(":logger"))
-                implementation(libs.kotlinx.serialization.json)
-                implementation(libs.androidx.room.runtime)
-            }
+        commonMain.dependencies {
+            implementation(project(":crypto"))
+            implementation(project(":dateutils"))
+            implementation(project(":logger"))
+            implementation(libs.kotlinx.serialization.json)
+            implementation(libs.androidx.room.runtime)
         }
-        val androidMain by getting {
-            dependencies {
-                implementation(libs.androidx.appcompat)
-                implementation(libs.androidx.core.ktx)
-                implementation(libs.material)
-            }
+        androidMain.dependencies {
+            implementation(libs.androidx.appcompat)
+            implementation(libs.androidx.core.ktx)
+            implementation(libs.material)
         }
     }
 }

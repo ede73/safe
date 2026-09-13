@@ -119,55 +119,49 @@ kotlin {
     }
 
     sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation(compose.runtime)
-                implementation(compose.foundation)
-                implementation(compose.ui)
-                implementation(libs.compose.ui.tooling.preview)
-                implementation(compose.material)
-                implementation(compose.material3)
-                implementation(compose.materialIconsExtended)
-                implementation(project(":crypto"))
-                implementation(project(":logger"))
-                implementation(project(":app:datamodel"))
-                implementation(project(":app:db"))
-                implementation(project(":app:cryptoobjects"))
-                implementation(project(":app:preferences"))
-                implementation(project(":app:theme"))
-                implementation(project(":app:backup"))
-                implementation(project(":gpm"))
-                implementation(project(":dateutils"))
-                implementation(libs.kotlinx.datetime)
-                implementation(libs.okio)
-            }
+        commonMain.dependencies {
+            implementation(compose.runtime)
+            implementation(compose.foundation)
+            implementation(compose.ui)
+            implementation(libs.compose.ui.tooling.preview)
+            implementation(compose.material)
+            implementation(compose.material3)
+            implementation(compose.materialIconsExtended)
+            implementation(project(":crypto"))
+            implementation(project(":logger"))
+            implementation(project(":app:datamodel"))
+            implementation(project(":app:db"))
+            implementation(project(":app:cryptoobjects"))
+            implementation(project(":app:preferences"))
+            implementation(project(":app:theme"))
+            implementation(project(":app:backup"))
+            implementation(project(":gpm"))
+            implementation(project(":dateutils"))
+            implementation(libs.kotlinx.datetime)
+            implementation(libs.okio)
         }
 
-        val androidMain by getting {
-            dependencies {
-                implementation(libs.androidx.activity.compose)
-                implementation(libs.androidx.appcompat)
-                implementation(libs.androidx.core.ktx)
-            }
+        androidMain.dependencies {
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.appcompat)
+            implementation(libs.androidx.core.ktx)
         }
-        val desktopMain by getting {
+        named("desktopMain") {
             dependencies {
                 implementation(compose.desktop.currentOs)
             }
         }
-        val commonTest by getting {
-            dependencies {
-                implementation(kotlin("test"))
-                @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
-                implementation(compose.uiTest)
-            }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
+            @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
+            implementation(compose.uiTest)
         }
-        val desktopTest by getting {
+        named("desktopTest") {
             dependencies {
                 implementation(compose.desktop.uiTestJUnit4)
             }
         }
-        val iosMain by creating {
+        iosMain {
             kotlin.srcDirs(generateIosStrings)
         }
     }

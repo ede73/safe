@@ -19,24 +19,20 @@ kotlin {
     iosSimulatorArm64()
 
     sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation(compose.runtime)
-                implementation(compose.foundation)
-                implementation(compose.material)
-                implementation(compose.material3)
-            }
+        commonMain.dependencies {
+            implementation(compose.runtime)
+            implementation(compose.foundation)
+            implementation(compose.material)
+            implementation(compose.material3)
         }
-        val androidMain by getting {
-            dependencies {
-                implementation(libs.androidx.activity.compose)
-                implementation(libs.androidx.appcompat)
-                implementation(libs.androidx.core.ktx)
-                implementation(libs.androidx.material.icons.extended.android)
-                implementation(libs.androidx.material3.android)
-                implementation(libs.androidx.ui.tooling.preview.android)
-                implementation(libs.material)
-            }
+        androidMain.dependencies {
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.appcompat)
+            implementation(libs.androidx.core.ktx)
+            implementation(libs.androidx.material.icons.extended.android)
+            implementation(libs.androidx.material3.android)
+            implementation(libs.androidx.ui.tooling.preview.android)
+            implementation(libs.material)
         }
     }
 }

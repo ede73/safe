@@ -41,7 +41,7 @@ volley = "1.2.1"
 ktor = "3.5.0"
 krypto = "4.0.10"
 #plugins
-agp = "9.2.1"
+agp = "9.1.1"
 jna = "5.19.1"
 jetbrainsKotlinJvm = "2.4.20"
 kotlin = "2.4.20"
