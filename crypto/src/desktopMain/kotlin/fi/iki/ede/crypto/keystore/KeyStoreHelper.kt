@@ -50,10 +50,12 @@ class KeyStoreHelper(
     }
 
     override var decrypterProviderWithKey: (IVCipherText, KMPKey) -> ByteArray = { encrypted, key ->
-        if (encrypted.iv.isEmpty()) {
+        if (encrypted.iv.isEmpty() || encrypted.cipherText.isEmpty()) {
             byteArrayOf()
         } else if (key is SecretKeySpec) {
-            AES.decryptAesCbc(encrypted.cipherText, key.encoded, encrypted.iv, Padding.PKCS7Padding)
+            val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+            cipher.init(Cipher.DECRYPT_MODE, key, IvParameterSpec(encrypted.iv))
+            cipher.doFinal(encrypted.cipherText)
         } else if (key is PrivateKey) {
             val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
             cipher.init(Cipher.DECRYPT_MODE, key)
@@ -64,17 +66,22 @@ class KeyStoreHelper(
     }
 
     override var decrypterProvider: (IVCipherText) -> ByteArray = { encrypted ->
-        if (encrypted.iv.isEmpty()) {
+        if (encrypted.iv.isEmpty() || encrypted.cipherText.isEmpty()) {
             byteArrayOf()
         } else {
-            AES.decryptAesCbc(encrypted.cipherText, masterKey.values, encrypted.iv, Padding.PKCS7Padding)
+            val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+            val secretKey = SecretKeySpec(masterKey.values, "AES")
+            cipher.init(Cipher.DECRYPT_MODE, secretKey, IvParameterSpec(encrypted.iv))
+            cipher.doFinal(encrypted.cipherText)
         }
     }
 
     override var encrypterProviderWithKey: (ByteArray, KMPKey) -> IVCipherText = { plaintext, key ->
         if (key is SecretKeySpec) {
+            val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
             val iv = CipherUtilities.generateRandomBytes(CipherUtilities.Companion.Bytes(16))
-            val cipherText = AES.encryptAesCbc(plaintext, key.encoded, iv, Padding.PKCS7Padding)
+            cipher.init(Cipher.ENCRYPT_MODE, key, IvParameterSpec(iv))
+            val cipherText = cipher.doFinal(plaintext)
             IVCipherText(iv, cipherText)
         } else if (key is PublicKey) {
             val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
@@ -87,8 +94,11 @@ class KeyStoreHelper(
     }
 
     override var encrypterProvider: (ByteArray) -> IVCipherText = { plaintext ->
+        val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+        val secretKey = SecretKeySpec(masterKey.values, "AES")
         val iv = CipherUtilities.generateRandomBytes(CipherUtilities.Companion.Bytes(16))
-        val cipherText = AES.encryptAesCbc(plaintext, masterKey.values, iv, Padding.PKCS7Padding)
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey, IvParameterSpec(iv))
+        val cipherText = cipher.doFinal(plaintext)
         IVCipherText(iv, cipherText)
     }
 
@@ -283,6 +293,10 @@ class KeyStoreHelper(
                     cipher.init(Cipher.DECRYPT_MODE, privKey)
                     cipher.doFinal(encryptedMasterKey.cipherText)
                 }
+
+                if (decryptedMasterKeyBytes.size != 16 && decryptedMasterKeyBytes.size != 24 && decryptedMasterKeyBytes.size != 32) {
+                    return false
+                }
                 
                 ensureMockKeysLoaded()
                 val mockPrivKey = loadedPrivateKey!!
@@ -306,6 +320,9 @@ class KeyStoreHelper(
                 KEY_LENGTH_BITS
             )
             val decrypted = decryptMasterKey(derivedKey, ivSecretKey)
+            require(decrypted.values.size == 16 || decrypted.values.size == 24 || decrypted.values.size == 32) {
+                "Invalid decrypted master key length: ${decrypted.values.size} bytes (invalid password)"
+            }
             
             ensureMockKeysLoaded()
             val privKey = loadedPrivateKey!!
