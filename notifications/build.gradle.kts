@@ -16,6 +16,10 @@ kotlin {
     iosSimulatorArm64()
 
     sourceSets {
+        commonMain.dependencies {
+            implementation(project(":logger"))
+            implementation(libs.kotlinx.coroutines.core)
+        }
         androidMain.dependencies {
             implementation(project(":app:preferences"))
             implementation(project(":logger"))

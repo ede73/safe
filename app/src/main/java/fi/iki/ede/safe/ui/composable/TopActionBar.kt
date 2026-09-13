@@ -1,8 +1,9 @@
 package fi.iki.ede.safe.ui.composable
 
 import android.content.ActivityNotFoundException
-import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
+import fi.iki.ede.notifications.ToastDuration
+import fi.iki.ede.notifications.showToast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -125,7 +126,6 @@ private fun ShowChangeMasterPasswordDialog(
     showChangePasswordDialog: MutableState<Boolean>
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
 
     val masterPasswordChanged = stringResource(id = R.string.action_bar_password_changed)
     val masterPasswordChangeFailed = stringResource(id = R.string.action_bar_password_change_failed)
@@ -140,13 +140,9 @@ private fun ShowChangeMasterPasswordDialog(
                 coroutineScope.launch(Dispatchers.Main) {
                     if (success) {
                         // master password successfully changed
-                        Toast.makeText(
-                            context, masterPasswordChanged, Toast.LENGTH_LONG
-                        ).show()
+                        showToast(masterPasswordChanged, ToastDuration.LONG)
                     } else {
-                        Toast.makeText(
-                            context, masterPasswordChangeFailed, Toast.LENGTH_LONG
-                        ).show()
+                        showToast(masterPasswordChangeFailed, ToastDuration.LONG)
                     }
                 }
                 showChangePasswordDialog.value = false

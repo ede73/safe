@@ -1,7 +1,6 @@
 package fi.iki.ede.safe.ui.models
 
 import android.app.Application
-import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import com.google.android.play.core.splitinstall.SplitInstallManagerFactory
 import com.google.android.play.core.splitinstall.SplitInstallRequest
@@ -10,6 +9,7 @@ import com.google.android.play.core.splitinstall.model.SplitInstallSessionStatus
 import fi.iki.ede.logger.firebaseJustTry
 import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.logger.firebaseRecordException
+import fi.iki.ede.notifications.showToast
 import fi.iki.ede.safe.splits.PluginManager
 import fi.iki.ede.safe.splits.PluginManager.initializePlugin
 import fi.iki.ede.safe.splits.PluginName
@@ -28,9 +28,7 @@ class PluginLoaderViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun informUser(message: String) {
         firebaseLog(message)
-        Toast.makeText(
-            getApplication(), message, Toast.LENGTH_SHORT
-        ).show()
+        showToast(message)
     }
 
     private val listener = SplitInstallStateUpdatedListener { state ->

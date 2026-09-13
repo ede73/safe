@@ -54,11 +54,25 @@ import java.security.spec.X509EncodedKeySpec
 import java.awt.FileDialog
 import java.awt.Frame
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
+import fi.iki.ede.notifications.showToast
+import fi.iki.ede.notifications.currentToastFlow
+import fi.iki.ede.logger.Logger
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import fi.iki.ede.db.DATABASE_NAME
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelperFactory
 import okio.Path.Companion.toPath
 import okio.FileSystem
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.BorderStroke
 
 object DesktopSettings {
     fun initializeMigration() {
@@ -1365,6 +1379,32 @@ fun LoginScreen() {
                 }
             }
         }
+
+        // --- In-App Toast Overlay ---
+        val currentToast by currentToastFlow.collectAsState()
+        AnimatedVisibility(
+            visible = currentToast != null,
+            enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }),
+            exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 }),
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 32.dp)
+        ) {
+            Surface(
+                shape = RoundedCornerShape(24.dp),
+                color = Color(0xFF2A2A3C).copy(alpha = 0.95f),
+                shadowElevation = 8.dp,
+                border = BorderStroke(1.dp, Color(0xFF444466))
+            ) {
+                Text(
+                    text = currentToast?.message ?: "",
+                    color = Color.White,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)
+                )
+            }
+        }
     }
 }
 
@@ -1389,11 +1429,29 @@ private fun openBrowser(url: String) {
     }
 }
 
+private var clipboardClearJob: Job? = null
+private val clipboardScope = CoroutineScope(Dispatchers.Default)
+
 private fun copyToClipboard(text: String) {
     try {
         val selection = java.awt.datatransfer.StringSelection(text)
         val clipboard = java.awt.Toolkit.getDefaultToolkit().systemClipboard
         clipboard.setContents(selection, selection)
+
+        val delaySecs = Preferences.getClipboardClearDelaySecs()
+        clipboardClearJob?.cancel()
+        if (delaySecs > 0) {
+            clipboardClearJob = clipboardScope.launch {
+                delay(delaySecs * 1000L)
+                try {
+                    val emptySelection = java.awt.datatransfer.StringSelection("")
+                    clipboard.setContents(emptySelection, emptySelection)
+                    showToast(DesktopStrings.get("clipboard_cleared"))
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
     } catch (e: Exception) {
         e.printStackTrace()
     }

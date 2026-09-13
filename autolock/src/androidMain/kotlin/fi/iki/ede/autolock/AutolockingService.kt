@@ -65,7 +65,7 @@ class AutolockingService : Service() {
             oldRegisterReceiver()
         }
         autoLockNotification =
-            MainNotification(this, ConfiguredNotifications.get("autolock_notification"))
+            MainNotification(ConfiguredNotifications.get("autolock_notification"))
     }
 
     override fun onDestroy() {
@@ -107,8 +107,8 @@ class AutolockingService : Service() {
         }
         autoLockCountdownNotifier?.cancel()
         autoLockCountdownNotifier = null
-        autoLockNotification.setNotification({ this@AutolockingService }) { mainNotification ->
-            mainNotification.notify({ this@AutolockingService }) {
+        autoLockNotification.setNotification { mainNotification ->
+            mainNotification.notify {
                 (it as NotificationCompat.Builder).setProgress(100, 0, false)
             }
         }
@@ -122,10 +122,8 @@ class AutolockingService : Service() {
                     // doing nothing.
                     millisecondsTillAutoLock = millisUntilFinished
                     if (mFeatures?.isLoggedIn() == true) {
-                        autoLockNotification.setNotification(
-                            { this@AutolockingService }
-                        ) { mainNotification ->
-                            mainNotification.notify({ this@AutolockingService }) {
+                        autoLockNotification.setNotification { mainNotification ->
+                            mainNotification.notify {
                                 (it as NotificationCompat.Builder).setProgress(
                                     timeoutUntilStop.toInt(),
                                     millisUntilFinished.toInt(), false

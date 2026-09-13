@@ -8,8 +8,8 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.PersistableBundle
-import android.widget.Toast
 import androidx.annotation.RequiresApi
+import fi.iki.ede.notifications.showToast
 import kotlin.time.Duration.Companion.seconds
 
 // https://developer.android.com/develop/ui/views/touch-and-input/copy-paste
@@ -60,10 +60,7 @@ object ClipboardUtils {
                 clearClipboard(context)
                 // Only show a toast for Android 12 and lower.
                 if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) {
-                    Toast.makeText(
-                        context, context.getString(R.string.clipboard_cleared),
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    showToast(context.getString(R.string.clipboard_cleared))
                 }
             },
             delayMs

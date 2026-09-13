@@ -3,7 +3,6 @@ package fi.iki.ede.safe.ui.activities
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricManager
@@ -22,6 +21,7 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseLog
+import fi.iki.ede.notifications.showToast
 import fi.iki.ede.preferences.Preferences.PREFERENCE_BIOMETRICS_ENABLED
 import fi.iki.ede.preferences.Preferences.PREFERENCE_BIO_CIPHER
 import fi.iki.ede.preferences.Preferences.sharedPreferences
@@ -137,7 +137,7 @@ class BiometricsActivity : AppCompatActivity() {
     }
 
     private fun showMessage(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        showToast(message)
     }
 
     companion object {

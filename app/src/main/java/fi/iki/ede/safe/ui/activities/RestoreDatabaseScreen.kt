@@ -129,7 +129,7 @@ class RestoreDatabaseScreen :
                         processedMessage = processedMessage,
                         backupPassword = viewModel.backupPassword!!,
                         backupSource = contentResolver.openInputStream(viewModel.docUri!!)!!.source(),
-                        passwordLogin = { pwd -> LoginHandler.passwordLogin(context, pwd) },
+                        passwordLogin = { pwd -> LoginHandler.passwordLogin(pwd) },
                         linkSaveGPMAndSiteEntry = fi.iki.ede.gpmdatamodel.db.GPMDB::linkSaveGPMAndSiteEntry,
                         addSavedGPM = fi.iki.ede.gpmdatamodel.db.GPMDB::addSavedGPM,
                         onFinished = { restoredPasswords, ex ->

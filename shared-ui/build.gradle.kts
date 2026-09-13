@@ -129,6 +129,7 @@ kotlin {
             implementation(compose.materialIconsExtended)
             implementation(project(":crypto"))
             implementation(project(":logger"))
+            implementation(project(":notifications"))
             implementation(project(":app:datamodel"))
             implementation(project(":app:db"))
             implementation(project(":app:cryptoobjects"))

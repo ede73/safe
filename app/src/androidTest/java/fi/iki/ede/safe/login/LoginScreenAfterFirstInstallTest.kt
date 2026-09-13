@@ -127,7 +127,7 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
         getPasswordFields(loginActivityTestRule)[0].performTextInput(MockKeyStore.FAKE_PASSWORD_PLAINTEXT)
         getLoginButton(loginActivityTestRule).assertIsEnabled()
         getLoginButton(loginActivityTestRule).performClick()
-        verify(exactly = 1) { LoginHandler.passwordLogin(any(), any()) }
+        verify(exactly = 1) { LoginHandler.passwordLogin(any()) }
         verify(exactly = 0) { IntentManager.startCategoryScreen(any()) }
         verify(exactly = 0) { LoginHandler.firstTimeLogin(any()) }
         verify(exactly = 0) { LoginHandler.biometricLogin() }
@@ -152,7 +152,7 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
 
         //verify(exactly = 1) { CategoryListScreen.startMe(any()) }
         verify(exactly = 0) { LoginHandler.firstTimeLogin(any()) }
-        verify(exactly = 0) { LoginHandler.passwordLogin(any(), any()) }
+        verify(exactly = 0) { LoginHandler.passwordLogin(any()) }
         verify(exactly = 0) { BiometricsActivity.getRegistrationIntent(any()) }
         verify(exactly = 1) { BiometricsActivity.getVerificationIntent(any()) }
         verify(exactly = 0) { LoginHandler.biometricLogin() }
@@ -189,7 +189,7 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
 
         //verify(exactly = 1) { CategoryListScreen.startMe(any()) }
         verify(exactly = 0) { LoginHandler.firstTimeLogin(any()) }
-        verify(exactly = 0) { LoginHandler.passwordLogin(any(), any()) }
+        verify(exactly = 0) { LoginHandler.passwordLogin(any()) }
         verify(exactly = 0) { BiometricsActivity.getRegistrationIntent(any()) }
         verify(exactly = 1) { BiometricsActivity.getVerificationIntent(any()) }
         verify(exactly = 0) { LoginHandler.biometricLogin() }
@@ -231,7 +231,7 @@ class LoginScreenAfterFirstInstallTest : AutoMockingUtilities, LoginScreenHelper
 
         //verify(exactly = 1) { CategoryListScreen.startMe(any()) }
         verify(exactly = 0) { LoginHandler.firstTimeLogin(any()) }
-        verify(exactly = 0) { LoginHandler.passwordLogin(any(), any()) }
+        verify(exactly = 0) { LoginHandler.passwordLogin(any()) }
         verify(exactly = 0) { BiometricsActivity.getRegistrationIntent(any()) }
         verify(exactly = 1) { BiometricsActivity.getVerificationIntent(any()) }
         verify(exactly = 0) { LoginHandler.biometricLogin() }
