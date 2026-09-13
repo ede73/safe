@@ -59,10 +59,12 @@ fun SharedLoginScreen(
     var registerFingerprint by remember { mutableStateOf(false) }
 
     val focusRequester = remember { FocusRequester() }
-    LaunchedEffect(focusRequester) {
-        androidx.compose.runtime.withFrameNanos {}
-        androidx.compose.runtime.withFrameNanos {}
-        focusRequester.requestFocus()
+    LaunchedEffect(focusRequester, isBiometricsEnabled) {
+        if (!isBiometricsEnabled) {
+            androidx.compose.runtime.withFrameNanos {}
+            androidx.compose.runtime.withFrameNanos {}
+            focusRequester.requestFocus()
+        }
     }
 
     Card(

@@ -25,6 +25,7 @@ import fi.iki.ede.gpmdatamodel.db.GPMDB
 import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.model.LoginHandler
+import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.splits.PluginManager
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.composable.DualModePreview
@@ -168,6 +169,7 @@ open class LoginScreen : ComponentActivity() {
         firebaseLog("Asked NOT TO OPEN open category screen, taskRoot=${isTaskRoot}")
         if (isTaskRoot) {
             firebaseLog("Oh NO! We're ROOT and we're finishing, taskRoot=${isTaskRoot}")
+            IntentManager.startCategoryScreen(this)
         }
         firebaseLog("finishLoginProcess: finishWithTrace(::finish)")
         finish()
