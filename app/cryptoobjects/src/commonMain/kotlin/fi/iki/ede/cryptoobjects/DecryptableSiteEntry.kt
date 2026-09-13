@@ -56,17 +56,7 @@ class DecryptableSiteEntry(
     @ColumnInfo(name = "password")
     var password: IVCipherText = IVCipherText.getEmpty()
 
-    @get:Ignore
-    val plainExtensions: Map<String, Set<String>>
-        get() = try {
-            if (extensions.isEmpty()) mapOf()
-            else
-                Json.decodeFromString<Map<String, Set<String>>>(
-                    extensions.decrypt().trim()
-                )
-        } catch (e: Exception) {
-            mutableMapOf()
-        }
+
 
     @ColumnInfo(name = "extensions")
     var extensions: IVCipherText = IVCipherText.getEmpty()
@@ -89,35 +79,7 @@ class DecryptableSiteEntry(
     var website: IVCipherText = IVCipherText.getEmpty()
 
     @Ignore
-    private var decryptedCachedPlainDescription: String? = null
-
-    @get:Ignore
-    val plainPassword: String
-        get() = password.decrypt()
-    @get:Ignore
-    val plainUsername: String
-        get() = username.decrypt()
-    @get:Ignore
-    val plainWebsite: String
-        get() = website.decrypt()
-    @get:Ignore
-    val plainNote: String
-        get() = note.decrypt()
-    @get:Ignore
-    val plainPhoto: PlatformBitmap?
-        get() = if (photo.isEmpty()) null else decryptPhoto()
-
-    // plain description is used A LOT everywhere (listing, sorting, displaying)
-    // On a large password DB operating on decrypt-on-demand description is just too slow
-    // Hence once description is decrypted, we'll keep it (unless encrypted description changes)
-    @get:Ignore
-    val cachedPlainDescription: String
-        get() {
-            if (decryptedCachedPlainDescription == null && description != IVCipherText.getEmpty()) {
-                decryptedCachedPlainDescription = description.decrypt()
-            }
-            return decryptedCachedPlainDescription ?: ""
-        }
+    internal var decryptedCachedPlainDescription: String? = null
 
     fun contains(
         searchText: String,
@@ -194,6 +156,25 @@ val DecryptableSiteEntry.plainExtensions: Map<String, Set<String>>
             )
     } catch (e: Exception) {
         mutableMapOf()
+    }
+
+val DecryptableSiteEntry.plainPassword: String
+    get() = password.decrypt()
+val DecryptableSiteEntry.plainUsername: String
+    get() = username.decrypt()
+val DecryptableSiteEntry.plainWebsite: String
+    get() = website.decrypt()
+val DecryptableSiteEntry.plainNote: String
+    get() = note.decrypt()
+val DecryptableSiteEntry.plainPhoto: PlatformBitmap?
+    get() = if (photo.isEmpty()) null else decryptPhoto()
+
+val DecryptableSiteEntry.cachedPlainDescription: String
+    get() {
+        if (decryptedCachedPlainDescription == null && description != IVCipherText.getEmpty()) {
+            decryptedCachedPlainDescription = description.decrypt()
+        }
+        return decryptedCachedPlainDescription ?: ""
     }
 
 
