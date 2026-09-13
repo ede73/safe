@@ -794,7 +794,7 @@ fun LoginScreen() {
         // --- Edit/View Site Entry Dialog Overlay ---
         val activeSiteEntry = DesktopSiteEntryNavigation.activeSiteEntry
         if (activeSiteEntry != null) {
-            var editDesc by remember(activeSiteEntry) { mutableStateOf(activeSiteEntry.cachedPlainDescription) }
+            var editDesc by remember(activeSiteEntry) { mutableStateOf(activeSiteEntry.plainDescription) }
             var editWeb by remember(activeSiteEntry) { mutableStateOf(activeSiteEntry.plainWebsite) }
             var editUser by remember(activeSiteEntry) {
                 val initialUser = if (activeSiteEntry.id == null) {

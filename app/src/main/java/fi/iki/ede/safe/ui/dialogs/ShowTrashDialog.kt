@@ -90,11 +90,11 @@ fun ShowTrashDialog(
                         }) { Text(stringResource(id = R.string.trash_restore)) }
                     }
                     LazyColumn {
-                        items(deletedSiteEntries.sortedBy { it.cachedPlainDescription }) { entry: DecryptableSiteEntry ->
+                        items(deletedSiteEntries.sortedBy { it.plainDescription }) { entry: DecryptableSiteEntry ->
                             SafeListItem {
                                 Text(
                                     // TODO: translate to days!
-                                    text = "${entry.cachedPlainDescription} (${entry.deleted})",
+                                    text = "${entry.plainDescription} (${entry.deleted})",
                                     modifier = Modifier
                                         .clickable { restoreSiteEntry.value = entry }
                                         .fillMaxWidth()

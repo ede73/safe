@@ -12,9 +12,9 @@ import fi.iki.ede.gpmui.BuildConfig
 @Composable
 fun ShowInfoDialog(item: SavedGPM, onDismiss: () -> Unit) {
     val dump =
-        "Name: ${item.cachedDecryptedName}\nUser: ${item.cachedDecryptedUsername}\nUrl: ${item.cachedDecryptedUrl}".let {
+        "Name: ${item.plainName}\nUser: ${item.plainUsername}\nUrl: ${item.plainUrl}".let {
             if (BuildConfig.DEBUG) {
-                it + "\nID=${item.id}\nPassword=${item.cachedDecryptedPassword}"
+                it + "\nID=${item.id}\nPassword=${item.plainPassword}"
             } else it
         }
     UsageInfoDialog(dump, onDismiss = onDismiss)
@@ -33,9 +33,9 @@ fun ShowInfoDialog(item: IncomingGPM, onDismiss: () -> Unit) {
 @Composable
 fun ShowInfoDialog(item: ScoredMatch, onDismiss: () -> Unit) {
     val dump =
-        "Match: ${item.matchScore}\nHashMatch: ${item.hashMatch}\nName: ${item.item.cachedDecryptedName}\nUser: ${item.item.cachedDecryptedUsername}\nUrl: ${item.item.cachedDecryptedUrl}".let {
+        "Match: ${item.matchScore}\nHashMatch: ${item.hashMatch}\nName: ${item.item.plainName}\nUser: ${item.item.plainUsername}\nUrl: ${item.item.plainUrl}".let {
             if (BuildConfig.DEBUG) {
-                it + "\nNote: ${item.item.cachedDecryptedNote}\nPassword: ${item.item.cachedDecryptedPassword}"
+                it + "\nNote: ${item.item.plainNote}\nPassword: ${item.item.plainPassword}"
             } else it
         }
     UsageInfoDialog(dump, onDismiss = onDismiss)

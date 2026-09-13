@@ -36,7 +36,7 @@ fun SearchSiteEntryList(
     val siteEntryState = filteredSiteEntries.collectAsState()
     val sortedPasswords by remember(siteEntryState) {
         derivedStateOf {
-            siteEntryState.value.sortedBy { it.cachedPlainDescription }
+            siteEntryState.value.sortedBy { it.plainDescription }
         }
     }
 

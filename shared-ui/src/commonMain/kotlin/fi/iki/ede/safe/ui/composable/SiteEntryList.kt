@@ -27,7 +27,7 @@ fun SiteEntryList(
             .verticalScroll(rememberScrollState())
     ) {
         siteEntries.forEach { siteEntry ->
-            val beginning = siteEntry.cachedPlainDescription.substring(0, 1).uppercase()
+            val beginning = siteEntry.plainDescription.substring(0, 1).uppercase()
             Box {
                 if (previousValue != beginning) {
                     previousValue = beginning

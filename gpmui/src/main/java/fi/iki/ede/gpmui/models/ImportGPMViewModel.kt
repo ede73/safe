@@ -258,7 +258,7 @@ class ImportGPMViewModel : ViewModel() {
                         similarityThresholdOrSubString,
                         regex,
                         searchText
-                    ) { item -> item.cachedPlainDescription }
+                    ) { item -> item.plainDescription }
                     else null
 
                 val gpmSearchThread = if (gpmSearchTarget != SearchTarget.IGNORE) singleListSearch(

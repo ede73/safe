@@ -333,7 +333,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
                     assertEquals(null, passwords[i].passwordChangedDate)
                 }
                 assertEquals(f.toLong(), passwords[i].categoryId)
-                assertEquals("enc_desc$f$l", passwords[i].cachedPlainDescription)
+                assertEquals("enc_desc$f$l", passwords[i].plainDescription)
                 assertEquals("enc_web$f$l", passwords[i].plainWebsite)
                 assertEquals("enc_user$f$l", passwords[i].plainUsername)
                 assertEquals("enc_pwd$f$l", passwords[i].plainPassword)
@@ -528,7 +528,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
             assertEquals(categoryId, passwords[id].categoryId)
             val mockId = mockIds[id]
             assertEquals(siteEntryIds[id], passwords[id].id)
-            assertEquals("enc_desc$mockId", passwords[id].cachedPlainDescription)
+            assertEquals("enc_desc$mockId", passwords[id].plainDescription)
             assertEquals("enc_web$mockId", passwords[id].plainWebsite)
             assertEquals("enc_user$mockId", passwords[id].plainUsername)
             assertEquals("enc_pwd$mockId", passwords[id].plainPassword)

@@ -47,7 +47,7 @@ fun findSimilarNamesWhereUsernameMatchesAndURLDomainLooksTheSame(
         importChangeSet.getUnprocessedSavedGPMs.mapNotNull { savedGPM ->
             val score = findSimilarity(
                 harmonizePotentialDomainName(incomingGPM.name).toLowerCasedTrimmedString(),
-                harmonizePotentialDomainName(savedGPM.cachedDecryptedName).toLowerCasedTrimmedString()
+                harmonizePotentialDomainName(savedGPM.plainName).toLowerCasedTrimmedString()
             )
             if (score > scoringConfig.recordNameSimilarityThreshold) ScoredMatch(
                 score,
@@ -80,11 +80,11 @@ fun processOneFieldChanges(
     scoringConfig: ScoringConfig,
     progressReport: (progress: String) -> Unit,
 ) = listOf(
-    Pair(IncomingGPM::name, SavedGPM::cachedDecryptedName/*encryptedName*/),
-    Pair(IncomingGPM::password, SavedGPM::cachedDecryptedPassword/*encryptedPassword*/),
-    Pair(IncomingGPM::username, SavedGPM::cachedDecryptedUsername/*encryptedUsername*/),
-    Pair(IncomingGPM::url, SavedGPM::cachedDecryptedUrl/*encryptedUrl*/),
-    Pair(IncomingGPM::note, SavedGPM::cachedDecryptedNote/*encryptedNote*/),
+    Pair(IncomingGPM::name, SavedGPM::plainName/*encryptedName*/),
+    Pair(IncomingGPM::password, SavedGPM::plainPassword/*encryptedPassword*/),
+    Pair(IncomingGPM::username, SavedGPM::plainUsername/*encryptedUsername*/),
+    Pair(IncomingGPM::url, SavedGPM::plainUrl/*encryptedUrl*/),
+    Pair(IncomingGPM::note, SavedGPM::plainNote/*encryptedNote*/),
 ).map {
     // for debuggability, this would be nice, but for clarity not
     // we don't care WHICH field it really was...
@@ -215,7 +215,7 @@ private fun doesUserNameOrDomainNameMatch(
     scoringConfig: ScoringConfig
 ): ScoredMatch? {
     val incomingUsername = incomingGPM.username.toLowerCasedTrimmedString()
-    val savedUsername = scoredSavedGPM.item.cachedDecryptedUsername.toLowerCasedTrimmedString()
+    val savedUsername = scoredSavedGPM.item.plainUsername.toLowerCasedTrimmedString()
     val userNameMatches = incomingUsername == savedUsername
 
     // of course there's a chance that username was changed, but assuming recent enuf import, 1-field-change should caught that
@@ -223,7 +223,7 @@ private fun doesUserNameOrDomainNameMatch(
         return null
     }
     val incomingUrl = parseUrl(incomingGPM.url.toLowerCasedTrimmedString())
-    val savedUrl = parseUrl(scoredSavedGPM.item.cachedDecryptedUrl.toLowerCasedTrimmedString())
+    val savedUrl = parseUrl(scoredSavedGPM.item.plainUrl.toLowerCasedTrimmedString())
 
     if (incomingUrl != null && savedUrl != null) {
         val domainMatchSimilarityScore = findSimilarity(
@@ -280,10 +280,10 @@ private fun hasOnlyOneFieldChange(
 ): Boolean {
 // List of all comparable properties in GPMEntry and their corresponding encrypted versions in DBGPMEntry
     val properties = listOf(
-        IncomingGPM::name to SavedGPM::cachedDecryptedName, //encryptedName,
-        IncomingGPM::url to SavedGPM::cachedDecryptedUrl, // encryptedUrl,
-        IncomingGPM::username to SavedGPM::cachedDecryptedUsername,// encryptedUsername,
-        IncomingGPM::password to SavedGPM::cachedDecryptedPassword,// encryptedPassword
+        IncomingGPM::name to SavedGPM::plainName, //encryptedName,
+        IncomingGPM::url to SavedGPM::plainUrl, // encryptedUrl,
+        IncomingGPM::username to SavedGPM::plainUsername,// encryptedUsername,
+        IncomingGPM::password to SavedGPM::plainPassword,// encryptedPassword
     )
 
     // Check if the specified properties are different

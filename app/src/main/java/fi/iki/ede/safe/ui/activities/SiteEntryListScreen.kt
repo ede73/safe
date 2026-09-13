@@ -41,7 +41,7 @@ class SiteEntryListScreen :
             // TODO: Either new kotlin, coroutines or both, this is a linter error now
             val siteEntriesState by siteEntriesStateFlow
                 .map { passwords -> passwords.filter { it.categoryId == categoryId } }
-                .map { passwords -> passwords.sortedBy { it.cachedPlainDescription.lowercase() } }
+                .map { passwords -> passwords.sortedBy { it.plainDescription.lowercase() } }
                 .filterNotNull()
                 .collectAsState(initial = emptyList())
 

@@ -266,9 +266,9 @@ fun AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesList(
     val combinedList = when (viewModel.displayedItemsAreConnected) {
         true -> connectedDisplayItems.value.map { SiteEntryToGPM(it.first, it.second, true) }
             .sortedWith(compareBy<SiteEntryToGPM, String?>(nullsLast()) {
-                it.siteEntry?.cachedPlainDescription?.lowercase()
+                it.siteEntry?.plainDescription?.lowercase()
             }.thenBy {
-                it.gpm?.cachedDecryptedName?.lowercase()
+                it.gpm?.plainName?.lowercase()
             })
 
         false -> combineLists(

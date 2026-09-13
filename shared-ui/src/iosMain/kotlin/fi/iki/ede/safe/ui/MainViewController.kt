@@ -287,7 +287,7 @@ fun MainViewController(): UIViewController {
                         title = {
                             Text(
                                 text = when {
-                                    activeSiteEntry != null -> activeSiteEntry!!.cachedPlainDescription
+                                    activeSiteEntry != null -> activeSiteEntry!!.plainDescription
                                     activeCategory != null -> activeCategory!!.plainName
                                     else -> "Safe 🔐"
                                 },
@@ -371,7 +371,7 @@ fun MainViewController(): UIViewController {
                         activeSiteEntry != null -> {
                             val siteEntry = activeSiteEntry!!
                             // Read decrypted properties
-                            var desc by remember { mutableStateOf(siteEntry.cachedPlainDescription) }
+                            var desc by remember { mutableStateOf(siteEntry.plainDescription) }
                             var user by remember { mutableStateOf(siteEntry.plainUsername) }
                             var pass by remember { mutableStateOf(siteEntry.plainPassword) }
                             var note by remember { mutableStateOf(siteEntry.plainNote) }
@@ -417,7 +417,7 @@ fun MainViewController(): UIViewController {
                                     },
                                     bottomBarContent = {
                                         val hasChanges = siteEntry.id == null ||
-                                                desc != siteEntry.cachedPlainDescription ||
+                                                desc != siteEntry.plainDescription ||
                                                 user != siteEntry.plainUsername ||
                                                 pass != siteEntry.plainPassword ||
                                                 note != siteEntry.plainNote ||

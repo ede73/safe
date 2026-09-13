@@ -335,7 +335,7 @@ object DataModel {
                 straySiteEntries.forEach {
                     Logger.e(
                         TAG,
-                        "Stray SiteEntry id=${it.id}, category=${it.categoryId}, description=${it.cachedPlainDescription}"
+                        "Stray SiteEntry id=${it.id}, category=${it.categoryId}, description=${it.plainDescription}"
                     )
                 }
             }
@@ -354,7 +354,7 @@ object DataModel {
                         for (siteEntry in getSiteEntriesOfCategory(category.id!!)) {
                             Logger.d(
                                 TAG,
-                                "  SiteEntry id=${siteEntry.id}, description=${siteEntry.cachedPlainDescription},changed=${siteEntry.passwordChangedDate}"
+                                "  SiteEntry id=${siteEntry.id}, description=${siteEntry.plainDescription},changed=${siteEntry.passwordChangedDate}"
                             ) // OK: Dump
                         }
                     }

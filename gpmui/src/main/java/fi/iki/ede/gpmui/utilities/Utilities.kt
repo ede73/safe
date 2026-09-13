@@ -41,11 +41,11 @@ internal fun combineLists(
     val extendedSiteEntries =
         siteEntries.extendToSize(maxSize).sortedWith(
             compareBy(nullsLast()) {
-                it?.cachedPlainDescription?.lowercase()
+                it?.plainDescription?.lowercase()
             })
     val extendedGPMs = gpms.extendToSize(maxSize).sortedWith(
         compareBy(nullsLast()) {
-            it?.cachedDecryptedName?.lowercase()
+            it?.plainName?.lowercase()
         })
     return mutableListOf<SiteEntryToGPM>().apply {
         for (i in 0 until maxSize) {
@@ -163,7 +163,7 @@ fun DNDObject.dump(): String =
     "DNDObject:" +
             when (this) {
                 is DNDObject.JustString -> this.string
-                is DNDObject.GPM -> "${this.savedGPM.cachedDecryptedName} - ${this.savedGPM.id}"
-                is DNDObject.SiteEntry -> "${this.decryptableSiteEntry.cachedPlainDescription} - ${this.decryptableSiteEntry.id}"
+                is DNDObject.GPM -> "${this.savedGPM.plainName} - ${this.savedGPM.id}"
+                is DNDObject.SiteEntry -> "${this.decryptableSiteEntry.plainDescription} - ${this.decryptableSiteEntry.id}"
                 is DNDObject.Spacer -> "Spacer"
             }

@@ -30,5 +30,6 @@ class DecryptableCategoryEntry {
     var containedSiteEntryCount = 0
 }
 
+// This are intentionally not cached and decrypted inefficiently per request
 val DecryptableCategoryEntry.plainName: String
     get() = encryptedName.decrypt()

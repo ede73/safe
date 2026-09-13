@@ -69,7 +69,7 @@ fun SiteEntryRow(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = siteEntry.cachedPlainDescription,
+                    text = siteEntry.plainDescription,
                     maxLines = 1,
                     style = MaterialTheme.typography.titleMedium,
                     overflow = TextOverflow.Ellipsis,
@@ -99,7 +99,7 @@ fun SiteEntryRow(
         ) {
             DropdownMenuItem(
                 text = {
-                    Text(text = getString("password_list_delete_password", siteEntry.cachedPlainDescription))
+                    Text(text = getString("password_list_delete_password", siteEntry.plainDescription))
                 },
                 onClick = {
                     displayMenu.value = false
@@ -109,7 +109,7 @@ fun SiteEntryRow(
             if (onMoveSiteEntry != null) {
                 DropdownMenuItem(
                     text = {
-                        Text(text = getString("password_list_move_password", siteEntry.cachedPlainDescription))
+                        Text(text = getString("password_list_move_password", siteEntry.plainDescription))
                     },
                     onClick = {
                         displayMenu.value = false

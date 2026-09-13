@@ -82,7 +82,7 @@ private fun CategoryListScreenPagedCompose(
                 val category = categoriesState[page]
                 val passwordsState by siteEntriesStateFlow
                     .map { passwords -> passwords.filter { it.categoryId == category.id } }
-                    .map { passwords -> passwords.sortedBy { it.cachedPlainDescription.lowercase() } }
+                    .map { passwords -> passwords.sortedBy { it.plainDescription.lowercase() } }
                     .filterNotNull()
                     .collectAsState(initial = emptyList())
                 Column(modifier = Modifier.fillMaxSize()) {

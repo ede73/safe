@@ -138,7 +138,7 @@ fun DraggableText(
                             else it
                         })
 
-                        is DNDObject.SiteEntry -> Text(text = dragObject.decryptableSiteEntry.cachedPlainDescription.let {
+                        is DNDObject.SiteEntry -> Text(text = dragObject.decryptableSiteEntry.plainDescription.let {
                             if (BuildConfig.DEBUG)
                                 it + "(${dragObject.decryptableSiteEntry.id})"
                             else
