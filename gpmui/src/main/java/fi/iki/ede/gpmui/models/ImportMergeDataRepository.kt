@@ -59,12 +59,12 @@ class ImportMergeDataRepository {
 
                     is ModificationRequest.AddGpmToDisplayList ->
                         _displayedUnprocessedGPMs.update { it + request.savedGPM }.also {
-                            debug("AddGpmToDisplayList ${request.savedGPM.cachedDecryptedName}")
+                            debug("AddGpmToDisplayList ${request.savedGPM.plainName}")
                         }
 
                     is ModificationRequest.AddSiteEntryToDisplayList ->
                         _displayedSiteEntries.update { it + request.siteEntry }.also {
-                            debug("AddSiteEntryToDisplayList ${request.siteEntry.cachedPlainDescription}")
+                            debug("AddSiteEntryToDisplayList ${request.siteEntry.plainDescription}")
                         }
 
                     is ModificationRequest.AddConnectedDisplayItem ->

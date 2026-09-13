@@ -88,8 +88,8 @@ class ImportExportTest {
 
         assertEquals(siteEntriesBefore.size, siteEntriesAfter.size)
         for (before in siteEntriesBefore) {
-            val after = requireNotNull(siteEntriesAfter.firstOrNull { it.cachedPlainDescription == before.cachedPlainDescription }) {
-                "Site entry '${before.cachedPlainDescription}' was not preserved"
+            val after = requireNotNull(siteEntriesAfter.firstOrNull { it.plainDescription == before.plainDescription }) {
+                "Site entry '${before.plainDescription}' was not preserved"
             }
 
             assertEquals(before.plainUsername, after.plainUsername)

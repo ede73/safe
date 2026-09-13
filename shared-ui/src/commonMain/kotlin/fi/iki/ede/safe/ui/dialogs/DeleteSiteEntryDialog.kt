@@ -34,7 +34,7 @@ fun DeleteSiteEntryDialog(
             }
         },
         title = {
-            Text(text = getString("password_list_delete_password", siteEntry.cachedPlainDescription))
+            Text(text = getString("password_list_delete_password", siteEntry.plainDescription))
         },
         modifier = modifier
     )

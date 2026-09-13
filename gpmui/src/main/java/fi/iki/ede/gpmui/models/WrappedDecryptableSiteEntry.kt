@@ -12,6 +12,6 @@ data class WrappedDecryptableSiteEntry(val siteEntry: DecryptableSiteEntry) {
 
     // to speed up the massive search matrix
     val cachedHarmonizedDecryptedDescription: LowerCaseTrimmedString by lazy {
-        harmonizePotentialDomainName(siteEntry.cachedPlainDescription).toLowerCasedTrimmedString()
+        harmonizePotentialDomainName(siteEntry.plainDescription).toLowerCasedTrimmedString()
     }
 }

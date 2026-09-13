@@ -36,20 +36,18 @@ data class SavedGPM(
     @ColumnInfo(name = "hash")
     val hash: String
 ) : DisallowedFunctions {
-    @get:Ignore
-    val cachedDecryptedName: String by lazy { encryptedName.decrypt() } // ok
-    @get:Ignore
-    val cachedDecryptedUsername: String by lazy { encryptedUsername.decrypt() } // ok
-    @get:Ignore
-    val cachedDecryptedUrl: String by lazy { encryptedUrl.decrypt() } // ok
-    @get:Ignore
-    val cachedDecryptedPassword: String by lazy { encryptedPassword.decrypt() } // ok
-    @get:Ignore
-    val cachedDecryptedNote: String by lazy { encryptedNote.decrypt() } // ok
-    @get:Ignore
-    val harmonizedName: LowerCaseTrimmedString by lazy {
-        harmonizePotentialDomainName(cachedDecryptedName).toLowerCasedTrimmedString()
-    }
+    @Ignore
+    internal var _cachedDecryptedName: String? = null
+    @Ignore
+    internal var _cachedDecryptedUsername: String? = null
+    @Ignore
+    internal var _cachedDecryptedUrl: String? = null
+    @Ignore
+    internal var _cachedDecryptedPassword: String? = null
+    @Ignore
+    internal var _cachedDecryptedNote: String? = null
+    @Ignore
+    internal var _harmonizedName: LowerCaseTrimmedString? = null
 
     @Ignore
     constructor(id: Long? = null, importing: IncomingGPM) : this(
@@ -64,7 +62,7 @@ data class SavedGPM(
     )
 
     fun toStringRedacted(): String {
-        return "SavedGPM ( id=$id, name=${cachedDecryptedName}, url=${cachedDecryptedUrl}, username=${cachedDecryptedUsername}, password=REDACTED, note=${encryptedNote.decrypt()}, flaggedIgnored=$flaggedIgnored, hash=$hash)"
+        return "SavedGPM ( id=$id, name=${cachedDecryptedName}, url=${cachedDecryptedUrl}, username=${cachedDecryptedUsername}, password=REDACTED, note=${cachedDecryptedNote}, flaggedIgnored=$flaggedIgnored, hash=$hash)"
     }
 
     companion object {
@@ -87,18 +85,30 @@ data class SavedGPM(
                 encryptedNote,
                 flaggedIgnored,
                 hash
-//                calculateSha128(
-//                    listOf(
-//                        encryptedName.decrypt(), // ok
-//                        encryptedUrl.decrypt(), // ok
-//                        encryptedUsername.decrypt(), // ok
-//                        encryptedPassword.decrypt(), // ok
-//                        encryptedNote.decrypt() // ok
-//                    ),
-//                    "makeFromEncryptedStringFields"
-//                )
             )
     }
 }
 
+val SavedGPM.cachedDecryptedName: String
+    get() = _cachedDecryptedName ?: encryptedName.decrypt().also { _cachedDecryptedName = it }
 
+val SavedGPM.cachedDecryptedUsername: String
+    get() = _cachedDecryptedUsername ?: encryptedUsername.decrypt().also { _cachedDecryptedUsername = it }
+
+val SavedGPM.cachedDecryptedUrl: String
+    get() = _cachedDecryptedUrl ?: encryptedUrl.decrypt().also { _cachedDecryptedUrl = it }
+
+val SavedGPM.cachedDecryptedPassword: String
+    get() = _cachedDecryptedPassword ?: encryptedPassword.decrypt().also { _cachedDecryptedPassword = it }
+
+val SavedGPM.cachedDecryptedNote: String
+    get() = _cachedDecryptedNote ?: encryptedNote.decrypt().also { _cachedDecryptedNote = it }
+
+val SavedGPM.harmonizedName: LowerCaseTrimmedString
+    get() = _harmonizedName ?: harmonizePotentialDomainName(cachedDecryptedName).toLowerCasedTrimmedString().also { _harmonizedName = it }
+
+val SavedGPM.plainName: String get() = cachedDecryptedName
+val SavedGPM.plainUsername: String get() = cachedDecryptedUsername
+val SavedGPM.plainUrl: String get() = cachedDecryptedUrl
+val SavedGPM.plainPassword: String get() = cachedDecryptedPassword
+val SavedGPM.plainNote: String get() = cachedDecryptedNote

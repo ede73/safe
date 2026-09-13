@@ -31,16 +31,6 @@ class DecryptableSiteEntry(
 
     @ColumnInfo(name = "description")
     var description: IVCipherText = IVCipherText.getEmpty()
-        set(value) {
-            if (field != value) {
-                field = value
-                decryptedCachedPlainDescription = null
-            }
-        }
-
-    init {
-        this.description = IVCipherText.getEmpty()
-    }
 
     // soft deletion property, mainly used for backup/restore and Trash Can visuals
     @ColumnInfo(name = "deleted")
@@ -55,18 +45,6 @@ class DecryptableSiteEntry(
 
     @ColumnInfo(name = "password")
     var password: IVCipherText = IVCipherText.getEmpty()
-
-    @get:Ignore
-    val plainExtensions: Map<String, Set<String>>
-        get() = try {
-            if (extensions.isEmpty()) mapOf()
-            else
-                Json.decodeFromString<Map<String, Set<String>>>(
-                    extensions.decrypt().trim()
-                )
-        } catch (e: Exception) {
-            mutableMapOf()
-        }
 
     @ColumnInfo(name = "extensions")
     var extensions: IVCipherText = IVCipherText.getEmpty()
@@ -88,37 +66,6 @@ class DecryptableSiteEntry(
     @ColumnInfo(name = "website")
     var website: IVCipherText = IVCipherText.getEmpty()
 
-    @Ignore
-    private var decryptedCachedPlainDescription: String? = null
-
-    @get:Ignore
-    val plainPassword: String
-        get() = password.decrypt()
-    @get:Ignore
-    val plainUsername: String
-        get() = username.decrypt()
-    @get:Ignore
-    val plainWebsite: String
-        get() = website.decrypt()
-    @get:Ignore
-    val plainNote: String
-        get() = note.decrypt()
-    @get:Ignore
-    val plainPhoto: PlatformBitmap?
-        get() = if (photo.isEmpty()) null else decryptPhoto()
-
-    // plain description is used A LOT everywhere (listing, sorting, displaying)
-    // On a large password DB operating on decrypt-on-demand description is just too slow
-    // Hence once description is decrypted, we'll keep it (unless encrypted description changes)
-    @get:Ignore
-    val cachedPlainDescription: String
-        get() {
-            if (decryptedCachedPlainDescription == null && description != IVCipherText.getEmpty()) {
-                decryptedCachedPlainDescription = description.decrypt()
-            }
-            return decryptedCachedPlainDescription ?: ""
-        }
-
     fun contains(
         searchText: String,
         searchWebsites: Boolean,
@@ -127,7 +74,7 @@ class DecryptableSiteEntry(
         searchNotes: Boolean,
         searchExtensions: Boolean
     ) = // TODO: Might be able to optimize?
-        cachedPlainDescription.contains(searchText, true) ||
+        plainDescription.contains(searchText, true) ||
                 (searchWebsites && plainWebsite.contains(searchText, true)) ||
                 (searchUsernames && plainUsername.contains(searchText, true)) ||
                 (searchPasswords && plainPassword.contains(searchText, true)) ||
@@ -147,7 +94,7 @@ class DecryptableSiteEntry(
         note: IVCipherText,
         photo: PlatformBitmap?,
         extensions: Map<String, Set<String>>
-    ) = cachedPlainDescription == description &&
+    ) = plainDescription == description &&
             plainWebsite == website &&
             plainUsername == username.decrypt() &&
             isSamePassword(password) &&
@@ -195,5 +142,19 @@ val DecryptableSiteEntry.plainExtensions: Map<String, Set<String>>
     } catch (e: Exception) {
         mutableMapOf()
     }
+
+// This are intentionally not cached and decrypted inefficiently per request
+val DecryptableSiteEntry.plainDescription: String
+    get() = description.decrypt()
+val DecryptableSiteEntry.plainPassword: String
+    get() = password.decrypt()
+val DecryptableSiteEntry.plainUsername: String
+    get() = username.decrypt()
+val DecryptableSiteEntry.plainWebsite: String
+    get() = website.decrypt()
+val DecryptableSiteEntry.plainNote: String
+    get() = note.decrypt()
+val DecryptableSiteEntry.plainPhoto: PlatformBitmap?
+    get() = if (photo.isEmpty()) null else decryptPhoto()
 
 

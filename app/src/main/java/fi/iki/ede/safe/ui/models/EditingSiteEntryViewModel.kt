@@ -26,7 +26,7 @@ open class EditingSiteEntryViewModel : ViewModel() {
         _editableSiteEntryState.value = EditableSiteEntry(
             siteEntry.categoryId,
             siteEntry.id as DBID,
-            siteEntry.cachedPlainDescription,
+            siteEntry.plainDescription,
             siteEntry.plainWebsite,
             siteEntry.username,
             siteEntry.password,
