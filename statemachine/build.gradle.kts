@@ -20,13 +20,11 @@ kotlin {
     iosSimulatorArm64()
 
     sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation(project(":logger"))
-                implementation(compose.runtime)
-            }
+        commonMain.dependencies {
+            implementation(project(":logger"))
+            implementation(compose.runtime)
         }
-        val androidMain by getting {
+        androidMain {
             kotlin.srcDirs("src/main/java")
             dependencies {
                 implementation(libs.androidx.activity.compose)
@@ -35,12 +33,10 @@ kotlin {
                 implementation(libs.material)
             }
         }
-        val commonTest by getting {
-            dependencies {
-                implementation(kotlin("test"))
-            }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
         }
-        val androidHostTest by getting {
+        named("androidHostTest") {
             kotlin.srcDir("src/test/java")
             dependencies {
                 implementation(project.dependencies.platform(libs.junit5.bom))

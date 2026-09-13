@@ -14,28 +14,22 @@ kotlin {
     iosSimulatorArm64()
 
     sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation(project(":dateutils"))
-                implementation(project(":logger"))
-                implementation(libs.okio)
-                api(libs.krypto)
-                api(libs.cryptography.core)
-            }
+        commonMain.dependencies {
+            implementation(project(":dateutils"))
+            implementation(project(":logger"))
+            implementation(libs.okio)
+            api(libs.krypto)
+            api(libs.cryptography.core)
         }
-        val commonTest by getting {
-            dependencies {
-                implementation(kotlin("test"))
-            }
+        commonTest.dependencies {
+            implementation(kotlin("test"))
         }
-        val androidMain by getting {
-            dependencies {
-                implementation(libs.androidx.appcompat)
-                implementation(libs.androidx.core.ktx)
-                implementation(libs.material)
-            }
+        androidMain.dependencies {
+            implementation(libs.androidx.appcompat)
+            implementation(libs.androidx.core.ktx)
+            implementation(libs.material)
         }
-        val androidHostTest by getting {
+        named("androidHostTest") {
             dependencies {
                 implementation(libs.bcprov.jdk16)
                 implementation(project.dependencies.platform(libs.junit5.bom))
@@ -47,7 +41,7 @@ kotlin {
                 runtimeOnly("org.junit.platform:junit-platform-launcher")
             }
         }
-        val desktopMain by getting {
+        named("desktopMain") {
             dependencies {
                 implementation(libs.jna)
                 implementation(libs.jna.platform)

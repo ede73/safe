@@ -17,23 +17,19 @@ kotlin {
     iosSimulatorArm64()
 
     sourceSets {
-        val commonMain by getting {
-            dependencies {
-                api(libs.kotlinx.datetime)
-                implementation(project(":logger"))
-            }
+        commonMain.dependencies {
+            api(libs.kotlinx.datetime)
+            implementation(project(":logger"))
         }
-        val commonTest by getting {
+        commonTest {
             kotlin.srcDirs("src/test/java")
             dependencies {
                 implementation(kotlin("test"))
             }
         }
-        val androidMain by getting {
-            dependencies {
-                implementation(libs.androidx.appcompat)
-                implementation(libs.androidx.core.ktx)
-            }
+        androidMain.dependencies {
+            implementation(libs.androidx.appcompat)
+            implementation(libs.androidx.core.ktx)
         }
     }
 }

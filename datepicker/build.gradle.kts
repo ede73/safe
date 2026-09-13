@@ -19,22 +19,18 @@ kotlin {
     iosSimulatorArm64()
 
     sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation(project(":dateutils"))
-                implementation(compose.runtime)
-            }
+        commonMain.dependencies {
+            implementation(project(":dateutils"))
+            implementation(compose.runtime)
         }
-        val androidMain by getting {
-            dependencies {
-                implementation(libs.androidx.activity.compose)
-                implementation(libs.androidx.appcompat)
-                implementation(libs.androidx.core.ktx)
-                implementation(libs.androidx.material3.android)
-                implementation(libs.androidx.ui.tooling.preview.android)
-                implementation(libs.material)
-                implementation(libs.kotlinx.datetime)
-            }
+        androidMain.dependencies {
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.androidx.appcompat)
+            implementation(libs.androidx.core.ktx)
+            implementation(libs.androidx.material3.android)
+            implementation(libs.androidx.ui.tooling.preview.android)
+            implementation(libs.material)
+            implementation(libs.kotlinx.datetime)
         }
     }
 }

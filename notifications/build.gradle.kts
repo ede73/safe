@@ -16,14 +16,11 @@ kotlin {
     iosSimulatorArm64()
 
     sourceSets {
-        val commonMain by getting
-        val androidMain by getting {
-            dependencies {
-                implementation(project(":app:preferences"))
-                implementation(project(":logger"))
-                implementation(libs.androidx.core.ktx)
-                implementation(libs.androidx.appcompat)
-            }
+        androidMain.dependencies {
+            implementation(project(":app:preferences"))
+            implementation(project(":logger"))
+            implementation(libs.androidx.core.ktx)
+            implementation(libs.androidx.appcompat)
         }
     }
 }
