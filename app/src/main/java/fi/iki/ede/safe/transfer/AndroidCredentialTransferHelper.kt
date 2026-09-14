@@ -233,6 +233,9 @@ object AndroidCredentialTransferHelper {
                     )
                 }
 
+                // Refresh synthetic CXF entries in DataModel for UI display
+                fi.iki.ede.datamodel.DataModel.loadSyntheticCxfEntries()
+
                 onMessage("Successfully imported ${incomingCXFs.size} credentials!")
                 withContext(Dispatchers.Main) {
                     complete(true, incomingCXFs.size)
