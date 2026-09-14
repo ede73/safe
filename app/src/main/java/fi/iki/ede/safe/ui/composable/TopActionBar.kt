@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import fi.iki.ede.autolock.AutolockingService
 import fi.iki.ede.gpmui.activities.ImportNewGpmsScreen
 import fi.iki.ede.logger.Logger
+import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.SafeApplication
 import fi.iki.ede.safe.password.ChangeMasterKeyAndPassword
@@ -213,7 +214,7 @@ private fun MakeDropdownMenu(
             }
             DropdownMenuItem(
                 enabled = !loginScreen,
-                text = { Text(text = "${stringResource(id = R.string.action_bar_import_export)} ▶") },
+                text = { Text(text = stringResource(id = R.string.action_bar_import_export)) },
                 onClick = {
                     exportImport.value = true
                 })
@@ -272,25 +273,27 @@ private fun MakeDropdownMenu(
                         }
                     )
                 })
-            DropdownMenuItem(
-                text = { Text(text = "🧪 Test Direct Sync (Fake CXF Payload)") },
-                onClick = {
-                    displayMenu.value = false
-                    exportImport.value = false
-                    val fakePayload = fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper.createSampleFakeCxfPayload()
-                    fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper.processAndStoreCxfPayload(
-                        cxfJsonPayload = fakePayload,
-                        scope = coroutineScope,
-                        onMessage = { msg -> Logger.d(TAG, msg) },
-                        complete = { success, count ->
-                            if (success) {
-                                showToast("Test: Imported $count credentials into database!", ToastDuration.LONG)
-                            } else {
-                                showToast("Test import failed.", ToastDuration.SHORT)
+            if (BuildConfig.DEBUG) {
+                DropdownMenuItem(
+                    text = { Text(text = "🧪 Test Direct Sync (Fake CXF Payload)") },
+                    onClick = {
+                        displayMenu.value = false
+                        exportImport.value = false
+                        val fakePayload = fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper.createSampleFakeCxfPayload()
+                        fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper.processAndStoreCxfPayload(
+                            cxfJsonPayload = fakePayload,
+                            scope = coroutineScope,
+                            onMessage = { msg -> Logger.d(TAG, msg) },
+                            complete = { success, count ->
+                                if (success) {
+                                    showToast("Test: Imported $count credentials into database!", ToastDuration.LONG)
+                                } else {
+                                    showToast("Test import failed.", ToastDuration.SHORT)
+                                }
                             }
-                        }
-                    )
-                })
+                        )
+                    })
+            }
             IntentManager.getMenuItems(DropDownMenu.TopActionBarImportExportMenu).forEach {
                 DropdownMenuItem(text = { Text(text = stringResource(id = it.first)) }, onClick = {
                     displayMenu.value = false
