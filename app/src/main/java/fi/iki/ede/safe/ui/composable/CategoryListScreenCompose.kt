@@ -23,8 +23,11 @@ import fi.iki.ede.safe.R
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.theme.SafeTheme
 import fi.iki.ede.theme.SafeThemeSurface
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
 
@@ -39,10 +42,10 @@ internal fun CategoryListScreenCompose(
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    val rawCategories by flow.collectAsState()
-    val categoriesState = remember(rawCategories) {
-        rawCategories.sortedBy { it.plainName.lowercase() }
-    }
+    val categoriesState by remember(flow) {
+        flow.map { categories -> categories.sortedBy { it.plainName.lowercase() } }
+            .flowOn(Dispatchers.Default)
+    }.collectAsState(initial = emptyList())
     val displayAddCategoryDialog = remember { mutableStateOf(false) }
 
     SafeTheme {
