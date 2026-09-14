@@ -200,39 +200,6 @@ object AndroidCredentialTransferHelper {
                     database.cxfPasskeyDao().updateAll(passkeyEntitiesToUpdate)
                 }
 
-                // Also save to GPMDB for UI compatibility with proper deduplication
-                val existingGPMs = GPMDB.fetchAllSavedGPMsFromDB()
-                val gpmAddSet = mutableSetOf<IncomingGPM>()
-                val gpmUpdateMap = mutableMapOf<IncomingGPM, SavedGPM>()
-
-                for (cxf in incomingCXFs) {
-                    val incomingGPM = IncomingGPM.makeFromCSVImport(
-                        name = cxf.name,
-                        url = cxf.url,
-                        username = cxf.username,
-                        password = cxf.password,
-                        note = cxf.note
-                    )
-                    val existingGpm = existingGPMs.find { it.hash == incomingGPM.hash }
-                        ?: existingGPMs.find { it.cachedDecryptedName == incomingGPM.name && it.cachedDecryptedUsername == incomingGPM.username }
-
-                    if (existingGpm != null) {
-                        if (existingGpm.hash != incomingGPM.hash) {
-                            gpmUpdateMap[incomingGPM] = existingGpm
-                        }
-                    } else {
-                        gpmAddSet.add(incomingGPM)
-                    }
-                }
-
-                if (gpmAddSet.isNotEmpty() || gpmUpdateMap.isNotEmpty()) {
-                    fi.iki.ede.gpmdatamodel.GPMDataModel.storeNewGpmsAndReload(
-                        delete = emptySet(),
-                        update = gpmUpdateMap,
-                        add = gpmAddSet
-                    )
-                }
-
                 // Refresh synthetic CXF entries in DataModel for UI display
                 fi.iki.ede.datamodel.DataModel.loadSyntheticCxfEntries()
 
