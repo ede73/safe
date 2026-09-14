@@ -26,4 +26,16 @@ class AndroidCredentialTransferHelperTest {
         assertEquals("hihhuliturha", passwordItem?.username)
         assertEquals("eioooikeesalasana", passwordItem?.password)
     }
+
+    @Test
+    fun testMock800CxfPayloadParsing() {
+        val mockPayload = AndroidCredentialTransferHelper.generateMock800CxfPayload()
+        val cxfItems = FidoCxfParser.parseCxfPayloadToIncomingCXFList(mockPayload)
+
+        assertEquals(800, cxfItems.size)
+        assertEquals("user_1@example.com", cxfItems[0].username)
+        assertEquals("SecretPassword_1!", cxfItems[0].password)
+        assertEquals("user_800@example.com", cxfItems[799].username)
+        assertEquals("SecretPassword_800!", cxfItems[799].password)
+    }
 }

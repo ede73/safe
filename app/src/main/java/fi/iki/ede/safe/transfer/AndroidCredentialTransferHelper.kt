@@ -365,6 +365,43 @@ object AndroidCredentialTransferHelper {
         """.trimIndent()
     }
 
+    fun generateMock800CxfPayload(accountEmail: String = "tavaraturha963@gmail.com"): String {
+        val itemsJson = (1..800).joinToString(",") { i ->
+            """
+            {
+                "id": "item_mock_$i",
+                "creationAt": 1789354584,
+                "modifiedAt": 1789354584,
+                "title": "Mock Site $i (https://example$i.com/)",
+                "scope": {"urls": ["https://example$i.com/"]},
+                "credentials": [
+                    {
+                        "type": "basic-auth",
+                        "username": {"fieldType": "string", "value": "user_$i@example.com"},
+                        "password": {"fieldType": "concealed-string", "value": "SecretPassword_$i!"}
+                    }
+                ]
+            }
+            """.trimIndent()
+        }
+
+        return """
+            {
+                "version": {"major": 1, "minor": 0},
+                "exporterDisplayName": "Google Password Manager",
+                "accounts": [
+                    {
+                        "id": "acc_mock_800",
+                        "email": "$accountEmail",
+                        "items": [
+                            $itemsJson
+                        ]
+                    }
+                ]
+            }
+        """.trimIndent()
+    }
+
     private fun extractRpIdFromRawJson(rawJson: String, fallbackUrl: String): String {
         try {
             if (rawJson.isNotBlank() && rawJson.startsWith("{")) {

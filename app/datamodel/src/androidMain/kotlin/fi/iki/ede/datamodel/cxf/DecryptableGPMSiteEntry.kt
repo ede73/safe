@@ -2,8 +2,8 @@ package fi.iki.ede.datamodel.cxf
 
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
-import fi.iki.ede.db.cxf.CXFImport
-import fi.iki.ede.db.cxf.CXFPasskey
+import fi.iki.ede.cryptoobjects.ICachedPlainCredentials
+import fi.iki.ede.db.cxf.*
 
 /**
  * Specialized synthetic SiteEntry wrapper for Google Password Manager / FIDO CXF credentials.
@@ -14,9 +14,20 @@ class DecryptableGPMSiteEntry(
     categoryId: Long,
     val cxfImport: CXFImport? = null,
     val cxfPasskey: CXFPasskey? = null
-) : DecryptableSiteEntry(categoryId = categoryId) {
+) : DecryptableSiteEntry(categoryId = categoryId), ICachedPlainCredentials {
 
     val isPasskey: Boolean get() = cxfPasskey != null
+
+    override val cachedPlainDescription: String
+        get() = cxfImport?.cachedDecryptedName ?: cxfPasskey?.cachedDecryptedName ?: ""
+    override val cachedPlainUsername: String
+        get() = cxfImport?.cachedDecryptedUsername ?: cxfPasskey?.cachedDecryptedUsername ?: ""
+    override val cachedPlainPassword: String
+        get() = cxfImport?.cachedDecryptedPassword ?: if (cxfPasskey != null) "[Passkey: ${cxfPasskey.rpId.ifBlank { "Passkey" }}]" else ""
+    override val cachedPlainWebsite: String
+        get() = cxfImport?.cachedDecryptedUrl ?: cxfPasskey?.cachedDecryptedUrl ?: ""
+    override val cachedPlainNote: String
+        get() = cxfImport?.cachedDecryptedNote ?: cxfPasskey?.cachedDecryptedNote ?: ""
 
     init {
         id = if (cxfPasskey != null) {

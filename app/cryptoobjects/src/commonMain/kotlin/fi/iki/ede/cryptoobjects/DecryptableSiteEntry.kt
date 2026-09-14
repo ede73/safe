@@ -130,6 +130,14 @@ open class DecryptableSiteEntry(
         Json.encodeToString(plainExtensions).encrypt()
 }
 
+interface ICachedPlainCredentials {
+    val cachedPlainDescription: String? get() = null
+    val cachedPlainUsername: String? get() = null
+    val cachedPlainPassword: String? get() = null
+    val cachedPlainWebsite: String? get() = null
+    val cachedPlainNote: String? get() = null
+}
+
 expect fun DecryptableSiteEntry.decryptPhoto(): PlatformBitmap?
 
 val DecryptableSiteEntry.plainExtensions: Map<String, Set<String>>
@@ -143,17 +151,21 @@ val DecryptableSiteEntry.plainExtensions: Map<String, Set<String>>
         mutableMapOf()
     }
 
-// This are intentionally not cached and decrypted inefficiently per request
 val DecryptableSiteEntry.plainDescription: String
-    get() = description.decrypt()
+    get() = (this as? ICachedPlainCredentials)?.cachedPlainDescription ?: description.decrypt()
+
 val DecryptableSiteEntry.plainPassword: String
-    get() = password.decrypt()
+    get() = (this as? ICachedPlainCredentials)?.cachedPlainPassword ?: password.decrypt()
+
 val DecryptableSiteEntry.plainUsername: String
-    get() = username.decrypt()
+    get() = (this as? ICachedPlainCredentials)?.cachedPlainUsername ?: username.decrypt()
+
 val DecryptableSiteEntry.plainWebsite: String
-    get() = website.decrypt()
+    get() = (this as? ICachedPlainCredentials)?.cachedPlainWebsite ?: website.decrypt()
+
 val DecryptableSiteEntry.plainNote: String
-    get() = note.decrypt()
+    get() = (this as? ICachedPlainCredentials)?.cachedPlainNote ?: note.decrypt()
+
 val DecryptableSiteEntry.plainPhoto: PlatformBitmap?
     get() = if (photo.isEmpty()) null else decryptPhoto()
 
