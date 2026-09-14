@@ -24,6 +24,9 @@ interface CxfImportDao {
     @Update
     suspend fun update(import: CXFImport)
 
+    @Update
+    suspend fun updateAll(imports: List<CXFImport>)
+
     @Delete
     suspend fun delete(import: CXFImport)
 

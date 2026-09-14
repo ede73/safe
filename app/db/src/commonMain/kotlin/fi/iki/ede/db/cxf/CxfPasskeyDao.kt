@@ -24,6 +24,9 @@ interface CxfPasskeyDao {
     @Update
     suspend fun update(passkey: CXFPasskey)
 
+    @Update
+    suspend fun updateAll(passkeys: List<CXFPasskey>)
+
     @Delete
     suspend fun delete(passkey: CXFPasskey)
 

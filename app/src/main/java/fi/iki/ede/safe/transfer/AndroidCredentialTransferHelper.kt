@@ -12,6 +12,8 @@ import fi.iki.ede.db.cxf.CXFAccount
 import fi.iki.ede.db.cxf.CXFImport
 import fi.iki.ede.db.cxf.CXFPasskey
 import fi.iki.ede.db.cxf.cachedDecryptedCxfItemId
+import fi.iki.ede.db.cxf.cachedDecryptedName
+import fi.iki.ede.db.cxf.cachedDecryptedUsername
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -49,8 +51,10 @@ object AndroidCredentialTransferHelper {
                 onMessage("Saving ${incomingCXFs.size} credentials securely to relational CXF database...")
                 val database = fi.iki.ede.db.DBHelperFactory.getDBHelper().database
 
-                val cxfEntities = mutableListOf<fi.iki.ede.db.cxf.CXFImport>()
-                val passkeyEntities = mutableListOf<fi.iki.ede.db.cxf.CXFPasskey>()
+                val cxfEntitiesToInsert = mutableListOf<CXFImport>()
+                val cxfEntitiesToUpdate = mutableListOf<CXFImport>()
+                val passkeyEntitiesToInsert = mutableListOf<CXFPasskey>()
+                val passkeyEntitiesToUpdate = mutableListOf<CXFPasskey>()
 
                 for ((cxfAccountId, cxfItemsGroup) in incomingCXFs.groupBy { it.cxfAccountId }) {
                     val email = cxfItemsGroup.firstOrNull()?.cxfAccountEmail ?: ""
@@ -58,7 +62,7 @@ object AndroidCredentialTransferHelper {
                     val parentAccountId = if (existingAccount != null && existingAccount.id != null) {
                         existingAccount.id!!
                     } else {
-                        val newAccount = fi.iki.ede.db.cxf.CXFAccount(
+                        val newAccount = CXFAccount(
                             cxfAccountId = cxfAccountId,
                             email = email,
                             importedAt = kotlin.time.Clock.System.now().toEpochMilliseconds()
@@ -66,17 +70,27 @@ object AndroidCredentialTransferHelper {
                         database.cxfAccountDao().insert(newAccount)
                     }
 
-                    val accountPasskeys = database.cxfPasskeyDao().getByAccountId(parentAccountId)
-                    val accountImports = database.cxfImportDao().getByAccountId(parentAccountId)
+                    val accountPasskeys = database.cxfPasskeyDao().getByAccountId(parentAccountId).toMutableList()
+                    val accountImports = database.cxfImportDao().getByAccountId(parentAccountId).toMutableList()
 
                     for (cxf in cxfItemsGroup) {
                         if (cxf.credentialType == "public-key") {
-                            val existingPasskey = if (cxf.cxfItemId.isNotBlank()) accountPasskeys.find { it.cachedDecryptedCxfItemId == cxf.cxfItemId } else null
+                            val existingPasskey = if (cxf.cxfItemId.isNotBlank()) {
+                                accountPasskeys.find { it.cachedDecryptedCxfItemId == cxf.cxfItemId }
+                            } else {
+                                accountPasskeys.find { it.cachedDecryptedName == cxf.name && it.cachedDecryptedUsername == cxf.username }
+                            }
+
                             if (existingPasskey != null) {
+                                accountPasskeys.remove(existingPasskey)
+                                // Skip storing/updating if content hash is identical
+                                if (existingPasskey.hash == cxf.hash) {
+                                    continue
+                                }
                                 val existingModified = existingPasskey.modifiedAt ?: 0L
                                 val incomingModified = cxf.modifiedAt ?: System.currentTimeMillis()
                                 if (cxf.modifiedAt == null || existingPasskey.modifiedAt == null || incomingModified >= existingModified) {
-                                    val updatedPasskey = fi.iki.ede.db.cxf.CXFPasskey(
+                                    val updatedPasskey = CXFPasskey(
                                         id = existingPasskey.id,
                                         accountId = parentAccountId,
                                         cxfItemId = cxf.cxfItemId,
@@ -93,10 +107,10 @@ object AndroidCredentialTransferHelper {
                                         flaggedIgnored = existingPasskey.flaggedIgnored,
                                         hash = cxf.hash
                                     )
-                                    passkeyEntities.add(updatedPasskey)
+                                    passkeyEntitiesToUpdate.add(updatedPasskey)
                                 }
                             } else {
-                                val newPasskey = fi.iki.ede.db.cxf.CXFPasskey(
+                                val newPasskey = CXFPasskey(
                                     accountId = parentAccountId,
                                     cxfItemId = cxf.cxfItemId,
                                     rpId = extractRpIdFromRawJson(cxf.rawCredentialJson, cxf.url),
@@ -112,15 +126,25 @@ object AndroidCredentialTransferHelper {
                                     flaggedIgnored = false,
                                     hash = cxf.hash
                                 )
-                                passkeyEntities.add(newPasskey)
+                                passkeyEntitiesToInsert.add(newPasskey)
                             }
                         } else {
-                            val existingImport = if (cxf.cxfItemId.isNotBlank()) accountImports.find { it.cachedDecryptedCxfItemId == cxf.cxfItemId } else null
+                            val existingImport = if (cxf.cxfItemId.isNotBlank()) {
+                                accountImports.find { it.cachedDecryptedCxfItemId == cxf.cxfItemId && it.type == cxf.credentialType }
+                            } else {
+                                accountImports.find { it.cachedDecryptedName == cxf.name && it.cachedDecryptedUsername == cxf.username && it.type == cxf.credentialType }
+                            }
+
                             if (existingImport != null) {
+                                accountImports.remove(existingImport)
+                                // Skip storing/updating if content hash is identical
+                                if (existingImport.hash == cxf.hash) {
+                                    continue
+                                }
                                 val existingModified = existingImport.modifiedAt ?: 0L
                                 val incomingModified = cxf.modifiedAt ?: System.currentTimeMillis()
                                 if (cxf.modifiedAt == null || existingImport.modifiedAt == null || incomingModified >= existingModified) {
-                                    val updatedImport = fi.iki.ede.db.cxf.CXFImport(
+                                    val updatedImport = CXFImport(
                                         id = existingImport.id,
                                         accountId = parentAccountId,
                                         cxfItemId = cxf.cxfItemId,
@@ -136,10 +160,10 @@ object AndroidCredentialTransferHelper {
                                         flaggedIgnored = existingImport.flaggedIgnored,
                                         hash = cxf.hash
                                     )
-                                    cxfEntities.add(updatedImport)
+                                    cxfEntitiesToUpdate.add(updatedImport)
                                 }
                             } else {
-                                val newImport = fi.iki.ede.db.cxf.CXFImport(
+                                val newImport = CXFImport(
                                     accountId = parentAccountId,
                                     cxfItemId = cxf.cxfItemId,
                                     type = cxf.credentialType,
@@ -154,17 +178,23 @@ object AndroidCredentialTransferHelper {
                                     flaggedIgnored = false,
                                     hash = cxf.hash
                                 )
-                                cxfEntities.add(newImport)
+                                cxfEntitiesToInsert.add(newImport)
                             }
                         }
                     }
                 }
 
-                if (cxfEntities.isNotEmpty()) {
-                    database.cxfImportDao().insertAll(cxfEntities)
+                if (cxfEntitiesToInsert.isNotEmpty()) {
+                    database.cxfImportDao().insertAll(cxfEntitiesToInsert)
                 }
-                if (passkeyEntities.isNotEmpty()) {
-                    database.cxfPasskeyDao().insertAll(passkeyEntities)
+                if (cxfEntitiesToUpdate.isNotEmpty()) {
+                    database.cxfImportDao().updateAll(cxfEntitiesToUpdate)
+                }
+                if (passkeyEntitiesToInsert.isNotEmpty()) {
+                    database.cxfPasskeyDao().insertAll(passkeyEntitiesToInsert)
+                }
+                if (passkeyEntitiesToUpdate.isNotEmpty()) {
+                    database.cxfPasskeyDao().updateAll(passkeyEntitiesToUpdate)
                 }
 
                 // Also save to GPMDB for UI compatibility
