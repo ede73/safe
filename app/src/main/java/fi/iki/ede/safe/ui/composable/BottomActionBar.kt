@@ -248,14 +248,9 @@ private fun MakeDropdownMenu(
                     fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper.launchDirectGpmImport(
                         context = context,
                         scope = coroutineScope,
-                        onMessage = { msg ->
-                            Logger.d(TAG, msg)
-                            showToast(msg, ToastDuration.SHORT)
-                        },
+                        onMessage = { msg -> Logger.d(TAG, msg) },
                         complete = { success, count ->
-                            if (success) {
-                                showToast("Successfully synced $count credentials from Google!", ToastDuration.LONG)
-                            }
+                            Logger.d(TAG, "Sync complete: success=$success, count=$count")
                         }
                     )
                 })
@@ -271,11 +266,7 @@ private fun MakeDropdownMenu(
                             scope = coroutineScope,
                             onMessage = { msg -> Logger.d(TAG, msg) },
                             complete = { success, count ->
-                                if (success) {
-                                    showToast("Test: Imported $count credentials into database!", ToastDuration.LONG)
-                                } else {
-                                    showToast("Test import failed.", ToastDuration.SHORT)
-                                }
+                                Logger.d(TAG, "Test sync complete: success=$success, count=$count")
                             }
                         )
                     })
