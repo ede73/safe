@@ -35,22 +35,12 @@ object DataModel {
         // this is just for debug build..
         coroutineScope.launch {
             _siteEntriesStateFlow.collect { list ->
-                Logger.d(
-                    tag,
-                    "Debug observer: _siteEntriesStateFlow:  (${
-                        list.map { it.id }.joinToString(",")
-                    })"
-                )
+                Logger.d(tag, "Debug observer: _siteEntriesStateFlow size: ${list.size}")
             }
         }
         coroutineScope.launch {
             _categoriesStateFlow.collect { list ->
-                Logger.d(
-                    tag,
-                    "Debug observer: _categoriesStateFlow:  (${
-                        list.map { it.id }.joinToString(",")
-                    })"
-                )
+                Logger.d(tag, "Debug observer: _categoriesStateFlow size: ${list.size}")
             }
         }
     }
