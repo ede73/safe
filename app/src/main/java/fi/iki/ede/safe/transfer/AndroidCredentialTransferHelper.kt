@@ -8,6 +8,10 @@ import fi.iki.ede.gpm.model.IncomingGPM
 import fi.iki.ede.gpmdatamodel.db.GPMDB
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.safe.cxf.FidoCxfParser
+import fi.iki.ede.db.cxf.CXFAccount
+import fi.iki.ede.db.cxf.CXFImport
+import fi.iki.ede.db.cxf.CXFPasskey
+import fi.iki.ede.db.cxf.cachedDecryptedCxfItemId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -62,9 +66,12 @@ object AndroidCredentialTransferHelper {
                         database.cxfAccountDao().insert(newAccount)
                     }
 
+                    val accountPasskeys = database.cxfPasskeyDao().getByAccountId(parentAccountId)
+                    val accountImports = database.cxfImportDao().getByAccountId(parentAccountId)
+
                     for (cxf in cxfItemsGroup) {
                         if (cxf.credentialType == "public-key") {
-                            val existingPasskey = if (cxf.cxfItemId.isNotBlank()) database.cxfPasskeyDao().getByCxfItemId(cxf.cxfItemId) else null
+                            val existingPasskey = if (cxf.cxfItemId.isNotBlank()) accountPasskeys.find { it.cachedDecryptedCxfItemId == cxf.cxfItemId } else null
                             if (existingPasskey != null) {
                                 val existingModified = existingPasskey.modifiedAt ?: 0L
                                 val incomingModified = cxf.modifiedAt ?: System.currentTimeMillis()
@@ -73,14 +80,12 @@ object AndroidCredentialTransferHelper {
                                         id = existingPasskey.id,
                                         accountId = parentAccountId,
                                         cxfItemId = cxf.cxfItemId,
-                                        cxfAccountId = cxf.cxfAccountId,
                                         rpId = extractRpIdFromRawJson(cxf.rawCredentialJson, cxf.url),
                                         name = cxf.name,
                                         url = cxf.url,
                                         username = cxf.username,
                                         credentialId = extractCredentialIdFromRawJson(cxf.rawCredentialJson),
                                         userHandle = extractUserHandleFromRawJson(cxf.rawCredentialJson),
-                                        rawCredentialJson = cxf.rawCredentialJson,
                                         note = cxf.note,
                                         createdAt = cxf.creationAt ?: existingPasskey.createdAt,
                                         modifiedAt = cxf.modifiedAt ?: incomingModified,
@@ -94,14 +99,12 @@ object AndroidCredentialTransferHelper {
                                 val newPasskey = fi.iki.ede.db.cxf.CXFPasskey(
                                     accountId = parentAccountId,
                                     cxfItemId = cxf.cxfItemId,
-                                    cxfAccountId = cxf.cxfAccountId,
                                     rpId = extractRpIdFromRawJson(cxf.rawCredentialJson, cxf.url),
                                     name = cxf.name,
                                     url = cxf.url,
                                     username = cxf.username,
                                     credentialId = extractCredentialIdFromRawJson(cxf.rawCredentialJson),
                                     userHandle = extractUserHandleFromRawJson(cxf.rawCredentialJson),
-                                    rawCredentialJson = cxf.rawCredentialJson,
                                     note = cxf.note,
                                     createdAt = cxf.creationAt,
                                     modifiedAt = cxf.modifiedAt,
@@ -112,7 +115,7 @@ object AndroidCredentialTransferHelper {
                                 passkeyEntities.add(newPasskey)
                             }
                         } else {
-                            val existingImport = if (cxf.cxfItemId.isNotBlank()) database.cxfImportDao().getByCxfItemId(cxf.cxfItemId) else null
+                            val existingImport = if (cxf.cxfItemId.isNotBlank()) accountImports.find { it.cachedDecryptedCxfItemId == cxf.cxfItemId } else null
                             if (existingImport != null) {
                                 val existingModified = existingImport.modifiedAt ?: 0L
                                 val incomingModified = cxf.modifiedAt ?: System.currentTimeMillis()
@@ -121,13 +124,11 @@ object AndroidCredentialTransferHelper {
                                         id = existingImport.id,
                                         accountId = parentAccountId,
                                         cxfItemId = cxf.cxfItemId,
-                                        cxfAccountId = cxf.cxfAccountId,
                                         type = cxf.credentialType,
                                         name = cxf.name,
                                         url = cxf.url,
                                         username = cxf.username,
                                         password = cxf.password,
-                                        rawCredentialJson = cxf.rawCredentialJson,
                                         note = cxf.note,
                                         createdAt = cxf.creationAt ?: existingImport.createdAt,
                                         modifiedAt = cxf.modifiedAt ?: incomingModified,
@@ -141,13 +142,11 @@ object AndroidCredentialTransferHelper {
                                 val newImport = fi.iki.ede.db.cxf.CXFImport(
                                     accountId = parentAccountId,
                                     cxfItemId = cxf.cxfItemId,
-                                    cxfAccountId = cxf.cxfAccountId,
                                     type = cxf.credentialType,
                                     name = cxf.name,
                                     url = cxf.url,
                                     username = cxf.username,
                                     password = cxf.password,
-                                    rawCredentialJson = cxf.rawCredentialJson,
                                     note = cxf.note,
                                     createdAt = cxf.creationAt,
                                     modifiedAt = cxf.modifiedAt,

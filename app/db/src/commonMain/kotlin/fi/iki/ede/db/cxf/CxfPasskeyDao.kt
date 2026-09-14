@@ -15,9 +15,6 @@ interface CxfPasskeyDao {
     @Query("SELECT * FROM cxf_passkeys WHERE account_id = :accountId")
     suspend fun getByAccountId(accountId: Long): List<CXFPasskey>
 
-    @Query("SELECT * FROM cxf_passkeys WHERE cxf_item_id = :cxfItemId LIMIT 1")
-    suspend fun getByCxfItemId(cxfItemId: String): CXFPasskey?
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(passkey: CXFPasskey): Long
 

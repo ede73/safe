@@ -15,9 +15,6 @@ interface CxfImportDao {
     @Query("SELECT * FROM cxf_imports WHERE account_id = :accountId")
     suspend fun getByAccountId(accountId: Long): List<CXFImport>
 
-    @Query("SELECT * FROM cxf_imports WHERE cxf_item_id = :cxfItemId LIMIT 1")
-    suspend fun getByCxfItemId(cxfItemId: String): CXFImport?
-
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(import: CXFImport): Long
 

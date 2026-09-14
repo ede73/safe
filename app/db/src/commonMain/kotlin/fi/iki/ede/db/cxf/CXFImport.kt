@@ -23,8 +23,7 @@ import kotlin.time.Clock
         )
     ],
     indices = [
-        Index(value = ["account_id"]),
-        Index(value = ["cxf_item_id"])
+        Index(value = ["account_id"])
     ]
 )
 data class CXFImport(
@@ -34,9 +33,7 @@ data class CXFImport(
     @ColumnInfo(name = "account_id")
     val accountId: Long,
     @ColumnInfo(name = "cxf_item_id")
-    val cxfItemId: String,
-    @ColumnInfo(name = "cxf_account_id")
-    val cxfAccountId: String,
+    val encryptedCxfItemId: IVCipherText,
     @ColumnInfo(name = "type")
     val type: String,
     @ColumnInfo(name = "name")
@@ -47,8 +44,6 @@ data class CXFImport(
     val encryptedUsername: IVCipherText,
     @ColumnInfo(name = "password")
     val encryptedPassword: IVCipherText,
-    @ColumnInfo(name = "raw_credential_json")
-    val encryptedRawCredentialJson: IVCipherText,
     @ColumnInfo(name = "note")
     val encryptedNote: IVCipherText,
     @ColumnInfo(name = "created_at")
@@ -64,6 +59,8 @@ data class CXFImport(
 ) : DisallowedFunctions {
 
     @Ignore
+    internal var _cachedDecryptedCxfItemId: String? = null
+    @Ignore
     internal var _cachedDecryptedName: String? = null
     @Ignore
     internal var _cachedDecryptedUsername: String? = null
@@ -72,8 +69,6 @@ data class CXFImport(
     @Ignore
     internal var _cachedDecryptedPassword: String? = null
     @Ignore
-    internal var _cachedDecryptedRawCredentialJson: String? = null
-    @Ignore
     internal var _cachedDecryptedNote: String? = null
 
     @Ignore
@@ -81,13 +76,11 @@ data class CXFImport(
         id: Long? = null,
         accountId: Long,
         cxfItemId: String,
-        cxfAccountId: String,
         type: String,
         name: String,
         url: String,
         username: String,
         password: String,
-        rawCredentialJson: String,
         note: String,
         createdAt: Long? = null,
         modifiedAt: Long? = null,
@@ -97,14 +90,12 @@ data class CXFImport(
     ) : this(
         id = id,
         accountId = accountId,
-        cxfItemId = cxfItemId,
-        cxfAccountId = cxfAccountId,
+        encryptedCxfItemId = cxfItemId.encrypt(),
         type = type,
         encryptedName = name.encrypt(),
         encryptedUrl = url.encrypt(),
         encryptedUsername = username.encrypt(),
         encryptedPassword = password.encrypt(),
-        encryptedRawCredentialJson = rawCredentialJson.encrypt(),
         encryptedNote = note.encrypt(),
         createdAt = createdAt,
         modifiedAt = modifiedAt,
@@ -113,6 +104,9 @@ data class CXFImport(
         hash = hash
     )
 }
+
+val CXFImport.cachedDecryptedCxfItemId: String
+    get() = _cachedDecryptedCxfItemId ?: encryptedCxfItemId.decrypt().also { _cachedDecryptedCxfItemId = it }
 
 val CXFImport.cachedDecryptedName: String
     get() = _cachedDecryptedName ?: encryptedName.decrypt().also { _cachedDecryptedName = it }
@@ -126,8 +120,6 @@ val CXFImport.cachedDecryptedUrl: String
 val CXFImport.cachedDecryptedPassword: String
     get() = _cachedDecryptedPassword ?: encryptedPassword.decrypt().also { _cachedDecryptedPassword = it }
 
-val CXFImport.cachedDecryptedRawCredentialJson: String
-    get() = _cachedDecryptedRawCredentialJson ?: encryptedRawCredentialJson.decrypt().also { _cachedDecryptedRawCredentialJson = it }
-
 val CXFImport.cachedDecryptedNote: String
     get() = _cachedDecryptedNote ?: encryptedNote.decrypt().also { _cachedDecryptedNote = it }
+

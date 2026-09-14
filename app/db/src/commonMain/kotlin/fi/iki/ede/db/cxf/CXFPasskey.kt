@@ -23,8 +23,7 @@ import kotlin.time.Clock
         )
     ],
     indices = [
-        Index(value = ["account_id"]),
-        Index(value = ["cxf_item_id"])
+        Index(value = ["account_id"])
     ]
 )
 data class CXFPasskey(
@@ -34,9 +33,7 @@ data class CXFPasskey(
     @ColumnInfo(name = "account_id")
     val accountId: Long,
     @ColumnInfo(name = "cxf_item_id")
-    val cxfItemId: String,
-    @ColumnInfo(name = "cxf_account_id")
-    val cxfAccountId: String,
+    val encryptedCxfItemId: IVCipherText,
     @ColumnInfo(name = "rp_id")
     val rpId: String = "",
     @ColumnInfo(name = "name")
@@ -49,8 +46,6 @@ data class CXFPasskey(
     val encryptedCredentialId: IVCipherText,
     @ColumnInfo(name = "user_handle")
     val encryptedUserHandle: IVCipherText,
-    @ColumnInfo(name = "raw_credential_json")
-    val encryptedRawCredentialJson: IVCipherText,
     @ColumnInfo(name = "note")
     val encryptedNote: IVCipherText,
     @ColumnInfo(name = "created_at")
@@ -66,6 +61,8 @@ data class CXFPasskey(
 ) : DisallowedFunctions {
 
     @Ignore
+    internal var _cachedDecryptedCxfItemId: String? = null
+    @Ignore
     internal var _cachedDecryptedName: String? = null
     @Ignore
     internal var _cachedDecryptedUsername: String? = null
@@ -76,8 +73,6 @@ data class CXFPasskey(
     @Ignore
     internal var _cachedDecryptedUserHandle: String? = null
     @Ignore
-    internal var _cachedDecryptedRawCredentialJson: String? = null
-    @Ignore
     internal var _cachedDecryptedNote: String? = null
 
     @Ignore
@@ -85,14 +80,12 @@ data class CXFPasskey(
         id: Long? = null,
         accountId: Long,
         cxfItemId: String,
-        cxfAccountId: String,
         rpId: String = "",
         name: String,
         url: String,
         username: String,
         credentialId: String = "",
         userHandle: String = "",
-        rawCredentialJson: String,
         note: String,
         createdAt: Long? = null,
         modifiedAt: Long? = null,
@@ -102,15 +95,13 @@ data class CXFPasskey(
     ) : this(
         id = id,
         accountId = accountId,
-        cxfItemId = cxfItemId,
-        cxfAccountId = cxfAccountId,
+        encryptedCxfItemId = cxfItemId.encrypt(),
         rpId = rpId,
         encryptedName = name.encrypt(),
         encryptedUrl = url.encrypt(),
         encryptedUsername = username.encrypt(),
         encryptedCredentialId = credentialId.encrypt(),
         encryptedUserHandle = userHandle.encrypt(),
-        encryptedRawCredentialJson = rawCredentialJson.encrypt(),
         encryptedNote = note.encrypt(),
         createdAt = createdAt,
         modifiedAt = modifiedAt,
@@ -119,6 +110,9 @@ data class CXFPasskey(
         hash = hash
     )
 }
+
+val CXFPasskey.cachedDecryptedCxfItemId: String
+    get() = _cachedDecryptedCxfItemId ?: encryptedCxfItemId.decrypt().also { _cachedDecryptedCxfItemId = it }
 
 val CXFPasskey.cachedDecryptedName: String
     get() = _cachedDecryptedName ?: encryptedName.decrypt().also { _cachedDecryptedName = it }
@@ -135,8 +129,6 @@ val CXFPasskey.cachedDecryptedCredentialId: String
 val CXFPasskey.cachedDecryptedUserHandle: String
     get() = _cachedDecryptedUserHandle ?: encryptedUserHandle.decrypt().also { _cachedDecryptedUserHandle = it }
 
-val CXFPasskey.cachedDecryptedRawCredentialJson: String
-    get() = _cachedDecryptedRawCredentialJson ?: encryptedRawCredentialJson.decrypt().also { _cachedDecryptedRawCredentialJson = it }
-
 val CXFPasskey.cachedDecryptedNote: String
     get() = _cachedDecryptedNote ?: encryptedNote.decrypt().also { _cachedDecryptedNote = it }
+
