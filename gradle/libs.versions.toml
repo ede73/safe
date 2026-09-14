@@ -9,6 +9,7 @@ bcprovJdk16 = "1.46"
 biometricKtx = "1.2.0-alpha05"
 cameraCore = "1.6.2"
 coreKtx = "1.19.0"
+credentialsProviderEvents = "1.0.0-alpha06"
 cryptographyCore = "0.6.0"
 datastore = "1.2.1"
 documentfile = "1.1.0"
@@ -62,6 +63,8 @@ androidx-activity-compose = { group = "androidx.activity", name = "activity-comp
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 androidx-biometric-ktx = { group = "androidx.biometric", name = "biometric-ktx", version.ref = "biometricKtx" }
 androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "cameraCore" }
+androidx-credentials-providerevents = { group = "androidx.credentials.providerevents", name = "providerevents", version.ref = "credentialsProviderEvents" }
+androidx-credentials-providerevents-play-services = { group = "androidx.credentials.providerevents", name = "providerevents-play-services", version.ref = "credentialsProviderEvents" }
 androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "cameraCore" }
 androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "cameraCore" }
 androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "cameraCore" }

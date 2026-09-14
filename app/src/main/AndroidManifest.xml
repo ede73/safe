@@ -104,5 +104,13 @@
             android:name=".ui.activities.BackupDatabaseScreen"
             android:exported="false"
             android:label="@string/title_activity_restore_screen" />
+        <activity
+            android:name=".ui.activities.ExportCredentialsActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.credentials.providerevents.action.EXPORT_CREDENTIALS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
     </application>
 </manifest>

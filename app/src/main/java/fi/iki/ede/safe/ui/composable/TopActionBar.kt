@@ -166,71 +166,77 @@ private fun MakeDropdownMenu(
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
 
-    DropdownMenu(expanded = displayMenu.value, onDismissRequest = { displayMenu.value = false }) {
-        // Creating dropdown menu item, on click
-        // would create a Toast message
-        DropdownMenuItem(
-            enabled = !loginScreen,
-            text = { Text(text = stringResource(id = R.string.action_bar_settings)) },
-            onClick = {
-                displayMenu.value = false
-                IntentManager.startPreferencesActivity(context)
-            })
-        DropdownMenuItem(
-            text = { Text(text = stringResource(id = R.string.action_bar_help)) },
-            onClick = {
-                displayMenu.value = false
-                IntentManager.startHelpScreen(context)
-            })
-        DropdownMenuItem(
-            enabled = !loginScreen,
-            text = { Text(text = stringResource(id = R.string.action_bar_change_master_password)) },
-            onClick = {
-                displayMenu.value = false
-                showChangePasswordDialog.value = true
-            })
-        DropdownMenuItem(
-            enabled = !loginScreen,
-            text = { Text(text = stringResource(id = R.string.action_bar_show_trash)) },
-            onClick = {
-                displayMenu.value = false
-                showTrashDialog.value = true
-            })
-        IntentManager.getMenuItems(DropDownMenu.TopActionBarMenu).forEach {
-            DropdownMenuItem(text = { Text(text = stringResource(id = it.first)) }, onClick = {
-                displayMenu.value = false
-                try {
-                    it.second(context)
-                } catch (ex: Exception) {
-                    Logger.e(TAG, "Plugin failed to do the menu", ex)
-                }
-            })
+    DropdownMenu(
+        expanded = displayMenu.value,
+        onDismissRequest = {
+            displayMenu.value = false
+            exportImport.value = false
         }
-        DropdownMenuItem(
-            enabled = !loginScreen,
-            text = { Text(text = stringResource(id = R.string.action_bar_import_export)) },
-            onClick = {
-                exportImport.value = true
-            })
-        DropdownMenu(
-            expanded = exportImport.value,
-            onDismissRequest = { exportImport.value = false }) {
+    ) {
+        if (!exportImport.value) {
+            DropdownMenuItem(
+                enabled = !loginScreen,
+                text = { Text(text = stringResource(id = R.string.action_bar_settings)) },
+                onClick = {
+                    displayMenu.value = false
+                    IntentManager.startPreferencesActivity(context)
+                })
+            DropdownMenuItem(
+                text = { Text(text = stringResource(id = R.string.action_bar_help)) },
+                onClick = {
+                    displayMenu.value = false
+                    IntentManager.startHelpScreen(context)
+                })
+            DropdownMenuItem(
+                enabled = !loginScreen,
+                text = { Text(text = stringResource(id = R.string.action_bar_change_master_password)) },
+                onClick = {
+                    displayMenu.value = false
+                    showChangePasswordDialog.value = true
+                })
+            DropdownMenuItem(
+                enabled = !loginScreen,
+                text = { Text(text = stringResource(id = R.string.action_bar_show_trash)) },
+                onClick = {
+                    displayMenu.value = false
+                    showTrashDialog.value = true
+                })
+            IntentManager.getMenuItems(DropDownMenu.TopActionBarMenu).forEach {
+                DropdownMenuItem(text = { Text(text = stringResource(id = it.first)) }, onClick = {
+                    displayMenu.value = false
+                    try {
+                        it.second(context)
+                    } catch (ex: Exception) {
+                        Logger.e(TAG, "Plugin failed to do the menu", ex)
+                    }
+                })
+            }
+            DropdownMenuItem(
+                enabled = !loginScreen,
+                text = { Text(text = "${stringResource(id = R.string.action_bar_import_export)} ▶") },
+                onClick = {
+                    exportImport.value = true
+                })
+        } else {
+            DropdownMenuItem(
+                text = { Text(text = "◀ Back") },
+                onClick = {
+                    exportImport.value = false
+                })
             DropdownMenuItem(
                 text = { Text(text = stringResource(id = R.string.action_bar_backup)) },
                 onClick = {
-                    // TODO: Move outta here, so we can pause the time for duration of file selection
                     displayMenu.value = false
+                    exportImport.value = false
                     AutolockingService.sendRestartTimer(context)
                     IntentManager.startBackupDatabaseScreen(context)
                 })
-            // Currently does not work from login screen
-            // TODO: Make work from login screen?
             DropdownMenuItem(
                 text = { Text(text = stringResource(id = R.string.action_bar_restore)) },
                 onClick = {
                     try {
-                        // TODO: Move outta here, so we can pause the time for duration of file selection
                         displayMenu.value = false
+                        exportImport.value = false
                         IntentManager.startRestoreDatabaseScreen(context)
                     } catch (ex: ActivityNotFoundException) {
                         Logger.e(TAG, "Cannot launch ACTION_OPEN_DOCUMENT")
@@ -241,14 +247,54 @@ private fun MakeDropdownMenu(
                 onClick = {
                     try {
                         displayMenu.value = false
+                        exportImport.value = false
                         ImportNewGpmsScreen.startMe(context)
                     } catch (ex: ActivityNotFoundException) {
                         Logger.e(TAG, "Cannot launch ImportGooglePasswordManager", ex)
                     }
                 })
+            DropdownMenuItem(
+                text = { Text(text = "Sync Direct from Google (Peer-to-Peer)") },
+                onClick = {
+                    displayMenu.value = false
+                    exportImport.value = false
+                    fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper.launchDirectGpmImport(
+                        context = context,
+                        scope = coroutineScope,
+                        onMessage = { msg ->
+                            Logger.d(TAG, msg)
+                            showToast(msg, ToastDuration.SHORT)
+                        },
+                        complete = { success, count ->
+                            if (success) {
+                                showToast("Successfully synced $count credentials from Google!", ToastDuration.LONG)
+                            }
+                        }
+                    )
+                })
+            DropdownMenuItem(
+                text = { Text(text = "🧪 Test Direct Sync (Fake CXF Payload)") },
+                onClick = {
+                    displayMenu.value = false
+                    exportImport.value = false
+                    val fakePayload = fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper.createSampleFakeCxfPayload()
+                    fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper.processAndStoreCxfPayload(
+                        cxfJsonPayload = fakePayload,
+                        scope = coroutineScope,
+                        onMessage = { msg -> Logger.d(TAG, msg) },
+                        complete = { success, count ->
+                            if (success) {
+                                showToast("Test: Imported $count credentials into database!", ToastDuration.LONG)
+                            } else {
+                                showToast("Test import failed.", ToastDuration.SHORT)
+                            }
+                        }
+                    )
+                })
             IntentManager.getMenuItems(DropDownMenu.TopActionBarImportExportMenu).forEach {
                 DropdownMenuItem(text = { Text(text = stringResource(id = it.first)) }, onClick = {
                     displayMenu.value = false
+                    exportImport.value = false
                     try {
                         coroutineScope.launch {
                             it.second(context)
