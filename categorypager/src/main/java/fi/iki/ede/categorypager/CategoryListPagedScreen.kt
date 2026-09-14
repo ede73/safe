@@ -35,9 +35,11 @@ import fi.iki.ede.safe.ui.composable.SiteEntryList
 import fi.iki.ede.safe.ui.composable.TopActionBar
 import fi.iki.ede.theme.SafeTheme
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
@@ -67,9 +69,10 @@ private fun CategoryListScreenPagedCompose(
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    @Suppress("FlowOperatorInvokedInComposition")
-    val categoriesState by flow.map { categories -> categories.sortedBy { it.plainName.lowercase() } }
-        .collectAsState(initial = emptyList())
+    val categoriesState by remember(flow) {
+        flow.map { categories -> categories.sortedBy { it.plainName.lowercase() } }
+            .flowOn(Dispatchers.Default)
+    }.collectAsState(initial = emptyList())
     val displayAddCategoryDialog = remember { mutableStateOf(false) }
     val pagerState = rememberPagerState(pageCount = { categoriesState.size })
 
@@ -80,11 +83,12 @@ private fun CategoryListScreenPagedCompose(
         ) {
             HorizontalPager(state = pagerState) { page ->
                 val category = categoriesState[page]
-                val passwordsState by siteEntriesStateFlow
-                    .map { passwords -> passwords.filter { it.categoryId == category.id } }
-                    .map { passwords -> passwords.sortedBy { it.plainDescription.lowercase() } }
-                    .filterNotNull()
-                    .collectAsState(initial = emptyList())
+                val passwordsState by remember(category.id) {
+                    siteEntriesStateFlow
+                        .map { passwords -> passwords.filter { it.categoryId == category.id } }
+                        .map { passwords -> passwords.sortedBy { it.plainDescription.lowercase() } }
+                        .flowOn(Dispatchers.Default)
+                }.collectAsState(initial = emptyList())
                 Column(modifier = Modifier.fillMaxSize()) {
                     TopActionBar(onAddRequested = { displayAddCategoryDialog.value = true })
                     if (displayAddCategoryDialog.value) {

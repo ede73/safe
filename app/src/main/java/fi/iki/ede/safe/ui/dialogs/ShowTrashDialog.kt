@@ -34,6 +34,8 @@ import fi.iki.ede.theme.SafeButton
 import fi.iki.ede.theme.SafeListItem
 import fi.iki.ede.theme.SafeThemeSurface
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
 
@@ -44,7 +46,11 @@ import kotlin.time.ExperimentalTime
 fun ShowTrashDialog(
     onDismiss: () -> Unit,
 ) {
-    val deletedSiteEntries by DataModel.softDeletedStateFlow.collectAsState(initial = emptyList())
+    val deletedSiteEntries by remember {
+        DataModel.softDeletedStateFlow
+            .map { set -> set.sortedBy { it.plainDescription.lowercase() } }
+            .flowOn(Dispatchers.Default)
+    }.collectAsState(initial = emptyList())
     val restoreSiteEntry = remember { mutableStateOf<DecryptableSiteEntry?>(null) }
     val showEmptyConfirmation = remember { mutableStateOf(false) }
 
@@ -90,7 +96,7 @@ fun ShowTrashDialog(
                         }) { Text(stringResource(id = R.string.trash_restore)) }
                     }
                     LazyColumn {
-                        items(deletedSiteEntries.sortedBy { it.plainDescription }) { entry: DecryptableSiteEntry ->
+                        items(deletedSiteEntries) { entry: DecryptableSiteEntry ->
                             SafeListItem {
                                 Text(
                                     // TODO: translate to days!

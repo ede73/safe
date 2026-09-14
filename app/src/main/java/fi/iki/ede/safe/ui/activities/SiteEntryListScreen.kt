@@ -17,7 +17,10 @@ import fi.iki.ede.datamodel.DataModel.siteEntriesStateFlow
 import fi.iki.ede.safe.notifications.SetupNotifications
 import fi.iki.ede.safe.ui.composable.DualModePreview
 import fi.iki.ede.safe.ui.composable.SiteEntryListCompose
+import androidx.compose.runtime.remember
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlin.time.ExperimentalTime
 
@@ -38,12 +41,12 @@ class SiteEntryListScreen :
         val category = DataModel.categoriesStateFlow.value.first { it.id == categoryId }
         setContent {
             val context = LocalContext.current
-            // TODO: Either new kotlin, coroutines or both, this is a linter error now
-            val siteEntriesState by siteEntriesStateFlow
-                .map { passwords -> passwords.filter { it.categoryId == categoryId } }
-                .map { passwords -> passwords.sortedBy { it.plainDescription.lowercase() } }
-                .filterNotNull()
-                .collectAsState(initial = emptyList())
+            val siteEntriesState by remember(categoryId) {
+                siteEntriesStateFlow
+                    .map { passwords -> passwords.filter { it.categoryId == categoryId } }
+                    .map { passwords -> passwords.sortedBy { it.plainDescription.lowercase() } }
+                    .flowOn(Dispatchers.Default)
+            }.collectAsState(initial = emptyList())
 
             SiteEntryListCompose(context, category, siteEntriesState)
         }

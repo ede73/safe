@@ -23,7 +23,10 @@ import fi.iki.ede.logger.Logger
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.activities.SiteEntryEditScreen
 import fi.iki.ede.theme.SafeThemeSurface
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlin.time.ExperimentalTime
 
 @Composable
@@ -33,12 +36,11 @@ fun SearchSiteEntryList(
     filteredSiteEntries: MutableStateFlow<List<DecryptableSiteEntry>>
 ) {
     val context = LocalContext.current
-    val siteEntryState = filteredSiteEntries.collectAsState()
-    val sortedPasswords by remember(siteEntryState) {
-        derivedStateOf {
-            siteEntryState.value.sortedBy { it.plainDescription }
-        }
-    }
+    val sortedPasswords by remember(filteredSiteEntries) {
+        filteredSiteEntries
+            .map { list -> list.sortedBy { it.plainDescription.lowercase() } }
+            .flowOn(Dispatchers.Default)
+    }.collectAsState(initial = emptyList())
 
     fun updateEntry(siteEntryToUpdate: DecryptableSiteEntry) {
         val updatedList = filteredSiteEntries.value.map { entry ->
