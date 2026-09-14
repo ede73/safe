@@ -10,6 +10,7 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.support.DisallowedFunctions
 import fi.iki.ede.crypto.support.decrypt
 import fi.iki.ede.crypto.support.encrypt
+import kotlin.time.Clock
 
 @Entity(
     tableName = "cxf_passkeys",
@@ -37,7 +38,7 @@ data class CXFPasskey(
     @ColumnInfo(name = "cxf_account_id")
     val cxfAccountId: String,
     @ColumnInfo(name = "rp_id")
-    val rpId: String,
+    val rpId: String = "",
     @ColumnInfo(name = "name")
     val encryptedName: IVCipherText,
     @ColumnInfo(name = "url")
@@ -57,7 +58,7 @@ data class CXFPasskey(
     @ColumnInfo(name = "modified_at")
     val modifiedAt: Long? = null,
     @ColumnInfo(name = "imported_at")
-    val importedAt: Long = System.currentTimeMillis(),
+    val importedAt: Long = Clock.System.now().toEpochMilliseconds(),
     @ColumnInfo(name = "flagged_ignored")
     val flaggedIgnored: Boolean = false,
     @ColumnInfo(name = "hash")
@@ -95,7 +96,7 @@ data class CXFPasskey(
         note: String,
         createdAt: Long? = null,
         modifiedAt: Long? = null,
-        importedAt: Long = System.currentTimeMillis(),
+        importedAt: Long = Clock.System.now().toEpochMilliseconds(),
         flaggedIgnored: Boolean = false,
         hash: String
     ) : this(

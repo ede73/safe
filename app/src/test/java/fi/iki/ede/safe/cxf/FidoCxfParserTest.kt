@@ -221,4 +221,38 @@ class FidoCxfParserTest {
         assertTrue(cxfJson.contains("testuser"))
         assertTrue(cxfJson.contains("password1"))
     }
+
+    @Test
+    fun testItemLevelUsernamePasswordFallback() {
+        val jsonPayload = """
+            {
+                "version": {"major": 1, "minor": 0},
+                "exporterDisplayName": "Google Password Manager",
+                "accounts": [
+                    {
+                        "id": "acc_fallback",
+                        "email": "user@example.com",
+                        "items": [
+                            {
+                                "id": "item_fallback",
+                                "title": "Fallback Site",
+                                "username": "itemLevelUser",
+                                "password": "itemLevelPassword",
+                                "credentials": [
+                                    {
+                                        "type": "basic-auth"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        """.trimIndent()
+
+        val cxfItems = FidoCxfParser.parseCxfPayloadToIncomingCXFList(jsonPayload)
+        assertEquals(1, cxfItems.size)
+        assertEquals("itemLevelUser", cxfItems[0].username)
+        assertEquals("itemLevelPassword", cxfItems[0].password)
+    }
 }

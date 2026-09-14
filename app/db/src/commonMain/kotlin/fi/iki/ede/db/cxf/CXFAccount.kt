@@ -4,6 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import fi.iki.ede.crypto.support.DisallowedFunctions
+import kotlin.time.Clock
 
 @Entity(tableName = "cxf_accounts")
 data class CXFAccount(
@@ -15,5 +16,5 @@ data class CXFAccount(
     @ColumnInfo(name = "email")
     val email: String,
     @ColumnInfo(name = "imported_at")
-    val importedAt: Long = System.currentTimeMillis()
+    val importedAt: Long = Clock.System.now().toEpochMilliseconds()
 ) : DisallowedFunctions

@@ -92,8 +92,8 @@ object FidoCxfParser {
                 if (mainCreds.isNotEmpty()) {
                     for (cred in mainCreds) {
                         val credType = cred.extractStringValue("type").ifBlank { "basic-auth" }
-                        val username = cred.extractUsernameFromCred()
-                        val password = cred.extractPasswordFromCred()
+                        val username = cred.extractUsernameFromCred().ifBlank { item.extractUsernameFromCred() }
+                        val password = cred.extractPasswordFromCred().ifBlank { item.extractPasswordFromCred() }
 
                         val incomingCxf = IncomingCXF.make(
                             cxfItemId = itemId,
@@ -234,74 +234,6 @@ object FidoCxfParser {
         }
     }
 
-    private fun parseStructuredCxf(element: JsonElement, result: MutableList<IncomingGPM>) {
-        if (element !is JsonObject) return
-
-        val exporterName = element.extractStringValue("exporterDisplayName")
-        val accounts = element["accounts"] as? JsonArray ?: return
-
-        for (account in accounts) {
-            if (account !is JsonObject) continue
-            val accountEmail = account.extractStringValue("email")
-            val accountId = account.extractStringValue("id")
-            val items = account["items"] as? JsonArray ?: continue
-
-            val accountHeader = listOfNotNull(
-                if (exporterName.isNotBlank()) exporterName else "Google Password Manager",
-                if (accountEmail.isNotBlank()) accountEmail else null,
-                if (accountId.isNotBlank()) "ID: $accountId" else null
-            ).joinToString(" - ")
-
-            for (item in items) {
-                if (item !is JsonObject) continue
-
-                val title = item.extractStringValue("title", "name", "label", "displayName")
-                val url = item.extractUrlFromItem()
-                val notes = item.extractStringValue("notes", "note", "comment")
-
-                val combinedNote = listOf(accountHeader, notes).filter { it.isNotBlank() }.joinToString("\n")
-
-                val credentials = item["credentials"] as? JsonArray
-                if (credentials != null && credentials.isNotEmpty()) {
-                    for (cred in credentials) {
-                        if (cred !is JsonObject) continue
-                        val username = cred.extractStringValue("username", "user", "account", "login", "userName", "email")
-                        val password = cred.extractStringValue("password", "secret", "pass", "value")
-
-                        if (username.isNotBlank() || password.isNotBlank() || title.isNotBlank() || url.isNotBlank()) {
-                            val incomingGpm = IncomingGPM.makeFromCSVImport(
-                                name = if (title.isNotBlank()) title else if (url.isNotBlank()) url else "Imported Credential",
-                                url = url,
-                                username = username,
-                                password = password,
-                                note = combinedNote
-                            )
-                            if (!result.contains(incomingGpm)) {
-                                result.add(incomingGpm)
-                            }
-                        }
-                    }
-                } else {
-                    // Item itself contains credential fields directly
-                    val username = item.extractStringValue("username", "user", "account", "login", "userName", "email")
-                    val password = item.extractStringValue("password", "secret", "pass", "value")
-                    if (username.isNotBlank() || password.isNotBlank()) {
-                        val incomingGpm = IncomingGPM.makeFromCSVImport(
-                            name = if (title.isNotBlank()) title else if (url.isNotBlank()) url else "Imported Credential",
-                            url = url,
-                            username = username,
-                            password = password,
-                            note = combinedNote
-                        )
-                        if (!result.contains(incomingGpm)) {
-                            result.add(incomingGpm)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     private fun JsonObject.extractUrlFromItem(): String {
         // Direct url/origin field
         val directUrl = extractStringValue("url", "origin", "rpId", "site", "domain", "host", "uri")
@@ -317,32 +249,6 @@ object FidoCxfParser {
             }
         }
         return ""
-    }
-
-    private fun parseFallbackCxf(element: JsonElement, result: MutableList<IncomingGPM>) {
-        val candidateObjects = mutableListOf<JsonObject>()
-        findJsonObjects(element, candidateObjects)
-
-        for (item in candidateObjects) {
-            val name = item.extractStringValue("name", "title", "label", "displayName", "service")
-            val url = item.extractUrlFromItem()
-            val username = item.extractStringValue("username", "user", "account", "login", "userName", "email")
-            val password = item.extractStringValue("password", "secret", "pass", "value")
-            val note = item.extractStringValue("note", "notes", "comment", "description")
-
-            if (username.isNotBlank() || password.isNotBlank() || name.isNotBlank() || url.isNotBlank()) {
-                val incomingGpm = IncomingGPM.makeFromCSVImport(
-                    name = if (name.isNotBlank()) name else if (url.isNotBlank()) url else "Imported Credential",
-                    url = url,
-                    username = username,
-                    password = password,
-                    note = note
-                )
-                if (!result.contains(incomingGpm)) {
-                    result.add(incomingGpm)
-                }
-            }
-        }
     }
 
     private fun findJsonObjects(element: JsonElement, accumulator: MutableList<JsonObject>) {

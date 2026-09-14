@@ -64,7 +64,7 @@ object AndroidCredentialTransferHelper {
 
                     for (cxf in cxfItemsGroup) {
                         if (cxf.credentialType == "public-key") {
-                            val existingPasskey = database.cxfPasskeyDao().getByCxfItemId(cxf.cxfItemId)
+                            val existingPasskey = if (cxf.cxfItemId.isNotBlank()) database.cxfPasskeyDao().getByCxfItemId(cxf.cxfItemId) else null
                             if (existingPasskey != null) {
                                 val existingModified = existingPasskey.modifiedAt ?: 0L
                                 val incomingModified = cxf.modifiedAt ?: System.currentTimeMillis()
@@ -112,7 +112,7 @@ object AndroidCredentialTransferHelper {
                                 passkeyEntities.add(newPasskey)
                             }
                         } else {
-                            val existingImport = database.cxfImportDao().getByCxfItemId(cxf.cxfItemId)
+                            val existingImport = if (cxf.cxfItemId.isNotBlank()) database.cxfImportDao().getByCxfItemId(cxf.cxfItemId) else null
                             if (existingImport != null) {
                                 val existingModified = existingImport.modifiedAt ?: 0L
                                 val incomingModified = cxf.modifiedAt ?: System.currentTimeMillis()
