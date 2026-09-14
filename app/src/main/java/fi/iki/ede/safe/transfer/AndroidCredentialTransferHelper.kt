@@ -57,7 +57,7 @@ object AndroidCredentialTransferHelper {
                         val newAccount = fi.iki.ede.db.cxf.CXFAccount(
                             cxfAccountId = cxfAccountId,
                             email = email,
-                            importedAt = System.currentTimeMillis()
+                            importedAt = kotlin.time.Clock.System.now().toEpochMilliseconds()
                         )
                         database.cxfAccountDao().insert(newAccount)
                     }

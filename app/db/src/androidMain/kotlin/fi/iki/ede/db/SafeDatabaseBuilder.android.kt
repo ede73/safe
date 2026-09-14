@@ -66,7 +66,7 @@ fun runLegacyDatabaseMigration(context: Context, databaseName: String = DBHelper
                 val tempDb = Room.databaseBuilder<SafeDatabase>(
                     context = context,
                     name = DATABASE_NAME
-                ).addMigrations(MIGRATION_7_9, MIGRATION_8_9, MIGRATION_9_10)
+                ).addMigrations(MIGRATION_7_9, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
                 .setDriver(BundledSQLiteDriver()).build()
 
                 val photoDir = File(context.filesDir, "photos")

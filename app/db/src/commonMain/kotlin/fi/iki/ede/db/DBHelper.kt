@@ -43,7 +43,7 @@ class DBHelper(
             getDatabaseBuilder(databaseName)
         }
         database = builder
-            .addMigrations(MIGRATION_7_9, MIGRATION_8_9, MIGRATION_9_10)
+            .addMigrations(MIGRATION_7_9, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
             .build()
 
         if (!FileSystem.SYSTEM.exists(photoDir) && runCatching {
