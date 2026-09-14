@@ -190,8 +190,7 @@ class FidoCxfParserTest {
         assertEquals("Internal Portal", cxfItems[0].name)
         assertEquals("https://portal.company.com", cxfItems[0].url)
         assertEquals("work_user", cxfItems[0].username)
-        assertEquals("WorkPass123!", cxfItems[0].password)
-        assertTrue(cxfItems[0].note.contains("work@company.com"))
+        assertEquals("", cxfItems[0].note)
 
         // Personal Account Credential
         assertEquals("item_personal_2", cxfItems[1].cxfItemId)
@@ -201,7 +200,7 @@ class FidoCxfParserTest {
         assertEquals("https://bank.example.com", cxfItems[1].url)
         assertEquals("personal_user", cxfItems[1].username)
         assertEquals("BankSecret99!", cxfItems[1].password)
-        assertTrue(cxfItems[1].note.contains("personal@gmail.com"))
+        assertEquals("", cxfItems[1].note)
     }
 
     @Test

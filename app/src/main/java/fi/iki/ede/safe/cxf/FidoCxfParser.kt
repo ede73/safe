@@ -37,7 +37,6 @@ object FidoCxfParser {
     }
 
     private fun parseStructuredCxfToIncomingCXF(rootElement: JsonObject, result: MutableList<IncomingCXF>) {
-        val exporterName = rootElement.extractStringValue("exporterDisplayName")
         val accounts = rootElement["accounts"] as? JsonArray ?: return
 
         for (account in accounts) {
@@ -45,12 +44,6 @@ object FidoCxfParser {
             val accountId = account.extractStringValue("id")
             val accountEmail = account.extractStringValue("email")
             val items = account["items"] as? JsonArray ?: continue
-
-            val accountHeader = listOfNotNull(
-                if (exporterName.isNotBlank()) exporterName else "Google Password Manager",
-                if (accountEmail.isNotBlank()) accountEmail else null,
-                if (accountId.isNotBlank()) "ID: $accountId" else null
-            ).joinToString(" - ")
 
             for (item in items) {
                 if (item !is JsonObject) continue
@@ -84,7 +77,6 @@ object FidoCxfParser {
                 }
 
                 val combinedNote = listOfNotNull(
-                    if (accountHeader.isNotBlank()) accountHeader else null,
                     if (notes.isNotBlank()) notes else null,
                     if (extraNotes.isNotEmpty()) extraNotes.distinct().joinToString("\n") else null
                 ).joinToString("\n")
