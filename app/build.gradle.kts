@@ -279,6 +279,8 @@ dependencies {
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.credentials.providerevents)
+    implementation(libs.androidx.credentials.providerevents.play.services)
     implementation(libs.androidx.material.icons.extended.android)
     implementation(libs.androidx.material3.android)
     implementation(libs.androidx.preference.ktx)

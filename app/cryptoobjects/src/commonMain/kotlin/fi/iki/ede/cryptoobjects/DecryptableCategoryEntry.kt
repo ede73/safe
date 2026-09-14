@@ -10,7 +10,7 @@ import fi.iki.ede.crypto.support.decrypt
 // TODO: Doesn't really belong to this project, does it?
 // Addressed PR5 comment: Restored original comment above
 @Entity(tableName = "categories")
-class DecryptableCategoryEntry {
+open class DecryptableCategoryEntry {
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
     var id: Long? = null

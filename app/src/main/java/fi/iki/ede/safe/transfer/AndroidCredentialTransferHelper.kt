@@ -1,0 +1,456 @@
+package fi.iki.ede.safe.transfer
+
+import android.content.Context
+import androidx.credentials.providerevents.ProviderEventsManager
+import androidx.credentials.providerevents.transfer.CredentialTypes
+import androidx.credentials.providerevents.transfer.ImportCredentialsRequest
+import fi.iki.ede.gpm.model.IncomingGPM
+import fi.iki.ede.gpm.model.SavedGPM
+import fi.iki.ede.gpm.model.cachedDecryptedName
+import fi.iki.ede.gpm.model.cachedDecryptedUsername
+import fi.iki.ede.gpmdatamodel.db.GPMDB
+import fi.iki.ede.logger.Logger
+import fi.iki.ede.safe.cxf.FidoCxfParser
+import fi.iki.ede.db.cxf.CXFAccount
+import fi.iki.ede.db.cxf.CXFImport
+import fi.iki.ede.db.cxf.CXFPasskey
+import fi.iki.ede.db.cxf.cachedDecryptedCxfItemId
+import fi.iki.ede.db.cxf.cachedDecryptedName
+import fi.iki.ede.db.cxf.cachedDecryptedUsername
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlin.time.ExperimentalTime
+
+private const val TAG = "CredentialTransfer"
+
+object AndroidCredentialTransferHelper {
+
+    /**
+     * Imports credentials directly from a FIDO CXF JSON payload into the database.
+     * Can be used with real IPC response or simulated fake CXF payload for emulator testing.
+     */
+    @OptIn(ExperimentalTime::class)
+    fun processAndStoreCxfPayload(
+        cxfJsonPayload: String,
+        scope: CoroutineScope,
+        onMessage: (String) -> Unit = {},
+        complete: (Boolean, Int) -> Unit
+    ) {
+        scope.launch(Dispatchers.IO) {
+            try {
+                onMessage("Parsing incoming credentials...")
+                val incomingCXFs = FidoCxfParser.parseCxfPayloadToIncomingCXFList(cxfJsonPayload).toSet()
+
+                if (incomingCXFs.isEmpty()) {
+                    onMessage("No valid credentials found in payload.")
+                    withContext(Dispatchers.Main) {
+                        complete(false, 0)
+                    }
+                    return@launch
+                }
+
+                onMessage("Saving ${incomingCXFs.size} credentials securely to relational CXF database...")
+                val database = fi.iki.ede.db.DBHelperFactory.getDBHelper().database
+
+                val cxfEntitiesToInsert = mutableListOf<CXFImport>()
+                val cxfEntitiesToUpdate = mutableListOf<CXFImport>()
+                val passkeyEntitiesToInsert = mutableListOf<CXFPasskey>()
+                val passkeyEntitiesToUpdate = mutableListOf<CXFPasskey>()
+
+                for ((cxfAccountId, cxfItemsGroup) in incomingCXFs.groupBy { it.cxfAccountId }) {
+                    val email = cxfItemsGroup.firstOrNull()?.cxfAccountEmail ?: ""
+                    val existingAccount = database.cxfAccountDao().getByCxfAccountId(cxfAccountId)
+                    val parentAccountId = if (existingAccount != null && existingAccount.id != null) {
+                        existingAccount.id!!
+                    } else {
+                        val newAccount = CXFAccount(
+                            cxfAccountId = cxfAccountId,
+                            email = email,
+                            importedAt = kotlin.time.Clock.System.now().toEpochMilliseconds()
+                        )
+                        database.cxfAccountDao().insert(newAccount)
+                    }
+
+                    val accountPasskeys = database.cxfPasskeyDao().getByAccountId(parentAccountId).toMutableList()
+                    val accountImports = database.cxfImportDao().getByAccountId(parentAccountId).toMutableList()
+
+                    for (cxf in cxfItemsGroup) {
+                        if (cxf.credentialType == "public-key") {
+                            val existingPasskey = if (cxf.cxfItemId.isNotBlank()) {
+                                accountPasskeys.find { it.cachedDecryptedCxfItemId == cxf.cxfItemId }
+                            } else {
+                                accountPasskeys.find { it.cachedDecryptedName == cxf.name && it.cachedDecryptedUsername == cxf.username }
+                            }
+
+                            if (existingPasskey != null) {
+                                accountPasskeys.remove(existingPasskey)
+                                // Skip storing/updating if content hash is identical
+                                if (existingPasskey.hash == cxf.hash) {
+                                    continue
+                                }
+                                val existingModified = existingPasskey.modifiedAt ?: 0L
+                                val incomingModified = cxf.modifiedAt ?: System.currentTimeMillis()
+                                if (cxf.modifiedAt == null || existingPasskey.modifiedAt == null || incomingModified >= existingModified) {
+                                    val updatedPasskey = CXFPasskey(
+                                        id = existingPasskey.id,
+                                        accountId = parentAccountId,
+                                        cxfItemId = cxf.cxfItemId,
+                                        rpId = extractRpIdFromRawJson(cxf.rawCredentialJson, cxf.url),
+                                        name = cxf.name,
+                                        url = cxf.url,
+                                        username = cxf.username,
+                                        credentialId = extractCredentialIdFromRawJson(cxf.rawCredentialJson),
+                                        userHandle = extractUserHandleFromRawJson(cxf.rawCredentialJson),
+                                        note = cxf.note,
+                                        createdAt = cxf.creationAt ?: existingPasskey.createdAt,
+                                        modifiedAt = cxf.modifiedAt ?: incomingModified,
+                                        importedAt = cxf.importedAt,
+                                        flaggedIgnored = existingPasskey.flaggedIgnored,
+                                        hash = cxf.hash
+                                    )
+                                    passkeyEntitiesToUpdate.add(updatedPasskey)
+                                }
+                            } else {
+                                val newPasskey = CXFPasskey(
+                                    accountId = parentAccountId,
+                                    cxfItemId = cxf.cxfItemId,
+                                    rpId = extractRpIdFromRawJson(cxf.rawCredentialJson, cxf.url),
+                                    name = cxf.name,
+                                    url = cxf.url,
+                                    username = cxf.username,
+                                    credentialId = extractCredentialIdFromRawJson(cxf.rawCredentialJson),
+                                    userHandle = extractUserHandleFromRawJson(cxf.rawCredentialJson),
+                                    note = cxf.note,
+                                    createdAt = cxf.creationAt,
+                                    modifiedAt = cxf.modifiedAt,
+                                    importedAt = cxf.importedAt,
+                                    flaggedIgnored = false,
+                                    hash = cxf.hash
+                                )
+                                passkeyEntitiesToInsert.add(newPasskey)
+                            }
+                        } else {
+                            val existingImport = if (cxf.cxfItemId.isNotBlank()) {
+                                accountImports.find { it.cachedDecryptedCxfItemId == cxf.cxfItemId && it.type == cxf.credentialType }
+                            } else {
+                                accountImports.find { it.cachedDecryptedName == cxf.name && it.cachedDecryptedUsername == cxf.username && it.type == cxf.credentialType }
+                            }
+
+                            if (existingImport != null) {
+                                accountImports.remove(existingImport)
+                                // Skip storing/updating if content hash is identical
+                                if (existingImport.hash == cxf.hash) {
+                                    continue
+                                }
+                                val existingModified = existingImport.modifiedAt ?: 0L
+                                val incomingModified = cxf.modifiedAt ?: System.currentTimeMillis()
+                                if (cxf.modifiedAt == null || existingImport.modifiedAt == null || incomingModified >= existingModified) {
+                                    val updatedImport = CXFImport(
+                                        id = existingImport.id,
+                                        accountId = parentAccountId,
+                                        cxfItemId = cxf.cxfItemId,
+                                        type = cxf.credentialType,
+                                        name = cxf.name,
+                                        url = cxf.url,
+                                        username = cxf.username,
+                                        password = cxf.password,
+                                        note = cxf.note,
+                                        createdAt = cxf.creationAt ?: existingImport.createdAt,
+                                        modifiedAt = cxf.modifiedAt ?: incomingModified,
+                                        importedAt = cxf.importedAt,
+                                        flaggedIgnored = existingImport.flaggedIgnored,
+                                        hash = cxf.hash
+                                    )
+                                    cxfEntitiesToUpdate.add(updatedImport)
+                                }
+                            } else {
+                                val newImport = CXFImport(
+                                    accountId = parentAccountId,
+                                    cxfItemId = cxf.cxfItemId,
+                                    type = cxf.credentialType,
+                                    name = cxf.name,
+                                    url = cxf.url,
+                                    username = cxf.username,
+                                    password = cxf.password,
+                                    note = cxf.note,
+                                    createdAt = cxf.creationAt,
+                                    modifiedAt = cxf.modifiedAt,
+                                    importedAt = cxf.importedAt,
+                                    flaggedIgnored = false,
+                                    hash = cxf.hash
+                                )
+                                cxfEntitiesToInsert.add(newImport)
+                            }
+                        }
+                    }
+                }
+
+                if (cxfEntitiesToInsert.isNotEmpty()) {
+                    database.cxfImportDao().insertAll(cxfEntitiesToInsert)
+                }
+                if (cxfEntitiesToUpdate.isNotEmpty()) {
+                    database.cxfImportDao().updateAll(cxfEntitiesToUpdate)
+                }
+                if (passkeyEntitiesToInsert.isNotEmpty()) {
+                    database.cxfPasskeyDao().insertAll(passkeyEntitiesToInsert)
+                }
+                if (passkeyEntitiesToUpdate.isNotEmpty()) {
+                    database.cxfPasskeyDao().updateAll(passkeyEntitiesToUpdate)
+                }
+
+                // Also save to GPMDB for UI compatibility with proper deduplication
+                val existingGPMs = GPMDB.fetchAllSavedGPMsFromDB()
+                val gpmAddSet = mutableSetOf<IncomingGPM>()
+                val gpmUpdateMap = mutableMapOf<IncomingGPM, SavedGPM>()
+
+                for (cxf in incomingCXFs) {
+                    val incomingGPM = IncomingGPM.makeFromCSVImport(
+                        name = cxf.name,
+                        url = cxf.url,
+                        username = cxf.username,
+                        password = cxf.password,
+                        note = cxf.note
+                    )
+                    val existingGpm = existingGPMs.find { it.hash == incomingGPM.hash }
+                        ?: existingGPMs.find { it.cachedDecryptedName == incomingGPM.name && it.cachedDecryptedUsername == incomingGPM.username }
+
+                    if (existingGpm != null) {
+                        if (existingGpm.hash != incomingGPM.hash) {
+                            gpmUpdateMap[incomingGPM] = existingGpm
+                        }
+                    } else {
+                        gpmAddSet.add(incomingGPM)
+                    }
+                }
+
+                if (gpmAddSet.isNotEmpty() || gpmUpdateMap.isNotEmpty()) {
+                    fi.iki.ede.gpmdatamodel.GPMDataModel.storeNewGpmsAndReload(
+                        delete = emptySet(),
+                        update = gpmUpdateMap,
+                        add = gpmAddSet
+                    )
+                }
+
+                // Refresh synthetic CXF entries in DataModel for UI display
+                fi.iki.ede.datamodel.DataModel.loadSyntheticCxfEntries()
+
+                onMessage("Successfully imported ${incomingCXFs.size} credentials!")
+                withContext(Dispatchers.Main) {
+                    complete(true, incomingCXFs.size)
+                }
+            } catch (e: Throwable) {
+                Logger.e(TAG, "Storing CXF credentials failed: ${e.message}", e)
+                onMessage("Import failed: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    complete(false, 0)
+                }
+            }
+        }
+    }
+
+    /**
+     * Launches direct credential transfer from Google Password Manager via Jetpack Credentials Provider Events API.
+     */
+    @OptIn(ExperimentalTime::class)
+    fun launchDirectGpmImport(
+        context: Context,
+        scope: CoroutineScope,
+        onMessage: (String) -> Unit = {},
+        complete: (Boolean, Int) -> Unit
+    ) {
+        scope.launch(Dispatchers.IO) {
+            try {
+                onMessage("Connecting to Android Credential Transfer...")
+                val providerEventsManager = ProviderEventsManager.create(context)
+
+                val importRequest = ImportCredentialsRequest(
+                    credentialTypes = setOf(
+                        "password",
+                        CredentialTypes.CREDENTIAL_TYPE_BASIC_AUTH,
+                        CredentialTypes.CREDENTIAL_TYPE_PUBLIC_KEY,
+                        CredentialTypes.CREDENTIAL_TYPE_GENERATED_PASSWORD,
+                        CredentialTypes.CREDENTIAL_TYPE_NOTE,
+                        CredentialTypes.CREDENTIAL_TYPE_CUSTOM_FIELDS,
+                        CredentialTypes.CREDENTIAL_TYPE_TOTP
+                    ),
+                    knownExtensions = emptySet()
+                )
+
+                onMessage("Waiting for user authorization...")
+                val providerResponse = providerEventsManager.importCredentials(context, importRequest)
+                val cxfPayload = providerResponse.response.responseJson
+                Logger.d(TAG, "Received CXF payload (${cxfPayload.length} bytes)")
+
+                processAndStoreCxfPayload(cxfPayload, scope, onMessage, complete)
+            } catch (e: Throwable) {
+                val cause = e.cause ?: e
+                Logger.e(TAG, "Direct credential import failed (${cause.javaClass.name}): ${cause.message}", cause)
+                val detailMsg = "${cause.javaClass.simpleName}: ${cause.message ?: "No matching provider or Play Services unavailable"}"
+                onMessage("Import failed: $detailMsg")
+                withContext(Dispatchers.Main) {
+                    complete(false, 0)
+                }
+            }
+        }
+    }
+
+    /**
+     * Helper for testing in emulator with a sample/fake FIDO CXF payload including a Passkey (public-key).
+     */
+    fun createSampleFakeCxfPayload(): String {
+        return """
+            {
+                "version": { "major": 1, "minor": 0 },
+                "exporterRpId": "passwords.google.com",
+                "exporterDisplayName": "Google Password Manager",
+                "timestamp": 1789356704,
+                "accounts": [
+                    {
+                        "id": "s8TePQC5pJz9eGwoQXYURbtzNuDM6YmqUL57-2P6hPQ",
+                        "email": "tavaraturha963@gmail.com",
+                        "items": [
+                            {
+                                "id": "item_passkey_github_001",
+                                "creationAt": 1789356667,
+                                "modifiedAt": 1789356667,
+                                "title": "https://github.com",
+                                "scope": {
+                                    "urls": ["https://github.com"],
+                                    "androidApps": []
+                                },
+                                "credentials": [
+                                    {
+                                        "type": "public-key",
+                                        "userHandle": {
+                                            "fieldType": "string",
+                                            "value": "dXNlcmlkX2dpdGh1Yl8xMjM0NQ"
+                                        },
+                                        "username": {
+                                            "fieldType": "string",
+                                            "value": "developer_alice"
+                                        },
+                                        "userDisplayName": {
+                                            "fieldType": "string",
+                                            "value": "Alice Developer"
+                                        },
+                                        "credentialId": {
+                                            "fieldType": "string",
+                                            "value": "KzNnOGxXNG9Vd29pY2hDdzE4aFF2dz09"
+                                        },
+                                        "rpId": {
+                                            "fieldType": "string",
+                                            "value": "github.com"
+                                        },
+                                        "keyPair": {
+                                            "algorithm": -7,
+                                            "privateKey": {
+                                                "fieldType": "concealed-string",
+                                                "value": "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg5X7zY..."
+                                            },
+                                            "publicKey": {
+                                                "fieldType": "string",
+                                                "value": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE9Z8x..."
+                                            }
+                                        },
+                                        "transports": ["internal", "hybrid"],
+                                        "signCount": 12
+                                    }
+                                ]
+                            },
+                            {
+                                "id": "item_password_acme_002",
+                                "creationAt": 1789356667,
+                                "modifiedAt": 1789356667,
+                                "title": "https://www.acme.com/",
+                                "scope": {
+                                    "urls": ["https://www.acme.com/"],
+                                    "androidApps": []
+                                },
+                                "credentials": [
+                                    {
+                                        "type": "basic-auth",
+                                        "username": {
+                                            "fieldType": "string",
+                                            "value": "hihhuliturha"
+                                        },
+                                        "password": {
+                                            "fieldType": "concealed-string",
+                                            "value": "eioooikeesalasana"
+                                        }
+                                    },
+                                    {
+                                        "type": "note",
+                                        "content": {
+                                            "fieldType": "string",
+                                            "value": "noottia TULEEEEE!"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        """.trimIndent()
+    }
+
+    private fun extractRpIdFromRawJson(rawJson: String, fallbackUrl: String): String {
+        try {
+            if (rawJson.isNotBlank() && rawJson.startsWith("{")) {
+                val element = kotlinx.serialization.json.Json.parseToJsonElement(rawJson)
+                if (element is kotlinx.serialization.json.JsonObject) {
+                    val rpIdElem = element["rpId"] ?: element["rp"]
+                    if (rpIdElem != null) {
+                        val valStr = when (rpIdElem) {
+                            is kotlinx.serialization.json.JsonPrimitive -> rpIdElem.content
+                            is kotlinx.serialization.json.JsonObject -> rpIdElem["value"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it.content else "" } ?: ""
+                            else -> ""
+                        }
+                        if (valStr.isNotBlank()) return valStr
+                    }
+                }
+            }
+        } catch (_: Throwable) {}
+        return fallbackUrl.removePrefix("https://").removePrefix("http://").substringBefore("/")
+    }
+
+    private fun extractCredentialIdFromRawJson(rawJson: String): String {
+        try {
+            if (rawJson.isNotBlank() && rawJson.startsWith("{")) {
+                val element = kotlinx.serialization.json.Json.parseToJsonElement(rawJson)
+                if (element is kotlinx.serialization.json.JsonObject) {
+                    val credIdElem = element["credentialId"] ?: element["id"]
+                    if (credIdElem != null) {
+                        return when (credIdElem) {
+                            is kotlinx.serialization.json.JsonPrimitive -> credIdElem.content
+                            is kotlinx.serialization.json.JsonObject -> credIdElem["value"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it.content else "" } ?: ""
+                            else -> ""
+                        }
+                    }
+                }
+            }
+        } catch (_: Throwable) {}
+        return ""
+    }
+
+    private fun extractUserHandleFromRawJson(rawJson: String): String {
+        try {
+            if (rawJson.isNotBlank() && rawJson.startsWith("{")) {
+                val element = kotlinx.serialization.json.Json.parseToJsonElement(rawJson)
+                if (element is kotlinx.serialization.json.JsonObject) {
+                    val userHandleElem = element["userHandle"] ?: element["userId"]
+                    if (userHandleElem != null) {
+                        return when (userHandleElem) {
+                            is kotlinx.serialization.json.JsonPrimitive -> userHandleElem.content
+                            is kotlinx.serialization.json.JsonObject -> userHandleElem["value"]?.let { if (it is kotlinx.serialization.json.JsonPrimitive) it.content else "" } ?: ""
+                            else -> ""
+                        }
+                    }
+                }
+            }
+        } catch (_: Throwable) {}
+        return ""
+    }
+}

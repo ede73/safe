@@ -21,7 +21,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Ignore
 
 @Entity(tableName = "passwords")
-class DecryptableSiteEntry(
+open class DecryptableSiteEntry(
     @ColumnInfo(name = "category")
     var categoryId: Long = 0L
 ) {

@@ -52,6 +52,7 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
             )
 
         for (category in categoriesList) {
+            if (category.id != null && category.id!! < 0L) continue
             serializer.startTagWithIVCipherAttribute(
                 Elements.CATEGORY,
                 makePair(Attributes.CATEGORY_NAME, category.encryptedName)

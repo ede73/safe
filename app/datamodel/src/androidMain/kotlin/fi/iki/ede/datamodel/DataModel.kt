@@ -297,7 +297,49 @@ object DataModel {
                     }
                 }
                 loadExternalDatabases()
+                launch { loadSyntheticCxfEntries() }
             }
+        }
+    }
+
+    suspend fun loadSyntheticCxfEntries() {
+        try {
+            val database = DBHelperFactory.getDBHelper().database
+            val cxfAccounts = database.cxfAccountDao().getAll()
+            val cxfImports = database.cxfImportDao().getAll()
+            val cxfPasskeys = database.cxfPasskeyDao().getAll()
+
+            if (cxfAccounts.isEmpty()) return
+
+            val syntheticCategories = mutableListOf<DecryptableCategoryEntry>()
+            val syntheticSiteEntries = mutableListOf<DecryptableSiteEntry>()
+
+            for (account in cxfAccounts) {
+                val accountId = account.id ?: continue
+                val syntheticCat = fi.iki.ede.datamodel.cxf.CxfSyntheticModelMapper.toSyntheticCategory(account)
+
+                val accountImports = cxfImports.filter { it.accountId == accountId }
+                val accountPasskeys = cxfPasskeys.filter { it.accountId == accountId }
+
+                val importSites = accountImports.map { fi.iki.ede.datamodel.cxf.CxfSyntheticModelMapper.toSyntheticSiteEntry(it, accountId) }
+                val passkeySites = accountPasskeys.map { fi.iki.ede.datamodel.cxf.CxfSyntheticModelMapper.toSyntheticSiteEntry(it, accountId) }
+
+                val totalCount = importSites.size + passkeySites.size
+                syntheticCat.containedSiteEntryCount = totalCount
+
+                syntheticCategories.add(syntheticCat)
+                syntheticSiteEntries.addAll(importSites)
+                syntheticSiteEntries.addAll(passkeySites)
+            }
+
+            _categoriesStateFlow.update { current ->
+                current.filterNot { fi.iki.ede.datamodel.cxf.CxfSyntheticModelMapper.isSyntheticId(it.id) } + syntheticCategories
+            }
+            _siteEntriesStateFlow.update { current ->
+                current.filterNot { fi.iki.ede.datamodel.cxf.CxfSyntheticModelMapper.isSyntheticId(it.id) } + syntheticSiteEntries
+            }
+        } catch (e: Throwable) {
+            Logger.e(TAG, "Loading synthetic CXF entries failed: ${e.message}", e)
         }
     }
 

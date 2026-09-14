@@ -304,7 +304,7 @@ fun LoginScreen() {
                                                 val targetFile = (dialog.directory ?: "").toPath() / file
                                                 val backupContent = BackupExporter.exportToXml(db)
                                                 FileSystem.SYSTEM.write(targetFile) { writeUtf8(backupContent) }
-                                                exportStatusMessage = DesktopStrings.get("backup_export_success", targetFile.toNioPath().toAbsolutePath().toString())
+                                                exportStatusMessage = DesktopStrings.get("backup_export_success", targetFile.toNioPath().toAbsolutePath().toString()) + "\n\n💡 Security Note: For maximum safety, consider using direct peer-to-peer sync on Android instead of storing unencrypted export files."
                                             }
                                         } catch (ex: Exception) {
                                             exportStatusMessage = DesktopStrings.get("backup_export_failure", ex.message ?: ex.toString())
