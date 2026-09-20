@@ -117,6 +117,15 @@ object DataModelMocks {
             cxfImportsList.add(inserted)
             newId
         }
+        coEvery { mockCxfImportDao.insertAll(any()) } answers {
+            val items = firstArg<List<fi.iki.ede.db.cxf.CXFImport>>()
+            items.map { item ->
+                val newId = (cxfImportsList.maxOfOrNull { it.id ?: 0L } ?: 0L) + 1L
+                val inserted = item.copy(id = newId)
+                cxfImportsList.add(inserted)
+                newId
+            }
+        }
 
         coEvery { mockCxfPasskeyDao.getAll() } answers { cxfPasskeysList.toList() }
         coEvery { mockCxfPasskeyDao.getByAccountId(any()) } answers {
@@ -129,6 +138,15 @@ object DataModelMocks {
             val inserted = item.copy(id = newId)
             cxfPasskeysList.add(inserted)
             newId
+        }
+        coEvery { mockCxfPasskeyDao.insertAll(any()) } answers {
+            val items = firstArg<List<fi.iki.ede.db.cxf.CXFPasskey>>()
+            items.map { item ->
+                val newId = (cxfPasskeysList.maxOfOrNull { it.id ?: 0L } ?: 0L) + 1L
+                val inserted = item.copy(id = newId)
+                cxfPasskeysList.add(inserted)
+                newId
+            }
         }
 
         every { mockSafeDb.cxfAccountDao() } returns mockCxfAccountDao

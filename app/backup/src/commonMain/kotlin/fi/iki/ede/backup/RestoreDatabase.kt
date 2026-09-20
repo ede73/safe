@@ -491,21 +491,31 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                         accountCxfIdToDbId[acc.cxfAccountId] = dbId
                                     }
 
-                                    for ((accCxfId, item) in restoredCxfImports) {
-                                        val dbAccId = accountCxfIdToDbId[accCxfId] ?: continue
-                                        val existingImports = cxfDb.cxfImportDao().getByAccountId(dbAccId)
-                                        val alreadyExists = existingImports.any { it.hash == item.hash }
-                                        if (!alreadyExists) {
-                                            cxfDb.cxfImportDao().insert(item.copy(accountId = dbAccId))
+                                    restoredCxfImports.groupBy { it.first }.forEach { (accCxfId, items) ->
+                                        val dbAccId = accountCxfIdToDbId[accCxfId] ?: return@forEach
+                                        val existingHashes = cxfDb.cxfImportDao().getByAccountId(dbAccId).mapTo(HashSet()) { it.hash }
+                                        val toInsert = mutableListOf<CXFImport>()
+                                        for ((_, item) in items) {
+                                            if (existingHashes.add(item.hash)) {
+                                                toInsert.add(item.copy(accountId = dbAccId))
+                                            }
+                                        }
+                                        if (toInsert.isNotEmpty()) {
+                                            cxfDb.cxfImportDao().insertAll(toInsert)
                                         }
                                     }
 
-                                    for ((accCxfId, passkey) in restoredCxfPasskeys) {
-                                        val dbAccId = accountCxfIdToDbId[accCxfId] ?: continue
-                                        val existingPasskeys = cxfDb.cxfPasskeyDao().getByAccountId(dbAccId)
-                                        val alreadyExists = existingPasskeys.any { it.hash == passkey.hash }
-                                        if (!alreadyExists) {
-                                            cxfDb.cxfPasskeyDao().insert(passkey.copy(accountId = dbAccId))
+                                    restoredCxfPasskeys.groupBy { it.first }.forEach { (accCxfId, passkeys) ->
+                                        val dbAccId = accountCxfIdToDbId[accCxfId] ?: return@forEach
+                                        val existingHashes = cxfDb.cxfPasskeyDao().getByAccountId(dbAccId).mapTo(HashSet()) { it.hash }
+                                        val toInsert = mutableListOf<CXFPasskey>()
+                                        for ((_, passkey) in passkeys) {
+                                            if (existingHashes.add(passkey.hash)) {
+                                                toInsert.add(passkey.copy(accountId = dbAccId))
+                                            }
+                                        }
+                                        if (toInsert.isNotEmpty()) {
+                                            cxfDb.cxfPasskeyDao().insertAll(toInsert)
                                         }
                                     }
                                 }
