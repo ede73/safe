@@ -763,6 +763,32 @@ class BackupDatabaseAndRestoreDatabaseTest {
         }
     }
 
+    @Test
+    fun testCleanDomainNameAndCxfSyntheticMapping() {
+        assertEquals("amazon.com", fi.iki.ede.db.cxf.DecryptableGPMSiteEntry.cleanDomainName("https://www.amazon.com/ap/signin"))
+        assertEquals("github.com", fi.iki.ede.db.cxf.DecryptableGPMSiteEntry.cleanDomainName("http://github.com/login"))
+        assertEquals("nordea.fi", fi.iki.ede.db.cxf.DecryptableGPMSiteEntry.cleanDomainName("www.nordea.fi"))
+        assertEquals("Google Account", fi.iki.ede.db.cxf.DecryptableGPMSiteEntry.cleanDomainName("Google Account"))
+
+        val cxfImport = fi.iki.ede.db.cxf.CXFImport(
+            id = 1L,
+            accountId = 10L,
+            cxfItemId = "item1",
+            type = "password",
+            name = "https://www.amazon.com/ap/signin",
+            url = "",
+            username = "ede@iki.fi",
+            password = "secretpassword",
+            note = "my note",
+            hash = "hash1"
+        )
+        val syntheticEntry = fi.iki.ede.db.cxf.DecryptableGPMSiteEntry.makeFromImport(10L, cxfImport)
+        assertEquals("amazon.com", syntheticEntry.plainDescription)
+        assertEquals("https://www.amazon.com/ap/signin", syntheticEntry.plainWebsite)
+        assertEquals("ede@iki.fi", syntheticEntry.plainUsername)
+        assertEquals("secretpassword", syntheticEntry.plainPassword)
+    }
+
     companion object {
         private val salt = Salt("9b90e143578bdbe7".hexToByteArray())
         private val backupPassword = Password("secret")
