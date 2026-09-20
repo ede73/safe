@@ -606,7 +606,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
                     }"
                 })
         }
-        val categories = DataModel.categoriesStateFlow.value
+        val categories = DataModel.categoriesStateFlow.value.filter { (it.id ?: 0L) > 0L }
         assertEquals(2, categories.size)
         assertEquals("encryptedcat1", categories[0].plainName)
         assertEquals(1L, categories[0].id)
@@ -719,6 +719,11 @@ class BackupDatabaseAndRestoreDatabaseTest {
             <gpmitem hash="hash" name="1" password_ids="102" iv_name="0102030405060708090a0b0c0d0e0f10" cipher_name="6f636e61" iv_note="0102030405060708090a0b0c0d0e0f10" cipher_note="6f6d7761" iv_password="0102030405060708090a0b0c0d0e0f10" cipher_password="716370777269756c" status="0" iv_url="0102030405060708090a0b0c0d0e0f10" cipher_url="766761" iv_username="0102030405060708090a0b0c0d0e0f10" cipher_username="74716676" />
             <gpmitem hash="hash" name="2" password_ids="202" iv_name="0102030405060708090a0b0c0d0e0f10" cipher_name="6f636e61" iv_note="0102030405060708090a0b0c0d0e0f10" cipher_note="6f6d7761" iv_password="0102030405060708090a0b0c0d0e0f10" cipher_password="716370777269756c" status="0" iv_url="0102030405060708090a0b0c0d0e0f10" cipher_url="766761" iv_username="0102030405060708090a0b0c0d0e0f10" cipher_username="74716676" />
         </gpm>
+        <cxf>
+            <cxfaccount cxf_account_id="acc-hex-1" iv_email="0102030405060708090a0b0c0d0e0f10" cipher_email="646c6076" />
+            <cxfimport cxf_account_id="acc-hex-1" iv_cxf_item_id="0102030405060708090a0b0c0d0e0f10" cipher_cxf_item_id="313031" type="password" iv_name="0102030405060708090a0b0c0d0e0f10" cipher_name="6f636e61" iv_url="0102030405060708090a0b0c0d0e0f10" cipher_url="766761" iv_username="0102030405060708090a0b0c0d0e0f10" cipher_username="74716676" iv_password="0102030405060708090a0b0c0d0e0f10" cipher_password="716370777269756c" iv_note="0102030405060708090a0b0c0d0e0f10" cipher_note="6f6d7761" hash="hex-cxf-hash-1" flagged_ignored="0" />
+            <cxfpasskey cxf_account_id="acc-hex-1" iv_cxf_item_id="0102030405060708090a0b0c0d0e0f10" cipher_cxf_item_id="313032" relying_party="example.org" iv_name="0102030405060708090a0b0c0d0e0f10" cipher_name="6f636e61" iv_url="0102030405060708090a0b0c0d0e0f10" cipher_url="766761" iv_username="0102030405060708090a0b0c0d0e0f10" cipher_username="74716676" iv_credential_id="0102030405060708090a0b0c0d0e0f10" cipher_credential_id="63726564" iv_user_handle="0102030405060708090a0b0c0d0e0f10" cipher_user_handle="68616e646c65" iv_note="0102030405060708090a0b0c0d0e0f10" cipher_note="6f6d7761" hash="hex-passkey-hash-1" flagged_ignored="0" />
+        </cxf>
     </imports>
     </PasswordSafe>
         """
