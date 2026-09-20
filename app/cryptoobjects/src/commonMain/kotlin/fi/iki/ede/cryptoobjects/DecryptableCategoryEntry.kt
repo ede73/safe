@@ -28,8 +28,14 @@ open class DecryptableCategoryEntry {
 
     @Ignore
     var containedSiteEntryCount = 0
+
+    @Ignore
+    internal var _cachedPlainName: String? = null
+
+    fun clearCachedName() {
+        _cachedPlainName = null
+    }
 }
 
-// This are intentionally not cached and decrypted inefficiently per request
 val DecryptableCategoryEntry.plainName: String
-    get() = encryptedName.decrypt()
+    get() = _cachedPlainName ?: encryptedName.decrypt().also { _cachedPlainName = it }

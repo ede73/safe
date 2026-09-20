@@ -66,6 +66,13 @@ open class DecryptableSiteEntry(
     @ColumnInfo(name = "website")
     var website: IVCipherText = IVCipherText.getEmpty()
 
+    @Ignore
+    internal var _cachedPlainDescription: String? = null
+
+    fun clearCachedDescription() {
+        _cachedPlainDescription = null
+    }
+
     fun contains(
         searchText: String,
         searchWebsites: Boolean,
@@ -145,7 +152,7 @@ val DecryptableSiteEntry.plainExtensions: Map<String, Set<String>>
 
 // This are intentionally not cached and decrypted inefficiently per request
 val DecryptableSiteEntry.plainDescription: String
-    get() = description.decrypt()
+    get() = _cachedPlainDescription ?: description.decrypt().also { _cachedPlainDescription = it }
 val DecryptableSiteEntry.plainPassword: String
     get() = password.decrypt()
 val DecryptableSiteEntry.plainUsername: String
