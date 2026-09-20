@@ -68,23 +68,47 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
             serializer.endTag(Elements.CATEGORY)
         }
 
-        // dump all imported passwords!
-        // TODO: use data model! (proper channels)
-        if (allSavedGPMs.isNotEmpty()) {
+        // Fetch CXF relational imports
+        val db = DBHelperFactory.getDBHelper().database
+        val cxfAccounts = kotlinx.coroutines.runBlocking { db.cxfAccountDao().getAll() }
+        val cxfImports = kotlinx.coroutines.runBlocking { db.cxfImportDao().getAll() }
+        val cxfPasskeys = kotlinx.coroutines.runBlocking { db.cxfPasskeyDao().getAll() }
+
+        if (allSavedGPMs.isNotEmpty() || cxfAccounts.isNotEmpty() || cxfImports.isNotEmpty() || cxfPasskeys.isNotEmpty()) {
             serializer.startTag(Elements.IMPORTS)
-            val gpmIdToSiteEntry =
-                // TODO: use data model!
-                siteEntryGPMMappings.flatMap { (a, bSet) -> bSet.map { b -> b to a } }
-                    .groupBy({ it.first }, { it.second })
-                    .mapValues { (_, v) -> v.toSet() }
-            serializer.startTag(Elements.IMPORTS_GPM)
-            allSavedGPMs.forEach { savedGPM ->
-                serializer.writeGPMEntry(
-                    savedGPM,
-                    gpmIdToSiteEntry[savedGPM.id!!] ?: emptySet()
-                )
+
+            if (allSavedGPMs.isNotEmpty()) {
+                val gpmIdToSiteEntry =
+                    siteEntryGPMMappings.flatMap { (a, bSet) -> bSet.map { b -> b to a } }
+                        .groupBy({ it.first }, { it.second })
+                        .mapValues { (_, v) -> v.toSet() }
+                serializer.startTag(Elements.IMPORTS_GPM)
+                allSavedGPMs.forEach { savedGPM ->
+                    serializer.writeGPMEntry(
+                        savedGPM,
+                        gpmIdToSiteEntry[savedGPM.id!!] ?: emptySet()
+                    )
+                }
+                serializer.endTag(Elements.IMPORTS_GPM)
             }
-            serializer.endTag(Elements.IMPORTS_GPM)
+
+            if (cxfAccounts.isNotEmpty() || cxfImports.isNotEmpty() || cxfPasskeys.isNotEmpty()) {
+                val accountIdToCxfId = cxfAccounts.associate { it.id to it.cxfAccountId }
+                serializer.startTag(Elements.IMPORTS_CXF)
+                cxfAccounts.forEach { account ->
+                    serializer.writeCxfAccount(account)
+                }
+                cxfImports.forEach { item ->
+                    val accCxfId = accountIdToCxfId[item.accountId] ?: ""
+                    serializer.writeCxfImport(item, accCxfId)
+                }
+                cxfPasskeys.forEach { passkey ->
+                    val accCxfId = accountIdToCxfId[passkey.accountId] ?: ""
+                    serializer.writeCxfPasskey(passkey, accCxfId)
+                }
+                serializer.endTag(Elements.IMPORTS_CXF)
+            }
+
             serializer.endTag(Elements.IMPORTS)
         }
 

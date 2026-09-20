@@ -230,6 +230,119 @@ class BackupDatabaseAndRestoreDatabaseTest {
     }
 
     @Test
+    fun cxfBackupAndRestoreTest() {
+        val dbHelper = mockDataModelFor_UNIT_TESTS_ONLY(linkedMapOf())
+        mockClockSystemNow(1234)
+        mockGetLastBackupTime(1234)
+
+        runBlocking {
+            val cxfDb = dbHelper.database
+            val accId = cxfDb.cxfAccountDao().insert(
+                fi.iki.ede.db.cxf.CXFAccount(
+                    cxfAccountId = "acc-123",
+                    encryptedEmail = IVCipherText.getEmpty()
+                )
+            )
+
+            cxfDb.cxfImportDao().insert(
+                fi.iki.ede.db.cxf.CXFImport(
+                    accountId = accId,
+                    encryptedCxfItemId = IVCipherText.getEmpty(),
+                    type = "password",
+                    encryptedName = IVCipherText.getEmpty(),
+                    encryptedUrl = IVCipherText.getEmpty(),
+                    encryptedUsername = IVCipherText.getEmpty(),
+                    encryptedPassword = IVCipherText.getEmpty(),
+                    encryptedNote = IVCipherText.getEmpty(),
+                    hash = "hash-123"
+                )
+            )
+
+            cxfDb.cxfPasskeyDao().insert(
+                fi.iki.ede.db.cxf.CXFPasskey(
+                    accountId = accId,
+                    encryptedCxfItemId = IVCipherText.getEmpty(),
+                    rpId = "example.com",
+                    encryptedName = IVCipherText.getEmpty(),
+                    encryptedUrl = IVCipherText.getEmpty(),
+                    encryptedUsername = IVCipherText.getEmpty(),
+                    encryptedCredentialId = IVCipherText.getEmpty(),
+                    encryptedUserHandle = IVCipherText.getEmpty(),
+                    encryptedNote = IVCipherText.getEmpty(),
+                    hash = "passkey-hash-123"
+                )
+            )
+
+            val xmlBuf = Buffer()
+            val xmlSink = xmlBuf.buffer()
+            BackupDatabase().generateXMLExport(
+                xmlSink,
+                emptyList(),
+                emptySet(),
+                emptyMap(),
+                emptySet(),
+                { emptyList() }
+            )
+            xmlSink.flush()
+            val rawXml = xmlBuf.readUtf8()
+            assertTrue(rawXml.contains("cxfimport"))
+            assertTrue(rawXml.contains("cxfpasskey"))
+
+            val buffer = Buffer()
+            BackupDatabase.backup(
+                emptyList(),
+                emptySet(),
+                { emptyList() },
+                emptyMap(),
+                emptySet(),
+                buffer
+            )
+            val encryptedBackup = buffer.readUtf8()
+
+            val restore = RestoreDatabase()
+            restore.doRestore(
+                Buffer().writeUtf8(encryptedBackup),
+                backupPassword,
+                dbHelper,
+                Preferences.getLastBackupTime(),
+                { _, _ -> },
+                { },
+                { true },
+                { _, _, _ -> },
+                { _, _ -> true }
+            )
+
+            val accounts = cxfDb.cxfAccountDao().getAll()
+            val imports = cxfDb.cxfImportDao().getAll()
+            val passkeys = cxfDb.cxfPasskeyDao().getAll()
+
+            assertEquals(1, accounts.size)
+            assertEquals(1, imports.size)
+            assertEquals(1, passkeys.size)
+            assertEquals("acc-123", accounts.first().cxfAccountId)
+            assertEquals("hash-123", imports.first().hash)
+            assertEquals("passkey-hash-123", passkeys.first().hash)
+
+            // Verify restoring again does not duplicate entries
+            restore.doRestore(
+                Buffer().writeUtf8(encryptedBackup),
+                backupPassword,
+                dbHelper,
+                Preferences.getLastBackupTime(),
+                { _, _ -> },
+                { },
+                { true },
+                { _, _, _ -> },
+                { _, _ -> true }
+            )
+
+            assertEquals(1, cxfDb.cxfAccountDao().getAll().size)
+            assertEquals(1, cxfDb.cxfImportDao().getAll().size)
+            assertEquals(1, cxfDb.cxfPasskeyDao().getAll().size)
+        }
+    }
+
+    @Test
     fun testUserCanCancelOldBackupRestoration() {
         val dbHelper = mockDataModelFor_UNIT_TESTS_ONLY(linkedMapOf())
         val r = RestoreDatabase()

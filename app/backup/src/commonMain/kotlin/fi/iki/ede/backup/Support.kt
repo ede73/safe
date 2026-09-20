@@ -8,6 +8,9 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.cryptoobjects.*
 import fi.iki.ede.db.DBID
 import fi.iki.ede.gpm.model.*
+import fi.iki.ede.db.cxf.CXFAccount
+import fi.iki.ede.db.cxf.CXFImport
+import fi.iki.ede.db.cxf.CXFPasskey
 import fi.iki.ede.backup.xml.XmlPullParser
 import fi.iki.ede.backup.xml.XmlSerializer
 import kotlin.time.ExperimentalTime
@@ -192,4 +195,45 @@ internal fun XmlSerializer.writeGPMEntry(savedGPM: SavedGPM, gpmToPasswords: Set
             savedGPM.encryptedUsername
         )
     endTag(Elements.IMPORTS_GPM_ITEM)
+}
+
+@ExperimentalTime
+internal fun XmlSerializer.writeCxfAccount(account: CXFAccount) {
+    startTag(Elements.IMPORTS_CXF_ACCOUNT)
+        .plainTextAttribute(Attributes.CXF_ACCOUNT_ID, account.cxfAccountId)
+        .encryptedAttribute(Attributes.CXF_ACCOUNT_EMAIL, account.encryptedEmail)
+    endTag(Elements.IMPORTS_CXF_ACCOUNT)
+}
+
+@ExperimentalTime
+internal fun XmlSerializer.writeCxfImport(item: CXFImport, accountCxfId: String) {
+    startTag(Elements.IMPORTS_CXF_IMPORT)
+        .plainTextAttribute(Attributes.CXF_ACCOUNT_ID, accountCxfId)
+        .encryptedAttribute(Attributes.CXF_ITEM_ID, item.encryptedCxfItemId)
+        .plainTextAttribute(Attributes.CXF_ITEM_TYPE, item.type)
+        .encryptedAttribute(Attributes.CXF_ITEM_NAME, item.encryptedName)
+        .encryptedAttribute(Attributes.CXF_ITEM_URL, item.encryptedUrl)
+        .encryptedAttribute(Attributes.CXF_ITEM_USERNAME, item.encryptedUsername)
+        .encryptedAttribute(Attributes.CXF_ITEM_PASSWORD, item.encryptedPassword)
+        .encryptedAttribute(Attributes.CXF_ITEM_NOTE, item.encryptedNote)
+        .plainTextAttribute(Attributes.CXF_ITEM_HASH, item.hash)
+        .plainTextAttribute(Attributes.CXF_ITEM_FLAGGED_IGNORED, if (item.flaggedIgnored) "1" else "0")
+    endTag(Elements.IMPORTS_CXF_IMPORT)
+}
+
+@ExperimentalTime
+internal fun XmlSerializer.writeCxfPasskey(passkey: CXFPasskey, accountCxfId: String) {
+    startTag(Elements.IMPORTS_CXF_PASSKEY)
+        .plainTextAttribute(Attributes.CXF_ACCOUNT_ID, accountCxfId)
+        .encryptedAttribute(Attributes.CXF_ITEM_ID, passkey.encryptedCxfItemId)
+        .plainTextAttribute(Attributes.CXF_PASSKEY_RELYING_PARTY, passkey.rpId)
+        .encryptedAttribute(Attributes.CXF_ITEM_NAME, passkey.encryptedName)
+        .encryptedAttribute(Attributes.CXF_ITEM_URL, passkey.encryptedUrl)
+        .encryptedAttribute(Attributes.CXF_ITEM_USERNAME, passkey.encryptedUsername)
+        .encryptedAttribute(Attributes.CXF_PASSKEY_CREDENTIAL_ID, passkey.encryptedCredentialId)
+        .encryptedAttribute(Attributes.CXF_PASSKEY_USER_HANDLE, passkey.encryptedUserHandle)
+        .encryptedAttribute(Attributes.CXF_ITEM_NOTE, passkey.encryptedNote)
+        .plainTextAttribute(Attributes.CXF_ITEM_HASH, passkey.hash)
+        .plainTextAttribute(Attributes.CXF_ITEM_FLAGGED_IGNORED, if (passkey.flaggedIgnored) "1" else "0")
+    endTag(Elements.IMPORTS_CXF_PASSKEY)
 }
