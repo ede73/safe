@@ -23,3 +23,5 @@ build/
 /app/google-services.json
 /desktop/exported_backup.xml
 .kotlin/
+xcuserdata/
+*.xcuserdata
