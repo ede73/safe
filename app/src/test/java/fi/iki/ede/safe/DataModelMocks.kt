@@ -138,59 +138,6 @@ object DataModelMocks {
 
         DBHelperFactory.initializeDatabase(db)
         mockkObject(GPMDB)
-
-        val mockSafeDb = mockkClass(fi.iki.ede.db.SafeDatabase::class)
-        val mockCxfAccountDao = mockkClass(fi.iki.ede.db.cxf.CxfAccountDao::class)
-        val mockCxfImportDao = mockkClass(fi.iki.ede.db.cxf.CxfImportDao::class)
-        val mockCxfPasskeyDao = mockkClass(fi.iki.ede.db.cxf.CxfPasskeyDao::class)
-
-        val cxfAccountsList = mutableListOf<fi.iki.ede.db.cxf.CXFAccount>()
-        val cxfImportsList = mutableListOf<fi.iki.ede.db.cxf.CXFImport>()
-        val cxfPasskeysList = mutableListOf<fi.iki.ede.db.cxf.CXFPasskey>()
-
-        coEvery { mockCxfAccountDao.getAll() } answers { cxfAccountsList.toList() }
-        coEvery { mockCxfAccountDao.getByCxfAccountId(any()) } answers {
-            val queryId = firstArg<String>()
-            cxfAccountsList.firstOrNull { it.cxfAccountId == queryId }
-        }
-        coEvery { mockCxfAccountDao.insert(any()) } answers {
-            val acc = firstArg<fi.iki.ede.db.cxf.CXFAccount>()
-            val newId = (cxfAccountsList.maxOfOrNull { it.id ?: 0L } ?: 0L) + 1L
-            val inserted = acc.copy(id = newId)
-            cxfAccountsList.add(inserted)
-            newId
-        }
-
-        coEvery { mockCxfImportDao.getAll() } answers { cxfImportsList.toList() }
-        coEvery { mockCxfImportDao.getByAccountId(any()) } answers {
-            val accId = firstArg<Long>()
-            cxfImportsList.filter { it.accountId == accId }
-        }
-        coEvery { mockCxfImportDao.insert(any()) } answers {
-            val item = firstArg<fi.iki.ede.db.cxf.CXFImport>()
-            val newId = (cxfImportsList.maxOfOrNull { it.id ?: 0L } ?: 0L) + 1L
-            val inserted = item.copy(id = newId)
-            cxfImportsList.add(inserted)
-            newId
-        }
-
-        coEvery { mockCxfPasskeyDao.getAll() } answers { cxfPasskeysList.toList() }
-        coEvery { mockCxfPasskeyDao.getByAccountId(any()) } answers {
-            val accId = firstArg<Long>()
-            cxfPasskeysList.filter { it.accountId == accId }
-        }
-        coEvery { mockCxfPasskeyDao.insert(any()) } answers {
-            val item = firstArg<fi.iki.ede.db.cxf.CXFPasskey>()
-            val newId = (cxfPasskeysList.maxOfOrNull { it.id ?: 0L } ?: 0L) + 1L
-            val inserted = item.copy(id = newId)
-            cxfPasskeysList.add(inserted)
-            newId
-        }
-
-        every { mockSafeDb.cxfAccountDao() } returns mockCxfAccountDao
-        every { mockSafeDb.cxfImportDao() } returns mockCxfImportDao
-        every { mockSafeDb.cxfPasskeyDao() } returns mockCxfPasskeyDao
-        every { db.database } returns mockSafeDb
         every { db.addSiteEntry(any<DecryptableSiteEntry>()) } answers { _ ->
             val id: DBID =
                 if (firstArg<DecryptableSiteEntry>().id != null) firstArg<DecryptableSiteEntry>().id!!
