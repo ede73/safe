@@ -176,7 +176,9 @@ class BackupDatabaseAndRestoreDatabaseTest {
         }
         unmockkObject(Clock.System)
         val out = finalBuffer.readUtf8()
-        Logger.d(TAG, out)
+        if (PASSWORD_ENCRYPTED_BACKUP_AT_1234.trimIndent().trim() != out.trimIndent().trim()) {
+            println("ACTUAL_NEW_BACKUP_HEX:\n" + out.trim())
+        }
         assertEquals(
             PASSWORD_ENCRYPTED_BACKUP_AT_1234.trimIndent().trim(),
             out.trimIndent().trim(),
