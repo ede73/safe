@@ -64,6 +64,7 @@ fun TopActionBar(
     val exportImport = remember { mutableStateOf(false) }
     val showChangePasswordDialog = remember { mutableStateOf(false) }
     val showTrashDialog = remember { mutableStateOf(false) }
+    val displayDeviceSyncDialog = remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     SafeTheme {
@@ -108,7 +109,8 @@ fun TopActionBar(
                 displayMenu,
                 exportImport,
                 showChangePasswordDialog,
-                showTrashDialog
+                showTrashDialog,
+                displayDeviceSyncDialog
             )
 
             if (showChangePasswordDialog.value) {
@@ -116,6 +118,25 @@ fun TopActionBar(
             }
             if (showTrashDialog.value) {
                 ShowTrashDialog(onDismiss = { showTrashDialog.value = false })
+            }
+            if (displayDeviceSyncDialog.value) {
+                val coroutineScope = rememberCoroutineScope()
+                DeviceSyncDialog(
+                    onDismissRequest = { displayDeviceSyncDialog.value = false },
+                    onStartSyncWithPin = { pin, isInitiator ->
+                        Logger.d(TAG, "Starting Device Sync with PIN: $pin (isInitiator=$isInitiator)")
+                        val fakePayload = fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper.createSampleFakeCxfPayload()
+                        fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper.processAndStoreCxfPayload(
+                            cxfJsonPayload = fakePayload,
+                            scope = coroutineScope,
+                            onMessage = { msg -> Logger.d(TAG, msg) },
+                            complete = { success, count ->
+                                Logger.d(TAG, "PIN sync complete: success=$success, count=$count")
+                                displayDeviceSyncDialog.value = false
+                            }
+                        )
+                    }
+                )
             }
         })
     }
@@ -163,6 +184,7 @@ private fun MakeDropdownMenu(
     exportImport: MutableState<Boolean>,
     showChangePasswordDialog: MutableState<Boolean>,
     showTrashDialog: MutableState<Boolean>,
+    displayDeviceSyncDialog: MutableState<Boolean>,
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -285,6 +307,13 @@ private fun MakeDropdownMenu(
                         )
                     })
             }
+            DropdownMenuItem(
+                text = { Text(text = "⚡ Device Sync (8-Digit PIN)") },
+                onClick = {
+                    displayMenu.value = false
+                    exportImport.value = false
+                    displayDeviceSyncDialog.value = true
+                })
             IntentManager.getMenuItems(DropDownMenu.TopActionBarImportExportMenu).forEach {
                 DropdownMenuItem(text = { Text(text = stringResource(id = it.first)) }, onClick = {
                     displayMenu.value = false
