@@ -33,6 +33,7 @@ import fi.iki.ede.safe.ui.composable.AddOrEditCategory
 import fi.iki.ede.safe.ui.composable.CategoryRow
 import fi.iki.ede.safe.ui.composable.SiteEntryList
 import fi.iki.ede.safe.ui.composable.TopActionBar
+import fi.iki.ede.safe.ui.utils.streamSortedSiteEntries
 import fi.iki.ede.theme.SafeTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -83,11 +84,9 @@ private fun CategoryListScreenPagedCompose(
         ) {
             HorizontalPager(state = pagerState) { page ->
                 val category = categoriesState[page]
+
                 val passwordsState by remember(category.id) {
-                    siteEntriesStateFlow
-                        .map { passwords -> passwords.filter { it.categoryId == category.id } }
-                        .map { passwords -> passwords.sortedBy { it.plainDescription.lowercase() } }
-                        .flowOn(Dispatchers.Default)
+                    siteEntriesStateFlow.streamSortedSiteEntries(category.id)
                 }.collectAsState(initial = emptyList())
                 Column(modifier = Modifier.fillMaxSize()) {
                     TopActionBar(onAddRequested = { displayAddCategoryDialog.value = true })

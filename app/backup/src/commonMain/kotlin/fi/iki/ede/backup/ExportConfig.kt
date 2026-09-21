@@ -30,6 +30,10 @@ abstract class ExportConfig(currentCodedVersion: ExportVersion) {
             IMPORTS("imports"),
             IMPORTS_GPM("gpm"),
             IMPORTS_GPM_ITEM("gpmitem"),
+            IMPORTS_CXF("cxf"),
+            IMPORTS_CXF_ACCOUNT("cxfaccount"),
+            IMPORTS_CXF_IMPORT("cxfimport"),
+            IMPORTS_CXF_PASSKEY("cxfpasskey"),
         }
 
         enum class Attributes(val value: String) {
@@ -49,6 +53,22 @@ abstract class ExportConfig(currentCodedVersion: ExportVersion) {
             IMPORTS_GPM_ITEM_NOTE("note"),
             IMPORTS_GPM_ITEM_HASH("hash"),
             IMPORTS_GPM_ITEM_STATUS("status"),
+            CXF_ACCOUNT_ID("cxf_account_id"),
+            CXF_ACCOUNT_EMAIL("email"),
+            CXF_ITEM_ID("cxf_item_id"),
+            CXF_ITEM_TYPE("type"),
+            CXF_ITEM_NAME("name"),
+            CXF_ITEM_URL("url"),
+            CXF_ITEM_USERNAME("username"),
+            CXF_ITEM_PASSWORD("password"),
+            CXF_ITEM_NOTE("note"),
+            CXF_ITEM_HASH("hash"),
+            CXF_ITEM_FLAGGED_IGNORED("flagged_ignored"),
+            CXF_PASSKEY_RELYING_PARTY("relying_party"),
+            CXF_PASSKEY_USER_NAME("user_name"),
+            CXF_PASSKEY_USER_DISPLAY_NAME("user_display_name"),
+            CXF_PASSKEY_USER_HANDLE("user_handle"),
+            CXF_PASSKEY_CREDENTIAL_ID("credential_id"),
         }
     }
 }

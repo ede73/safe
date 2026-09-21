@@ -17,6 +17,9 @@ import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBID
 import fi.iki.ede.gpm.model.*
+import fi.iki.ede.db.cxf.CXFAccount
+import fi.iki.ede.db.cxf.CXFImport
+import fi.iki.ede.db.cxf.CXFPasskey
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseRecordException
 import kotlinx.coroutines.CancellationException
@@ -72,7 +75,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
             val masterKey = decryptMasterKey(salt, encryptedMasterKey, userPassword)
 
             val ivBackup = line4.hexToByteArray()
-            val cipherMasterLine2 = bufferedSource.readUtf8Line() ?: throw IllegalArgumentException("Missing backup data ciphertext")
+            val cipherMasterLine2 = (bufferedSource.readUtf8Line() ?: throw IllegalArgumentException("Missing backup data ciphertext")).trim()
             val cipherBackup = cipherMasterLine2.hexToByteArray()
 
             val helper = KeyStoreHelperFactory.getKeyStoreHelper()
@@ -143,6 +146,9 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         val readGPMMapsToPasswords: MutableMap<Long, Set<Long>> = mutableMapOf()
         var passwords = 0
         var categories = 0
+        val restoredCxfAccounts = mutableListOf<CXFAccount>()
+        val restoredCxfImports = mutableListOf<Pair<String, CXFImport>>()
+        val restoredCxfPasskeys = mutableListOf<Pair<String, CXFPasskey>>()
         while (myParser.eventType != XmlPullParser.END_DOCUMENT) {
             when (myParser.eventType) {
                 XmlPullParser.START_TAG -> {
@@ -186,6 +192,85 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                     throw CancellationException()
                                 }
                             }
+                        }
+
+                        listOf(
+                            Elements.ROOT_PASSWORD_SAFE,
+                            Elements.IMPORTS,
+                            Elements.IMPORTS_CXF,
+                            Elements.IMPORTS_CXF_ACCOUNT
+                        ) -> {
+                            val cxfAccountId = myParser.getTrimmedAttributeValue(Attributes.CXF_ACCOUNT_ID)
+                            val emailIvCipher = myParser.getEncryptedAttribute(Attributes.CXF_ACCOUNT_EMAIL)
+                            if (cxfAccountId.isNotBlank()) {
+                                restoredCxfAccounts.add(CXFAccount(cxfAccountId = cxfAccountId, encryptedEmail = emailIvCipher))
+                            }
+                        }
+
+                        listOf(
+                            Elements.ROOT_PASSWORD_SAFE,
+                            Elements.IMPORTS,
+                            Elements.IMPORTS_CXF,
+                            Elements.IMPORTS_CXF_IMPORT
+                        ) -> {
+                            val accCxfId = myParser.getTrimmedAttributeValue(Attributes.CXF_ACCOUNT_ID)
+                            val cxfItemId = myParser.getEncryptedAttribute(Attributes.CXF_ITEM_ID)
+                            val type = myParser.getTrimmedAttributeValue(Attributes.CXF_ITEM_TYPE)
+                            val name = myParser.getEncryptedAttribute(Attributes.CXF_ITEM_NAME)
+                            val url = myParser.getEncryptedAttribute(Attributes.CXF_ITEM_URL)
+                            val username = myParser.getEncryptedAttribute(Attributes.CXF_ITEM_USERNAME)
+                            val password = myParser.getEncryptedAttribute(Attributes.CXF_ITEM_PASSWORD)
+                            val note = myParser.getEncryptedAttribute(Attributes.CXF_ITEM_NOTE)
+                            val hash = myParser.getTrimmedAttributeValue(Attributes.CXF_ITEM_HASH)
+                            val flaggedIgnored = myParser.getTrimmedAttributeValue(Attributes.CXF_ITEM_FLAGGED_IGNORED) == "1"
+
+                            val item = CXFImport(
+                                accountId = 0L,
+                                encryptedCxfItemId = cxfItemId,
+                                type = type.ifBlank { "password" },
+                                encryptedName = name,
+                                encryptedUrl = url,
+                                encryptedUsername = username,
+                                encryptedPassword = password,
+                                encryptedNote = note,
+                                hash = hash,
+                                flaggedIgnored = flaggedIgnored
+                            )
+                            restoredCxfImports.add(accCxfId to item)
+                        }
+
+                        listOf(
+                            Elements.ROOT_PASSWORD_SAFE,
+                            Elements.IMPORTS,
+                            Elements.IMPORTS_CXF,
+                            Elements.IMPORTS_CXF_PASSKEY
+                        ) -> {
+                            val accCxfId = myParser.getTrimmedAttributeValue(Attributes.CXF_ACCOUNT_ID)
+                            val cxfItemId = myParser.getEncryptedAttribute(Attributes.CXF_ITEM_ID)
+                            val rpId = myParser.getTrimmedAttributeValue(Attributes.CXF_PASSKEY_RELYING_PARTY)
+                            val name = myParser.getEncryptedAttribute(Attributes.CXF_ITEM_NAME)
+                            val url = myParser.getEncryptedAttribute(Attributes.CXF_ITEM_URL)
+                            val username = myParser.getEncryptedAttribute(Attributes.CXF_ITEM_USERNAME)
+                            val credId = myParser.getEncryptedAttribute(Attributes.CXF_PASSKEY_CREDENTIAL_ID)
+                            val uHandle = myParser.getEncryptedAttribute(Attributes.CXF_PASSKEY_USER_HANDLE)
+                            val note = myParser.getEncryptedAttribute(Attributes.CXF_ITEM_NOTE)
+                            val hash = myParser.getTrimmedAttributeValue(Attributes.CXF_ITEM_HASH)
+                            val flaggedIgnored = myParser.getTrimmedAttributeValue(Attributes.CXF_ITEM_FLAGGED_IGNORED) == "1"
+
+                            val passkey = CXFPasskey(
+                                accountId = 0L,
+                                encryptedCxfItemId = cxfItemId,
+                                rpId = rpId,
+                                encryptedName = name,
+                                encryptedUrl = url,
+                                encryptedUsername = username,
+                                encryptedCredentialId = credId,
+                                encryptedUserHandle = uHandle,
+                                encryptedNote = note,
+                                hash = hash,
+                                flaggedIgnored = flaggedIgnored
+                            )
+                            restoredCxfPasskeys.add(accCxfId to passkey)
                         }
 
                         listOf(
@@ -391,6 +476,48 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                         "Failed to store deleted site entry",
                                         ex
                                     )
+                                }
+                            }
+
+                            if (restoredCxfAccounts.isNotEmpty() || restoredCxfImports.isNotEmpty() || restoredCxfPasskeys.isNotEmpty()) {
+                                val cxfDb = dbHelper.database
+                                kotlinx.coroutines.runBlocking {
+                                    val existingAccounts = cxfDb.cxfAccountDao().getAll().associateBy { it.cxfAccountId }
+                                    val accountCxfIdToDbId = mutableMapOf<String, Long>()
+
+                                    for (acc in restoredCxfAccounts) {
+                                        val dbId = existingAccounts[acc.cxfAccountId]?.id
+                                            ?: cxfDb.cxfAccountDao().insert(acc)
+                                        accountCxfIdToDbId[acc.cxfAccountId] = dbId
+                                    }
+
+                                    restoredCxfImports.groupBy { it.first }.forEach { (accCxfId, items) ->
+                                        val dbAccId = accountCxfIdToDbId[accCxfId] ?: return@forEach
+                                        val existingHashes = cxfDb.cxfImportDao().getByAccountId(dbAccId).mapTo(HashSet()) { it.hash }
+                                        val toInsert = mutableListOf<CXFImport>()
+                                        for ((_, item) in items) {
+                                            if (existingHashes.add(item.hash)) {
+                                                toInsert.add(item.copy(accountId = dbAccId))
+                                            }
+                                        }
+                                        if (toInsert.isNotEmpty()) {
+                                            cxfDb.cxfImportDao().insertAll(toInsert)
+                                        }
+                                    }
+
+                                    restoredCxfPasskeys.groupBy { it.first }.forEach { (accCxfId, passkeys) ->
+                                        val dbAccId = accountCxfIdToDbId[accCxfId] ?: return@forEach
+                                        val existingHashes = cxfDb.cxfPasskeyDao().getByAccountId(dbAccId).mapTo(HashSet()) { it.hash }
+                                        val toInsert = mutableListOf<CXFPasskey>()
+                                        for ((_, passkey) in passkeys) {
+                                            if (existingHashes.add(passkey.hash)) {
+                                                toInsert.add(passkey.copy(accountId = dbAccId))
+                                            }
+                                        }
+                                        if (toInsert.isNotEmpty()) {
+                                            cxfDb.cxfPasskeyDao().insertAll(toInsert)
+                                        }
+                                    }
                                 }
                             }
 

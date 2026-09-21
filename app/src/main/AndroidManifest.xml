@@ -18,7 +18,7 @@
         android:required="false" />
 
     <application
-        android:name=".SafeApplication"
+        android:name="fi.iki.ede.safe.SafeApplication"
         android:allowClearUserData="true"
         android:enableOnBackInvokedCallback="true"
         android:enabled="true"
@@ -28,21 +28,21 @@
         tools:targetApi="33">
         <!-- Keep this AppCompat theme, helps with buggy window title coloring -->
         <activity
-            android:name=".ui.activities.BiometricsActivity"
+            android:name="fi.iki.ede.safe.ui.activities.BiometricsActivity"
             android:exported="false"
             android:theme="@style/Theme.Safe.AppCompat" />
         <activity
-            android:name=".ui.activities.CategoryListScreen"
+            android:name="fi.iki.ede.safe.ui.activities.CategoryListScreen"
             android:exported="true"
             android:label="@string/title_activity_category_screen" />
 
         <activity
-            android:name=".ui.activities.HelpScreen"
+            android:name="fi.iki.ede.safe.ui.activities.HelpScreen"
             android:exported="false"
             android:label="@string/title_activity_help_screen" />
 
         <activity
-            android:name=".ui.activities.LoginScreen"
+            android:name="fi.iki.ede.safe.ui.activities.LoginScreen"
             android:exported="false" />
 
         <!-- just used as a launcher - no backup icon -->
@@ -52,7 +52,7 @@
             android:exported="true"
             android:icon="@drawable/ic_launcher_safe"
             android:label="@string/application_name"
-            android:targetActivity=".ui.activities.CategoryListScreen">
+            android:targetActivity="fi.iki.ede.safe.ui.activities.CategoryListScreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -69,7 +69,7 @@
             android:exported="true"
             android:icon="@drawable/ic_launcher_safe_backup_now"
             android:label="@string/application_name"
-            android:targetActivity=".ui.activities.CategoryListScreen">
+            android:targetActivity="fi.iki.ede.safe.ui.activities.CategoryListScreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -80,32 +80,32 @@
         </activity-alias>
 
         <activity
-            android:name=".ui.activities.PreferenceActivity"
+            android:name="fi.iki.ede.safe.ui.activities.PreferenceActivity"
             android:exported="false"
             android:theme="@style/Theme.Safe.AppCompat" />
         <activity
-            android:name=".ui.activities.SiteEntryEditScreen"
+            android:name="fi.iki.ede.safe.ui.activities.SiteEntryEditScreen"
             android:exported="false"
             android:label="@string/title_activity_password_entry_screen" />
         <activity
-            android:name=".ui.activities.SiteEntryListScreen"
+            android:name="fi.iki.ede.safe.ui.activities.SiteEntryListScreen"
             android:exported="false"
             android:label="@string/title_activity_password_screen" />
         <activity
-            android:name=".ui.activities.SiteEntrySearchScreen"
+            android:name="fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen"
             android:exported="false"
             android:label="@string/title_activity_password_search_screen"
             android:windowSoftInputMode="stateVisible" />
         <activity
-            android:name=".ui.activities.RestoreDatabaseScreen"
+            android:name="fi.iki.ede.safe.ui.activities.RestoreDatabaseScreen"
             android:exported="false"
             android:label="@string/title_activity_restore_screen" />
         <activity
-            android:name=".ui.activities.BackupDatabaseScreen"
+            android:name="fi.iki.ede.safe.ui.activities.BackupDatabaseScreen"
             android:exported="false"
             android:label="@string/title_activity_restore_screen" />
         <activity
-            android:name=".ui.activities.ExportCredentialsActivity"
+            android:name="fi.iki.ede.safe.ui.activities.ExportCredentialsActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="androidx.credentials.providerevents.action.EXPORT_CREDENTIALS" />

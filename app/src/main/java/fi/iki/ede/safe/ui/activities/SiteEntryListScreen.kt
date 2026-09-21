@@ -17,6 +17,7 @@ import fi.iki.ede.datamodel.DataModel.siteEntriesStateFlow
 import fi.iki.ede.safe.notifications.SetupNotifications
 import fi.iki.ede.safe.ui.composable.DualModePreview
 import fi.iki.ede.safe.ui.composable.SiteEntryListCompose
+import fi.iki.ede.safe.ui.utils.streamSortedSiteEntries
 import androidx.compose.runtime.remember
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filterNotNull
@@ -39,13 +40,11 @@ class SiteEntryListScreen :
         require(categoryId != -1L) { "You have to pass a proper category" }
         SetupNotifications.setup(this)
         val category = DataModel.categoriesStateFlow.value.first { it.id == categoryId }
+
         setContent {
             val context = LocalContext.current
             val siteEntriesState by remember(categoryId) {
-                siteEntriesStateFlow
-                    .map { passwords -> passwords.filter { it.categoryId == categoryId } }
-                    .map { passwords -> passwords.sortedBy { it.plainDescription.lowercase() } }
-                    .flowOn(Dispatchers.Default)
+                siteEntriesStateFlow.streamSortedSiteEntries(categoryId)
             }.collectAsState(initial = emptyList())
 
             SiteEntryListCompose(context, category, siteEntriesState)

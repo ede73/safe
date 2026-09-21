@@ -94,9 +94,24 @@ class DBHelper(
     }
 
     fun fetchAllCategoryRows(categoriesFlow: MutableStateFlow<List<DecryptableCategoryEntry>>? = null): List<DecryptableCategoryEntry> = runBlocking {
-        val categories = database.categoryDao().getAll()
+        val categories = database.categoryDao().getAll().toMutableList()
+        val cxfAccounts = database.cxfAccountDao().getAll()
+        val cxfImports = database.cxfImportDao().getAll()
+        val cxfPasskeys = database.cxfPasskeyDao().getAll()
+
+        for (account in cxfAccounts) {
+            val accountId = account.id ?: continue
+            val syntheticCat = fi.iki.ede.db.cxf.CxfSyntheticModelMapper.toSyntheticCategory(account)
+            val importCount = cxfImports.count { it.accountId == accountId }
+            val passkeyCount = cxfPasskeys.count { it.accountId == accountId }
+            syntheticCat.containedSiteEntryCount = importCount + passkeyCount
+            categories.add(syntheticCat)
+        }
+
         categories.forEach { category ->
-            category.containedSiteEntryCount = database.siteEntryDao().getByCategory(category.id!!).size
+            if (!fi.iki.ede.db.cxf.CxfSyntheticModelMapper.isSyntheticId(category.id)) {
+                category.containedSiteEntryCount = database.siteEntryDao().getByCategory(category.id!!).size
+            }
         }
         if (categoriesFlow != null) {
             categoriesFlow.value = categories
@@ -120,26 +135,73 @@ class DBHelper(
         softDeletedOnly: Boolean = false,
         siteEntriesFlow: MutableStateFlow<List<DecryptableSiteEntry>>? = null
     ): List<DecryptableSiteEntry> = runBlocking {
-        val list = if (categoryId != null) {
-            if (softDeletedOnly) {
-                database.siteEntryDao().getByCategorySoftDeleted(categoryId)
-            } else {
-                database.siteEntryDao().getByCategory(categoryId)
+        val list = mutableListOf<DecryptableSiteEntry>()
+        if (categoryId != null && fi.iki.ede.db.cxf.CxfSyntheticModelMapper.isSyntheticId(categoryId)) {
+            val cxfAccountId = fi.iki.ede.db.cxf.DecryptableCXFCategoryEntry.CATEGORY_ID_OFFSET - categoryId
+            if (!softDeletedOnly && cxfAccountId > 0L) {
+                val imports = database.cxfImportDao().getByAccountId(cxfAccountId)
+                val passkeys = database.cxfPasskeyDao().getByAccountId(cxfAccountId)
+                list.addAll(imports.map { fi.iki.ede.db.cxf.CxfSyntheticModelMapper.toSyntheticSiteEntry(it, cxfAccountId) })
+                list.addAll(passkeys.map { fi.iki.ede.db.cxf.CxfSyntheticModelMapper.toSyntheticSiteEntry(it, cxfAccountId) })
             }
         } else {
-            if (softDeletedOnly) {
-                database.siteEntryDao().getAllSoftDeleted()
+            val dbList = if (categoryId != null) {
+                if (softDeletedOnly) {
+                    database.siteEntryDao().getByCategorySoftDeleted(categoryId)
+                } else {
+                    database.siteEntryDao().getByCategory(categoryId)
+                }
             } else {
-                database.siteEntryDao().getAllActive()
+                if (softDeletedOnly) {
+                    database.siteEntryDao().getAllSoftDeleted()
+                } else {
+                    database.siteEntryDao().getAllActive()
+                }
+            }
+            list.addAll(dbList)
+            if (categoryId == null && !softDeletedOnly) {
+                val cxfAccounts = database.cxfAccountDao().getAll()
+                for (account in cxfAccounts) {
+                    val accountId = account.id ?: continue
+                    val imports = database.cxfImportDao().getByAccountId(accountId)
+                    val passkeys = database.cxfPasskeyDao().getByAccountId(accountId)
+                    list.addAll(imports.map { fi.iki.ede.db.cxf.CxfSyntheticModelMapper.toSyntheticSiteEntry(it, accountId) })
+                    list.addAll(passkeys.map { fi.iki.ede.db.cxf.CxfSyntheticModelMapper.toSyntheticSiteEntry(it, accountId) })
+                }
             }
         }
+        val sorted = list.sortedBy { it.plainDescription.lowercase() }
         if (siteEntriesFlow != null) {
-            siteEntriesFlow.value = list
+            siteEntriesFlow.value = sorted
         }
-        list
+        sorted
     }
 
     fun updateSiteEntry(entry: DecryptableSiteEntry): DBID = runBlocking {
+        if (entry is fi.iki.ede.db.cxf.DecryptableCXFSiteEntry) {
+            if (entry.cxfImport != null) {
+                val updated = entry.cxfImport.copy(
+                    encryptedName = entry.description,
+                    encryptedUsername = entry.username,
+                    encryptedPassword = entry.password,
+                    encryptedUrl = entry.website,
+                    encryptedNote = entry.note,
+                    modifiedAt = kotlin.time.Clock.System.now().toEpochMilliseconds()
+                )
+                database.cxfImportDao().update(updated)
+                return@runBlocking entry.id!!
+            } else if (entry.cxfPasskey != null) {
+                val updated = entry.cxfPasskey.copy(
+                    encryptedName = entry.description,
+                    encryptedUsername = entry.username,
+                    encryptedUrl = entry.website,
+                    encryptedNote = entry.note,
+                    modifiedAt = kotlin.time.Clock.System.now().toEpochMilliseconds()
+                )
+                database.cxfPasskeyDao().update(updated)
+                return@runBlocking entry.id!!
+            }
+        }
         require(entry.id != null) { "Cannot update SiteEntry without ID" }
         database.siteEntryDao().getPhotoFilenameById(entry.id!!)?.let { deletePhoto(it) }
         entry.photoFilename = savePhoto(entry.photo)
@@ -219,6 +281,9 @@ class DBHelper(
                 database.keyDao().clear()
                 database.gpmDao().deleteAll()
                 database.siteEntryGPMJoinDao().deleteAll()
+                database.cxfAccountDao().deleteAll()
+                database.cxfImportDao().deleteAll()
+                database.cxfPasskeyDao().deleteAll()
             } catch (e: Exception) {
                 endTransaction()
                 throw e
@@ -241,6 +306,9 @@ class DBHelper(
             database.siteEntryDao().getAllSoftDeleted().forEach { database.siteEntryDao().deleteById(it.id!!) }
             database.gpmDao().deleteAll()
             database.siteEntryGPMJoinDao().deleteAll()
+            database.cxfAccountDao().deleteAll()
+            database.cxfImportDao().deleteAll()
+            database.cxfPasskeyDao().deleteAll()
         }
     }
 }
