@@ -9,8 +9,14 @@ import fi.iki.ede.crypto.KeystoreHelperMock4UnitTests
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.crypto.keystore.IKeyStoreHelper
+import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 import fi.iki.ede.crypto.keystore.KMPKey
 import fi.iki.ede.crypto.keystore.KMPSecretKeySpec
+import fi.iki.ede.crypto.keystore.KeyManagement
+import fi.iki.ede.crypto.keystore.CipherUtilities
+import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.bytes
+import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_ITERATION_COUNT
+import fi.iki.ede.crypto.keystore.CipherUtilities.Companion.KEY_LENGTH_BITS
 import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelper
@@ -39,6 +45,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import okio.Buffer
+import okio.sink
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -507,12 +514,31 @@ class BackupDatabaseAndRestoreDatabaseTest {
             }
         }
 
-        override var encrypterProviderWithKey: (ByteArray, KMPKey) -> IVCipherText = { _, _ ->
-            throw NotImplementedError()
+        override var encrypterProviderWithKey: (ByteArray, KMPKey) -> IVCipherText = { plaintext, key ->
+            val iv = CipherUtilities.generateRandomBytes(CipherUtilities.IV_LENGTH.bytes)
+            val keyBytes = when (key) {
+                is KMPSecretKeySpec -> key.values
+                is SecretKeySpec -> key.encoded
+                else -> throw IllegalArgumentException("Unsupported key type: ${key::class}")
+            }
+            val cipherText = korlibs.crypto.AES.encryptAesCbc(
+                plaintext,
+                keyBytes,
+                iv,
+                korlibs.crypto.Padding.PKCS7Padding
+            )
+            IVCipherText(iv, cipherText)
         }
 
-        override var encrypterProvider: (ByteArray) -> IVCipherText = { _ ->
-            throw NotImplementedError()
+        override var encrypterProvider: (ByteArray) -> IVCipherText = { plaintext ->
+            val iv = CipherUtilities.generateRandomBytes(CipherUtilities.IV_LENGTH.bytes)
+            val cipherText = korlibs.crypto.AES.encryptAesCbc(
+                plaintext,
+                masterKey.values,
+                iv,
+                korlibs.crypto.Padding.PKCS7Padding
+            )
+            IVCipherText(iv, cipherText)
         }
     }
 
@@ -765,10 +791,10 @@ class BackupDatabaseAndRestoreDatabaseTest {
 
     @Test
     fun testCleanDomainNameAndCxfSyntheticMapping() {
-        assertEquals("amazon.com", fi.iki.ede.db.cxf.DecryptableGPMSiteEntry.cleanDomainName("https://www.amazon.com/ap/signin"))
-        assertEquals("github.com", fi.iki.ede.db.cxf.DecryptableGPMSiteEntry.cleanDomainName("http://github.com/login"))
-        assertEquals("nordea.fi", fi.iki.ede.db.cxf.DecryptableGPMSiteEntry.cleanDomainName("www.nordea.fi"))
-        assertEquals("Google Account", fi.iki.ede.db.cxf.DecryptableGPMSiteEntry.cleanDomainName("Google Account"))
+        assertEquals("www.amazon.com", fi.iki.ede.db.cxf.DecryptableCXFSiteEntry.cleanDomainName("https://www.amazon.com/ap/signin"))
+        assertEquals("github.com", fi.iki.ede.db.cxf.DecryptableCXFSiteEntry.cleanDomainName("http://github.com/login"))
+        assertEquals("www.nordea.fi", fi.iki.ede.db.cxf.DecryptableCXFSiteEntry.cleanDomainName("www.nordea.fi"))
+        assertEquals("Google Account", fi.iki.ede.db.cxf.DecryptableCXFSiteEntry.cleanDomainName("Google Account"))
 
         val cxfImport = fi.iki.ede.db.cxf.CXFImport(
             id = 1L,
@@ -782,11 +808,66 @@ class BackupDatabaseAndRestoreDatabaseTest {
             note = "my note",
             hash = "hash1"
         )
-        val syntheticEntry = fi.iki.ede.db.cxf.DecryptableGPMSiteEntry.makeFromImport(10L, cxfImport)
-        assertEquals("amazon.com", syntheticEntry.plainDescription)
+        val syntheticEntry = fi.iki.ede.db.cxf.DecryptableCXFSiteEntry.makeFromImport(10L, cxfImport)
+        assertEquals("www.amazon.com", syntheticEntry.plainDescription)
         assertEquals("https://www.amazon.com/ap/signin", syntheticEntry.plainWebsite)
         assertEquals("ede@iki.fi", syntheticEntry.plainUsername)
         assertEquals("secretpassword", syntheticEntry.plainPassword)
+    }
+
+    @Test
+    fun testDecScriptIntegration() {
+        val backupPassword = Password("secret")
+        val testSalt = Salt("9b90e143578bdbe7".hexToByteArray())
+        val derivedKey = KeyManagement.generatePBKDF2AESKey(
+            testSalt,
+            KEY_ITERATION_COUNT,
+            backupPassword,
+            KEY_LENGTH_BITS
+        )
+        val (unencryptedKey, cipheredKey) = KeyManagement.makeFreshNewKey(KEY_LENGTH_BITS, derivedKey)
+        dbHelper.storeSaltAndEncryptedMasterKey(testSalt, cipheredKey)
+
+        KeyStoreHelperFactory.provideKeyStoreHelper = KmpKeyStoreHelper(unencryptedKey)
+        every { KeyStoreHelperFactory.getKeyStoreHelper } returns { KmpKeyStoreHelper(unencryptedKey) }
+
+        val backupFile = File.createTempFile("test_backup", ".xml")
+        try {
+            val buf = okio.Buffer()
+            val cat = DecryptableCategoryEntry().apply {
+                id = 1L
+                encryptedName = IVCipherText(byteArrayOf(), "Personal".encodeToByteArray())
+            }
+            val site = DecryptableSiteEntry(1L).apply {
+                id = 100L
+                description = IVCipherText(byteArrayOf(), "Amazon".encodeToByteArray())
+                website = IVCipherText(byteArrayOf(), "https://amazon.com".encodeToByteArray())
+            }
+            BackupDatabase.backup(
+                categoriesList = listOf(cat),
+                softDeletedEntries = emptySet(),
+                getSiteEntriesOfCategory = { listOf(site) },
+                siteEntryGPMMappings = emptyMap(),
+                allSavedGPMs = emptySet(),
+                finalSink = buf
+            )
+            backupFile.writeBytes(buf.readByteArray())
+
+            assertTrue(backupFile.exists() && backupFile.length() > 0)
+
+            // Test executing docs/dec.sh script
+            val decScript = File("../docs/dec.sh").canonicalPath
+            val pb = ProcessBuilder("bash", decScript, backupFile.absolutePath, "secret")
+            val process = pb.start()
+            val stdout = process.inputStream.bufferedReader().readText()
+            val stderr = process.errorStream.bufferedReader().readText()
+            val exitCode = process.waitFor()
+
+            assertEquals(0, exitCode, "dec.sh failed with exitCode=$exitCode.\nSTDOUT:\n$stdout\nSTDERR:\n$stderr")
+            assertTrue(stdout.contains("PasswordSafe"), "Decrypted output should contain PasswordSafe root tag, got:\n$stdout")
+        } finally {
+            backupFile.delete()
+        }
     }
 
     companion object {
@@ -856,6 +937,36 @@ ${cipheredMasterKey.iv.toHexString()}
 ${cipheredMasterKey.cipherText.toHexString()}
 0102030405060708090a0b0c0d0e0f10
 3d5262777671687a6d596a6a682e797573716a6b6b3b25392b2a687e686f7b75653f21353735332a3736686d796b687f737b236d73596969646f362e3d3f3f22313133303533373e393d3b343d373f71316033673562376d396c3a3c2f2e6c79716a66765a6866656c37293a39386c26313535336631313f3a3c6f3a6938362660353b3766243934607e6e612d474b2d233332263b3a636d7a6979657d7a667f6f226a723824373939383b3f3d3a3f2531343333353e3731396b3b6e3d6d3f7431673362343625363f3e3d6f3b3e3a72373335373232316a3a32386e31216b757261716d75726e676734377b686c7c797567236d733b2538383a393c3e3e3b203432353432363f38303a6a3c6f3e6c20653266346337372a373c3f3a6e383f25633531323630323b3039333022796a72726b77613b3a727b6c78656d606b2f79773f2134343635383a3a3f3c383e392036323b343c3666386b3a683c693e6a20673333263b30333e6a3c3b396f393f273434313364353f3b6b3624797e6b7d7e606f663a3976667b7a7d647e692e6c78606c6461613b25313d3c3d3f3d373d2323226a723824373939383b3f3d3a3f2531343333353e3731396b3b6e3d6d3f7431673362343625363f3e3d6f3b3e3a7236373435333534313a3237237d6f7c63766d71603b3a69677d6f2b657b332d2030323134363633383c3a3d3c3a3e372038326234673664386d3a6e3c6b3f3f323f3437326630373d6b3c693a34393c2665313b37673a2866667e6e3231216664646f3d386c72626529434f312f3f3d323f3e676176657561797e6263632e66663c2033353534373b393e3b393d383f27313a333d3567376a39693b683d6b3f763032213a3332316b3f3a3e6e3b3f392336363566363e343035256f697e6d7d7971766a6b6b383b7f6c687865796b2f79773f2134343635383a3a3f3c383e392036323b343c3666386b3a683c693e6a20673333263b30333e6a3c3b396f393d26323436373c356534267d6e6e7e677b753f3e767760746969646f2b657b332d2030323134363633383c3a3d3c3a3e372038326234673664386d3a6e3c6b3f3f323f3437326630373d6b3d3b3b38383d2760313b373d3a287d7a6f79626c636a2e3d7262777671687a6d2a627a302c3f21313033373532373d393c3b3b3d363f29316333663565376c396f3b6a3c3e2d2e373635673336326a3e3f3c3d3b3d3c2932603f2b7567747b7e6579683332617f7567236d733b2538383a393c3e3e3b203432353432363f38303a6a3c6f3e6c20653266346337372a373c3f3a6e383f25633461323c31343e6d39333f3532207e6e76663a39296e7c6c673530226d6e6464656c767c383b6b687e6e6b627c763068745c6a646b62352b3a3a3c3f3e3c203532363433363038313a323c6c3e6d20623267346036613939282b6f647e6775735d6d6568633a2a3f3e3d6f3b3e3826366134323235316c3f6e3d353b6f38283264213a396f736d642a4248302c3d21233c3f606075647a607a7f6562602f79773f2134343635383a3a3f3c383e392036323b343c3666386b3a683c693e6a20673333263b30333e6a3c3b396f383e26323537326735653b6b362468687d6c626872776d6a6839347e6f697f647a6a3068743e263537373a39393b383d3b3f263135333c353f376939683b6f3d6a3f75316432342738313c3f693d3c386c3822373135313667343035257c696f7d6664643c3f717663756668676e2c64783232313333363535373c393f3b3a3d393f28313b33653564376b396e3b693d683e20233c3530336531383c683c3c3a3b39223663306636643b277c796e7e636f62753f3e7365767570677b6e2b657b332d2030323134363633383c3a3d3c3a3e372038326234673664386d3a6e3c6b3f3f323f3437326630373d6b3d3e3b3c383c2360313b382a76667b7a7d647e6930337e6e7666246c703a2a393b3b3e3d3d3f24313733323531373039333b6d3d6c3f7331663361356036382b343d383b6d392034603566333f303b3f6e386e3e6c333f6f6d77613b3a28617d6f663231677b756c224a403824353a2b343768687d6c626872776d6a6827617f37293c3c3e3d2032323734303631383e3a333c343e6e2063326034613662386f3b3b2e33383b26623433316730363e3a3d3f3a6f3d6d23393e2c606075647a607a7f656260312c766761776c726228607c362e3d3f3f22313133303533373e393d3b343d373f71316033673562376d396c3a3c2f303924376135343064303a3f393d393e6f3c723d2d746167756e7c6c3437797e6b7d7e606f66246c703a2a393b3b3e3d3d3f24313733323531373039333b6d3d6c3f7331663361356036382b343d383b6d3920346034343233313a3e6b386e3e36333f747166766b676a6d37367b6d7e7d787f7366236d733b2538383a393c3e3e3b203432353432363f38303a6a3c6f3e6c20653266346337372a373c3f3a6e383f25633536333430343b68396930227e6e6372756c7661383b66667e6e2c64783232313333363535373c393f3b3a3d393f28313b33653564376b396e3b693d683e20233c3530336531383c683d6e3b37382337663066363e3b2767657f693332207975676e3a392964697d6f6c637f77312c686f736b777274363569736a33326c68676360676a73697c2969736a526f6c736e776d705a6f63352b6b686f20666a682c3321246c70586d646b6260302c3f21313033373532373d393c3b3b3d363f29316333663565376c396f3b6a3c3e2d30626b736c6074586d646b6260302c39243761353432302527373668746b6762606e707724667e61576869686378607b4f68663e2664656425616f73213c2c2f79775d607c63596e7c6c67546569332d2030323134363633383c3a3d3c3a3e372038326234673664386d3a6e3c6b3f3f3221616a746d6375576a726d53647a6a7d5e6b67392735363b39393a2e2d7a7660643f21746475747f66786f2e2d67794f6f636e613824373939383b3f3d3a3f2531343333353e3731396b3b6e3d6d3f7431673362343625286a637b64687c507e606f66392730613e3a3c6e3a3c2c2f79775d7676693b2538383a393c3e3e3b203432353432363f38303a6a3c6f3e6c20653266346337372a2969627c656b7d4f74706f392731313e3e3c3a2e2d67794f747166766b676a6d34283b3d3d3c3f23313633313530373f39323b353d6f3f72316133603563376e383a292c6e677f7864705c717663756668676e312f393b2730343533332427617f557b6d7e7d787f73663e263537373a39393b383d3b3f263135333c353f376939683b6f3d6a3f75316432342726646179626e7e527e6e6372756c76613b253f383c383b3d39382733343a333030642a29637d5363617b753c2033353534373b393e3b393d383f27313a333d3567376a39693b683d6b3f7630322124666f77606c785462627a6a2d233465326131303e38282b646c7d672d236a667c28657f6e24626a7f65233e3221646f656261626c56636c62627c6a743c2033262a383b6b716c7b6d7e7d64757822607c6359666b6a657e62795166743c206267662b6f6d71273a2e2d67794f627a655b6c72626556636f312f3e3e2033323034313632383f3a3c3c353e362060326134663663386c3a6d3d3d2c2f7368726b61775964706f55627868635079653f21373435373b3b282b7e686276796f655c746474737134286e746c637f7c642c6c76622427617f55656d606b3232313333363535373c393f3b3a3d393f28313b33653564376b396e3b693d683e202322606d756e627a56646a6168332d26673430326030362a29637d53787c632d23323234373634383d3a3e3c3b3e382039323a34643665386a3a6f3c683e6921312023676c766f6d7b557e7e61332d2737343432342427617f557e7f687c61716c673e263537373a39393b383d3b3f263135333c353f376939683b6f3d6a3f75316432342726646179626e7e527b7c75736c6269603b253f3d3d3a3a3b393932216b755b6674626c6c647f656c625079653f2134343635383a3a3f3c383e392036323b343c3666386b3a683c693e6a206733332625656e78616f79536e7c6a74646c776d646a58616d37293a3e393d2634343726256f71577c796e7e52666e7e656e6639273636383b3a383c393e3a20373234343d363e38683a693c6e3e6b20643265353524276b607a63697f517a6364705c6c646863646c37293a35383e26643437326630322a29637d5363617b753c2033353534373b393e3b393d383f27313a333d3567376a39693b683d6b3f7630322124666f77606c785462627a6a2d233465326131303e38282b646c7d672d236a667c2876667b7a616e7520666e63692f322625606b696e6d6e685267687e6e7066603824372a263437236e76692e3d2d6a697569757c7a3437235d6f7c63766d71605667616d37
-"""
+        """
+
+    @Test
+    fun testCxfImportPerformanceAndZeroUpfrontDecryption() {
+        val count = 1000
+        val imports = (1..count).map { i ->
+            fi.iki.ede.db.cxf.CXFImport(
+                id = i.toLong(),
+                accountId = 100L,
+                cxfItemId = "item_$i",
+                type = "password",
+                name = if (i % 2 == 0) "https://sub$i.domain$i.com/login" else "Custom Title $i",
+                url = "https://sub$i.domain$i.com/login",
+                username = "user_$i",
+                password = "pass_$i",
+                note = "note_$i",
+                hash = "hash_$i"
+            )
+        }
+
+        val startTime = System.currentTimeMillis()
+        val syntheticEntries = imports.map { fi.iki.ede.db.cxf.DecryptableCXFSiteEntry.makeFromImport(100L, it) }
+        val elapsedTime = System.currentTimeMillis() - startTime
+
+        // Creation of 1000 synthetic entries MUST be under 500ms (verifying 0 upfront decryptions)
+        assertTrue(elapsedTime < 500, "Synthetic entry list creation took $elapsedTime ms, expected < 500ms")
+
+        // Lazy decryption when requested by UI list
+        assertEquals("sub2.domain2.com", syntheticEntries[1].plainDescription)
+        assertEquals("Custom Title 1", syntheticEntries[0].plainDescription)
     }
+}
 }

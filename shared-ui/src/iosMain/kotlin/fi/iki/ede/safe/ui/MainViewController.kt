@@ -41,6 +41,11 @@ import fi.iki.ede.safe.ui.composable.PopCustomPasswordDialog
 import platform.UIKit.UIViewController
 import fi.iki.ede.crypto.support.encrypt
 import kotlinx.coroutines.launch
+import fi.iki.ede.safe.ui.utils.streamSortedSiteEntries
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import fi.iki.ede.safe.ui.composable.AskBackupPasswordAndCommence
 import fi.iki.ede.safe.ui.composable.RestoreDatabaseComponent
 import fi.iki.ede.safe.ui.composable.SharedBottomActionBar
@@ -149,17 +154,32 @@ fun MainViewController(): UIViewController {
         }
     }
 
-    val categories = remember(refreshTrigger, isLoggedIn) {
-        if (isLoggedIn) db.fetchAllCategoryRows() else emptyList()
-    }
-
-    val siteEntries = remember(refreshTrigger, activeCategory, isLoggedIn) {
-        if (isLoggedIn && activeCategory != null) {
-            db.fetchAllRows(activeCategory!!.id)
-        } else {
-            emptyList()
+    val categories by remember(refreshTrigger, isLoggedIn) {
+        flow {
+            if (isLoggedIn) {
+                val cats = withContext(Dispatchers.Default) {
+                    db.fetchAllCategoryRows()
+                }
+                emit(cats)
+            } else {
+                emit(emptyList())
+            }
         }
-    }
+    }.collectAsState(initial = emptyList())
+
+    val siteEntries by remember(refreshTrigger, activeCategory, isLoggedIn) {
+        flow {
+            if (isLoggedIn && activeCategory != null) {
+                val catId = activeCategory!!.id
+                val rows = withContext(Dispatchers.Default) {
+                    db.fetchAllRows(catId)
+                }
+                emit(rows)
+            } else {
+                emit(emptyList())
+            }
+        }.streamSortedSiteEntries(activeCategory?.id)
+    }.collectAsState(initial = emptyList())
 
     MaterialTheme(
         colorScheme = darkColorScheme(

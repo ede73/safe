@@ -137,7 +137,7 @@ class DBHelper(
     ): List<DecryptableSiteEntry> = runBlocking {
         val list = mutableListOf<DecryptableSiteEntry>()
         if (categoryId != null && fi.iki.ede.db.cxf.CxfSyntheticModelMapper.isSyntheticId(categoryId)) {
-            val cxfAccountId = fi.iki.ede.db.cxf.DecryptableGPMCategoryEntry.CATEGORY_ID_OFFSET - categoryId
+            val cxfAccountId = fi.iki.ede.db.cxf.DecryptableCXFCategoryEntry.CATEGORY_ID_OFFSET - categoryId
             if (!softDeletedOnly && cxfAccountId > 0L) {
                 val imports = database.cxfImportDao().getByAccountId(cxfAccountId)
                 val passkeys = database.cxfPasskeyDao().getByAccountId(cxfAccountId)
@@ -170,13 +170,38 @@ class DBHelper(
                 }
             }
         }
+        val sorted = list.sortedBy { it.plainDescription.lowercase() }
         if (siteEntriesFlow != null) {
-            siteEntriesFlow.value = list
+            siteEntriesFlow.value = sorted
         }
-        list
+        sorted
     }
 
     fun updateSiteEntry(entry: DecryptableSiteEntry): DBID = runBlocking {
+        if (entry is fi.iki.ede.db.cxf.DecryptableCXFSiteEntry) {
+            if (entry.cxfImport != null) {
+                val updated = entry.cxfImport.copy(
+                    encryptedName = entry.description,
+                    encryptedUsername = entry.username,
+                    encryptedPassword = entry.password,
+                    encryptedUrl = entry.website,
+                    encryptedNote = entry.note,
+                    modifiedAt = kotlin.time.Clock.System.now().toEpochMilliseconds()
+                )
+                database.cxfImportDao().update(updated)
+                return@runBlocking entry.id!!
+            } else if (entry.cxfPasskey != null) {
+                val updated = entry.cxfPasskey.copy(
+                    encryptedName = entry.description,
+                    encryptedUsername = entry.username,
+                    encryptedUrl = entry.website,
+                    encryptedNote = entry.note,
+                    modifiedAt = kotlin.time.Clock.System.now().toEpochMilliseconds()
+                )
+                database.cxfPasskeyDao().update(updated)
+                return@runBlocking entry.id!!
+            }
+        }
         require(entry.id != null) { "Cannot update SiteEntry without ID" }
         database.siteEntryDao().getPhotoFilenameById(entry.id!!)?.let { deletePhoto(it) }
         entry.photoFilename = savePhoto(entry.photo)

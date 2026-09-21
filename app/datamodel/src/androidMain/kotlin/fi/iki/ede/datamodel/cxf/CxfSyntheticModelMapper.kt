@@ -1,5 +1,5 @@
 package fi.iki.ede.datamodel.cxf
 
 typealias CxfSyntheticModelMapper = fi.iki.ede.db.cxf.CxfSyntheticModelMapper
-typealias DecryptableGPMCategoryEntry = fi.iki.ede.db.cxf.DecryptableGPMCategoryEntry
-typealias DecryptableGPMSiteEntry = fi.iki.ede.db.cxf.DecryptableGPMSiteEntry
+typealias DecryptableCXFCategoryEntry = fi.iki.ede.db.cxf.DecryptableCXFCategoryEntry
+typealias DecryptableCXFSiteEntry = fi.iki.ede.db.cxf.DecryptableCXFSiteEntry

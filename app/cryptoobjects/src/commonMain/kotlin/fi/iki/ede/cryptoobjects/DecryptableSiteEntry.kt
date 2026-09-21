@@ -67,7 +67,7 @@ open class DecryptableSiteEntry(
     var website: IVCipherText = IVCipherText.getEmpty()
 
     @Ignore
-    internal var _cachedPlainDescription: String? = null
+    var _cachedPlainDescription: String? = null
 
     fun clearCachedDescription() {
         _cachedPlainDescription = null
@@ -135,6 +135,18 @@ open class DecryptableSiteEntry(
 
     fun encryptExtension(plainExtensions: Map<String, Set<String>>): IVCipherText =
         Json.encodeToString(plainExtensions).encrypt()
+
+    open fun getPlainDescription(): String {
+        val cached = _cachedPlainDescription
+        if (cached != null) return cached
+        val cleaned = cleanDomainNameIfNeeded(description.decrypt()).ifBlank { "Imported Credential" }
+        _cachedPlainDescription = cleaned
+        return cleaned
+    }
+
+    open fun getPlainWebsite(): String {
+        return website.decrypt()
+    }
 }
 
 expect fun DecryptableSiteEntry.decryptPhoto(): PlatformBitmap?
@@ -150,15 +162,30 @@ val DecryptableSiteEntry.plainExtensions: Map<String, Set<String>>
         mutableMapOf()
     }
 
+fun cleanDomainNameIfNeeded(str: String): String {
+    val trimmed = str.trim()
+    if (trimmed.isBlank()) return trimmed
+
+    var s = trimmed
+    if (s.contains("://")) {
+        s = s.substringAfter("://")
+    }
+    if (s.contains("@")) {
+        s = s.substringAfter("@")
+    }
+    s = s.substringBefore("/").substringBefore("?").substringBefore("#").substringBefore(":")
+    return s.ifBlank { trimmed }
+}
+
 // This are intentionally not cached and decrypted inefficiently per request
 val DecryptableSiteEntry.plainDescription: String
-    get() = _cachedPlainDescription ?: description.decrypt().also { _cachedPlainDescription = it }
+    get() = getPlainDescription()
 val DecryptableSiteEntry.plainPassword: String
     get() = password.decrypt()
 val DecryptableSiteEntry.plainUsername: String
     get() = username.decrypt()
 val DecryptableSiteEntry.plainWebsite: String
-    get() = website.decrypt()
+    get() = getPlainWebsite()
 val DecryptableSiteEntry.plainNote: String
     get() = note.decrypt()
 val DecryptableSiteEntry.plainPhoto: PlatformBitmap?

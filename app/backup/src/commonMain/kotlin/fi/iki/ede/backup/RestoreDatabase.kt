@@ -75,7 +75,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
             val masterKey = decryptMasterKey(salt, encryptedMasterKey, userPassword)
 
             val ivBackup = line4.hexToByteArray()
-            val cipherMasterLine2 = bufferedSource.readUtf8Line() ?: throw IllegalArgumentException("Missing backup data ciphertext")
+            val cipherMasterLine2 = (bufferedSource.readUtf8Line() ?: throw IllegalArgumentException("Missing backup data ciphertext")).trim()
             val cipherBackup = cipherMasterLine2.hexToByteArray()
 
             val helper = KeyStoreHelperFactory.getKeyStoreHelper()
