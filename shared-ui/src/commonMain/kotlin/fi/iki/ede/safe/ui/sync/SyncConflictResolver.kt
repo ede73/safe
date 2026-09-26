@@ -45,6 +45,19 @@ data class SyncConflict(
     var selectedIsDeleted: Boolean = localItem?.isDeleted ?: remoteItem?.isDeleted ?: false
 )
 
+/**
+ * Multi-device conflict resolution engine for P2P CXF sync.
+ *
+ * DESIGN DECISION & SCALE ASSUMPTIONS:
+ * 1. Scope & Conflict Volume: This interactive modal UI (`ConflictResolutionDialog`) is designed
+ *    under the assumption of *minor conflicts* (typical day-to-day divergence of < 20-50 items).
+ * 2. High-Divergence Handling (100–500+ Conflicts): For large-scale sync conflicts (e.g., 100 to 500+ divergent items),
+ *    an in-memory modal dialog is insufficient. Resolving large batches requires a dedicated "parking" or
+ *    staging area UI (similar to the GPM plugin management UI) where users can review and resolve items incrementally
+ *    over multiple sessions.
+ * 3. Cancellation Safety: Sync and conflict resolution are strictly opt-in and non-destructive. The user can
+ *    ALWAYS cancel the sync operation at any time without committing changes to either local or remote storage.
+ */
 @OptIn(ExperimentalTime::class)
 object SyncConflictResolver {
 

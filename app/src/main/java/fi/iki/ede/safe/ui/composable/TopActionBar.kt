@@ -215,6 +215,45 @@ private fun MakeDropdownMenu(
     ) {
         if (!exportImport.value) {
             DropdownMenuItem(
+                text = { Text(text = "🌱 Seed Local DB (Android Matrix Q, X, Y, M)") },
+                onClick = {
+                    displayMenu.value = false
+                    fi.iki.ede.safe.ui.sync.SyncConflictResolver.seedLocalDatabase(isAndroid = true)
+                    Logger.d(TAG, "Seeded Android conflict matrix dataset into local DB")
+                })
+            DropdownMenuItem(
+                text = { Text(text = "🌱 Seed Local DB (iOS Matrix W, X, Y, M)") },
+                onClick = {
+                    displayMenu.value = false
+                    fi.iki.ede.safe.ui.sync.SyncConflictResolver.seedLocalDatabase(isAndroid = false)
+                    Logger.d(TAG, "Seeded iOS conflict matrix dataset into local DB")
+                })
+            DropdownMenuItem(
+                text = { Text(text = "🧪 Test Conflict Matrix (Simulated Q, W, X, Y, M)") },
+                onClick = {
+                    displayMenu.value = false
+                    val (androidItems, iosItems) = fi.iki.ede.safe.ui.sync.SyncConflictResolver.createTestConflictMatrix()
+                    val analyzed = fi.iki.ede.safe.ui.sync.SyncConflictResolver.analyzeConflicts(androidItems, iosItems)
+                    activeConflicts.value = analyzed
+                    displayConflictDialog.value = true
+                })
+            DropdownMenuItem(
+                text = { Text(text = "🧪 Resolve Local DB vs Matrix Conflicts") },
+                onClick = {
+                    displayMenu.value = false
+                    val localItems = fi.iki.ede.safe.ui.sync.SyncConflictResolver.readLocalDatabaseAsSyncItems()
+                    val (_, remoteMatrixItems) = fi.iki.ede.safe.ui.sync.SyncConflictResolver.createTestConflictMatrix()
+                    val analyzed = fi.iki.ede.safe.ui.sync.SyncConflictResolver.analyzeConflicts(localItems, remoteMatrixItems)
+                    activeConflicts.value = analyzed
+                    displayConflictDialog.value = true
+                })
+            DropdownMenuItem(
+                text = { Text(text = "⚡ Device Sync (8-Digit PIN)") },
+                onClick = {
+                    displayMenu.value = false
+                    displayDeviceSyncDialog.value = true
+                })
+            DropdownMenuItem(
                 enabled = !loginScreen,
                 text = { Text(text = stringResource(id = R.string.action_bar_settings)) },
                 onClick = {
@@ -306,52 +345,6 @@ private fun MakeDropdownMenu(
                             Logger.d(TAG, "Sync complete: success=$success, count=$count")
                         }
                     )
-                })
-            if (BuildConfig.DEBUG) {
-                DropdownMenuItem(
-                    text = { Text(text = "🌱 Seed Local DB (Android Matrix Q, X, Y, M)") },
-                    onClick = {
-                        displayMenu.value = false
-                        exportImport.value = false
-                        fi.iki.ede.safe.ui.sync.SyncConflictResolver.seedLocalDatabase(isAndroid = true)
-                        Logger.d(TAG, "Seeded Android conflict matrix dataset into local DB")
-                    })
-                DropdownMenuItem(
-                    text = { Text(text = "🌱 Seed Local DB (iOS Matrix W, X, Y, M)") },
-                    onClick = {
-                        displayMenu.value = false
-                        exportImport.value = false
-                        fi.iki.ede.safe.ui.sync.SyncConflictResolver.seedLocalDatabase(isAndroid = false)
-                        Logger.d(TAG, "Seeded iOS conflict matrix dataset into local DB")
-                    })
-                DropdownMenuItem(
-                    text = { Text(text = "🧪 Test Conflict Matrix (Simulated Q, W, X, Y, M)") },
-                    onClick = {
-                        displayMenu.value = false
-                        exportImport.value = false
-                        val (androidItems, iosItems) = fi.iki.ede.safe.ui.sync.SyncConflictResolver.createTestConflictMatrix()
-                        val analyzed = fi.iki.ede.safe.ui.sync.SyncConflictResolver.analyzeConflicts(androidItems, iosItems)
-                        activeConflicts.value = analyzed
-                        displayConflictDialog.value = true
-                    })
-                DropdownMenuItem(
-                    text = { Text(text = "🧪 Resolve Local DB vs Matrix Conflicts") },
-                    onClick = {
-                        displayMenu.value = false
-                        exportImport.value = false
-                        val localItems = fi.iki.ede.safe.ui.sync.SyncConflictResolver.readLocalDatabaseAsSyncItems()
-                        val (_, remoteMatrixItems) = fi.iki.ede.safe.ui.sync.SyncConflictResolver.createTestConflictMatrix()
-                        val analyzed = fi.iki.ede.safe.ui.sync.SyncConflictResolver.analyzeConflicts(localItems, remoteMatrixItems)
-                        activeConflicts.value = analyzed
-                        displayConflictDialog.value = true
-                    })
-            }
-            DropdownMenuItem(
-                text = { Text(text = "⚡ Device Sync (8-Digit PIN)") },
-                onClick = {
-                    displayMenu.value = false
-                    exportImport.value = false
-                    displayDeviceSyncDialog.value = true
                 })
             IntentManager.getMenuItems(DropDownMenu.TopActionBarImportExportMenu).forEach {
                 DropdownMenuItem(text = { Text(text = stringResource(id = it.first)) }, onClick = {
