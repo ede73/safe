@@ -65,6 +65,8 @@ fun TopActionBar(
     val showChangePasswordDialog = remember { mutableStateOf(false) }
     val showTrashDialog = remember { mutableStateOf(false) }
     val displayDeviceSyncDialog = remember { mutableStateOf(false) }
+    val displayConflictDialog = remember { mutableStateOf(false) }
+    val activeConflicts = remember { mutableStateOf<List<fi.iki.ede.safe.ui.sync.SyncConflict>>(emptyList()) }
     val context = LocalContext.current
 
     SafeTheme {
@@ -110,7 +112,9 @@ fun TopActionBar(
                 exportImport,
                 showChangePasswordDialog,
                 showTrashDialog,
-                displayDeviceSyncDialog
+                displayDeviceSyncDialog,
+                displayConflictDialog,
+                activeConflicts
             )
 
             if (showChangePasswordDialog.value) {
@@ -135,6 +139,16 @@ fun TopActionBar(
                                 displayDeviceSyncDialog.value = false
                             }
                         )
+                    }
+                )
+            }
+            if (displayConflictDialog.value) {
+                ConflictResolutionDialog(
+                    conflicts = activeConflicts.value,
+                    onDismissRequest = { displayConflictDialog.value = false },
+                    onResolveCompleted = { resolved ->
+                        Logger.d(TAG, "Conflict resolution completed with ${resolved.size} items resolved.")
+                        displayConflictDialog.value = false
                     }
                 )
             }
@@ -185,6 +199,8 @@ private fun MakeDropdownMenu(
     showChangePasswordDialog: MutableState<Boolean>,
     showTrashDialog: MutableState<Boolean>,
     displayDeviceSyncDialog: MutableState<Boolean>,
+    displayConflictDialog: MutableState<Boolean>,
+    activeConflicts: MutableState<List<fi.iki.ede.safe.ui.sync.SyncConflict>>,
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -305,6 +321,16 @@ private fun MakeDropdownMenu(
                                 Logger.d(TAG, "Test sync complete: success=$success, count=$count")
                             }
                         )
+                    })
+                DropdownMenuItem(
+                    text = { Text(text = "🧪 Test Conflict Matrix (Q, W, X, Y, M)") },
+                    onClick = {
+                        displayMenu.value = false
+                        exportImport.value = false
+                        val (androidItems, iosItems) = fi.iki.ede.safe.ui.sync.SyncConflictResolver.createTestConflictMatrix()
+                        val analyzed = fi.iki.ede.safe.ui.sync.SyncConflictResolver.analyzeConflicts(androidItems, iosItems)
+                        activeConflicts.value = analyzed
+                        displayConflictDialog.value = true
                     })
             }
             DropdownMenuItem(
