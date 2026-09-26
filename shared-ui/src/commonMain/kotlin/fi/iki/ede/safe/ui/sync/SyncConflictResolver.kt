@@ -1,6 +1,17 @@
 package fi.iki.ede.safe.ui.sync
 
+import fi.iki.ede.crypto.support.encrypt
+import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
+import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.cryptoobjects.plainDescription
+import fi.iki.ede.cryptoobjects.plainExtensions
+import fi.iki.ede.cryptoobjects.plainNote
+import fi.iki.ede.cryptoobjects.plainPassword
+import fi.iki.ede.cryptoobjects.plainUsername
+import fi.iki.ede.cryptoobjects.plainWebsite
+import fi.iki.ede.db.DBHelperFactory
 import kotlinx.serialization.Serializable
+import kotlin.time.ExperimentalTime
 
 @Serializable
 data class SyncItem(
@@ -34,6 +45,7 @@ data class SyncConflict(
     var selectedIsDeleted: Boolean = localItem?.isDeleted ?: remoteItem?.isDeleted ?: false
 )
 
+@OptIn(ExperimentalTime::class)
 object SyncConflictResolver {
 
     /**
@@ -158,4 +170,144 @@ object SyncConflictResolver {
 
         return Pair(androidItems, iosItems)
     }
+
+    /**
+     * Seeds the local SQLite database (via DBHelperFactory.getDBHelper()) with either the Android
+     * dataset or the iOS dataset for real matrix conflict testing.
+     */
+    fun seedLocalDatabase(isAndroid: Boolean) {
+        val db = DBHelperFactory.getDBHelper()
+        val categories = db.fetchAllCategoryRows()
+        val catId = if (categories.isNotEmpty()) categories.first().id!! else {
+            val newCat = DecryptableCategoryEntry().apply {
+                encryptedName = "General".encrypt()
+            }
+            db.addCategory(newCat)
+        }
+
+        val activeEntries = db.fetchAllRows(catId)
+        val softDeletedEntries = kotlinx.coroutines.runBlocking { db.database.siteEntryDao().getAllSoftDeleted() }
+        val existingEntries = activeEntries + softDeletedEntries
+
+        fun upsertEntry(cxfId: String, nameStr: String, userStr: String, passStr: String, noteStr: String = "", isDel: Boolean = false) {
+            val existing = existingEntries.find { entry ->
+                entry.plainExtensions["cxfItemId"]?.contains(cxfId) == true ||
+                        entry.plainUsername == userStr ||
+                        (cleanDomain(entry.plainDescription) == cleanDomain(nameStr) && userStr.isNotBlank() && entry.plainUsername == userStr)
+            }
+
+            if (existing != null) {
+                existing.description = nameStr.encrypt()
+                existing.username = userStr.encrypt()
+                existing.password = passStr.encrypt()
+                existing.note = noteStr.encrypt()
+                existing.deleted = if (isDel) 1789356600L else 0L
+                val extMap = existing.plainExtensions.toMutableMap()
+                extMap["cxfItemId"] = setOf(cxfId)
+                existing.extensions = existing.encryptExtension(extMap)
+                db.updateSiteEntry(existing)
+            } else {
+                val entry = DecryptableSiteEntry(categoryId = catId).apply {
+                    description = nameStr.encrypt()
+                    username = userStr.encrypt()
+                    password = passStr.encrypt()
+                    note = noteStr.encrypt()
+                    deleted = if (isDel) 1789356600L else 0L
+                    extensions = encryptExtension(mapOf("cxfItemId" to setOf(cxfId)))
+                }
+                db.addSiteEntry(entry)
+            }
+        }
+
+        if (isAndroid) {
+            // Android dataset: Q, X (deleted), Y (active), M (renamed)
+            upsertEntry("item_Q", "Q_Android_Added.com", "user_q", "pass_q_android")
+            upsertEntry("item_X", "X_Shared_Deleted_Android.com", "user_x", "pass_x", isDel = true)
+            upsertEntry("item_Y", "Y_Shared_Active_Android.com", "user_y", "pass_y", isDel = false)
+            upsertEntry("item_M", "M_Renamed_Android.com", "user_m", "pass_m_android", noteStr = "Android note")
+        } else {
+            // iOS dataset: W, X (active), Y (deleted), M (original)
+            upsertEntry("item_W", "W_iOS_Added.com", "user_w", "pass_w_ios")
+            upsertEntry("item_X", "X_Shared_Active_iOS.com", "user_x", "pass_x", isDel = false)
+            upsertEntry("item_Y", "Y_Shared_Deleted_iOS.com", "user_y", "pass_y", isDel = true)
+            upsertEntry("item_M", "M_Original_iOS.com", "user_m", "pass_m_ios", noteStr = "iOS note")
+        }
+    }
+
+    /**
+     * Reads all local database entries (active + soft-deleted) and converts them into SyncItems.
+     */
+    fun readLocalDatabaseAsSyncItems(): List<SyncItem> {
+        val db = DBHelperFactory.getDBHelper()
+        val activeEntries = kotlinx.coroutines.runBlocking { db.database.siteEntryDao().getAllActive() }
+        val softDeletedEntries = kotlinx.coroutines.runBlocking { db.database.siteEntryDao().getAllSoftDeleted() }
+        val allEntries = activeEntries + softDeletedEntries
+        return allEntries.map { entry ->
+            val cxfIdFromExt = entry.plainExtensions["cxfItemId"]?.firstOrNull()
+            val cxfId = cxfIdFromExt ?: when {
+                entry.plainUsername == "user_q" -> "item_Q"
+                entry.plainUsername == "user_w" -> "item_W"
+                entry.plainUsername == "user_x" -> "item_X"
+                entry.plainUsername == "user_y" -> "item_Y"
+                entry.plainUsername == "user_m" -> "item_M"
+                else -> "item_${entry.id ?: entry.plainDescription.hashCode()}"
+            }
+            SyncItem(
+                cxfItemId = cxfId,
+                name = entry.plainDescription,
+                username = entry.plainUsername,
+                password = entry.plainPassword,
+                note = entry.plainNote,
+                url = entry.plainWebsite,
+                isDeleted = entry.deleted != 0L,
+                modifiedAt = kotlin.time.Clock.System.now().toEpochMilliseconds()
+            )
+        }
+    }
+
+    /**
+     * Applies resolved conflict choices directly back to the local SQLite database.
+     */
+    fun applyResolvedConflictsToLocalDatabase(resolvedConflicts: List<SyncConflict>) {
+        val db = DBHelperFactory.getDBHelper()
+        val categories = db.fetchAllCategoryRows()
+        val catId = if (categories.isNotEmpty()) categories.first().id!! else 1L
+        val activeEntries = db.fetchAllRows(catId)
+        val softDeletedEntries = kotlinx.coroutines.runBlocking { db.database.siteEntryDao().getAllSoftDeleted() }
+        val existingEntries = activeEntries + softDeletedEntries
+
+        for (conflict in resolvedConflicts) {
+            val targetName = conflict.selectedName.ifBlank { conflict.localItem?.name ?: conflict.remoteItem?.name ?: "" }
+            val targetUser = conflict.selectedUsername.ifBlank { conflict.localItem?.username ?: conflict.remoteItem?.username ?: "" }
+            val targetPass = conflict.selectedPassword.ifBlank { conflict.localItem?.password ?: conflict.remoteItem?.password ?: "" }
+            val targetNote = conflict.selectedNote.ifBlank { conflict.localItem?.note ?: conflict.remoteItem?.note ?: "" }
+            val targetDeleted = conflict.selectedIsDeleted
+
+            val existing = existingEntries.find { entry ->
+                entry.plainExtensions["cxfItemId"]?.contains(conflict.conflictId) == true ||
+                        (cleanDomain(entry.plainDescription) == cleanDomain(targetName) && entry.plainUsername == targetUser)
+            }
+
+            if (existing != null) {
+                existing.description = targetName.encrypt()
+                existing.username = targetUser.encrypt()
+                existing.password = targetPass.encrypt()
+                existing.note = targetNote.encrypt()
+                existing.deleted = if (targetDeleted) 1789356600L else 0L
+                db.updateSiteEntry(existing)
+            } else {
+                val newEntry = DecryptableSiteEntry(categoryId = catId).apply {
+                    description = targetName.encrypt()
+                    username = targetUser.encrypt()
+                    password = targetPass.encrypt()
+                    note = targetNote.encrypt()
+                    deleted = if (targetDeleted) 1789356600L else 0L
+                    extensions = encryptExtension(mapOf("cxfItemId" to setOf(conflict.conflictId)))
+                }
+                db.addSiteEntry(newEntry)
+            }
+        }
+    }
 }
+
+

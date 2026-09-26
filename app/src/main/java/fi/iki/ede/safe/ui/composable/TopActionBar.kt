@@ -148,6 +148,7 @@ fun TopActionBar(
                     onDismissRequest = { displayConflictDialog.value = false },
                     onResolveCompleted = { resolved ->
                         Logger.d(TAG, "Conflict resolution completed with ${resolved.size} items resolved.")
+                        fi.iki.ede.safe.ui.sync.SyncConflictResolver.applyResolvedConflictsToLocalDatabase(resolved)
                         displayConflictDialog.value = false
                     }
                 )
@@ -308,27 +309,39 @@ private fun MakeDropdownMenu(
                 })
             if (BuildConfig.DEBUG) {
                 DropdownMenuItem(
-                    text = { Text(text = "🧪 Test Direct Sync (Fake CXF Payload)") },
+                    text = { Text(text = "🌱 Seed Local DB (Android Matrix Q, X, Y, M)") },
                     onClick = {
                         displayMenu.value = false
                         exportImport.value = false
-                        val fakePayload = fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper.createSampleFakeCxfPayload()
-                        fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper.processAndStoreCxfPayload(
-                            cxfJsonPayload = fakePayload,
-                            scope = coroutineScope,
-                            onMessage = { msg -> Logger.d(TAG, msg) },
-                            complete = { success, count ->
-                                Logger.d(TAG, "Test sync complete: success=$success, count=$count")
-                            }
-                        )
+                        fi.iki.ede.safe.ui.sync.SyncConflictResolver.seedLocalDatabase(isAndroid = true)
+                        Logger.d(TAG, "Seeded Android conflict matrix dataset into local DB")
                     })
                 DropdownMenuItem(
-                    text = { Text(text = "🧪 Test Conflict Matrix (Q, W, X, Y, M)") },
+                    text = { Text(text = "🌱 Seed Local DB (iOS Matrix W, X, Y, M)") },
+                    onClick = {
+                        displayMenu.value = false
+                        exportImport.value = false
+                        fi.iki.ede.safe.ui.sync.SyncConflictResolver.seedLocalDatabase(isAndroid = false)
+                        Logger.d(TAG, "Seeded iOS conflict matrix dataset into local DB")
+                    })
+                DropdownMenuItem(
+                    text = { Text(text = "🧪 Test Conflict Matrix (Simulated Q, W, X, Y, M)") },
                     onClick = {
                         displayMenu.value = false
                         exportImport.value = false
                         val (androidItems, iosItems) = fi.iki.ede.safe.ui.sync.SyncConflictResolver.createTestConflictMatrix()
                         val analyzed = fi.iki.ede.safe.ui.sync.SyncConflictResolver.analyzeConflicts(androidItems, iosItems)
+                        activeConflicts.value = analyzed
+                        displayConflictDialog.value = true
+                    })
+                DropdownMenuItem(
+                    text = { Text(text = "🧪 Resolve Local DB vs Matrix Conflicts") },
+                    onClick = {
+                        displayMenu.value = false
+                        exportImport.value = false
+                        val localItems = fi.iki.ede.safe.ui.sync.SyncConflictResolver.readLocalDatabaseAsSyncItems()
+                        val (_, remoteMatrixItems) = fi.iki.ede.safe.ui.sync.SyncConflictResolver.createTestConflictMatrix()
+                        val analyzed = fi.iki.ede.safe.ui.sync.SyncConflictResolver.analyzeConflicts(localItems, remoteMatrixItems)
                         activeConflicts.value = analyzed
                         displayConflictDialog.value = true
                     })

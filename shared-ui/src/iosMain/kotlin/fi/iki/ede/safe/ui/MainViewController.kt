@@ -38,6 +38,10 @@ import fi.iki.ede.safe.ui.composable.AddOrEditCategory
 import fi.iki.ede.safe.password.PasswordGenerator
 import fi.iki.ede.safe.ui.composable.BottomActionBarForSiteEntryView
 import fi.iki.ede.safe.ui.composable.PopCustomPasswordDialog
+import fi.iki.ede.safe.ui.composable.ConflictResolutionDialog
+import fi.iki.ede.safe.ui.composable.DeviceSyncDialog
+import fi.iki.ede.safe.ui.sync.SyncConflictResolver
+import fi.iki.ede.safe.ui.sync.SyncConflict
 import platform.UIKit.UIViewController
 import fi.iki.ede.crypto.support.encrypt
 import kotlinx.coroutines.launch
@@ -112,6 +116,9 @@ fun MainViewController(): UIViewController {
     // Dialog state for adding Category
     var showAddCategoryDialog by remember { mutableStateOf(false) }
     var showImportExportChoiceDialog by remember { mutableStateOf(false) }
+    var showConflictDialog by remember { mutableStateOf(false) }
+    var showDeviceSyncDialog by remember { mutableStateOf(false) }
+    var activeConflicts by remember { mutableStateOf<List<SyncConflict>>(emptyList()) }
 
     // Settings Screen states
     var showSettingsScreen by remember { mutableStateOf(false) }
@@ -547,7 +554,52 @@ fun MainViewController(): UIViewController {
                         AlertDialog(
                             onDismissRequest = { showImportExportChoiceDialog = false },
                             title = { Text(getString("action_bar_import_export")) },
-                            text = { Text("Select backup operation:") },
+                            text = {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text("Select operation:")
+                                    Button(
+                                        onClick = {
+                                            showImportExportChoiceDialog = false
+                                            SyncConflictResolver.seedLocalDatabase(isAndroid = false)
+                                            refreshTrigger++
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("🌱 Seed iOS DB Matrix (W, X, Y, M)")
+                                    }
+                                    Button(
+                                        onClick = {
+                                            showImportExportChoiceDialog = false
+                                            SyncConflictResolver.seedLocalDatabase(isAndroid = true)
+                                            refreshTrigger++
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("🌱 Seed Android DB Matrix (Q, X, Y, M)")
+                                    }
+                                    Button(
+                                        onClick = {
+                                            showImportExportChoiceDialog = false
+                                            val localItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
+                                            val (androidItems, _) = SyncConflictResolver.createTestConflictMatrix()
+                                            activeConflicts = SyncConflictResolver.analyzeConflicts(localItems, androidItems)
+                                            showConflictDialog = true
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("🧪 Resolve Local DB vs Matrix Conflicts")
+                                    }
+                                    Button(
+                                        onClick = {
+                                            showImportExportChoiceDialog = false
+                                            showDeviceSyncDialog = true
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("⚡ Device Sync (8-Digit PIN)")
+                                    }
+                                }
+                            },
                             confirmButton = {
                                 Button(
                                     onClick = {
@@ -593,6 +645,27 @@ fun MainViewController(): UIViewController {
                                 ) {
                                     Text(getString("action_bar_restore"))
                                 }
+                            }
+                        )
+                    }
+
+                    if (showDeviceSyncDialog) {
+                        DeviceSyncDialog(
+                            onDismissRequest = { showDeviceSyncDialog = false },
+                            onStartSyncWithPin = { pin, isInitiator ->
+                                showDeviceSyncDialog = false
+                            }
+                        )
+                    }
+
+                    if (showConflictDialog) {
+                        ConflictResolutionDialog(
+                            conflicts = activeConflicts,
+                            onDismissRequest = { showConflictDialog = false },
+                            onResolveCompleted = { resolved ->
+                                SyncConflictResolver.applyResolvedConflictsToLocalDatabase(resolved)
+                                showConflictDialog = false
+                                refreshTrigger++
                             }
                         )
                     }
