@@ -580,6 +580,17 @@ fun MainViewController(): UIViewController {
                                     Button(
                                         onClick = {
                                             showImportExportChoiceDialog = false
+                                            val (androidItems, iosItems) = SyncConflictResolver.createTestConflictMatrix()
+                                            activeConflicts = SyncConflictResolver.analyzeConflicts(androidItems, iosItems)
+                                            showConflictDialog = true
+                                        },
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("🧪 Test Conflict Matrix (Simulated Q, W, X, Y, M)")
+                                    }
+                                    Button(
+                                        onClick = {
+                                            showImportExportChoiceDialog = false
                                             val localItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
                                             val (androidItems, _) = SyncConflictResolver.createTestConflictMatrix()
                                             activeConflicts = SyncConflictResolver.analyzeConflicts(localItems, androidItems)
