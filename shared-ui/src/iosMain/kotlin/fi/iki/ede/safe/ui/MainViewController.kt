@@ -383,6 +383,28 @@ fun MainViewController(): UIViewController {
                              },
                              onImportExportRequested = {
                                  showImportExportChoiceDialog = true
+                             },
+                             onPeerSyncRequested = {
+                                 showDeviceSyncDialog = true
+                             },
+                             onSeedAndroidDbRequested = {
+                                 SyncConflictResolver.seedLocalDatabase(isAndroid = true)
+                                 refreshTrigger++
+                             },
+                             onSeedIosDbRequested = {
+                                 SyncConflictResolver.seedLocalDatabase(isAndroid = false)
+                                 refreshTrigger++
+                             },
+                             onTestConflictMatrixRequested = {
+                                 val (androidItems, iosItems) = SyncConflictResolver.createTestConflictMatrix()
+                                 activeConflicts = SyncConflictResolver.analyzeConflicts(androidItems, iosItems)
+                                 showConflictDialog = true
+                             },
+                             onResolveLocalConflictsRequested = {
+                                 val localItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
+                                 val (androidItems, _) = SyncConflictResolver.createTestConflictMatrix()
+                                 activeConflicts = SyncConflictResolver.analyzeConflicts(localItems, androidItems)
+                                 showConflictDialog = true
                              }
                         )
                     }

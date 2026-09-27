@@ -29,66 +29,50 @@ fun SharedBottomActionBar(
     onHelpRequested: () -> Unit = {},
     onChangeMasterPasswordRequested: () -> Unit = {},
     onShowTrashRequested: () -> Unit = {},
-    onImportExportRequested: () -> Unit = {}
+    onImportExportRequested: () -> Unit = {},
+    onPeerSyncRequested: () -> Unit = {},
+    onSeedAndroidDbRequested: () -> Unit = {},
+    onSeedIosDbRequested: () -> Unit = {},
+    onTestConflictMatrixRequested: () -> Unit = {},
+    onResolveLocalConflictsRequested: () -> Unit = {}
 ) {
     var displayMenu by remember { mutableStateOf(false) }
 
     BottomAppBar(
         actions = {
             IconButton(onClick = onAddRequested) {
-                    Icon(Icons.Default.Add, getString("generic_add"))
+                Icon(Icons.Default.Add, getString("generic_add"))
+            }
+            IconButton(onClick = onLockRequested) {
+                Icon(Icons.Default.Lock, getString("action_bar_lock"))
+            }
+            IconButton(onClick = onSearchRequested) {
+                Icon(Icons.Default.Search, getString("action_bar_search"))
+            }
+            Box {
+                IconButton(onClick = { displayMenu = !displayMenu }) {
+                    Icon(Icons.Default.MoreVert, "More actions")
                 }
-                IconButton(onClick = onLockRequested) {
-                    Icon(Icons.Default.Lock, getString("action_bar_lock"))
-                }
-                IconButton(onClick = onSearchRequested) {
-                    Icon(Icons.Default.Search, getString("action_bar_search"))
-                }
-                Box {
-                    IconButton(onClick = { displayMenu = !displayMenu }) {
-                        Icon(Icons.Default.MoreVert, "More actions")
-                    }
-                    DropdownMenu(
-                        expanded = displayMenu,
-                        onDismissRequest = { displayMenu = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text(text = getString("action_bar_settings")) },
-                            onClick = {
-                                displayMenu = false
-                                onSettingsRequested()
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(text = getString("action_bar_help")) },
-                            onClick = {
-                                displayMenu = false
-                                onHelpRequested()
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(text = getString("action_bar_change_master_password")) },
-                            onClick = {
-                                displayMenu = false
-                                onChangeMasterPasswordRequested()
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(text = getString("action_bar_show_trash")) },
-                            onClick = {
-                                displayMenu = false
-                                onShowTrashRequested()
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text(text = getString("action_bar_import_export")) },
-                            onClick = {
-                                displayMenu = false
-                                onImportExportRequested()
-                            }
-                        )
-                    }
+                DropdownMenu(
+                    expanded = displayMenu,
+                    onDismissRequest = { displayMenu = false }
+                ) {
+                    SharedMenuItems(
+                        isLoggedIn = true,
+                        onPeerSyncRequested = onPeerSyncRequested,
+                        onSettingsRequested = onSettingsRequested,
+                        onHelpRequested = onHelpRequested,
+                        onChangeMasterPasswordRequested = onChangeMasterPasswordRequested,
+                        onShowTrashRequested = onShowTrashRequested,
+                        onImportExportRequested = onImportExportRequested,
+                        onSeedAndroidDbRequested = onSeedAndroidDbRequested,
+                        onSeedIosDbRequested = onSeedIosDbRequested,
+                        onTestConflictMatrixRequested = onTestConflictMatrixRequested,
+                        onResolveLocalConflictsRequested = onResolveLocalConflictsRequested,
+                        onDismiss = { displayMenu = false }
+                    )
                 }
             }
-        )
+        }
+    )
 }
