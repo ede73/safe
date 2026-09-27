@@ -79,7 +79,15 @@ class DBHelper(
     }
 
     fun addCategory(entry: DecryptableCategoryEntry): DBID = runBlocking {
-        database.categoryDao().insert(entry)
+        val newCatId = database.categoryDao().insert(entry)
+        // Purge any orphan/stale site entries matching this category ID so new categories start 100% empty
+        database.siteEntryDao().getByCategory(newCatId).forEach {
+            database.siteEntryDao().deleteById(it.id!!)
+        }
+        database.siteEntryDao().getByCategorySoftDeleted(newCatId).forEach {
+            database.siteEntryDao().deleteById(it.id!!)
+        }
+        newCatId
     }
 
     fun deleteCategory(id: DBID): Int = runBlocking {

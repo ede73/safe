@@ -53,6 +53,9 @@ fun BottomActionBar(
     val exportImport = remember { mutableStateOf(false) }
     val showChangePasswordDialog = remember { mutableStateOf(false) }
     val showTrashDialog = remember { mutableStateOf(false) }
+    val displayDeviceSyncDialog = remember { mutableStateOf(false) }
+    val displayConflictDialog = remember { mutableStateOf(false) }
+    val activeConflicts = remember { mutableStateOf<List<fi.iki.ede.safe.ui.sync.SyncConflict>>(emptyList()) }
     val context = LocalContext.current
 
     SafeTheme {
@@ -91,7 +94,10 @@ fun BottomActionBar(
                         displayMenu,
                         exportImport,
                         showChangePasswordDialog,
-                        showTrashDialog
+                        showTrashDialog,
+                        displayDeviceSyncDialog,
+                        displayConflictDialog,
+                        activeConflicts
                     )
                 }
             },
@@ -103,6 +109,36 @@ fun BottomActionBar(
     }
     if (showTrashDialog.value) {
         ShowTrashDialog(onDismiss = { showTrashDialog.value = false })
+    }
+    if (displayDeviceSyncDialog.value) {
+        val coroutineScope = rememberCoroutineScope()
+        fi.iki.ede.safe.ui.composable.DeviceSyncDialog(
+            onDismissRequest = { displayDeviceSyncDialog.value = false },
+            onStartSyncWithPin = { pin, isInitiator ->
+                Logger.d(TAG, "Starting Device Sync with PIN: $pin (isInitiator=$isInitiator)")
+                val fakePayload = fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper.createSampleFakeCxfPayload()
+                fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper.processAndStoreCxfPayload(
+                    cxfJsonPayload = fakePayload,
+                    scope = coroutineScope,
+                    onMessage = { msg -> Logger.d(TAG, msg) },
+                    complete = { success, count ->
+                        Logger.d(TAG, "PIN sync complete: success=$success, count=$count")
+                        displayDeviceSyncDialog.value = false
+                    }
+                )
+            }
+        )
+    }
+    if (displayConflictDialog.value) {
+        fi.iki.ede.safe.ui.composable.ConflictResolutionDialog(
+            conflicts = activeConflicts.value,
+            onDismissRequest = { displayConflictDialog.value = false },
+            onResolveCompleted = { resolved ->
+                Logger.d(TAG, "Conflict resolution completed with ${resolved.size} items resolved.")
+                fi.iki.ede.safe.ui.sync.SyncConflictResolver.applyResolvedConflictsToLocalDatabase(resolved)
+                displayConflictDialog.value = false
+            }
+        )
     }
 }
 
@@ -149,6 +185,9 @@ private fun MakeDropdownMenu(
     exportImport: MutableState<Boolean>,
     showChangePasswordDialog: MutableState<Boolean>,
     showTrashDialog: MutableState<Boolean>,
+    displayDeviceSyncDialog: MutableState<Boolean>,
+    displayConflictDialog: MutableState<Boolean>,
+    activeConflicts: MutableState<List<fi.iki.ede.safe.ui.sync.SyncConflict>>,
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -161,33 +200,49 @@ private fun MakeDropdownMenu(
         }
     ) {
         if (!exportImport.value) {
-            DropdownMenuItem(
-                enabled = !loginScreen,
-                text = { Text(text = stringResource(id = R.string.action_bar_settings)) },
-                onClick = {
-                    displayMenu.value = false
+            SharedMenuItems(
+                isLoggedIn = !loginScreen,
+                onPeerSyncRequested = {
+                    displayDeviceSyncDialog.value = true
+                },
+                onSettingsRequested = {
                     IntentManager.startPreferencesActivity(context)
-                })
-            DropdownMenuItem(
-                text = { Text(text = stringResource(id = R.string.action_bar_help)) },
-                onClick = {
-                    displayMenu.value = false
+                },
+                onHelpRequested = {
                     IntentManager.startHelpScreen(context)
-                })
-            DropdownMenuItem(
-                enabled = !loginScreen,
-                text = { Text(text = stringResource(id = R.string.action_bar_change_master_password)) },
-                onClick = {
-                    displayMenu.value = false
+                },
+                onChangeMasterPasswordRequested = {
                     showChangePasswordDialog.value = true
-                })
-            DropdownMenuItem(
-                enabled = !loginScreen,
-                text = { Text(text = stringResource(id = R.string.action_bar_show_trash)) },
-                onClick = {
-                    displayMenu.value = false
+                },
+                onShowTrashRequested = {
                     showTrashDialog.value = true
-                })
+                },
+                onImportExportRequested = {
+                    exportImport.value = true
+                },
+                onSeedAndroidDbRequested = {
+                    fi.iki.ede.safe.ui.sync.SyncConflictResolver.seedLocalDatabase(isAndroid = true)
+                    Logger.d(TAG, "Seeded Android conflict matrix dataset into local DB")
+                },
+                onSeedIosDbRequested = {
+                    fi.iki.ede.safe.ui.sync.SyncConflictResolver.seedLocalDatabase(isAndroid = false)
+                    Logger.d(TAG, "Seeded iOS conflict matrix dataset into local DB")
+                },
+                onTestConflictMatrixRequested = {
+                    val (androidItems, iosItems) = fi.iki.ede.safe.ui.sync.SyncConflictResolver.createTestConflictMatrix()
+                    val analyzed = fi.iki.ede.safe.ui.sync.SyncConflictResolver.analyzeConflicts(androidItems, iosItems)
+                    activeConflicts.value = analyzed
+                    displayConflictDialog.value = true
+                },
+                onResolveLocalConflictsRequested = {
+                    val localItems = fi.iki.ede.safe.ui.sync.SyncConflictResolver.readLocalDatabaseAsSyncItems()
+                    val (_, remoteMatrixItems) = fi.iki.ede.safe.ui.sync.SyncConflictResolver.createTestConflictMatrix()
+                    val analyzed = fi.iki.ede.safe.ui.sync.SyncConflictResolver.analyzeConflicts(localItems, remoteMatrixItems)
+                    activeConflicts.value = analyzed
+                    displayConflictDialog.value = true
+                },
+                onDismiss = { displayMenu.value = false }
+            )
             IntentManager.getMenuItems(DropDownMenu.TopActionBarMenu).forEach {
                 DropdownMenuItem(text = { Text(text = stringResource(id = it.first)) }, onClick = {
                     displayMenu.value = false
