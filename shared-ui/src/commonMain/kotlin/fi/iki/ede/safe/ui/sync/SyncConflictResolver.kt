@@ -3,6 +3,7 @@ package fi.iki.ede.safe.ui.sync
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.DecryptableCategoryEntry
 import fi.iki.ede.cryptoobjects.DecryptableSiteEntry
+import fi.iki.ede.cryptoobjects.plainName
 import fi.iki.ede.cryptoobjects.plainDescription
 import fi.iki.ede.cryptoobjects.plainExtensions
 import fi.iki.ede.cryptoobjects.plainNote
@@ -191,9 +192,10 @@ object SyncConflictResolver {
     fun seedLocalDatabase(isAndroid: Boolean) {
         val db = DBHelperFactory.getDBHelper()
         val categories = db.fetchAllCategoryRows()
-        val catId = if (categories.isNotEmpty()) categories.first().id!! else {
+        val testCat = categories.find { it.plainName == "Test Sync Matrix" }
+        val catId = testCat?.id ?: run {
             val newCat = DecryptableCategoryEntry().apply {
-                encryptedName = "General".encrypt()
+                encryptedName = "Test Sync Matrix".encrypt()
             }
             db.addCategory(newCat)
         }
