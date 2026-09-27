@@ -214,7 +214,7 @@ object SyncConflictResolver {
                 existing.username = userStr.encrypt()
                 existing.password = passStr.encrypt()
                 existing.note = noteStr.encrypt()
-                existing.deleted = if (isDel) 1789356600L else 0L
+                existing.deleted = if (isDel) kotlin.time.Clock.System.now().toEpochMilliseconds() / 1000 else 0L
                 val extMap = existing.plainExtensions.toMutableMap()
                 extMap["cxfItemId"] = setOf(cxfId)
                 existing.extensions = existing.encryptExtension(extMap)
@@ -225,7 +225,7 @@ object SyncConflictResolver {
                     username = userStr.encrypt()
                     password = passStr.encrypt()
                     note = noteStr.encrypt()
-                    deleted = if (isDel) 1789356600L else 0L
+                    deleted = if (isDel) kotlin.time.Clock.System.now().toEpochMilliseconds() / 1000 else 0L
                     extensions = encryptExtension(mapOf("cxfItemId" to setOf(cxfId)))
                 }
                 db.addSiteEntry(entry)
@@ -306,7 +306,7 @@ object SyncConflictResolver {
                 existing.username = targetUser.encrypt()
                 existing.password = targetPass.encrypt()
                 existing.note = targetNote.encrypt()
-                existing.deleted = if (targetDeleted) 1789356600L else 0L
+                existing.deleted = if (targetDeleted) kotlin.time.Clock.System.now().toEpochMilliseconds() / 1000 else 0L
                 db.updateSiteEntry(existing)
             } else {
                 val newEntry = DecryptableSiteEntry(categoryId = catId).apply {
@@ -314,7 +314,7 @@ object SyncConflictResolver {
                     username = targetUser.encrypt()
                     password = targetPass.encrypt()
                     note = targetNote.encrypt()
-                    deleted = if (targetDeleted) 1789356600L else 0L
+                    deleted = if (targetDeleted) kotlin.time.Clock.System.now().toEpochMilliseconds() / 1000 else 0L
                     extensions = encryptExtension(mapOf("cxfItemId" to setOf(conflict.conflictId)))
                 }
                 db.addSiteEntry(newEntry)

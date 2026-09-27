@@ -28,7 +28,7 @@ fun ConflictResolutionDialog(
     onDismissRequest: () -> Unit,
     onResolveCompleted: (resolvedConflicts: List<SyncConflict>) -> Unit
 ) {
-    val conflictList = remember { mutableStateListOf(*conflicts.toTypedArray()) }
+    val conflictList = remember(conflicts) { mutableStateListOf(*conflicts.toTypedArray()) }
 
     AlertDialog(
         onDismissRequest = onDismissRequest,
@@ -55,7 +55,7 @@ fun ConflictResolutionDialog(
                     .padding(vertical = 4.dp)
             ) {
                 Text(
-                    text = "${conflictList.size} conflicts detected between Local (Android) and Remote (iOS):",
+                    text = "${conflictList.size} conflicts detected between Local and Remote devices:",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -139,7 +139,7 @@ fun ConflictResolutionDialog(
                                 if (conflict.type == ConflictType.DELETED_ON_ONE_SIDE) {
                                     val localDel = conflict.localItem?.isDeleted == true
                                     Text(
-                                        text = if (localDel) "Deleted on Local (Android)" else "Deleted on Remote (iOS)",
+                                        text = if (localDel) "Deleted on Local device" else "Deleted on Remote device",
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.error
                                     )
@@ -163,7 +163,7 @@ fun ConflictResolutionDialog(
                                 if (conflict.type == ConflictType.NEW_ENTRY_ADDED) {
                                     val isLocalNew = conflict.localItem != null
                                     Text(
-                                        text = if (isLocalNew) "Added on Local: ${conflict.localItem?.name}" else "Added on Remote: ${conflict.remoteItem?.name}",
+                                        text = if (isLocalNew) "Added on Local: ${conflict.localItem.name}" else "Added on Remote: ${conflict.remoteItem?.name}",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.primary
                                     )
