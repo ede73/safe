@@ -1,6 +1,7 @@
 package fi.iki.ede.safe.ui.sync
 
 import korlibs.crypto.AES
+import korlibs.crypto.HMAC
 import korlibs.crypto.Padding
 import korlibs.crypto.SHA256
 import korlibs.crypto.SecureRandom
@@ -9,6 +10,7 @@ import korlibs.crypto.encoding.Hex
 object SyncPairingSession {
 
     private const val SALT_STRING = "SafeLocalDeviceSyncSaltV1"
+    private const val MAC_INFO_STRING = "SafeLocalDeviceSyncMacV1"
 
     /**
      * Generates a secure random 8-digit PIN string (e.g., "49208173").
@@ -47,27 +49,41 @@ object SyncPairingSession {
         return hash
     }
 
+    private fun deriveMacKey(masterKey: ByteArray): ByteArray {
+        return HMAC.hmacSHA256(masterKey, MAC_INFO_STRING.encodeToByteArray()).bytes
+    }
+
     /**
-     * Encrypts plaintext JSON payload with the derived AES key.
+     * Encrypts plaintext JSON payload with the derived AES key and HMAC-SHA256 integrity tag.
      */
     fun encryptPayload(plainJson: String, pin: String): String {
-        val key = deriveAesKeyFromPin(pin)
+        val masterKey = deriveAesKeyFromPin(pin)
+        val macKey = deriveMacKey(masterKey)
         val iv = SecureRandom.nextBytes(16)
-        val encryptedBytes = AES.encryptAesCbc(plainJson.encodeToByteArray(), key, iv, Padding.PKCS7Padding)
-        val combined = iv + encryptedBytes
+        val encryptedBytes = AES.encryptAesCbc(plainJson.encodeToByteArray(), masterKey, iv, Padding.PKCS7Padding)
+        val ivAndCiphertext = iv + encryptedBytes
+        val hmacTag = HMAC.hmacSHA256(macKey, ivAndCiphertext).bytes
+        val combined = hmacTag + ivAndCiphertext
         return Hex.encode(combined)
     }
 
     /**
-     * Decrypts ciphertext back into plaintext JSON using the derived AES key.
+     * Decrypts ciphertext back into plaintext JSON after verifying HMAC-SHA256 payload integrity.
      */
     fun decryptPayload(cipherHex: String, pin: String): String {
-        val key = deriveAesKeyFromPin(pin)
+        val masterKey = deriveAesKeyFromPin(pin)
+        val macKey = deriveMacKey(masterKey)
         val bytes = Hex.decode(cipherHex)
-        require(bytes.size > 16) { "Invalid payload length" }
-        val iv = bytes.copyOfRange(0, 16)
-        val ciphertext = bytes.copyOfRange(16, bytes.size)
-        val decryptedBytes = AES.decryptAesCbc(ciphertext, key, iv, Padding.PKCS7Padding)
+        require(bytes.size > 48) { "Invalid payload length: payload must include HMAC tag (32b) and IV (16b)" }
+        val hmacTag = bytes.copyOfRange(0, 32)
+        val ivAndCiphertext = bytes.copyOfRange(32, bytes.size)
+        val expectedHmacTag = HMAC.hmacSHA256(macKey, ivAndCiphertext).bytes
+        require(hmacTag.contentEquals(expectedHmacTag)) { "Payload integrity check failed: HMAC mismatch" }
+
+        val iv = ivAndCiphertext.copyOfRange(0, 16)
+        val ciphertext = ivAndCiphertext.copyOfRange(16, ivAndCiphertext.size)
+        val decryptedBytes = AES.decryptAesCbc(ciphertext, masterKey, iv, Padding.PKCS7Padding)
         return decryptedBytes.decodeToString()
     }
 }
+

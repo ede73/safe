@@ -32,4 +32,21 @@ class SyncPairingSessionTest {
         val decryptedPayload = SyncPairingSession.decryptPayload(cipherHex, samplePin)
         assertEquals(originalPayload, decryptedPayload)
     }
+
+    @Test
+    fun testPayloadTamperingFailsHmacVerification() {
+        val samplePin = "49208173"
+        val originalPayload = """{"test":"tamper_proof_data"}"""
+        val cipherHex = SyncPairingSession.encryptPayload(originalPayload, samplePin)
+
+        // Tamper with the hex string (flip last character)
+        val lastChar = cipherHex.takeLast(1)
+        val replacementChar = if (lastChar == "0") "1" else "0"
+        val tamperedHex = cipherHex.dropLast(1) + replacementChar
+
+        assertThrows(IllegalArgumentException::class.java) {
+            SyncPairingSession.decryptPayload(tamperedHex, samplePin)
+        }
+    }
 }
+
