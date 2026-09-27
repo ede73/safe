@@ -200,72 +200,49 @@ private fun MakeDropdownMenu(
         }
     ) {
         if (!exportImport.value) {
-            DropdownMenuItem(
-                text = { Text(text = "🌱 Seed Local DB (Android Matrix Q, X, Y, M)") },
-                onClick = {
-                    displayMenu.value = false
+            SharedMenuItems(
+                isLoggedIn = !loginScreen,
+                onPeerSyncRequested = {
+                    displayDeviceSyncDialog.value = true
+                },
+                onSettingsRequested = {
+                    IntentManager.startPreferencesActivity(context)
+                },
+                onHelpRequested = {
+                    IntentManager.startHelpScreen(context)
+                },
+                onChangeMasterPasswordRequested = {
+                    showChangePasswordDialog.value = true
+                },
+                onShowTrashRequested = {
+                    showTrashDialog.value = true
+                },
+                onImportExportRequested = {
+                    exportImport.value = true
+                },
+                onSeedAndroidDbRequested = {
                     fi.iki.ede.safe.ui.sync.SyncConflictResolver.seedLocalDatabase(isAndroid = true)
                     Logger.d(TAG, "Seeded Android conflict matrix dataset into local DB")
-                })
-            DropdownMenuItem(
-                text = { Text(text = "🌱 Seed Local DB (iOS Matrix W, X, Y, M)") },
-                onClick = {
-                    displayMenu.value = false
+                },
+                onSeedIosDbRequested = {
                     fi.iki.ede.safe.ui.sync.SyncConflictResolver.seedLocalDatabase(isAndroid = false)
                     Logger.d(TAG, "Seeded iOS conflict matrix dataset into local DB")
-                })
-            DropdownMenuItem(
-                text = { Text(text = "🧪 Test Conflict Matrix (Simulated Q, W, X, Y, M)") },
-                onClick = {
-                    displayMenu.value = false
+                },
+                onTestConflictMatrixRequested = {
                     val (androidItems, iosItems) = fi.iki.ede.safe.ui.sync.SyncConflictResolver.createTestConflictMatrix()
                     val analyzed = fi.iki.ede.safe.ui.sync.SyncConflictResolver.analyzeConflicts(androidItems, iosItems)
                     activeConflicts.value = analyzed
                     displayConflictDialog.value = true
-                })
-            DropdownMenuItem(
-                text = { Text(text = "🧪 Resolve Local DB vs Matrix Conflicts") },
-                onClick = {
-                    displayMenu.value = false
+                },
+                onResolveLocalConflictsRequested = {
                     val localItems = fi.iki.ede.safe.ui.sync.SyncConflictResolver.readLocalDatabaseAsSyncItems()
                     val (_, remoteMatrixItems) = fi.iki.ede.safe.ui.sync.SyncConflictResolver.createTestConflictMatrix()
                     val analyzed = fi.iki.ede.safe.ui.sync.SyncConflictResolver.analyzeConflicts(localItems, remoteMatrixItems)
                     activeConflicts.value = analyzed
                     displayConflictDialog.value = true
-                })
-            DropdownMenuItem(
-                text = { Text(text = "⚡ Device Sync (8-Digit PIN)") },
-                onClick = {
-                    displayMenu.value = false
-                    displayDeviceSyncDialog.value = true
-                })
-            DropdownMenuItem(
-                enabled = !loginScreen,
-                text = { Text(text = stringResource(id = R.string.action_bar_settings)) },
-                onClick = {
-                    displayMenu.value = false
-                    IntentManager.startPreferencesActivity(context)
-                })
-            DropdownMenuItem(
-                text = { Text(text = stringResource(id = R.string.action_bar_help)) },
-                onClick = {
-                    displayMenu.value = false
-                    IntentManager.startHelpScreen(context)
-                })
-            DropdownMenuItem(
-                enabled = !loginScreen,
-                text = { Text(text = stringResource(id = R.string.action_bar_change_master_password)) },
-                onClick = {
-                    displayMenu.value = false
-                    showChangePasswordDialog.value = true
-                })
-            DropdownMenuItem(
-                enabled = !loginScreen,
-                text = { Text(text = stringResource(id = R.string.action_bar_show_trash)) },
-                onClick = {
-                    displayMenu.value = false
-                    showTrashDialog.value = true
-                })
+                },
+                onDismiss = { displayMenu.value = false }
+            )
             IntentManager.getMenuItems(DropDownMenu.TopActionBarMenu).forEach {
                 DropdownMenuItem(text = { Text(text = stringResource(id = it.first)) }, onClick = {
                     displayMenu.value = false
