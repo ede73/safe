@@ -365,34 +365,25 @@ object Preferences {
     fun setAutoSyncWifiEnabled(enabled: Boolean) =
         setCached(autoSyncWifiEnabledKey, enabled)
 
-    fun getPairedSyncDevices(): Set<String> {
-        val raw = getCached(pairedSyncDevicesKey, emptySet())
-        return raw.filterNot { item ->
-            val name = item.split("|").getOrNull(1)?.trim() ?: item
-            name.contains(":5844") || name.contains("Local Port") || name.contains("Linked Device") || name.contains("Local Gateway") || name == "Safe-Device" || name.contains("gateway-") || name.contains("loopback-")
-        }.toSet()
-    }
+    fun getPairedSyncDevices(): Set<String> =
+        getCached(pairedSyncDevicesKey, emptySet())
 
     fun addPairedSyncDevice(deviceId: String, deviceName: String) {
+        val cleanId = deviceId.trim()
+        val cleanName = deviceName.trim()
+        if (cleanId.isBlank() || cleanName.isBlank()) return
         val current = getPairedSyncDevices().toMutableSet()
-        val trimmedName = deviceName.trim()
         current.removeAll { 
-            it.startsWith("$deviceId|") || 
-            it.split("|").getOrNull(1)?.trim() == trimmedName 
+            it.startsWith("$cleanId|") || 
+            it.split("|").getOrNull(1)?.trim() == cleanName 
         }
-        current.removeAll { 
-            val n = it.split("|").getOrNull(1)?.trim() ?: it
-            n.contains(":5844") || n.contains("Local Port") || n.contains("Linked Device") || n.contains("Local Gateway") || n == "Safe-Device" || n.contains("gateway-") || n.contains("loopback-")
-        }
-        if (!trimmedName.contains(":5844") && !trimmedName.contains("gateway-") && !trimmedName.contains("loopback-") && trimmedName != "Safe-Device") {
-            current.add("$deviceId|$trimmedName|${Clock.System.now().toEpochMilliseconds()}")
-            setCached(pairedSyncDevicesKey, current)
-        }
+        current.add("$cleanId|$cleanName|${Clock.System.now().toEpochMilliseconds()}")
+        setCached(pairedSyncDevicesKey, current)
     }
 
     fun removePairedSyncDevice(deviceId: String) {
         val current = getPairedSyncDevices().toMutableSet()
-        current.removeAll { it.startsWith("$deviceId|") }
+        current.removeAll { it.startsWith("${deviceId.trim()}|") }
         setCached(pairedSyncDevicesKey, current)
     }
 

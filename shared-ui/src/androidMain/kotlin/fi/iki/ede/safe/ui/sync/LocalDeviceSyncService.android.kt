@@ -39,7 +39,7 @@ actual class LocalDeviceSyncManager {
 
         val serviceInfo = NsdServiceInfo().apply {
             serviceName = deviceName
-            serviceType = SAFE_MDNS_SERVICE_TYPE
+            serviceType = SAFE_MDNS_SERVICE_TYPE.trimEnd('.')
             setPort(port)
         }
 
@@ -106,7 +106,8 @@ actual class LocalDeviceSyncManager {
                             if (resolvedInfo.serviceName.equals(myDeviceName, ignoreCase = true)) {
                                 return
                             }
-                            val host = resolvedInfo.host?.hostAddress ?: "127.0.0.1"
+                            val rawHost = resolvedInfo.host?.hostAddress?.removePrefix("/") ?: ""
+                            val host = if (rawHost.isNotBlank() && rawHost != "0.0.0.0") rawHost else "127.0.0.1"
                             val device = DiscoveredDevice(
                                 id = resolvedInfo.serviceName,
                                 name = resolvedInfo.serviceName,
@@ -144,7 +145,7 @@ actual class LocalDeviceSyncManager {
         }
 
         try {
-            manager.discoverServices(SAFE_MDNS_SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, discoveryListener)
+            manager.discoverServices(SAFE_MDNS_SERVICE_TYPE.trimEnd('.'), NsdManager.PROTOCOL_DNS_SD, discoveryListener)
         } catch (e: Exception) {
             Logger.e(TAG, "Failed to start mDNS discovery", e)
         }

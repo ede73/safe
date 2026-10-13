@@ -10,13 +10,40 @@ import kotlin.concurrent.thread
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+import android.os.Build
+
 private const val TAG = "SyncNetworkServiceAndroid"
 
 actual class SyncNetworkService {
     private var serverSocket: ServerSocket? = null
     @Volatile private var isRunning = false
     actual var boundPort: Int = -1
-    actual val isAndroidGuest: Boolean = true
+    actual val isAndroidGuest: Boolean = isEmulator()
+
+    companion object {
+        fun isEmulator(): Boolean {
+            val fingerprint = Build.FINGERPRINT ?: ""
+            val model = Build.MODEL ?: ""
+            val hardware = Build.HARDWARE ?: ""
+            val product = Build.PRODUCT ?: ""
+            val board = Build.BOARD ?: ""
+            val brand = Build.BRAND ?: ""
+            val device = Build.DEVICE ?: ""
+            return fingerprint.startsWith("generic") ||
+                    fingerprint.startsWith("unknown") ||
+                    model.contains("google_sdk") ||
+                    model.contains("Emulator") ||
+                    model.contains("Android SDK built for x86") ||
+                    hardware.contains("goldfish") ||
+                    hardware.contains("ranchu") ||
+                    product.contains("sdk_gphone") ||
+                    product.contains("google_sdk") ||
+                    product.contains("emulator") ||
+                    board.contains("goldfish") ||
+                    brand.startsWith("generic") ||
+                    device.startsWith("generic")
+        }
+    }
 
     actual fun startServer(
         port: Int,

@@ -7,7 +7,7 @@ import fi.iki.ede.db.DBID
 import fi.iki.ede.datamodel.BuildConfig
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.preferences.Preferences
-import fi.iki.ede.datamodel.cxf.CxfSyntheticModelMapper
+import fi.iki.ede.db.cxf.CxfSyntheticModelMapper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -290,6 +290,7 @@ object DataModel {
                 launch { syncLoadSoftDeletedSiteEntries() }
                 awaitAll(cats, sites)
 
+                launch(Dispatchers.Default) { preDecryptDescriptions() }
                 launch { syncLoadAllPhotos() }
 
                 launch {
@@ -298,8 +299,26 @@ object DataModel {
                     }
                 }
                 loadExternalDatabases()
-                launch { loadSyntheticCxfEntries() }
+                launch {
+                    loadSyntheticCxfEntries()
+                    launch(Dispatchers.Default) { preDecryptDescriptions() }
+                }
             }
+        }
+    }
+
+    fun preDecryptDescriptions() {
+        val entries = _siteEntriesStateFlow.value
+        entries.forEach { entry ->
+            try {
+                entry.getPlainDescription()
+            } catch (_: Throwable) {}
+        }
+        val categories = _categoriesStateFlow.value
+        categories.forEach { cat ->
+            try {
+                cat.plainName
+            } catch (_: Throwable) {}
         }
     }
 

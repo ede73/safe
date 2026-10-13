@@ -29,6 +29,7 @@ import fi.iki.ede.safe.ui.sync.SyncNetworkService
 import fi.iki.ede.safe.ui.sync.SyncPairingSession
 import fi.iki.ede.safe.ui.sync.SyncPayload
 import fi.iki.ede.safe.ui.sync.ContinuousAutoSyncCoordinator
+import fi.iki.ede.safe.ui.sync.DeviceInfoProvider
 import fi.iki.ede.preferences.Preferences
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
@@ -47,6 +48,7 @@ fun DeviceSyncDialog(
     var syncStatusMessage by remember { mutableStateOf<String?>(null) }
     var isSyncing by remember { mutableStateOf(false) }
 
+    val currentDeviceName = remember { DeviceInfoProvider.getFormattedDeviceName() }
     val discoveredDevices = remember { mutableStateListOf<DiscoveredDevice>() }
     var selectedDevice by remember { mutableStateOf<DiscoveredDevice?>(null) }
 
@@ -57,7 +59,7 @@ fun DeviceSyncDialog(
     DisposableEffect(isInitiator, initiatorPin) {
         if (isInitiator) {
             ContinuousAutoSyncCoordinator.instance.pauseServer()
-            syncManager.startAdvertising("Safe-Device", SAFE_SYNC_DEFAULT_PORT)
+            syncManager.startAdvertising(currentDeviceName, SAFE_SYNC_DEFAULT_PORT)
             networkService.startServer(
                 port = SAFE_SYNC_DEFAULT_PORT,
                 pin = initiatorPin,
@@ -91,8 +93,9 @@ fun DeviceSyncDialog(
         } else {
             syncManager.startDiscovery(
                 onDeviceFound = { device ->
-                    val isSelf = (device.hostAddress == "127.0.0.1" || device.hostAddress == "localhost") &&
-                                 (device.port == networkService.boundPort || device.port == SAFE_SYNC_DEFAULT_PORT)
+                    val isSelf = device.name.equals(currentDeviceName, ignoreCase = true) ||
+                                 ((device.hostAddress == "127.0.0.1" || device.hostAddress == "localhost") &&
+                                  (device.port == networkService.boundPort || device.port == SAFE_SYNC_DEFAULT_PORT))
                     if (!isSelf && discoveredDevices.none { it.id == device.id }) {
                         discoveredDevices.add(device)
                         if (selectedDevice == null) {
@@ -333,10 +336,19 @@ fun DeviceSyncDialog(
                 Button(
                     enabled = !isSyncing && inputPin.length == 8,
                     onClick = {
-                        val candidateHosts = if (selectedDevice != null) {
-                            listOf(selectedDevice!!.hostAddress, "10.0.2.2", "127.0.0.1").filter { it.isNotBlank() }.distinct()
+                        val rawCandidateHosts = if (selectedDevice != null) {
+                            listOf(selectedDevice!!.hostAddress).filter { it.isNotBlank() }
                         } else {
-                            (discoveredDevices.map { it.hostAddress } + listOf("10.0.2.2", "127.0.0.1")).filter { it.isNotBlank() }.distinct()
+                            discoveredDevices.map { it.hostAddress }.filter { it.isNotBlank() }.distinct()
+                        }
+                        val candidateHosts = when {
+                            rawCandidateHosts.isNotEmpty() -> rawCandidateHosts
+                            networkService.isAndroidGuest -> listOf("10.0.2.2")
+                            else -> emptyList()
+                        }
+                        if (candidateHosts.isEmpty()) {
+                            syncStatusMessage = "No devices found on local network. Please ensure both devices are connected to the same Wi-Fi."
+                            return@Button
                         }
                         val candidatePorts = if (selectedDevice != null && selectedDevice!!.port > 0) {
                             listOf(selectedDevice!!.port, SAFE_SYNC_DEFAULT_PORT).distinct()
