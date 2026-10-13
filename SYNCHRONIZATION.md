@@ -292,3 +292,99 @@ Tombstones cannot be retained indefinitely without unbounded database growth. Sa
 - ❌ `Bank of America` (Deleted by Android @ $T=2500$)
 - ❌ `Steam Gaming` (Deleted by Desktop @ $T=2500$)
 - ❌ `Reddit` (Deleted by Desktop @ $T=2500$)
+
+---
+
+## 9. Emulator, Simulator & Local Testing Rig Setup
+
+To test P2P synchronization without physical Wi-Fi or across headless CI rigs, Safe supports emulator-to-host and simulator-to-desktop bridging.
+
+### 9.1. Real Devices vs. Emulator/Simulator Detection
+
+Safe distinguishes between **physical hardware on Wi-Fi** and **virtualized emulators/simulators**:
+
+| Environment | Host Resolution & Candidate Routing | Runtime Detection Mechanism |
+| :--- | :--- | :--- |
+| **Physical Android Device** | Connects strictly via resolved IPv4 LAN addresses (`192.168.x.x`). Never falls back to `10.0.2.2` or localhost. | `SyncNetworkService.isEmulator()` returns `false` (inspects `Build.FINGERPRINT`, `Build.HARDWARE`, `Build.MODEL`, `Build.PRODUCT`). |
+| **Android Emulator (QEMU)** | Injects `10.0.2.2` host gateway when Wi-Fi peers are absent. Allows `adb reverse` / `adb forward` loopbacks. | `SyncNetworkService.isEmulator()` returns `true` (`isAndroidGuest = true`). |
+| **Physical iOS Device** | Resolves raw IPv4 addresses from `NSNetService.addresses` (`sockaddr_in`). | Extracted IPv4 is a non-loopback LAN IP. |
+| **iOS Simulator** | Shares the macOS host network stack; uses `127.0.0.1` or host LAN IP. | `LocalDeviceSyncService.ios.kt` extracts `sender.hostName` / `127.0.0.1`. |
+
+> **Critical Rule**: On real physical devices, `10.0.2.2` and `127.0.0.1` candidate fallbacks are **disabled**. Injecting host loopbacks on real devices would cause silent connection black holes or self-connections. They are enabled **only** when `isAndroidGuest` is `true` or running inside the simulator.
+
+---
+
+### 9.2. Network Topology & Port Forwarding Matrix
+
+- **Default Sync Port**: `SAFE_SYNC_DEFAULT_PORT = 58443` (Desktop fallback: `58444`).
+- **Android Emulator**: Isolated inside QEMU NAT (`10.0.2.15`). The host machine is reachable at `10.0.2.2`.
+- **iOS Simulator / Desktop**: Runs natively on the macOS host network interface (`127.0.0.1`).
+
+```mermaid
+graph LR
+    subgraph "Android Emulator (Guest NAT)"
+        AE[Safe Android<br/>10.0.2.15]
+    end
+
+    subgraph "macOS Host Network (127.0.0.1)"
+        IOS[Safe iOS Simulator<br/>or Desktop Process<br/>:58443]
+    end
+
+    AE -->|Outbound to Host: 10.0.2.2:58443| IOS
+    AE <-->|adb reverse tcp:58443 tcp:58443| IOS
+    IOS <-->|adb forward tcp:58443 tcp:58443| AE
+```
+
+---
+
+### 9.3. ADB Port Forwarding Commands for Testing
+
+#### A. Android Emulator (Client) $\to$ macOS Host / iOS Simulator (Server)
+When the iOS Simulator or Desktop app displays the 8-digit PIN and listens on `:58443`:
+1. Android connects directly to `10.0.2.2:58443` (handled automatically by `ContinuousAutoSyncCoordinator` when `isAndroidGuest == true`).
+2. Or configure ADB reverse proxy:
+   ```bash
+   adb reverse tcp:58443 tcp:58443
+   ```
+   Now Android connecting to `127.0.0.1:58443` reaches the macOS host server.
+
+#### B. macOS Host / iOS Simulator (Client) $\to$ Android Emulator (Server)
+When the Android Emulator displays the 8-digit PIN and listens on `:58443`:
+1. Set up forward port mapping from host to emulator:
+   ```bash
+   adb forward tcp:58443 tcp:58443
+   ```
+2. The host / iOS Simulator connects to `127.0.0.1:58443`, which ADB routes into the emulator.
+
+#### C. Preventing Host Port Collision (`BindException`)
+If `adb forward` is active and you later try to run a server socket on macOS host:
+```bash
+# Clear specific forward
+adb forward --remove tcp:58443
+
+# Or clear all port forwards to avoid "Address already in use"
+adb forward --remove-all
+adb reverse --remove-all
+```
+
+---
+
+### 9.4. Step-by-Step Test Procedure for Multi-Device Rig
+
+1. **Deploy Seed Databases**:
+   - Master Password: `12345678`.
+   - Android: `adb push <seed.db> /data/data/fi.iki.ede.safe.debug/databases/safe`
+   - iOS: `cp <seed.db> "$(xcrun simctl get_app_container booted fi.iki.ede.safe.debug data)/Documents/safe.db"`
+   - Desktop: `cp <seed.db> ./safe.db`
+
+2. **Unlock Both Devices**:
+   - Ensure both apps are unlocked past the Master Password screen into the Category list.
+
+3. **Initiate Pairing Ceremony**:
+   - Device 1 (Server): Tap `Device Sync` $\to$ `Display PIN` (generates random 8-digit code, e.g., `8487 - 9314`, and starts listening on port `58443`).
+   - Device 2 (Client): Tap `Device Sync` $\to$ Enter the 8 digits $\to$ Tap `Connect & Sync`.
+
+4. **Verify Reconciliation**:
+   - Both devices converge to identical Merkle root hashes (`vault_checksum`).
+   - Deleted tombstones are hidden; new entries and edits appear on both devices.
+
