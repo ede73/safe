@@ -36,6 +36,11 @@ import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.dialogs.ShowTrashDialog
 import fi.iki.ede.safe.ui.testTag
 import fi.iki.ede.datamodel.DataModel
+import fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper
+import fi.iki.ede.safe.ui.composable.ConflictResolutionDialog
+import fi.iki.ede.safe.ui.composable.DeviceSyncDialog
+import fi.iki.ede.safe.ui.sync.SyncConflict
+import fi.iki.ede.safe.ui.sync.SyncConflictResolver
 import fi.iki.ede.theme.SafeTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -57,7 +62,7 @@ fun BottomActionBar(
     val showTrashDialog = remember { mutableStateOf(false) }
     val displayDeviceSyncDialog = remember { mutableStateOf(false) }
     val displayConflictDialog = remember { mutableStateOf(false) }
-    val activeConflicts = remember { mutableStateOf<List<fi.iki.ede.safe.ui.sync.SyncConflict>>(emptyList()) }
+    val activeConflicts = remember { mutableStateOf<List<SyncConflict>>(emptyList()) }
     val context = LocalContext.current
 
     SafeTheme {
@@ -113,7 +118,7 @@ fun BottomActionBar(
         ShowTrashDialog(onDismiss = { showTrashDialog.value = false })
     }
     if (displayDeviceSyncDialog.value) {
-        fi.iki.ede.safe.ui.composable.DeviceSyncDialog(
+        DeviceSyncDialog(
             onDismissRequest = { displayDeviceSyncDialog.value = false },
             onSyncCompleted = {
                 Logger.d(TAG, "Device sync completed successfully")
@@ -124,12 +129,12 @@ fun BottomActionBar(
         )
     }
     if (displayConflictDialog.value) {
-        fi.iki.ede.safe.ui.composable.ConflictResolutionDialog(
+        ConflictResolutionDialog(
             conflicts = activeConflicts.value,
             onDismissRequest = { displayConflictDialog.value = false },
             onResolveCompleted = { resolved ->
                 Logger.d(TAG, "Conflict resolution completed with ${resolved.size} items resolved.")
-                fi.iki.ede.safe.ui.sync.SyncConflictResolver.applyResolvedConflictsToLocalDatabase(resolved)
+                SyncConflictResolver.applyResolvedConflictsToLocalDatabase(resolved)
                 displayConflictDialog.value = false
             }
         )
@@ -181,7 +186,7 @@ private fun MakeDropdownMenu(
     showTrashDialog: MutableState<Boolean>,
     displayDeviceSyncDialog: MutableState<Boolean>,
     displayConflictDialog: MutableState<Boolean>,
-    activeConflicts: MutableState<List<fi.iki.ede.safe.ui.sync.SyncConflict>>,
+    activeConflicts: MutableState<List<SyncConflict>>,
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -267,7 +272,7 @@ private fun MakeDropdownMenu(
                 onClick = {
                     displayMenu.value = false
                     exportImport.value = false
-                    fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper.launchDirectGpmImport(
+                    AndroidCredentialTransferHelper.launchDirectGpmImport(
                         context = context,
                         scope = coroutineScope,
                         onMessage = { msg -> Logger.d(TAG, msg) },

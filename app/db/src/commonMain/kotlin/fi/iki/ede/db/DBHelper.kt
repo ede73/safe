@@ -3,6 +3,10 @@ package fi.iki.ede.db
 import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.Salt
 import fi.iki.ede.cryptoobjects.*
+import fi.iki.ede.dateutils.DateUtils
+import fi.iki.ede.db.cxf.CxfSyntheticModelMapper
+import fi.iki.ede.db.cxf.DecryptableCXFCategoryEntry
+import fi.iki.ede.db.cxf.DecryptableCXFSiteEntry
 import fi.iki.ede.logger.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
@@ -109,7 +113,7 @@ class DBHelper(
 
         for (account in cxfAccounts) {
             val accountId = account.id ?: continue
-            val syntheticCat = fi.iki.ede.db.cxf.CxfSyntheticModelMapper.toSyntheticCategory(account)
+            val syntheticCat = CxfSyntheticModelMapper.toSyntheticCategory(account)
             val importCount = cxfImports.count { it.accountId == accountId }
             val passkeyCount = cxfPasskeys.count { it.accountId == accountId }
             syntheticCat.containedSiteEntryCount = importCount + passkeyCount
@@ -117,7 +121,7 @@ class DBHelper(
         }
 
         categories.forEach { category ->
-            if (!fi.iki.ede.db.cxf.CxfSyntheticModelMapper.isSyntheticId(category.id)) {
+            if (!CxfSyntheticModelMapper.isSyntheticId(category.id)) {
                 category.containedSiteEntryCount = database.siteEntryDao().getByCategory(category.id!!).size
             }
         }
@@ -144,13 +148,13 @@ class DBHelper(
         siteEntriesFlow: MutableStateFlow<List<DecryptableSiteEntry>>? = null
     ): List<DecryptableSiteEntry> = runBlocking {
         val list = mutableListOf<DecryptableSiteEntry>()
-        if (categoryId != null && fi.iki.ede.db.cxf.CxfSyntheticModelMapper.isSyntheticId(categoryId)) {
-            val cxfAccountId = fi.iki.ede.db.cxf.DecryptableCXFCategoryEntry.CATEGORY_ID_OFFSET - categoryId
+        if (categoryId != null && CxfSyntheticModelMapper.isSyntheticId(categoryId)) {
+            val cxfAccountId = DecryptableCXFCategoryEntry.CATEGORY_ID_OFFSET - categoryId
             if (!softDeletedOnly && cxfAccountId > 0L) {
                 val imports = database.cxfImportDao().getByAccountId(cxfAccountId)
                 val passkeys = database.cxfPasskeyDao().getByAccountId(cxfAccountId)
-                list.addAll(imports.map { fi.iki.ede.db.cxf.CxfSyntheticModelMapper.toSyntheticSiteEntry(it, cxfAccountId) })
-                list.addAll(passkeys.map { fi.iki.ede.db.cxf.CxfSyntheticModelMapper.toSyntheticSiteEntry(it, cxfAccountId) })
+                list.addAll(imports.map { CxfSyntheticModelMapper.toSyntheticSiteEntry(it, cxfAccountId) })
+                list.addAll(passkeys.map { CxfSyntheticModelMapper.toSyntheticSiteEntry(it, cxfAccountId) })
             }
         } else {
             val dbList = if (categoryId != null) {
@@ -173,8 +177,8 @@ class DBHelper(
                     val accountId = account.id ?: continue
                     val imports = database.cxfImportDao().getByAccountId(accountId)
                     val passkeys = database.cxfPasskeyDao().getByAccountId(accountId)
-                    list.addAll(imports.map { fi.iki.ede.db.cxf.CxfSyntheticModelMapper.toSyntheticSiteEntry(it, accountId) })
-                    list.addAll(passkeys.map { fi.iki.ede.db.cxf.CxfSyntheticModelMapper.toSyntheticSiteEntry(it, accountId) })
+                    list.addAll(imports.map { CxfSyntheticModelMapper.toSyntheticSiteEntry(it, accountId) })
+                    list.addAll(passkeys.map { CxfSyntheticModelMapper.toSyntheticSiteEntry(it, accountId) })
                 }
             }
         }
@@ -186,7 +190,7 @@ class DBHelper(
     }
 
     fun updateSiteEntry(entry: DecryptableSiteEntry): DBID = runBlocking {
-        if (entry is fi.iki.ede.db.cxf.DecryptableCXFSiteEntry) {
+        if (entry is DecryptableCXFSiteEntry) {
             if (entry.cxfImport != null) {
                 val updated = entry.cxfImport.copy(
                     encryptedName = entry.description,
@@ -267,7 +271,7 @@ class DBHelper(
         database.siteEntryDao().updateDeletedStatus(id, 0L)
     }
 
-    fun markSiteEntryDeleted(id: DBID, deletedTimeSeconds: Long = fi.iki.ede.dateutils.DateUtils.toUnixSeconds()): Int = runBlocking {
+    fun markSiteEntryDeleted(id: DBID, deletedTimeSeconds: Long = DateUtils.toUnixSeconds()): Int = runBlocking {
         database.siteEntryDao().updateDeletedStatus(id, deletedTimeSeconds)
     }
 

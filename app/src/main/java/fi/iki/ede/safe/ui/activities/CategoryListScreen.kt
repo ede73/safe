@@ -20,6 +20,7 @@ import fi.iki.ede.safe.notifications.SetupNotifications
 import fi.iki.ede.safe.ui.composable.CategoryListScreenCompose
 import fi.iki.ede.safe.ui.composable.DualModePreview
 import fi.iki.ede.safe.ui.sync.ContinuousAutoSyncCoordinator
+import fi.iki.ede.safe.ui.sync.DevicePlatformInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,7 +50,7 @@ class CategoryListScreen :
             }
         }
         SetupNotifications.setup(this)
-        fi.iki.ede.safe.ui.sync.DevicePlatformInfo.appVersion = BuildConfig.VERSION_NAME
+        DevicePlatformInfo.appVersion = BuildConfig.VERSION_NAME
         val clusterSecret = Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER"
         DataModel.onDataChanged = {
             ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(clusterSecret)
