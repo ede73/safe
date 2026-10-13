@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.ui.sync.ContinuousAutoSyncCoordinator
+import fi.iki.ede.safe.ui.sync.DeviceInfoProvider
 import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
 
@@ -328,7 +329,7 @@ fun SettingsScreen(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        "Seen by other devices as:\n${fi.iki.ede.safe.ui.sync.DeviceInfoProvider.getFormattedDeviceName(customDeviceName)}",
+                        "Seen by other devices as:\n${DeviceInfoProvider.getFormattedDeviceName(customDeviceName)}",
                         color = Color(0xFF4CAF50),
                         fontSize = 11.sp,
                         lineHeight = 15.sp,

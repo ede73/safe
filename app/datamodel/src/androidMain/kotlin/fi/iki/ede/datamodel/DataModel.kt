@@ -7,6 +7,7 @@ import fi.iki.ede.db.DBID
 import fi.iki.ede.datamodel.BuildConfig
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.preferences.Preferences
+import fi.iki.ede.datamodel.cxf.CxfSyntheticModelMapper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -316,13 +317,13 @@ object DataModel {
 
             for (account in cxfAccounts) {
                 val accountId = account.id ?: continue
-                val syntheticCat = fi.iki.ede.datamodel.cxf.CxfSyntheticModelMapper.toSyntheticCategory(account)
+                val syntheticCat = CxfSyntheticModelMapper.toSyntheticCategory(account)
 
                 val accountImports = cxfImports.filter { it.accountId == accountId }
                 val accountPasskeys = cxfPasskeys.filter { it.accountId == accountId }
 
-                val importSites = accountImports.map { fi.iki.ede.datamodel.cxf.CxfSyntheticModelMapper.toSyntheticSiteEntry(it, accountId) }
-                val passkeySites = accountPasskeys.map { fi.iki.ede.datamodel.cxf.CxfSyntheticModelMapper.toSyntheticSiteEntry(it, accountId) }
+                val importSites = accountImports.map { CxfSyntheticModelMapper.toSyntheticSiteEntry(it, accountId) }
+                val passkeySites = accountPasskeys.map { CxfSyntheticModelMapper.toSyntheticSiteEntry(it, accountId) }
 
                 val totalCount = importSites.size + passkeySites.size
                 syntheticCat.containedSiteEntryCount = totalCount
@@ -333,10 +334,10 @@ object DataModel {
             }
 
             _categoriesStateFlow.update { current ->
-                current.filterNot { fi.iki.ede.datamodel.cxf.CxfSyntheticModelMapper.isSyntheticId(it.id) } + syntheticCategories
+                current.filterNot { CxfSyntheticModelMapper.isSyntheticId(it.id) } + syntheticCategories
             }
             _siteEntriesStateFlow.update { current ->
-                current.filterNot { fi.iki.ede.datamodel.cxf.CxfSyntheticModelMapper.isSyntheticId(it.id) } + syntheticSiteEntries
+                current.filterNot { CxfSyntheticModelMapper.isSyntheticId(it.id) } + syntheticSiteEntries
             }
         } catch (e: Throwable) {
             Logger.e(TAG, "Loading synthetic CXF entries failed: ${e.message}", e)
