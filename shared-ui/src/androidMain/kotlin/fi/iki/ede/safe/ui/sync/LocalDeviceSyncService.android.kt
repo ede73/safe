@@ -13,12 +13,27 @@ actual class LocalDeviceSyncManager {
     private var nsdManager: NsdManager? = null
     private var registrationListener: NsdManager.RegistrationListener? = null
     private var discoveryListener: NsdManager.DiscoveryListener? = null
+    private var myDeviceName: String = ""
+
+    init {
+        try {
+            val appClass = Class.forName("android.app.ActivityThread")
+            val currentAppMethod = appClass.getMethod("currentApplication")
+            val app = currentAppMethod.invoke(null) as? Context
+            if (app != null) {
+                nsdManager = app.getSystemService(Context.NSD_SERVICE) as? NsdManager
+            }
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to get Application Context for NsdManager", e)
+        }
+    }
 
     fun initialize(context: Context) {
         nsdManager = context.getSystemService(Context.NSD_SERVICE) as? NsdManager
     }
 
     actual fun startAdvertising(deviceName: String, port: Int) {
+        myDeviceName = deviceName
         val manager = nsdManager ?: return
         stopAdvertising()
 
@@ -78,6 +93,9 @@ actual class LocalDeviceSyncManager {
 
             override fun onServiceFound(serviceInfo: NsdServiceInfo) {
                 Logger.d(TAG, "mDNS Service found: ${serviceInfo.serviceName}")
+                if (serviceInfo.serviceName.equals(myDeviceName, ignoreCase = true)) {
+                    return
+                }
                 if (serviceInfo.serviceType.contains("safe-sync")) {
                     manager.resolveService(serviceInfo, object : NsdManager.ResolveListener {
                         override fun onResolveFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
@@ -85,6 +103,9 @@ actual class LocalDeviceSyncManager {
                         }
 
                         override fun onServiceResolved(resolvedInfo: NsdServiceInfo) {
+                            if (resolvedInfo.serviceName.equals(myDeviceName, ignoreCase = true)) {
+                                return
+                            }
                             val host = resolvedInfo.host?.hostAddress ?: "127.0.0.1"
                             val device = DiscoveredDevice(
                                 id = resolvedInfo.serviceName,

@@ -1,0 +1,427 @@
+package fi.iki.ede.safe.ui.sync
+
+import fi.iki.ede.notifications.showToast
+import fi.iki.ede.preferences.Preferences
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import kotlin.time.Clock
+
+data class AutoSyncStatus(
+    val isRunning: Boolean,
+    val localRootHash: String,
+    val connectedPeersCount: Int,
+    val lastSyncTimestamp: Long,
+    val lastStatusMessage: String
+)
+
+/**
+ * Continuous Auto-Sync Coordinator.
+ * Periodically monitors peer Merkle roots over local network and triggers
+ * silent fast-forward or reconciliation when data drift is detected.
+ */
+@OptIn(kotlin.time.ExperimentalTime::class)
+class ContinuousAutoSyncCoordinator(
+    private val networkService: SyncNetworkService = SyncNetworkService(),
+    private val syncManager: LocalDeviceSyncManager = LocalDeviceSyncManager(),
+    private val scope: CoroutineScope = CoroutineScope(
+        Dispatchers.Default + SupervisorJob() + CoroutineExceptionHandler { _, t ->
+            println("ContinuousAutoSyncCoordinator coroutine exception: ${t.message}")
+            t.printStackTrace()
+        }
+    )
+) {
+    companion object {
+        val instance by lazy { ContinuousAutoSyncCoordinator() }
+    }
+
+    private var backgroundJob: Job? = null
+    @kotlin.concurrent.Volatile
+    var isRunning = false
+        private set
+
+    private var currentDeviceName: String = "Safe Device"
+    private var currentAuthToken: String = ""
+
+    private val discoveredPeers = mutableMapOf<String, DiscoveredDevice>()
+    private val peerRootHashes = mutableMapOf<String, String>()
+
+    var lastSyncTimestamp: Long = 0L
+        private set
+    var lastStatusMessage: String = "Idle"
+        private set
+    var onDataMutatedBySync: (() -> Unit)? = null
+
+    private val _statusFlow = MutableStateFlow(
+        AutoSyncStatus(
+            isRunning = false,
+            localRootHash = "",
+            connectedPeersCount = 0,
+            lastSyncTimestamp = 0L,
+            lastStatusMessage = "Idle"
+        )
+    )
+    val statusFlow: StateFlow<AutoSyncStatus> = _statusFlow.asStateFlow()
+
+    private fun updateStatus() {
+        try {
+            val currentItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
+            val currentTree = MerkleTreeHelper.buildMerkleVault(currentItems)
+            val newStatus = AutoSyncStatus(
+                isRunning = isRunning,
+                localRootHash = currentTree.rootHash,
+                connectedPeersCount = discoveredPeers.size,
+                lastSyncTimestamp = lastSyncTimestamp,
+                lastStatusMessage = lastStatusMessage
+            )
+            _statusFlow.value = newStatus
+        } catch (t: Throwable) {
+            t.printStackTrace()
+        }
+    }
+
+    fun getStatus(): AutoSyncStatus {
+        return try {
+            val currentItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
+            val currentTree = MerkleTreeHelper.buildMerkleVault(currentItems)
+            AutoSyncStatus(
+                isRunning = isRunning,
+                localRootHash = currentTree.rootHash,
+                connectedPeersCount = discoveredPeers.size,
+                lastSyncTimestamp = lastSyncTimestamp,
+                lastStatusMessage = lastStatusMessage
+            )
+        } catch (_: Throwable) {
+            _statusFlow.value
+        }
+    }
+
+    /**
+     * Starts continuous auto-discovery and heartbeat sync.
+     */
+    /**
+     * Starts continuous auto-discovery and heartbeat sync.
+     */
+    fun start(deviceName: String = DeviceInfoProvider.getFormattedDeviceName(), authToken: String, heartbeatIntervalMs: Long = 5000L) {
+        if (isRunning) return
+        if (!Preferences.isAutoSyncWifiEnabled()) return
+        isRunning = true
+
+        val effectiveName = if (deviceName.isNotBlank() &&
+            deviceName != "Android Device" &&
+            deviceName != "iOS Device" &&
+            deviceName != "Desktop Client"
+        ) {
+            deviceName
+        } else {
+            DeviceInfoProvider.getFormattedDeviceName()
+        }
+        currentDeviceName = effectiveName
+        currentAuthToken = authToken
+
+        // 1. Start server listener for incoming peer sync requests
+        try {
+            networkService.startServer(
+                port = SAFE_SYNC_DEFAULT_PORT,
+                pin = authToken,
+                onPayloadReceived = ::handleServerPayload
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        // 2. Start mDNS advertising and discovery
+        val boundPort = if (networkService.boundPort > 0) networkService.boundPort else SAFE_SYNC_DEFAULT_PORT
+        syncManager.startAdvertising(deviceName, boundPort)
+        syncManager.startDiscovery(
+            onDeviceFound = { device ->
+                val isSelf = device.name.equals(currentDeviceName, ignoreCase = true) ||
+                             (device.port == networkService.boundPort && (device.hostAddress == "127.0.0.1" || device.hostAddress == "localhost"))
+                if (isSelf) return@startDiscovery
+
+                discoveredPeers[device.id] = device
+                lastStatusMessage = "Discovered peer: ${device.name}"
+                updateStatus()
+                // Immediately check and sync on discovery
+                scope.launch { syncWithPeer(device, authToken) }
+            },
+            onDeviceLost = { device ->
+                discoveredPeers.remove(device.id)
+                peerRootHashes.remove(device.id)
+                updateStatus()
+            }
+        )
+
+        // 3. Heartbeat loop to keep state synchronized continuously
+        backgroundJob = scope.launch {
+            while (isActive && isRunning) {
+                delay(heartbeatIntervalMs)
+                if (Preferences.isAutoSyncWifiEnabled()) {
+                    val candidatePeers = mutableListOf<DiscoveredDevice>()
+                    candidatePeers.addAll(discoveredPeers.values)
+
+                    // Add local bridging candidates across candidate ports (58443, 58444, 58445)
+                    val myPort = networkService.boundPort
+                    for (port in listOf(58443, 58444, 58445)) {
+                        if (!networkService.isAndroidGuest && port == myPort) continue
+                        if (networkService.isAndroidGuest) {
+                            if (port == 58445) continue // Port 58445 on host forwards to guest's port 58443
+                            val candidateName = if (port == 58443) "iOS Safe" else "Desktop Safe"
+                            candidatePeers.add(
+                                DiscoveredDevice(
+                                    id = "gateway-$port",
+                                    name = candidateName,
+                                    hostAddress = "10.0.2.2",
+                                    port = port
+                                )
+                            )
+                        } else {
+                            val candidateName = when (port) {
+                                58445 -> "Android Safe"
+                                58443 -> "iOS Safe"
+                                else -> "Desktop Safe"
+                            }
+                            candidatePeers.add(
+                                DiscoveredDevice(
+                                    id = "loopback-$port",
+                                    name = candidateName,
+                                    hostAddress = "127.0.0.1",
+                                    port = port
+                                )
+                            )
+                        }
+                    }
+
+                    val uniquePeers = candidatePeers.distinctBy { "${it.hostAddress}:${it.port}" }
+                    for (peer in uniquePeers) {
+                        if (peer.port == myPort && (peer.hostAddress == "127.0.0.1" || peer.hostAddress == "localhost")) continue
+                        try {
+                            syncWithPeer(peer, authToken)
+                        } catch (_: Exception) {
+                            // Ignored: peer not reachable on this endpoint
+                        }
+                    }
+                }
+            }
+        }
+        updateStatus()
+    }
+
+    private fun handleServerPayload(remotePayloadJson: String): String {
+        return try {
+            val remotePayload = Json.decodeFromString<SyncPayload>(remotePayloadJson)
+            val peerDeviceName = remotePayload.deviceName.ifBlank { "Safe Peer" }
+            val stableId = "peer-${peerDeviceName.filter { it.isLetterOrDigit() || it == '-' || it == '_' }}"
+            Preferences.addPairedSyncDevice(stableId, peerDeviceName)
+            val localItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
+            val localTree = MerkleTreeHelper.buildMerkleVault(localItems)
+            val myName = DeviceInfoProvider.getFormattedDeviceName()
+            if (remotePayload.merkleRoot.isNotBlank() && remotePayload.merkleRoot == localTree.rootHash) {
+                lastStatusMessage = "In parity with $peerDeviceName ✓"
+                return Json.encodeToString(SyncPayload(emptyList(), localTree.rootHash, myName))
+            }
+            val conflicts = SyncConflictResolver.analyzeConflicts(localItems, remotePayload.items)
+            SyncConflictResolver.applyResolvedConflictsToLocalDatabase(conflicts)
+            if (conflicts.isNotEmpty()) {
+                try {
+                    onDataMutatedBySync?.invoke()
+                } catch (e: Throwable) {
+                    e.printStackTrace()
+                }
+            }
+            val updatedLocalItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
+            val updatedTree = MerkleTreeHelper.buildMerkleVault(updatedLocalItems)
+            lastStatusMessage = "Synchronized with $peerDeviceName"
+            updateStatus()
+            Json.encodeToString(SyncPayload(updatedLocalItems, updatedTree.rootHash, myName))
+        } catch (t: Throwable) {
+            t.printStackTrace()
+            val myName = DeviceInfoProvider.getFormattedDeviceName()
+            val localItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
+            val localTree = MerkleTreeHelper.buildMerkleVault(localItems)
+            Json.encodeToString(SyncPayload(localItems, localTree.rootHash, myName))
+        }
+    }
+
+    /**
+     * Pauses the background server and advertising (e.g. while PIN pairing dialog is active).
+     */
+    fun pauseServer() {
+        try {
+            networkService.stopServer()
+            syncManager.stopAdvertising()
+        } catch (_: Exception) {}
+    }
+
+    /**
+     * Resumes the background server and advertising after PIN pairing dialog closes.
+     */
+    fun resumeServer() {
+        if (!isRunning || !Preferences.isAutoSyncWifiEnabled()) return
+        try {
+            networkService.startServer(
+                port = SAFE_SYNC_DEFAULT_PORT,
+                pin = currentAuthToken,
+                onPayloadReceived = ::handleServerPayload
+            )
+            syncManager.startAdvertising(currentDeviceName, SAFE_SYNC_DEFAULT_PORT)
+        } catch (_: Exception) {}
+    }
+
+    /**
+     * Stops continuous auto-sync.
+     */
+    fun stop() {
+        isRunning = false
+        backgroundJob?.cancel()
+        backgroundJob = null
+        try {
+            networkService.stopServer()
+        } catch (_: Exception) {}
+        syncManager.stopAdvertising()
+        syncManager.stopDiscovery()
+        discoveredPeers.clear()
+        peerRootHashes.clear()
+        lastStatusMessage = "Stopped"
+        updateStatus()
+    }
+
+    /**
+     * Called whenever a local database mutation occurs (add, edit, delete).
+     * Immediately triggers sync with all currently connected peers.
+     */
+    fun onLocalDataChanged(authToken: String) {
+        if (!isRunning || !Preferences.isAutoSyncWifiEnabled()) return
+        scope.launch {
+            try {
+                val candidatePeers = mutableListOf<DiscoveredDevice>()
+                candidatePeers.addAll(discoveredPeers.values)
+
+                val myPort = networkService.boundPort
+                for (port in listOf(58443, 58444, 58445)) {
+                    if (!networkService.isAndroidGuest && port == myPort) continue
+                    if (networkService.isAndroidGuest) {
+                        if (port == 58445) continue // Port 58445 on host forwards to guest's port 58443
+                        val candidateName = if (port == 58443) "iOS Safe" else "Desktop Safe"
+                        candidatePeers.add(
+                            DiscoveredDevice(
+                                id = "gateway-$port",
+                                name = candidateName,
+                                hostAddress = "10.0.2.2",
+                                port = port
+                            )
+                        )
+                    } else {
+                        val candidateName = when (port) {
+                            58445 -> "Android Safe"
+                            58443 -> "iOS Safe"
+                            else -> "Desktop Safe"
+                        }
+                        candidatePeers.add(
+                            DiscoveredDevice(
+                                id = "loopback-$port",
+                                name = candidateName,
+                                hostAddress = "127.0.0.1",
+                                port = port
+                            )
+                        )
+                    }
+                }
+
+                val uniquePeers = candidatePeers.distinctBy { "${it.hostAddress}:${it.port}" }
+                for (peer in uniquePeers) {
+                    if (peer.port == myPort && (peer.hostAddress == "127.0.0.1" || peer.hostAddress == "localhost")) continue
+                    try {
+                        syncWithPeer(peer, authToken)
+                    } catch (_: Throwable) {}
+                }
+                updateStatus()
+            } catch (t: Throwable) {
+                t.printStackTrace()
+            }
+        }
+    }
+
+    /**
+     * Executes single Merkle-based sync step with a discovered peer.
+     * Returns true if peer is verified to be in exact parity.
+     */
+    suspend fun syncWithPeer(peer: DiscoveredDevice, authToken: String): Boolean {
+        return try {
+            val localItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
+            val localTree = MerkleTreeHelper.buildMerkleVault(localItems)
+
+            // Fast-path check: If we already know peer matches our local root, skip network roundtrip
+            if (peerRootHashes[peer.id] == localTree.rootHash) {
+                lastStatusMessage = "Peer ${peer.name} already in parity ✓"
+                updateStatus()
+                return true
+            }
+
+            val myName = DeviceInfoProvider.getFormattedDeviceName()
+            val payload = SyncPayload(localItems, localTree.rootHash, myName)
+            val json = Json.encodeToString(payload)
+
+            val responseJson = networkService.sendPayloadToHost(
+                hostAddress = peer.hostAddress,
+                port = peer.port,
+                pin = authToken,
+                localPayloadJson = json
+            )
+
+            val remotePayload = Json.decodeFromString<SyncPayload>(responseJson)
+            val effectivePeerName = remotePayload.deviceName.ifBlank { peer.name }
+            val stableId = if (remotePayload.deviceName.isNotBlank()) {
+                "peer-${remotePayload.deviceName.filter { it.isLetterOrDigit() || it == '-' || it == '_' }}"
+            } else {
+                peer.id
+            }
+            if (remotePayload.merkleRoot.isNotBlank() && remotePayload.merkleRoot == localTree.rootHash) {
+                // Peer confirms roots are identical!
+                peerRootHashes[peer.id] = localTree.rootHash
+                lastSyncTimestamp = Clock.System.now().toEpochMilliseconds()
+                lastStatusMessage = "Peer $effectivePeerName synchronized (Merkle Root match) ✓"
+                Preferences.addPairedSyncDevice(stableId, effectivePeerName)
+                Preferences.setLastSyncTime()
+                updateStatus()
+                true
+            } else {
+                // Roots differ -> apply incoming items / reconciliation
+                val conflicts = SyncConflictResolver.analyzeConflicts(localItems, remotePayload.items)
+                SyncConflictResolver.applyResolvedConflictsToLocalDatabase(conflicts)
+
+                val updatedItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
+                val updatedTree = MerkleTreeHelper.buildMerkleVault(updatedItems)
+                peerRootHashes[peer.id] = updatedTree.rootHash
+                lastSyncTimestamp = Clock.System.now().toEpochMilliseconds()
+                lastStatusMessage = "Peer $effectivePeerName reconciled & converged to ${updatedTree.rootHash.take(8)} ✓"
+                Preferences.addPairedSyncDevice(stableId, effectivePeerName)
+                Preferences.setLastSyncTime()
+                if (conflicts.isNotEmpty()) {
+                    showToast("Vault synchronized with $effectivePeerName")
+                    try {
+                        onDataMutatedBySync?.invoke()
+                    } catch (e: Throwable) {
+                        e.printStackTrace()
+                    }
+                }
+                updateStatus()
+                true
+            }
+        } catch (e: Throwable) {
+            lastStatusMessage = "Auto-sync with ${peer.name} failed: ${e.message}"
+            updateStatus()
+            false
+        }
+    }
+}

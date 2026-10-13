@@ -44,6 +44,8 @@ import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.composable.ExtensionsEditor
 import fi.iki.ede.safe.ui.models.PluginLoaderViewModel
+import fi.iki.ede.safe.ui.sync.DeviceInfoProvider
+import fi.iki.ede.safe.ui.sync.DevicePlatformInfo
 import fi.iki.ede.safe.ui.utilities.startActivityForResults
 import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
@@ -118,6 +120,8 @@ class PreferenceActivity :
             preferenceManager.preferenceDataStore = DataStorePreferenceBridge(Preferences.sharedPreferences as DataStoreSharedPreferences)
             addPreferencesFromResource(prefR.xml.preferences)
 
+            DevicePlatformInfo.appVersion = BuildConfig.VERSION_NAME
+
             val versionPreference = Preference(requireContext()).apply {
                 key = "version_preference"
                 title = "App Version"
@@ -127,6 +131,78 @@ class PreferenceActivity :
             }
 
             preferenceScreen?.addPreference(versionPreference)
+
+            // --- Synchronization Preferences ---
+            val syncCategory = androidx.preference.PreferenceCategory(requireContext()).apply {
+                title = "Device Synchronization"
+                isIconSpaceReserved = false
+            }
+            preferenceScreen?.addPreference(syncCategory)
+
+            val autoSyncWifi = androidx.preference.SwitchPreferenceCompat(requireContext()).apply {
+                key = "auto_sync_wifi"
+                title = "Auto-Sync on Local Wi-Fi"
+                summary = "Continuously sync updates with linked devices when on the same Wi-Fi network"
+                isChecked = Preferences.isAutoSyncWifiEnabled()
+                isIconSpaceReserved = false
+                setOnPreferenceChangeListener { _, newValue ->
+                    val enabled = newValue as Boolean
+                    Preferences.setAutoSyncWifiEnabled(enabled)
+                    true
+                }
+            }
+            syncCategory.addPreference(autoSyncWifi)
+
+            val deviceNamePref = androidx.preference.EditTextPreference(requireContext()).apply {
+                key = "sync_device_custom_name"
+                title = "Device Name for Sync"
+                dialogTitle = "Device Name for Sync"
+                dialogMessage = "Set a recognizable name (e.g. Erkka's Safe):"
+                text = Preferences.getSyncDeviceCustomName()
+                summary = "Seen by other devices as:\n${DeviceInfoProvider.getFormattedDeviceName()}"
+                isIconSpaceReserved = false
+                isSingleLineTitle = false
+                setOnPreferenceChangeListener { _, newValue ->
+                    val name = newValue as String
+                    Preferences.setSyncDeviceCustomName(name)
+                    summary = "Seen by other devices as:\n${DeviceInfoProvider.getFormattedDeviceName(name)}"
+                    true
+                }
+            }
+            syncCategory.addPreference(deviceNamePref)
+
+            val pairedDevices = Preferences.getPairedSyncDevices().mapNotNull { raw ->
+                val parts = raw.split("|")
+                val name = if (parts.size >= 2) parts[1].trim() else raw.trim()
+                if (name.contains(":5844") || name.contains("Local Port") || name.contains("Linked Device") || name.contains("Local Gateway") || name == "Safe-Device") {
+                    null
+                } else {
+                    name
+                }
+            }.distinct()
+            val pairedCategory = androidx.preference.PreferenceCategory(requireContext()).apply {
+                title = "Paired Devices (${pairedDevices.size})"
+                isIconSpaceReserved = false
+            }
+            preferenceScreen?.addPreference(pairedCategory)
+
+            if (pairedDevices.isEmpty()) {
+                pairedCategory.addPreference(Preference(requireContext()).apply {
+                    title = "No linked devices"
+                    summary = "Devices on your local Wi-Fi will appear here after synchronizing"
+                    isEnabled = false
+                    isIconSpaceReserved = false
+                })
+            } else {
+                pairedDevices.forEach { devName ->
+                    pairedCategory.addPreference(Preference(requireContext()).apply {
+                        title = devName
+                        summary = "Linked for automatic peer synchronization"
+                        isIconSpaceReserved = false
+                        isSingleLineTitle = false
+                    })
+                }
+            }
 
             findPreference<MultiSelectListPreference>(Preferences.PREFERENCE_EXPERIMENTAL_FEATURES).let { experimentalFeatures ->
                 experimentalFeatures?.apply {

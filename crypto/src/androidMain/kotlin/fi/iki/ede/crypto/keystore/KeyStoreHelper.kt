@@ -99,7 +99,7 @@ class KeyStoreHelper(private val keyStore: KeyStore) : IKeyStoreHelper {
         encrypted: IVCipherText,
         secretKey: Key = getSecretKey()
     ): ByteArray =
-        if (encrypted.iv.isEmpty()) {
+        if (encrypted.iv.isEmpty() || encrypted.cipherText.isEmpty() || encrypted.iv.size != 16) {
             byteArrayOf()
         } else {
             getAESCipher().let { cipher ->

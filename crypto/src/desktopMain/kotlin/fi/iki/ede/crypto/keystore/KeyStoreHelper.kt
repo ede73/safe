@@ -50,7 +50,7 @@ class KeyStoreHelper(
     }
 
     override var decrypterProviderWithKey: (IVCipherText, KMPKey) -> ByteArray = { encrypted, key ->
-        if (encrypted.iv.isEmpty() || encrypted.cipherText.isEmpty()) {
+        if (encrypted.iv.isEmpty() || encrypted.cipherText.isEmpty() || (key is SecretKeySpec && encrypted.iv.size != 16)) {
             byteArrayOf()
         } else if (key is SecretKeySpec) {
             val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
@@ -66,7 +66,7 @@ class KeyStoreHelper(
     }
 
     override var decrypterProvider: (IVCipherText) -> ByteArray = { encrypted ->
-        if (encrypted.iv.isEmpty() || encrypted.cipherText.isEmpty()) {
+        if (encrypted.iv.isEmpty() || encrypted.cipherText.isEmpty() || encrypted.iv.size != 16) {
             byteArrayOf()
         } else {
             val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")

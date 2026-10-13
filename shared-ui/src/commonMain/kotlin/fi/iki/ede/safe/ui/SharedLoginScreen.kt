@@ -223,6 +223,14 @@ fun SharedLoginScreen(
                         }
                     },
                     singleLine = true,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Done),
+                    keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                        onDone = {
+                            if (password.isNotEmpty()) {
+                                onUnlock(password, registerFingerprint)
+                            }
+                        }
+                    ),
                     modifier = Modifier.fillMaxWidth().focusRequester(focusRequester)
                         .testTag(TestTag.PASSWORD_PROMPT),
                     colors = OutlinedTextFieldDefaults.colors(

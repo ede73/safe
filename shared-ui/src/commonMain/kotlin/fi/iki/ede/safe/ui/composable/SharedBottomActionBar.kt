@@ -30,11 +30,7 @@ fun SharedBottomActionBar(
     onChangeMasterPasswordRequested: () -> Unit = {},
     onShowTrashRequested: () -> Unit = {},
     onImportExportRequested: () -> Unit = {},
-    onPeerSyncRequested: () -> Unit = {},
-    onSeedAndroidDbRequested: () -> Unit = {},
-    onSeedIosDbRequested: () -> Unit = {},
-    onTestConflictMatrixRequested: () -> Unit = {},
-    onResolveLocalConflictsRequested: () -> Unit = {}
+    onPeerSyncRequested: () -> Unit = {}
 ) {
     var displayMenu by remember { mutableStateOf(false) }
 
@@ -65,10 +61,6 @@ fun SharedBottomActionBar(
                         onChangeMasterPasswordRequested = onChangeMasterPasswordRequested,
                         onShowTrashRequested = onShowTrashRequested,
                         onImportExportRequested = onImportExportRequested,
-                        onSeedAndroidDbRequested = onSeedAndroidDbRequested,
-                        onSeedIosDbRequested = onSeedIosDbRequested,
-                        onTestConflictMatrixRequested = onTestConflictMatrixRequested,
-                        onResolveLocalConflictsRequested = onResolveLocalConflictsRequested,
                         onDismiss = { displayMenu = false }
                     )
                 }

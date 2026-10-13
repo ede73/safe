@@ -13,11 +13,17 @@ import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.*
 import fi.iki.ede.datamodel.DataModel
+import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.preferences.Preferences
+import fi.iki.ede.safe.BuildConfig
 import fi.iki.ede.safe.notifications.SetupNotifications
 import fi.iki.ede.safe.ui.composable.CategoryListScreenCompose
 import fi.iki.ede.safe.ui.composable.DualModePreview
+import fi.iki.ede.safe.ui.sync.ContinuousAutoSyncCoordinator
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
 
 
@@ -43,7 +49,31 @@ class CategoryListScreen :
             }
         }
         SetupNotifications.setup(this)
+        fi.iki.ede.safe.ui.sync.DevicePlatformInfo.appVersion = BuildConfig.VERSION_NAME
+        val clusterSecret = Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER"
+        DataModel.onDataChanged = {
+            ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(clusterSecret)
+        }
+        ContinuousAutoSyncCoordinator.instance.onDataMutatedBySync = {
+            CoroutineScope(Dispatchers.Main).launch {
+                DataModel.loadFromDatabase {
+                    GPMDataModel.loadFromDatabase()
+                }
+            }
+        }
+        ContinuousAutoSyncCoordinator.instance.start(authToken = clusterSecret)
         setContent { CategoryListScreenCompose(DataModel.categoriesStateFlow) }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val clusterSecret = Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER"
+        ContinuousAutoSyncCoordinator.instance.start(authToken = clusterSecret)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        ContinuousAutoSyncCoordinator.instance.stop()
     }
 }
 

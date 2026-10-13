@@ -17,10 +17,6 @@ fun SharedMenuItems(
     onChangeMasterPasswordRequested: () -> Unit = {},
     onShowTrashRequested: () -> Unit = {},
     onImportExportRequested: () -> Unit = {},
-    onSeedAndroidDbRequested: () -> Unit = {},
-    onSeedIosDbRequested: () -> Unit = {},
-    onTestConflictMatrixRequested: () -> Unit = {},
-    onResolveLocalConflictsRequested: () -> Unit = {},
     onDismiss: () -> Unit = {}
 ) {
     DropdownMenuItem(
@@ -67,34 +63,6 @@ fun SharedMenuItems(
         onClick = {
             onDismiss()
             onImportExportRequested()
-        }
-    )
-    DropdownMenuItem(
-        text = { Text(text = "🌱 Seed Local DB (Android Matrix Q, X, Y, M)") },
-        onClick = {
-            onDismiss()
-            onSeedAndroidDbRequested()
-        }
-    )
-    DropdownMenuItem(
-        text = { Text(text = "🌱 Seed Local DB (iOS Matrix W, X, Y, M)") },
-        onClick = {
-            onDismiss()
-            onSeedIosDbRequested()
-        }
-    )
-    DropdownMenuItem(
-        text = { Text(text = "🧪 Test Conflict Matrix (Simulated Q, W, X, Y, M)") },
-        onClick = {
-            onDismiss()
-            onTestConflictMatrixRequested()
-        }
-    )
-    DropdownMenuItem(
-        text = { Text(text = "🧪 Resolve Local DB vs Matrix Conflicts") },
-        onClick = {
-            onDismiss()
-            onResolveLocalConflictsRequested()
         }
     )
 }

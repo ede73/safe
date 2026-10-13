@@ -6,6 +6,7 @@
 package fi.iki.ede.safe.ui
 
 import androidx.compose.foundation.background
+import kotlin.time.Clock
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -20,6 +21,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.ComposeUIViewController
 import fi.iki.ede.backup.RestorationProgress
 import fi.iki.ede.crypto.IVCipherText
@@ -56,8 +58,13 @@ import fi.iki.ede.safe.ui.composable.SharedBottomActionBar
 import fi.iki.ede.safe.ui.composable.SettingsScreen
 import fi.iki.ede.safe.ui.composable.ExtensionsEditor
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import fi.iki.ede.safe.ui.sync.ContinuousAutoSyncCoordinator
+import fi.iki.ede.safe.ui.sync.DeviceInfoProvider
 import fi.iki.ede.backup.RestoreDatabase
 import fi.iki.ede.db.SiteEntryGPMJoin
 import kotlinx.coroutines.runBlocking
@@ -109,9 +116,50 @@ fun MainViewController(): UIViewController {
     // Main App Navigation States
     var activeCategory by remember { mutableStateOf<DecryptableCategoryEntry?>(null) }
     var activeSiteEntry by remember { mutableStateOf<DecryptableSiteEntry?>(null) }
+    var editingSiteDesc by remember { mutableStateOf("") }
+    var editingSiteUser by remember { mutableStateOf("") }
+    var editingSitePass by remember { mutableStateOf("") }
+    var editingSiteNote by remember { mutableStateOf("") }
+    var editingSiteUrl by remember { mutableStateOf("") }
 
-    // Triggers for re-fetching lists
+    LaunchedEffect(activeSiteEntry) {
+        val entry = activeSiteEntry
+        if (entry != null) {
+            editingSiteDesc = entry.plainDescription
+            editingSiteUser = entry.plainUsername
+            editingSitePass = entry.plainPassword
+            editingSiteNote = entry.plainNote
+            editingSiteUrl = entry.plainWebsite
+        }
+    }
+
     var refreshTrigger by remember { mutableStateOf(0) }
+
+    val saveActiveSiteEntry: () -> Unit = {
+        val siteEntry = activeSiteEntry
+        if (siteEntry != null) {
+            try {
+                siteEntry.description = editingSiteDesc.encrypt()
+                siteEntry.username = editingSiteUser.encrypt()
+                siteEntry.password = editingSitePass.encrypt()
+                siteEntry.note = editingSiteNote.encrypt()
+                siteEntry.website = editingSiteUrl.encrypt()
+                siteEntry.clearCachedDescription()
+                if (siteEntry.id == null) {
+                    val newId = db.addSiteEntry(siteEntry)
+                    siteEntry.id = newId
+                } else {
+                    db.updateSiteEntry(siteEntry)
+                }
+                val clusterSecret = Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER"
+                ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(clusterSecret)
+                activeSiteEntry = null
+                refreshTrigger++
+            } catch (e: Throwable) {
+                e.printStackTrace()
+            }
+        }
+    }
 
     // Dialog state for adding Category
     var showAddCategoryDialog by remember { mutableStateOf(false) }
@@ -119,6 +167,7 @@ fun MainViewController(): UIViewController {
     var showConflictDialog by remember { mutableStateOf(false) }
     var showDeviceSyncDialog by remember { mutableStateOf(false) }
     var activeConflicts by remember { mutableStateOf<List<SyncConflict>>(emptyList()) }
+    val syncStatus by ContinuousAutoSyncCoordinator.instance.statusFlow.collectAsState()
 
     // Settings Screen states
     var showSettingsScreen by remember { mutableStateOf(false) }
@@ -198,7 +247,10 @@ fun MainViewController(): UIViewController {
         if (showSettingsScreen) {
             SettingsScreen(
                 onBack = { showSettingsScreen = false },
-                onEditExtensions = { showExtensionsEditor = true }
+                onEditExtensions = { showExtensionsEditor = true },
+                onManualSyncTriggered = {
+                    showDeviceSyncDialog = true
+                }
             )
         } else if (importedBackupXml != null) {
             var currentRestoreScreenState by remember { mutableStateOf("askBackupPassword") }
@@ -283,6 +335,9 @@ fun MainViewController(): UIViewController {
                             isFirstTimeLogin = false
                             isLoggedIn = true
                             refreshTrigger++
+                            val clusterSecret = Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER"
+                            ContinuousAutoSyncCoordinator.instance.onDataMutatedBySync = { refreshTrigger++ }
+                            ContinuousAutoSyncCoordinator.instance.start(authToken = clusterSecret)
                         } catch (e: Exception) {
                             statusMessage = "Failed to create vault: ${e.message}"
                         }
@@ -296,6 +351,9 @@ fun MainViewController(): UIViewController {
                             )
                             isLoggedIn = true
                             refreshTrigger++
+                            val clusterSecret = Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER"
+                            ContinuousAutoSyncCoordinator.instance.onDataMutatedBySync = { refreshTrigger++ }
+                            ContinuousAutoSyncCoordinator.instance.start(authToken = clusterSecret)
                         } catch (e: Exception) {
                             statusMessage = "Invalid password!"
                         }
@@ -312,21 +370,33 @@ fun MainViewController(): UIViewController {
                 topBar = {
                     TopAppBar(
                         title = {
-                            Text(
-                                text = when {
-                                    activeSiteEntry != null -> activeSiteEntry!!.plainDescription
-                                    activeCategory != null -> activeCategory!!.plainName
-                                    else -> "Safe 🔐"
-                                },
-                                fontWeight = FontWeight.Bold
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = when {
+                                        activeSiteEntry != null -> editingSiteDesc.ifBlank { "New Password" }
+                                        activeCategory != null -> activeCategory!!.plainName
+                                        else -> "Safe 🔐"
+                                    },
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         },
                         navigationIcon = {
                             NavigationBackIcon(
                                 hasBackNavigation = (activeCategory != null || activeSiteEntry != null),
                                 onBack = {
                                     when {
-                                        activeSiteEntry != null -> activeSiteEntry = null
+                                        activeSiteEntry != null -> {
+                                            val siteEntry = activeSiteEntry!!
+                                            if (editingSiteDesc.isNotBlank() && (siteEntry.id == null ||
+                                                    editingSiteDesc != siteEntry.plainDescription ||
+                                                    editingSiteUser != siteEntry.plainUsername ||
+                                                    editingSitePass != siteEntry.plainPassword)) {
+                                                saveActiveSiteEntry()
+                                            } else {
+                                                activeSiteEntry = null
+                                            }
+                                        }
                                         activeCategory != null -> activeCategory = null
                                     }
                                     refreshTrigger++
@@ -334,6 +404,44 @@ fun MainViewController(): UIViewController {
                             )
                         },
                         actions = {
+                            if (activeSiteEntry != null) {
+                                Button(
+                                    onClick = { saveActiveSiteEntry() },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFe94560)),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                    modifier = Modifier.padding(end = 8.dp)
+                                ) {
+                                    Icon(Icons.Default.Check, contentDescription = "Save", modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("Save", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                }
+                            }
+                            if (syncStatus.connectedPeersCount > 0) {
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = Color(0xFF2e7d32).copy(alpha = 0.35f),
+                                    modifier = Modifier.clickable { showSettingsScreen = true }
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(6.dp)
+                                                .background(Color(0xFF4CAF50), shape = RoundedCornerShape(3.dp))
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            "${syncStatus.connectedPeersCount} linked",
+                                            fontSize = 11.sp,
+                                            color = Color(0xFF81C784),
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(4.dp))
+                            }
                             if (activeCategory == null && activeSiteEntry == null) {
                                 IconButton(onClick = { showSettingsScreen = true }) {
                                     Icon(
@@ -358,26 +466,34 @@ fun MainViewController(): UIViewController {
                                 if (activeCategory == null) {
                                     showAddCategoryDialog = true
                                 } else {
+                                    val defaultUser = Preferences.getDefaultUserName()
+                                    val genPass = PasswordGenerator.genPassword(
+                                        passUpper = true,
+                                        passLower = true,
+                                        passNum = true,
+                                        passSymbols = true,
+                                        length = PasswordGenerator.PASSWORD_DEFAULT_LENGTH
+                                    )
+                                    editingSiteDesc = ""
+                                    editingSiteUser = defaultUser
+                                    editingSitePass = genPass
+                                    editingSiteUrl = ""
+                                    editingSiteNote = ""
                                     activeSiteEntry = DecryptableSiteEntry(categoryId = activeCategory!!.id!!).apply {
                                         description = "".encrypt()
-                                        username = Preferences.getDefaultUserName().encrypt()
-                                        password = PasswordGenerator.genPassword(
-                                            passUpper = true,
-                                            passLower = true,
-                                            passNum = true,
-                                            passSymbols = true,
-                                            length = PasswordGenerator.PASSWORD_DEFAULT_LENGTH
-                                        ).encrypt()
+                                        username = defaultUser.encrypt()
+                                        password = genPass.encrypt()
                                         website = "".encrypt()
                                         note = "".encrypt()
                                     }
                                 }
                             },
-                             onLockRequested = {
-                                 isLoggedIn = false
-                                 activeCategory = null
-                                 activeSiteEntry = null
-                             },
+                            onLockRequested = {
+                                ContinuousAutoSyncCoordinator.instance.stop()
+                                isLoggedIn = false
+                                activeCategory = null
+                                activeSiteEntry = null
+                            },
                              onSettingsRequested = {
                                  showSettingsScreen = true
                              },
@@ -386,25 +502,6 @@ fun MainViewController(): UIViewController {
                              },
                              onPeerSyncRequested = {
                                  showDeviceSyncDialog = true
-                             },
-                             onSeedAndroidDbRequested = {
-                                 SyncConflictResolver.seedLocalDatabase(isAndroid = true)
-                                 refreshTrigger++
-                             },
-                             onSeedIosDbRequested = {
-                                 SyncConflictResolver.seedLocalDatabase(isAndroid = false)
-                                 refreshTrigger++
-                             },
-                             onTestConflictMatrixRequested = {
-                                 val (androidItems, iosItems) = SyncConflictResolver.createTestConflictMatrix()
-                                 activeConflicts = SyncConflictResolver.analyzeConflicts(androidItems, iosItems)
-                                 showConflictDialog = true
-                             },
-                             onResolveLocalConflictsRequested = {
-                                 val localItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
-                                 val (androidItems, _) = SyncConflictResolver.createTestConflictMatrix()
-                                 activeConflicts = SyncConflictResolver.analyzeConflicts(localItems, androidItems)
-                                 showConflictDialog = true
                              }
                         )
                     }
@@ -419,28 +516,22 @@ fun MainViewController(): UIViewController {
                     when {
                         activeSiteEntry != null -> {
                             val siteEntry = activeSiteEntry!!
-                            // Read decrypted properties
-                            var desc by remember { mutableStateOf(siteEntry.plainDescription) }
-                            var user by remember { mutableStateOf(siteEntry.plainUsername) }
-                            var pass by remember { mutableStateOf(siteEntry.plainPassword) }
-                            var note by remember { mutableStateOf(siteEntry.plainNote) }
-                            var url by remember { mutableStateOf(siteEntry.plainWebsite) }
                             val showCustomPasswordGenerator = remember { mutableStateOf(false) }
 
                             Column(
                                 modifier = Modifier.fillMaxSize()
                             ) {
                                 SiteEntryView(
-                                    description = desc,
-                                    onDescriptionChange = { desc = it },
-                                    website = url,
-                                    onWebSiteChange = { url = it },
-                                    username = user,
-                                    onUsernameChange = { user = it.utf8password.concatToString() },
-                                    password = pass,
-                                    onPasswordChange = { pass = it.utf8password.concatToString() },
-                                    note = note,
-                                    onNoteChange = { note = it.utf8password.concatToString() },
+                                    description = editingSiteDesc,
+                                    onDescriptionChange = { editingSiteDesc = it },
+                                    website = editingSiteUrl,
+                                    onWebSiteChange = { editingSiteUrl = it },
+                                    username = editingSiteUser,
+                                    onUsernameChange = { editingSiteUser = it.utf8password.concatToString() },
+                                    password = editingSitePass,
+                                    onPasswordChange = { editingSitePass = it.utf8password.concatToString() },
+                                    note = editingSiteNote,
+                                    onNoteChange = { editingSiteNote = it.utf8password.concatToString() },
                                     onOpenBrowser = { browserUrl ->
                                         val nsUrl = platform.Foundation.NSURL.URLWithString(browserUrl)
                                         if (nsUrl != null) {
@@ -458,7 +549,7 @@ fun MainViewController(): UIViewController {
                                         if (showCustomPasswordGenerator.value) {
                                             PopCustomPasswordDialog { customPassword ->
                                                 if (customPassword != null) {
-                                                    pass = customPassword.utf8password.concatToString()
+                                                    editingSitePass = customPassword.utf8password.concatToString()
                                                 }
                                                 showCustomPasswordGenerator.value = false
                                             }
@@ -466,36 +557,16 @@ fun MainViewController(): UIViewController {
                                     },
                                     bottomBarContent = {
                                         val hasChanges = siteEntry.id == null ||
-                                                desc != siteEntry.plainDescription ||
-                                                user != siteEntry.plainUsername ||
-                                                pass != siteEntry.plainPassword ||
-                                                note != siteEntry.plainNote ||
-                                                url != siteEntry.plainWebsite
+                                                editingSiteDesc != siteEntry.plainDescription ||
+                                                editingSiteUser != siteEntry.plainUsername ||
+                                                editingSitePass != siteEntry.plainPassword ||
+                                                editingSiteNote != siteEntry.plainNote ||
+                                                editingSiteUrl != siteEntry.plainWebsite
 
                                         Column(modifier = Modifier.fillMaxWidth()) {
                                             if (hasChanges) {
                                                 Button(
-                                                    onClick = {
-                                                        coroutineScope.launch {
-                                                            try {
-                                                                // Encrypt values back before writing
-                                                                siteEntry.description = desc.encrypt()
-                                                                siteEntry.username = user.encrypt()
-                                                                siteEntry.password = pass.encrypt()
-                                                                siteEntry.note = note.encrypt()
-                                                                siteEntry.website = url.encrypt()
-                                                                if (siteEntry.id == null) {
-                                                                    db.addSiteEntry(siteEntry)
-                                                                } else {
-                                                                    db.updateSiteEntry(siteEntry)
-                                                                }
-                                                                activeSiteEntry = null
-                                                                refreshTrigger++
-                                                            } catch (e: Throwable) {
-                                                                e.printStackTrace()
-                                                            }
-                                                        }
-                                                    },
+                                                    onClick = { saveActiveSiteEntry() },
                                                     modifier = Modifier
                                                         .fillMaxWidth()
                                                         .padding(16.dp),
@@ -512,7 +583,7 @@ fun MainViewController(): UIViewController {
                                                     if (custom) {
                                                         showCustomPasswordGenerator.value = true
                                                     } else {
-                                                        pass = PasswordGenerator.genPassword(
+                                                        editingSitePass = PasswordGenerator.genPassword(
                                                             passUpper = true,
                                                             passLower = true,
                                                             passNum = true,
@@ -531,9 +602,19 @@ fun MainViewController(): UIViewController {
                             SiteEntryList(
                                 siteEntries = siteEntries,
                                 categoriesState = categories,
-                                onSiteEntryClick = { activeSiteEntry = it },
+                                onSiteEntryClick = {
+                                    editingSiteDesc = it.plainDescription
+                                    editingSiteUser = it.plainUsername
+                                    editingSitePass = it.plainPassword
+                                    editingSiteNote = it.plainNote
+                                    editingSiteUrl = it.plainWebsite
+                                    activeSiteEntry = it
+                                },
                                 onDeleteSiteEntry = {
-                                    db.hardDeleteSiteEntry(it.id!!)
+                                    val deletedTime = Clock.System.now().epochSeconds
+                                    db.markSiteEntryDeleted(it.id!!, deletedTime)
+                                    val clusterSecret = Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER"
+                                    ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(clusterSecret)
                                     refreshTrigger++
                                 }
                             )
@@ -545,11 +626,15 @@ fun MainViewController(): UIViewController {
                                 onRenameCategory = { category, newName ->
                                      category.encryptedName = newName.encrypt()
                                      db.updateCategory(category.id!!, category)
+                                     val clusterSecret = Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER"
+                                     ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(clusterSecret)
                                      refreshTrigger++
                                 },
                                 onDeleteCategory = {
-                                    db.deleteCategory(it.id!!)
-                                    refreshTrigger++
+                                     db.deleteCategory(it.id!!)
+                                     val clusterSecret = Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER"
+                                     ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(clusterSecret)
+                                     refreshTrigger++
                                 }
                             )
                         }
@@ -565,12 +650,14 @@ fun MainViewController(): UIViewController {
                                     db.addCategory(DecryptableCategoryEntry().apply {
                                          encryptedName = name.encrypt()
                                     })
+                                    val clusterSecret = Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER"
+                                    ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(clusterSecret)
                                     refreshTrigger++
                                 }
                                 showAddCategoryDialog = false
                             }
                         )
-                    }
+                    }  }
 
                     if (showImportExportChoiceDialog) {
                         AlertDialog(
@@ -579,49 +666,6 @@ fun MainViewController(): UIViewController {
                             text = {
                                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Text("Select operation:")
-                                    Button(
-                                        onClick = {
-                                            showImportExportChoiceDialog = false
-                                            SyncConflictResolver.seedLocalDatabase(isAndroid = false)
-                                            refreshTrigger++
-                                        },
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Text("🌱 Seed iOS DB Matrix (W, X, Y, M)")
-                                    }
-                                    Button(
-                                        onClick = {
-                                            showImportExportChoiceDialog = false
-                                            SyncConflictResolver.seedLocalDatabase(isAndroid = true)
-                                            refreshTrigger++
-                                        },
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Text("🌱 Seed Android DB Matrix (Q, X, Y, M)")
-                                    }
-                                    Button(
-                                        onClick = {
-                                            showImportExportChoiceDialog = false
-                                            val (androidItems, iosItems) = SyncConflictResolver.createTestConflictMatrix()
-                                            activeConflicts = SyncConflictResolver.analyzeConflicts(androidItems, iosItems)
-                                            showConflictDialog = true
-                                        },
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Text("🧪 Test Conflict Matrix (Simulated Q, W, X, Y, M)")
-                                    }
-                                    Button(
-                                        onClick = {
-                                            showImportExportChoiceDialog = false
-                                            val localItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
-                                            val (androidItems, _) = SyncConflictResolver.createTestConflictMatrix()
-                                            activeConflicts = SyncConflictResolver.analyzeConflicts(localItems, androidItems)
-                                            showConflictDialog = true
-                                        },
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Text("🧪 Resolve Local DB vs Matrix Conflicts")
-                                    }
                                     Button(
                                         onClick = {
                                             showImportExportChoiceDialog = false
@@ -685,8 +729,8 @@ fun MainViewController(): UIViewController {
                     if (showDeviceSyncDialog) {
                         DeviceSyncDialog(
                             onDismissRequest = { showDeviceSyncDialog = false },
-                            onStartSyncWithPin = { pin, isInitiator ->
-                                showDeviceSyncDialog = false
+                            onSyncCompleted = {
+                                refreshTrigger++
                             }
                         )
                     }
@@ -760,7 +804,6 @@ fun MainViewController(): UIViewController {
                 }
             }
         }
-    }
     }
     return viewController
 }
