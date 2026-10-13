@@ -12,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.activityViewModels
+import androidx.preference.EditTextPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -153,7 +154,7 @@ class PreferenceActivity :
             }
             syncCategory.addPreference(autoSyncWifi)
 
-            val deviceNamePref = androidx.preference.EditTextPreference(requireContext()).apply {
+            val deviceNamePref = EditTextPreference(requireContext()).apply {
                 key = "sync_device_custom_name"
                 title = "Device Name for Sync"
                 dialogTitle = "Device Name for Sync"

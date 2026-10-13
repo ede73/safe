@@ -18,14 +18,14 @@ actual class SyncNetworkService {
 
     private fun htons(v: UShort): UShort = ((v.toInt() and 0xFF) shl 8 or (v.toInt() ushr 8)).toUShort()
 
-    private fun parseIpv4ToNetworkOrder(ipStr: String): UInt {
+    private fun parseIpv4ToNetworkOrder(ipStr: String): UInt? {
         val cleanIp = if (ipStr.equals("localhost", ignoreCase = true)) "127.0.0.1" else ipStr
         val parts = cleanIp.split(".")
-        if (parts.size != 4) return 0x0100007Fu
-        val b0 = parts[0].toUIntOrNull() ?: 0u
-        val b1 = parts[1].toUIntOrNull() ?: 0u
-        val b2 = parts[2].toUIntOrNull() ?: 0u
-        val b3 = parts[3].toUIntOrNull() ?: 0u
+        if (parts.size != 4) return null
+        val b0 = parts[0].toUIntOrNull() ?: return null
+        val b1 = parts[1].toUIntOrNull() ?: return null
+        val b2 = parts[2].toUIntOrNull() ?: return null
+        val b3 = parts[3].toUIntOrNull() ?: return null
         return b0 or (b1 shl 8) or (b2 shl 16) or (b3 shl 24)
     }
 
@@ -79,7 +79,7 @@ actual class SyncNetworkService {
                     testAddr.sin_len = sizeOf<sockaddr_in>().toUByte()
                     testAddr.sin_family = AF_INET.toUByte()
                     testAddr.sin_port = htons(p.toUShort())
-                    testAddr.sin_addr.s_addr = parseIpv4ToNetworkOrder("127.0.0.1")
+                    testAddr.sin_addr.s_addr = parseIpv4ToNetworkOrder("127.0.0.1") ?: 0x0100007Fu
                     val isTaken = connect(testSock, testAddr.ptr.reinterpret(), sizeOf<sockaddr_in>().toUInt()) == 0
                     close(testSock)
                     if (isTaken) return@memScoped
@@ -168,7 +168,25 @@ actual class SyncNetworkService {
             serverAddr.sin_len = sizeOf<sockaddr_in>().toUByte()
             serverAddr.sin_family = AF_INET.toUByte()
             serverAddr.sin_port = htons(port.toUShort())
-            serverAddr.sin_addr.s_addr = parseIpv4ToNetworkOrder(hostAddress)
+            val directIpv4 = parseIpv4ToNetworkOrder(hostAddress)
+            if (directIpv4 != null) {
+                serverAddr.sin_addr.s_addr = directIpv4
+            } else {
+                val hints = alloc<addrinfo>()
+                memset(hints.ptr, 0, sizeOf<addrinfo>().toULong())
+                hints.ai_family = AF_INET
+                hints.ai_socktype = SOCK_STREAM
+                val res = allocPointerTo<addrinfo>()
+                if (getaddrinfo(hostAddress, null, hints.ptr, res.ptr) == 0 && res.value != null) {
+                    val resolved = res.value!!.pointed.ai_addr?.reinterpret<sockaddr_in>()
+                    if (resolved != null) {
+                        serverAddr.sin_addr.s_addr = resolved.pointed.sin_addr.s_addr
+                    }
+                    freeaddrinfo(res.value)
+                } else {
+                    serverAddr.sin_addr.s_addr = 0x0100007Fu
+                }
+            }
 
             if (connect(sock, serverAddr.ptr.reinterpret(), sizeOf<sockaddr_in>().toUInt()) < 0) {
                 close(sock)

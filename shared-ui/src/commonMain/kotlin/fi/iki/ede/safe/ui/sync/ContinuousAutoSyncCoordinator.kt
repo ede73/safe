@@ -167,44 +167,8 @@ class ContinuousAutoSyncCoordinator(
             while (isActive && isRunning) {
                 delay(heartbeatIntervalMs)
                 if (Preferences.isAutoSyncWifiEnabled()) {
-                    val candidatePeers = mutableListOf<DiscoveredDevice>()
-                    candidatePeers.addAll(discoveredPeers.values)
-
-                    // Add local bridging candidates across candidate ports (58443, 58444, 58445)
-                    val myPort = networkService.boundPort
-                    for (port in listOf(58443, 58444, 58445)) {
-                        if (!networkService.isAndroidGuest && port == myPort) continue
-                        if (networkService.isAndroidGuest) {
-                            if (port == 58445) continue // Port 58445 on host forwards to guest's port 58443
-                            val candidateName = if (port == 58443) "iOS Safe" else "Desktop Safe"
-                            candidatePeers.add(
-                                DiscoveredDevice(
-                                    id = "gateway-$port",
-                                    name = candidateName,
-                                    hostAddress = "10.0.2.2",
-                                    port = port
-                                )
-                            )
-                        } else {
-                            val candidateName = when (port) {
-                                58445 -> "Android Safe"
-                                58443 -> "iOS Safe"
-                                else -> "Desktop Safe"
-                            }
-                            candidatePeers.add(
-                                DiscoveredDevice(
-                                    id = "loopback-$port",
-                                    name = candidateName,
-                                    hostAddress = "127.0.0.1",
-                                    port = port
-                                )
-                            )
-                        }
-                    }
-
-                    val uniquePeers = candidatePeers.distinctBy { "${it.hostAddress}:${it.port}" }
+                    val uniquePeers = getCandidatePeers()
                     for (peer in uniquePeers) {
-                        if (peer.port == myPort && (peer.hostAddress == "127.0.0.1" || peer.hostAddress == "localhost")) continue
                         try {
                             syncWithPeer(peer, authToken)
                         } catch (_: Exception) {
@@ -215,6 +179,31 @@ class ContinuousAutoSyncCoordinator(
             }
         }
         updateStatus()
+    }
+
+    private fun getCandidatePeers(): List<DiscoveredDevice> {
+        val candidatePeers = mutableListOf<DiscoveredDevice>()
+        candidatePeers.addAll(discoveredPeers.values)
+
+        // Only add local emulator bridging if no peers were discovered over Wi-Fi
+        if (candidatePeers.isEmpty() && networkService.isAndroidGuest) {
+            for (port in listOf(58443, 58444)) {
+                val candidateName = if (port == 58443) "iOS Safe" else "Desktop Safe"
+                candidatePeers.add(
+                    DiscoveredDevice(
+                        id = "gateway-$port",
+                        name = candidateName,
+                        hostAddress = "10.0.2.2",
+                        port = port
+                    )
+                )
+            }
+        }
+
+        val myPort = networkService.boundPort
+        return candidatePeers.distinctBy { "${it.hostAddress}:${it.port}" }.filter { peer ->
+            !(peer.port == myPort && (peer.hostAddress == "127.0.0.1" || peer.hostAddress == "localhost"))
+        }
     }
 
     private fun handleServerPayload(remotePayloadJson: String): String {
@@ -304,43 +293,8 @@ class ContinuousAutoSyncCoordinator(
         if (!isRunning || !Preferences.isAutoSyncWifiEnabled()) return
         scope.launch {
             try {
-                val candidatePeers = mutableListOf<DiscoveredDevice>()
-                candidatePeers.addAll(discoveredPeers.values)
-
-                val myPort = networkService.boundPort
-                for (port in listOf(58443, 58444, 58445)) {
-                    if (!networkService.isAndroidGuest && port == myPort) continue
-                    if (networkService.isAndroidGuest) {
-                        if (port == 58445) continue // Port 58445 on host forwards to guest's port 58443
-                        val candidateName = if (port == 58443) "iOS Safe" else "Desktop Safe"
-                        candidatePeers.add(
-                            DiscoveredDevice(
-                                id = "gateway-$port",
-                                name = candidateName,
-                                hostAddress = "10.0.2.2",
-                                port = port
-                            )
-                        )
-                    } else {
-                        val candidateName = when (port) {
-                            58445 -> "Android Safe"
-                            58443 -> "iOS Safe"
-                            else -> "Desktop Safe"
-                        }
-                        candidatePeers.add(
-                            DiscoveredDevice(
-                                id = "loopback-$port",
-                                name = candidateName,
-                                hostAddress = "127.0.0.1",
-                                port = port
-                            )
-                        )
-                    }
-                }
-
-                val uniquePeers = candidatePeers.distinctBy { "${it.hostAddress}:${it.port}" }
+                val uniquePeers = getCandidatePeers()
                 for (peer in uniquePeers) {
-                    if (peer.port == myPort && (peer.hostAddress == "127.0.0.1" || peer.hostAddress == "localhost")) continue
                     try {
                         syncWithPeer(peer, authToken)
                     } catch (_: Throwable) {}
