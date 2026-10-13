@@ -4,5 +4,13 @@ import fi.iki.ede.crypto.IVCipherText
 import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
 
 // Addressed PR12 comment: Restored DecryptExtensions.kt for decryption helper extensions
-fun IVCipherText.decrypt(decrypter: (IVCipherText) -> ByteArray = KeyStoreHelperFactory.getKeyStoreHelper().decrypterProvider) =
-    decrypter(this).decodeToString()
+fun IVCipherText.decrypt(decrypter: (IVCipherText) -> ByteArray = KeyStoreHelperFactory.getKeyStoreHelper().decrypterProvider): String {
+    if (this.isEmpty()) {
+        return ""
+    }
+    return try {
+        decrypter(this).decodeToString()
+    } catch (_: Throwable) {
+        ""
+    }
+}

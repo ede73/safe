@@ -35,6 +35,7 @@ import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.dialogs.ShowTrashDialog
 import fi.iki.ede.safe.ui.testTag
+import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.theme.SafeTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -49,6 +50,7 @@ fun BottomActionBar(
     onAddRequested: () -> Unit = {},
     loginScreen: Boolean = false
 ) {
+    val coroutineScope = rememberCoroutineScope()
     val displayMenu = remember { mutableStateOf(false) }
     val exportImport = remember { mutableStateOf(false) }
     val showChangePasswordDialog = remember { mutableStateOf(false) }
@@ -111,21 +113,13 @@ fun BottomActionBar(
         ShowTrashDialog(onDismiss = { showTrashDialog.value = false })
     }
     if (displayDeviceSyncDialog.value) {
-        val coroutineScope = rememberCoroutineScope()
         fi.iki.ede.safe.ui.composable.DeviceSyncDialog(
             onDismissRequest = { displayDeviceSyncDialog.value = false },
-            onStartSyncWithPin = { pin, isInitiator ->
-                Logger.d(TAG, "Starting Device Sync with PIN: $pin (isInitiator=$isInitiator)")
-                val fakePayload = fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper.createSampleFakeCxfPayload()
-                fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper.processAndStoreCxfPayload(
-                    cxfJsonPayload = fakePayload,
-                    scope = coroutineScope,
-                    onMessage = { msg -> Logger.d(TAG, msg) },
-                    complete = { success, count ->
-                        Logger.d(TAG, "PIN sync complete: success=$success, count=$count")
-                        displayDeviceSyncDialog.value = false
-                    }
-                )
+            onSyncCompleted = {
+                Logger.d(TAG, "Device sync completed successfully")
+                coroutineScope.launch {
+                    DataModel.loadFromDatabase {}
+                }
             }
         )
     }
@@ -220,27 +214,6 @@ private fun MakeDropdownMenu(
                 onImportExportRequested = {
                     exportImport.value = true
                 },
-                onSeedAndroidDbRequested = {
-                    fi.iki.ede.safe.ui.sync.SyncConflictResolver.seedLocalDatabase(isAndroid = true)
-                    Logger.d(TAG, "Seeded Android conflict matrix dataset into local DB")
-                },
-                onSeedIosDbRequested = {
-                    fi.iki.ede.safe.ui.sync.SyncConflictResolver.seedLocalDatabase(isAndroid = false)
-                    Logger.d(TAG, "Seeded iOS conflict matrix dataset into local DB")
-                },
-                onTestConflictMatrixRequested = {
-                    val (androidItems, iosItems) = fi.iki.ede.safe.ui.sync.SyncConflictResolver.createTestConflictMatrix()
-                    val analyzed = fi.iki.ede.safe.ui.sync.SyncConflictResolver.analyzeConflicts(androidItems, iosItems)
-                    activeConflicts.value = analyzed
-                    displayConflictDialog.value = true
-                },
-                onResolveLocalConflictsRequested = {
-                    val localItems = fi.iki.ede.safe.ui.sync.SyncConflictResolver.readLocalDatabaseAsSyncItems()
-                    val (_, remoteMatrixItems) = fi.iki.ede.safe.ui.sync.SyncConflictResolver.createTestConflictMatrix()
-                    val analyzed = fi.iki.ede.safe.ui.sync.SyncConflictResolver.analyzeConflicts(localItems, remoteMatrixItems)
-                    activeConflicts.value = analyzed
-                    displayConflictDialog.value = true
-                },
                 onDismiss = { displayMenu.value = false }
             )
             IntentManager.getMenuItems(DropDownMenu.TopActionBarMenu).forEach {
@@ -253,12 +226,6 @@ private fun MakeDropdownMenu(
                     }
                 })
             }
-            DropdownMenuItem(
-                enabled = !loginScreen,
-                text = { Text(text = stringResource(id = R.string.action_bar_import_export)) },
-                onClick = {
-                    exportImport.value = true
-                })
         } else {
             DropdownMenuItem(
                 text = { Text(text = "◀ Back") },
@@ -309,23 +276,6 @@ private fun MakeDropdownMenu(
                         }
                     )
                 })
-            if (BuildConfig.DEBUG) {
-                DropdownMenuItem(
-                    text = { Text(text = "🧪 Test Direct Sync (Fake CXF Payload)") },
-                    onClick = {
-                        displayMenu.value = false
-                        exportImport.value = false
-                        val fakePayload = fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper.createSampleFakeCxfPayload()
-                        fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper.processAndStoreCxfPayload(
-                            cxfJsonPayload = fakePayload,
-                            scope = coroutineScope,
-                            onMessage = { msg -> Logger.d(TAG, msg) },
-                            complete = { success, count ->
-                                Logger.d(TAG, "Test sync complete: success=$success, count=$count")
-                            }
-                        )
-                    })
-            }
             IntentManager.getMenuItems(DropDownMenu.TopActionBarImportExportMenu).forEach {
                 DropdownMenuItem(text = { Text(text = stringResource(id = it.first)) }, onClick = {
                     displayMenu.value = false

@@ -23,6 +23,7 @@ import kotlin.time.ExperimentalTime
 @ExperimentalTime
 object DataModel {
     private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    var onDataChanged: (() -> Unit)? = null
 
     init {
         if (BuildConfig.DEBUG) {
@@ -101,6 +102,7 @@ object DataModel {
                     }
                 }
             }
+            onDataChanged?.invoke()
         }
     }
 
@@ -112,6 +114,7 @@ object DataModel {
         CoroutineScope(Dispatchers.IO).launch {
             DBHelperFactory.getDBHelper().deleteCategory(category.id!!)
             _categoriesStateFlow.update { oldMap -> oldMap.filterNot { it.id == category.id } }
+            onDataChanged?.invoke()
         }
     }
 
@@ -136,6 +139,7 @@ object DataModel {
                 _siteEntriesStateFlow.updateListItemById(siteEntry, keySelector = { it.id!! })
             }
             storeAllExtensionsToPreferences()
+            onDataChanged?.invoke()
         }
     }
 
@@ -209,15 +213,10 @@ object DataModel {
         Preferences.setLastModified()
         CoroutineScope(Dispatchers.IO).launch {
             val db = DBHelperFactory.getDBHelper()
-            Preferences.getSoftDeleteDays().let {
-                if (it > 0) {
-                    siteEntry.deleted = Clock.System.now().epochSeconds
-                    db.markSiteEntryDeleted(siteEntry.id!!, siteEntry.deleted)
-                    _softDeletedStateFlow.value = _softDeletedStateFlow.value + siteEntry
-                } else {
-                    db.hardDeleteSiteEntry(siteEntry.id!!)
-                }
-            }
+            val deletedTime = Clock.System.now().epochSeconds
+            siteEntry.deleted = deletedTime
+            db.markSiteEntryDeleted(siteEntry.id!!, deletedTime)
+            _softDeletedStateFlow.value = _softDeletedStateFlow.value + siteEntry
 
             _siteEntriesStateFlow.update {
                 it.filterNot { entry -> entry.id == siteEntry.id }
@@ -229,6 +228,7 @@ object DataModel {
                     containedSiteEntryCount = old.containedSiteEntryCount - 1
                 }
             }
+            onDataChanged?.invoke()
         }
     }
 

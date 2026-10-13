@@ -25,3 +25,8 @@ build/
 .kotlin/
 xcuserdata/
 *.xcuserdata
+*DerivedData*/
+*.db
+*.db-shm
+*.db-wal
+*.db.lck

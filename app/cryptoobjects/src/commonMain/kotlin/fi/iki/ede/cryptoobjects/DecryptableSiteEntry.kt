@@ -139,7 +139,8 @@ open class DecryptableSiteEntry(
     open fun getPlainDescription(): String {
         val cached = _cachedPlainDescription
         if (cached != null) return cached
-        val cleaned = cleanDomainNameIfNeeded(description.decrypt()).ifBlank { "Imported Credential" }
+        val decrypted = description.decrypt()
+        val cleaned = if (decrypted.isBlank()) "" else cleanDomainNameIfNeeded(decrypted)
         _cachedPlainDescription = cleaned
         return cleaned
     }

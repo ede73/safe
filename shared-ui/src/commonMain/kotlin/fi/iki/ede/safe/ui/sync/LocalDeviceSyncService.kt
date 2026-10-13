@@ -8,6 +8,7 @@ data class DiscoveredDevice(
 )
 
 const val SAFE_MDNS_SERVICE_TYPE = "_safe-sync._tcp."
+const val SAFE_SYNC_DEFAULT_PORT = 58443
 
 expect class LocalDeviceSyncManager() {
     fun startAdvertising(deviceName: String, port: Int)

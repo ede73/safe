@@ -14,10 +14,14 @@ actual class LocalDeviceSyncManager {
     private var discoveryThread: Thread? = null
     @Volatile private var isAdvertising = false
     @Volatile private var isDiscovering = false
+    @Volatile private var myDeviceName: String = ""
+    @Volatile private var myPort: Int = -1
 
     actual fun startAdvertising(deviceName: String, port: Int) {
         stopAdvertising()
         isAdvertising = true
+        myDeviceName = deviceName
+        myPort = port
         advertisingThread = thread(start = true, isDaemon = true) {
             try {
                 val group = InetAddress.getByName(MULTICAST_GROUP)
@@ -64,8 +68,16 @@ actual class LocalDeviceSyncManager {
                         val parts = message.split(":")
                         if (parts.size >= 3) {
                             val name = parts[1]
-                            val port = parts[2].toIntOrNull() ?: 8443
+                            val port = parts[2].toIntOrNull() ?: SAFE_SYNC_DEFAULT_PORT
                             val host = packet.address.hostAddress ?: "127.0.0.1"
+
+                            // Filter out self
+                            if (name.equals(myDeviceName, ignoreCase = true) ||
+                                name.equals("Safe Desktop", ignoreCase = true) ||
+                                ((host == "127.0.0.1" || host == "localhost") && (port == myPort || port == 58444 || port == SAFE_SYNC_DEFAULT_PORT))) {
+                                continue
+                            }
+
                             val device = DiscoveredDevice(
                                 id = "$name@$host",
                                 name = name,

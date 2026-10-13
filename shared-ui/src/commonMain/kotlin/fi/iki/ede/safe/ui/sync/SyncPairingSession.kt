@@ -16,8 +16,15 @@ object SyncPairingSession {
      * Generates a secure random 8-digit PIN string (e.g., "49208173").
      */
     fun generate8DigitPin(): String {
-        val randomInt = SecureRandom.nextInt(100_000_000)
-        return randomInt.toString().padStart(8, '0')
+        // Generate a cryptographically secure random 8‑digit PIN
+        val randomBytes = SecureRandom.nextBytes(4)
+        var intVal = ((randomBytes[0].toInt() and 0xFF) shl 24) or
+                     ((randomBytes[1].toInt() and 0xFF) shl 16) or
+                     ((randomBytes[2].toInt() and 0xFF) shl 8) or
+                     (randomBytes[3].toInt() and 0xFF)
+        intVal = intVal and 0x7FFFFFFF // ensure positive
+        intVal %= 100_000_000 // limit to 0‑99,999,999
+        return intVal.toString().padStart(8, '0')
     }
 
     /**
@@ -36,10 +43,10 @@ object SyncPairingSession {
     }
 
     /**
-     * Derives a 256-bit AES key from an 8-digit PIN using SHA-256 stretching.
+     * Derives a 256-bit AES key from an 8-digit PIN or cluster secret using SHA-256 stretching.
      */
     fun deriveAesKeyFromPin(pin: String): ByteArray {
-        val cleanPin = normalizePinInput(pin)
+        val cleanPin = if (pin.any { !it.isDigit() } || pin.length != 8) pin.trim() else normalizePinInput(pin)
         val combined = "$cleanPin:$SALT_STRING"
         var hash = SHA256.digest(combined.encodeToByteArray()).bytes
         // Perform 5,000 rounds of SHA-256 stretching for local pairing security
