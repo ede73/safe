@@ -2,6 +2,8 @@ package fi.iki.ede.safe.ui.sync
 
 import fi.iki.ede.notifications.showToast
 import fi.iki.ede.preferences.Preferences
+import fi.iki.ede.logger.firebaseLog
+import fi.iki.ede.logger.firebaseRecordException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -305,11 +307,13 @@ class ContinuousAutoSyncCoordinator(
      */
     suspend fun syncWithPeer(peer: DiscoveredDevice, authToken: String): Boolean {
         return try {
+            firebaseLog("SafeAutoSync", "Attempting syncWithPeer: ${peer.name} at ${peer.hostAddress}:${peer.port}")
             val localItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
             val localTree = MerkleTreeHelper.buildMerkleVault(localItems)
 
             // Fast-path check: If we already know peer matches our local root, skip network roundtrip
             if (peerRootHashes[peer.id] == localTree.rootHash) {
+                firebaseLog("SafeAutoSync", "Peer ${peer.name} cached root matches local root (${localTree.rootHash.take(8)}). Skipping roundtrip.")
                 lastStatusMessage = "Peer ${peer.name} already in parity ✓"
                 updateStatus()
                 return true
@@ -335,6 +339,7 @@ class ContinuousAutoSyncCoordinator(
             }
             if (remotePayload.merkleRoot.isNotBlank() && remotePayload.merkleRoot == localTree.rootHash) {
                 // Peer confirms roots are identical!
+                firebaseLog("SafeAutoSync", "Peer $effectivePeerName confirmed roots match (${localTree.rootHash.take(8)})")
                 peerRootHashes[peer.id] = localTree.rootHash
                 lastSyncTimestamp = Clock.System.now().toEpochMilliseconds()
                 lastStatusMessage = "Peer $effectivePeerName synchronized (Merkle Root match) ✓"
@@ -345,10 +350,12 @@ class ContinuousAutoSyncCoordinator(
             } else {
                 // Roots differ -> apply incoming items / reconciliation
                 val conflicts = SyncConflictResolver.analyzeConflicts(localItems, remotePayload.items)
+                firebaseLog("SafeAutoSync", "Peer $effectivePeerName roots differ. Applying ${conflicts.size} conflicts...")
                 SyncConflictResolver.applyResolvedConflictsToLocalDatabase(conflicts)
 
                 val updatedItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
                 val updatedTree = MerkleTreeHelper.buildMerkleVault(updatedItems)
+                firebaseLog("SafeAutoSync", "Peer $effectivePeerName converged to root ${updatedTree.rootHash.take(8)}")
                 peerRootHashes[peer.id] = updatedTree.rootHash
                 lastSyncTimestamp = Clock.System.now().toEpochMilliseconds()
                 lastStatusMessage = "Peer $effectivePeerName reconciled & converged to ${updatedTree.rootHash.take(8)} ✓"
@@ -366,6 +373,7 @@ class ContinuousAutoSyncCoordinator(
                 true
             }
         } catch (e: Throwable) {
+            firebaseRecordException("SafeAutoSync failed with peer ${peer.name}: ${e::class.simpleName}", e)
             lastStatusMessage = "Auto-sync with ${peer.name} failed: ${e.message}"
             updateStatus()
             false
