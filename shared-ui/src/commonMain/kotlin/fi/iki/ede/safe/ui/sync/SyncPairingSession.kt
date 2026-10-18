@@ -3,20 +3,18 @@ package fi.iki.ede.safe.ui.sync
 import korlibs.crypto.AES
 import korlibs.crypto.HMAC
 import korlibs.crypto.Padding
-import korlibs.crypto.SHA256
 import korlibs.crypto.SecureRandom
 import korlibs.crypto.encoding.Hex
 
 object SyncPairingSession {
 
-    private const val SALT_STRING = "SafeLocalDeviceSyncSaltV1"
-    private const val MAC_INFO_STRING = "SafeLocalDeviceSyncMacV1"
+    const val PROTOCOL_HELLO_PREFIX = "SAFE_HELLO:"
+    const val PROTOCOL_PAYLOAD_PREFIX = "SAFE_PAYLOAD:"
 
     /**
      * Generates a secure random 8-digit PIN string (e.g., "49208173").
      */
     fun generate8DigitPin(): String {
-        // Generate a cryptographically secure random 8‑digit PIN
         val randomBytes = SecureRandom.nextBytes(4)
         var intVal = ((randomBytes[0].toInt() and 0xFF) shl 24) or
                      ((randomBytes[1].toInt() and 0xFF) shl 16) or
@@ -42,50 +40,111 @@ object SyncPairingSession {
         return rawInput.filter { it.isDigit() }.take(8)
     }
 
-    /**
-     * Derives a 256-bit AES key from an 8-digit PIN or cluster secret using SHA-256 stretching.
-     */
-    fun deriveAesKeyFromPin(pin: String): ByteArray {
-        val cleanPin = if (pin.any { !it.isDigit() } || pin.length != 8) pin.trim() else normalizePinInput(pin)
-        val combined = "$cleanPin:$SALT_STRING"
-        var hash = SHA256.digest(combined.encodeToByteArray()).bytes
-        // Perform 5,000 rounds of SHA-256 stretching for local pairing security
-        for (i in 0 until 5000) {
-            hash = SHA256.digest(hash + cleanPin.encodeToByteArray()).bytes
+    data class KeyPair(val privateKey: ByteArray, val publicKey: ByteArray) {
+        val publicKeyHex: String get() = Hex.encode(publicKey)
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is KeyPair) return false
+            return privateKey.contentEquals(other.privateKey) && publicKey.contentEquals(other.publicKey)
         }
-        return hash
+
+        override fun hashCode(): Int {
+            var result = privateKey.contentHashCode()
+            result = 31 * result + publicKey.contentHashCode()
+            return result
+        }
     }
 
-    private fun deriveMacKey(masterKey: ByteArray): ByteArray {
-        return HMAC.hmacSHA256(masterKey, MAC_INFO_STRING.encodeToByteArray()).bytes
+    fun generateEphemeralKeyPair(): KeyPair {
+        val priv = X25519.generatePrivateKey()
+        val pub = X25519.publicFromPrivate(priv)
+        return KeyPair(priv, pub)
+    }
+
+    fun createHelloMessage(myKeyPair: KeyPair): String =
+        "$PROTOCOL_HELLO_PREFIX${myKeyPair.publicKeyHex}"
+
+    fun parseHelloMessage(line: String): ByteArray {
+        require(line.startsWith(PROTOCOL_HELLO_PREFIX)) { "Invalid handshake message: expected $PROTOCOL_HELLO_PREFIX" }
+        val hex = line.removePrefix(PROTOCOL_HELLO_PREFIX).trim()
+        val pub = Hex.decode(hex)
+        require(pub.size == 32) { "Invalid peer public key size: expected 32 bytes, got ${pub.size}" }
+        return pub
     }
 
     /**
-     * Encrypts plaintext JSON payload with the derived AES key and HMAC-SHA256 integrity tag.
+     * Derives session AES and MAC keys using Ephemeral Curve25519 (X25519) ECDH shared secret
+     * cryptographically bound to the user-verified PIN and both public keys.
+     *
+     * This guarantees that:
+     * 1. Passive network eavesdroppers cannot perform offline PIN brute-forcing (requires breaking ECDH 2^128).
+     * 2. Active MITM attackers cannot forge or substitute keys without knowing the out-of-band PIN.
      */
-    fun encryptPayload(plainJson: String, pin: String): String {
-        val masterKey = deriveAesKeyFromPin(pin)
-        val macKey = deriveMacKey(masterKey)
+    fun deriveSessionKeys(
+        myPrivateKey: ByteArray,
+        myPublicKey: ByteArray,
+        peerPublicKey: ByteArray,
+        pin: String
+    ): Pair<ByteArray, ByteArray> {
+        val cleanPin = if (pin.any { !it.isDigit() } || pin.length != 8) pin.trim() else normalizePinInput(pin)
+        val sharedSecret = X25519.scalarmult(myPrivateKey, peerPublicKey)
+        require(!X25519.isAllZero(sharedSecret)) { "ECDH key agreement failed: peer public key is invalid or small-order" }
+
+        val myPubHex = Hex.encode(myPublicKey)
+        val peerPubHex = Hex.encode(peerPublicKey)
+        val (pk1, pk2) = if (myPubHex < peerPubHex) {
+            myPublicKey to peerPublicKey
+        } else {
+            peerPublicKey to myPublicKey
+        }
+
+        val kdfSalt = "SafeP2P-v2:".encodeToByteArray() + cleanPin.encodeToByteArray() + pk1 + pk2
+        val masterKey = HMAC.hmacSHA256(sharedSecret, kdfSalt).bytes
+        val macKey = HMAC.hmacSHA256(masterKey, "SafeP2P-v2-Mac".encodeToByteArray()).bytes
+        return masterKey to macKey
+    }
+
+    /**
+     * Encrypts plaintext JSON payload with Ephemeral ECDH + PIN transcript-bound AES-CBC-256 and HMAC-SHA256.
+     */
+    fun encryptPayload(
+        plainJson: String,
+        pin: String,
+        myKeyPair: KeyPair,
+        peerPublicKey: ByteArray
+    ): String {
+        val (masterKey, macKey) = deriveSessionKeys(myKeyPair.privateKey, myKeyPair.publicKey, peerPublicKey, pin)
         val iv = SecureRandom.nextBytes(16)
         val encryptedBytes = AES.encryptAesCbc(plainJson.encodeToByteArray(), masterKey, iv, Padding.PKCS7Padding)
         val ivAndCiphertext = iv + encryptedBytes
         val hmacTag = HMAC.hmacSHA256(macKey, ivAndCiphertext).bytes
         val combined = hmacTag + ivAndCiphertext
-        return Hex.encode(combined)
+        return "$PROTOCOL_PAYLOAD_PREFIX${Hex.encode(combined)}"
     }
 
     /**
      * Decrypts ciphertext back into plaintext JSON after verifying HMAC-SHA256 payload integrity.
      */
-    fun decryptPayload(cipherHex: String, pin: String): String {
-        val masterKey = deriveAesKeyFromPin(pin)
-        val macKey = deriveMacKey(masterKey)
+    fun decryptPayload(
+        message: String,
+        pin: String,
+        myKeyPair: KeyPair,
+        peerPublicKey: ByteArray
+    ): String {
+        val cipherHex = if (message.startsWith(PROTOCOL_PAYLOAD_PREFIX)) {
+            message.removePrefix(PROTOCOL_PAYLOAD_PREFIX).trim()
+        } else {
+            message.trim()
+        }
+        val (masterKey, macKey) = deriveSessionKeys(myKeyPair.privateKey, myKeyPair.publicKey, peerPublicKey, pin)
         val bytes = Hex.decode(cipherHex)
         require(bytes.size > 48) { "Invalid payload length: payload must include HMAC tag (32b) and IV (16b)" }
+
         val hmacTag = bytes.copyOfRange(0, 32)
         val ivAndCiphertext = bytes.copyOfRange(32, bytes.size)
         val expectedHmacTag = HMAC.hmacSHA256(macKey, ivAndCiphertext).bytes
-        require(constantTimeEquals(hmacTag, expectedHmacTag)) { "Payload integrity check failed: HMAC mismatch" }
+        require(constantTimeEquals(hmacTag, expectedHmacTag)) { "Payload authentication failed: HMAC mismatch (incorrect PIN or tampering)" }
 
         val iv = ivAndCiphertext.copyOfRange(0, 16)
         val ciphertext = ivAndCiphertext.copyOfRange(16, ivAndCiphertext.size)
@@ -105,4 +164,3 @@ object SyncPairingSession {
         return result == 0
     }
 }
-

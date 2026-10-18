@@ -68,10 +68,10 @@ actual class SyncNetworkService {
         if (serverSocket == null) return
 
         thread(start = true, isDaemon = true) {
-
             try {
                 while (isRunning) {
                     val clientSocket = serverSocket?.accept() ?: break
+                    clientSocket.soTimeout = 30000
                     firebaseLog("SafeSyncNet", "Server accepted client connection from ${clientSocket.inetAddress?.hostAddress}:${clientSocket.port}")
                     thread {
                         handleClient(clientSocket, pin, onPayloadReceived)
@@ -115,20 +115,38 @@ actual class SyncNetworkService {
             socket.use { s ->
                 val reader = BufferedReader(InputStreamReader(s.getInputStream()))
                 val writer = PrintWriter(s.getOutputStream(), true)
-                firebaseLog("SafeSyncNet", "Reading from client ${s.inetAddress?.hostAddress}...")
-                val incomingLine = readBoundedLine(reader)
-                if (incomingLine == null) {
-                    firebaseLog("SafeSyncNet", "Client closed connection before sending data")
-                    return
-                }
 
-                firebaseLog("SafeSyncNet", "Server received line length=${incomingLine.length}, decrypting...")
-                val decryptedJson = SyncPairingSession.decryptPayload(incomingLine, pin)
+                // 1. Read Client Ephemeral Public Key (Handshake)
+                val clientHelloLine = readBoundedLine(reader) ?: return
+                val clientPublicKey = SyncPairingSession.parseHelloMessage(clientHelloLine)
+
+                // 2. Generate Server Ephemeral Keypair and Send Server Hello
+                val serverKeyPair = SyncPairingSession.generateEphemeralKeyPair()
+                writer.println(SyncPairingSession.createHelloMessage(serverKeyPair))
+                writer.flush()
+
+                // 3. Read and Decrypt Payload (Authenticated via ECDH + PIN)
+                val incomingLine = readBoundedLine(reader) ?: return
+                val decryptedJson = SyncPairingSession.decryptPayload(
+                    message = incomingLine,
+                    pin = pin,
+                    myKeyPair = serverKeyPair,
+                    peerPublicKey = clientPublicKey
+                )
+
+                // 4. Process Application Vault Changes
                 val responseJson = onPayloadReceived(decryptedJson)
-                val encryptedResponse = SyncPairingSession.encryptPayload(responseJson, pin)
+
+                // 5. Encrypt and Send Response
+                val encryptedResponse = SyncPairingSession.encryptPayload(
+                    plainJson = responseJson,
+                    pin = pin,
+                    myKeyPair = serverKeyPair,
+                    peerPublicKey = clientPublicKey
+                )
                 writer.println(encryptedResponse)
                 writer.flush()
-                Logger.d(TAG, "Client request processed successfully")
+                Logger.d(TAG, "Client request processed successfully (ECDH v2)")
                 firebaseLog("SafeSyncNet", "Server response sent (length=${encryptedResponse.length})")
             }
         } catch (e: Exception) {
@@ -136,7 +154,7 @@ actual class SyncNetworkService {
             firebaseRecordException("SafeSyncNet error handling client request: ${e::class.simpleName}", e)
             try {
                 PrintWriter(socket.getOutputStream(), true).apply {
-                    println("ERROR:${e::class.simpleName}:${e.message}")
+                    println("ERROR:Failed")
                     flush()
                 }
             } catch (_: Exception) {}
@@ -173,14 +191,35 @@ actual class SyncNetworkService {
                 val reader = BufferedReader(InputStreamReader(s.getInputStream()))
                 val writer = PrintWriter(s.getOutputStream(), true)
 
+                // 1. Generate Client Ephemeral Keypair and Send Hello
+                val clientKeyPair = SyncPairingSession.generateEphemeralKeyPair()
+                writer.println(SyncPairingSession.createHelloMessage(clientKeyPair))
+                writer.flush()
+
+                // 2. Read Server Hello (ECDH Public Key)
+                onProgress?.invoke("Negotiating ECDH key agreement...")
+                val serverHelloLine = readBoundedLine(reader)
+                    ?: throw IllegalStateException("Target device closed connection during handshake")
+                if (serverHelloLine.startsWith("ERROR:")) {
+                    throw IllegalArgumentException("Target device rejected connection: $serverHelloLine")
+                }
+                val serverPublicKey = SyncPairingSession.parseHelloMessage(serverHelloLine)
+
+                // 3. Encrypt and Send Vault Payload
                 onProgress?.invoke("Encrypting vault data...")
-                val encryptedPayload = SyncPairingSession.encryptPayload(localPayloadJson, pin)
+                val encryptedPayload = SyncPairingSession.encryptPayload(
+                    plainJson = localPayloadJson,
+                    pin = pin,
+                    myKeyPair = clientKeyPair,
+                    peerPublicKey = serverPublicKey
+                )
                 val payloadKb = encryptedPayload.length / 1024
                 onProgress?.invoke("Transferring vault data ($payloadKb KB)...")
                 firebaseLog("SafeSyncNet", "Client sending payload of length ${encryptedPayload.length} to $hostAddress:$port...")
                 writer.println(encryptedPayload)
                 writer.flush()
 
+                // 4. Wait for Encrypted Response
                 onProgress?.invoke("Waiting for remote device to process changes...")
                 firebaseLog("SafeSyncNet", "Client waiting for response from $hostAddress:$port...")
                 val responseLine = readBoundedLine(reader)
@@ -191,8 +230,14 @@ actual class SyncNetworkService {
                     throw IllegalArgumentException("Target device rejected connection: $responseLine")
                 }
 
+                // 5. Decrypt and Authenticate Response
                 onProgress?.invoke("Decrypting response...")
-                SyncPairingSession.decryptPayload(responseLine, pin)
+                SyncPairingSession.decryptPayload(
+                    message = responseLine,
+                    pin = pin,
+                    myKeyPair = clientKeyPair,
+                    peerPublicKey = serverPublicKey
+                )
             }
         } catch (e: Exception) {
             firebaseRecordException("SafeSyncNet client error with $hostAddress:$port: ${e::class.simpleName}", e)

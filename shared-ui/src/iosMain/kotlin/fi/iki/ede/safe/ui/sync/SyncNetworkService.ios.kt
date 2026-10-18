@@ -109,22 +109,68 @@ actual class SyncNetworkService {
                 val clientFd = accept(serverFd, null, null)
                 if (clientFd < 0) break
 
-                memScoped {
-                    val incomingLine = readLineFromFd(clientFd)
-                    if (!incomingLine.isNullOrEmpty()) {
-                        try {
-                            val decryptedJson = SyncPairingSession.decryptPayload(incomingLine, pin)
-                            val responseJson = onPayloadReceived(decryptedJson)
-                            val encryptedResponse = SyncPairingSession.encryptPayload(responseJson, pin) + "\n"
-                            sendAll(clientFd, encryptedResponse.encodeToByteArray())
-                        } catch (e: Exception) {
-                            val errStr = "ERROR:${e::class.simpleName}:${e.message}\n"
-                            sendAll(clientFd, errStr.encodeToByteArray())
-                        }
-                    }
-                    shutdown(clientFd, SHUT_WR)
-                    close(clientFd)
+                // Dispatch each client session to avoid blocking the accept loop
+                dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT.toLong(), 0u)) {
+                    handleClient(clientFd, pin, onPayloadReceived)
                 }
+            }
+        }
+    }
+
+    private fun handleClient(
+        clientFd: Int,
+        pin: String,
+        onPayloadReceived: (remotePayloadJson: String) -> String
+    ) {
+        memScoped {
+            try {
+                // Set receive and send timeouts on client socket to prevent hanging
+                val rcvTv = alloc<timeval>()
+                rcvTv.tv_sec = 30
+                rcvTv.tv_usec = 0
+                setsockopt(clientFd, SOL_SOCKET, SO_RCVTIMEO, rcvTv.ptr, sizeOf<timeval>().toUInt())
+
+                val sndTv = alloc<timeval>()
+                sndTv.tv_sec = 10
+                sndTv.tv_usec = 0
+                setsockopt(clientFd, SOL_SOCKET, SO_SNDTIMEO, sndTv.ptr, sizeOf<timeval>().toUInt())
+
+                // 1. Read Client Hello
+                val clientHelloLine = readLineFromFd(clientFd) ?: return@memScoped
+                val clientPublicKey = SyncPairingSession.parseHelloMessage(clientHelloLine)
+
+                // 2. Generate Server Keypair and Send Hello
+                val serverKeyPair = SyncPairingSession.generateEphemeralKeyPair()
+                val serverHello = SyncPairingSession.createHelloMessage(serverKeyPair) + "\n"
+                sendAll(clientFd, serverHello.encodeToByteArray())
+
+                // 3. Read and Decrypt Payload
+                val incomingPayloadLine = readLineFromFd(clientFd) ?: return@memScoped
+                val decryptedJson = SyncPairingSession.decryptPayload(
+                    message = incomingPayloadLine,
+                    pin = pin,
+                    myKeyPair = serverKeyPair,
+                    peerPublicKey = clientPublicKey
+                )
+
+                // 4. Process Application Vault Changes
+                val responseJson = onPayloadReceived(decryptedJson)
+
+                // 5. Encrypt and Send Response
+                val encryptedResponse = SyncPairingSession.encryptPayload(
+                    plainJson = responseJson,
+                    pin = pin,
+                    myKeyPair = serverKeyPair,
+                    peerPublicKey = clientPublicKey
+                ) + "\n"
+                sendAll(clientFd, encryptedResponse.encodeToByteArray())
+            } catch (t: Throwable) {
+                try {
+                    sendAll(clientFd, "ERROR:Failed\n".encodeToByteArray())
+                } catch (_: Throwable) {}
+            } finally {
+                shutdown(clientFd, SHUT_WR)
+                close(clientFd)
             }
         }
     }
@@ -145,69 +191,99 @@ actual class SyncNetworkService {
         localPayloadJson: String,
         onProgress: ((String) -> Unit)?
     ): String = withContext(Dispatchers.Default) {
-        onProgress?.invoke("Encrypting vault data...")
-        val encryptedPayload = SyncPairingSession.encryptPayload(localPayloadJson, pin) + "\n"
-        val requestBytes = encryptedPayload.encodeToByteArray()
         onProgress?.invoke("Connecting to $hostAddress:$port...")
 
         memScoped {
             val sock = socket(AF_INET, SOCK_STREAM, 0)
             if (sock < 0) throw IllegalStateException("Failed to create client socket")
 
-            val tv = alloc<timeval>()
-            tv.tv_sec = 60
-            tv.tv_usec = 0
-            setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, tv.ptr, sizeOf<timeval>().toUInt())
+            try {
+                val tv = alloc<timeval>()
+                tv.tv_sec = 60
+                tv.tv_usec = 0
+                setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, tv.ptr, sizeOf<timeval>().toUInt())
 
-            val sndTv = alloc<timeval>()
-            sndTv.tv_sec = 10
-            sndTv.tv_usec = 0
-            setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, sndTv.ptr, sizeOf<timeval>().toUInt())
+                val sndTv = alloc<timeval>()
+                sndTv.tv_sec = 10
+                sndTv.tv_usec = 0
+                setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, sndTv.ptr, sizeOf<timeval>().toUInt())
 
-            val serverAddr = alloc<sockaddr_in>()
-            memset(serverAddr.ptr, 0, sizeOf<sockaddr_in>().toULong())
-            serverAddr.sin_len = sizeOf<sockaddr_in>().toUByte()
-            serverAddr.sin_family = AF_INET.toUByte()
-            serverAddr.sin_port = htons(port.toUShort())
-            val directIpv4 = parseIpv4ToNetworkOrder(hostAddress)
-            if (directIpv4 != null) {
-                serverAddr.sin_addr.s_addr = directIpv4
-            } else {
-                val hints = alloc<addrinfo>()
-                memset(hints.ptr, 0, sizeOf<addrinfo>().toULong())
-                hints.ai_family = AF_INET
-                hints.ai_socktype = SOCK_STREAM
-                val res = allocPointerTo<addrinfo>()
-                if (getaddrinfo(hostAddress, null, hints.ptr, res.ptr) == 0 && res.value != null) {
-                    val resolved = res.value!!.pointed.ai_addr?.reinterpret<sockaddr_in>()
-                    if (resolved != null) {
-                        serverAddr.sin_addr.s_addr = resolved.pointed.sin_addr.s_addr
-                    }
-                    freeaddrinfo(res.value)
+                val serverAddr = alloc<sockaddr_in>()
+                memset(serverAddr.ptr, 0, sizeOf<sockaddr_in>().toULong())
+                serverAddr.sin_len = sizeOf<sockaddr_in>().toUByte()
+                serverAddr.sin_family = AF_INET.toUByte()
+                serverAddr.sin_port = htons(port.toUShort())
+                val directIpv4 = parseIpv4ToNetworkOrder(hostAddress)
+                if (directIpv4 != null) {
+                    serverAddr.sin_addr.s_addr = directIpv4
                 } else {
-                    serverAddr.sin_addr.s_addr = 0x0100007Fu
+                    val hints = alloc<addrinfo>()
+                    memset(hints.ptr, 0, sizeOf<addrinfo>().toULong())
+                    hints.ai_family = AF_INET
+                    hints.ai_socktype = SOCK_STREAM
+                    val res = allocPointerTo<addrinfo>()
+                    if (getaddrinfo(hostAddress, null, hints.ptr, res.ptr) == 0 && res.value != null) {
+                        val resolved = res.value!!.pointed.ai_addr?.reinterpret<sockaddr_in>()
+                        if (resolved != null) {
+                            serverAddr.sin_addr.s_addr = resolved.pointed.sin_addr.s_addr
+                        }
+                        freeaddrinfo(res.value)
+                    } else {
+                        throw IllegalStateException("Could not resolve host address: $hostAddress")
+                    }
                 }
-            }
 
-            if (connect(sock, serverAddr.ptr.reinterpret(), sizeOf<sockaddr_in>().toUInt()) < 0) {
+                if (connect(sock, serverAddr.ptr.reinterpret(), sizeOf<sockaddr_in>().toUInt()) < 0) {
+                    throw IllegalStateException("Failed to connect to $hostAddress:$port")
+                }
+
+                // 1. Send Client Hello
+                val clientKeyPair = SyncPairingSession.generateEphemeralKeyPair()
+                val clientHello = SyncPairingSession.createHelloMessage(clientKeyPair) + "\n"
+                sendAll(sock, clientHello.encodeToByteArray())
+
+                // 2. Read Server Hello
+                onProgress?.invoke("Negotiating ECDH key agreement...")
+                val serverHelloLine = readLineFromFd(sock)
+                    ?: throw IllegalStateException("Target device closed connection during handshake")
+
+                if (serverHelloLine.startsWith("ERROR:")) {
+                    throw IllegalArgumentException("Target device rejected connection: $serverHelloLine")
+                }
+                val serverPublicKey = SyncPairingSession.parseHelloMessage(serverHelloLine)
+
+                // 3. Encrypt and Send Vault Payload
+                onProgress?.invoke("Encrypting vault data...")
+                val encryptedPayload = SyncPairingSession.encryptPayload(
+                    plainJson = localPayloadJson,
+                    pin = pin,
+                    myKeyPair = clientKeyPair,
+                    peerPublicKey = serverPublicKey
+                ) + "\n"
+                val payloadKb = encryptedPayload.length / 1024
+                onProgress?.invoke("Transferring vault data ($payloadKb KB)...")
+                sendAll(sock, encryptedPayload.encodeToByteArray())
+
+                // 4. Wait for Response
+                onProgress?.invoke("Waiting for remote device to process changes...")
+                val responseLine = readLineFromFd(sock)
+                    ?: throw IllegalStateException("No response from target device")
+
+                if (responseLine.startsWith("ERROR:")) {
+                    throw IllegalArgumentException("Target device rejected connection: $responseLine")
+                }
+
+                // 5. Decrypt and Authenticate Response
+                onProgress?.invoke("Decrypting response...")
+                SyncPairingSession.decryptPayload(
+                    message = responseLine,
+                    pin = pin,
+                    myKeyPair = clientKeyPair,
+                    peerPublicKey = serverPublicKey
+                )
+            } finally {
                 close(sock)
-                throw IllegalStateException("Failed to connect to $hostAddress:$port")
             }
-
-            sendAll(sock, requestBytes)
-
-            val responseLine = readLineFromFd(sock)
-            close(sock)
-
-            if (responseLine.isNullOrEmpty()) {
-                throw IllegalStateException("No response from target device")
-            }
-
-            if (responseLine.startsWith("ERROR:")) {
-                throw IllegalArgumentException("Target device rejected connection: $responseLine")
-            }
-
-            SyncPairingSession.decryptPayload(responseLine, pin)
         }
     }
 }

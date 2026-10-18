@@ -26,6 +26,7 @@ class ThreeDeviceConvergenceUnitTest {
             val user = c.selectedUsername.ifBlank { c.localItem?.username ?: c.remoteItem?.username ?: "" }
             val pass = c.selectedPassword.ifBlank { c.localItem?.password ?: c.remoteItem?.password ?: "" }
             val note = c.selectedNote.ifBlank { c.localItem?.note ?: c.remoteItem?.note ?: "" }
+            val url = c.selectedUrl.ifBlank { c.localItem?.url ?: c.remoteItem?.url ?: "" }
             val isDel = c.selectedIsDeleted
             val modTime = maxOf(c.localItem?.modifiedAt ?: 0L, c.remoteItem?.modifiedAt ?: 0L)
             val catName = c.localItem?.categoryName?.ifBlank { null }
@@ -37,6 +38,7 @@ class ThreeDeviceConvergenceUnitTest {
                 username = user,
                 password = pass,
                 note = note,
+                url = url,
                 categoryName = catName,
                 isDeleted = isDel,
                 modifiedAt = modTime

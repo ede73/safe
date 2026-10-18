@@ -54,6 +54,7 @@ data class SyncConflict(
     var selectedUsername: String = pickDeterministic(localItem?.username, remoteItem?.username, localItem?.modifiedAt ?: 0L, remoteItem?.modifiedAt ?: 0L),
     var selectedPassword: String = pickDeterministic(localItem?.password, remoteItem?.password, localItem?.modifiedAt ?: 0L, remoteItem?.modifiedAt ?: 0L),
     var selectedNote: String = pickDeterministic(localItem?.note, remoteItem?.note, localItem?.modifiedAt ?: 0L, remoteItem?.modifiedAt ?: 0L),
+    var selectedUrl: String = pickDeterministic(localItem?.url, remoteItem?.url, localItem?.modifiedAt ?: 0L, remoteItem?.modifiedAt ?: 0L),
     var selectedIsDeleted: Boolean = localItem?.isDeleted ?: remoteItem?.isDeleted ?: false
 )
 
@@ -222,7 +223,7 @@ object SyncConflictResolver {
         val softDeletedEntries = kotlinx.coroutines.runBlocking { db.database.siteEntryDao().getAllSoftDeleted() }
         val existingEntries = activeEntries + softDeletedEntries
 
-        fun upsertEntry(cxfId: String, nameStr: String, userStr: String, passStr: String, noteStr: String = "", isDel: Boolean = false) {
+        fun upsertEntry(cxfId: String, nameStr: String, userStr: String, passStr: String, noteStr: String = "", urlStr: String = "", isDel: Boolean = false) {
             val existing = existingEntries.find { entry ->
                 entry.plainExtensions["cxfItemId"]?.contains(cxfId) == true ||
                         entry.plainUsername == userStr ||
@@ -234,6 +235,7 @@ object SyncConflictResolver {
                 existing.username = userStr.encrypt()
                 existing.password = passStr.encrypt()
                 existing.note = noteStr.encrypt()
+                existing.website = urlStr.encrypt()
                 existing.deleted = if (isDel) kotlin.time.Clock.System.now().toEpochMilliseconds() / 1000 else 0L
                 val extMap = existing.plainExtensions.toMutableMap()
                 extMap["cxfItemId"] = setOf(cxfId)
@@ -245,6 +247,7 @@ object SyncConflictResolver {
                     username = userStr.encrypt()
                     password = passStr.encrypt()
                     note = noteStr.encrypt()
+                    website = urlStr.encrypt()
                     deleted = if (isDel) kotlin.time.Clock.System.now().toEpochMilliseconds() / 1000 else 0L
                     extensions = encryptExtension(mapOf("cxfItemId" to setOf(cxfId)))
                 }
@@ -312,72 +315,78 @@ object SyncConflictResolver {
      */
     fun applyResolvedConflictsToLocalDatabase(resolvedConflicts: List<SyncConflict>) {
         val db = DBHelperFactory.getDBHelper()
-        var currentCategories = db.fetchAllCategoryRows()
-        val activeEntries = db.fetchAllRows(null)
-        val softDeletedEntries = kotlinx.coroutines.runBlocking { db.database.siteEntryDao().getAllSoftDeleted() }
-        val existingEntries = (activeEntries + softDeletedEntries).toMutableList()
+        db.beginTransaction()
+        try {
+            var currentCategories = db.fetchAllCategoryRows()
+            val activeEntries = db.fetchAllRows(null)
+            val softDeletedEntries = kotlinx.coroutines.runBlocking { db.database.siteEntryDao().getAllSoftDeleted() }
+            val existingEntries = (activeEntries + softDeletedEntries).toMutableList()
 
-        for (conflict in resolvedConflicts) {
-            val targetName = conflict.selectedName.ifBlank { conflict.localItem?.name ?: conflict.remoteItem?.name ?: "" }
-            val targetUser = conflict.selectedUsername.ifBlank { conflict.localItem?.username ?: conflict.remoteItem?.username ?: "" }
-            val targetPass = conflict.selectedPassword.ifBlank { conflict.localItem?.password ?: conflict.remoteItem?.password ?: "" }
-            val targetNote = conflict.selectedNote.ifBlank { conflict.localItem?.note ?: conflict.remoteItem?.note ?: "" }
-            val targetDeleted = conflict.selectedIsDeleted
-            val winningTime = maxOf(conflict.localItem?.modifiedAt ?: 0L, conflict.remoteItem?.modifiedAt ?: 0L)
-            val delTimeSeconds = if (winningTime > 0L) {
-                if (winningTime > 5_000_000_000L) winningTime / 1000L else winningTime
-            } else kotlin.time.Clock.System.now().epochSeconds
-            val winningMillis = if (winningTime > 0L) {
-                if (winningTime < 5_000_000_000L) winningTime * 1000L else winningTime
-            } else 0L
-            val itemCatName = conflict.localItem?.categoryName?.ifBlank { null }
-                ?: conflict.remoteItem?.categoryName?.ifBlank { null }
-                ?: "General Vault"
+            for (conflict in resolvedConflicts) {
+                val targetName = conflict.selectedName.ifBlank { conflict.localItem?.name ?: conflict.remoteItem?.name ?: "" }
+                val targetUser = conflict.selectedUsername.ifBlank { conflict.localItem?.username ?: conflict.remoteItem?.username ?: "" }
+                val targetPass = conflict.selectedPassword.ifBlank { conflict.localItem?.password ?: conflict.remoteItem?.password ?: "" }
+                val targetNote = conflict.selectedNote.ifBlank { conflict.localItem?.note ?: conflict.remoteItem?.note ?: "" }
+                val targetUrl = conflict.selectedUrl.ifBlank { conflict.localItem?.url ?: conflict.remoteItem?.url ?: "" }
+                val targetDeleted = conflict.selectedIsDeleted
+                val winningTime = maxOf(conflict.localItem?.modifiedAt ?: 0L, conflict.remoteItem?.modifiedAt ?: 0L)
+                val delTimeSeconds = if (winningTime > 0L) {
+                    if (winningTime > 5_000_000_000L) winningTime / 1000L else winningTime
+                } else kotlin.time.Clock.System.now().epochSeconds
+                val nowMillis = kotlin.time.Clock.System.now().toEpochMilliseconds()
+                val winningMillis = if (winningTime > 0L) {
+                    if (winningTime < 5_000_000_000L) winningTime * 1000L else winningTime
+                } else nowMillis
+                val itemCatName = conflict.localItem?.categoryName?.ifBlank { null }
+                    ?: conflict.remoteItem?.categoryName?.ifBlank { null }
+                    ?: "General Vault"
 
-            var resolvedCat = currentCategories.find { it.plainName == itemCatName }
-            if (resolvedCat == null) {
-                val newCat = DecryptableCategoryEntry().apply {
-                    encryptedName = itemCatName.encrypt()
-                }
-                db.addCategory(newCat)
-                currentCategories = db.fetchAllCategoryRows()
-                resolvedCat = currentCategories.find { it.plainName == itemCatName }
-            }
-            val targetCatId = resolvedCat?.id ?: (currentCategories.firstOrNull()?.id ?: 1L)
-
-            val existing = existingEntries.find { entry ->
-                entry.plainExtensions["cxfItemId"]?.contains(conflict.conflictId) == true ||
-                        (cleanDomain(entry.plainDescription) == cleanDomain(targetName) && entry.plainUsername == targetUser)
-            }
-
-            if (existing != null) {
-                existing.description = targetName.encrypt()
-                existing.username = targetUser.encrypt()
-                existing.password = targetPass.encrypt()
-                existing.note = targetNote.encrypt()
-                existing.deleted = if (targetDeleted) delTimeSeconds else 0L
-                if (winningMillis > 0L) {
-                    existing.passwordChangedDate = kotlin.time.Instant.fromEpochMilliseconds(winningMillis)
-                }
-                val extMap = existing.plainExtensions.toMutableMap()
-                extMap["cxfItemId"] = setOf(conflict.conflictId)
-                existing.extensions = existing.encryptExtension(extMap)
-                db.updateSiteEntry(existing)
-            } else {
-                val newEntry = DecryptableSiteEntry(categoryId = targetCatId).apply {
-                    description = targetName.encrypt()
-                    username = targetUser.encrypt()
-                    password = targetPass.encrypt()
-                    note = targetNote.encrypt()
-                    deleted = if (targetDeleted) delTimeSeconds else 0L
-                    if (winningMillis > 0L) {
-                        passwordChangedDate = kotlin.time.Instant.fromEpochMilliseconds(winningMillis)
+                var resolvedCat = currentCategories.find { it.plainName == itemCatName }
+                if (resolvedCat == null) {
+                    val newCat = DecryptableCategoryEntry().apply {
+                        encryptedName = itemCatName.encrypt()
                     }
-                    extensions = encryptExtension(mapOf("cxfItemId" to setOf(conflict.conflictId)))
+                    db.addCategory(newCat)
+                    currentCategories = db.fetchAllCategoryRows()
+                    resolvedCat = currentCategories.find { it.plainName == itemCatName }
                 }
-                db.addSiteEntry(newEntry)
-                existingEntries.add(newEntry)
+                val targetCatId = resolvedCat?.id ?: (currentCategories.firstOrNull()?.id ?: 1L)
+
+                val existing = existingEntries.find { entry ->
+                    entry.plainExtensions["cxfItemId"]?.contains(conflict.conflictId) == true ||
+                            (cleanDomain(entry.plainDescription) == cleanDomain(targetName) && entry.plainUsername == targetUser)
+                }
+
+                if (existing != null) {
+                    existing.description = targetName.encrypt()
+                    existing.username = targetUser.encrypt()
+                    existing.password = targetPass.encrypt()
+                    existing.note = targetNote.encrypt()
+                    existing.website = targetUrl.encrypt()
+                    existing.deleted = if (targetDeleted) delTimeSeconds else 0L
+                    existing.passwordChangedDate = kotlin.time.Instant.fromEpochMilliseconds(winningMillis)
+                    val extMap = existing.plainExtensions.toMutableMap()
+                    extMap["cxfItemId"] = setOf(conflict.conflictId)
+                    existing.extensions = existing.encryptExtension(extMap)
+                    db.updateSiteEntry(existing)
+                } else {
+                    val newEntry = DecryptableSiteEntry(categoryId = targetCatId).apply {
+                        description = targetName.encrypt()
+                        username = targetUser.encrypt()
+                        password = targetPass.encrypt()
+                        note = targetNote.encrypt()
+                        website = targetUrl.encrypt()
+                        deleted = if (targetDeleted) delTimeSeconds else 0L
+                        passwordChangedDate = kotlin.time.Instant.fromEpochMilliseconds(winningMillis)
+                        extensions = encryptExtension(mapOf("cxfItemId" to setOf(conflict.conflictId)))
+                    }
+                    db.addSiteEntry(newEntry)
+                    existingEntries.add(newEntry)
+                }
             }
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
         }
     }
 }

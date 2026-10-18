@@ -22,22 +22,10 @@ actual class SyncNetworkService {
     ) {
         stopServer()
         isRunning = true
-        val candidatePorts = if (port == 0) listOf(0) else listOf(port, port + 1, port + 2, port + 3, port + 4, 0).distinct()
+        val candidatePorts = if (port == 0) listOf(0) else listOf(port, port + 1, port + 2, 0).distinct()
         for (p in candidatePorts) {
             try {
-                if (p != 0) {
-                    val isPortTaken = try {
-                        val testSock = Socket()
-                        testSock.connect(java.net.InetSocketAddress("127.0.0.1", p), 100)
-                        testSock.close()
-                        true
-                    } catch (_: Exception) {
-                        false
-                    }
-                    if (isPortTaken) continue
-                }
-
-                val ss = ServerSocket(p, 50, java.net.InetAddress.getByName("0.0.0.0"))
+                val ss = ServerSocket(p)
                 serverSocket = ss
                 boundPort = ss.localPort
                 break
@@ -49,6 +37,7 @@ actual class SyncNetworkService {
             try {
                 while (isRunning) {
                     val clientSocket = serverSocket?.accept() ?: break
+                    clientSocket.soTimeout = 30000
                     thread {
                         handleClient(clientSocket, pin, onPayloadReceived)
                     }
@@ -86,18 +75,42 @@ actual class SyncNetworkService {
             socket.use { s ->
                 val reader = BufferedReader(InputStreamReader(s.getInputStream()))
                 val writer = PrintWriter(s.getOutputStream(), true)
-                val incomingLine = readBoundedLine(reader) ?: return
 
-                val decryptedJson = SyncPairingSession.decryptPayload(incomingLine, pin)
+                // 1. Read Client Hello
+                val clientHelloLine = readBoundedLine(reader) ?: return
+                val clientPublicKey = SyncPairingSession.parseHelloMessage(clientHelloLine)
+
+                // 2. Generate Server Keypair and Send Hello
+                val serverKeyPair = SyncPairingSession.generateEphemeralKeyPair()
+                writer.println(SyncPairingSession.createHelloMessage(serverKeyPair))
+                writer.flush()
+
+                // 3. Read and Decrypt Payload
+                val incomingLine = readBoundedLine(reader) ?: return
+                val decryptedJson = SyncPairingSession.decryptPayload(
+                    message = incomingLine,
+                    pin = pin,
+                    myKeyPair = serverKeyPair,
+                    peerPublicKey = clientPublicKey
+                )
+
+                // 4. Process Application Vault Changes
                 val responseJson = onPayloadReceived(decryptedJson)
-                val encryptedResponse = SyncPairingSession.encryptPayload(responseJson, pin)
+
+                // 5. Send Encrypted Response
+                val encryptedResponse = SyncPairingSession.encryptPayload(
+                    plainJson = responseJson,
+                    pin = pin,
+                    myKeyPair = serverKeyPair,
+                    peerPublicKey = clientPublicKey
+                )
                 writer.println(encryptedResponse)
                 writer.flush()
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             try {
                 PrintWriter(socket.getOutputStream(), true).apply {
-                    println("ERROR:${e::class.simpleName}:${e.message}")
+                    println("ERROR:Failed")
                     flush()
                 }
             } catch (_: Exception) {}
@@ -130,23 +143,50 @@ actual class SyncNetworkService {
             val reader = BufferedReader(InputStreamReader(s.getInputStream()))
             val writer = PrintWriter(s.getOutputStream(), true)
 
+            // 1. Send Client Hello
+            val clientKeyPair = SyncPairingSession.generateEphemeralKeyPair()
+            writer.println(SyncPairingSession.createHelloMessage(clientKeyPair))
+            writer.flush()
+
+            // 2. Read Server Hello
+            onProgress?.invoke("Negotiating ECDH key agreement...")
+            val serverHelloLine = readBoundedLine(reader)
+                ?: throw IllegalStateException("Target device closed connection during handshake")
+            if (serverHelloLine.startsWith("ERROR:")) {
+                throw IllegalArgumentException("Target device rejected connection: $serverHelloLine")
+            }
+            val serverPublicKey = SyncPairingSession.parseHelloMessage(serverHelloLine)
+
+            // 3. Encrypt and Send Vault Payload
             onProgress?.invoke("Encrypting vault data...")
-            val encryptedPayload = SyncPairingSession.encryptPayload(localPayloadJson, pin)
+            val encryptedPayload = SyncPairingSession.encryptPayload(
+                plainJson = localPayloadJson,
+                pin = pin,
+                myKeyPair = clientKeyPair,
+                peerPublicKey = serverPublicKey
+            )
             val payloadKb = encryptedPayload.length / 1024
             onProgress?.invoke("Transferring vault data ($payloadKb KB)...")
             writer.println(encryptedPayload)
             writer.flush()
 
+            // 4. Wait for Response
             onProgress?.invoke("Waiting for remote device to process changes...")
             val responseLine = readBoundedLine(reader)
-                ?: throw IllegalStateException("No response received from target device")
+                ?: throw IllegalStateException("No response received from target device (connection closed)")
 
             if (responseLine.startsWith("ERROR:")) {
                 throw IllegalArgumentException("Target device rejected connection: $responseLine")
             }
 
+            // 5. Decrypt and Authenticate Response
             onProgress?.invoke("Decrypting response...")
-            SyncPairingSession.decryptPayload(responseLine, pin)
+            SyncPairingSession.decryptPayload(
+                message = responseLine,
+                pin = pin,
+                myKeyPair = clientKeyPair,
+                peerPublicKey = serverPublicKey
+            )
         }
     }
 }

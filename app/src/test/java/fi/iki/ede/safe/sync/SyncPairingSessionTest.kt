@@ -21,31 +21,112 @@ class SyncPairingSessionTest {
     }
 
     @Test
-    fun testPayloadEncryptionAndDecryptionWithPin() {
+    fun testEcdhKeyExchangeAndPinBoundPayloadEncryption() {
         val samplePin = "49208173"
         val originalPayload = """{"accounts":[{"email":"user@test.com","items":[{"title":"https://www.amazon.com/ap/signin"}]}]}"""
 
-        val cipherHex = SyncPairingSession.encryptPayload(originalPayload, samplePin)
-        assertNotEquals(originalPayload, cipherHex)
-        assertTrue(cipherHex.isNotEmpty())
+        // Client and Server generate ephemeral keypairs
+        val clientKeys = SyncPairingSession.generateEphemeralKeyPair()
+        val serverKeys = SyncPairingSession.generateEphemeralKeyPair()
 
-        val decryptedPayload = SyncPairingSession.decryptPayload(cipherHex, samplePin)
-        assertEquals(originalPayload, decryptedPayload)
+        // 1. Hello exchange
+        val clientHello = SyncPairingSession.createHelloMessage(clientKeys)
+        val serverHello = SyncPairingSession.createHelloMessage(serverKeys)
+
+        val clientPubReceivedByServer = SyncPairingSession.parseHelloMessage(clientHello)
+        val serverPubReceivedByClient = SyncPairingSession.parseHelloMessage(serverHello)
+
+        // 2. Client encrypts payload to Server using Server's public key + PIN
+        val encryptedByClient = SyncPairingSession.encryptPayload(
+            plainJson = originalPayload,
+            pin = samplePin,
+            myKeyPair = clientKeys,
+            peerPublicKey = serverPubReceivedByClient
+        )
+        assertNotEquals(originalPayload, encryptedByClient)
+
+        // 3. Server decrypts payload using Client's public key + PIN
+        val decryptedByServer = SyncPairingSession.decryptPayload(
+            message = encryptedByClient,
+            pin = samplePin,
+            myKeyPair = serverKeys,
+            peerPublicKey = clientPubReceivedByServer
+        )
+        assertEquals(originalPayload, decryptedByServer)
+
+        // 4. Server encrypts response back to Client
+        val serverResponse = """{"status":"converged","items":[]}"""
+        val encryptedByServer = SyncPairingSession.encryptPayload(
+            plainJson = serverResponse,
+            pin = samplePin,
+            myKeyPair = serverKeys,
+            peerPublicKey = clientPubReceivedByServer
+        )
+
+        // 5. Client decrypts response from Server
+        val decryptedByClient = SyncPairingSession.decryptPayload(
+            message = encryptedByServer,
+            pin = samplePin,
+            myKeyPair = clientKeys,
+            peerPublicKey = serverPubReceivedByClient
+        )
+        assertEquals(serverResponse, decryptedByClient)
+    }
+
+    @Test
+    fun testIncorrectPinFailsDecryption() {
+        val correctPin = "49208173"
+        val wrongPin = "11112222"
+        val originalPayload = """{"test":"secret_vault_record"}"""
+
+        val clientKeys = SyncPairingSession.generateEphemeralKeyPair()
+        val serverKeys = SyncPairingSession.generateEphemeralKeyPair()
+
+        val encryptedByClient = SyncPairingSession.encryptPayload(
+            plainJson = originalPayload,
+            pin = correctPin,
+            myKeyPair = clientKeys,
+            peerPublicKey = serverKeys.publicKey
+        )
+
+        // Attempting to decrypt with wrong PIN throws IllegalArgumentException
+        assertThrows(IllegalArgumentException::class.java) {
+            SyncPairingSession.decryptPayload(
+                message = encryptedByClient,
+                pin = wrongPin,
+                myKeyPair = serverKeys,
+                peerPublicKey = clientKeys.publicKey
+            )
+        }
     }
 
     @Test
     fun testPayloadTamperingFailsHmacVerification() {
         val samplePin = "49208173"
         val originalPayload = """{"test":"tamper_proof_data"}"""
-        val cipherHex = SyncPairingSession.encryptPayload(originalPayload, samplePin)
 
-        // Tamper with the hex string (flip last character)
-        val lastChar = cipherHex.takeLast(1)
+        val clientKeys = SyncPairingSession.generateEphemeralKeyPair()
+        val serverKeys = SyncPairingSession.generateEphemeralKeyPair()
+
+        val encrypted = SyncPairingSession.encryptPayload(
+            plainJson = originalPayload,
+            pin = samplePin,
+            myKeyPair = clientKeys,
+            peerPublicKey = serverKeys.publicKey
+        )
+
+        // Tamper with ciphertext
+        val lastChar = encrypted.takeLast(1)
         val replacementChar = if (lastChar == "0") "1" else "0"
-        val tamperedHex = cipherHex.dropLast(1) + replacementChar
+        val tampered = encrypted.dropLast(1) + replacementChar
 
         assertThrows(IllegalArgumentException::class.java) {
-            SyncPairingSession.decryptPayload(tamperedHex, samplePin)
+            SyncPairingSession.decryptPayload(
+                message = tampered,
+                pin = samplePin,
+                myKeyPair = serverKeys,
+                peerPublicKey = clientKeys.publicKey
+            )
         }
     }
 
@@ -62,4 +143,3 @@ class SyncPairingSessionTest {
         assertTrue(SyncPairingSession.constantTimeEquals(byteArrayOf(), byteArrayOf()))
     }
 }
-
