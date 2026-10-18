@@ -115,6 +115,7 @@ class ContinuousAutoSyncCoordinator(
     fun start(deviceName: String = DeviceInfoProvider.getFormattedDeviceName(), authToken: String, heartbeatIntervalMs: Long = 5000L) {
         if (isRunning) return
         if (!Preferences.isAutoSyncWifiEnabled()) return
+        if (Preferences.getPairedSyncDevices().isEmpty()) return
         isRunning = true
 
         val effectiveName = if (deviceName.isNotBlank() &&

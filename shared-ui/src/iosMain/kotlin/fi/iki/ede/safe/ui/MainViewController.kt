@@ -335,9 +335,6 @@ fun MainViewController(): UIViewController {
                             isFirstTimeLogin = false
                             isLoggedIn = true
                             refreshTrigger++
-                            val clusterSecret = Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER"
-                            ContinuousAutoSyncCoordinator.instance.onDataMutatedBySync = { refreshTrigger++ }
-                            ContinuousAutoSyncCoordinator.instance.start(authToken = clusterSecret)
                         } catch (e: Exception) {
                             statusMessage = "Failed to create vault: ${e.message}"
                         }
@@ -351,9 +348,6 @@ fun MainViewController(): UIViewController {
                             )
                             isLoggedIn = true
                             refreshTrigger++
-                            val clusterSecret = Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER"
-                            ContinuousAutoSyncCoordinator.instance.onDataMutatedBySync = { refreshTrigger++ }
-                            ContinuousAutoSyncCoordinator.instance.start(authToken = clusterSecret)
                         } catch (e: Exception) {
                             statusMessage = "Invalid password!"
                         }

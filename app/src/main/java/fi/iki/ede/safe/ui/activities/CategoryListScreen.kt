@@ -51,30 +51,7 @@ class CategoryListScreen :
         }
         SetupNotifications.setup(this)
         DevicePlatformInfo.appVersion = BuildConfig.VERSION_NAME
-        val clusterSecret = Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER"
-        DataModel.onDataChanged = {
-            ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(clusterSecret)
-        }
-        ContinuousAutoSyncCoordinator.instance.onDataMutatedBySync = {
-            CoroutineScope(Dispatchers.Main).launch {
-                DataModel.loadFromDatabase {
-                    GPMDataModel.loadFromDatabase()
-                }
-            }
-        }
-        ContinuousAutoSyncCoordinator.instance.start(authToken = clusterSecret)
         setContent { CategoryListScreenCompose(DataModel.categoriesStateFlow) }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        val clusterSecret = Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER"
-        ContinuousAutoSyncCoordinator.instance.start(authToken = clusterSecret)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        ContinuousAutoSyncCoordinator.instance.stop()
     }
 }
 

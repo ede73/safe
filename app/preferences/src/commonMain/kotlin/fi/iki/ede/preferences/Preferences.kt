@@ -360,7 +360,7 @@ object Preferences {
     }
 
     fun isAutoSyncWifiEnabled(): Boolean =
-        getCached(autoSyncWifiEnabledKey, true)
+        getCached(autoSyncWifiEnabledKey, false)
 
     fun setAutoSyncWifiEnabled(enabled: Boolean) =
         setCached(autoSyncWifiEnabledKey, enabled)

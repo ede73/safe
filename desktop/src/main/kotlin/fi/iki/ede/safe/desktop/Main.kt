@@ -199,11 +199,7 @@ fun LoginScreen() {
     }
 
     LaunchedEffect(isLoggedIn) {
-        if (isLoggedIn) {
-            val clusterSecret = Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER"
-            ContinuousAutoSyncCoordinator.instance.onDataMutatedBySync = { DesktopNavigation.dbRefreshTrigger++ }
-            ContinuousAutoSyncCoordinator.instance.start(authToken = clusterSecret)
-        } else {
+        if (!isLoggedIn) {
             ContinuousAutoSyncCoordinator.instance.stop()
         }
     }
