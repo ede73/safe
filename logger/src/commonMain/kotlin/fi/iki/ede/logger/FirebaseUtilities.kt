@@ -24,3 +24,7 @@ expect fun firebaseRecordException(t: Throwable)
 expect fun firebaseRecordException(message: String, t: Throwable)
 
 expect fun firebaseLogEvent(eventName: String, params: Map<String, String> = emptyMap())
+
+expect fun firebaseSetCustomKey(key: String, value: String)
+
+expect fun firebasePublishFlowEvent(flowName: String, step: String, details: Map<String, String> = emptyMap())

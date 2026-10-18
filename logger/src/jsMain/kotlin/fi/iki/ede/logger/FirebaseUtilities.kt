@@ -26,3 +26,7 @@ actual fun firebaseRecordException(t: Throwable) {}
 actual fun firebaseRecordException(message: String, t: Throwable) {}
 
 actual fun firebaseLogEvent(eventName: String, params: Map<String, String>) {}
+
+actual fun firebaseSetCustomKey(key: String, value: String) {}
+
+actual fun firebasePublishFlowEvent(flowName: String, step: String, details: Map<String, String>) {}

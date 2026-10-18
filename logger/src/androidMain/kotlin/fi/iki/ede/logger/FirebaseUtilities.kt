@@ -126,3 +126,26 @@ actual fun firebaseLogEvent(eventName: String, params: Map<String, String>) {
     }
     firebaseLog("EVENT", "$eventName: $params")
 }
+
+actual fun firebaseSetCustomKey(key: String, value: String) {
+    withCrashlytics { it.setCustomKey(key, value) }
+}
+
+class SyncFlowBreadcrumb(flowName: String, details: String) : Exception("[$flowName] $details")
+
+actual fun firebasePublishFlowEvent(flowName: String, step: String, details: Map<String, String>) {
+    withCrashlytics { crashlytics ->
+        crashlytics.setCustomKey("flow_${flowName}", step)
+        details.forEach { (k, v) -> crashlytics.setCustomKey(k, v) }
+        crashlytics.log("[$flowName] $step: $details")
+        crashlytics.recordException(SyncFlowBreadcrumb(flowName, "$step: $details"))
+    }
+    withAnalytics { analytics ->
+        val bundle = android.os.Bundle()
+        bundle.putString("step", step)
+        details.forEach { (k, v) -> bundle.putString(k, v) }
+        val safeEventName = "${flowName}_${step}".lowercase().filter { it.isLetterOrDigit() || it == '_' }.take(40)
+        analytics.logEvent(safeEventName, bundle)
+    }
+    Logger.i("FirebaseFlow", "[$flowName] $step: $details")
+}
