@@ -140,10 +140,12 @@ actual class SyncNetworkService {
         hostAddress: String,
         port: Int,
         pin: String,
-        localPayloadJson: String
+        localPayloadJson: String,
+        onProgress: ((String) -> Unit)?
     ): String = withContext(Dispatchers.IO) {
         val socket = Socket()
         try {
+            onProgress?.invoke("Connecting to $hostAddress:$port...")
             firebaseLog("SafeSyncNet", "Client connecting to $hostAddress:$port (connectTimeout=5000ms, soTimeout=60000ms)...")
             socket.connect(java.net.InetSocketAddress(hostAddress, port), 5000)
             socket.soTimeout = 60000
@@ -151,11 +153,15 @@ actual class SyncNetworkService {
                 val reader = BufferedReader(InputStreamReader(s.getInputStream()))
                 val writer = PrintWriter(s.getOutputStream(), true)
 
+                onProgress?.invoke("Encrypting vault data...")
                 val encryptedPayload = SyncPairingSession.encryptPayload(localPayloadJson, pin)
+                val payloadKb = encryptedPayload.length / 1024
+                onProgress?.invoke("Transferring vault data ($payloadKb KB)...")
                 firebaseLog("SafeSyncNet", "Client sending payload of length ${encryptedPayload.length} to $hostAddress:$port...")
                 writer.println(encryptedPayload)
                 writer.flush()
 
+                onProgress?.invoke("Waiting for remote device to process changes...")
                 firebaseLog("SafeSyncNet", "Client waiting for response from $hostAddress:$port...")
                 val responseLine = reader.readLine()
                     ?: throw IllegalStateException("No response received from target device (connection closed)")
@@ -165,6 +171,7 @@ actual class SyncNetworkService {
                     throw IllegalArgumentException("Target device rejected connection: $responseLine")
                 }
 
+                onProgress?.invoke("Decrypting response...")
                 SyncPairingSession.decryptPayload(responseLine, pin)
             }
         } catch (e: Exception) {

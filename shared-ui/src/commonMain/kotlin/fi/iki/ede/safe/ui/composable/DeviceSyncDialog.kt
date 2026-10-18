@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
@@ -52,6 +53,7 @@ fun DeviceSyncDialog(
     var inputPin by remember { mutableStateOf("") }
     var syncStatusMessage by remember { mutableStateOf<String?>(null) }
     var isSyncing by remember { mutableStateOf(false) }
+    var isSyncCompleted by remember { mutableStateOf(false) }
 
     var currentDeviceName by remember { mutableStateOf(DeviceInfoProvider.getFormattedDeviceName()) }
     var showNamePrompt by remember { mutableStateOf(Preferences.getSyncDeviceCustomName().isBlank()) }
@@ -78,11 +80,15 @@ fun DeviceSyncDialog(
                 pin = initiatorPin,
                 onPayloadReceived = { remotePayloadJson ->
                     try {
+                        isSyncing = true
+                        isSyncCompleted = false
+                        syncStatusMessage = "Incoming connection: Receiving vault data..."
                         firebaseLog("SafeSync", "Server processing incoming payload (bytes=${remotePayloadJson.length})...")
                         val remotePayload = Json.decodeFromString<SyncPayload>(remotePayloadJson)
+                        val peerName = remotePayload.deviceName.ifBlank { "Safe Peer" }
+                        syncStatusMessage = "Connected to $peerName. Comparing vault versions..."
                         val localItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
                         val localTree = MerkleTreeHelper.buildMerkleVault(localItems)
-                        val peerName = remotePayload.deviceName.ifBlank { "Safe Peer" }
                         val stableId = "peer-${peerName.filter { it.isLetterOrDigit() || it == '-' || it == '_' }}"
                         Preferences.addPairedSyncDevice(stableId, peerName)
                         firebaseLog("SafeSync", "Server paired device registered: id=$stableId, name=$peerName, remoteItems=${remotePayload.items.size}, localItems=${localItems.size}")
@@ -95,14 +101,20 @@ fun DeviceSyncDialog(
                         if (remotePayload.merkleRoot.isNotBlank() && remotePayload.merkleRoot == localTree.rootHash) {
                             firebaseLog("SafeSync", "Server: Merkle roots match (${localTree.rootHash.take(8)}). Already synchronized.")
                             firebasePublishFlowEvent("SafeSync", "ServerAlreadySynced", mapOf("root" to localTree.rootHash.take(8)))
-                            syncStatusMessage = "Already synchronized ✓"
+                            syncStatusMessage = "Sync complete: All ${localItems.size} items are in sync with $peerName ✓"
+                            isSyncCompleted = true
+                            isSyncing = false
                             onSyncCompleted()
                             return@startServer Json.encodeToString(SyncPayload(emptyList(), localTree.rootHash, currentDeviceName))
                         }
 
+                        syncStatusMessage = "Analyzing vault differences with $peerName..."
                         val conflicts = SyncConflictResolver.analyzeConflicts(localItems, remotePayload.items)
                         firebaseLog("SafeSync", "Server: Analyzing conflicts, detected=${conflicts.size}")
-                        SyncConflictResolver.applyResolvedConflictsToLocalDatabase(conflicts)
+                        if (conflicts.isNotEmpty()) {
+                            syncStatusMessage = "Applying ${conflicts.size} change(s) from $peerName..."
+                            SyncConflictResolver.applyResolvedConflictsToLocalDatabase(conflicts)
+                        }
 
                         val updatedLocalItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
                         val updatedTree = MerkleTreeHelper.buildMerkleVault(updatedLocalItems)
@@ -111,11 +123,19 @@ fun DeviceSyncDialog(
                             "conflicts" to conflicts.size.toString(),
                             "updatedItems" to updatedLocalItems.size.toString()
                         ))
-                        syncStatusMessage = "Device paired & synchronized successfully!"
+                        syncStatusMessage = if (conflicts.isNotEmpty()) {
+                            "Sync complete: Synchronized ${conflicts.size} change(s) with $peerName ✓"
+                        } else {
+                            "Sync complete: All ${updatedLocalItems.size} items are in sync with $peerName ✓"
+                        }
+                        isSyncCompleted = true
+                        isSyncing = false
                         onSyncCompleted()
                         ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER")
                         Json.encodeToString(SyncPayload(updatedLocalItems, updatedTree.rootHash, currentDeviceName))
                     } catch (e: Exception) {
+                        isSyncing = false
+                        syncStatusMessage = "Sync error: ${e.message ?: "Failed"}"
                         firebaseRecordException("SafeSync server error in onPayloadReceived: ${e::class.simpleName}", e)
                         firebasePublishFlowEvent("SafeSync", "ServerError", mapOf("error" to (e::class.simpleName ?: "unknown"), "message" to (e.message ?: "")))
                         e.printStackTrace()
@@ -307,8 +327,10 @@ fun DeviceSyncDialog(
                 ) {
                     Tab(
                         selected = isInitiator,
+                        enabled = !isSyncing,
                         onClick = {
                             isInitiator = true
+                            isSyncCompleted = false
                             initiatorPin = SyncPairingSession.generate8DigitPin()
                             syncStatusMessage = null
                         },
@@ -316,8 +338,10 @@ fun DeviceSyncDialog(
                     )
                     Tab(
                         selected = !isInitiator,
+                        enabled = !isSyncing,
                         onClick = {
                             isInitiator = false
+                            isSyncCompleted = false
                             syncStatusMessage = null
                         },
                         text = { Text("Enter PIN") }
@@ -326,9 +350,73 @@ fun DeviceSyncDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                if (isInitiator) {
+                if (isSyncing) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(48.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            strokeWidth = 3.dp
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Synchronizing Vault...",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = syncStatusMessage ?: "Connecting...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Please keep both devices nearby and Safe open.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } else if (isSyncCompleted) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "Success",
+                            tint = Color(0xFF4CAF50),
+                            modifier = Modifier.size(52.dp)
+                        )
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Text(
+                            text = "Synchronization Complete",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = syncStatusMessage ?: "All vault items are synchronized ✓",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFF4CAF50),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } else if (isInitiator) {
                     Text(
-                        text = "Broadcasting via mDNS (_safe-sync._tcp).\nEnter this 8-digit PIN on the target device:",
+                        text = "Broadcasting on local Wi-Fi.\nEnter this 8-digit PIN on the target device to sync:",
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -361,46 +449,85 @@ fun DeviceSyncDialog(
                     }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Regenerate PIN")
                     }
-                } else {
-                    Text(
-                        text = "Discovering nearby devices via mDNS...\nEnter the 8-digit PIN shown on the target device:",
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    if (discoveredDevices.isNotEmpty()) {
+                    syncStatusMessage?.let { msg ->
+                        Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Discovered Devices (${discoveredDevices.size}):",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.primary
+                            text = msg,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (msg.contains("Error") || msg.contains("rejected")) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                            textAlign = TextAlign.Center
                         )
+                    }
+                } else {
+                    if (selectedDevice != null) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "Target Device",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                    )
+                                    Text(
+                                        text = selectedDevice!!.name,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                }
+                                if (discoveredDevices.size > 1) {
+                                    TextButton(onClick = { selectedDevice = null }) {
+                                        Text("Change", style = MaterialTheme.typography.labelSmall)
+                                    }
+                                }
+                            }
+                        }
+                        Text(
+                            text = "Enter the 8-digit PIN shown on ${selectedDevice!!.name}:",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    } else if (discoveredDevices.isNotEmpty()) {
+                        Text(
+                            text = "Select a nearby device to sync with:",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .heightIn(max = 140.dp)
                         ) {
                             items(discoveredDevices) { device ->
-                                val isSelected = selectedDevice?.id == device.id
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .background(
-                                            if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+                                            MaterialTheme.colorScheme.surfaceVariant,
                                             shape = RoundedCornerShape(6.dp)
                                         )
                                         .clickable { selectedDevice = device }
-                                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                                        .padding(horizontal = 12.dp, vertical = 8.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "${if (isSelected) "✓ " else "• "}${device.name}",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                        maxLines = 3,
+                                        text = "• ${device.name}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 2,
                                         softWrap = true
                                     )
                                 }
@@ -408,13 +535,13 @@ fun DeviceSyncDialog(
                         }
                     } else {
                         Row(
-                            modifier = Modifier.padding(vertical = 4.dp),
+                            modifier = Modifier.padding(vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(14.dp),
-                                strokeWidth = 1.5.dp,
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Text(
@@ -423,6 +550,12 @@ fun DeviceSyncDialog(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
+                        Text(
+                            text = "Make sure the target device has the Safe sync dialog open on 'Display PIN'.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                            textAlign = TextAlign.Center
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -439,38 +572,45 @@ fun DeviceSyncDialog(
                         ),
                         modifier = Modifier.fillMaxWidth(0.85f)
                     )
-                }
 
-                syncStatusMessage?.let { msg ->
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = msg,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = if (msg.contains("Error") || msg.contains("rejected")) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                        textAlign = TextAlign.Center
-                    )
+                    syncStatusMessage?.let { msg ->
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = msg,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (msg.contains("Error") || msg.contains("rejected")) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
         },
         confirmButton = {
-            if (isInitiator) {
-                TextButton(onClick = onDismissRequest) {
-                    Text("Broadcasting...")
-                }
-            } else {
+            if (isSyncing) {
+                // In progress, no confirm button
+            } else if (isSyncCompleted) {
                 Button(
-                    enabled = !isSyncing && inputPin.length == 8,
+                    onClick = onDismissRequest,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                ) {
+                    Text("Done")
+                }
+            } else if (!isInitiator) {
+                val rawCandidateHosts = if (selectedDevice != null) {
+                    listOf(selectedDevice!!.hostAddress).filter { it.isNotBlank() }
+                } else {
+                    discoveredDevices.map { it.hostAddress }.filter { it.isNotBlank() }.distinct()
+                }
+                val candidateHosts = when {
+                    rawCandidateHosts.isNotEmpty() -> rawCandidateHosts
+                    networkService.isAndroidGuest -> listOf("10.0.2.2")
+                    else -> emptyList()
+                }
+                val isReadyToSync = inputPin.length == 8 && (selectedDevice != null || candidateHosts.isNotEmpty())
+
+                Button(
+                    enabled = isReadyToSync,
                     onClick = {
-                        val rawCandidateHosts = if (selectedDevice != null) {
-                            listOf(selectedDevice!!.hostAddress).filter { it.isNotBlank() }
-                        } else {
-                            discoveredDevices.map { it.hostAddress }.filter { it.isNotBlank() }.distinct()
-                        }
-                        val candidateHosts = when {
-                            rawCandidateHosts.isNotEmpty() -> rawCandidateHosts
-                            networkService.isAndroidGuest -> listOf("10.0.2.2")
-                            else -> emptyList()
-                        }
                         if (candidateHosts.isEmpty()) {
                             firebaseLog("SafeSync", "Client: No candidate hosts found on local network")
                             firebaseLogEvent("safe_sync_client_no_hosts")
@@ -482,14 +622,18 @@ fun DeviceSyncDialog(
                         } else {
                             listOf(SAFE_SYNC_DEFAULT_PORT)
                         }
+                        val targetDisplayName = selectedDevice?.name ?: candidateHosts.first()
                         isSyncing = true
-                        syncStatusMessage = "Connecting to ${candidateHosts.first()}:${candidatePorts.first()}..."
+                        isSyncCompleted = false
+                        syncStatusMessage = "Reading local vault items..."
                         firebaseLog("SafeSync", "Client initiating sync to candidate hosts: $candidateHosts on ports $candidatePorts")
                         firebasePublishFlowEvent("SafeSync", "ClientSyncStarted", mapOf("targetHosts" to candidateHosts.joinToString(",")))
                         coroutineScope.launch {
                             try {
                                 val localItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
+                                syncStatusMessage = "Analyzing vault checksums (${localItems.size} items)..."
                                 val localTree = MerkleTreeHelper.buildMerkleVault(localItems)
+                                syncStatusMessage = "Preparing sync payload..."
                                 val localJson = Json.encodeToString(SyncPayload(localItems, localTree.rootHash, currentDeviceName))
                                 firebaseLog("SafeSync", "Client prepared payload: localItems=${localItems.size}, localRoot=${localTree.rootHash.take(8)}, payloadBytes=${localJson.length}")
                                 firebasePublishFlowEvent("SafeSync", "ClientPreparedPayload", mapOf("localItems" to localItems.size.toString(), "bytes" to localJson.length.toString()))
@@ -500,13 +644,12 @@ fun DeviceSyncDialog(
                                 outer@ for (port in candidatePorts) {
                                     for (host in candidateHosts) {
                                         try {
-                                            syncStatusMessage = "Connecting to $host:$port..."
-                                            firebaseLog("SafeSync", "Client attempting payload send to $host:$port...")
                                             remoteJson = networkService.sendPayloadToHost(
                                                 hostAddress = host,
                                                 port = port,
                                                 pin = inputPin,
-                                                localPayloadJson = localJson
+                                                localPayloadJson = localJson,
+                                                onProgress = { step -> syncStatusMessage = step }
                                             )
                                             if (remoteJson != null) {
                                                 firebaseLog("SafeSync", "Client successfully received response from $host:$port (bytes=${remoteJson.length})")
@@ -524,13 +667,14 @@ fun DeviceSyncDialog(
                                     throw lastError ?: IllegalStateException("Failed to connect to target device")
                                 }
 
+                                syncStatusMessage = "Reading remote vault response..."
                                 val remotePayload = Json.decodeFromString<SyncPayload>(remoteJson)
                                 val peerName = if (remotePayload.deviceName.isNotBlank()) {
                                     remotePayload.deviceName
                                 } else if (selectedDevice != null && selectedDevice!!.name.isNotBlank()) {
                                     selectedDevice!!.name
                                 } else {
-                                    "Safe Peer (${candidateHosts.first()})"
+                                    targetDisplayName
                                 }
                                 val stableId = "peer-${peerName.filter { it.isLetterOrDigit() || it == '-' || it == '_' }}"
                                 Preferences.addPairedSyncDevice(stableId, peerName)
@@ -540,18 +684,22 @@ fun DeviceSyncDialog(
                                 if (remotePayload.merkleRoot.isNotBlank() && remotePayload.merkleRoot == localTree.rootHash) {
                                     firebaseLog("SafeSync", "Client: Merkle roots match (${localTree.rootHash.take(8)}). Already synchronized.")
                                     firebasePublishFlowEvent("SafeSync", "ClientAlreadySynced", mapOf("peer" to peerName, "root" to localTree.rootHash.take(8)))
-                                    syncStatusMessage = "Already synchronized ✓"
+                                    syncStatusMessage = "Sync complete: All ${localItems.size} items are in sync with $peerName ✓"
+                                    isSyncCompleted = true
                                     onSyncCompleted()
                                 } else {
+                                    syncStatusMessage = "Analyzing differences with $peerName..."
                                     val conflicts = SyncConflictResolver.analyzeConflicts(localItems, remotePayload.items)
                                     firebaseLog("SafeSync", "Client: Detected ${conflicts.size} conflicts, resolving...")
-                                    SyncConflictResolver.applyResolvedConflictsToLocalDatabase(conflicts)
-                                    firebaseLog("SafeSync", "Client: Conflicts applied successfully")
-                                    firebasePublishFlowEvent("SafeSync", "ClientConflictsApplied", mapOf(
-                                        "peer" to peerName,
-                                        "conflicts" to conflicts.size.toString()
-                                    ))
-                                    syncStatusMessage = "Connected & synchronized successfully!"
+                                    if (conflicts.isNotEmpty()) {
+                                        syncStatusMessage = "Applying ${conflicts.size} change(s) to vault..."
+                                        SyncConflictResolver.applyResolvedConflictsToLocalDatabase(conflicts)
+                                        val updatedLocalItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
+                                        syncStatusMessage = "Sync complete: Synchronized ${conflicts.size} change(s) with $peerName (${updatedLocalItems.size} items total) ✓"
+                                    } else {
+                                        syncStatusMessage = "Sync complete: All ${localItems.size} items are in sync with $peerName ✓"
+                                    }
+                                    isSyncCompleted = true
                                     onSyncCompleted()
                                     ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER")
                                 }
@@ -569,21 +717,22 @@ fun DeviceSyncDialog(
                         }
                     }
                 ) {
-                    if (isSyncing) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Text("Connect & Sync")
-                    }
+                    Text("Connect & Sync")
                 }
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismissRequest) {
-                Text("Close")
+            if (isSyncing) {
+                TextButton(
+                    onClick = {},
+                    enabled = false
+                ) {
+                    Text("Syncing...")
+                }
+            } else {
+                TextButton(onClick = onDismissRequest) {
+                    Text(if (isSyncCompleted) "Close" else "Cancel")
+                }
             }
         }
     )
