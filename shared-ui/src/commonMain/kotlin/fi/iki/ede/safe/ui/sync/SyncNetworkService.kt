@@ -6,7 +6,8 @@ import kotlinx.serialization.Serializable
 data class SyncPayload(
     val items: List<SyncItem>,
     val merkleRoot: String = "",
-    val deviceName: String = ""
+    val deviceName: String = "",
+    val deviceId: String = ""
 )
 
 expect class SyncNetworkService() {
