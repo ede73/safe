@@ -23,6 +23,7 @@ expect class SyncNetworkService() {
         hostAddress: String,
         port: Int,
         pin: String,
-        localPayloadJson: String
+        localPayloadJson: String,
+        onProgress: ((String) -> Unit)? = null
     ): String
 }

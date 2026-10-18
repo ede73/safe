@@ -156,17 +156,25 @@ class PreferenceActivity :
 
             val deviceNamePref = EditTextPreference(requireContext()).apply {
                 key = "sync_device_custom_name"
-                title = "Device Name for Sync"
-                dialogTitle = "Device Name for Sync"
-                dialogMessage = "Set a recognizable name (e.g. Erkka's Safe):"
+                title = "Device Name"
+                dialogTitle = "Device Name"
+                dialogMessage = "Enter a custom name for this device (e.g. Work Laptop, Tablet):"
                 text = Preferences.getSyncDeviceCustomName()
-                summary = "Seen by other devices as:\n${DeviceInfoProvider.getFormattedDeviceName()}"
+                fun updateSummary(custom: String) {
+                    val trimmed = custom.trim()
+                    summary = if (trimmed.isNotBlank()) {
+                        "Custom name: $trimmed\nTap to change"
+                    } else {
+                        "Default: ${DeviceInfoProvider.getFormattedDeviceName()}\nTap to set custom name"
+                    }
+                }
+                updateSummary(Preferences.getSyncDeviceCustomName())
                 isIconSpaceReserved = false
                 isSingleLineTitle = false
                 setOnPreferenceChangeListener { _, newValue ->
-                    val name = newValue as String
+                    val name = (newValue as String).trim()
                     Preferences.setSyncDeviceCustomName(name)
-                    summary = "Seen by other devices as:\n${DeviceInfoProvider.getFormattedDeviceName(name)}"
+                    updateSummary(name)
                     true
                 }
             }

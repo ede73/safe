@@ -149,10 +149,13 @@ actual class SyncNetworkService {
         hostAddress: String,
         port: Int,
         pin: String,
-        localPayloadJson: String
+        localPayloadJson: String,
+        onProgress: ((String) -> Unit)?
     ): String = withContext(Dispatchers.Default) {
+        onProgress?.invoke("Encrypting vault data...")
         val encryptedPayload = SyncPairingSession.encryptPayload(localPayloadJson, pin) + "\n"
         val requestBytes = encryptedPayload.encodeToByteArray()
+        onProgress?.invoke("Connecting to $hostAddress:$port...")
 
         memScoped {
             val sock = socket(AF_INET, SOCK_STREAM, 0)
