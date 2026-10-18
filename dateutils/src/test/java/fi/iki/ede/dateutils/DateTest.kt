@@ -26,6 +26,16 @@ class DateTest {
         DateUtils.newParse("Jan 12, 2024, 12:44:37")
     }
 
+    @Test
+    fun testFormatTimeAgo() {
+        val now = kotlin.time.Clock.System.now().toEpochMilliseconds()
+        assertEquals("never", DateUtils.formatTimeAgo(0L))
+        assertEquals("just now", DateUtils.formatTimeAgo(now - 10_000L))
+        assertEquals("5 minutes ago", DateUtils.formatTimeAgo(now - 5 * 60_000L))
+        assertEquals("12 hours ago", DateUtils.formatTimeAgo(now - 12 * 3600_000L))
+        assertEquals("2 days ago", DateUtils.formatTimeAgo(now - 2 * 86400_000L))
+    }
+
     companion object {
         // Exactly Wed May 31 2023 22:21:47 GMT+0000
         private const val UNIX_STAMP_MILLIS = 1685571707000L

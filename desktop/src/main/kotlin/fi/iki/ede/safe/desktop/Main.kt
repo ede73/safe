@@ -8,6 +8,7 @@ import fi.iki.ede.crypto.DesktopPathUtils
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.SaltedPassword
 import fi.iki.ede.cryptoobjects.*
+import kotlin.time.Clock
 import fi.iki.ede.safe.ui.composable.DesktopNavigation
 import fi.iki.ede.safe.ui.composable.DesktopSiteEntryNavigation
 import fi.iki.ede.safe.ui.composable.CategoryList
@@ -28,8 +29,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import fi.iki.ede.safe.ui.composable.DeviceSyncDialog
+import fi.iki.ede.safe.ui.composable.SettingsScreen
+import fi.iki.ede.safe.ui.sync.ContinuousAutoSyncCoordinator
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -133,6 +139,15 @@ private fun loadTpmKeys(db: DBHelper) {
 }
 
 
+private fun notifyAutoSyncDataChanged() {
+    try {
+        val secret = Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER"
+        ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(secret)
+    } catch (e: Throwable) {
+        e.printStackTrace()
+    }
+}
+
 fun main() {
     Preferences.initialize()
     DesktopSettings.initializeMigration()
@@ -140,7 +155,7 @@ fun main() {
         Window(
             onCloseRequest = ::exitApplication,
             title = DesktopStrings.get("application_name"),
-            state = rememberWindowState(width = 480.dp, height = 640.dp)
+            state = rememberWindowState(width = 720.dp, height = 780.dp)
         ) {
             MaterialTheme(
                 colorScheme = darkColorScheme()
@@ -161,15 +176,33 @@ fun LoginScreen() {
     var confirmPasswordVisible by remember { mutableStateOf(false) }
     var registerFingerprint by remember { mutableStateOf(false) }
 
-    var isFirstTimeLogin by remember { mutableStateOf(!Path("$DATABASE_NAME.db").exists()) }
+    val db = remember { DBHelperFactory.getDBHelper() }
+    var isFirstTimeLogin by remember {
+        val hasMasterKey = try {
+            val res = db.fetchSaltAndEncryptedMasterKey()
+            !res.first.isEmpty() && !res.second.isEmpty()
+        } catch (_: Exception) {
+            false
+        }
+        mutableStateOf(!hasMasterKey)
+    }
     var isBiometricsEnabled by remember { mutableStateOf(DesktopSettings.isBiometricsRegistered()) }
     var showBiometricsScanning by remember { mutableStateOf(false) }
 
     var statusMessage by remember { mutableStateOf(if (isFirstTimeLogin) DesktopStrings.get("login_password_tip") else DesktopStrings.get("login_password_tip")) }
     var isLoggedIn by remember { mutableStateOf(false) }
 
-    // Shared DBHelper instance for this screen
-    val db = remember { DBHelperFactory.getDBHelper() }
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(100)
+        focusRequester.requestFocus()
+    }
+
+    LaunchedEffect(isLoggedIn) {
+        if (!isLoggedIn) {
+            ContinuousAutoSyncCoordinator.instance.stop()
+        }
+    }
 
     // Navigation and state variables
     val activeCategory = DesktopNavigation.activeCategory
@@ -232,111 +265,152 @@ fun LoginScreen() {
         contentAlignment = Alignment.Center
     ) {
         if (isLoggedIn) {
+            var showSyncDialog by remember { mutableStateOf(false) }
+            var showSettingsScreen by remember { mutableStateOf(false) }
             val currentCategory = activeCategory
 
-            Card(
-                modifier = Modifier
-                    .fillMaxHeight(0.92f)
-                    .width(440.dp)
-                    .padding(16.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = DesktopColors.CardBackground.copy(alpha = 0.9f)
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-            ) {
-                val categories = remember(dbRefreshTrigger) { db.fetchAllCategoryRows() }
-                if (currentCategory == null) {
-                    // --- CATEGORY LIST SCREEN ---
+            if (showSettingsScreen) {
+                SettingsScreen(
+                    onBack = { showSettingsScreen = false },
+                    onEditExtensions = {},
+                    onManualSyncTriggered = {
+                        showSettingsScreen = false
+                        showSyncDialog = true
+                    }
+                )
+            } else {
+                Card(
+                    modifier = Modifier
+                        .fillMaxHeight(0.95f)
+                        .fillMaxWidth(0.95f)
+                        .padding(16.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = DesktopColors.CardBackground.copy(alpha = 0.9f)
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                ) {
+                    val categories = remember(dbRefreshTrigger) { db.fetchAllCategoryRows() }
+                    if (currentCategory == null) {
+                        // --- CATEGORY LIST SCREEN ---
 
-                    Column(
-                        modifier = Modifier.padding(24.dp).fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        // Category Toolbar
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                        Column(
+                            modifier = Modifier.padding(24.dp).fillMaxSize(),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("🔓", fontSize = 24.sp)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(DesktopStrings.get("vault"), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                            }
+                            // Category Toolbar
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text("🔓", fontSize = 24.sp)
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(DesktopStrings.get("vault"), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                    }
 
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Button(
-                                    onClick = {
-                                        showAddCategoryDialog = true
-                                    },
-                                    shape = RoundedCornerShape(8.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = DesktopColors.ActionButton
-                                    ),
-                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
-                                ) {
-                                    Text("➕ " + DesktopStrings.get("generic_add"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                                }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Button(
-                                    onClick = {
-                                        showImportDialog = true
-                                    },
-                                    shape = RoundedCornerShape(8.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = DesktopColors.Success
-                                    ),
-                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
-                                ) {
-                                    Text("📥 " + DesktopStrings.get("action_bar_restore"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
-                                }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Button(
-                                    onClick = {
-                                        try {
-                                            val dialog = FileDialog(null as Frame?, DesktopStrings.get("export_backup"), FileDialog.SAVE).apply {
-                                                file = "safe_backup.xml"
-                                                isVisible = true
-                                            }
-                                            val file = dialog.file
-                                            if (file != null) {
-                                                val targetFile = (dialog.directory ?: "").toPath() / file
-                                                val backupContent = BackupExporter.exportToXml(db)
-                                                FileSystem.SYSTEM.write(targetFile) { writeUtf8(backupContent) }
-                                                exportStatusMessage = DesktopStrings.get("backup_export_success", targetFile.toNioPath().toAbsolutePath().toString()) + "\n\n💡 Security Note: For maximum safety, consider using direct peer-to-peer sync on Android instead of storing unencrypted export files."
-                                            }
-                                        } catch (ex: Exception) {
-                                            exportStatusMessage = DesktopStrings.get("backup_export_failure", ex.message ?: ex.toString())
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Button(
+                                            onClick = { showSyncDialog = true },
+                                            shape = RoundedCornerShape(8.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = DesktopColors.Success),
+                                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                                        ) {
+                                            Text("🔄 " + DesktopStrings.get("sync"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                                         }
-                                    },
-                                    shape = RoundedCornerShape(8.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = DesktopColors.Info
-                                    ),
-                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
-                                ) {
-                                    Text("📤 " + DesktopStrings.get("action_bar_backup"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                        Button(
+                                            onClick = { showSettingsScreen = true },
+                                            shape = RoundedCornerShape(8.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFe94560)),
+                                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                                        ) {
+                                            Text("⚙️ " + DesktopStrings.get("preferences"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                        }
+                                        Button(
+                                            onClick = {
+                                                isLoggedIn = false
+                                                password = ""
+                                                confirmPassword = ""
+                                                DesktopNavigation.activeCategory = null
+                                                statusMessage = DesktopStrings.get("login_password_tip")
+                                                ContinuousAutoSyncCoordinator.instance.stop()
+                                            },
+                                            shape = RoundedCornerShape(8.dp),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = DesktopColors.Primary
+                                            ),
+                                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                                        ) {
+                                            Text(DesktopStrings.get("action_bar_lock"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                        }
+                                    }
                                 }
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Button(
-                                    onClick = {
-                                        isLoggedIn = false
-                                        password = ""
-                                        confirmPassword = ""
-                                        DesktopNavigation.activeCategory = null
-                                        statusMessage = DesktopStrings.get("login_password_tip")
-                                    },
-                                    shape = RoundedCornerShape(8.dp),
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = DesktopColors.Primary
-                                    ),
-                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(DesktopStrings.get("action_bar_lock"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                    Button(
+                                        onClick = {
+                                            showAddCategoryDialog = true
+                                        },
+                                        shape = RoundedCornerShape(8.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = DesktopColors.ActionButton
+                                        ),
+                                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                                    ) {
+                                        Text("➕ " + DesktopStrings.get("generic_add"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                    }
+                                    Button(
+                                        onClick = {
+                                            showImportDialog = true
+                                        },
+                                        shape = RoundedCornerShape(8.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = DesktopColors.Success
+                                        ),
+                                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                                    ) {
+                                        Text("📥 " + DesktopStrings.get("action_bar_restore"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                    }
+                                    Button(
+                                        onClick = {
+                                            try {
+                                                val dialog = FileDialog(null as Frame?, DesktopStrings.get("export_backup"), FileDialog.SAVE).apply {
+                                                    file = "safe_backup.xml"
+                                                    isVisible = true
+                                                }
+                                                val file = dialog.file
+                                                if (file != null) {
+                                                    val targetFile = (dialog.directory ?: "").toPath() / file
+                                                    val backupContent = BackupExporter.exportToXml(db)
+                                                    FileSystem.SYSTEM.write(targetFile) { writeUtf8(backupContent) }
+                                                    exportStatusMessage = DesktopStrings.get("backup_export_success", targetFile.toNioPath().toAbsolutePath().toString()) + "\n\n💡 Security Note: For maximum safety, consider using direct peer-to-peer sync on Android instead of storing unencrypted export files."
+                                                }
+                                            } catch (ex: Exception) {
+                                                exportStatusMessage = DesktopStrings.get("backup_export_failure", ex.message ?: ex.toString())
+                                            }
+                                        },
+                                        shape = RoundedCornerShape(8.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = DesktopColors.Info
+                                        ),
+                                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                                    ) {
+                                        Text("📤 " + DesktopStrings.get("action_bar_backup"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                    }
                                 }
                             }
-                        }
 
                         HorizontalDivider(color = DesktopColors.Border, thickness = 1.dp)
 
@@ -358,10 +432,12 @@ fun LoginScreen() {
                                         this.encryptedName = newName.encrypt()
                                     })
                                     DesktopNavigation.dbRefreshTrigger++
+                                    notifyAutoSyncDataChanged()
                                 },
                                 onDeleteCategory = { category ->
                                     db.deleteCategory(category.id!!)
                                     DesktopNavigation.dbRefreshTrigger++
+                                    notifyAutoSyncDataChanged()
                                 }
                             )
                         }
@@ -402,7 +478,10 @@ fun LoginScreen() {
                                 )
                             }
 
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
                                 Button(
                                     onClick = {
                                         DesktopSiteEntryNavigation.activeSiteEntry = DecryptableSiteEntry(currentCategory.id!!)
@@ -415,12 +494,28 @@ fun LoginScreen() {
                                 ) {
                                     Text("➕ " + DesktopStrings.get("generic_add"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                                 }
-                                Spacer(modifier = Modifier.width(6.dp))
+                                Button(
+                                    onClick = { showSyncDialog = true },
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = DesktopColors.Success),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    Text("🔄 " + DesktopStrings.get("sync"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                }
+                                Button(
+                                    onClick = { showSettingsScreen = true },
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFe94560)),
+                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    Text("⚙️ " + DesktopStrings.get("preferences"), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                }
                                 Button(
                                     onClick = {
                                         db.deleteCategory(currentCategory.id!!)
                                         DesktopNavigation.dbRefreshTrigger++
                                         DesktopNavigation.activeCategory = null
+                                        notifyAutoSyncDataChanged()
                                     },
                                     shape = RoundedCornerShape(8.dp),
                                     colors = ButtonDefaults.buttonColors(
@@ -443,14 +538,24 @@ fun LoginScreen() {
                                     DesktopSiteEntryNavigation.activeSiteEntry = siteEntry
                                 },
                                 onDeleteSiteEntry = { siteEntry ->
-                                    db.hardDeleteSiteEntry(siteEntry.id!!)
+                                    val deletedTime = Clock.System.now().epochSeconds
+                                    db.markSiteEntryDeleted(siteEntry.id!!, deletedTime)
                                     DesktopNavigation.dbRefreshTrigger++
+                                    notifyAutoSyncDataChanged()
                                 }
                             )
                         }
                     }
                 }
             }
+        }
+        // Show sync dialog if needed
+        if (showSyncDialog) {
+            DeviceSyncDialog(
+                onDismissRequest = { showSyncDialog = false },
+                onSyncCompleted = { DesktopNavigation.dbRefreshTrigger++ }
+            )
+        }
         } else {
             if (showBiometricsScanning) {
                 Card(
@@ -641,6 +746,33 @@ fun LoginScreen() {
                                 Text("OR", color = DesktopColors.Secondary, fontSize = 12.sp)
                             }
 
+                            val performUnlock = {
+                                statusMessage = "Authenticating..."
+                                try {
+                                    val (salt, cipheredKey) = db.fetchSaltAndEncryptedMasterKey()
+
+                                    loadTpmKeys(db)
+
+                                    KeyStoreHelper.importExistingEncryptedMasterKey(
+                                        SaltedPassword(salt, Password(password)),
+                                        cipheredKey
+                                    )
+
+                                    if (registerFingerprint) {
+                                        val encryptedKey = KeyStoreHelper.getBiometricEncryptedMasterKey()
+                                        if (encryptedKey != null) {
+                                            DesktopSettings.registerBiometrics(encryptedKey)
+                                            isBiometricsEnabled = true
+                                        }
+                                    }
+
+                                    isLoggedIn = true
+                                    statusMessage = "Unlock successful! Logged in."
+                                } catch (ex: Exception) {
+                                    statusMessage = DesktopStrings.get("login_invalid_password")
+                                }
+                            }
+
                             OutlinedTextField(
                                 value = password,
                                 onValueChange = { password = it },
@@ -652,7 +784,9 @@ fun LoginScreen() {
                                     }
                                 },
                                 singleLine = true,
-                                modifier = Modifier.fillMaxWidth(),
+                                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Done),
+                                keyboardActions = androidx.compose.foundation.text.KeyboardActions(onDone = { performUnlock() }),
+                                modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedBorderColor = DesktopColors.Primary,
                                     focusedLabelColor = DesktopColors.Primary,
@@ -684,32 +818,7 @@ fun LoginScreen() {
                             }
 
                             Button(
-                                onClick = {
-                                    statusMessage = "Authenticating..."
-                                    try {
-                                        val (salt, cipheredKey) = db.fetchSaltAndEncryptedMasterKey()
-
-                                        loadTpmKeys(db)
-
-                                        KeyStoreHelper.importExistingEncryptedMasterKey(
-                                            SaltedPassword(salt, Password(password)),
-                                            cipheredKey
-                                        )
-
-                                        if (registerFingerprint) {
-                                            val encryptedKey = KeyStoreHelper.getBiometricEncryptedMasterKey()
-                                            if (encryptedKey != null) {
-                                                DesktopSettings.registerBiometrics(encryptedKey)
-                                                isBiometricsEnabled = true
-                                            }
-                                        }
-
-                                        isLoggedIn = true
-                                        statusMessage = "Unlock successful! Logged in."
-                                    } catch (ex: Exception) {
-                                        statusMessage = DesktopStrings.get("login_invalid_password")
-                                    }
-                                },
+                                onClick = performUnlock,
                                 modifier = Modifier.fillMaxWidth().height(48.dp),
                                 shape = RoundedCornerShape(8.dp),
                                 colors = ButtonDefaults.buttonColors(
@@ -789,6 +898,7 @@ fun LoginScreen() {
                                             this.encryptedName = newCategoryName.encrypt()
                                         })
                                         DesktopNavigation.dbRefreshTrigger++
+                                        notifyAutoSyncDataChanged()
                                         newCategoryName = ""
                                         showAddCategoryDialog = false
                                     }
@@ -1150,9 +1260,11 @@ fun LoginScreen() {
                             if (activeSiteEntry.id != null) {
                                 Button(
                                     onClick = {
-                                        db.hardDeleteSiteEntry(activeSiteEntry.id!!)
+                                        val deletedTime = Clock.System.now().epochSeconds
+                                        db.markSiteEntryDeleted(activeSiteEntry.id!!, deletedTime)
                                         DesktopSiteEntryNavigation.activeSiteEntry = null
                                         DesktopNavigation.dbRefreshTrigger++
+                                        notifyAutoSyncDataChanged()
                                     },
                                     colors = ButtonDefaults.buttonColors(containerColor = DesktopColors.Primary)
                                 ) {
@@ -1193,6 +1305,7 @@ fun LoginScreen() {
                                             }
                                             DesktopSiteEntryNavigation.activeSiteEntry = null
                                             DesktopNavigation.dbRefreshTrigger++
+                                            notifyAutoSyncDataChanged()
                                         }
                                     },
                                     colors = ButtonDefaults.buttonColors(containerColor = DesktopColors.ActionButton)

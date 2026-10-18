@@ -51,6 +51,8 @@ object DesktopStrings {
         strings["extension_type"] = "Type"
         strings["extension_value"] = "Value"
         strings["clipboard_cleared"] = "Clipboard cleared!"
+        strings["sync"] = "Sync"
+        strings["preferences"] = "Preferences"
 
         // Load translations from strings.xml
         runCatching {

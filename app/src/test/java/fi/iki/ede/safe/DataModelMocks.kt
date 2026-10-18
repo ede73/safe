@@ -9,6 +9,8 @@ import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.db.DBID
+import fi.iki.ede.db.SafeDatabase
+import fi.iki.ede.db.cxf.*
 import fi.iki.ede.gpm.model.*
 import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.gpmdatamodel.db.GPMDB
@@ -83,14 +85,14 @@ object DataModelMocks {
         val db = mockkClass(DBHelper::class)
         require(isMockKMock(db)) { "Mocking failed somehow" }
 
-        val mockSafeDb = mockkClass(fi.iki.ede.db.SafeDatabase::class)
-        val mockCxfAccountDao = mockkClass(fi.iki.ede.db.cxf.CxfAccountDao::class)
-        val mockCxfImportDao = mockkClass(fi.iki.ede.db.cxf.CxfImportDao::class)
-        val mockCxfPasskeyDao = mockkClass(fi.iki.ede.db.cxf.CxfPasskeyDao::class)
+        val mockSafeDb = mockkClass(SafeDatabase::class)
+        val mockCxfAccountDao = mockkClass(CxfAccountDao::class)
+        val mockCxfImportDao = mockkClass(CxfImportDao::class)
+        val mockCxfPasskeyDao = mockkClass(CxfPasskeyDao::class)
 
-        val cxfAccountsList = mutableListOf<fi.iki.ede.db.cxf.CXFAccount>()
-        val cxfImportsList = mutableListOf<fi.iki.ede.db.cxf.CXFImport>()
-        val cxfPasskeysList = mutableListOf<fi.iki.ede.db.cxf.CXFPasskey>()
+        val cxfAccountsList = mutableListOf<CXFAccount>()
+        val cxfImportsList = mutableListOf<CXFImport>()
+        val cxfPasskeysList = mutableListOf<CXFPasskey>()
 
         coEvery { mockCxfAccountDao.getAll() } answers { cxfAccountsList.toList() }
         coEvery { mockCxfAccountDao.getByCxfAccountId(any()) } answers {
@@ -98,7 +100,7 @@ object DataModelMocks {
             cxfAccountsList.firstOrNull { it.cxfAccountId == queryId }
         }
         coEvery { mockCxfAccountDao.insert(any()) } answers {
-            val acc = firstArg<fi.iki.ede.db.cxf.CXFAccount>()
+            val acc = firstArg<CXFAccount>()
             val newId = (cxfAccountsList.maxOfOrNull { it.id ?: 0L } ?: 0L) + 1L
             val inserted = acc.copy(id = newId)
             cxfAccountsList.add(inserted)
@@ -111,14 +113,14 @@ object DataModelMocks {
             cxfImportsList.filter { it.accountId == accId }
         }
         coEvery { mockCxfImportDao.insert(any()) } answers {
-            val item = firstArg<fi.iki.ede.db.cxf.CXFImport>()
+            val item = firstArg<CXFImport>()
             val newId = (cxfImportsList.maxOfOrNull { it.id ?: 0L } ?: 0L) + 1L
             val inserted = item.copy(id = newId)
             cxfImportsList.add(inserted)
             newId
         }
         coEvery { mockCxfImportDao.insertAll(any()) } answers {
-            val items = firstArg<List<fi.iki.ede.db.cxf.CXFImport>>()
+            val items = firstArg<List<CXFImport>>()
             items.map { item ->
                 val newId = (cxfImportsList.maxOfOrNull { it.id ?: 0L } ?: 0L) + 1L
                 val inserted = item.copy(id = newId)
@@ -133,14 +135,14 @@ object DataModelMocks {
             cxfPasskeysList.filter { it.accountId == accId }
         }
         coEvery { mockCxfPasskeyDao.insert(any()) } answers {
-            val item = firstArg<fi.iki.ede.db.cxf.CXFPasskey>()
+            val item = firstArg<CXFPasskey>()
             val newId = (cxfPasskeysList.maxOfOrNull { it.id ?: 0L } ?: 0L) + 1L
             val inserted = item.copy(id = newId)
             cxfPasskeysList.add(inserted)
             newId
         }
         coEvery { mockCxfPasskeyDao.insertAll(any()) } answers {
-            val items = firstArg<List<fi.iki.ede.db.cxf.CXFPasskey>>()
+            val items = firstArg<List<CXFPasskey>>()
             items.map { item ->
                 val newId = (cxfPasskeysList.maxOfOrNull { it.id ?: 0L } ?: 0L) + 1L
                 val inserted = item.copy(id = newId)

@@ -190,8 +190,19 @@ object Preferences {
     const val PREFERENCE_LOCK_TIMEOUT_DEFAULT_VALUE_MINUTES = "5"
     const val PREFERENCE_DESKTOP_BIOMETRICS_ENABLED = "desktop_biometrics_enabled"
     const val PREFERENCE_DESKTOP_BIO_CIPHER = "desktop_bio_cipher"
+    const val PREFERENCE_AUTO_SYNC_WIFI_ENABLED = "auto_sync_wifi_enabled"
+    const val PREFERENCE_PAIRED_SYNC_DEVICES = "paired_sync_devices"
+    const val PREFERENCE_VAULT_CLUSTER_SECRET = "vault_cluster_secret"
+    const val PREFERENCE_LAST_SYNC_TIME = "time_of_last_sync"
+    const val PREFERENCE_LOCAL_DEVICE_ID = "sync_local_device_id"
+    const val PREFERENCE_SYNC_DEVICE_CUSTOM_NAME = "sync_device_custom_name"
 
     private val backupDocumentKey = stringPreferencesKey(PREFERENCE_BACKUP_DOCUMENT)
+    private val autoSyncWifiEnabledKey = booleanPreferencesKey(PREFERENCE_AUTO_SYNC_WIFI_ENABLED)
+    private val pairedSyncDevicesKey = stringSetPreferencesKey(PREFERENCE_PAIRED_SYNC_DEVICES)
+    private val localDeviceIdKey = stringPreferencesKey(PREFERENCE_LOCAL_DEVICE_ID)
+    private val vaultClusterSecretKey = stringPreferencesKey(PREFERENCE_VAULT_CLUSTER_SECRET)
+    private val lastSyncTimeKey = longPreferencesKey(PREFERENCE_LAST_SYNC_TIME)
     private val defaultUserNameKey = stringPreferencesKey(PREFERENCE_DEFAULT_USER_NAME)
     private val lockOnScreenLockKey = booleanPreferencesKey(PREFERENCE_LOCK_ON_SCREEN_LOCK)
     private val clipboardClearDelayKey = stringPreferencesKey(PREFERENCE_CLIPBOARD_CLEAR_DELAY)
@@ -210,6 +221,7 @@ object Preferences {
     private val lastModifiedKey = longPreferencesKey(PREFERENCE_LAST_MODIFIED)
     private val desktopBiometricsEnabledKey = booleanPreferencesKey(PREFERENCE_DESKTOP_BIOMETRICS_ENABLED)
     private val desktopBioCipherKey = stringPreferencesKey(PREFERENCE_DESKTOP_BIO_CIPHER)
+    private val syncDeviceCustomNameKey = stringPreferencesKey(PREFERENCE_SYNC_DEVICE_CUSTOM_NAME)
 
     fun getBackupDocument(): String =
         if (SUPPORT_EXPORT_LOCATION_MEMORY) {
@@ -349,4 +361,85 @@ object Preferences {
         notifyPlatformListeners(desktopBiometricsEnabledKey.name)
         notifyPlatformListeners(desktopBioCipherKey.name)
     }
+
+    fun isAutoSyncWifiEnabled(): Boolean =
+        getCached(autoSyncWifiEnabledKey, false)
+
+    fun setAutoSyncWifiEnabled(enabled: Boolean) =
+        setCached(autoSyncWifiEnabledKey, enabled)
+
+    data class PairedDevice(
+        val id: String,
+        val name: String,
+        val lastSyncTimestamp: Long
+    )
+
+    fun getLocalDeviceId(): String {
+        var id = getCached(localDeviceIdKey, "")
+        if (id.isBlank()) {
+            val randomHex = (1..16).map { "0123456789abcdef".random() }.joinToString("")
+            id = "dev-$randomHex"
+            setCached(localDeviceIdKey, id)
+        }
+        return id
+    }
+
+    fun getPairedSyncDevices(): Set<String> =
+        getCached(pairedSyncDevicesKey, emptySet())
+
+    fun getPairedSyncDeviceList(): List<PairedDevice> {
+        return getPairedSyncDevices().mapNotNull { raw ->
+            val parts = raw.split("|")
+            if (parts.isEmpty()) return@mapNotNull null
+            val id = parts[0].trim()
+            val name = if (parts.size >= 2) parts[1].trim() else id
+            val timestamp = if (parts.size >= 3) parts[2].trim().toLongOrNull() ?: 0L else 0L
+            if (name.contains(":5844") || name.contains("Local Port") || name.contains("Local Gateway") || name == "Safe-Device") {
+                null
+            } else {
+                PairedDevice(id, name, timestamp)
+            }
+        }.sortedByDescending { it.lastSyncTimestamp }
+    }
+
+    fun addPairedSyncDevice(
+        deviceId: String,
+        deviceName: String,
+        timestamp: Long = Clock.System.now().toEpochMilliseconds()
+    ) {
+        val cleanId = deviceId.trim()
+        val cleanName = deviceName.trim().replace(Regex("""\s*\((Android|iOS|Desktop)\)""", RegexOption.IGNORE_CASE), "").trim()
+        if (cleanId.isBlank() || cleanName.isBlank()) return
+        val current = getPairedSyncDevices().toMutableSet()
+        current.removeAll { entry ->
+            val parts = entry.split("|")
+            val existingId = parts.getOrNull(0)?.trim()
+            val existingName = parts.getOrNull(1)?.trim()?.replace(Regex("""\s*\((Android|iOS|Desktop)\)""", RegexOption.IGNORE_CASE), "")?.trim()
+            existingId == cleanId || 
+            (existingName != null && existingName.equals(cleanName, ignoreCase = true))
+        }
+        current.add("$cleanId|$cleanName|$timestamp")
+        setCached(pairedSyncDevicesKey, current)
+    }
+
+    fun removePairedSyncDevice(deviceId: String) {
+        val current = getPairedSyncDevices().toMutableSet()
+        current.removeAll { it.startsWith("${deviceId.trim()}|") }
+        setCached(pairedSyncDevicesKey, current)
+    }
+
+    fun getVaultClusterSecret(): String? =
+        getCachedOrNull(vaultClusterSecretKey)
+
+    fun setVaultClusterSecret(secret: String?) =
+        setCached(vaultClusterSecretKey, secret)
+
+    fun getSyncDeviceCustomName(): String =
+        getCached(syncDeviceCustomNameKey, "")
+
+    fun setSyncDeviceCustomName(name: String) =
+        setCached(syncDeviceCustomNameKey, name)
+
+    fun setLastSyncTime() = storeTimestamp(lastSyncTimeKey)
+    fun getLastSyncTime() = getStoredTimestamp(lastSyncTimeKey)
 }

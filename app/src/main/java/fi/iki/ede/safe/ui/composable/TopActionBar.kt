@@ -41,6 +41,10 @@ import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.dialogs.ShowTrashDialog
 import fi.iki.ede.safe.ui.testTag
+import fi.iki.ede.datamodel.DataModel
+import fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper
+import fi.iki.ede.safe.ui.sync.SyncConflict
+import fi.iki.ede.safe.ui.sync.SyncConflictResolver
 import fi.iki.ede.theme.SafeTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -60,10 +64,14 @@ fun TopActionBar(
     loginScreen: Boolean = false,
     title: String? = null
 ) {
+    val coroutineScope = rememberCoroutineScope()
     val displayMenu = remember { mutableStateOf(false) }
     val exportImport = remember { mutableStateOf(false) }
     val showChangePasswordDialog = remember { mutableStateOf(false) }
     val showTrashDialog = remember { mutableStateOf(false) }
+    val displayDeviceSyncDialog = remember { mutableStateOf(false) }
+    val displayConflictDialog = remember { mutableStateOf(false) }
+    val activeConflicts = remember { mutableStateOf<List<SyncConflict>>(emptyList()) }
     val context = LocalContext.current
 
     SafeTheme {
@@ -108,7 +116,10 @@ fun TopActionBar(
                 displayMenu,
                 exportImport,
                 showChangePasswordDialog,
-                showTrashDialog
+                showTrashDialog,
+                displayDeviceSyncDialog,
+                displayConflictDialog,
+                activeConflicts
             )
 
             if (showChangePasswordDialog.value) {
@@ -116,6 +127,28 @@ fun TopActionBar(
             }
             if (showTrashDialog.value) {
                 ShowTrashDialog(onDismiss = { showTrashDialog.value = false })
+            }
+            if (displayDeviceSyncDialog.value) {
+                DeviceSyncDialog(
+                    onDismissRequest = { displayDeviceSyncDialog.value = false },
+                    onSyncCompleted = {
+                        Logger.d(TAG, "Device sync completed successfully")
+                        coroutineScope.launch {
+                            DataModel.loadFromDatabase {}
+                        }
+                    }
+                )
+            }
+            if (displayConflictDialog.value) {
+                ConflictResolutionDialog(
+                    conflicts = activeConflicts.value,
+                    onDismissRequest = { displayConflictDialog.value = false },
+                    onResolveCompleted = { resolved ->
+                        Logger.d(TAG, "Conflict resolution completed with ${resolved.size} items resolved.")
+                        SyncConflictResolver.applyResolvedConflictsToLocalDatabase(resolved)
+                        displayConflictDialog.value = false
+                    }
+                )
             }
         })
     }
@@ -163,6 +196,9 @@ private fun MakeDropdownMenu(
     exportImport: MutableState<Boolean>,
     showChangePasswordDialog: MutableState<Boolean>,
     showTrashDialog: MutableState<Boolean>,
+    displayDeviceSyncDialog: MutableState<Boolean>,
+    displayConflictDialog: MutableState<Boolean>,
+    activeConflicts: MutableState<List<SyncConflict>>,
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -175,6 +211,12 @@ private fun MakeDropdownMenu(
         }
     ) {
         if (!exportImport.value) {
+            DropdownMenuItem(
+                text = { Text(text = "⚡ Device Sync (8-Digit PIN)") },
+                onClick = {
+                    displayMenu.value = false
+                    displayDeviceSyncDialog.value = true
+                })
             DropdownMenuItem(
                 enabled = !loginScreen,
                 text = { Text(text = stringResource(id = R.string.action_bar_settings)) },
@@ -259,7 +301,7 @@ private fun MakeDropdownMenu(
                 onClick = {
                     displayMenu.value = false
                     exportImport.value = false
-                    fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper.launchDirectGpmImport(
+                    AndroidCredentialTransferHelper.launchDirectGpmImport(
                         context = context,
                         scope = coroutineScope,
                         onMessage = { msg -> Logger.d(TAG, msg) },
@@ -268,23 +310,6 @@ private fun MakeDropdownMenu(
                         }
                     )
                 })
-            if (BuildConfig.DEBUG) {
-                DropdownMenuItem(
-                    text = { Text(text = "🧪 Test Direct Sync (Fake CXF Payload)") },
-                    onClick = {
-                        displayMenu.value = false
-                        exportImport.value = false
-                        val fakePayload = fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper.createSampleFakeCxfPayload()
-                        fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper.processAndStoreCxfPayload(
-                            cxfJsonPayload = fakePayload,
-                            scope = coroutineScope,
-                            onMessage = { msg -> Logger.d(TAG, msg) },
-                            complete = { success, count ->
-                                Logger.d(TAG, "Test sync complete: success=$success, count=$count")
-                            }
-                        )
-                    })
-            }
             IntentManager.getMenuItems(DropDownMenu.TopActionBarImportExportMenu).forEach {
                 DropdownMenuItem(text = { Text(text = stringResource(id = it.first)) }, onClick = {
                     displayMenu.value = false

@@ -7,6 +7,7 @@ import fi.iki.ede.db.DBID
 import fi.iki.ede.datamodel.BuildConfig
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.preferences.Preferences
+import fi.iki.ede.db.cxf.CxfSyntheticModelMapper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -23,6 +24,7 @@ import kotlin.time.ExperimentalTime
 @ExperimentalTime
 object DataModel {
     private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    var onDataChanged: (() -> Unit)? = null
 
     init {
         if (BuildConfig.DEBUG) {
@@ -101,6 +103,7 @@ object DataModel {
                     }
                 }
             }
+            onDataChanged?.invoke()
         }
     }
 
@@ -112,6 +115,7 @@ object DataModel {
         CoroutineScope(Dispatchers.IO).launch {
             DBHelperFactory.getDBHelper().deleteCategory(category.id!!)
             _categoriesStateFlow.update { oldMap -> oldMap.filterNot { it.id == category.id } }
+            onDataChanged?.invoke()
         }
     }
 
@@ -136,6 +140,7 @@ object DataModel {
                 _siteEntriesStateFlow.updateListItemById(siteEntry, keySelector = { it.id!! })
             }
             storeAllExtensionsToPreferences()
+            onDataChanged?.invoke()
         }
     }
 
@@ -209,15 +214,10 @@ object DataModel {
         Preferences.setLastModified()
         CoroutineScope(Dispatchers.IO).launch {
             val db = DBHelperFactory.getDBHelper()
-            Preferences.getSoftDeleteDays().let {
-                if (it > 0) {
-                    siteEntry.deleted = Clock.System.now().epochSeconds
-                    db.markSiteEntryDeleted(siteEntry.id!!, siteEntry.deleted)
-                    _softDeletedStateFlow.value = _softDeletedStateFlow.value + siteEntry
-                } else {
-                    db.hardDeleteSiteEntry(siteEntry.id!!)
-                }
-            }
+            val deletedTime = Clock.System.now().epochSeconds
+            siteEntry.deleted = deletedTime
+            db.markSiteEntryDeleted(siteEntry.id!!, deletedTime)
+            _softDeletedStateFlow.value = _softDeletedStateFlow.value + siteEntry
 
             _siteEntriesStateFlow.update {
                 it.filterNot { entry -> entry.id == siteEntry.id }
@@ -229,6 +229,7 @@ object DataModel {
                     containedSiteEntryCount = old.containedSiteEntryCount - 1
                 }
             }
+            onDataChanged?.invoke()
         }
     }
 
@@ -289,6 +290,7 @@ object DataModel {
                 launch { syncLoadSoftDeletedSiteEntries() }
                 awaitAll(cats, sites)
 
+                launch(Dispatchers.Default) { preDecryptDescriptions() }
                 launch { syncLoadAllPhotos() }
 
                 launch {
@@ -297,8 +299,26 @@ object DataModel {
                     }
                 }
                 loadExternalDatabases()
-                launch { loadSyntheticCxfEntries() }
+                launch {
+                    loadSyntheticCxfEntries()
+                    launch(Dispatchers.Default) { preDecryptDescriptions() }
+                }
             }
+        }
+    }
+
+    fun preDecryptDescriptions() {
+        val entries = _siteEntriesStateFlow.value
+        entries.forEach { entry ->
+            try {
+                entry.getPlainDescription()
+            } catch (_: Throwable) {}
+        }
+        val categories = _categoriesStateFlow.value
+        categories.forEach { cat ->
+            try {
+                cat.plainName
+            } catch (_: Throwable) {}
         }
     }
 
@@ -316,13 +336,13 @@ object DataModel {
 
             for (account in cxfAccounts) {
                 val accountId = account.id ?: continue
-                val syntheticCat = fi.iki.ede.datamodel.cxf.CxfSyntheticModelMapper.toSyntheticCategory(account)
+                val syntheticCat = CxfSyntheticModelMapper.toSyntheticCategory(account)
 
                 val accountImports = cxfImports.filter { it.accountId == accountId }
                 val accountPasskeys = cxfPasskeys.filter { it.accountId == accountId }
 
-                val importSites = accountImports.map { fi.iki.ede.datamodel.cxf.CxfSyntheticModelMapper.toSyntheticSiteEntry(it, accountId) }
-                val passkeySites = accountPasskeys.map { fi.iki.ede.datamodel.cxf.CxfSyntheticModelMapper.toSyntheticSiteEntry(it, accountId) }
+                val importSites = accountImports.map { CxfSyntheticModelMapper.toSyntheticSiteEntry(it, accountId) }
+                val passkeySites = accountPasskeys.map { CxfSyntheticModelMapper.toSyntheticSiteEntry(it, accountId) }
 
                 val totalCount = importSites.size + passkeySites.size
                 syntheticCat.containedSiteEntryCount = totalCount
@@ -333,10 +353,10 @@ object DataModel {
             }
 
             _categoriesStateFlow.update { current ->
-                current.filterNot { fi.iki.ede.datamodel.cxf.CxfSyntheticModelMapper.isSyntheticId(it.id) } + syntheticCategories
+                current.filterNot { CxfSyntheticModelMapper.isSyntheticId(it.id) } + syntheticCategories
             }
             _siteEntriesStateFlow.update { current ->
-                current.filterNot { fi.iki.ede.datamodel.cxf.CxfSyntheticModelMapper.isSyntheticId(it.id) } + syntheticSiteEntries
+                current.filterNot { CxfSyntheticModelMapper.isSyntheticId(it.id) } + syntheticSiteEntries
             }
         } catch (e: Throwable) {
             Logger.e(TAG, "Loading synthetic CXF entries failed: ${e.message}", e)
