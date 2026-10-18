@@ -72,10 +72,14 @@ actual class SyncNetworkService {
                 val responseJson = onPayloadReceived(decryptedJson)
                 val encryptedResponse = SyncPairingSession.encryptPayload(responseJson, pin)
                 writer.println(encryptedResponse)
+                writer.flush()
             }
         } catch (e: Exception) {
             try {
-                PrintWriter(socket.getOutputStream(), true).println("ERROR:${e::class.simpleName}:${e.message}")
+                PrintWriter(socket.getOutputStream(), true).apply {
+                    println("ERROR:${e::class.simpleName}:${e.message}")
+                    flush()
+                }
             } catch (_: Exception) {}
         }
     }
@@ -98,14 +102,15 @@ actual class SyncNetworkService {
         localPayloadJson: String
     ): String = withContext(Dispatchers.IO) {
         val socket = Socket()
-        socket.connect(java.net.InetSocketAddress(hostAddress, port), 3000)
-        socket.soTimeout = 5000
+        socket.connect(java.net.InetSocketAddress(hostAddress, port), 5000)
+        socket.soTimeout = 60000
         socket.use { s ->
             val reader = BufferedReader(InputStreamReader(s.getInputStream()))
             val writer = PrintWriter(s.getOutputStream(), true)
 
             val encryptedPayload = SyncPairingSession.encryptPayload(localPayloadJson, pin)
             writer.println(encryptedPayload)
+            writer.flush()
 
             val responseLine = reader.readLine()
                 ?: throw IllegalStateException("No response received from target device")

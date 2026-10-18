@@ -68,11 +68,13 @@ fun DeviceSyncDialog(
                         val remotePayload = Json.decodeFromString<SyncPayload>(remotePayloadJson)
                         val localItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
                         val localTree = MerkleTreeHelper.buildMerkleVault(localItems)
-                        Preferences.addPairedSyncDevice("peer-${initiatorPin.take(4)}", "Linked Device")
+                        val peerName = remotePayload.deviceName.ifBlank { "Safe Peer" }
+                        val stableId = "peer-${peerName.filter { it.isLetterOrDigit() || it == '-' || it == '_' }}"
+                        Preferences.addPairedSyncDevice(stableId, peerName)
                         if (remotePayload.merkleRoot.isNotBlank() && remotePayload.merkleRoot == localTree.rootHash) {
                             syncStatusMessage = "Already synchronized ✓"
                             onSyncCompleted()
-                            return@startServer Json.encodeToString(SyncPayload(emptyList(), localTree.rootHash))
+                            return@startServer Json.encodeToString(SyncPayload(emptyList(), localTree.rootHash, currentDeviceName))
                         }
 
                         val conflicts = SyncConflictResolver.analyzeConflicts(localItems, remotePayload.items)
@@ -83,7 +85,7 @@ fun DeviceSyncDialog(
                         syncStatusMessage = "Device paired & synchronized successfully!"
                         onSyncCompleted()
                         ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER")
-                        Json.encodeToString(SyncPayload(updatedLocalItems, updatedTree.rootHash))
+                        Json.encodeToString(SyncPayload(updatedLocalItems, updatedTree.rootHash, currentDeviceName))
                     } catch (e: Exception) {
                         e.printStackTrace()
                         throw e
@@ -257,7 +259,7 @@ fun DeviceSyncDialog(
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .heightIn(max = 80.dp)
+                                .heightIn(max = 140.dp)
                         ) {
                             items(discoveredDevices) { device ->
                                 val isSelected = selectedDevice?.id == device.id
@@ -276,7 +278,9 @@ fun DeviceSyncDialog(
                                         text = "${if (isSelected) "✓ " else "• "}${device.name}",
                                         style = MaterialTheme.typography.bodySmall,
                                         color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                        maxLines = 3,
+                                        softWrap = true
                                     )
                                 }
                             }
@@ -361,7 +365,7 @@ fun DeviceSyncDialog(
                             try {
                                 val localItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
                                 val localTree = MerkleTreeHelper.buildMerkleVault(localItems)
-                                val localJson = Json.encodeToString(SyncPayload(localItems, localTree.rootHash))
+                                val localJson = Json.encodeToString(SyncPayload(localItems, localTree.rootHash, currentDeviceName))
 
                                 var remoteJson: String? = null
                                 var lastError: Exception? = null
@@ -388,7 +392,15 @@ fun DeviceSyncDialog(
                                 }
 
                                 val remotePayload = Json.decodeFromString<SyncPayload>(remoteJson)
-                                Preferences.addPairedSyncDevice("peer-${candidateHosts.first().replace(".", "-")}", "Linked Device (${candidateHosts.first()})")
+                                val peerName = if (remotePayload.deviceName.isNotBlank()) {
+                                    remotePayload.deviceName
+                                } else if (selectedDevice != null && selectedDevice!!.name.isNotBlank()) {
+                                    selectedDevice!!.name
+                                } else {
+                                    "Safe Peer (${candidateHosts.first()})"
+                                }
+                                val stableId = "peer-${peerName.filter { it.isLetterOrDigit() || it == '-' || it == '_' }}"
+                                Preferences.addPairedSyncDevice(stableId, peerName)
                                 if (remotePayload.merkleRoot.isNotBlank() && remotePayload.merkleRoot == localTree.rootHash) {
                                     syncStatusMessage = "Already synchronized ✓"
                                     onSyncCompleted()

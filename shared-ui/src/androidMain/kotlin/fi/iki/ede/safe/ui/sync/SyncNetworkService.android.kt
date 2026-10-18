@@ -96,12 +96,16 @@ actual class SyncNetworkService {
                 val responseJson = onPayloadReceived(decryptedJson)
                 val encryptedResponse = SyncPairingSession.encryptPayload(responseJson, pin)
                 writer.println(encryptedResponse)
+                writer.flush()
                 Logger.d(TAG, "Client request processed successfully")
             }
         } catch (e: Exception) {
             Logger.e(TAG, "Error handling client sync request", e)
             try {
-                PrintWriter(socket.getOutputStream(), true).println("ERROR:${e::class.simpleName}:${e.message}")
+                PrintWriter(socket.getOutputStream(), true).apply {
+                    println("ERROR:${e::class.simpleName}:${e.message}")
+                    flush()
+                }
             } catch (_: Exception) {}
         }
     }
@@ -124,19 +128,22 @@ actual class SyncNetworkService {
         pin: String,
         localPayloadJson: String
     ): String = withContext(Dispatchers.IO) {
-        Socket(hostAddress, port).use { socket ->
-            socket.soTimeout = 10000
-            val reader = BufferedReader(InputStreamReader(socket.getInputStream()))
-            val writer = PrintWriter(socket.getOutputStream(), true)
+        val socket = Socket()
+        socket.connect(java.net.InetSocketAddress(hostAddress, port), 5000)
+        socket.soTimeout = 60000
+        socket.use { s ->
+            val reader = BufferedReader(InputStreamReader(s.getInputStream()))
+            val writer = PrintWriter(s.getOutputStream(), true)
 
             val encryptedPayload = SyncPairingSession.encryptPayload(localPayloadJson, pin)
             writer.println(encryptedPayload)
+            writer.flush()
 
             val responseLine = reader.readLine()
                 ?: throw IllegalStateException("No response received from target device")
 
             if (responseLine.startsWith("ERROR:")) {
-                throw IllegalArgumentException("Target device rejected connection (invalid PIN)")
+                throw IllegalArgumentException("Target device rejected connection: $responseLine")
             }
 
             SyncPairingSession.decryptPayload(responseLine, pin)

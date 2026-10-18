@@ -159,7 +159,7 @@ actual class SyncNetworkService {
             if (sock < 0) throw IllegalStateException("Failed to create client socket")
 
             val tv = alloc<timeval>()
-            tv.tv_sec = 10
+            tv.tv_sec = 60
             tv.tv_usec = 0
             setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, tv.ptr, sizeOf<timeval>().toUInt())
 
