@@ -106,3 +106,23 @@ actual fun firebaseRecordException(message: String, t: Throwable) {
     firebaseLog(message)
     firebaseRecordException(t)
 }
+
+private inline fun withAnalytics(block: (com.google.firebase.analytics.FirebaseAnalytics) -> Unit) {
+    val context = appContext
+    if (context != null && FirebaseApp.getApps(context).isNotEmpty()) {
+        try {
+            block(com.google.firebase.analytics.FirebaseAnalytics.getInstance(context))
+        } catch (e: Exception) {
+            Logger.e(TAG, "Analytics error: ${e.message}")
+        }
+    }
+}
+
+actual fun firebaseLogEvent(eventName: String, params: Map<String, String>) {
+    withAnalytics { analytics ->
+        val bundle = android.os.Bundle()
+        params.forEach { (k, v) -> bundle.putString(k, v) }
+        analytics.logEvent(eventName, bundle)
+    }
+    firebaseLog("EVENT", "$eventName: $params")
+}

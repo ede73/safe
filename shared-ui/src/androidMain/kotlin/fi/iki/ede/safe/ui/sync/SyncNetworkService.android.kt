@@ -1,6 +1,8 @@
 package fi.iki.ede.safe.ui.sync
 
 import fi.iki.ede.logger.Logger
+import fi.iki.ede.logger.firebaseLog
+import fi.iki.ede.logger.firebaseRecordException
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.io.PrintWriter
@@ -59,6 +61,7 @@ actual class SyncNetworkService {
                 serverSocket = ss
                 boundPort = ss.localPort
                 Logger.d(TAG, "Sync server started on port ${ss.localPort}")
+                firebaseLog("SafeSyncNet", "Sync server started on port ${ss.localPort}")
                 break
             } catch (_: Exception) {}
         }
@@ -69,6 +72,7 @@ actual class SyncNetworkService {
             try {
                 while (isRunning) {
                     val clientSocket = serverSocket?.accept() ?: break
+                    firebaseLog("SafeSyncNet", "Server accepted client connection from ${clientSocket.inetAddress?.hostAddress}:${clientSocket.port}")
                     thread {
                         handleClient(clientSocket, pin, onPayloadReceived)
                     }
@@ -76,6 +80,7 @@ actual class SyncNetworkService {
             } catch (e: Exception) {
                 if (isRunning) {
                     Logger.e(TAG, "Error in sync server loop", e)
+                    firebaseRecordException("SafeSyncNet server loop error", e)
                 }
             }
         }
@@ -90,17 +95,25 @@ actual class SyncNetworkService {
             socket.use { s ->
                 val reader = BufferedReader(InputStreamReader(s.getInputStream()))
                 val writer = PrintWriter(s.getOutputStream(), true)
-                val incomingLine = reader.readLine() ?: return
+                firebaseLog("SafeSyncNet", "Reading from client ${s.inetAddress?.hostAddress}...")
+                val incomingLine = reader.readLine()
+                if (incomingLine == null) {
+                    firebaseLog("SafeSyncNet", "Client closed connection before sending data")
+                    return
+                }
 
+                firebaseLog("SafeSyncNet", "Server received line length=${incomingLine.length}, decrypting...")
                 val decryptedJson = SyncPairingSession.decryptPayload(incomingLine, pin)
                 val responseJson = onPayloadReceived(decryptedJson)
                 val encryptedResponse = SyncPairingSession.encryptPayload(responseJson, pin)
                 writer.println(encryptedResponse)
                 writer.flush()
                 Logger.d(TAG, "Client request processed successfully")
+                firebaseLog("SafeSyncNet", "Server response sent (length=${encryptedResponse.length})")
             }
         } catch (e: Exception) {
             Logger.e(TAG, "Error handling client sync request", e)
+            firebaseRecordException("SafeSyncNet error handling client request: ${e::class.simpleName}", e)
             try {
                 PrintWriter(socket.getOutputStream(), true).apply {
                     println("ERROR:${e::class.simpleName}:${e.message}")
@@ -115,6 +128,7 @@ actual class SyncNetworkService {
         boundPort = -1
         try {
             serverSocket?.close()
+            firebaseLog("SafeSyncNet", "Sync server stopped")
         } catch (e: Exception) {
             Logger.e(TAG, "Error closing sync server socket", e)
         } finally {
@@ -129,24 +143,33 @@ actual class SyncNetworkService {
         localPayloadJson: String
     ): String = withContext(Dispatchers.IO) {
         val socket = Socket()
-        socket.connect(java.net.InetSocketAddress(hostAddress, port), 5000)
-        socket.soTimeout = 60000
-        socket.use { s ->
-            val reader = BufferedReader(InputStreamReader(s.getInputStream()))
-            val writer = PrintWriter(s.getOutputStream(), true)
+        try {
+            firebaseLog("SafeSyncNet", "Client connecting to $hostAddress:$port (connectTimeout=5000ms, soTimeout=60000ms)...")
+            socket.connect(java.net.InetSocketAddress(hostAddress, port), 5000)
+            socket.soTimeout = 60000
+            socket.use { s ->
+                val reader = BufferedReader(InputStreamReader(s.getInputStream()))
+                val writer = PrintWriter(s.getOutputStream(), true)
 
-            val encryptedPayload = SyncPairingSession.encryptPayload(localPayloadJson, pin)
-            writer.println(encryptedPayload)
-            writer.flush()
+                val encryptedPayload = SyncPairingSession.encryptPayload(localPayloadJson, pin)
+                firebaseLog("SafeSyncNet", "Client sending payload of length ${encryptedPayload.length} to $hostAddress:$port...")
+                writer.println(encryptedPayload)
+                writer.flush()
 
-            val responseLine = reader.readLine()
-                ?: throw IllegalStateException("No response received from target device")
+                firebaseLog("SafeSyncNet", "Client waiting for response from $hostAddress:$port...")
+                val responseLine = reader.readLine()
+                    ?: throw IllegalStateException("No response received from target device (connection closed)")
 
-            if (responseLine.startsWith("ERROR:")) {
-                throw IllegalArgumentException("Target device rejected connection: $responseLine")
+                firebaseLog("SafeSyncNet", "Client received response of length ${responseLine.length} from $hostAddress:$port")
+                if (responseLine.startsWith("ERROR:")) {
+                    throw IllegalArgumentException("Target device rejected connection: $responseLine")
+                }
+
+                SyncPairingSession.decryptPayload(responseLine, pin)
             }
-
-            SyncPairingSession.decryptPayload(responseLine, pin)
+        } catch (e: Exception) {
+            firebaseRecordException("SafeSyncNet client error with $hostAddress:$port: ${e::class.simpleName}", e)
+            throw e
         }
     }
 }

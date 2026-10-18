@@ -22,3 +22,5 @@ expect fun firebaseLog(tag: String, message: String)
 expect fun firebaseRecordException(t: Throwable)
 
 expect fun firebaseRecordException(message: String, t: Throwable)
+
+expect fun firebaseLogEvent(eventName: String, params: Map<String, String> = emptyMap())
