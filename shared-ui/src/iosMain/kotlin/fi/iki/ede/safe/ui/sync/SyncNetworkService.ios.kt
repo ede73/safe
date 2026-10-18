@@ -71,25 +71,12 @@ actual class SyncNetworkService {
         val candidatePorts = if (port == 0) listOf(58446, 58447, 58448, 58449, 58450) else listOf(port, port + 1, port + 2, port + 3, port + 4, port + 5, port + 6, port + 7)
         for (p in candidatePorts) {
             memScoped {
-                // Check if port is already taken by an active service
-                val testSock = socket(AF_INET, SOCK_STREAM, 0)
-                if (testSock >= 0) {
-                    val testAddr = alloc<sockaddr_in>()
-                    memset(testAddr.ptr, 0, sizeOf<sockaddr_in>().toULong())
-                    testAddr.sin_len = sizeOf<sockaddr_in>().toUByte()
-                    testAddr.sin_family = AF_INET.toUByte()
-                    testAddr.sin_port = htons(p.toUShort())
-                    testAddr.sin_addr.s_addr = parseIpv4ToNetworkOrder("127.0.0.1") ?: 0x0100007Fu
-                    val isTaken = connect(testSock, testAddr.ptr.reinterpret(), sizeOf<sockaddr_in>().toUInt()) == 0
-                    close(testSock)
-                    if (isTaken) return@memScoped
-                }
-
                 val fd = socket(AF_INET, SOCK_STREAM, 0)
                 if (fd >= 0) {
                     val reuse = alloc<IntVar>()
                     reuse.value = 1
                     setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, reuse.ptr, sizeOf<IntVar>().toUInt())
+                    setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, reuse.ptr, sizeOf<IntVar>().toUInt())
 
                     val serverAddr = alloc<sockaddr_in>()
                     memset(serverAddr.ptr, 0, sizeOf<sockaddr_in>().toULong())
@@ -101,8 +88,11 @@ actual class SyncNetworkService {
                     if (bind(fd, serverAddr.ptr.reinterpret(), sizeOf<sockaddr_in>().toUInt()) == 0 && listen(fd, 5) == 0) {
                         serverFd = fd
                         boundPort = p
+                        fi.iki.ede.logger.Logger.d("SyncNetworkServiceIOS", "Server socket bound to port $p, fd=$fd")
+                        fi.iki.ede.logger.firebaseLog("SafeSyncNetwork", "iOS Server socket bound to port $p, fd=$fd")
                         return@memScoped
                     } else {
+                        fi.iki.ede.logger.Logger.w("SyncNetworkServiceIOS", "Failed to bind to port $p: errno=$errno")
                         close(fd)
                     }
                 }

@@ -12,6 +12,8 @@ Paused: not important
     - for now, both go under 1st category found or not possible to restore if no categories
 
 TODO:
+- iOS Biometrics: Implement Face ID / Touch ID on iOS (LocalAuthentication LAContext, Keychain kSecAccessControlBiometryAny, NSFaceIDUsageDescription) so master password is not required on every launch.
+- Login Screen Icon: Replace raw system emoji "🔐" in SharedLoginScreen with the Android lock/key vector graphic across all platforms so iOS does not render the brass Apple emoji.
 - BOTTOM toolbar!
 - Enhance linter
     - linter test case provides different AST from prod (doesn't use k2?)
