@@ -60,7 +60,10 @@ fun SharedBottomActionBar(
                         onHelpRequested = onHelpRequested,
                         onChangeMasterPasswordRequested = onChangeMasterPasswordRequested,
                         onShowTrashRequested = onShowTrashRequested,
-                        onImportExportRequested = onImportExportRequested,
+                        onImportExportRequested = {
+                            displayMenu = false
+                            onImportExportRequested()
+                        },
                         onDismiss = { displayMenu = false }
                     )
                 }

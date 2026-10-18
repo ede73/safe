@@ -61,7 +61,6 @@ fun SharedMenuItems(
         enabled = isLoggedIn,
         text = { Text(text = getString("action_bar_import_export")) },
         onClick = {
-            onDismiss()
             onImportExportRequested()
         }
     )
