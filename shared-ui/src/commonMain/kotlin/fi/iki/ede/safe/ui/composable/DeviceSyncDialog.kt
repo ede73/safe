@@ -215,7 +215,7 @@ fun DeviceSyncDialog(
                         val trimmed = customNameInput.trim()
                         if (trimmed.isNotBlank()) {
                             Preferences.setSyncDeviceCustomName(trimmed)
-                            currentDeviceName = trimmed
+                            currentDeviceName = DeviceInfoProvider.getFormattedDeviceName()
                         }
                         showNamePrompt = false
                     }
@@ -234,10 +234,9 @@ fun DeviceSyncDialog(
                 }
             }
         )
-    }
-
-    AlertDialog(
-        onDismissRequest = onDismissRequest,
+    } else {
+        AlertDialog(
+            onDismissRequest = onDismissRequest,
         icon = {
             Icon(
                 imageVector = Icons.Default.Share,
@@ -738,4 +737,5 @@ fun DeviceSyncDialog(
             }
         }
     )
+    }
 }
