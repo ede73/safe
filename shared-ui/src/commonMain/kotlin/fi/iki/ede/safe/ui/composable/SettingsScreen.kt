@@ -19,6 +19,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
+import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.ui.sync.ContinuousAutoSyncCoordinator
 import fi.iki.ede.safe.ui.sync.DeviceInfoProvider
@@ -66,7 +67,7 @@ fun SettingsScreen(
         mutableStateOf(Preferences.isAutoSyncWifiEnabled())
     }
     var pairedDevices by remember {
-        mutableStateOf(Preferences.getPairedSyncDevices())
+        mutableStateOf(Preferences.getPairedSyncDeviceList())
     }
     var customDeviceName by remember {
         mutableStateOf(Preferences.getSyncDeviceCustomName())
@@ -350,20 +351,7 @@ fun SettingsScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    val validPairedDevices = pairedDevices
-                        .mapNotNull { devString ->
-                            val parts = devString.split("|")
-                            val devId = parts.getOrNull(0) ?: ""
-                            val devName = parts.getOrNull(1) ?: return@mapNotNull null
-                            if (devName.contains(":5844") || devName.contains("Local Port") || devName.contains("Linked Device") || devName.contains("Local Gateway") || devName == "Safe-Device") {
-                                null
-                            } else {
-                                Pair(devId, devName)
-                            }
-                        }
-                        .distinctBy { it.second }
-
-                    if (validPairedDevices.isEmpty()) {
+                    if (pairedDevices.isEmpty()) {
                         Text(
                             "No devices linked yet. Pair your other phone or laptop using the 8-digit PIN.",
                             color = Color.Gray,
@@ -371,7 +359,7 @@ fun SettingsScreen(
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
                     } else {
-                        validPairedDevices.forEach { (devId, devName) ->
+                        pairedDevices.forEach { dev ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -387,20 +375,25 @@ fun SettingsScreen(
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Column(modifier = Modifier.weight(1f, fill = false)) {
                                         Text(
-                                            text = devName,
+                                            text = dev.name,
                                             color = Color.White,
                                             fontSize = 13.sp,
                                             fontWeight = FontWeight.Medium,
                                             maxLines = 2,
                                             lineHeight = 17.sp
                                         )
-                                        Text("Status: Linked & Trusted", color = Color(0xFF4CAF50), fontSize = 11.sp)
+                                        val syncText = if (dev.lastSyncTimestamp > 0L) {
+                                            "Last synced: ${DateUtils.formatTimeAgo(dev.lastSyncTimestamp)}"
+                                        } else {
+                                            "Status: Linked & Trusted"
+                                        }
+                                        Text(syncText, color = Color(0xFF4CAF50), fontSize = 11.sp)
                                     }
                                 }
                                 IconButton(
                                     onClick = {
-                                        Preferences.removePairedSyncDevice(devId)
-                                        pairedDevices = Preferences.getPairedSyncDevices()
+                                        Preferences.removePairedSyncDevice(dev.id)
+                                        pairedDevices = Preferences.getPairedSyncDeviceList()
                                     }
                                 ) {
                                     Text("✕", color = Color.LightGray, fontSize = 14.sp)
@@ -537,7 +530,7 @@ fun SettingsScreen(
             DeviceSyncDialog(
                 onDismissRequest = { showPairDialog = false },
                 onSyncCompleted = {
-                    pairedDevices = Preferences.getPairedSyncDevices()
+                    pairedDevices = Preferences.getPairedSyncDeviceList()
                     showPairDialog = false
                 }
             )

@@ -89,8 +89,9 @@ fun DeviceSyncDialog(
                         syncStatusMessage = "Connected to $peerName. Comparing vault versions..."
                         val localItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
                         val localTree = MerkleTreeHelper.buildMerkleVault(localItems)
-                        val stableId = "peer-${peerName.filter { it.isLetterOrDigit() || it == '-' || it == '_' }}"
+                        val stableId = remotePayload.deviceId.ifBlank { "peer-${peerName.filter { it.isLetterOrDigit() || it == '-' || it == '_' }}" }
                         Preferences.addPairedSyncDevice(stableId, peerName)
+                        Preferences.setLastSyncTime()
                         firebaseLog("SafeSync", "Server paired device registered: id=$stableId, name=$peerName, remoteItems=${remotePayload.items.size}, localItems=${localItems.size}")
                         firebasePublishFlowEvent("SafeSync", "ServerPayloadReceived", mapOf(
                             "peer" to peerName,
@@ -105,7 +106,7 @@ fun DeviceSyncDialog(
                             isSyncCompleted = true
                             isSyncing = false
                             onSyncCompleted()
-                            return@startServer Json.encodeToString(SyncPayload(emptyList(), localTree.rootHash, currentDeviceName))
+                            return@startServer Json.encodeToString(SyncPayload(emptyList(), localTree.rootHash, currentDeviceName, Preferences.getLocalDeviceId()))
                         }
 
                         syncStatusMessage = "Analyzing vault differences with $peerName..."
@@ -132,7 +133,7 @@ fun DeviceSyncDialog(
                         isSyncing = false
                         onSyncCompleted()
                         ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER")
-                        Json.encodeToString(SyncPayload(updatedLocalItems, updatedTree.rootHash, currentDeviceName))
+                        Json.encodeToString(SyncPayload(updatedLocalItems, updatedTree.rootHash, currentDeviceName, Preferences.getLocalDeviceId()))
                     } catch (e: Exception) {
                         isSyncing = false
                         syncStatusMessage = "Sync error: ${e.message ?: "Failed"}"
@@ -634,7 +635,7 @@ fun DeviceSyncDialog(
                                 syncStatusMessage = "Analyzing vault checksums (${localItems.size} items)..."
                                 val localTree = MerkleTreeHelper.buildMerkleVault(localItems)
                                 syncStatusMessage = "Preparing sync payload..."
-                                val localJson = Json.encodeToString(SyncPayload(localItems, localTree.rootHash, currentDeviceName))
+                                val localJson = Json.encodeToString(SyncPayload(localItems, localTree.rootHash, currentDeviceName, Preferences.getLocalDeviceId()))
                                 firebaseLog("SafeSync", "Client prepared payload: localItems=${localItems.size}, localRoot=${localTree.rootHash.take(8)}, payloadBytes=${localJson.length}")
                                 firebasePublishFlowEvent("SafeSync", "ClientPreparedPayload", mapOf("localItems" to localItems.size.toString(), "bytes" to localJson.length.toString()))
 
@@ -676,8 +677,9 @@ fun DeviceSyncDialog(
                                 } else {
                                     targetDisplayName
                                 }
-                                val stableId = "peer-${peerName.filter { it.isLetterOrDigit() || it == '-' || it == '_' }}"
+                                val stableId = remotePayload.deviceId.ifBlank { "peer-${peerName.filter { it.isLetterOrDigit() || it == '-' || it == '_' }}" }
                                 Preferences.addPairedSyncDevice(stableId, peerName)
+                                Preferences.setLastSyncTime()
                                 firebaseLog("SafeSync", "Client registered paired peer: id=$stableId, name=$peerName, remoteItems=${remotePayload.items.size}")
                                 firebasePublishFlowEvent("SafeSync", "ClientPeerPaired", mapOf("peerName" to peerName, "remoteItems" to remotePayload.items.size.toString()))
 
