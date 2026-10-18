@@ -17,7 +17,7 @@ object DeviceInfoProvider {
             return customName
         }
         val model = DevicePlatformInfo.modelName
-        return "$model (${DevicePlatformInfo.platformName})"
+        return model
     }
 
     fun getPlatformDisplayName(): String =

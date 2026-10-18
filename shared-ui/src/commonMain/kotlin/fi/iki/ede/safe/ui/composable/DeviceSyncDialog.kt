@@ -30,6 +30,7 @@ import fi.iki.ede.safe.ui.sync.SyncPairingSession
 import fi.iki.ede.safe.ui.sync.SyncPayload
 import fi.iki.ede.safe.ui.sync.ContinuousAutoSyncCoordinator
 import fi.iki.ede.safe.ui.sync.DeviceInfoProvider
+import fi.iki.ede.safe.ui.sync.DevicePlatformInfo
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.logger.firebaseLogEvent
@@ -52,7 +53,10 @@ fun DeviceSyncDialog(
     var syncStatusMessage by remember { mutableStateOf<String?>(null) }
     var isSyncing by remember { mutableStateOf(false) }
 
-    val currentDeviceName = remember { DeviceInfoProvider.getFormattedDeviceName() }
+    var currentDeviceName by remember { mutableStateOf(DeviceInfoProvider.getFormattedDeviceName()) }
+    var showNamePrompt by remember { mutableStateOf(Preferences.getSyncDeviceCustomName().isBlank()) }
+    var customNameInput by remember { mutableStateOf(Preferences.getSyncDeviceCustomName().ifBlank { DevicePlatformInfo.modelName }) }
+
     val discoveredDevices = remember { mutableStateListOf<DiscoveredDevice>() }
     var selectedDevice by remember { mutableStateOf<DiscoveredDevice?>(null) }
 
@@ -60,7 +64,8 @@ fun DeviceSyncDialog(
     val networkService = remember { SyncNetworkService() }
     val coroutineScope = rememberCoroutineScope()
 
-    DisposableEffect(isInitiator, initiatorPin) {
+    DisposableEffect(isInitiator, initiatorPin, currentDeviceName, showNamePrompt) {
+        if (showNamePrompt) return@DisposableEffect onDispose {}
         firebaseLog("SafeSync", "DeviceSyncDialog effect active: role=${if (isInitiator) "SERVER" else "CLIENT"}, device=$currentDeviceName")
         firebasePublishFlowEvent("SafeSync", "DialogOpened", mapOf("role" to if (isInitiator) "server" else "client", "device" to currentDeviceName))
         if (isInitiator) {
@@ -153,6 +158,63 @@ fun DeviceSyncDialog(
         }
     }
 
+    if (showNamePrompt) {
+        AlertDialog(
+            onDismissRequest = {
+                // Allow user not to set it
+                showNamePrompt = false
+            },
+            title = {
+                Text(
+                    text = "Name This Device",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Set a custom name for this device so other devices can easily identify it when syncing:",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = customNameInput,
+                        onValueChange = { customNameInput = it },
+                        label = { Text("Device Name") },
+                        placeholder = { Text(DevicePlatformInfo.modelName) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val trimmed = customNameInput.trim()
+                        if (trimmed.isNotBlank()) {
+                            Preferences.setSyncDeviceCustomName(trimmed)
+                            currentDeviceName = trimmed
+                        }
+                        showNamePrompt = false
+                    }
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        // Allow user not to set it
+                        showNamePrompt = false
+                    }
+                ) {
+                    Text("Use Default (${DevicePlatformInfo.modelName})")
+                }
+            }
+        )
+    }
+
     AlertDialog(
         onDismissRequest = onDismissRequest,
         icon = {
@@ -182,7 +244,7 @@ fun DeviceSyncDialog(
                 Surface(
                     shape = RoundedCornerShape(10.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
@@ -210,6 +272,33 @@ fun DeviceSyncDialog(
                         )
                     }
                 }
+
+                // Device Name indicator & edit button
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            customNameInput = Preferences.getSyncDeviceCustomName().ifBlank { DevicePlatformInfo.modelName }
+                            showNamePrompt = true
+                        }
+                        .padding(horizontal = 4.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "This Device: $currentDeviceName",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "Change",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
 
                 // Mode selector tabs
                 SecondaryTabRow(
