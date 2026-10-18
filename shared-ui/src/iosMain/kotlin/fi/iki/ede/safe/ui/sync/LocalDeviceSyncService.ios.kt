@@ -14,15 +14,21 @@ import platform.Foundation.NSNetService
 import platform.Foundation.NSNetServiceBrowser
 import platform.Foundation.NSNetServiceBrowserDelegateProtocol
 import platform.Foundation.NSNetServiceDelegateProtocol
+import platform.Foundation.NSRunLoop
+import platform.Foundation.NSRunLoopCommonModes
 import platform.darwin.NSObject
 import platform.posix.AF_INET
 import platform.posix.sockaddr
 import platform.posix.sockaddr_in
+import fi.iki.ede.logger.Logger
+import fi.iki.ede.logger.firebaseLog
 
 actual class LocalDeviceSyncManager {
 
     private var netService: NSNetService? = null
+    private var netServiceDelegate: NSNetServiceDelegateProtocol? = null
     private var netServiceBrowser: NSNetServiceBrowser? = null
+    private var browserDelegate: NSNetServiceBrowserDelegateProtocol? = null
     private val resolvingServices = mutableListOf<NSNetService>()
     private var myDeviceName: String = ""
     private var myPort: Int = -1
@@ -31,19 +37,37 @@ actual class LocalDeviceSyncManager {
         stopAdvertising()
         myDeviceName = deviceName
         myPort = port
+        val delegate = object : NSObject(), NSNetServiceDelegateProtocol {
+            @ObjCSignatureOverride
+            override fun netServiceDidPublish(sender: NSNetService) {
+                Logger.d("LocalDeviceSyncIOS", "NSNetService published: ${sender.name} on port ${sender.port}")
+                firebaseLog("SafeSyncDiscovery", "iOS NSNetService published: ${sender.name} port=${sender.port}")
+            }
+
+            @ObjCSignatureOverride
+            override fun netService(sender: NSNetService, didNotPublish: Map<Any?, *>) {
+                Logger.e("LocalDeviceSyncIOS", "NSNetService failed to publish: $didNotPublish")
+                firebaseLog("SafeSyncDiscovery", "iOS NSNetService FAILED to publish: $didNotPublish")
+            }
+        }
+        netServiceDelegate = delegate
         netService = NSNetService(
             domain = "local.",
             type = "_safe-sync._tcp.",
             name = deviceName,
             port = port
         ).apply {
+            setDelegate(delegate)
+            scheduleInRunLoop(NSRunLoop.mainRunLoop, NSRunLoopCommonModes)
             publish()
         }
     }
 
     actual fun stopAdvertising() {
+        netService?.removeFromRunLoop(NSRunLoop.mainRunLoop, NSRunLoopCommonModes)
         netService?.stop()
         netService = null
+        netServiceDelegate = null
     }
 
     actual fun startDiscovery(
@@ -52,14 +76,13 @@ actual class LocalDeviceSyncManager {
     ) {
         stopDiscovery()
         resolvingServices.clear()
-        netServiceBrowser = NSNetServiceBrowser().apply {
-            val browserDelegate = object : NSObject(), NSNetServiceBrowserDelegateProtocol {
-                @ObjCSignatureOverride
-                override fun netServiceBrowser(
-                    browser: NSNetServiceBrowser,
-                    didFindService: NSNetService,
-                    moreComing: Boolean
-                ) {
+        val bDelegate = object : NSObject(), NSNetServiceBrowserDelegateProtocol {
+            @ObjCSignatureOverride
+            override fun netServiceBrowser(
+                browser: NSNetServiceBrowser,
+                didFindService: NSNetService,
+                moreComing: Boolean
+            ) {
                     if (didFindService.name.equals(myDeviceName, ignoreCase = true)) {
                         return
                     }
@@ -140,7 +163,10 @@ actual class LocalDeviceSyncManager {
                     onDeviceLost(device)
                 }
             }
-            setDelegate(browserDelegate)
+        browserDelegate = bDelegate
+        netServiceBrowser = NSNetServiceBrowser().apply {
+            setDelegate(bDelegate)
+            scheduleInRunLoop(NSRunLoop.mainRunLoop, NSRunLoopCommonModes)
             searchForServicesOfType("_safe-sync._tcp.", inDomain = "local.")
         }
     }
@@ -148,7 +174,9 @@ actual class LocalDeviceSyncManager {
     actual fun stopDiscovery() {
         resolvingServices.forEach { it.stop() }
         resolvingServices.clear()
+        netServiceBrowser?.removeFromRunLoop(NSRunLoop.mainRunLoop, NSRunLoopCommonModes)
         netServiceBrowser?.stop()
         netServiceBrowser = null
+        browserDelegate = null
     }
 }
