@@ -33,6 +33,7 @@ import fi.iki.ede.safe.ui.sync.DeviceInfoProvider
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.logger.firebaseLogEvent
+import fi.iki.ede.logger.firebasePublishFlowEvent
 import fi.iki.ede.logger.firebaseRecordException
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
@@ -61,10 +62,11 @@ fun DeviceSyncDialog(
 
     DisposableEffect(isInitiator, initiatorPin) {
         firebaseLog("SafeSync", "DeviceSyncDialog effect active: role=${if (isInitiator) "SERVER" else "CLIENT"}, device=$currentDeviceName")
-        firebaseLogEvent("safe_sync_dialog_active", mapOf("role" to if (isInitiator) "server" else "client"))
+        firebasePublishFlowEvent("SafeSync", "DialogOpened", mapOf("role" to if (isInitiator) "server" else "client", "device" to currentDeviceName))
         if (isInitiator) {
             ContinuousAutoSyncCoordinator.instance.pauseServer()
             firebaseLog("SafeSync", "Server advertising started: name=$currentDeviceName, port=$SAFE_SYNC_DEFAULT_PORT")
+            firebasePublishFlowEvent("SafeSync", "ServerStarted", mapOf("port" to SAFE_SYNC_DEFAULT_PORT.toString(), "device" to currentDeviceName))
             syncManager.startAdvertising(currentDeviceName, SAFE_SYNC_DEFAULT_PORT)
             networkService.startServer(
                 port = SAFE_SYNC_DEFAULT_PORT,
@@ -79,14 +81,15 @@ fun DeviceSyncDialog(
                         val stableId = "peer-${peerName.filter { it.isLetterOrDigit() || it == '-' || it == '_' }}"
                         Preferences.addPairedSyncDevice(stableId, peerName)
                         firebaseLog("SafeSync", "Server paired device registered: id=$stableId, name=$peerName, remoteItems=${remotePayload.items.size}, localItems=${localItems.size}")
-                        firebaseLogEvent("safe_sync_server_payload_received", mapOf(
-                            "remote_items" to remotePayload.items.size.toString(),
-                            "local_items" to localItems.size.toString()
+                        firebasePublishFlowEvent("SafeSync", "ServerPayloadReceived", mapOf(
+                            "peer" to peerName,
+                            "remoteItems" to remotePayload.items.size.toString(),
+                            "localItems" to localItems.size.toString()
                         ))
 
                         if (remotePayload.merkleRoot.isNotBlank() && remotePayload.merkleRoot == localTree.rootHash) {
                             firebaseLog("SafeSync", "Server: Merkle roots match (${localTree.rootHash.take(8)}). Already synchronized.")
-                            firebaseLogEvent("safe_sync_server_completed", mapOf("status" to "already_synchronized"))
+                            firebasePublishFlowEvent("SafeSync", "ServerAlreadySynced", mapOf("root" to localTree.rootHash.take(8)))
                             syncStatusMessage = "Already synchronized ✓"
                             onSyncCompleted()
                             return@startServer Json.encodeToString(SyncPayload(emptyList(), localTree.rootHash, currentDeviceName))
@@ -99,10 +102,9 @@ fun DeviceSyncDialog(
                         val updatedLocalItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
                         val updatedTree = MerkleTreeHelper.buildMerkleVault(updatedLocalItems)
                         firebaseLog("SafeSync", "Server: Conflicts applied, new local items count=${updatedLocalItems.size}")
-                        firebaseLogEvent("safe_sync_server_completed", mapOf(
-                            "status" to "synchronized",
+                        firebasePublishFlowEvent("SafeSync", "ServerConflictsApplied", mapOf(
                             "conflicts" to conflicts.size.toString(),
-                            "updated_items" to updatedLocalItems.size.toString()
+                            "updatedItems" to updatedLocalItems.size.toString()
                         ))
                         syncStatusMessage = "Device paired & synchronized successfully!"
                         onSyncCompleted()
@@ -110,7 +112,7 @@ fun DeviceSyncDialog(
                         Json.encodeToString(SyncPayload(updatedLocalItems, updatedTree.rootHash, currentDeviceName))
                     } catch (e: Exception) {
                         firebaseRecordException("SafeSync server error in onPayloadReceived: ${e::class.simpleName}", e)
-                        firebaseLogEvent("safe_sync_server_error", mapOf("error" to (e::class.simpleName ?: "unknown")))
+                        firebasePublishFlowEvent("SafeSync", "ServerError", mapOf("error" to (e::class.simpleName ?: "unknown"), "message" to (e.message ?: "")))
                         e.printStackTrace()
                         throw e
                     }
@@ -118,6 +120,7 @@ fun DeviceSyncDialog(
             )
         } else {
             firebaseLog("SafeSync", "Client starting mDNS discovery...")
+            firebasePublishFlowEvent("SafeSync", "ClientDiscoveryStarted", emptyMap())
             syncManager.startDiscovery(
                 onDeviceFound = { device ->
                     val isSelf = device.name.equals(currentDeviceName, ignoreCase = true) ||
@@ -125,7 +128,7 @@ fun DeviceSyncDialog(
                                   (device.port == networkService.boundPort || device.port == SAFE_SYNC_DEFAULT_PORT))
                     if (!isSelf && discoveredDevices.none { it.id == device.id }) {
                         firebaseLog("SafeSync", "Client discovered peer: ${device.name} at ${device.hostAddress}:${device.port}")
-                        firebaseLogEvent("safe_sync_peer_discovered", mapOf("peer_name" to device.name))
+                        firebasePublishFlowEvent("SafeSync", "ClientPeerDiscovered", mapOf("peer" to device.name, "host" to device.hostAddress, "port" to device.port.toString()))
                         discoveredDevices.add(device)
                         if (selectedDevice == null) {
                             selectedDevice = device
@@ -393,13 +396,14 @@ fun DeviceSyncDialog(
                         isSyncing = true
                         syncStatusMessage = "Connecting to ${candidateHosts.first()}:${candidatePorts.first()}..."
                         firebaseLog("SafeSync", "Client initiating sync to candidate hosts: $candidateHosts on ports $candidatePorts")
-                        firebaseLogEvent("safe_sync_client_started", mapOf("target_hosts_count" to candidateHosts.size.toString()))
+                        firebasePublishFlowEvent("SafeSync", "ClientSyncStarted", mapOf("targetHosts" to candidateHosts.joinToString(",")))
                         coroutineScope.launch {
                             try {
                                 val localItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
                                 val localTree = MerkleTreeHelper.buildMerkleVault(localItems)
                                 val localJson = Json.encodeToString(SyncPayload(localItems, localTree.rootHash, currentDeviceName))
                                 firebaseLog("SafeSync", "Client prepared payload: localItems=${localItems.size}, localRoot=${localTree.rootHash.take(8)}, payloadBytes=${localJson.length}")
+                                firebasePublishFlowEvent("SafeSync", "ClientPreparedPayload", mapOf("localItems" to localItems.size.toString(), "bytes" to localJson.length.toString()))
 
                                 var remoteJson: String? = null
                                 var lastError: Exception? = null
@@ -417,6 +421,7 @@ fun DeviceSyncDialog(
                                             )
                                             if (remoteJson != null) {
                                                 firebaseLog("SafeSync", "Client successfully received response from $host:$port (bytes=${remoteJson.length})")
+                                                firebasePublishFlowEvent("SafeSync", "ClientReceivedResponse", mapOf("host" to host, "port" to port.toString(), "bytes" to remoteJson.length.toString()))
                                                 break@outer
                                             }
                                         } catch (e: Exception) {
@@ -441,10 +446,11 @@ fun DeviceSyncDialog(
                                 val stableId = "peer-${peerName.filter { it.isLetterOrDigit() || it == '-' || it == '_' }}"
                                 Preferences.addPairedSyncDevice(stableId, peerName)
                                 firebaseLog("SafeSync", "Client registered paired peer: id=$stableId, name=$peerName, remoteItems=${remotePayload.items.size}")
+                                firebasePublishFlowEvent("SafeSync", "ClientPeerPaired", mapOf("peerName" to peerName, "remoteItems" to remotePayload.items.size.toString()))
 
                                 if (remotePayload.merkleRoot.isNotBlank() && remotePayload.merkleRoot == localTree.rootHash) {
                                     firebaseLog("SafeSync", "Client: Merkle roots match (${localTree.rootHash.take(8)}). Already synchronized.")
-                                    firebaseLogEvent("safe_sync_client_completed", mapOf("status" to "already_synchronized"))
+                                    firebasePublishFlowEvent("SafeSync", "ClientAlreadySynced", mapOf("peer" to peerName, "root" to localTree.rootHash.take(8)))
                                     syncStatusMessage = "Already synchronized ✓"
                                     onSyncCompleted()
                                 } else {
@@ -452,8 +458,8 @@ fun DeviceSyncDialog(
                                     firebaseLog("SafeSync", "Client: Detected ${conflicts.size} conflicts, resolving...")
                                     SyncConflictResolver.applyResolvedConflictsToLocalDatabase(conflicts)
                                     firebaseLog("SafeSync", "Client: Conflicts applied successfully")
-                                    firebaseLogEvent("safe_sync_client_completed", mapOf(
-                                        "status" to "synchronized",
+                                    firebasePublishFlowEvent("SafeSync", "ClientConflictsApplied", mapOf(
+                                        "peer" to peerName,
                                         "conflicts" to conflicts.size.toString()
                                     ))
                                     syncStatusMessage = "Connected & synchronized successfully!"
@@ -465,7 +471,7 @@ fun DeviceSyncDialog(
                                 }
                             } catch (e: Exception) {
                                 firebaseRecordException("SafeSync client sync failed: ${e::class.simpleName}", e)
-                                firebaseLogEvent("safe_sync_client_error", mapOf("error" to (e::class.simpleName ?: "unknown")))
+                                firebasePublishFlowEvent("SafeSync", "ClientSyncFailed", mapOf("error" to (e::class.simpleName ?: "unknown"), "message" to (e.message ?: "")))
                                 e.printStackTrace()
                                 syncStatusMessage = "Error: ${e.message ?: "Failed to sync"}"
                             } finally {
