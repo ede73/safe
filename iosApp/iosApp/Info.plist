@@ -50,5 +50,11 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Safe uses your local network to discover and securely synchronize your encrypted password safe with your other devices.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_safe-sync._tcp</string>
+	</array>
 </dict>
 </plist>
