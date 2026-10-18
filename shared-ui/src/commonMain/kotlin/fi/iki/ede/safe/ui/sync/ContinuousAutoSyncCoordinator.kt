@@ -106,6 +106,17 @@ class ContinuousAutoSyncCoordinator(
         }
     }
 
+    fun registerPairedPeer(device: DiscoveredDevice) {
+        discoveredPeers[device.id] = device
+        updateStatus()
+    }
+
+    fun unregisterPairedPeer(deviceId: String) {
+        discoveredPeers.remove(deviceId)
+        peerRootHashes.remove(deviceId)
+        updateStatus()
+    }
+
     /**
      * Starts continuous auto-discovery and heartbeat sync.
      */
@@ -141,27 +152,9 @@ class ContinuousAutoSyncCoordinator(
             e.printStackTrace()
         }
 
-        // 2. Start mDNS advertising and discovery
-        val boundPort = if (networkService.boundPort > 0) networkService.boundPort else SAFE_SYNC_DEFAULT_PORT
-        syncManager.startAdvertising(deviceName, boundPort)
-        syncManager.startDiscovery(
-            onDeviceFound = { device ->
-                val isSelf = device.name.equals(currentDeviceName, ignoreCase = true) ||
-                             (device.port == networkService.boundPort && (device.hostAddress == "127.0.0.1" || device.hostAddress == "localhost"))
-                if (isSelf) return@startDiscovery
-
-                discoveredPeers[device.id] = device
-                lastStatusMessage = "Discovered peer: ${device.name}"
-                updateStatus()
-                // Immediately check and sync on discovery
-                scope.launch { syncWithPeer(device, authToken) }
-            },
-            onDeviceLost = { device ->
-                discoveredPeers.remove(device.id)
-                peerRootHashes.remove(device.id)
-                updateStatus()
-            }
-        )
+        // Continuous auto-sync NEVER runs mDNS discovery on its own.
+        // Discovery is strictly user-consented and only initiated when the user explicitly
+        // opens the Device Sync Dialog from the menu.
 
         // 3. Heartbeat loop to keep state synchronized continuously
         backgroundJob = scope.launch {
@@ -264,7 +257,6 @@ class ContinuousAutoSyncCoordinator(
                 pin = currentAuthToken,
                 onPayloadReceived = ::handleServerPayload
             )
-            syncManager.startAdvertising(currentDeviceName, SAFE_SYNC_DEFAULT_PORT)
         } catch (_: Exception) {}
     }
 

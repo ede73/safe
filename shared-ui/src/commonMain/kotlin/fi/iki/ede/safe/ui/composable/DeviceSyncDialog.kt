@@ -399,6 +399,9 @@ fun DeviceSyncDialog(
                                     onSyncCompleted()
                                     ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER")
                                 }
+                                if (selectedDevice != null) {
+                                    ContinuousAutoSyncCoordinator.instance.registerPairedPeer(selectedDevice!!)
+                                }
                             } catch (e: Exception) {
                                 e.printStackTrace()
                                 syncStatusMessage = "Error: ${e.message ?: "Failed to sync"}"
