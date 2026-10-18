@@ -43,7 +43,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.ImeAction
 import fi.iki.ede.safe.ui.sync.syncJson
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -648,15 +650,22 @@ fun DeviceSyncDialog(
                         val targetDisplayName = selectedDevice?.name ?: candidateHosts.first()
                         isSyncing = true
                         isSyncCompleted = false
-                        syncStatusMessage = "Reading local vault items..."
+                        syncStatusMessage = "Connecting to $targetDisplayName..."
                         firebaseLog("SafeSync", "Client initiating sync to candidate hosts: $candidateHosts on ports $candidatePorts")
                         firebasePublishFlowEvent("SafeSync", "ClientSyncStarted", mapOf("targetHosts" to candidateHosts.joinToString(",")))
-                        coroutineScope.launch {
+                        coroutineScope.launch(Dispatchers.Default) {
                             try {
+                                withContext(Dispatchers.Main) {
+                                    syncStatusMessage = "Preparing vault data (${candidateHosts.first()})..."
+                                }
                                 val localItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
-                                syncStatusMessage = "Analyzing vault checksums (${localItems.size} items)..."
+                                withContext(Dispatchers.Main) {
+                                    syncStatusMessage = "Computing vault checksums (${localItems.size} items)..."
+                                }
                                 val localTree = MerkleTreeHelper.buildMerkleVault(localItems)
-                                syncStatusMessage = "Preparing sync payload..."
+                                withContext(Dispatchers.Main) {
+                                    syncStatusMessage = "Encrypting sync payload..."
+                                }
                                 val localJson = syncJson.encodeToString(SyncPayload(localItems, localTree.rootHash, currentDeviceName))
                                 firebaseLog("SafeSync", "Client prepared payload: localItems=${localItems.size}, localRoot=${localTree.rootHash.take(8)}, payloadBytes=${localJson.length}")
                                 firebasePublishFlowEvent("SafeSync", "ClientPreparedPayload", mapOf("localItems" to localItems.size.toString(), "bytes" to localJson.length.toString()))
@@ -667,12 +676,19 @@ fun DeviceSyncDialog(
                                 outer@ for (port in candidatePorts) {
                                     for (host in candidateHosts) {
                                         try {
+                                            withContext(Dispatchers.Main) {
+                                                syncStatusMessage = "Connecting to $targetDisplayName ($host:$port)..."
+                                            }
                                             remoteJson = networkService.sendPayloadToHost(
                                                 hostAddress = host,
                                                 port = port,
                                                 pin = inputPin,
                                                 localPayloadJson = localJson,
-                                                onProgress = { step -> syncStatusMessage = step }
+                                                onProgress = { step ->
+                                                    coroutineScope.launch(Dispatchers.Main) {
+                                                        syncStatusMessage = step
+                                                    }
+                                                }
                                             )
                                             if (remoteJson != null) {
                                                 firebaseLog("SafeSync", "Client successfully received response from $host:$port (bytes=${remoteJson.length})")
