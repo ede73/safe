@@ -78,9 +78,6 @@ fun DeviceSyncDialog(
         firebasePublishFlowEvent("SafeSync", "DialogOpened", mapOf("role" to if (isInitiator) "server" else "client", "device" to currentDeviceName))
         if (isInitiator) {
             ContinuousAutoSyncCoordinator.instance.pauseServer()
-            firebaseLog("SafeSync", "Server advertising started: name=$currentDeviceName, port=$SAFE_SYNC_DEFAULT_PORT")
-            firebasePublishFlowEvent("SafeSync", "ServerStarted", mapOf("port" to SAFE_SYNC_DEFAULT_PORT.toString(), "device" to currentDeviceName))
-            syncManager.startAdvertising(currentDeviceName, SAFE_SYNC_DEFAULT_PORT)
             networkService.startServer(
                 port = SAFE_SYNC_DEFAULT_PORT,
                 pin = initiatorPin,
@@ -150,6 +147,10 @@ fun DeviceSyncDialog(
                     }
                 }
             )
+            val actualPort = if (networkService.boundPort > 0) networkService.boundPort else SAFE_SYNC_DEFAULT_PORT
+            firebaseLog("SafeSync", "Server advertising started: name=$currentDeviceName, port=$actualPort")
+            firebasePublishFlowEvent("SafeSync", "ServerStarted", mapOf("port" to actualPort.toString(), "device" to currentDeviceName))
+            syncManager.startAdvertising(currentDeviceName, actualPort)
         } else {
             firebaseLog("SafeSync", "Client starting mDNS discovery...")
             firebasePublishFlowEvent("SafeSync", "ClientDiscoveryStarted", emptyMap())
@@ -598,7 +599,18 @@ fun DeviceSyncDialog(
         },
         confirmButton = {
             if (isSyncing) {
-                // In progress, no confirm button
+                Button(
+                    enabled = false,
+                    onClick = {}
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Connecting & Syncing...")
+                }
             } else if (isSyncCompleted) {
                 Button(
                     onClick = onDismissRequest,
@@ -629,9 +641,9 @@ fun DeviceSyncDialog(
                             return@Button
                         }
                         val candidatePorts = if (selectedDevice != null && selectedDevice!!.port > 0) {
-                            listOf(selectedDevice!!.port, SAFE_SYNC_DEFAULT_PORT).distinct()
+                            listOf(selectedDevice!!.port, SAFE_SYNC_DEFAULT_PORT, 58444, 58445, 58446).distinct()
                         } else {
-                            listOf(SAFE_SYNC_DEFAULT_PORT)
+                            listOf(SAFE_SYNC_DEFAULT_PORT, 58444, 58445, 58446)
                         }
                         val targetDisplayName = selectedDevice?.name ?: candidateHosts.first()
                         isSyncing = true
