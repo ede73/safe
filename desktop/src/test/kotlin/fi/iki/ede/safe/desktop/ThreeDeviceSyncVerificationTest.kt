@@ -243,9 +243,11 @@ class ThreeDeviceSyncVerificationTest {
         assertEquals(androidCats, iosCats, "Android and iOS must have identical categories")
         assertEquals(androidCats, desktopCats, "Android and Desktop must have identical categories")
 
-        assertEquals(13, androidEntries.size, "13 active reconciled entries")
+        // Divergent credentials are kept as active, encrypted conflict copies.
+        assertEquals(20, androidEntries.size, "13 primary entries plus 7 retained conflict copies")
+        assertEquals(7, androidEntries.count { it.startsWith("Conflict copy") })
         assertEquals(1, androidSoftDeleted.size, "1 soft-deleted tombstone in trash")
-        assertEquals(14, androidEntries.size + androidSoftDeleted.size, "All 14 total records preserved across active + trash")
+        assertEquals(21, androidEntries.size + androidSoftDeleted.size, "All records and retained conflict copies preserved")
 
         assertEquals(androidEntries.size, iosEntries.size, "Android and iOS must have identical active entry count")
         assertEquals(androidEntries.size, desktopEntries.size, "Android and Desktop must have identical active entry count")

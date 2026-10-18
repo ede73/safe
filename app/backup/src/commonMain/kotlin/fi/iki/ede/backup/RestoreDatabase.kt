@@ -16,6 +16,7 @@ import fi.iki.ede.cryptoobjects.*
 import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBID
+import fi.iki.ede.db.SyncTombstone
 import fi.iki.ede.gpm.model.*
 import fi.iki.ede.db.cxf.CXFAccount
 import fi.iki.ede.db.cxf.CXFImport
@@ -34,7 +35,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 @ExperimentalTime
-class RestoreDatabase : ExportConfig(ExportVersion.V1) {
+class RestoreDatabase : ExportConfig(ExportVersion.V2) {
     fun doRestore(
         backupSource: Source,
         userPassword: Password,
@@ -149,6 +150,7 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
         val restoredCxfAccounts = mutableListOf<CXFAccount>()
         val restoredCxfImports = mutableListOf<Pair<String, CXFImport>>()
         val restoredCxfPasskeys = mutableListOf<Pair<String, CXFPasskey>>()
+        val restoredSyncTombstones = mutableListOf<SyncTombstone>()
         while (myParser.eventType != XmlPullParser.END_DOCUMENT) {
             when (myParser.eventType) {
                 XmlPullParser.START_TAG -> {
@@ -167,8 +169,9 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                 // here and remind you to handle the situation
                                 when (version) {
                                     ExportVersion.V1 -> {
-                                        // current version - currently
+                                        // Older backups contain no permanent-deletion ledger.
                                     }
+                                    ExportVersion.V2 -> Unit
                                 }
                             }
                             val creationTime = myParser.getTrimmedAttributeValue(
@@ -205,6 +208,17 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                             if (cxfAccountId.isNotBlank()) {
                                 restoredCxfAccounts.add(CXFAccount(cxfAccountId = cxfAccountId, encryptedEmail = emailIvCipher))
                             }
+                        }
+
+                        listOf(Elements.ROOT_PASSWORD_SAFE, Elements.IMPORTS, Elements.SYNC_TOMBSTONE) -> {
+                            val syncId = myParser.getTrimmedAttributeValue(Attributes.SYNC_TOMBSTONE_ID)
+                            val deletedAt = myParser.getTrimmedAttributeValue(Attributes.SYNC_TOMBSTONE_DELETED_AT).toLongOrNull()
+                                ?: throw IllegalArgumentException("Invalid sync tombstone deletion time")
+                            require(syncId.isNotBlank() && syncId.length <= 4096) { "Sync tombstone has invalid identity" }
+                            require(deletedAt > 0L && deletedAt <= Long.MAX_VALUE / 1000L) {
+                                "Sync tombstone deletion time is out of range"
+                            }
+                            restoredSyncTombstones.add(SyncTombstone(syncId, deletedAt))
                         }
 
                         listOf(
@@ -517,6 +531,14 @@ class RestoreDatabase : ExportConfig(ExportVersion.V1) {
                                         if (toInsert.isNotEmpty()) {
                                             cxfDb.cxfPasskeyDao().insertAll(toInsert)
                                         }
+                                    }
+                                }
+                            }
+
+                            if (restoredSyncTombstones.isNotEmpty()) {
+                                kotlinx.coroutines.runBlocking {
+                                    restoredSyncTombstones.distinctBy { it.cxfItemId }.forEach {
+                                        dbHelper.database.syncTombstoneDao().upsert(it)
                                     }
                                 }
                             }

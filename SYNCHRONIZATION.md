@@ -1,9 +1,25 @@
 # Safe Synchronization & Reconciliation Architecture (SYNCHRONIZATION.md)
 
+**Validation status (2026-10-25):** The earlier backup/sync commit passed the repository's full pre-commit hook across its configured Xcode/iOS simulator, Android, Desktop, and sync targets. These tombstone follow-up changes passed focused Desktop, shared-ui, backup round-trip, and Android compile checks; the full hook and physical-device LAN pairing, restart, revocation, and flood tests have not yet run for this follow-up. The per-device selective revocation and network-wide rekey design remains future work; the current action resets this device's whole shared sync group.
+
+**Read this before the design notes below:** Sections 4–8 contain proposals, historical scenarios, and test-rig instructions; they do not all describe shipped behavior. The current behavior and known limits are listed here so plans are not mistaken for implementation.
+
+### Current implementation facts and gotchas
+
+- Sync sends a full snapshot and reconciles it on each exchange. There is no persisted shared ancestor, peer-specific root history, or fast-forward import path.
+- The pairing code is 24 random hexadecimal characters (96 bits). The sync credential is independent of the database master key. Backup restore imports the same master key; changing the login password rewraps that key. Sync itself can still work between different master keys because each app decrypts locally and encrypts under its own vault key.
+- X25519 provides the ephemeral Diffie–Hellman shared secret; it does not by itself authenticate peers or define the complete E2E protocol. This implementation also authenticates the handshake with the pairing code or cluster secret and derives session keys. Independent third-party review is optional assurance, not a prerequisite for using X25519. Protocol correctness still depends on its authentication, transcript binding, key derivation, encryption, replay handling, and platform key storage being implemented and tested correctly.
+- Conflict winners use the item timestamp and a deterministic item-hash tie-break. Divergent losing password records are kept as encrypted, active `Conflict copy` entries. Their IDs must derive from the losing item hash, not the local conflict ID, or peers make duplicate copies and fail to converge. The three-device fixture currently has 13 primary active entries, 7 retained conflict copies, and 1 soft-deleted entry; those extra rows are intentional preservation.
+- Existing explicit sync IDs are preferred. Password entries without one use `site-entry:<database id>`. Once peers share the cluster secret, independently created password rows with different local IDs can bootstrap an HMAC-based content identity only when complete credential content is unique on both peers. The HMAC avoids storing a directly guessable password hash. Without a shared cluster secret, or with ambiguous duplicates, bootstrap matching is disabled. Similar names/usernames alone never merge entries; category and timestamp differences do not prevent a valid bootstrap match.
+- Sync protocol version 4 carries `isPermanentDeletion` tombstone items; all peers must run a version that supports protocol 4. Physical password purge writes only the stable sync ID and deletion time to `sync_tombstones`; the password, username, note, URL, and name are removed with the row. Tombstones are included in Merkle roots and snapshots and circulate A→B→C→A. Backup format V2 preserves the tombstone ledger; older V1 backups cannot. Tombstones are retained indefinitely because the current protocol has no all-peer acknowledgement or safe tombstone garbage collection.
+- Permanent tombstones rely on a stable sync ID. Once independently-created legacy rows have reconciled and adopted a shared ID, purge propagates across devices with different local row IDs. A purge before that initial reconciliation can only tombstone its local `site-entry:<id>` identity; matching an independently-created duplicate on another device is ambiguous and is intentionally not guessed from a password hash.
+- Removing a paired device resets this device's whole shared sync key and remembers its fingerprint. Other devices still holding the old key can continue syncing with each other until they are reset too. This is group reset, not selective network-wide revocation.
+- The repository commit hook runs broad verification (including Xcode and Gradle platform tests, and may run emulator-backed checks). It takes longer than the focused unit commands. Let it finish, inspect the failing test/report, and verify whether changed counts are retained conflict copies before updating expectations; do not bypass it just to make a commit pass.
+
 ## 1. Executive Summary & The Prime Directive
 
-The primary objective of Safe's Peer-to-Peer (P2P) synchronization engine is **zero data loss**.
-Safe stores user passwords, notes, financial credentials, and recovery codes. Under no circumstances should an automated sync routine permanently discard user data due to clock skew, ambiguous state, or network interruptions.
+The objective of Safe's Peer-to-Peer (P2P) synchronization engine is to minimize data loss.
+Safe stores user passwords, notes, financial credentials, and recovery codes. Ambiguous changes should retain both versions where possible. The implementation still has known deletion and multi-device revocation limits listed above.
 
 ### The Retentive Invariant
 > **"Always make a retentive mistake, never a destructive mistake."**
@@ -11,20 +27,22 @@ Safe stores user passwords, notes, financial credentials, and recovery codes. Un
 
 ---
 
-## 2. Security Architecture: The Vault Cluster Secret & Hardware Keystore
+## 2. Security Architecture: The Vault Cluster Secret
 
-To enable effortless background auto-sync without sacrificing security, Safe uses a **Vault Cluster Secret** stored strictly in hardware-backed secure storage.
+Safe uses one persistent 256-bit **Vault Cluster Secret** for background sync. It is exchanged only inside an authenticated, encrypted pairing session using a random 24-character hexadecimal code (96 bits) and is encrypted at rest with the unlocked vault encryption key. The storage protection of that key varies by platform. Legacy plaintext sync credentials are invalidated during migration and devices must be paired again.
 
 ```
-Vault Cluster ID:       UUID (Identifies this specific user's vault cluster)
-Vault Sync Secret:      256-bit cryptographic key (AES-256-GCM + HMAC-SHA256)
-Hardware Storage:       • Android: Android Keystore / StrongBox
-                        • iOS: iOS Keychain / Secure Enclave
-                        • Desktop / macOS: macOS Keychain / OS Keystore
+Pairing:        Ephemeral X25519 session, authenticated with the displayed PIN
+Background sync: Fresh ephemeral X25519 session authenticated with the stable cluster secret
+At rest:        Cluster secret encrypted using the unlocked vault key
+Revocation:     Removing one member revokes the shared secret locally and requires re-pairing
 ```
 
-- **Zero User Exposure**: The user never sees, copies, or manages hex keys. The key lives entirely inside hardware-backed storage.
-- **Lost Secret Recovery**: If a device is wiped or its keychain cleared, nothing is broken: the user simply runs the 8-digit PIN pairing ceremony once from any other active device to re-inject the cluster secret.
+Synchronization uses a separate credential from the database backup format. Restoring a full backup imports its encrypted master key, so the restored vault uses the same master key. Changing the login password only rewraps that key and does not rotate it. Sync does not compare master keys: each app decrypts its own records locally and encrypts received records with its own vault key. Pairing authorizes the two open vaults to exchange records, including when their master keys differ.
+
+- **Zero User Exposure**: The user never sees or copies the cluster secret. Automatic sync starts only while the vault is unlocked.
+- **Lost Secret Recovery**: If a device loses the secret, re-pair it with an active member using a new pairing code.
+- **Revocation scope**: Removing a device resets the shared credential locally, remembers the revoked key fingerprint, and stops this device's listener. The old key cannot be reintroduced here by pairing with an unchanged peer. Other members that still hold the old credential can continue syncing with each other; reset them separately before re-pairing the trusted set. Selective network-wide revocation requires per-device identities and key rotation.
 
 ### 2.1. Trust Topology: Multi-Device Mesh
 When a new device joins the cluster via PIN with **any single existing device**, it receives the Vault Cluster Secret.
@@ -32,9 +50,9 @@ When a new device joins the cluster via PIN with **any single existing device**,
 
 ```mermaid
 graph TD
-    subgraph "Trusted Vault Cluster (Hardware Keystore)"
-        A[Device A: Phone<br/>StrongBox] <--->|Silent Auto-Sync| B[Device B: Laptop<br/>macOS Keychain]
-        B <--->|Silent Auto-Sync| C[Device C: Desktop<br/>OS Keystore]
+    subgraph "Trusted Vault Cluster (encrypted local credential)"
+        A[Device A: Phone] <--->|Silent Auto-Sync| B[Device B: Laptop]
+        B <--->|Silent Auto-Sync| C[Device C: Desktop]
         A <--->|Silent Auto-Sync| C
     end
     
@@ -47,8 +65,8 @@ graph TD
 ## 3. Auto-Discovery & Zero-Drift Synchronization
 
 To eliminate drift before conflicts can accumulate, Safe auto-syncs silently over local Wi-Fi:
-1. **mDNS Announcement**: Safe announces `_safe-sync._tcp.` with its ephemeral port and `vaultClusterId`.
-2. **Mutual Cryptographic Challenge**: Peers verify each other via HMAC-SHA256 challenge-response using the hardware-stored `Vault Sync Secret` in under 15ms. Unauthenticated connections are dropped immediately.
+1. **Discovery**: Clients advertise the `_safe-sync._tcp.` service (Desktop uses a multicast beacon) with a listener port.
+2. **Mutual Authentication**: Fresh X25519 session keys are authenticated in both directions with HMAC-SHA256 commitments to the stable cluster secret. Unauthenticated connections cannot exchange vault payloads.
 3. **Trigger Events**:
    - On app unlock.
    - 2 seconds after any local password addition, edit, or deletion.
@@ -58,7 +76,7 @@ To eliminate drift before conflicts can accumulate, Safe auto-syncs silently ove
 
 ## 4. Git-Style Fast-Forward Merges & Hash Lineage
 
-Safe guarantees mathematical convergence by maintaining a lightweight peer state table in SQLite:
+A future fast-forward design could maintain a peer state table in SQLite. The current implementation exchanges Merkle roots and full item snapshots on each heartbeat and does not persist this table:
 
 ```sql
 CREATE TABLE sync_peer_state (
@@ -71,7 +89,7 @@ CREATE TABLE sync_peer_state (
 ### 4.1. The Canonical Vault Checksum
 Every device computes an immutable Merkle hash representing its entire database state:
 ```
-entry_hash = SHA-256(cxfItemId + name + username + password + note + categoryName + modifiedAt + isDeleted)
+entry_hash = SHA-256(canonical serialized SyncItem, including URL and CXF metadata)
 vault_checksum = SHA-256(sorted entry_hashes)
 ```
 - Parity between any two devices is mathematically verified if and only if:
@@ -340,7 +358,7 @@ graph LR
 ### 9.3. ADB Port Forwarding Commands for Testing
 
 #### A. Android Emulator (Client) $\to$ macOS Host / iOS Simulator (Server)
-When the iOS Simulator or Desktop app displays the 8-digit PIN and listens on `:58443`:
+When the iOS Simulator or Desktop app displays the pairing code and listens on `:58443`:
 1. Android connects directly to `10.0.2.2:58443` (handled automatically by `ContinuousAutoSyncCoordinator` when `isAndroidGuest == true`).
 2. Or configure ADB reverse proxy:
    ```bash
@@ -349,7 +367,7 @@ When the iOS Simulator or Desktop app displays the 8-digit PIN and listens on `:
    Now Android connecting to `127.0.0.1:58443` reaches the macOS host server.
 
 #### B. macOS Host / iOS Simulator (Client) $\to$ Android Emulator (Server)
-When the Android Emulator displays the 8-digit PIN and listens on `:58443`:
+When the Android Emulator displays the pairing code and listens on `:58443`:
 1. Set up forward port mapping from host to emulator:
    ```bash
    adb forward tcp:58443 tcp:58443
@@ -381,8 +399,8 @@ adb reverse --remove-all
    - Ensure both apps are unlocked past the Master Password screen into the Category list.
 
 3. **Initiate Pairing Ceremony**:
-   - Device 1 (Server): Tap `Device Sync` $\to$ `Display PIN` (generates random 8-digit code, e.g., `8487 - 9314`, and starts listening on port `58443`).
-   - Device 2 (Client): Tap `Device Sync` $\to$ Enter the 8 digits $\to$ Tap `Connect & Sync`.
+   - Device 1 (Server): Tap `Device Sync` $\to$ `Display PIN` (generates a random 24-character pairing code and starts listening on port `58443`).
+   - Device 2 (Client): Tap `Device Sync` $\to$ Enter the pairing code $\to$ Tap `Connect & Sync`.
 
 4. **Verify Reconciliation**:
    - Both devices converge to identical Merkle root hashes (`vault_checksum`).

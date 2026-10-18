@@ -8,6 +8,11 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
+import fi.iki.ede.crypto.IVCipherText
+import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
+import fi.iki.ede.crypto.keystore.KeyManagement
+import fi.iki.ede.crypto.support.decrypt
+import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.dateutils.DateUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -70,6 +75,15 @@ object Preferences {
             } catch (e: Exception) {
                 // Ignore or log in-memory
             }
+        }
+        val oldClusterSecret = getCachedOrNull(vaultClusterSecretKey)
+        if (oldClusterSecret != null && !oldClusterSecret.startsWith("enc-v1:")) {
+            // Invalidate legacy plaintext credentials on upgrade. Re-pairing is required.
+            if (oldClusterSecret.length == 64 && oldClusterSecret.all { it in "0123456789abcdefABCDEF" }) {
+                rememberRevokedVaultClusterSecret(oldClusterSecret)
+            }
+            setVaultClusterSecret(null)
+            setCached(pairedSyncDevicesKey, emptySet())
         }
         initializePlatform()
     }
@@ -193,6 +207,7 @@ object Preferences {
     const val PREFERENCE_AUTO_SYNC_WIFI_ENABLED = "auto_sync_wifi_enabled"
     const val PREFERENCE_PAIRED_SYNC_DEVICES = "paired_sync_devices"
     const val PREFERENCE_VAULT_CLUSTER_SECRET = "vault_cluster_secret"
+    const val PREFERENCE_REVOKED_VAULT_CLUSTER_SECRETS = "revoked_vault_cluster_secrets"
     const val PREFERENCE_LAST_SYNC_TIME = "time_of_last_sync"
     const val PREFERENCE_LOCAL_DEVICE_ID = "sync_local_device_id"
     const val PREFERENCE_SYNC_DEVICE_CUSTOM_NAME = "sync_device_custom_name"
@@ -202,6 +217,7 @@ object Preferences {
     private val pairedSyncDevicesKey = stringSetPreferencesKey(PREFERENCE_PAIRED_SYNC_DEVICES)
     private val localDeviceIdKey = stringPreferencesKey(PREFERENCE_LOCAL_DEVICE_ID)
     private val vaultClusterSecretKey = stringPreferencesKey(PREFERENCE_VAULT_CLUSTER_SECRET)
+    private val revokedVaultClusterSecretsKey = stringSetPreferencesKey(PREFERENCE_REVOKED_VAULT_CLUSTER_SECRETS)
     private val lastSyncTimeKey = longPreferencesKey(PREFERENCE_LAST_SYNC_TIME)
     private val defaultUserNameKey = stringPreferencesKey(PREFERENCE_DEFAULT_USER_NAME)
     private val lockOnScreenLockKey = booleanPreferencesKey(PREFERENCE_LOCK_ON_SCREEN_LOCK)
@@ -423,16 +439,76 @@ object Preferences {
     }
 
     fun removePairedSyncDevice(deviceId: String) {
-        val current = getPairedSyncDevices().toMutableSet()
-        current.removeAll { it.startsWith("${deviceId.trim()}|") }
-        setCached(pairedSyncDevicesKey, current)
+        if (getPairedSyncDevices().none { it.startsWith("${deviceId.trim()}|") }) return
+        // A single shared credential cannot revoke only one member. Revoke the entire
+        // cluster immediately and require fresh PIN pairing with the retained devices.
+        getVaultClusterSecret()?.let(::rememberRevokedVaultClusterSecret)
+        setVaultClusterSecret(null)
+        setCached(pairedSyncDevicesKey, emptySet())
     }
 
-    fun getVaultClusterSecret(): String? =
-        getCachedOrNull(vaultClusterSecretKey)
+    private fun rememberRevokedVaultClusterSecret(secret: String) {
+        val revoked = getCached(revokedVaultClusterSecretsKey, emptySet()).toMutableSet()
+        revoked.add(KeyManagement.syncSecretFingerprint(secret))
+        // Durable before the active credential is removed, even on abrupt exit.
+        if (::dataStore.isInitialized) {
+            runBlocking {
+                dataStore.edit { prefs -> prefs[revokedVaultClusterSecretsKey] = revoked }
+            }
+        }
+        synchronized(cacheLock) {
+            cache[revokedVaultClusterSecretsKey.name] = PreferenceValue.StringSetVal(revoked)
+        }
+    }
 
-    fun setVaultClusterSecret(secret: String?) =
-        setCached(vaultClusterSecretKey, secret)
+    fun isRevokedVaultClusterSecret(secret: String): Boolean =
+        KeyManagement.syncSecretFingerprint(secret) in getCached(revokedVaultClusterSecretsKey, emptySet())
+
+    /** The legacy unencrypted value is intentionally rejected; it must be re-paired. */
+    @OptIn(ExperimentalStdlibApi::class)
+    fun getVaultClusterSecret(): String? {
+        val stored = getCachedOrNull(vaultClusterSecretKey) ?: return null
+        if (!stored.startsWith("enc-v1:")) return null
+        if (!KeyStoreHelperFactory.hasActiveKeyStoreHelper) return null
+        return try {
+            val encoded = stored.removePrefix("enc-v1:").hexToByteArray()
+            if (encoded.isEmpty()) return null
+            val ivSize = encoded[0].toInt() and 0xff
+            if (ivSize == 0 || encoded.size <= ivSize + 1) return null
+            IVCipherText(encoded.copyOfRange(1, ivSize + 1), encoded.copyOfRange(ivSize + 1, encoded.size)).decrypt()
+                .takeIf { it.length == 64 && it.all { ch -> ch in "0123456789abcdefABCDEF" } }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    @OptIn(ExperimentalStdlibApi::class)
+    fun setVaultClusterSecret(secret: String?) {
+        val stored = if (secret == null) {
+            null
+        } else {
+            require(secret.length == 64 && secret.all { it in "0123456789abcdefABCDEF" })
+            check(KeyStoreHelperFactory.hasActiveKeyStoreHelper) { "Vault must be unlocked before pairing" }
+            val cipher = secret.encrypt()
+            require(cipher.iv.size in 1..255)
+            "enc-v1:" + (byteArrayOf(cipher.iv.size.toByte()) + cipher.iv + cipher.cipherText).toHexString()
+        }
+        // Persist first. A failed write must not leave an apparently paired or
+        // revoked credential in memory that disagrees with the next app launch.
+        if (::dataStore.isInitialized) {
+            runBlocking {
+                dataStore.edit { prefs ->
+                    if (stored == null) prefs.remove(vaultClusterSecretKey)
+                    else prefs[vaultClusterSecretKey] = stored
+                }
+            }
+        }
+        synchronized(cacheLock) {
+            if (stored == null) cache.remove(vaultClusterSecretKey.name)
+            else cache[vaultClusterSecretKey.name] = PreferenceValue.StringVal(stored)
+        }
+        notifyPlatformListeners(vaultClusterSecretKey.name)
+    }
 
     fun getSyncDeviceCustomName(): String =
         getCached(syncDeviceCustomNameKey, "")

@@ -57,7 +57,7 @@ fun DeviceSyncDialog(
 ) {
     var autoSyncEnabled by remember { mutableStateOf(Preferences.isAutoSyncWifiEnabled()) }
     var isInitiator by remember { mutableStateOf(true) }
-    var initiatorPin by remember { mutableStateOf(SyncPairingSession.generate8DigitPin()) }
+    var initiatorPin by remember { mutableStateOf(SyncPairingSession.generatePairingCode()) }
     var inputPin by remember { mutableStateOf("") }
     var syncStatusMessage by remember { mutableStateOf<String?>(null) }
     var isSyncing by remember { mutableStateOf(false) }
@@ -137,7 +137,9 @@ fun DeviceSyncDialog(
                         isSyncCompleted = true
                         isSyncing = false
                         onSyncCompleted()
-                        ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER")
+                        Preferences.getVaultClusterSecret()?.let { secret ->
+                            ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(secret)
+                        }
                         syncJson.encodeToString(SyncPayload(updatedLocalItems, updatedTree.rootHash, currentDeviceName))
                     } catch (e: Exception) {
                         isSyncing = false
@@ -341,7 +343,7 @@ fun DeviceSyncDialog(
                         onClick = {
                             isInitiator = true
                             isSyncCompleted = false
-                            initiatorPin = SyncPairingSession.generate8DigitPin()
+                            initiatorPin = SyncPairingSession.generatePairingCode()
                             syncStatusMessage = null
                         },
                         text = { Text("Display PIN") }
@@ -426,7 +428,7 @@ fun DeviceSyncDialog(
                     }
                 } else if (isInitiator) {
                     Text(
-                        text = "Broadcasting on local Wi-Fi.\nEnter this 8-digit PIN on the target device to sync:",
+                        text = "Broadcasting on local Wi-Fi.\nEnter this pairing code on the target device to sync:",
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -441,7 +443,7 @@ fun DeviceSyncDialog(
                     ) {
                         Text(
                             text = SyncPairingSession.formatPinForDisplay(initiatorPin),
-                            style = MaterialTheme.typography.headlineLarge.copy(
+                            style = MaterialTheme.typography.titleLarge.copy(
                                 fontFamily = FontFamily.Monospace,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 2.sp
@@ -455,7 +457,7 @@ fun DeviceSyncDialog(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     IconButton(onClick = {
-                        initiatorPin = SyncPairingSession.generate8DigitPin()
+                        initiatorPin = SyncPairingSession.generatePairingCode()
                     }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Regenerate PIN")
                     }
@@ -502,7 +504,7 @@ fun DeviceSyncDialog(
                             }
                         }
                         Text(
-                            text = "Enter the 8-digit PIN shown on ${selectedDevice!!.name}:",
+                            text = "Enter the pairing code shown on ${selectedDevice!!.name}:",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
@@ -573,11 +575,11 @@ fun DeviceSyncDialog(
                     OutlinedTextField(
                         value = inputPin,
                         onValueChange = { inputPin = SyncPairingSession.normalizePinInput(it) },
-                        label = { Text("8-Digit Sync PIN") },
-                        placeholder = { Text("e.g. 49208173") },
+                        label = { Text("Sync pairing code") },
+                        placeholder = { Text("24 hexadecimal characters") },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Number,
+                            keyboardType = KeyboardType.Ascii,
                             imeAction = ImeAction.Done
                         ),
                         textStyle = MaterialTheme.typography.titleMedium.copy(
@@ -631,7 +633,9 @@ fun DeviceSyncDialog(
                     networkService.isAndroidGuest -> listOf("10.0.2.2")
                     else -> emptyList()
                 }
-                val isReadyToSync = inputPin.length == 8 && (selectedDevice != null || candidateHosts.isNotEmpty())
+                val isReadyToSync = inputPin.length == SyncPairingSession.PAIRING_CODE_LENGTH &&
+                    inputPin.all { it in "0123456789abcdef" } &&
+                    (selectedDevice != null || candidateHosts.isNotEmpty())
 
                 Button(
                     enabled = isReadyToSync,
@@ -651,12 +655,12 @@ fun DeviceSyncDialog(
                         isSyncing = true
                         isSyncCompleted = false
                         syncStatusMessage = "Connecting to $targetDisplayName..."
-                        firebaseLog("SafeSync", "Client initiating sync to candidate hosts: $candidateHosts on ports $candidatePorts")
-                        firebasePublishFlowEvent("SafeSync", "ClientSyncStarted", mapOf("targetHosts" to candidateHosts.joinToString(",")))
+                        firebaseLog("SafeSync", "Client initiating sync to candidate hosts")
+                        firebasePublishFlowEvent("SafeSync", "ClientSyncStarted", mapOf("candidateHostsCount" to candidateHosts.size.toString()))
                         coroutineScope.launch(Dispatchers.Default) {
                             try {
                                 withContext(Dispatchers.Main) {
-                                    syncStatusMessage = "Preparing vault data (${candidateHosts.first()})..."
+                                    syncStatusMessage = "Preparing vault data..."
                                 }
                                 val localItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
                                 withContext(Dispatchers.Main) {
@@ -677,7 +681,7 @@ fun DeviceSyncDialog(
                                     for (host in candidateHosts) {
                                         try {
                                             withContext(Dispatchers.Main) {
-                                                syncStatusMessage = "Connecting to $targetDisplayName ($host:$port)..."
+                                                syncStatusMessage = "Connecting to $targetDisplayName..."
                                             }
                                             remoteJson = networkService.sendPayloadToHost(
                                                 hostAddress = host,
@@ -690,11 +694,11 @@ fun DeviceSyncDialog(
                                                     }
                                                 }
                                             )
-                                            firebaseLog("SafeSync", "Client successfully received response from $host:$port (bytes=${remoteJson.length})")
-                                            firebasePublishFlowEvent("SafeSync", "ClientReceivedResponse", mapOf("host" to host, "port" to port.toString(), "bytes" to remoteJson.length.toString()))
+                                            firebaseLog("SafeSync", "Client successfully received response (bytes=${remoteJson.length})")
+                                            firebasePublishFlowEvent("SafeSync", "ClientReceivedResponse", mapOf("bytes" to remoteJson.length.toString()))
                                             break@outer
                                         } catch (e: Exception) {
-                                            firebaseLog("SafeSync", "Client attempt to $host:$port failed: ${e::class.simpleName} - ${e.message}")
+                                            firebaseLog("SafeSync", "Client attempt failed: ${e::class.simpleName}")
                                             lastError = e
                                         }
                                     }
@@ -716,12 +720,12 @@ fun DeviceSyncDialog(
                                 val stableId = "peer-${peerName.filter { it.isLetterOrDigit() || it == '-' || it == '_' }}"
                                 Preferences.addPairedSyncDevice(stableId, peerName)
                                 Preferences.setLastSyncTime()
-                                firebaseLog("SafeSync", "Client registered paired peer: id=$stableId, name=$peerName, remoteItems=${remotePayload.items.size}")
-                                firebasePublishFlowEvent("SafeSync", "ClientPeerPaired", mapOf("peerName" to peerName, "remoteItems" to remotePayload.items.size.toString()))
+                                firebaseLog("SafeSync", "Client registered paired peer: id=$stableId, remoteItems=${remotePayload.items.size}")
+                                firebasePublishFlowEvent("SafeSync", "ClientPeerPaired", mapOf("remoteItems" to remotePayload.items.size.toString()))
 
                                 if (remotePayload.merkleRoot.isNotBlank() && remotePayload.merkleRoot == localTree.rootHash) {
-                                    firebaseLog("SafeSync", "Client: Merkle roots match (${localTree.rootHash.take(8)}). Already synchronized.")
-                                    firebasePublishFlowEvent("SafeSync", "ClientAlreadySynced", mapOf("peer" to peerName, "root" to localTree.rootHash.take(8)))
+                                    firebaseLog("SafeSync", "Client: Merkle roots match. Already synchronized.")
+                                    firebasePublishFlowEvent("SafeSync", "ClientAlreadySynced", mapOf("root" to localTree.rootHash.take(8)))
                                     syncStatusMessage = "Sync complete: All ${localItems.size} items are in sync with $peerName ✓"
                                     isSyncCompleted = true
                                     onSyncCompleted()
@@ -739,7 +743,9 @@ fun DeviceSyncDialog(
                                     }
                                     isSyncCompleted = true
                                     onSyncCompleted()
-                                    ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER")
+                                    Preferences.getVaultClusterSecret()?.let { secret ->
+                                        ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(secret)
+                                    }
                                 }
                                 if (selectedDevice != null) {
                                     ContinuousAutoSyncCoordinator.instance.registerPairedPeer(selectedDevice!!)

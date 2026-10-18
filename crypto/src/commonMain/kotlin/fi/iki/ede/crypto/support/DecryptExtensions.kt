@@ -8,9 +8,5 @@ fun IVCipherText.decrypt(decrypter: (IVCipherText) -> ByteArray = KeyStoreHelper
     if (this.isEmpty()) {
         return ""
     }
-    return try {
-        decrypter(this).decodeToString()
-    } catch (_: Throwable) {
-        ""
-    }
+    return decrypter(this).decodeToString()
 }

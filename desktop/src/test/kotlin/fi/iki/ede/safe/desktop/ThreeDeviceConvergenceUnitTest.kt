@@ -5,13 +5,58 @@ import fi.iki.ede.safe.ui.sync.ConflictType
 import fi.iki.ede.safe.ui.sync.SyncConflictResolver
 import fi.iki.ede.safe.ui.sync.SyncItem
 import fi.iki.ede.safe.ui.sync.SyncPayload
+import fi.iki.ede.safe.ui.sync.MerkleTreeHelper
+import fi.iki.ede.crypto.KeystoreHelperMock4UnitTests
+import fi.iki.ede.preferences.Preferences
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import io.mockk.unmockkAll
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class ThreeDeviceConvergenceUnitTest {
+
+    @BeforeEach
+    fun setUpClusterIdentityKey() {
+        KeystoreHelperMock4UnitTests.mock()
+        Preferences.setVaultClusterSecret("ab".repeat(32))
+    }
+
+    @AfterEach
+    fun clearClusterIdentityKey() {
+        Preferences.setVaultClusterSecret(null)
+        unmockkAll()
+    }
+
+    /** Exercise the real conflict analyzer while simulating the payload after a sync. */
+    private fun reconcileForUnitTest(
+        localItems: List<SyncItem>,
+        remoteItems: List<SyncItem>
+    ): List<SyncItem> {
+        val conflicts = SyncConflictResolver.analyzeConflicts(localItems, remoteItems)
+        val conflictedLocal = conflicts.mapNotNull { it.localItem }.toSet()
+        val merged = localItems.filterNot { it in conflictedLocal }.toMutableList()
+        for (conflict in conflicts) {
+            val winner = listOfNotNull(conflict.localItem, conflict.remoteItem).maxWithOrNull(
+                compareBy<SyncItem> { it.modifiedAt }.thenBy { MerkleTreeHelper.computeItemHash(it) }
+            ) ?: continue
+            merged += winner.copy(
+                cxfItemId = conflict.conflictId,
+                name = conflict.selectedName,
+                username = conflict.selectedUsername,
+                password = conflict.selectedPassword,
+                note = conflict.selectedNote,
+                url = conflict.selectedUrl,
+                categoryName = conflict.selectedCategoryName,
+                modifiedAt = maxOf(conflict.localItem?.modifiedAt ?: 0L, conflict.remoteItem?.modifiedAt ?: 0L),
+                isDeleted = conflict.selectedIsDeleted
+            )
+        }
+        return merged.distinctBy { it.cxfItemId }
+    }
 
     private fun simulatePeerSync(
         localItems: List<SyncItem>,
@@ -26,6 +71,7 @@ class ThreeDeviceConvergenceUnitTest {
             val user = c.selectedUsername.ifBlank { c.localItem?.username ?: c.remoteItem?.username ?: "" }
             val pass = c.selectedPassword.ifBlank { c.localItem?.password ?: c.remoteItem?.password ?: "" }
             val note = c.selectedNote.ifBlank { c.localItem?.note ?: c.remoteItem?.note ?: "" }
+            val url = c.selectedUrl.ifBlank { c.localItem?.url ?: c.remoteItem?.url ?: "" }
             val isDel = c.selectedIsDeleted
             val modTime = maxOf(c.localItem?.modifiedAt ?: 0L, c.remoteItem?.modifiedAt ?: 0L)
             val catName = c.localItem?.categoryName?.ifBlank { null }
@@ -37,9 +83,12 @@ class ThreeDeviceConvergenceUnitTest {
                 username = user,
                 password = pass,
                 note = note,
+                url = url,
                 categoryName = catName,
                 isDeleted = isDel,
-                modifiedAt = modTime
+                modifiedAt = modTime,
+                isPermanentDeletion = c.selectedIsDeleted &&
+                    listOfNotNull(c.localItem, c.remoteItem).any { it.isPermanentDeletion }
             )
         }
 
@@ -203,6 +252,71 @@ class ThreeDeviceConvergenceUnitTest {
 
         assertEquals(ConflictType.DELETED_ON_ONE_SIDE, conflict.type)
         assertEquals(true, conflict.selectedIsDeleted, "Deletion made after edit must win and propagate soft-deletion")
+    }
+
+    @Test
+    fun legacyDifferentRowIdsConvergeAroundThreeDeviceRingAndCarryDeletion() {
+        val initial = 1_000_000L
+        // These are independently-created rows for the same credential. Password
+        // and category database IDs are local; the synced category name is shared.
+        var a = listOf(SyncItem("local-a", "Mail", "alice", "same-secret", "https://mail.test", categoryName = "Personal", modifiedAt = initial, createdAt = 11))
+        var b = listOf(SyncItem("local-b", "Mail", "alice", "same-secret", "https://mail.test", categoryName = "Personal", modifiedAt = initial, createdAt = 22))
+        var c = listOf(SyncItem("local-c", "Mail", "alice", "same-secret", "https://mail.test", categoryName = "Personal", modifiedAt = initial, createdAt = 33))
+
+        // A -> B, B -> C, C -> A bootstraps a common ID despite unrelated row IDs.
+        a = reconcileForUnitTest(a, b)
+        b = reconcileForUnitTest(b, a)
+        c = reconcileForUnitTest(c, b)
+        a = reconcileForUnitTest(a, c)
+        assertEquals(listOf(a.single().cxfItemId, a.single().cxfItemId), listOf(b.single().cxfItemId, c.single().cxfItemId))
+        assertEquals(MerkleTreeHelper.buildMerkleVault(a).rootHash, MerkleTreeHelper.buildMerkleVault(b).rootHash)
+        assertEquals(MerkleTreeHelper.buildMerkleVault(a).rootHash, MerkleTreeHelper.buildMerkleVault(c).rootHash)
+
+        // Concurrent edits produce a resolver conflict and deterministically converge.
+        a = listOf(a.single().copy(password = "edited-on-a", modifiedAt = initial + 10))
+        b = listOf(b.single().copy(note = "edited-on-b", modifiedAt = initial + 20))
+        val conflict = SyncConflictResolver.analyzeConflicts(a, b).single()
+        assertEquals(ConflictType.MODIFIED_DIVERGENCE, conflict.type)
+        a = reconcileForUnitTest(a, b)
+        b = reconcileForUnitTest(b, a)
+        c = reconcileForUnitTest(c, b)
+        a = reconcileForUnitTest(a, c)
+        assertEquals(MerkleTreeHelper.buildMerkleVault(a).rootHash, MerkleTreeHelper.buildMerkleVault(b).rootHash)
+        assertEquals(MerkleTreeHelper.buildMerkleVault(a).rootHash, MerkleTreeHelper.buildMerkleVault(c).rootHash)
+
+        // A deletes; the tombstone rotates A -> B -> C -> A and remains deleted.
+        a = listOf(a.single().copy(isDeleted = true, isPermanentDeletion = true, modifiedAt = initial + 30))
+        b = reconcileForUnitTest(b, a)
+        c = reconcileForUnitTest(c, b)
+        a = reconcileForUnitTest(a, c)
+        assertTrue(a.single().isDeleted)
+        assertTrue(b.single().isDeleted)
+        assertTrue(c.single().isDeleted)
+        assertTrue(a.single().isPermanentDeletion)
+        assertTrue(b.single().isPermanentDeletion)
+        assertTrue(c.single().isPermanentDeletion)
+        assertEquals(MerkleTreeHelper.buildMerkleVault(a).rootHash, MerkleTreeHelper.buildMerkleVault(b).rootHash)
+        assertEquals(MerkleTreeHelper.buildMerkleVault(a).rootHash, MerkleTreeHelper.buildMerkleVault(c).rootHash)
+    }
+
+    @Test
+    fun ambiguousDuplicateLegacyContentIsKeptSeparate() {
+        val duplicate1 = SyncItem("a-1", "Mail", "alice", "same-secret", "https://mail.test")
+        val duplicate2 = duplicate1.copy(cxfItemId = "a-2")
+        val remote = duplicate1.copy(cxfItemId = "b-1")
+        val conflicts = SyncConflictResolver.analyzeConflicts(listOf(duplicate1, duplicate2), listOf(remote))
+        assertEquals(3, conflicts.size, "Ambiguous content must not cause unrelated rows to be merged")
+        assertTrue(conflicts.all { it.type == ConflictType.NEW_ENTRY_ADDED })
+    }
+
+    @Test
+    fun legacyContentIsNotUsedAsIdentityWithoutSharedClusterSecret() {
+        Preferences.setVaultClusterSecret(null)
+        val local = SyncItem("local-a", "Mail", "alice", "same-secret", "https://mail.test")
+        val remote = local.copy(cxfItemId = "local-b")
+        val conflicts = SyncConflictResolver.analyzeConflicts(listOf(local), listOf(remote))
+        assertEquals(2, conflicts.size)
+        assertTrue(conflicts.all { it.type == ConflictType.NEW_ENTRY_ADDED })
     }
 
     @Test

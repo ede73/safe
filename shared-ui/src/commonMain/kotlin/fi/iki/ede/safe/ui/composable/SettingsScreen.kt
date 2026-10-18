@@ -353,12 +353,17 @@ fun SettingsScreen(
 
                     if (pairedDevices.isEmpty()) {
                         Text(
-                            "No devices linked yet. Pair your other phone or laptop using the 8-digit PIN.",
+                            "No devices linked yet. Pair your other phone or laptop using the pairing code.",
                             color = Color.Gray,
                             fontSize = 12.sp,
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
                     } else {
+                        Text(
+                            "Removing a device resets this device's sync key and unpairs all devices here. Other devices can still sync with each other until you reset them too. Re-pair only devices you trust.",
+                            color = Color.Gray,
+                            fontSize = 11.sp
+                        )
                         pairedDevices.forEach { dev ->
                             Row(
                                 modifier = Modifier
@@ -393,6 +398,7 @@ fun SettingsScreen(
                                 IconButton(
                                     onClick = {
                                         Preferences.removePairedSyncDevice(dev.id)
+                                        ContinuousAutoSyncCoordinator.instance.stop()
                                         pairedDevices = Preferences.getPairedSyncDeviceList()
                                     }
                                 ) {

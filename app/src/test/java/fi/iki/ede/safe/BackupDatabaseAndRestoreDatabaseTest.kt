@@ -184,13 +184,19 @@ class BackupDatabaseAndRestoreDatabaseTest {
         }
         unmockkObject(Clock.System)
         val out = finalBuffer.readUtf8()
-        if (PASSWORD_ENCRYPTED_BACKUP_AT_1234.trimIndent().trim() != out.trimIndent().trim()) {
-            println("ACTUAL_NEW_BACKUP_HEX:\n" + out.trim())
-        }
-        assertEquals(
-            PASSWORD_ENCRYPTED_BACKUP_AT_1234.trimIndent().trim(),
-            out.trimIndent().trim(),
-        )
+        val expectedLines = PASSWORD_ENCRYPTED_BACKUP_AT_1234.trimIndent().trim().lines()
+        val actualLines = out.trimIndent().trim().lines()
+        assertEquals(expectedLines.take(4), actualLines.take(4))
+
+        // V2 changes the encrypted XML's version attribute, while the legacy fixture remains
+        // V1 so restore tests continue covering old backups.
+        val expectedLegacyXml = KeyStoreHelperFactory.getKeyStoreHelper().decrypterProvider(
+            IVCipherText(expectedLines[3].hexToByteArray(), expectedLines[4].hexToByteArray())
+        ).decodeToString()
+        val actualXml = KeyStoreHelperFactory.getKeyStoreHelper().decrypterProvider(
+            IVCipherText(actualLines[3].hexToByteArray(), actualLines[4].hexToByteArray())
+        ).decodeToString()
+        assertEquals(expectedLegacyXml.replace("version=\"1\"", "version=\"2\""), actualXml)
 
         runBlocking {
             DataModel.dumpModelInDebugMode()

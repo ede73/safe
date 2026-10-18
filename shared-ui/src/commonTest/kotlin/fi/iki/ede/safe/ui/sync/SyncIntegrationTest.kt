@@ -11,7 +11,8 @@ import kotlin.test.assertTrue
 class SyncIntegrationTest {
     @Test
     fun testDesktopSyncHandshake() = runBlocking {
-        val pin = SyncPairingSession.generate8DigitPin()
+        // Exercise the automatic-sync transport without depending on a real vault keystore.
+        val pin = "a".repeat(64)
         val server = SyncNetworkService()
         var serverReceived: String? = null
         server.startServer(port = SAFE_SYNC_DEFAULT_PORT, pin = pin) { payloadJson ->

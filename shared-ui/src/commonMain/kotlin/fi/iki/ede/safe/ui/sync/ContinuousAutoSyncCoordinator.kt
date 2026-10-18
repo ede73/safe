@@ -1,9 +1,10 @@
 package fi.iki.ede.safe.ui.sync
 
-import fi.iki.ede.notifications.showToast
-import fi.iki.ede.preferences.Preferences
+import fi.iki.ede.logger.Logger
 import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.logger.firebaseRecordException
+import fi.iki.ede.notifications.showToast
+import fi.iki.ede.preferences.Preferences
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -16,8 +17,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import kotlin.time.Clock
+
+private const val TAG = "SafeAutoSync"
 
 data class AutoSyncStatus(
     val isRunning: Boolean,
@@ -38,8 +40,7 @@ class ContinuousAutoSyncCoordinator(
     private val syncManager: LocalDeviceSyncManager = LocalDeviceSyncManager(),
     private val scope: CoroutineScope = CoroutineScope(
         Dispatchers.Default + SupervisorJob() + CoroutineExceptionHandler { _, t ->
-            println("ContinuousAutoSyncCoordinator coroutine exception: ${t.message}")
-            t.printStackTrace()
+            Logger.e(TAG, "Coroutine exception: ${t.message}", t)
         }
     )
 ) {
@@ -87,9 +88,7 @@ class ContinuousAutoSyncCoordinator(
                 lastStatusMessage = lastStatusMessage
             )
             _statusFlow.value = newStatus
-        } catch (t: Throwable) {
-            t.printStackTrace()
-        }
+        } catch (_: Throwable) {}
     }
 
     fun getStatus(): AutoSyncStatus {
@@ -120,13 +119,15 @@ class ContinuousAutoSyncCoordinator(
     }
 
     /**
-     * Starts continuous auto-discovery and heartbeat sync.
+     * Starts continuous auto-discovery, advertising, and heartbeat sync.
      */
-    /**
-     * Starts continuous auto-discovery and heartbeat sync.
-     */
-    fun start(deviceName: String = DeviceInfoProvider.getFormattedDeviceName(), authToken: String, heartbeatIntervalMs: Long = 5000L) {
+    fun start(
+        deviceName: String = DeviceInfoProvider.getFormattedDeviceName(),
+        authToken: String,
+        heartbeatIntervalMs: Long = 5000L
+    ) {
         if (isRunning) return
+        if (authToken.isBlank()) return
         if (!Preferences.isAutoSyncWifiEnabled()) return
         if (Preferences.getPairedSyncDevices().isEmpty()) return
         isRunning = true
@@ -151,12 +152,30 @@ class ContinuousAutoSyncCoordinator(
                 onPayloadReceived = ::handleServerPayload
             )
         } catch (e: Exception) {
-            e.printStackTrace()
+            Logger.e(TAG, "Error starting auto-sync server", e)
         }
 
-        // Continuous auto-sync NEVER runs mDNS discovery on its own.
-        // Discovery is strictly user-consented and only initiated when the user explicitly
-        // opens the Device Sync Dialog from the menu.
+        val actualPort = if (networkService.boundPort > 0) networkService.boundPort else SAFE_SYNC_DEFAULT_PORT
+
+        // 2. Start advertising and discovery on local network
+        try {
+            syncManager.startAdvertising(effectiveName, actualPort)
+            syncManager.startDiscovery(
+                onDeviceFound = { device ->
+                    val isSelf = device.name.equals(effectiveName, ignoreCase = true) ||
+                            ((device.hostAddress == "127.0.0.1" || device.hostAddress == "localhost") &&
+                                    (device.port == networkService.boundPort || device.port == SAFE_SYNC_DEFAULT_PORT))
+                    if (!isSelf) {
+                        registerPairedPeer(device)
+                    }
+                },
+                onDeviceLost = { device ->
+                    unregisterPairedPeer(device.id)
+                }
+            )
+        } catch (e: Exception) {
+            Logger.e(TAG, "Error starting auto-sync discovery/advertising", e)
+        }
 
         // 3. Heartbeat loop to keep state synchronized continuously
         backgroundJob = scope.launch {
@@ -167,9 +186,7 @@ class ContinuousAutoSyncCoordinator(
                     for (peer in uniquePeers) {
                         try {
                             syncWithPeer(peer, authToken)
-                        } catch (_: Exception) {
-                            // Ignored: peer not reachable on this endpoint
-                        }
+                        } catch (_: Exception) {}
                     }
                 }
             }
@@ -222,7 +239,7 @@ class ContinuousAutoSyncCoordinator(
                 try {
                     onDataMutatedBySync?.invoke()
                 } catch (e: Throwable) {
-                    e.printStackTrace()
+                    Logger.e(TAG, "Error invoking onDataMutatedBySync callback", e)
                 }
             }
             val updatedLocalItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
@@ -231,34 +248,47 @@ class ContinuousAutoSyncCoordinator(
             updateStatus()
             syncJson.encodeToString(SyncPayload(updatedLocalItems, updatedTree.rootHash, myName))
         } catch (t: Throwable) {
-            t.printStackTrace()
-            val myName = DeviceInfoProvider.getFormattedDeviceName()
-            val localItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
-            val localTree = MerkleTreeHelper.buildMerkleVault(localItems)
-            syncJson.encodeToString(SyncPayload(localItems, localTree.rootHash, myName))
+            Logger.e(TAG, "Error in handleServerPayload", t)
+            throw t
         }
     }
 
     /**
-     * Pauses the background server and advertising (e.g. while PIN pairing dialog is active).
+     * Pauses the background server, discovery, and advertising (e.g. while PIN pairing dialog is active).
      */
     fun pauseServer() {
         try {
             networkService.stopServer()
             syncManager.stopAdvertising()
+            syncManager.stopDiscovery()
         } catch (_: Exception) {}
     }
 
     /**
-     * Resumes the background server and advertising after PIN pairing dialog closes.
+     * Resumes the background server, discovery, and advertising after PIN pairing dialog closes.
      */
     fun resumeServer() {
-        if (!isRunning || !Preferences.isAutoSyncWifiEnabled()) return
+        if (!isRunning || !Preferences.isAutoSyncWifiEnabled() || currentAuthToken.isBlank()) return
         try {
             networkService.startServer(
                 port = SAFE_SYNC_DEFAULT_PORT,
                 pin = currentAuthToken,
                 onPayloadReceived = ::handleServerPayload
+            )
+            val actualPort = if (networkService.boundPort > 0) networkService.boundPort else SAFE_SYNC_DEFAULT_PORT
+            syncManager.startAdvertising(currentDeviceName, actualPort)
+            syncManager.startDiscovery(
+                onDeviceFound = { device ->
+                    val isSelf = device.name.equals(currentDeviceName, ignoreCase = true) ||
+                            ((device.hostAddress == "127.0.0.1" || device.hostAddress == "localhost") &&
+                                    (device.port == networkService.boundPort || device.port == SAFE_SYNC_DEFAULT_PORT))
+                    if (!isSelf) {
+                        registerPairedPeer(device)
+                    }
+                },
+                onDeviceLost = { device ->
+                    unregisterPairedPeer(device.id)
+                }
             )
         } catch (_: Exception) {}
     }
@@ -273,8 +303,10 @@ class ContinuousAutoSyncCoordinator(
         try {
             networkService.stopServer()
         } catch (_: Exception) {}
-        syncManager.stopAdvertising()
-        syncManager.stopDiscovery()
+        try {
+            syncManager.stopAdvertising()
+            syncManager.stopDiscovery()
+        } catch (_: Exception) {}
         discoveredPeers.clear()
         peerRootHashes.clear()
         lastStatusMessage = "Stopped"
@@ -286,7 +318,11 @@ class ContinuousAutoSyncCoordinator(
      * Immediately triggers sync with all currently connected peers.
      */
     fun onLocalDataChanged(authToken: String) {
-        if (!isRunning || !Preferences.isAutoSyncWifiEnabled()) return
+        if (authToken.isBlank() || !Preferences.isAutoSyncWifiEnabled()) return
+        if (!isRunning && Preferences.getPairedSyncDevices().isNotEmpty()) {
+            start(authToken = authToken)
+        }
+        if (!isRunning) return
         scope.launch {
             try {
                 val uniquePeers = getCandidatePeers()
@@ -297,7 +333,7 @@ class ContinuousAutoSyncCoordinator(
                 }
                 updateStatus()
             } catch (t: Throwable) {
-                t.printStackTrace()
+                Logger.e(TAG, "Error triggering onLocalDataChanged sync", t)
             }
         }
     }
@@ -308,17 +344,8 @@ class ContinuousAutoSyncCoordinator(
      */
     suspend fun syncWithPeer(peer: DiscoveredDevice, authToken: String): Boolean {
         return try {
-            firebaseLog("SafeAutoSync", "Attempting syncWithPeer: ${peer.name} at ${peer.hostAddress}:${peer.port}")
             val localItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
             val localTree = MerkleTreeHelper.buildMerkleVault(localItems)
-
-            // Fast-path check: If we already know peer matches our local root, skip network roundtrip
-            if (peerRootHashes[peer.id] == localTree.rootHash) {
-                firebaseLog("SafeAutoSync", "Peer ${peer.name} cached root matches local root (${localTree.rootHash.take(8)}). Skipping roundtrip.")
-                lastStatusMessage = "Peer ${peer.name} already in parity ✓"
-                updateStatus()
-                return true
-            }
 
             val myName = DeviceInfoProvider.getFormattedDeviceName()
             val payload = SyncPayload(localItems, localTree.rootHash, myName)
@@ -339,8 +366,6 @@ class ContinuousAutoSyncCoordinator(
                 peer.id
             }
             if (remotePayload.merkleRoot.isNotBlank() && remotePayload.merkleRoot == localTree.rootHash) {
-                // Peer confirms roots are identical!
-                firebaseLog("SafeAutoSync", "Peer $effectivePeerName confirmed roots match (${localTree.rootHash.take(8)})")
                 peerRootHashes[peer.id] = localTree.rootHash
                 lastSyncTimestamp = Clock.System.now().toEpochMilliseconds()
                 lastStatusMessage = "Peer $effectivePeerName synchronized (Merkle Root match) ✓"
@@ -349,14 +374,11 @@ class ContinuousAutoSyncCoordinator(
                 updateStatus()
                 true
             } else {
-                // Roots differ -> apply incoming items / reconciliation
                 val conflicts = SyncConflictResolver.analyzeConflicts(localItems, remotePayload.items)
-                firebaseLog("SafeAutoSync", "Peer $effectivePeerName roots differ. Applying ${conflicts.size} conflicts...")
                 SyncConflictResolver.applyResolvedConflictsToLocalDatabase(conflicts)
 
                 val updatedItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
                 val updatedTree = MerkleTreeHelper.buildMerkleVault(updatedItems)
-                firebaseLog("SafeAutoSync", "Peer $effectivePeerName converged to root ${updatedTree.rootHash.take(8)}")
                 peerRootHashes[peer.id] = updatedTree.rootHash
                 lastSyncTimestamp = Clock.System.now().toEpochMilliseconds()
                 lastStatusMessage = "Peer $effectivePeerName reconciled & converged to ${updatedTree.rootHash.take(8)} ✓"
@@ -367,14 +389,14 @@ class ContinuousAutoSyncCoordinator(
                     try {
                         onDataMutatedBySync?.invoke()
                     } catch (e: Throwable) {
-                        e.printStackTrace()
+                        Logger.e(TAG, "Error invoking onDataMutatedBySync after conflict resolution", e)
                     }
                 }
                 updateStatus()
                 true
             }
         } catch (e: Throwable) {
-            firebaseRecordException("SafeAutoSync failed with peer ${peer.name}: ${e::class.simpleName}", e)
+            firebaseRecordException("SafeAutoSync failed: ${e::class.simpleName}", e)
             lastStatusMessage = "Auto-sync with ${peer.name} failed: ${e.message}"
             updateStatus()
             false
