@@ -12,6 +12,12 @@ Paused: not important
     - for now, both go under 1st category found or not possible to restore if no categories
 
 TODO:
+- GPM Dynamic Split Migration:
+    - Decouple GPM / GPMUI from the main app base APK.
+    - Convert gpmui to an on-demand Android Dynamic Feature Module (split) like categorypager and hibp.
+    - Remove direct project dependencies (:gpm, :gpmdatamodel, :gpmui) from app/build.gradle.kts.
+    - Remove hardcoded "Import Google Password Manager" from BottomActionBar / TopActionBar.
+    - Register GPM menu item dynamically into TopActionBarImportExportMenu via RegistrationAPI and IntentManager.registerSubMenu() when the split is installed.
 - iOS Biometrics: Implement Face ID / Touch ID on iOS (LocalAuthentication LAContext, Keychain kSecAccessControlBiometryAny, NSFaceIDUsageDescription) so master password is not required on every launch.
 - Login Screen Icon: Replace raw system emoji "🔐" in SharedLoginScreen with the Android lock/key vector graphic across all platforms so iOS does not render the brass Apple emoji.
 - BOTTOM toolbar!
