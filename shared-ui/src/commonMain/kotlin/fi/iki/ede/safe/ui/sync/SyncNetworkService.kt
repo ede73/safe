@@ -1,13 +1,19 @@
 package fi.iki.ede.safe.ui.sync
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+
+val syncJson = Json {
+    ignoreUnknownKeys = true
+    isLenient = true
+    encodeDefaults = false
+}
 
 @Serializable
 data class SyncPayload(
     val items: List<SyncItem>,
     val merkleRoot: String = "",
-    val deviceName: String = "",
-    val deviceId: String = ""
+    val deviceName: String = ""
 )
 
 expect class SyncNetworkService() {
