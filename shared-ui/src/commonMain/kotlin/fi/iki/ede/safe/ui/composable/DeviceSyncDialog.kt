@@ -37,6 +37,12 @@ import fi.iki.ede.logger.firebaseLog
 import fi.iki.ede.logger.firebaseLogEvent
 import fi.iki.ede.logger.firebasePublishFlowEvent
 import fi.iki.ede.logger.firebaseRecordException
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.ImeAction
+import fi.iki.ede.safe.ui.sync.syncJson
 import kotlinx.coroutines.launch
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -84,12 +90,12 @@ fun DeviceSyncDialog(
                         isSyncCompleted = false
                         syncStatusMessage = "Incoming connection: Receiving vault data..."
                         firebaseLog("SafeSync", "Server processing incoming payload (bytes=${remotePayloadJson.length})...")
-                        val remotePayload = Json.decodeFromString<SyncPayload>(remotePayloadJson)
+                        val remotePayload = syncJson.decodeFromString<SyncPayload>(remotePayloadJson)
                         val peerName = remotePayload.deviceName.ifBlank { "Safe Peer" }
                         syncStatusMessage = "Connected to $peerName. Comparing vault versions..."
                         val localItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
                         val localTree = MerkleTreeHelper.buildMerkleVault(localItems)
-                        val stableId = remotePayload.deviceId.ifBlank { "peer-${peerName.filter { it.isLetterOrDigit() || it == '-' || it == '_' }}" }
+                        val stableId = "peer-${peerName.filter { it.isLetterOrDigit() || it == '-' || it == '_' }}"
                         Preferences.addPairedSyncDevice(stableId, peerName)
                         Preferences.setLastSyncTime()
                         firebaseLog("SafeSync", "Server paired device registered: id=$stableId, name=$peerName, remoteItems=${remotePayload.items.size}, localItems=${localItems.size}")
@@ -106,7 +112,7 @@ fun DeviceSyncDialog(
                             isSyncCompleted = true
                             isSyncing = false
                             onSyncCompleted()
-                            return@startServer Json.encodeToString(SyncPayload(emptyList(), localTree.rootHash, currentDeviceName, Preferences.getLocalDeviceId()))
+                            return@startServer syncJson.encodeToString(SyncPayload(emptyList(), localTree.rootHash, currentDeviceName))
                         }
 
                         syncStatusMessage = "Analyzing vault differences with $peerName..."
@@ -133,7 +139,7 @@ fun DeviceSyncDialog(
                         isSyncing = false
                         onSyncCompleted()
                         ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER")
-                        Json.encodeToString(SyncPayload(updatedLocalItems, updatedTree.rootHash, currentDeviceName, Preferences.getLocalDeviceId()))
+                        syncJson.encodeToString(SyncPayload(updatedLocalItems, updatedTree.rootHash, currentDeviceName))
                     } catch (e: Exception) {
                         isSyncing = false
                         syncStatusMessage = "Sync error: ${e.message ?: "Failed"}"
@@ -257,6 +263,7 @@ fun DeviceSyncDialog(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
                     .padding(vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -566,6 +573,10 @@ fun DeviceSyncDialog(
                         label = { Text("8-Digit Sync PIN") },
                         placeholder = { Text("e.g. 49208173") },
                         singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done
+                        ),
                         textStyle = MaterialTheme.typography.titleMedium.copy(
                             fontFamily = FontFamily.Monospace,
                             fontWeight = FontWeight.Bold
@@ -634,7 +645,7 @@ fun DeviceSyncDialog(
                                 syncStatusMessage = "Analyzing vault checksums (${localItems.size} items)..."
                                 val localTree = MerkleTreeHelper.buildMerkleVault(localItems)
                                 syncStatusMessage = "Preparing sync payload..."
-                                val localJson = Json.encodeToString(SyncPayload(localItems, localTree.rootHash, currentDeviceName, Preferences.getLocalDeviceId()))
+                                val localJson = syncJson.encodeToString(SyncPayload(localItems, localTree.rootHash, currentDeviceName))
                                 firebaseLog("SafeSync", "Client prepared payload: localItems=${localItems.size}, localRoot=${localTree.rootHash.take(8)}, payloadBytes=${localJson.length}")
                                 firebasePublishFlowEvent("SafeSync", "ClientPreparedPayload", mapOf("localItems" to localItems.size.toString(), "bytes" to localJson.length.toString()))
 
@@ -668,7 +679,7 @@ fun DeviceSyncDialog(
                                 }
 
                                 syncStatusMessage = "Reading remote vault response..."
-                                val remotePayload = Json.decodeFromString<SyncPayload>(remoteJson)
+                                val remotePayload = syncJson.decodeFromString<SyncPayload>(remoteJson)
                                 val peerName = if (remotePayload.deviceName.isNotBlank()) {
                                     remotePayload.deviceName
                                 } else if (selectedDevice != null && selectedDevice!!.name.isNotBlank()) {
@@ -676,7 +687,7 @@ fun DeviceSyncDialog(
                                 } else {
                                     targetDisplayName
                                 }
-                                val stableId = remotePayload.deviceId.ifBlank { "peer-${peerName.filter { it.isLetterOrDigit() || it == '-' || it == '_' }}" }
+                                val stableId = "peer-${peerName.filter { it.isLetterOrDigit() || it == '-' || it == '_' }}"
                                 Preferences.addPairedSyncDevice(stableId, peerName)
                                 Preferences.setLastSyncTime()
                                 firebaseLog("SafeSync", "Client registered paired peer: id=$stableId, name=$peerName, remoteItems=${remotePayload.items.size}")

@@ -313,6 +313,7 @@ fun MainViewController(): UIViewController {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .imePadding()
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(

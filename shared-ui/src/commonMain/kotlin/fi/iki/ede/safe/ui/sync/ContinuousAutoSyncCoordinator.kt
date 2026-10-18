@@ -204,9 +204,9 @@ class ContinuousAutoSyncCoordinator(
 
     private fun handleServerPayload(remotePayloadJson: String): String {
         return try {
-            val remotePayload = Json.decodeFromString<SyncPayload>(remotePayloadJson)
+            val remotePayload = syncJson.decodeFromString<SyncPayload>(remotePayloadJson)
             val peerDeviceName = remotePayload.deviceName.ifBlank { "Safe Peer" }
-            val stableId = remotePayload.deviceId.ifBlank { "peer-${peerDeviceName.filter { it.isLetterOrDigit() || it == '-' || it == '_' }}" }
+            val stableId = "peer-${peerDeviceName.filter { it.isLetterOrDigit() || it == '-' || it == '_' }}"
             Preferences.addPairedSyncDevice(stableId, peerDeviceName)
             Preferences.setLastSyncTime()
             val localItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
@@ -214,7 +214,7 @@ class ContinuousAutoSyncCoordinator(
             val myName = DeviceInfoProvider.getFormattedDeviceName()
             if (remotePayload.merkleRoot.isNotBlank() && remotePayload.merkleRoot == localTree.rootHash) {
                 lastStatusMessage = "In parity with $peerDeviceName ✓"
-                return Json.encodeToString(SyncPayload(emptyList(), localTree.rootHash, myName, Preferences.getLocalDeviceId()))
+                return syncJson.encodeToString(SyncPayload(emptyList(), localTree.rootHash, myName))
             }
             val conflicts = SyncConflictResolver.analyzeConflicts(localItems, remotePayload.items)
             SyncConflictResolver.applyResolvedConflictsToLocalDatabase(conflicts)
@@ -229,13 +229,13 @@ class ContinuousAutoSyncCoordinator(
             val updatedTree = MerkleTreeHelper.buildMerkleVault(updatedLocalItems)
             lastStatusMessage = "Synchronized with $peerDeviceName"
             updateStatus()
-            Json.encodeToString(SyncPayload(updatedLocalItems, updatedTree.rootHash, myName, Preferences.getLocalDeviceId()))
+            syncJson.encodeToString(SyncPayload(updatedLocalItems, updatedTree.rootHash, myName))
         } catch (t: Throwable) {
             t.printStackTrace()
             val myName = DeviceInfoProvider.getFormattedDeviceName()
             val localItems = SyncConflictResolver.readLocalDatabaseAsSyncItems()
             val localTree = MerkleTreeHelper.buildMerkleVault(localItems)
-            Json.encodeToString(SyncPayload(localItems, localTree.rootHash, myName, Preferences.getLocalDeviceId()))
+            syncJson.encodeToString(SyncPayload(localItems, localTree.rootHash, myName))
         }
     }
 
@@ -321,8 +321,8 @@ class ContinuousAutoSyncCoordinator(
             }
 
             val myName = DeviceInfoProvider.getFormattedDeviceName()
-            val payload = SyncPayload(localItems, localTree.rootHash, myName, Preferences.getLocalDeviceId())
-            val json = Json.encodeToString(payload)
+            val payload = SyncPayload(localItems, localTree.rootHash, myName)
+            val json = syncJson.encodeToString(payload)
 
             val responseJson = networkService.sendPayloadToHost(
                 hostAddress = peer.hostAddress,
@@ -331,14 +331,12 @@ class ContinuousAutoSyncCoordinator(
                 localPayloadJson = json
             )
 
-            val remotePayload = Json.decodeFromString<SyncPayload>(responseJson)
+            val remotePayload = syncJson.decodeFromString<SyncPayload>(responseJson)
             val effectivePeerName = remotePayload.deviceName.ifBlank { peer.name }
-            val stableId = remotePayload.deviceId.ifBlank {
-                if (remotePayload.deviceName.isNotBlank()) {
-                    "peer-${remotePayload.deviceName.filter { it.isLetterOrDigit() || it == '-' || it == '_' }}"
-                } else {
-                    peer.id
-                }
+            val stableId = if (remotePayload.deviceName.isNotBlank()) {
+                "peer-${remotePayload.deviceName.filter { it.isLetterOrDigit() || it == '-' || it == '_' }}"
+            } else {
+                peer.id
             }
             if (remotePayload.merkleRoot.isNotBlank() && remotePayload.merkleRoot == localTree.rootHash) {
                 // Peer confirms roots are identical!
