@@ -141,7 +141,7 @@ class PreferenceActivity :
             preferenceScreen?.addPreference(syncCategory)
 
             val autoSyncWifi = androidx.preference.SwitchPreferenceCompat(requireContext()).apply {
-                key = "auto_sync_wifi"
+                key = Preferences.PREFERENCE_AUTO_SYNC_WIFI_ENABLED
                 title = "Auto-Sync on Local Wi-Fi"
                 summary = "Continuously sync updates with linked devices when on the same Wi-Fi network"
                 isChecked = Preferences.isAutoSyncWifiEnabled()
@@ -175,7 +175,7 @@ class PreferenceActivity :
             val pairedDevices = Preferences.getPairedSyncDevices().mapNotNull { raw ->
                 val parts = raw.split("|")
                 val name = if (parts.size >= 2) parts[1].trim() else raw.trim()
-                if (name.contains(":5844") || name.contains("Local Port") || name.contains("Linked Device") || name.contains("Local Gateway") || name == "Safe-Device") {
+                if (name.contains(":5844") || name.contains("Local Port") || name.contains("Local Gateway") || name == "Safe-Device") {
                     null
                 } else {
                     name

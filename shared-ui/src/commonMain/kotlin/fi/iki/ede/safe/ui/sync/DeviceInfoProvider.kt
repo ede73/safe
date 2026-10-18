@@ -13,10 +13,11 @@ expect object DevicePlatformInfo {
 object DeviceInfoProvider {
     fun getFormattedDeviceName(customNameOverride: String? = null): String {
         val customName = (customNameOverride ?: Preferences.getSyncDeviceCustomName()).trim()
-        val baseName = if (customName.isNotBlank()) customName else "${DevicePlatformInfo.platformName} Safe"
-        val version = DevicePlatformInfo.appVersion
+        if (customName.isNotBlank()) {
+            return customName
+        }
         val model = DevicePlatformInfo.modelName
-        return "$baseName v$version on $model"
+        return "$model (${DevicePlatformInfo.platformName})"
     }
 
     fun getPlatformDisplayName(): String =
