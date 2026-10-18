@@ -141,8 +141,9 @@ private fun loadTpmKeys(db: DBHelper) {
 
 private fun notifyAutoSyncDataChanged() {
     try {
-        val secret = Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER"
-        ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(secret)
+        Preferences.getVaultClusterSecret()?.let { secret ->
+            ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(secret)
+        }
     } catch (e: Throwable) {
         e.printStackTrace()
     }
@@ -199,7 +200,14 @@ fun LoginScreen() {
     }
 
     LaunchedEffect(isLoggedIn) {
-        if (!isLoggedIn) {
+        if (isLoggedIn) {
+            val clusterSecret = Preferences.getVaultClusterSecret()
+            if (!clusterSecret.isNullOrBlank() && Preferences.isAutoSyncWifiEnabled()) {
+                ContinuousAutoSyncCoordinator.instance.start(
+                    authToken = clusterSecret
+                )
+            }
+        } else {
             ContinuousAutoSyncCoordinator.instance.stop()
         }
     }

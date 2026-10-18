@@ -135,6 +135,44 @@ fun ConflictResolutionDialog(
                                     }
                                 }
 
+                                // Case 2b: URL Divergence
+                                if (conflict.localItem != null && conflict.remoteItem != null && conflict.localItem.url != conflict.remoteItem.url && (conflict.localItem.url.isNotBlank() || conflict.remoteItem.url.isNotBlank())) {
+                                    Text("URL Selection:", style = MaterialTheme.typography.labelSmall)
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        RadioButton(
+                                            selected = conflict.selectedUrl == conflict.localItem.url,
+                                            onClick = { conflict.selectedUrl = conflict.localItem.url }
+                                        )
+                                        Text("Local: ${conflict.localItem.url}", style = MaterialTheme.typography.bodySmall)
+                                    }
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        RadioButton(
+                                            selected = conflict.selectedUrl == conflict.remoteItem.url,
+                                            onClick = { conflict.selectedUrl = conflict.remoteItem.url }
+                                        )
+                                        Text("Remote: ${conflict.remoteItem.url}", style = MaterialTheme.typography.bodySmall)
+                                    }
+                                }
+
+                                // Case 2c: Note Divergence
+                                if (conflict.localItem != null && conflict.remoteItem != null && conflict.localItem.note != conflict.remoteItem.note && (conflict.localItem.note.isNotBlank() || conflict.remoteItem.note.isNotBlank())) {
+                                    Text("Note Selection:", style = MaterialTheme.typography.labelSmall)
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        RadioButton(
+                                            selected = conflict.selectedNote == conflict.localItem.note,
+                                            onClick = { conflict.selectedNote = conflict.localItem.note }
+                                        )
+                                        Text("Local: ${conflict.localItem.note}", style = MaterialTheme.typography.bodySmall)
+                                    }
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        RadioButton(
+                                            selected = conflict.selectedNote == conflict.remoteItem.note,
+                                            onClick = { conflict.selectedNote = conflict.remoteItem.note }
+                                        )
+                                        Text("Remote: ${conflict.remoteItem.note}", style = MaterialTheme.typography.bodySmall)
+                                    }
+                                }
+
                                 // Case 3: Deletion Conflict
                                 if (conflict.type == ConflictType.DELETED_ON_ONE_SIDE) {
                                     val localDel = conflict.localItem?.isDeleted == true

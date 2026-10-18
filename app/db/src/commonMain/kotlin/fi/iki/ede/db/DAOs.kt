@@ -58,6 +58,21 @@ interface SiteEntryDao {
 }
 
 @Dao
+interface SyncTombstoneDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(tombstone: SyncTombstone)
+
+    @Query("SELECT * FROM sync_tombstones")
+    suspend fun getAll(): List<SyncTombstone>
+
+    @Query("DELETE FROM sync_tombstones WHERE cxf_item_id IN (:ids)")
+    suspend fun deleteByIds(ids: List<String>): Int
+
+    @Query("DELETE FROM sync_tombstones")
+    suspend fun deleteAll(): Int
+}
+
+@Dao
 interface KeyDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(key: KeyEntry)

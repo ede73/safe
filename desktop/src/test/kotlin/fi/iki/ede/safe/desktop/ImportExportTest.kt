@@ -3,6 +3,7 @@ package fi.iki.ede.safe.desktop
 
 import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelperFactory
+import fi.iki.ede.db.SyncTombstone
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test
 import fi.iki.ede.crypto.KeystoreHelperMock4UnitTests
 import io.mockk.unmockkAll
 import fi.iki.ede.cryptoobjects.*
+import kotlinx.coroutines.runBlocking
 
 class ImportExportTest {
     private lateinit var db: DBHelper
@@ -48,6 +50,7 @@ class ImportExportTest {
 
         val categoriesBefore = db.fetchAllCategoryRows()
         val siteEntriesBefore = db.fetchAllRows()
+        runBlocking { db.database.syncTombstoneDao().upsert(SyncTombstone("purged-entry", 1_700_000_000)) }
 
         // Verify categories and site entries are loaded
         assertEquals(2, categoriesBefore.size, "Should import 2 categories")
@@ -87,6 +90,11 @@ class ImportExportTest {
         }
 
         assertEquals(siteEntriesBefore.size, siteEntriesAfter.size)
+        assertEquals(
+            listOf(SyncTombstone("purged-entry", 1_700_000_000)),
+            runBlocking { db.database.syncTombstoneDao().getAll() },
+            "Encrypted full backup round-trip must preserve permanent-deletion tombstones"
+        )
         for (before in siteEntriesBefore) {
             val after = requireNotNull(siteEntriesAfter.firstOrNull { it.plainDescription == before.plainDescription }) {
                 "Site entry '${before.plainDescription}' was not preserved"

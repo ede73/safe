@@ -47,7 +47,7 @@ class DBHelper(
             getDatabaseBuilder(databaseName)
         }
         database = builder
-            .addMigrations(MIGRATION_7_9, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
+            .addMigrations(MIGRATION_7_9, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12)
             .build()
 
         if (!FileSystem.SYSTEM.exists(photoDir) && runCatching {
@@ -83,15 +83,7 @@ class DBHelper(
     }
 
     fun addCategory(entry: DecryptableCategoryEntry): DBID = runBlocking {
-        val newCatId = database.categoryDao().insert(entry)
-        // Purge any orphan/stale site entries matching this category ID so new categories start 100% empty
-        database.siteEntryDao().getByCategory(newCatId).forEach {
-            database.siteEntryDao().deleteById(it.id!!)
-        }
-        database.siteEntryDao().getByCategorySoftDeleted(newCatId).forEach {
-            database.siteEntryDao().deleteById(it.id!!)
-        }
-        newCatId
+        database.categoryDao().insert(entry)
     }
 
     fun deleteCategory(id: DBID): Int = runBlocking {
@@ -275,13 +267,18 @@ class DBHelper(
         database.siteEntryDao().updateDeletedStatus(id, deletedTimeSeconds)
     }
 
-    fun hardDeleteSiteEntry(id: DBID): Int = runBlocking {
+    fun hardDeleteSiteEntry(id: DBID): Int = runInTransaction {
+        val entry = database.siteEntryDao().getById(id) ?: return@runInTransaction 0
+        val syncId = entry.plainExtensions["cxfItemId"]?.firstOrNull() ?: "site-entry:$id"
+        val now = DateUtils.toUnixSeconds()
+        database.syncTombstoneDao().upsert(SyncTombstone(syncId, now))
         database.siteEntryDao().deleteById(id)
     }
 
     fun beginTransaction() = beginTransaction(database)
     fun setTransactionSuccessful() = setTransactionSuccessful(database)
     fun endTransaction() = endTransaction(database)
+    fun <T> runInTransaction(block: suspend () -> T): T = runInDbTransaction(database, block)
 
     fun beginRestoration(): DBTransaction {
         beginTransaction()
@@ -296,6 +293,7 @@ class DBHelper(
                 database.cxfAccountDao().deleteAll()
                 database.cxfImportDao().deleteAll()
                 database.cxfPasskeyDao().deleteAll()
+                database.syncTombstoneDao().deleteAll()
             } catch (e: Exception) {
                 endTransaction()
                 throw e
@@ -321,6 +319,7 @@ class DBHelper(
             database.cxfAccountDao().deleteAll()
             database.cxfImportDao().deleteAll()
             database.cxfPasskeyDao().deleteAll()
+            database.syncTombstoneDao().deleteAll()
         }
     }
 }

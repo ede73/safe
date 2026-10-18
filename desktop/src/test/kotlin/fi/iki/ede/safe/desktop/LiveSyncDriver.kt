@@ -30,13 +30,15 @@ class LiveSyncDriver {
     }
 
     @Test
+    @Disabled("Manual live integration driver only - requires running iOS server")
     fun testProbeLiveIosServer() = runBlocking {
         println("=== PROBING LIVE IOS SERVER (port 58443) ===")
         val network = SyncNetworkService()
         val dummyPayload = SyncPayload(emptyList(), "testMerkle")
         val jsonPayload = Json.encodeToString(dummyPayload)
         try {
-            val response = network.sendPayloadToHost("127.0.0.1", 58443, "DEFAULT_VAULT_CLUSTER", jsonPayload)
+            val token = requireNotNull(Preferences.getVaultClusterSecret()) { "Pair the vault before probing sync" }
+            val response = network.sendPayloadToHost("127.0.0.1", 58443, token, jsonPayload)
             println("=== SUCCESS! iOS Response: $response ===")
         } catch (e: Exception) {
             println("=== FAILED to sync with iOS: ${e::class.simpleName} : ${e.message} ===")
@@ -48,7 +50,7 @@ class LiveSyncDriver {
     @Test
     @Disabled("Manual live integration driver only - requires running Android server")
     fun syncIosWithAndroidServer() = runBlocking {
-        val pin = "75528133" // Live PIN from Android screen: 7552 - 8133
+        val pin = requireNotNull(System.getenv("SAFE_SYNC_PAIRING_CODE"))
         println("=== LIVE SYNC: Connecting iOS DB to Android Server (PIN: $pin) ===")
 
         val rootDir = File("/Users/ede/src/safe")
@@ -98,7 +100,7 @@ class LiveSyncDriver {
     @Test
     @Disabled("Manual live integration driver only - requires running Android server")
     fun syncDesktopWithAndroidServer() = runBlocking {
-        val pin = "75528133" // Live PIN from Android screen
+        val pin = requireNotNull(System.getenv("SAFE_SYNC_PAIRING_CODE"))
         println("=== LIVE SYNC: Connecting Desktop DB to Android Server (PIN: $pin) ===")
 
         val rootDir = File("/Users/ede/src/safe")
@@ -184,7 +186,7 @@ class LiveSyncDriver {
     @Test
     @Disabled("Manual live integration driver only - requires running Android emulator and iOS simulator")
     fun testLiveAndroidAndIosSyncEndpoints() = runBlocking {
-        val pin = Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER"
+        val pin = requireNotNull(Preferences.getVaultClusterSecret()) { "Pair the vault before probing sync" }
         val payload = SyncPayload(emptyList(), "DUMMY_CHECK")
         val json = Json.encodeToString(payload)
         val network = SyncNetworkService()
@@ -203,7 +205,7 @@ class LiveSyncDriver {
     @Test
     @Disabled("Manual live integration driver only - requires running Android emulator and iOS simulator")
     fun testLive3WayConvergence() = runBlocking {
-        val pin = Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER"
+        val pin = requireNotNull(Preferences.getVaultClusterSecret()) { "Pair the vault before probing sync" }
         val network = SyncNetworkService()
 
         println("Fetching state from Desktop (port 58444)...")

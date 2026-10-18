@@ -3,6 +3,7 @@ package fi.iki.ede.safe.ui.sync
 import korlibs.crypto.SHA256
 import korlibs.crypto.encoding.Hex
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
 
 @Serializable
 data class MerkleItemDigest(
@@ -29,24 +30,9 @@ object MerkleTreeHelper {
      * Computes deterministic SHA-256 leaf hash for an individual sync item.
      */
     fun computeItemHash(item: SyncItem): String {
-        val raw = buildString {
-            append(item.cxfItemId.trim())
-            append("|")
-            append(item.name.trim())
-            append("|")
-            append(item.username.trim().lowercase())
-            append("|")
-            append(item.password)
-            append("|")
-            append(item.note)
-            append("|")
-            append(item.categoryName.trim())
-            append("|")
-            append(item.modifiedAt)
-            append("|")
-            append(item.isDeleted)
-        }
-        val digest = SHA256.digest(raw.encodeToByteArray())
+        // Canonical serialization covers every synchronized field, including URL.
+        // Field separators could collide with untrusted password/note contents.
+        val digest = SHA256.digest(syncJson.encodeToString(item).encodeToByteArray())
         return Hex.encode(digest.bytes)
     }
 
@@ -57,6 +43,12 @@ object MerkleTreeHelper {
      * Level 2 (Root): Vault Root Hash
      */
     fun buildMerkleVault(items: List<SyncItem>): MerkleVaultDigest {
+        // Category digests are keyed by item ID. Reject collisions rather than
+        // silently omitting a credential from the root and parity checks.
+        require(items.all { it.cxfItemId.isNotBlank() }) { "Sync item has no identity" }
+        require(items.map { it.cxfItemId }.toSet().size == items.size) {
+            "Duplicate synchronization identities in vault"
+        }
         val itemsByCategory = items.groupBy { it.categoryName.ifBlank { "General Vault" } }
         val categoryMap = mutableMapOf<String, MerkleCategoryDigest>()
 

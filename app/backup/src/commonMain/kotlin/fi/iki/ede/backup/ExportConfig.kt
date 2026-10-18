@@ -9,7 +9,8 @@ abstract class ExportConfig(currentCodedVersion: ExportVersion) {
     val currentVersion = currentCodedVersion
 
     enum class ExportVersion(val version: String) {
-        V1("1")
+        V1("1"),
+        V2("2")
     }
 
     companion object {
@@ -34,6 +35,7 @@ abstract class ExportConfig(currentCodedVersion: ExportVersion) {
             IMPORTS_CXF_ACCOUNT("cxfaccount"),
             IMPORTS_CXF_IMPORT("cxfimport"),
             IMPORTS_CXF_PASSKEY("cxfpasskey"),
+            SYNC_TOMBSTONE("synctombstone"),
         }
 
         enum class Attributes(val value: String) {
@@ -69,6 +71,8 @@ abstract class ExportConfig(currentCodedVersion: ExportVersion) {
             CXF_PASSKEY_USER_DISPLAY_NAME("user_display_name"),
             CXF_PASSKEY_USER_HANDLE("user_handle"),
             CXF_PASSKEY_CREDENTIAL_ID("credential_id"),
+            SYNC_TOMBSTONE_ID("sync_id"),
+            SYNC_TOMBSTONE_DELETED_AT("deleted_at"),
         }
     }
 }

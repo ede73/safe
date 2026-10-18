@@ -10,6 +10,8 @@ import fi.iki.ede.db.DBHelper
 import fi.iki.ede.db.DBHelperFactory
 import fi.iki.ede.db.DBID
 import fi.iki.ede.db.SafeDatabase
+import fi.iki.ede.db.SyncTombstoneDao
+import fi.iki.ede.db.SyncTombstone
 import fi.iki.ede.db.cxf.*
 import fi.iki.ede.gpm.model.*
 import fi.iki.ede.gpmdatamodel.GPMDataModel
@@ -89,10 +91,30 @@ object DataModelMocks {
         val mockCxfAccountDao = mockkClass(CxfAccountDao::class)
         val mockCxfImportDao = mockkClass(CxfImportDao::class)
         val mockCxfPasskeyDao = mockkClass(CxfPasskeyDao::class)
+        val mockSyncTombstoneDao = mockkClass(SyncTombstoneDao::class)
 
         val cxfAccountsList = mutableListOf<CXFAccount>()
         val cxfImportsList = mutableListOf<CXFImport>()
         val cxfPasskeysList = mutableListOf<CXFPasskey>()
+        val syncTombstones = mutableListOf<SyncTombstone>()
+
+        coEvery { mockSyncTombstoneDao.getAll() } answers { syncTombstones.toList() }
+        coEvery { mockSyncTombstoneDao.upsert(any()) } answers {
+            val tombstone = firstArg<SyncTombstone>()
+            syncTombstones.removeAll { it.cxfItemId == tombstone.cxfItemId }
+            syncTombstones.add(tombstone)
+        }
+        coEvery { mockSyncTombstoneDao.deleteByIds(any()) } answers {
+            val ids = firstArg<List<String>>().toSet()
+            val oldSize = syncTombstones.size
+            syncTombstones.removeAll { it.cxfItemId in ids }
+            oldSize - syncTombstones.size
+        }
+        coEvery { mockSyncTombstoneDao.deleteAll() } answers {
+            val oldSize = syncTombstones.size
+            syncTombstones.clear()
+            oldSize
+        }
 
         coEvery { mockCxfAccountDao.getAll() } answers { cxfAccountsList.toList() }
         coEvery { mockCxfAccountDao.getByCxfAccountId(any()) } answers {
@@ -154,6 +176,7 @@ object DataModelMocks {
         every { mockSafeDb.cxfAccountDao() } returns mockCxfAccountDao
         every { mockSafeDb.cxfImportDao() } returns mockCxfImportDao
         every { mockSafeDb.cxfPasskeyDao() } returns mockCxfPasskeyDao
+        every { mockSafeDb.syncTombstoneDao() } returns mockSyncTombstoneDao
         every { db.database } returns mockSafeDb
 
         DBHelperFactory.initializeDatabase(db)

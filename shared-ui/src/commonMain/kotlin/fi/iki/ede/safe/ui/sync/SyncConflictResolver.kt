@@ -11,7 +11,23 @@ import fi.iki.ede.cryptoobjects.plainPassword
 import fi.iki.ede.cryptoobjects.plainUsername
 import fi.iki.ede.cryptoobjects.plainWebsite
 import fi.iki.ede.db.DBHelperFactory
+import fi.iki.ede.db.cxf.CXFAccount
+import fi.iki.ede.db.cxf.CXFImport
+import fi.iki.ede.db.cxf.CXFPasskey
+import fi.iki.ede.db.cxf.cachedDecryptedCxfItemId
+import fi.iki.ede.db.cxf.cachedDecryptedCredentialId
+import fi.iki.ede.db.cxf.cachedDecryptedEmail
+import fi.iki.ede.db.cxf.cachedDecryptedName
+import fi.iki.ede.db.cxf.cachedDecryptedNote
+import fi.iki.ede.db.cxf.cachedDecryptedPassword
+import fi.iki.ede.db.cxf.cachedDecryptedUrl
+import fi.iki.ede.db.cxf.cachedDecryptedUserHandle
+import fi.iki.ede.db.cxf.cachedDecryptedUsername
+import fi.iki.ede.preferences.Preferences
+import korlibs.crypto.HMAC
+import korlibs.crypto.encoding.Hex
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
 import kotlin.time.ExperimentalTime
 
 @Serializable
@@ -24,7 +40,20 @@ data class SyncItem(
     val note: String = "",
     val categoryName: String = "",
     val modifiedAt: Long = 0L,
-    val isDeleted: Boolean = false
+    val isDeleted: Boolean = false,
+    val kind: String = "PASSWORD",
+    val cxfAccountId: String = "",
+    val cxfAccountEmail: String = "",
+    val cxfType: String = "",
+    val rpId: String = "",
+    val credentialId: String = "",
+    val userHandle: String = "",
+    val cxfHash: String = "",
+    val sourceCxfItemId: String = "",
+    val flaggedIgnored: Boolean = false,
+    val createdAt: Long = 0L,
+    /** The credential row was physically purged; this identity-only tombstone must propagate. */
+    val isPermanentDeletion: Boolean = false
 )
 
 enum class ConflictType {
@@ -34,15 +63,10 @@ enum class ConflictType {
     RENAMED_DIVERGENCE    // Renamed on one device, original or differently named on the other
 }
 
-private fun pickDeterministic(local: String?, remote: String?, localMod: Long, remoteMod: Long): String {
-    if (local == null) return remote ?: ""
-    if (remote == null) return local
-    return when {
-        remoteMod > localMod -> remote
-        localMod > remoteMod -> local
-        else -> if (remote > local) remote else local
-    }
-}
+private fun winningItem(local: SyncItem?, remote: SyncItem?): SyncItem? =
+    listOfNotNull(local, remote).maxWithOrNull(
+        compareBy<SyncItem> { it.modifiedAt }.thenBy { MerkleTreeHelper.computeItemHash(it) }
+    )
 
 @Serializable
 data class SyncConflict(
@@ -50,10 +74,12 @@ data class SyncConflict(
     val type: ConflictType,
     val localItem: SyncItem?,
     val remoteItem: SyncItem?,
-    var selectedName: String = pickDeterministic(localItem?.name, remoteItem?.name, localItem?.modifiedAt ?: 0L, remoteItem?.modifiedAt ?: 0L),
-    var selectedUsername: String = pickDeterministic(localItem?.username, remoteItem?.username, localItem?.modifiedAt ?: 0L, remoteItem?.modifiedAt ?: 0L),
-    var selectedPassword: String = pickDeterministic(localItem?.password, remoteItem?.password, localItem?.modifiedAt ?: 0L, remoteItem?.modifiedAt ?: 0L),
-    var selectedNote: String = pickDeterministic(localItem?.note, remoteItem?.note, localItem?.modifiedAt ?: 0L, remoteItem?.modifiedAt ?: 0L),
+    var selectedName: String = winningItem(localItem, remoteItem)?.name ?: "",
+    var selectedUsername: String = winningItem(localItem, remoteItem)?.username ?: "",
+    var selectedPassword: String = winningItem(localItem, remoteItem)?.password ?: "",
+    var selectedNote: String = winningItem(localItem, remoteItem)?.note ?: "",
+    var selectedUrl: String = winningItem(localItem, remoteItem)?.url ?: "",
+    var selectedCategoryName: String = winningItem(localItem, remoteItem)?.categoryName ?: "General Vault",
     var selectedIsDeleted: Boolean = localItem?.isDeleted ?: remoteItem?.isDeleted ?: false
 )
 
@@ -86,17 +112,34 @@ object SyncConflictResolver {
         remoteItems: List<SyncItem>
     ): List<SyncConflict> {
         val conflicts = mutableListOf<SyncConflict>()
-        val matchedRemoteIds = mutableSetOf<String>()
+        val matchedRemoteIndexes = mutableSetOf<Int>()
+        val identityKey = Preferences.getVaultClusterSecret()?.let { runCatching { Hex.decode(it) }.getOrNull() }
+        val localFallbackCounts = localItems.mapNotNull { fallbackContentIdentity(it, identityKey) }.groupingBy { it }.eachCount()
+        val remoteFallbackCounts = remoteItems.mapNotNull { fallbackContentIdentity(it, identityKey) }.groupingBy { it }.eachCount()
 
-        for (local in localItems) {
-            // Match by cxfItemId first, then by (name, username) fallback across categories
-            val remoteMatch = remoteItems.find { remote ->
-                (local.cxfItemId.isNotBlank() && remote.cxfItemId == local.cxfItemId) ||
-                        (cleanDomain(remote.name) == cleanDomain(local.name) && remote.username.equals(local.username, ignoreCase = true))
+        for ((localIndex, local) in localItems.withIndex()) {
+            // Only a stable identity can justify updating an existing credential.
+            // Similar names/usernames alone are unsafe. For old databases without
+            // shared IDs, identical full password content can bootstrap one stable
+            // identity only when it is unique on both sides.
+            val exactRemoteIndex = remoteItems.indices.firstOrNull { index ->
+                index !in matchedRemoteIndexes && local.kind == remoteItems[index].kind &&
+                    local.cxfItemId.isNotBlank() && remoteItems[index].cxfItemId == local.cxfItemId
             }
+            val fallbackIdentity = fallbackContentIdentity(local, identityKey)
+            val fallbackRemoteIndex = if (exactRemoteIndex == null && local.kind == "PASSWORD" &&
+                fallbackIdentity != null && localFallbackCounts[fallbackIdentity] == 1 &&
+                remoteFallbackCounts[fallbackIdentity] == 1
+            ) remoteItems.indices.firstOrNull { index ->
+                index !in matchedRemoteIndexes && fallbackContentIdentity(remoteItems[index], identityKey) == fallbackIdentity
+            } else null
+            val matchedIndex = exactRemoteIndex ?: fallbackRemoteIndex
+            val remoteMatch = matchedIndex?.let(remoteItems::get)
+            val resolvedId = if (exactRemoteIndex != null) local.cxfItemId else fallbackIdentity?.let { "legacy-content:$it" }
 
             if (remoteMatch != null) {
-                matchedRemoteIds.add(remoteMatch.cxfItemId)
+                matchedRemoteIndexes.add(requireNotNull(matchedIndex))
+                val stableId = requireNotNull(resolvedId)
 
                 // Scenario 1: Deletion Conflict (Deleted on one side, active/modified on the other)
                 if (local.isDeleted != remoteMatch.isDeleted) {
@@ -107,7 +150,7 @@ object SyncConflictResolver {
                     }
                     conflicts.add(
                         SyncConflict(
-                            conflictId = local.cxfItemId.ifBlank { local.name },
+                            conflictId = stableId,
                             type = ConflictType.DELETED_ON_ONE_SIDE,
                             localItem = local,
                             remoteItem = remoteMatch,
@@ -119,7 +162,7 @@ object SyncConflictResolver {
                 else if (local.name != remoteMatch.name) {
                     conflicts.add(
                         SyncConflict(
-                            conflictId = local.cxfItemId.ifBlank { local.name },
+                            conflictId = stableId,
                             type = ConflictType.RENAMED_DIVERGENCE,
                             localItem = local,
                             remoteItem = remoteMatch
@@ -127,10 +170,10 @@ object SyncConflictResolver {
                     )
                 }
                 // Scenario 3: Field Modifications Divergence
-                else if (local.password != remoteMatch.password || local.note != remoteMatch.note || local.url != remoteMatch.url) {
+                else if (local != remoteMatch) {
                     conflicts.add(
                         SyncConflict(
-                            conflictId = local.cxfItemId.ifBlank { local.name },
+                            conflictId = stableId,
                             type = ConflictType.MODIFIED_DIVERGENCE,
                             localItem = local,
                             remoteItem = remoteMatch
@@ -152,8 +195,8 @@ object SyncConflictResolver {
         }
 
         // Scenario 5: Added on Remote (iOS W) - Missing on Local
-        for (remote in remoteItems) {
-            if (!matchedRemoteIds.contains(remote.cxfItemId)) {
+        for ((remoteIndex, remote) in remoteItems.withIndex()) {
+            if (remoteIndex !in matchedRemoteIndexes) {
                 conflicts.add(
                     SyncConflict(
                         conflictId = remote.cxfItemId.ifBlank { remote.name },
@@ -167,6 +210,29 @@ object SyncConflictResolver {
         }
 
         return conflicts
+    }
+
+    /**
+     * Keyed bootstrap identity for old password rows created independently on
+     * multiple devices. It excludes local IDs, categories and metadata while
+     * including complete password-entry content. Without the shared cluster key,
+     * or when duplicates are ambiguous, bootstrap matching is disabled.
+     */
+    private fun fallbackContentIdentity(item: SyncItem, identityKey: ByteArray?): String? {
+        if (identityKey == null) return null
+        if (item.kind != "PASSWORD" || item.url.isBlank() && item.password.isBlank() ||
+            item.name.isBlank() && item.url.isBlank()
+        ) return null
+        val canonicalContent = syncJson.encodeToString(
+            item.copy(
+                cxfItemId = "", categoryName = "", modifiedAt = 0L, isDeleted = false,
+                cxfAccountId = "", cxfAccountEmail = "", cxfType = "", rpId = "",
+                credentialId = "", userHandle = "", cxfHash = "", sourceCxfItemId = "",
+                flaggedIgnored = false, createdAt = 0L
+            )
+        )
+        val contentMac = HMAC.hmacSHA256(identityKey, canonicalContent.encodeToByteArray()).bytes
+        return "legacy-content:${Hex.encode(contentMac)}"
     }
 
     private fun cleanDomain(raw: String): String {
@@ -222,7 +288,7 @@ object SyncConflictResolver {
         val softDeletedEntries = kotlinx.coroutines.runBlocking { db.database.siteEntryDao().getAllSoftDeleted() }
         val existingEntries = activeEntries + softDeletedEntries
 
-        fun upsertEntry(cxfId: String, nameStr: String, userStr: String, passStr: String, noteStr: String = "", isDel: Boolean = false) {
+        fun upsertEntry(cxfId: String, nameStr: String, userStr: String, passStr: String, noteStr: String = "", urlStr: String = "", isDel: Boolean = false) {
             val existing = existingEntries.find { entry ->
                 entry.plainExtensions["cxfItemId"]?.contains(cxfId) == true ||
                         entry.plainUsername == userStr ||
@@ -234,6 +300,7 @@ object SyncConflictResolver {
                 existing.username = userStr.encrypt()
                 existing.password = passStr.encrypt()
                 existing.note = noteStr.encrypt()
+                existing.website = urlStr.encrypt()
                 existing.deleted = if (isDel) kotlin.time.Clock.System.now().toEpochMilliseconds() / 1000 else 0L
                 val extMap = existing.plainExtensions.toMutableMap()
                 extMap["cxfItemId"] = setOf(cxfId)
@@ -245,6 +312,7 @@ object SyncConflictResolver {
                     username = userStr.encrypt()
                     password = passStr.encrypt()
                     note = noteStr.encrypt()
+                    website = urlStr.encrypt()
                     deleted = if (isDel) kotlin.time.Clock.System.now().toEpochMilliseconds() / 1000 else 0L
                     extensions = encryptExtension(mapOf("cxfItemId" to setOf(cxfId)))
                 }
@@ -277,17 +345,12 @@ object SyncConflictResolver {
         val activeEntries = kotlinx.coroutines.runBlocking { db.database.siteEntryDao().getAllActive() }
         val softDeletedEntries = kotlinx.coroutines.runBlocking { db.database.siteEntryDao().getAllSoftDeleted() }
         val allEntries = activeEntries + softDeletedEntries
-        return allEntries.map { entry ->
+        val passwordItems = allEntries.map { entry ->
             val cxfIdFromExt = entry.plainExtensions["cxfItemId"]?.firstOrNull()
             val catName = categoryMap[entry.categoryId]?.plainName ?: "General Vault"
-            val cxfId = cxfIdFromExt ?: when {
-                entry.plainUsername == "user_q" -> "item_Q"
-                entry.plainUsername == "user_w" -> "item_W"
-                entry.plainUsername == "user_x" -> "item_X"
-                entry.plainUsername == "user_y" -> "item_Y"
-                entry.plainUsername == "user_m" -> "item_M"
-                else -> "item_${cleanDomain(entry.plainDescription)}_${entry.plainUsername.trim().lowercase()}"
-            }
+            // Backup/restore preserves the database ID for live entries. A rename,
+            // username change, or duplicate display name must not change identity.
+            val cxfId = cxfIdFromExt ?: "site-entry:${requireNotNull(entry.id)}"
             val delMillis = if (entry.deleted != 0L) {
                 if (entry.deleted < 5_000_000_000L) entry.deleted * 1000L else entry.deleted
             } else 0L
@@ -305,6 +368,138 @@ object SyncConflictResolver {
                 modifiedAt = effectiveTime
             )
         }
+        val permanentDeletionItems = kotlinx.coroutines.runBlocking {
+            db.database.syncTombstoneDao().getAll().map { tombstone ->
+                SyncItem(
+                    cxfItemId = tombstone.cxfItemId,
+                    name = "",
+                    modifiedAt = tombstone.deletedAt * 1000L,
+                    isDeleted = true,
+                    isPermanentDeletion = true
+                )
+            }
+        }
+        val cxfItems = kotlinx.coroutines.runBlocking {
+            val accounts = db.database.cxfAccountDao().getAll().associateBy { it.id }
+            val accountItems = accounts.values.map { account ->
+                SyncItem(
+                    cxfItemId = "cxf-account:${account.cxfAccountId}",
+                    name = account.cachedDecryptedEmail,
+                    kind = "CXF_ACCOUNT",
+                    cxfAccountId = account.cxfAccountId,
+                    cxfAccountEmail = account.cachedDecryptedEmail
+                )
+            }
+            val imports = db.database.cxfImportDao().getAll().mapNotNull { entry ->
+                val account = accounts[entry.accountId] ?: return@mapNotNull null
+                SyncItem(
+                    cxfItemId = "cxf-import:${account.cxfAccountId}:${entry.cachedDecryptedCxfItemId}:${entry.hash}",
+                    name = entry.cachedDecryptedName,
+                    username = entry.cachedDecryptedUsername,
+                    password = entry.cachedDecryptedPassword,
+                    url = entry.cachedDecryptedUrl,
+                    note = entry.cachedDecryptedNote,
+                    categoryName = "CXF:${account.cxfAccountId}",
+                    modifiedAt = entry.modifiedAt ?: entry.importedAt,
+                    kind = "CXF_IMPORT",
+                    cxfAccountId = account.cxfAccountId,
+                    cxfAccountEmail = account.cachedDecryptedEmail,
+                    cxfType = entry.type,
+                    cxfHash = entry.hash,
+                    sourceCxfItemId = entry.cachedDecryptedCxfItemId,
+                    flaggedIgnored = entry.flaggedIgnored,
+                    createdAt = entry.createdAt ?: 0L
+                )
+            }
+            val passkeys = db.database.cxfPasskeyDao().getAll().mapNotNull { entry ->
+                val account = accounts[entry.accountId] ?: return@mapNotNull null
+                SyncItem(
+                    cxfItemId = "cxf-passkey:${account.cxfAccountId}:${entry.cachedDecryptedCxfItemId}:${entry.hash}",
+                    name = entry.cachedDecryptedName,
+                    username = entry.cachedDecryptedUsername,
+                    url = entry.cachedDecryptedUrl,
+                    note = entry.cachedDecryptedNote,
+                    categoryName = "CXF:${account.cxfAccountId}",
+                    modifiedAt = entry.modifiedAt ?: entry.importedAt,
+                    kind = "CXF_PASSKEY",
+                    cxfAccountId = account.cxfAccountId,
+                    cxfAccountEmail = account.cachedDecryptedEmail,
+                    rpId = entry.rpId,
+                    credentialId = entry.cachedDecryptedCredentialId,
+                    userHandle = entry.cachedDecryptedUserHandle,
+                    cxfHash = entry.hash,
+                    sourceCxfItemId = entry.cachedDecryptedCxfItemId,
+                    flaggedIgnored = entry.flaggedIgnored,
+                    createdAt = entry.createdAt ?: 0L
+                )
+            }
+            accountItems + imports + passkeys
+        }
+        return passwordItems + permanentDeletionItems + cxfItems
+    }
+
+    private suspend fun upsertCxfItem(database: fi.iki.ede.db.SafeDatabase, item: SyncItem) {
+        require(!item.isDeleted && item.cxfAccountId.isNotBlank() &&
+            (item.kind == "CXF_ACCOUNT" || item.cxfHash.isNotBlank())) {
+            "Invalid CXF sync record"
+        }
+        val accountDao = database.cxfAccountDao()
+        var account = accountDao.getByCxfAccountId(item.cxfAccountId)
+        if (account == null) {
+            val id = accountDao.insert(CXFAccount(cxfAccountId = item.cxfAccountId, email = item.cxfAccountEmail))
+            account = accountDao.getByCxfAccountId(item.cxfAccountId)
+            require(account?.id == id) { "Failed to create CXF account" }
+        } else if (account.cachedDecryptedEmail != item.cxfAccountEmail) {
+            accountDao.update(account.copy(encryptedEmail = item.cxfAccountEmail.encrypt()))
+        }
+        if (item.kind == "CXF_ACCOUNT") return
+        val accountId = requireNotNull(account.id)
+        if (item.kind == "CXF_IMPORT") {
+            val dao = database.cxfImportDao()
+            val existing = dao.getByAccountId(accountId).find {
+                it.hash == item.cxfHash && it.cachedDecryptedCxfItemId == item.sourceCxfItemId
+            }
+            val record = CXFImport(
+                id = existing?.id,
+                accountId = accountId,
+                cxfItemId = item.sourceCxfItemId,
+                type = item.cxfType,
+                name = item.name,
+                url = item.url,
+                username = item.username,
+                password = item.password,
+                note = item.note,
+                createdAt = item.createdAt.takeIf { it > 0L },
+                modifiedAt = item.modifiedAt,
+                importedAt = existing?.importedAt ?: item.modifiedAt,
+                flaggedIgnored = item.flaggedIgnored,
+                hash = item.cxfHash
+            )
+            if (existing == null) dao.insert(record) else dao.update(record)
+        } else {
+            val dao = database.cxfPasskeyDao()
+            val existing = dao.getByAccountId(accountId).find {
+                it.hash == item.cxfHash && it.cachedDecryptedCxfItemId == item.sourceCxfItemId
+            }
+            val record = CXFPasskey(
+                id = existing?.id,
+                accountId = accountId,
+                cxfItemId = item.sourceCxfItemId,
+                rpId = item.rpId,
+                name = item.name,
+                url = item.url,
+                username = item.username,
+                credentialId = item.credentialId,
+                userHandle = item.userHandle,
+                note = item.note,
+                createdAt = item.createdAt.takeIf { it > 0L },
+                modifiedAt = item.modifiedAt,
+                importedAt = existing?.importedAt ?: item.modifiedAt,
+                flaggedIgnored = item.flaggedIgnored,
+                hash = item.cxfHash
+            )
+            if (existing == null) dao.insert(record) else dao.update(record)
+        }
     }
 
     /**
@@ -312,71 +507,149 @@ object SyncConflictResolver {
      */
     fun applyResolvedConflictsToLocalDatabase(resolvedConflicts: List<SyncConflict>) {
         val db = DBHelperFactory.getDBHelper()
-        var currentCategories = db.fetchAllCategoryRows()
-        val activeEntries = db.fetchAllRows(null)
-        val softDeletedEntries = kotlinx.coroutines.runBlocking { db.database.siteEntryDao().getAllSoftDeleted() }
-        val existingEntries = (activeEntries + softDeletedEntries).toMutableList()
+        db.runInTransaction {
+            var currentCategories = db.database.categoryDao().getAll()
+            val activeEntries = db.database.siteEntryDao().getAllActive()
+            val softDeletedEntries = db.database.siteEntryDao().getAllSoftDeleted()
+            val existingEntries = (activeEntries + softDeletedEntries).toMutableList()
 
-        for (conflict in resolvedConflicts) {
-            val targetName = conflict.selectedName.ifBlank { conflict.localItem?.name ?: conflict.remoteItem?.name ?: "" }
-            val targetUser = conflict.selectedUsername.ifBlank { conflict.localItem?.username ?: conflict.remoteItem?.username ?: "" }
-            val targetPass = conflict.selectedPassword.ifBlank { conflict.localItem?.password ?: conflict.remoteItem?.password ?: "" }
-            val targetNote = conflict.selectedNote.ifBlank { conflict.localItem?.note ?: conflict.remoteItem?.note ?: "" }
-            val targetDeleted = conflict.selectedIsDeleted
-            val winningTime = maxOf(conflict.localItem?.modifiedAt ?: 0L, conflict.remoteItem?.modifiedAt ?: 0L)
-            val delTimeSeconds = if (winningTime > 0L) {
-                if (winningTime > 5_000_000_000L) winningTime / 1000L else winningTime
-            } else kotlin.time.Clock.System.now().epochSeconds
-            val winningMillis = if (winningTime > 0L) {
-                if (winningTime < 5_000_000_000L) winningTime * 1000L else winningTime
-            } else 0L
-            val itemCatName = conflict.localItem?.categoryName?.ifBlank { null }
-                ?: conflict.remoteItem?.categoryName?.ifBlank { null }
-                ?: "General Vault"
-
-            var resolvedCat = currentCategories.find { it.plainName == itemCatName }
-            if (resolvedCat == null) {
-                val newCat = DecryptableCategoryEntry().apply {
-                    encryptedName = itemCatName.encrypt()
-                }
-                db.addCategory(newCat)
-                currentCategories = db.fetchAllCategoryRows()
-                resolvedCat = currentCategories.find { it.plainName == itemCatName }
-            }
-            val targetCatId = resolvedCat?.id ?: (currentCategories.firstOrNull()?.id ?: 1L)
-
-            val existing = existingEntries.find { entry ->
-                entry.plainExtensions["cxfItemId"]?.contains(conflict.conflictId) == true ||
-                        (cleanDomain(entry.plainDescription) == cleanDomain(targetName) && entry.plainUsername == targetUser)
-            }
-
-            if (existing != null) {
-                existing.description = targetName.encrypt()
-                existing.username = targetUser.encrypt()
-                existing.password = targetPass.encrypt()
-                existing.note = targetNote.encrypt()
-                existing.deleted = if (targetDeleted) delTimeSeconds else 0L
-                if (winningMillis > 0L) {
-                    existing.passwordChangedDate = kotlin.time.Instant.fromEpochMilliseconds(winningMillis)
-                }
-                val extMap = existing.plainExtensions.toMutableMap()
-                extMap["cxfItemId"] = setOf(conflict.conflictId)
-                existing.extensions = existing.encryptExtension(extMap)
-                db.updateSiteEntry(existing)
-            } else {
-                val newEntry = DecryptableSiteEntry(categoryId = targetCatId).apply {
-                    description = targetName.encrypt()
-                    username = targetUser.encrypt()
-                    password = targetPass.encrypt()
-                    note = targetNote.encrypt()
-                    deleted = if (targetDeleted) delTimeSeconds else 0L
-                    if (winningMillis > 0L) {
-                        passwordChangedDate = kotlin.time.Instant.fromEpochMilliseconds(winningMillis)
+            for (conflict in resolvedConflicts) {
+                val local = conflict.localItem
+                val remote = conflict.remoteItem
+                val winner = winningItem(local, remote) ?: continue
+                if (winner.kind == "CXF_ACCOUNT" || winner.kind == "CXF_IMPORT" || winner.kind == "CXF_PASSKEY") {
+                    val loser = if (local != null && remote != null &&
+                        local.copy(modifiedAt = 0L) != remote.copy(modifiedAt = 0L)) {
+                        if (winner === local) remote else local
+                    } else null
+                    if (loser != null && !loser.isDeleted && loser.kind == winner.kind) {
+                        val archiveHash = "sync-conflict-" + MerkleTreeHelper.computeItemHash(loser).take(24)
+                        val archive = if (loser.kind == "CXF_ACCOUNT") {
+                            loser.copy(
+                                cxfItemId = "cxf-account:$archiveHash",
+                                cxfAccountId = archiveHash,
+                                name = "Conflict copy: ${loser.name}"
+                            )
+                        } else {
+                            loser.copy(name = "Conflict copy: ${loser.name}", cxfHash = archiveHash)
+                        }
+                        upsertCxfItem(db.database, archive)
                     }
-                    extensions = encryptExtension(mapOf("cxfItemId" to setOf(conflict.conflictId)))
+                    upsertCxfItem(db.database, winner)
+                    continue
                 }
-                db.addSiteEntry(newEntry)
-                existingEntries.add(newEntry)
+                require(winner.kind == "PASSWORD") { "Unsupported sync item kind" }
+                val targetName = conflict.selectedName
+                val targetUser = conflict.selectedUsername
+                val targetPass = conflict.selectedPassword
+                val targetNote = conflict.selectedNote
+                val targetUrl = conflict.selectedUrl
+                val targetDeleted = conflict.selectedIsDeleted
+                val permanentDeletionWins = conflict.selectedIsDeleted &&
+                    listOfNotNull(local, remote).any { it.isPermanentDeletion && it.isDeleted }
+                val winningTime = maxOf(conflict.localItem?.modifiedAt ?: 0L, conflict.remoteItem?.modifiedAt ?: 0L)
+                val delTimeSeconds = if (winningTime > 0L) {
+                    if (winningTime > 5_000_000_000L) winningTime / 1000L else winningTime
+                } else kotlin.time.Clock.System.now().epochSeconds
+                val nowMillis = kotlin.time.Clock.System.now().toEpochMilliseconds()
+                val winningMillis = if (winningTime > 0L) {
+                    if (winningTime < 5_000_000_000L) winningTime * 1000L else winningTime
+                } else nowMillis
+                var targetCatId = currentCategories.firstOrNull()?.id ?: 1L
+                if (!permanentDeletionWins) {
+                    val itemCatName = conflict.selectedCategoryName.ifBlank { "General Vault" }
+                    var resolvedCat = currentCategories.find { it.plainName == itemCatName }
+                    if (resolvedCat == null) {
+                        val newCat = DecryptableCategoryEntry().apply {
+                            encryptedName = itemCatName.encrypt()
+                        }
+                        db.database.categoryDao().insert(newCat)
+                        currentCategories = db.database.categoryDao().getAll()
+                        resolvedCat = currentCategories.find { it.plainName == itemCatName }
+                    }
+                    targetCatId = resolvedCat?.id ?: targetCatId
+                }
+
+                // Keep the losing credential as an ordinary encrypted vault entry. Both
+                // peers derive the same copy ID, so later syncs do not create more copies.
+                val loser = if (local != null && remote != null &&
+                    local.copy(cxfItemId = "", modifiedAt = 0L) != remote.copy(cxfItemId = "", modifiedAt = 0L)) {
+                    if (winner === local) remote else local
+                } else null
+                if (loser != null && !loser.isDeleted && winner.kind == "PASSWORD" && !permanentDeletionWins) {
+                    // The loser hash is stable on every peer. Including the local
+                    // conflict ID would create a different archive ID on each
+                    // database when their pre-sync row IDs differ.
+                    val canonicalLoser = loser.copy(cxfItemId = conflict.conflictId)
+                    val archiveId = "conflict:${MerkleTreeHelper.computeItemHash(canonicalLoser).take(24)}"
+                    if (existingEntries.none { it.plainExtensions["cxfItemId"]?.contains(archiveId) == true }) {
+                        val archive = DecryptableSiteEntry(categoryId = targetCatId).apply {
+                            description = "Conflict copy: ${loser.name}".encrypt()
+                            username = loser.username.encrypt()
+                            password = loser.password.encrypt()
+                            note = loser.note.encrypt()
+                            website = loser.url.encrypt()
+                            passwordChangedDate = kotlin.time.Instant.fromEpochMilliseconds(loser.modifiedAt)
+                            extensions = encryptExtension(mapOf("cxfItemId" to setOf(archiveId)))
+                        }
+                        archive.id = db.database.siteEntryDao().insert(archive)
+                        existingEntries.add(archive)
+                    }
+                }
+
+                val sourceIds = setOfNotNull(
+                    conflict.conflictId,
+                    local?.cxfItemId,
+                    remote?.cxfItemId
+                )
+                val existing = existingEntries.find { entry ->
+                    entry.plainExtensions["cxfItemId"]?.any(sourceIds::contains) == true ||
+                        (entry.plainExtensions["cxfItemId"].isNullOrEmpty() &&
+                            "site-entry:${entry.id}" in sourceIds)
+                }
+
+                if (permanentDeletionWins) {
+                    existing?.let { db.database.siteEntryDao().deleteById(requireNotNull(it.id)) }
+                    existingEntries.removeAll { it.id == existing?.id }
+                    db.database.syncTombstoneDao().deleteByIds(sourceIds.toList())
+                    db.database.syncTombstoneDao().upsert(
+                        fi.iki.ede.db.SyncTombstone(conflict.conflictId, delTimeSeconds)
+                    )
+                    continue
+                }
+
+                // A later active edit supersedes and removes the old permanent-deletion marker.
+                if (!targetDeleted) {
+                    db.database.syncTombstoneDao().deleteByIds(sourceIds.toList())
+                }
+
+                if (existing != null) {
+                    existing.categoryId = targetCatId
+                    existing.description = targetName.encrypt()
+                    existing.username = targetUser.encrypt()
+                    existing.password = targetPass.encrypt()
+                    existing.note = targetNote.encrypt()
+                    existing.website = targetUrl.encrypt()
+                    existing.deleted = if (targetDeleted) delTimeSeconds else 0L
+                    existing.passwordChangedDate = kotlin.time.Instant.fromEpochMilliseconds(winningMillis)
+                    val extMap = existing.plainExtensions.toMutableMap()
+                    extMap["cxfItemId"] = setOf(conflict.conflictId)
+                    existing.extensions = existing.encryptExtension(extMap)
+                    db.database.siteEntryDao().update(existing)
+                } else {
+                    val newEntry = DecryptableSiteEntry(categoryId = targetCatId).apply {
+                        description = targetName.encrypt()
+                        username = targetUser.encrypt()
+                        password = targetPass.encrypt()
+                        note = targetNote.encrypt()
+                        website = targetUrl.encrypt()
+                        deleted = if (targetDeleted) delTimeSeconds else 0L
+                        passwordChangedDate = kotlin.time.Instant.fromEpochMilliseconds(winningMillis)
+                        extensions = encryptExtension(mapOf("cxfItemId" to setOf(conflict.conflictId)))
+                    }
+                    newEntry.id = db.database.siteEntryDao().insert(newEntry)
+                    existingEntries.add(newEntry)
+                }
             }
         }
     }

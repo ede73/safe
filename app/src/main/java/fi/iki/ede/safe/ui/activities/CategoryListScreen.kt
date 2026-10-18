@@ -16,6 +16,7 @@ import fi.iki.ede.datamodel.DataModel
 import fi.iki.ede.gpmdatamodel.GPMDataModel
 import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.BuildConfig
+import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.safe.notifications.SetupNotifications
 import fi.iki.ede.safe.ui.composable.CategoryListScreenCompose
 import fi.iki.ede.safe.ui.composable.DualModePreview
@@ -51,7 +52,26 @@ class CategoryListScreen :
         }
         SetupNotifications.setup(this)
         DevicePlatformInfo.appVersion = BuildConfig.VERSION_NAME
+
+        DataModel.onDataChanged = {
+            if (LoginHandler.isLoggedIn()) Preferences.getVaultClusterSecret()?.let { secret ->
+                ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(secret)
+            }
+        }
+
+        val clusterSecret = Preferences.getVaultClusterSecret()
+        if (!clusterSecret.isNullOrBlank() && Preferences.isAutoSyncWifiEnabled()) {
+            ContinuousAutoSyncCoordinator.instance.start(
+                authToken = clusterSecret
+            )
+        }
+
         setContent { CategoryListScreenCompose(DataModel.categoriesStateFlow) }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        ContinuousAutoSyncCoordinator.instance.stop()
     }
 }
 

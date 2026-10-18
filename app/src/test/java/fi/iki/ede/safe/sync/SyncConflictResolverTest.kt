@@ -77,8 +77,9 @@ class SyncConflictResolverTest {
 
         val conflicts = SyncConflictResolver.analyzeConflicts(localItems, remoteItems)
 
-        // Should NOT create NEW_ENTRY_ADDED or duplicate conflict when name & username match
-        assertTrue(conflicts.isEmpty(), "Matching entries in different categories must be recognized as identical")
+        // Same stable ID represents one entry, but its category is a synchronized field.
+        assertEquals(1, conflicts.size)
+        assertEquals(ConflictType.MODIFIED_DIVERGENCE, conflicts.single().type)
     }
 
     @Test

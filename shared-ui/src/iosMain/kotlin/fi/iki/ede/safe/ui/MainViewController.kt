@@ -151,8 +151,9 @@ fun MainViewController(): UIViewController {
                 } else {
                     db.updateSiteEntry(siteEntry)
                 }
-                val clusterSecret = Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER"
-                ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(clusterSecret)
+                Preferences.getVaultClusterSecret()?.let { clusterSecret ->
+                    ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(clusterSecret)
+                }
                 activeSiteEntry = null
                 refreshTrigger++
             } catch (e: Throwable) {
@@ -168,6 +169,19 @@ fun MainViewController(): UIViewController {
     var showDeviceSyncDialog by remember { mutableStateOf(false) }
     var activeConflicts by remember { mutableStateOf<List<SyncConflict>>(emptyList()) }
     val syncStatus by ContinuousAutoSyncCoordinator.instance.statusFlow.collectAsState()
+
+    LaunchedEffect(isLoggedIn) {
+        if (isLoggedIn) {
+            val clusterSecret = Preferences.getVaultClusterSecret()
+            if (!clusterSecret.isNullOrBlank() && Preferences.isAutoSyncWifiEnabled()) {
+                ContinuousAutoSyncCoordinator.instance.start(
+                    authToken = clusterSecret
+                )
+            }
+        } else {
+            ContinuousAutoSyncCoordinator.instance.stop()
+        }
+    }
 
     // Settings Screen states
     var showSettingsScreen by remember { mutableStateOf(false) }
@@ -608,8 +622,9 @@ fun MainViewController(): UIViewController {
                                 onDeleteSiteEntry = {
                                     val deletedTime = Clock.System.now().epochSeconds
                                     db.markSiteEntryDeleted(it.id!!, deletedTime)
-                                    val clusterSecret = Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER"
-                                    ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(clusterSecret)
+                                    Preferences.getVaultClusterSecret()?.let { clusterSecret ->
+                                        ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(clusterSecret)
+                                    }
                                     refreshTrigger++
                                 }
                             )
@@ -621,14 +636,16 @@ fun MainViewController(): UIViewController {
                                 onRenameCategory = { category, newName ->
                                      category.encryptedName = newName.encrypt()
                                      db.updateCategory(category.id!!, category)
-                                     val clusterSecret = Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER"
-                                     ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(clusterSecret)
+                                     Preferences.getVaultClusterSecret()?.let { clusterSecret ->
+                                         ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(clusterSecret)
+                                     }
                                      refreshTrigger++
                                 },
                                 onDeleteCategory = {
                                      db.deleteCategory(it.id!!)
-                                     val clusterSecret = Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER"
-                                     ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(clusterSecret)
+                                     Preferences.getVaultClusterSecret()?.let { clusterSecret ->
+                                         ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(clusterSecret)
+                                     }
                                      refreshTrigger++
                                 }
                             )
@@ -645,8 +662,9 @@ fun MainViewController(): UIViewController {
                                     db.addCategory(DecryptableCategoryEntry().apply {
                                          encryptedName = name.encrypt()
                                     })
-                                    val clusterSecret = Preferences.getVaultClusterSecret() ?: "DEFAULT_VAULT_CLUSTER"
-                                    ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(clusterSecret)
+                                    Preferences.getVaultClusterSecret()?.let { clusterSecret ->
+                                        ContinuousAutoSyncCoordinator.instance.onLocalDataChanged(clusterSecret)
+                                    }
                                     refreshTrigger++
                                 }
                                 showAddCategoryDialog = false
