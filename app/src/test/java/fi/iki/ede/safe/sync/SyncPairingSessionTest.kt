@@ -48,5 +48,18 @@ class SyncPairingSessionTest {
             SyncPairingSession.decryptPayload(tamperedHex, samplePin)
         }
     }
+
+    @Test
+    fun testConstantTimeEquals() {
+        val a = byteArrayOf(1, 2, 3, 4, 5)
+        val b = byteArrayOf(1, 2, 3, 4, 5)
+        val c = byteArrayOf(1, 2, 3, 4, 6)
+        val d = byteArrayOf(1, 2, 3)
+
+        assertTrue(SyncPairingSession.constantTimeEquals(a, b))
+        assertFalse(SyncPairingSession.constantTimeEquals(a, c))
+        assertFalse(SyncPairingSession.constantTimeEquals(a, d))
+        assertTrue(SyncPairingSession.constantTimeEquals(byteArrayOf(), byteArrayOf()))
+    }
 }
 

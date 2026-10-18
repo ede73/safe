@@ -9,6 +9,10 @@ val syncJson = Json {
     encodeDefaults = false
 }
 
+/** Maximum allowed payload size (10 MB) to prevent unbounded memory allocation and DoS attacks. */
+const val MAX_SYNC_PAYLOAD_BYTES: Int = 10 * 1024 * 1024
+
+
 @Serializable
 data class SyncPayload(
     val items: List<SyncItem>,

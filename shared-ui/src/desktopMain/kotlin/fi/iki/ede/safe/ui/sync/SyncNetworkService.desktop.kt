@@ -57,6 +57,26 @@ actual class SyncNetworkService {
         }
     }
 
+    private fun readBoundedLine(reader: BufferedReader, maxBytes: Int = MAX_SYNC_PAYLOAD_BYTES): String? {
+        val sb = StringBuilder()
+        var count = 0
+        while (true) {
+            val ch = reader.read()
+            if (ch == -1) {
+                return if (sb.isNotEmpty()) sb.toString() else null
+            }
+            if (ch == '\n'.code) {
+                val s = sb.toString()
+                return if (s.endsWith('\r')) s.dropLast(1) else s
+            }
+            sb.append(ch.toChar())
+            count++
+            if (count > maxBytes) {
+                throw IllegalStateException("Sync payload exceeded maximum allowed limit of $maxBytes bytes")
+            }
+        }
+    }
+
     private fun handleClient(
         socket: Socket,
         pin: String,
@@ -66,7 +86,7 @@ actual class SyncNetworkService {
             socket.use { s ->
                 val reader = BufferedReader(InputStreamReader(s.getInputStream()))
                 val writer = PrintWriter(s.getOutputStream(), true)
-                val incomingLine = reader.readLine() ?: return
+                val incomingLine = readBoundedLine(reader) ?: return
 
                 val decryptedJson = SyncPairingSession.decryptPayload(incomingLine, pin)
                 val responseJson = onPayloadReceived(decryptedJson)
@@ -118,7 +138,7 @@ actual class SyncNetworkService {
             writer.flush()
 
             onProgress?.invoke("Waiting for remote device to process changes...")
-            val responseLine = reader.readLine()
+            val responseLine = readBoundedLine(reader)
                 ?: throw IllegalStateException("No response received from target device")
 
             if (responseLine.startsWith("ERROR:")) {

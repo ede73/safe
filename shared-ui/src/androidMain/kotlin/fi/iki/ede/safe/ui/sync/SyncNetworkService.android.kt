@@ -86,6 +86,26 @@ actual class SyncNetworkService {
         }
     }
 
+    private fun readBoundedLine(reader: BufferedReader, maxBytes: Int = MAX_SYNC_PAYLOAD_BYTES): String? {
+        val sb = StringBuilder()
+        var count = 0
+        while (true) {
+            val ch = reader.read()
+            if (ch == -1) {
+                return if (sb.isNotEmpty()) sb.toString() else null
+            }
+            if (ch == '\n'.code) {
+                val s = sb.toString()
+                return if (s.endsWith('\r')) s.dropLast(1) else s
+            }
+            sb.append(ch.toChar())
+            count++
+            if (count > maxBytes) {
+                throw IllegalStateException("Sync payload exceeded maximum allowed limit of $maxBytes bytes")
+            }
+        }
+    }
+
     private fun handleClient(
         socket: Socket,
         pin: String,
@@ -96,7 +116,7 @@ actual class SyncNetworkService {
                 val reader = BufferedReader(InputStreamReader(s.getInputStream()))
                 val writer = PrintWriter(s.getOutputStream(), true)
                 firebaseLog("SafeSyncNet", "Reading from client ${s.inetAddress?.hostAddress}...")
-                val incomingLine = reader.readLine()
+                val incomingLine = readBoundedLine(reader)
                 if (incomingLine == null) {
                     firebaseLog("SafeSyncNet", "Client closed connection before sending data")
                     return
@@ -163,7 +183,7 @@ actual class SyncNetworkService {
 
                 onProgress?.invoke("Waiting for remote device to process changes...")
                 firebaseLog("SafeSyncNet", "Client waiting for response from $hostAddress:$port...")
-                val responseLine = reader.readLine()
+                val responseLine = readBoundedLine(reader)
                     ?: throw IllegalStateException("No response received from target device (connection closed)")
 
                 firebaseLog("SafeSyncNet", "Client received response of length ${responseLine.length} from $hostAddress:$port")
