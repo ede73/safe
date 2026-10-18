@@ -56,6 +56,9 @@ actual class SyncNetworkService {
                     return accumulated.toByteArray().decodeToString().trim()
                 }
                 accumulated.add(b)
+                if (accumulated.size > MAX_SYNC_PAYLOAD_BYTES) {
+                    throw IllegalStateException("Sync payload exceeded maximum limit of $MAX_SYNC_PAYLOAD_BYTES bytes")
+                }
             }
         }
         return if (accumulated.isNotEmpty()) accumulated.toByteArray().decodeToString().trim() else null
@@ -155,6 +158,11 @@ actual class SyncNetworkService {
             tv.tv_sec = 60
             tv.tv_usec = 0
             setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, tv.ptr, sizeOf<timeval>().toUInt())
+
+            val sndTv = alloc<timeval>()
+            sndTv.tv_sec = 10
+            sndTv.tv_usec = 0
+            setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, sndTv.ptr, sizeOf<timeval>().toUInt())
 
             val serverAddr = alloc<sockaddr_in>()
             memset(serverAddr.ptr, 0, sizeOf<sockaddr_in>().toULong())

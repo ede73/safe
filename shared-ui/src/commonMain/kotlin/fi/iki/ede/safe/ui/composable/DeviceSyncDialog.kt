@@ -690,11 +690,9 @@ fun DeviceSyncDialog(
                                                     }
                                                 }
                                             )
-                                            if (remoteJson != null) {
-                                                firebaseLog("SafeSync", "Client successfully received response from $host:$port (bytes=${remoteJson.length})")
-                                                firebasePublishFlowEvent("SafeSync", "ClientReceivedResponse", mapOf("host" to host, "port" to port.toString(), "bytes" to remoteJson.length.toString()))
-                                                break@outer
-                                            }
+                                            firebaseLog("SafeSync", "Client successfully received response from $host:$port (bytes=${remoteJson.length})")
+                                            firebasePublishFlowEvent("SafeSync", "ClientReceivedResponse", mapOf("host" to host, "port" to port.toString(), "bytes" to remoteJson.length.toString()))
+                                            break@outer
                                         } catch (e: Exception) {
                                             firebaseLog("SafeSync", "Client attempt to $host:$port failed: ${e::class.simpleName} - ${e.message}")
                                             lastError = e

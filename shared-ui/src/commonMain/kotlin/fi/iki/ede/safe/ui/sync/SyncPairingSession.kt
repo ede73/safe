@@ -85,12 +85,24 @@ object SyncPairingSession {
         val hmacTag = bytes.copyOfRange(0, 32)
         val ivAndCiphertext = bytes.copyOfRange(32, bytes.size)
         val expectedHmacTag = HMAC.hmacSHA256(macKey, ivAndCiphertext).bytes
-        require(hmacTag.contentEquals(expectedHmacTag)) { "Payload integrity check failed: HMAC mismatch" }
+        require(constantTimeEquals(hmacTag, expectedHmacTag)) { "Payload integrity check failed: HMAC mismatch" }
 
         val iv = ivAndCiphertext.copyOfRange(0, 16)
         val ciphertext = ivAndCiphertext.copyOfRange(16, ivAndCiphertext.size)
         val decryptedBytes = AES.decryptAesCbc(ciphertext, masterKey, iv, Padding.PKCS7Padding)
         return decryptedBytes.decodeToString()
+    }
+
+    /**
+     * Constant-time byte array equality check to eliminate timing side-channels in cryptographic comparisons.
+     */
+    fun constantTimeEquals(a: ByteArray, b: ByteArray): Boolean {
+        if (a.size != b.size) return false
+        var result = 0
+        for (i in a.indices) {
+            result = result or (a[i].toInt() xor b[i].toInt())
+        }
+        return result == 0
     }
 }
 
