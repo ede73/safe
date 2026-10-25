@@ -106,3 +106,46 @@ actual fun firebaseRecordException(message: String, t: Throwable) {
     firebaseLog(message)
     firebaseRecordException(t)
 }
+
+private inline fun withAnalytics(block: (com.google.firebase.analytics.FirebaseAnalytics) -> Unit) {
+    val context = appContext
+    if (context != null && FirebaseApp.getApps(context).isNotEmpty()) {
+        try {
+            block(com.google.firebase.analytics.FirebaseAnalytics.getInstance(context))
+        } catch (e: Exception) {
+            Logger.e(TAG, "Analytics error: ${e.message}")
+        }
+    }
+}
+
+actual fun firebaseLogEvent(eventName: String, params: Map<String, String>) {
+    withAnalytics { analytics ->
+        val bundle = android.os.Bundle()
+        params.forEach { (k, v) -> bundle.putString(k, v) }
+        analytics.logEvent(eventName, bundle)
+    }
+    firebaseLog("EVENT", "$eventName: $params")
+}
+
+actual fun firebaseSetCustomKey(key: String, value: String) {
+    withCrashlytics { it.setCustomKey(key, value) }
+}
+
+class SyncFlowBreadcrumb(flowName: String, details: String) : Exception("[$flowName] $details")
+
+actual fun firebasePublishFlowEvent(flowName: String, step: String, details: Map<String, String>) {
+    withCrashlytics { crashlytics ->
+        crashlytics.setCustomKey("flow_${flowName}", step)
+        details.forEach { (k, v) -> crashlytics.setCustomKey(k, v) }
+        crashlytics.log("[$flowName] $step: $details")
+        crashlytics.recordException(SyncFlowBreadcrumb(flowName, "$step: $details"))
+    }
+    withAnalytics { analytics ->
+        val bundle = android.os.Bundle()
+        bundle.putString("step", step)
+        details.forEach { (k, v) -> bundle.putString(k, v) }
+        val safeEventName = "${flowName}_${step}".lowercase().filter { it.isLetterOrDigit() || it == '_' }.take(40)
+        analytics.logEvent(safeEventName, bundle)
+    }
+    Logger.i("FirebaseFlow", "[$flowName] $step: $details")
+}

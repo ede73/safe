@@ -17,6 +17,7 @@ dependencies {
     implementation(project(":notifications"))
 
     implementation(libs.okio)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.11.0")
 
     implementation(compose.desktop.currentOs)
     implementation(compose.runtime)
@@ -27,6 +28,7 @@ dependencies {
 
     testImplementation(libs.junit5.jupiter)
     testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.serialization.json)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
@@ -43,5 +45,6 @@ tasks.test {
 compose.desktop {
     application {
         mainClass = "fi.iki.ede.safe.desktop.MainKt"
+        jvmArgs += listOf("-Djava.net.preferIPv4Stack=true")
     }
 }

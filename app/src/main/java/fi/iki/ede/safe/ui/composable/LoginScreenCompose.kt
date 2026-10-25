@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.integerResource
+import androidx.compose.ui.res.stringResource
 import fi.iki.ede.backup.MyBackupAgent
 import fi.iki.ede.crypto.Password
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
@@ -82,14 +83,14 @@ internal fun LoginScreenCompose(
         }
 
         val isInspectionMode = LocalInspectionMode.current
-        val initialStatusMessage = remember {
-            if (!isInspectionMode && MyBackupAgent.haveRestoreMark(context)) {
-                val time = Preferences.getAutoBackupRestoreFinished()?.toLocalDateTime()?.toString() ?: ""
-                context.getString(R.string.login_screen_restore_mark_message, time)
-            } else ""
-        }
+        val initialStatusMessage = if (!isInspectionMode && MyBackupAgent.haveRestoreMark(context)) {
+            val time = Preferences.getAutoBackupRestoreFinished()?.toLocalDateTime()?.toString() ?: ""
+            stringResource(R.string.login_screen_restore_mark_message, time)
+        } else ""
 
         var statusMessage by remember { mutableStateOf(initialStatusMessage) }
+        val failedToCreateVaultMessage = stringResource(R.string.failed_to_create_vault)
+        val loginInvalidPasswordMessage = stringResource(R.string.login_invalid_password)
 
         val passwordMinimumLength = integerResource(id = R.integer.password_minimum_length)
         Scaffold(
@@ -111,14 +112,14 @@ internal fun LoginScreenCompose(
                         BiometricsActivity.setBiometricEnabled(registerBio)
                         val accepted = goodPasswordEntered(LoginStyle.FIRST_TIME_LOGIN_CLEAR_DATABASE, Password(pwd))
                         if (!accepted) {
-                            statusMessage = context.getString(R.string.failed_to_create_vault)
+                            statusMessage = failedToCreateVaultMessage
                         }
                     },
                     onUnlock = { pwd, registerBio ->
                         BiometricsActivity.setBiometricEnabled(registerBio)
                         val accepted = goodPasswordEntered(LoginStyle.EXISTING_LOGIN, Password(pwd))
                         if (!accepted) {
-                            statusMessage = context.getString(R.string.login_invalid_password)
+                            statusMessage = loginInvalidPasswordMessage
                         }
                     },
                     onBiometricLogin = if (biometricsVerify != null && biometricsActivityEnabled && biometricsRecorded && keystoreIsInitialized) {

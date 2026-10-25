@@ -34,7 +34,7 @@ class SettingsScreenTest {
             onNodeWithText("Security").assertIsDisplayed()
 
             // Assert default username preference field is displayed
-            onNodeWithText("Default username").assertIsDisplayed()
+            onNodeWithText("Default username").performScrollTo().assertIsDisplayed()
 
             // Click Edit Extensions button and verify callback
             onNodeWithText("Edit Extensions").performScrollTo().performClick()

@@ -18,7 +18,11 @@ object DesktopResources {
 
     private fun loadResources() {
         val userLang = Locale.getDefault().language
-        val baseDir = "app/src/main/res".toPath()
+        val candidateDirs = listOf(
+            "app/src/main/res".toPath(),
+            "../app/src/main/res".toPath()
+        )
+        val baseDir = candidateDirs.firstOrNull { FileSystem.SYSTEM.exists(it) } ?: return
         
         val defaultStringsFile = baseDir / "values/strings.xml"
         if (FileSystem.SYSTEM.exists(defaultStringsFile)) {

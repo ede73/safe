@@ -27,7 +27,7 @@ import fi.iki.ede.crypto.keystore.KeyStoreHelperFactory
  * Make sure to increase the version code. Linter will highlight places to fix
  */
 @ExperimentalTime
-class BackupDatabase : ExportConfig(ExportVersion.V1) {
+class BackupDatabase : ExportConfig(ExportVersion.V2) {
     // Addressed PR10 comment: Use Okio BufferedSink signature for KMP compliance
     @VisibleForTesting(PRIVATE)
     fun generateXMLExport(
@@ -73,8 +73,11 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
         val cxfAccounts = kotlinx.coroutines.runBlocking { db.cxfAccountDao().getAll() }
         val cxfImports = kotlinx.coroutines.runBlocking { db.cxfImportDao().getAll() }
         val cxfPasskeys = kotlinx.coroutines.runBlocking { db.cxfPasskeyDao().getAll() }
+        val syncTombstones = kotlinx.coroutines.runBlocking { db.syncTombstoneDao().getAll() }
 
-        if (allSavedGPMs.isNotEmpty() || cxfAccounts.isNotEmpty() || cxfImports.isNotEmpty() || cxfPasskeys.isNotEmpty()) {
+        if (allSavedGPMs.isNotEmpty() || cxfAccounts.isNotEmpty() || cxfImports.isNotEmpty() ||
+            cxfPasskeys.isNotEmpty() || syncTombstones.isNotEmpty()
+        ) {
             serializer.startTag(Elements.IMPORTS)
 
             if (allSavedGPMs.isNotEmpty()) {
@@ -107,6 +110,13 @@ class BackupDatabase : ExportConfig(ExportVersion.V1) {
                     serializer.writeCxfPasskey(passkey, accCxfId)
                 }
                 serializer.endTag(Elements.IMPORTS_CXF)
+            }
+
+            syncTombstones.forEach { tombstone ->
+                serializer.startTag(Elements.SYNC_TOMBSTONE)
+                    .plainTextAttribute(Attributes.SYNC_TOMBSTONE_ID, tombstone.cxfItemId)
+                    .plainTextAttribute(Attributes.SYNC_TOMBSTONE_DELETED_AT, tombstone.deletedAt.toString())
+                serializer.endTag(Elements.SYNC_TOMBSTONE)
             }
 
             serializer.endTag(Elements.IMPORTS)

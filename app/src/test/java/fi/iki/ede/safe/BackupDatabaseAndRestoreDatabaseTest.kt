@@ -28,6 +28,7 @@ import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.safe.DataModelMocks.mockDataModelFor_UNIT_TESTS_ONLY
 import fi.iki.ede.safe.model.LoginHandler
 import fi.iki.ede.cryptoobjects.*
+import fi.iki.ede.db.cxf.*
 import fi.iki.ede.gpm.model.*
 import io.mockk.every
 import io.mockk.isMockKMock
@@ -183,13 +184,19 @@ class BackupDatabaseAndRestoreDatabaseTest {
         }
         unmockkObject(Clock.System)
         val out = finalBuffer.readUtf8()
-        if (PASSWORD_ENCRYPTED_BACKUP_AT_1234.trimIndent().trim() != out.trimIndent().trim()) {
-            println("ACTUAL_NEW_BACKUP_HEX:\n" + out.trim())
-        }
-        assertEquals(
-            PASSWORD_ENCRYPTED_BACKUP_AT_1234.trimIndent().trim(),
-            out.trimIndent().trim(),
-        )
+        val expectedLines = PASSWORD_ENCRYPTED_BACKUP_AT_1234.trimIndent().trim().lines()
+        val actualLines = out.trimIndent().trim().lines()
+        assertEquals(expectedLines.take(4), actualLines.take(4))
+
+        // V2 changes the encrypted XML's version attribute, while the legacy fixture remains
+        // V1 so restore tests continue covering old backups.
+        val expectedLegacyXml = KeyStoreHelperFactory.getKeyStoreHelper().decrypterProvider(
+            IVCipherText(expectedLines[3].hexToByteArray(), expectedLines[4].hexToByteArray())
+        ).decodeToString()
+        val actualXml = KeyStoreHelperFactory.getKeyStoreHelper().decrypterProvider(
+            IVCipherText(actualLines[3].hexToByteArray(), actualLines[4].hexToByteArray())
+        ).decodeToString()
+        assertEquals(expectedLegacyXml.replace("version=\"1\"", "version=\"2\""), actualXml)
 
         runBlocking {
             DataModel.dumpModelInDebugMode()
@@ -247,14 +254,14 @@ class BackupDatabaseAndRestoreDatabaseTest {
         runBlocking {
             val cxfDb = dbHelper.database
             val accId = cxfDb.cxfAccountDao().insert(
-                fi.iki.ede.db.cxf.CXFAccount(
+                CXFAccount(
                     cxfAccountId = "acc-123",
                     encryptedEmail = IVCipherText.getEmpty()
                 )
             )
 
             cxfDb.cxfImportDao().insert(
-                fi.iki.ede.db.cxf.CXFImport(
+                CXFImport(
                     accountId = accId,
                     encryptedCxfItemId = IVCipherText.getEmpty(),
                     type = "password",
@@ -268,7 +275,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
             )
 
             cxfDb.cxfPasskeyDao().insert(
-                fi.iki.ede.db.cxf.CXFPasskey(
+                CXFPasskey(
                     accountId = accId,
                     encryptedCxfItemId = IVCipherText.getEmpty(),
                     rpId = "example.com",
@@ -562,7 +569,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
         runBlocking {
             val cxfDb = dbHelper.database
             val accId = cxfDb.cxfAccountDao().insert(
-                fi.iki.ede.db.cxf.CXFAccount(
+                CXFAccount(
                     cxfAccountId = "acc-hex-1",
                     encryptedEmail = IVCipherText(
                         "0102030405060708090a0b0c0d0e0f10".hexToByteArray(),
@@ -571,7 +578,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
                 )
             )
             cxfDb.cxfImportDao().insert(
-                fi.iki.ede.db.cxf.CXFImport(
+                CXFImport(
                     accountId = accId,
                     encryptedCxfItemId = IVCipherText(
                         "0102030405060708090a0b0c0d0e0f10".hexToByteArray(),
@@ -603,7 +610,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
                 )
             )
             cxfDb.cxfPasskeyDao().insert(
-                fi.iki.ede.db.cxf.CXFPasskey(
+                CXFPasskey(
                     accountId = accId,
                     encryptedCxfItemId = IVCipherText(
                         "0102030405060708090a0b0c0d0e0f10".hexToByteArray(),
@@ -791,12 +798,12 @@ class BackupDatabaseAndRestoreDatabaseTest {
 
     @Test
     fun testCleanDomainNameAndCxfSyntheticMapping() {
-        assertEquals("www.amazon.com", fi.iki.ede.db.cxf.DecryptableCXFSiteEntry.cleanDomainName("https://www.amazon.com/ap/signin"))
-        assertEquals("github.com", fi.iki.ede.db.cxf.DecryptableCXFSiteEntry.cleanDomainName("http://github.com/login"))
-        assertEquals("www.nordea.fi", fi.iki.ede.db.cxf.DecryptableCXFSiteEntry.cleanDomainName("www.nordea.fi"))
-        assertEquals("Google Account", fi.iki.ede.db.cxf.DecryptableCXFSiteEntry.cleanDomainName("Google Account"))
+        assertEquals("www.amazon.com", DecryptableCXFSiteEntry.cleanDomainName("https://www.amazon.com/ap/signin"))
+        assertEquals("github.com", DecryptableCXFSiteEntry.cleanDomainName("http://github.com/login"))
+        assertEquals("www.nordea.fi", DecryptableCXFSiteEntry.cleanDomainName("www.nordea.fi"))
+        assertEquals("Google Account", DecryptableCXFSiteEntry.cleanDomainName("Google Account"))
 
-        val cxfImport = fi.iki.ede.db.cxf.CXFImport(
+        val cxfImport = CXFImport(
             id = 1L,
             accountId = 10L,
             cxfItemId = "item1",
@@ -808,7 +815,7 @@ class BackupDatabaseAndRestoreDatabaseTest {
             note = "my note",
             hash = "hash1"
         )
-        val syntheticEntry = fi.iki.ede.db.cxf.DecryptableCXFSiteEntry.makeFromImport(10L, cxfImport)
+        val syntheticEntry = DecryptableCXFSiteEntry.makeFromImport(10L, cxfImport)
         assertEquals("www.amazon.com", syntheticEntry.plainDescription)
         assertEquals("https://www.amazon.com/ap/signin", syntheticEntry.plainWebsite)
         assertEquals("ede@iki.fi", syntheticEntry.plainUsername)
@@ -943,7 +950,7 @@ ${cipheredMasterKey.cipherText.toHexString()}
     fun testCxfImportPerformanceAndZeroUpfrontDecryption() {
         val count = 1000
         val imports = (1..count).map { i ->
-            fi.iki.ede.db.cxf.CXFImport(
+            CXFImport(
                 id = i.toLong(),
                 accountId = 100L,
                 cxfItemId = "item_$i",
@@ -958,7 +965,7 @@ ${cipheredMasterKey.cipherText.toHexString()}
         }
 
         val startTime = System.currentTimeMillis()
-        val syntheticEntries = imports.map { fi.iki.ede.db.cxf.DecryptableCXFSiteEntry.makeFromImport(100L, it) }
+        val syntheticEntries = imports.map { DecryptableCXFSiteEntry.makeFromImport(100L, it) }
         val elapsedTime = System.currentTimeMillis() - startTime
 
         // Creation of 1000 synthetic entries MUST be under 500ms (verifying 0 upfront decryptions)

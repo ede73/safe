@@ -7,6 +7,7 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.useWriterConnection
 import java.io.File
 import kotlinx.coroutines.runBlocking
 import fi.iki.ede.cryptoobjects.*
@@ -66,7 +67,7 @@ fun runLegacyDatabaseMigration(context: Context, databaseName: String = DBHelper
                 val tempDb = Room.databaseBuilder<SafeDatabase>(
                     context = context,
                     name = DATABASE_NAME
-                ).addMigrations(MIGRATION_7_9, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11)
+                ).addMigrations(MIGRATION_7_9, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12)
                 .setDriver(BundledSQLiteDriver()).build()
 
                 val photoDir = File(context.filesDir, "photos")
@@ -247,6 +248,16 @@ actual fun setTransactionSuccessful(database: SafeDatabase) {
 @Suppress("DEPRECATION")
 actual fun endTransaction(database: SafeDatabase) {
     database.endTransaction()
+}
+
+actual fun <T> runInDbTransaction(database: SafeDatabase, block: suspend () -> T): T {
+    return kotlinx.coroutines.runBlocking {
+        database.useWriterConnection { transactor ->
+            transactor.withTransaction(androidx.room.Transactor.SQLiteTransactionType.IMMEDIATE) {
+                block()
+            }
+        }
+    }
 }
 
 actual fun storeTpmKeys(privateKeyBase64: String, publicKeyBase64: String) {}

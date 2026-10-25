@@ -5,9 +5,11 @@
         <!-- TODO: android:theme="@style/Theme.Safe.AppCompat" -->
         <activity
             android:name="fi.iki.ede.gpmui.activities.ImportNewGpmsScreen"
+            android:screenOrientation="portrait"
             android:exported="false" />
         <activity
             android:name="fi.iki.ede.gpmui.activities.AllowUserToMatchAndMergeImportedGpmsAndSiteEntriesScreen"
+            android:screenOrientation="portrait"
             android:exported="false" />
     </application>
 </manifest>
