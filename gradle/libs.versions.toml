@@ -22,6 +22,7 @@ junit6 = "6.1.0"
 junitVersion = "1.3.0"
 kotlinStdlib = "2.4.20"
 kotlinxCoroutinesCore = "1.11.0"
+kotlinxCollectionsImmutable = "0.5.1"
 kotlinxDatetime = "0.8.0"
 kotlinxSerializationJson = "1.11.0"
 kxml2 = "2.3.0"
@@ -102,6 +103,7 @@ junit6_jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.
 junit6_platform = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junit6" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlinStdlib" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
+kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinxCollectionsImmutable" }
 kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinxDatetime" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 kxml2 = { group = "net.sf.kxml", name = "kxml2", version.ref = "kxml2" }

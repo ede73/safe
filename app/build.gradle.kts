@@ -289,6 +289,7 @@ dependencies {
     implementation(libs.app.update.ktx)
     implementation(libs.feature.delivery.ktx)
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.collections.immutable)
     implementation(libs.material)
     implementation(libs.androidx.ui.test.junit4.android)
     implementation(libs.kotlinx.serialization.json)
