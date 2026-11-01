@@ -32,6 +32,7 @@ import fi.iki.ede.crypto.keystore.MockKeyStoreHelper
 import fi.iki.ede.crypto.support.encrypt
 import fi.iki.ede.cryptoobjects.*
 import fi.iki.ede.datamodel.DataModel
+import fi.iki.ede.db.DBID
 import fi.iki.ede.logger.Logger
 import fi.iki.ede.safe.R
 import fi.iki.ede.safe.ui.TestTag
@@ -47,11 +48,22 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
+import kotlinx.collections.immutable.toPersistentSet
 import kotlin.math.abs
 import kotlin.time.ExperimentalTime
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Search view at the top of the PasswordSearchScreen, intrinsic search controls
@@ -60,10 +72,11 @@ import kotlin.time.ExperimentalTime
 @ExperimentalTime
 @ExperimentalFoundationApi
 fun SearchSiteEntryControls(
-    matchingSiteEntries: MutableStateFlow<List<DecryptableSiteEntry>>,
+    matchingSiteEntries: MutableStateFlow<PersistentList<DecryptableSiteEntry>>,
     searchTextField: MutableState<TextFieldValue>,
 ) {
     val coroutineScope = rememberCoroutineScope()
+    var activeSearchCollectionJob by remember { mutableStateOf<Job?>(null) }
     val focusRequester = remember { FocusRequester() }
     val searchExtensions = remember { mutableStateOf(false) }
     val searchNotes = remember { mutableStateOf(false) }
@@ -73,18 +86,46 @@ fun SearchSiteEntryControls(
 
     // just small gather up for use in UI code below
     fun findNow(checked: Boolean) {
-        matchingSiteEntries.value = emptyList()
+        val generation = activeSearchGeneration.incrementAndGet()
+        matchingSiteEntries.value = persistentListOf()
+        activeSearchCollectionJob?.cancel()
+        val entriesAtSearchStart = DataModel.siteEntriesStateFlow.value.toPersistentList()
         beginSearch(
             coroutineScope,
-            DataModel.siteEntriesStateFlow.value, // ugly but too many recomposes
+            entriesAtSearchStart,
             matchingSiteEntries,
             searchTextField.value,
             searchWebsites.value,
             searchUsernames.value,
             searchPasswords.value,
             searchNotes.value,
-            searchExtensions.value
+            searchExtensions.value,
+            generation
         )
+
+        val query = searchTextField.value.text.trim()
+        if (query.isBlank()) return
+
+        val tracker = SearchEntrySnapshotTracker<DecryptableSiteEntry> { it.id }
+        val initialSearchJob = delayedSearchJob
+        activeSearchCollectionJob = coroutineScope.launch {
+            DataModel.siteEntriesStateFlow
+                .debouncedSearchEntryChanges(tracker, entriesAtSearchStart)
+                .collect { changes ->
+                    searchNewEntriesInChunks(
+                        changes,
+                        query,
+                        searchWebsites.value,
+                        searchUsernames.value,
+                        searchPasswords.value,
+                        searchNotes.value,
+                        searchExtensions.value,
+                        matchingSiteEntries,
+                        initialSearchJob,
+                        generation
+                    )
+                }
+        }
     }
 
     // Even focus changes, keyboard hidden etc.
@@ -118,11 +159,16 @@ fun SearchSiteEntryControls(
             placeholder = { Text(stringResource(id = R.string.password_search_search_hint)) },
             trailingIcon = {
                 if (searchTextField.value != TextFieldValue("")) {
-                    IconButton(onClick = { searchTextField.value = TextFieldValue("") }) {
+                    IconButton(onClick = {
+                        val clearedValue = TextFieldValue("")
+                        searchTextField.value = clearedValue
+                        hackToInvokeSearchOnlyIfTextValueChanges = clearedValue
+                        findNow(true)
+                    }) {
                         Icon(
                             Icons.Default.Close,
                             contentDescription = "",
-                            modifier = iconPadding
+                            modifier = iconPadding.testTag(TestTag.SEARCH_CLEAR_BUTTON)
                         )
                     }
                 }
@@ -162,21 +208,162 @@ fun SearchSiteEntryControls(
     }
 }
 
+@OptIn(ExperimentalTime::class, ExperimentalFoundationApi::class)
+internal fun <T> Flow<List<T>>.debouncedSearchEntryChanges(
+    tracker: SearchEntrySnapshotTracker<T>,
+    initialEntries: PersistentList<T>,
+    debounceMillis: Long = 500L
+): Flow<SearchEntryChanges<T>> {
+    tracker.seed(initialEntries)
+    return map { it.toPersistentList() }
+        .debounce(debounceMillis)
+        .map(tracker::update)
+        .filter { it.changedEntries.isNotEmpty() || it.removedIds.isNotEmpty() }
+}
+
+/** Search only the entries added or replaced since the active query began. */
+@ExperimentalTime
+@ExperimentalFoundationApi
+private suspend fun searchNewEntriesInChunks(
+    changes: SearchEntryChanges<DecryptableSiteEntry>,
+    searchText: String,
+    searchWebsites: Boolean,
+    searchUsernames: Boolean,
+    searchPasswords: Boolean,
+    searchNotes: Boolean,
+    searchExtensions: Boolean,
+    matchingSiteEntries: MutableStateFlow<PersistentList<DecryptableSiteEntry>>,
+    initialSearchJob: Job?,
+    generation: Long
+) = kotlinx.coroutines.coroutineScope {
+    initialSearchJob?.join()
+    if (!coroutineContext[Job]!!.isActive || activeSearchGeneration.get() != generation) {
+        return@coroutineScope
+    }
+
+    val newEntries = changes.changedEntries
+    val batchMatches = MutableStateFlow(persistentListOf<DecryptableSiteEntry>())
+
+    if (newEntries.isNotEmpty()) {
+        val cpus =
+            if (newEntries.size < SiteEntrySearchScreen.MIN_PASSWORDS_FOR_THREADED_SEARCH) {
+                1
+            } else Runtime.getRuntime().availableProcessors()
+        val chunkSize = (newEntries.size + cpus) / cpus
+        val chunkedSiteEntries = mutableListOf<PersistentList<DecryptableSiteEntry>>()
+        newEntries.chunked(chunkSize).forEach { chunkedSiteEntries += it.toPersistentList() }
+        require(chunkedSiteEntries.size <= cpus) { "Logic error too many chunks" }
+
+        val parentJob = coroutineContext[Job]!!
+        searchProgressPerThread.clear()
+        searchProgressPerThread.addAll(MutableList(cpus) { 0f })
+        val routines = mutableListOf<Deferred<Unit>>()
+        for ((chunkIndex, siteEntryChunk) in chunkedSiteEntries.withIndex()) {
+            routines.add(
+                async {
+                    withContext(Dispatchers.Default) {
+                        asyncFilterChunkOfSiteEntries(
+                            chunkIndex,
+                            parentJob::isActive,
+                            searchText,
+                            siteEntryChunk,
+                            searchWebsites,
+                            searchUsernames,
+                            searchPasswords,
+                            searchNotes,
+                            searchExtensions,
+                            batchMatches,
+                            generation
+                        )
+                    }
+                }
+            )
+        }
+        routines.forEach { it.await() }
+    }
+    matchingSiteEntries.update { current ->
+        reconcileSearchResults(
+            current,
+            changes.changedEntries,
+            changes.removedIds,
+            batchMatches.value,
+            keyOf = { it.id }
+        ).takeIf { activeSearchGeneration.get() == generation } ?: current
+    }
+}
+
+internal fun <T, K> reconcileSearchResults(
+    current: PersistentList<T>,
+    changedEntries: PersistentList<T>,
+    removedKeys: PersistentSet<K>,
+    matchingChangedEntries: PersistentList<T>,
+    keyOf: (T) -> K?
+): PersistentList<T> {
+    val affectedKeys = changedEntries.mapNotNull(keyOf).toPersistentSet() + removedKeys
+    return current.filterNot { keyOf(it) in affectedKeys }
+        .toPersistentList()
+        .addingAll(matchingChangedEntries)
+}
+
+internal data class SearchEntryChanges<T>(
+    val changedEntries: PersistentList<T>,
+    val removedIds: PersistentSet<DBID>
+)
+
+/** Diffs snapshots without re-running the encrypted search for unchanged entries. */
+internal class SearchEntrySnapshotTracker<T>(private val idOf: (T) -> DBID?) {
+    private var entriesById: MutableMap<DBID, T> = mutableMapOf()
+    private var entriesWithoutId = persistentListOf<T>()
+
+    fun seed(snapshot: PersistentList<T>) {
+        val entriesWithIds = mutableMapOf<DBID, T>()
+        val noIdEntries = mutableListOf<T>()
+        snapshot.forEach { item ->
+            val id = idOf(item)
+            if (id == null) noIdEntries += item else entriesWithIds[id] = item
+        }
+        entriesById = entriesWithIds
+        entriesWithoutId = noIdEntries.toPersistentList()
+    }
+
+    fun update(snapshot: PersistentList<T>): SearchEntryChanges<T> {
+        val nextEntriesById = mutableMapOf<DBID, T>()
+        val nextEntriesWithoutId = mutableListOf<T>()
+        val changed = mutableListOf<T>()
+        snapshot.forEach { item ->
+            val id = idOf(item)
+            if (id == null) {
+                if (entriesWithoutId.none { it === item }) changed += item
+                nextEntriesWithoutId += item
+            } else {
+                if (entriesById[id] !== item) changed += item
+                nextEntriesById[id] = item
+            }
+        }
+        val removed = entriesById.keys - nextEntriesById.keys
+        entriesById = nextEntriesById
+        entriesWithoutId = nextEntriesWithoutId.toPersistentList()
+        return SearchEntryChanges(changed.toPersistentList(), removed.toPersistentSet())
+    }
+}
+
 private var delayedSearchJob: Job? = null
 private const val TAG = "SearchPasswordAndControls"
+private val activeSearchGeneration = AtomicLong(0L)
 
 @ExperimentalTime
 @ExperimentalFoundationApi
 fun beginSearch(
     coroutineScope: CoroutineScope,
-    allSiteEntries: List<DecryptableSiteEntry>,
-    matchingSiteEntries: MutableStateFlow<List<DecryptableSiteEntry>>,
+    allSiteEntries: PersistentList<DecryptableSiteEntry>,
+    matchingSiteEntries: MutableStateFlow<PersistentList<DecryptableSiteEntry>>,
     searchTextField: TextFieldValue,
     searchWebsites: Boolean,
     searchUsernames: Boolean,
     searchPasswords: Boolean,
     searchNotes: Boolean,
-    searchExtensions: Boolean
+    searchExtensions: Boolean,
+    generation: Long
 ) {
     try {
         synchronized(allSiteEntries) {
@@ -197,7 +384,7 @@ fun beginSearch(
 
             // no point searching for something we will never find
             if (searchTextField.text.isEmpty() || allSiteEntries.isEmpty()) {
-                matchingSiteEntries.value = emptyList()
+                matchingSiteEntries.value = persistentListOf()
                 return
             }
 
@@ -219,7 +406,8 @@ fun beginSearch(
                 // HACKY! I'm guessing there's a completion handler or something like that
                 // this is just to pass the CoroutineScope to filter function (also maybe some other way doing this)
                 fun localIsActive(): Boolean {
-                    return ourJob.isActive && !ourJob.isCancelled
+                    return ourJob.isActive && !ourJob.isCancelled &&
+                            activeSearchGeneration.get() == generation
                 }
 
                 // user might have already typed new search terms, and we might have been cancelled
@@ -228,8 +416,10 @@ fun beginSearch(
                     // TODO: PULL UP. no point chunking on every key stroke!!
                     // make sure password entry list is split to chunks of number of CPUs
                     // make sure the nor matter how non-even the CPU count is, all passwords are included
-                    val chunkedSiteEntries =
-                        allSiteEntries.chunked((allSiteEntries.size + cpus) / cpus)
+                    val chunkSize = (allSiteEntries.size + cpus) / cpus
+                    val chunkedSiteEntries = mutableListOf<PersistentList<DecryptableSiteEntry>>()
+                    allSiteEntries.chunked(chunkSize)
+                        .forEach { chunkedSiteEntries += it.toPersistentList() }
                     require(chunkedSiteEntries.size <= cpus) { "Logic error too many chunks" }
 
                     val routines = mutableListOf<Deferred<Unit>>()
@@ -247,7 +437,8 @@ fun beginSearch(
                                         searchPasswords,
                                         searchNotes,
                                         searchExtensions,
-                                        matchingSiteEntries
+                                        matchingSiteEntries,
+                                        generation
                                     )
                                 }
                             })
@@ -279,13 +470,14 @@ private fun asyncFilterChunkOfSiteEntries(
     chunk: Int,
     isActive: () -> Boolean,
     searchText: String,
-    chunkOfSiteEntries: List<DecryptableSiteEntry>,
+    chunkOfSiteEntries: PersistentList<DecryptableSiteEntry>,
     searchWebsites: Boolean,
     searchUsernames: Boolean,
     searchPasswords: Boolean,
     searchNotes: Boolean,
     searchExtensions: Boolean,
-    matchingSiteEntries: MutableStateFlow<List<DecryptableSiteEntry>>,
+    matchingSiteEntries: MutableStateFlow<PersistentList<DecryptableSiteEntry>>,
+    generation: Long,
 ) {
     var searchedSiteEntryCount = 0.0f
     val amountOfSiteEntries = chunkOfSiteEntries.size * 1.0f
@@ -303,8 +495,12 @@ private fun asyncFilterChunkOfSiteEntries(
                     searchNotes,
                     searchExtensions,
                 )
-            ) {
-                matchingSiteEntries.update { currentList -> currentList + it }
+                && isActive()) {
+                matchingSiteEntries.update { currentList ->
+                    if (isActive() && activeSearchGeneration.get() == generation) {
+                        currentList.adding(it)
+                    } else currentList
+                }
             }
         }
     }
@@ -322,7 +518,7 @@ private fun SearchSiteEntryPreview() {
             description = "Description".encrypt()
         }
         val search = remember { mutableStateOf(TextFieldValue()) }
-        val stateFlow = MutableStateFlow(listOf(site, site, site))
+        val stateFlow = MutableStateFlow(persistentListOf(site, site, site))
         SearchSiteEntryControls(stateFlow, search)
     }
 }

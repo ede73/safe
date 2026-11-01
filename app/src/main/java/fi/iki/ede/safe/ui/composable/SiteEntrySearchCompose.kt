@@ -19,6 +19,7 @@ import fi.iki.ede.cryptoobjects.*
 import fi.iki.ede.safe.ui.activities.SiteEntrySearchScreen
 import fi.iki.ede.theme.SafeTheme
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.collections.immutable.persistentListOf
 import kotlin.time.ExperimentalTime
 
 @Composable
@@ -32,9 +33,7 @@ internal fun SiteEntrySearchCompose() {
             val searchText = remember { mutableStateOf(TextFieldValue("")) }
             val matchingPasswordEntries =
                 remember {
-                    MutableStateFlow<List<DecryptableSiteEntry>>(
-                        emptyList()
-                    )
+                    MutableStateFlow(persistentListOf<DecryptableSiteEntry>())
                 }
             Column {
                 SearchSiteEntryControls(

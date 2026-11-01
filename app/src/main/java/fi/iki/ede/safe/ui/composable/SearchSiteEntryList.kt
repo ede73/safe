@@ -27,29 +27,32 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
 import kotlin.time.ExperimentalTime
 
 @Composable
 @ExperimentalTime
 @ExperimentalFoundationApi
 fun SearchSiteEntryList(
-    filteredSiteEntries: MutableStateFlow<List<DecryptableSiteEntry>>
+    filteredSiteEntries: MutableStateFlow<PersistentList<DecryptableSiteEntry>>
 ) {
     val context = LocalContext.current
     val sortedPasswords by remember(filteredSiteEntries) {
         filteredSiteEntries
-            .map { list -> list.sortedBy { it.plainDescription.lowercase() } }
+            .map { entries ->
+                entries.sortedBy { it.plainDescription.lowercase() }.toPersistentList()
+            }
             .flowOn(Dispatchers.Default)
-    }.collectAsState(initial = emptyList())
+    }.collectAsState(initial = persistentListOf())
 
     fun updateEntry(siteEntryToUpdate: DecryptableSiteEntry) {
-        val updatedList = filteredSiteEntries.value.map { entry ->
-            if (entry.id == siteEntryToUpdate.id)
-                siteEntryToUpdate.copy()
-            else
-                entry
-        }
-        filteredSiteEntries.value = updatedList
+        filteredSiteEntries.value = replaceSearchResultEntry(
+            filteredSiteEntries.value,
+            siteEntryToUpdate,
+            keyOf = { it.id }
+        )
     }
 
     val launcher =
@@ -82,12 +85,22 @@ fun SearchSiteEntryList(
                 }, onDeleteSiteEntry = { deletedEntry ->
                     // it is gone already
                     val newList = filteredSiteEntries.value.filter { it != deletedEntry }
+                        .toPersistentList()
                     filteredSiteEntries.value = newList
                 }, onUpdateSiteEntry = { entryToUpdate ->
                     updateEntry(entryToUpdate)
                 })
         })
     }
+}
+
+internal fun <T, K> replaceSearchResultEntry(
+    current: PersistentList<T>,
+    updated: T,
+    keyOf: (T) -> K?
+): PersistentList<T> {
+    val updatedKey = keyOf(updated) ?: return current
+    return current.map { if (keyOf(it) == updatedKey) updated else it }.toPersistentList()
 }
 
 @DualModePreview
@@ -107,8 +120,7 @@ private fun SearchSiteEntryListPreview() {
             id = 1
             encryptedName = "Category".encrypt()
         }
-        val lst = mutableListOf(site1, site2)
-        val sitesFlow = MutableStateFlow(lst.toList())
+        val sitesFlow = MutableStateFlow(persistentListOf(site1, site2))
         // TODO: No mock..
         //DataModel._categories[cat] = lst
         SearchSiteEntryList(sitesFlow)
