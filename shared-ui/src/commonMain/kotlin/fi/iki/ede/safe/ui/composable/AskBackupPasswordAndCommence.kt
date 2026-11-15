@@ -47,7 +47,10 @@ fun AskBackupPasswordAndCommence(
                 },
                 enabled = !doRestore
             ) {
-                Text(text = getString("restore_screen_restore_button"))
+                val btnText = getString("restore_screen_restore_button").let {
+                    if (it.isBlank() || it.startsWith("restore_")) "Restore" else it
+                }
+                Text(text = btnText)
             }
             Column {
                 Text(getString("restore_screen_passwords_count").replace("%d", processedPasswords.intValue.toString()))

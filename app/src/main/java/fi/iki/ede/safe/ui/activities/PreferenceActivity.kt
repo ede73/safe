@@ -12,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.activityViewModels
+import androidx.preference.EditTextPreference
 import androidx.preference.MultiSelectListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -23,6 +24,7 @@ import fi.iki.ede.backup.ExportConfig
 import fi.iki.ede.backup.getCreateDocumentIntent
 import fi.iki.ede.cryptoobjects.*
 import fi.iki.ede.datamodel.DataModel
+import fi.iki.ede.dateutils.DateUtils
 import fi.iki.ede.dateutils.toLocalDateTime
 import fi.iki.ede.logger.firebaseCollectCrashlytics
 import fi.iki.ede.logger.firebaseLog
@@ -44,6 +46,8 @@ import fi.iki.ede.safe.splits.PluginName
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.composable.ExtensionsEditor
 import fi.iki.ede.safe.ui.models.PluginLoaderViewModel
+import fi.iki.ede.safe.ui.sync.DeviceInfoProvider
+import fi.iki.ede.safe.ui.sync.DevicePlatformInfo
 import fi.iki.ede.safe.ui.utilities.startActivityForResults
 import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
@@ -78,6 +82,49 @@ class PreferenceActivity :
                 }
             }
         private var serviceConnection: ServiceConnection? = null
+        private var deviceNamePref: EditTextPreference? = null
+        private var pairedCategory: androidx.preference.PreferenceCategory? = null
+
+        private fun updateDeviceNameSummary() {
+            deviceNamePref?.let { pref ->
+                val custom = Preferences.getSyncDeviceCustomName().trim()
+                pref.text = custom
+                pref.summary = if (custom.isNotBlank()) {
+                    "Custom name: $custom\nTap to change"
+                } else {
+                    "Default: ${DeviceInfoProvider.getFormattedDeviceName()}\nTap to set custom name"
+                }
+            }
+        }
+
+        private fun updatePairedDevicesCategory() {
+            val category = pairedCategory ?: return
+            category.removeAll()
+            val pairedDevices = Preferences.getPairedSyncDeviceList()
+            category.title = "Paired Devices (${pairedDevices.size})"
+
+            if (pairedDevices.isEmpty()) {
+                category.addPreference(Preference(requireContext()).apply {
+                    title = "No linked devices"
+                    summary = "Devices on your local Wi-Fi will appear here after synchronizing"
+                    isEnabled = false
+                    isIconSpaceReserved = false
+                })
+            } else {
+                pairedDevices.forEach { dev ->
+                    category.addPreference(Preference(requireContext()).apply {
+                        title = dev.name
+                        summary = if (dev.lastSyncTimestamp > 0L) {
+                            "Last synced ${DateUtils.formatTimeAgo(dev.lastSyncTimestamp)} • Linked for auto-sync"
+                        } else {
+                            "Linked for automatic peer synchronization"
+                        }
+                        isIconSpaceReserved = false
+                        isSingleLineTitle = false
+                    })
+                }
+            }
+        }
 
         private inline fun <reified T : Preference, reified C : Any> addChangeListener(
             preferenceKey: String,
@@ -118,6 +165,8 @@ class PreferenceActivity :
             preferenceManager.preferenceDataStore = DataStorePreferenceBridge(Preferences.sharedPreferences as DataStoreSharedPreferences)
             addPreferencesFromResource(prefR.xml.preferences)
 
+            DevicePlatformInfo.appVersion = BuildConfig.VERSION_NAME
+
             val versionPreference = Preference(requireContext()).apply {
                 key = "version_preference"
                 title = "App Version"
@@ -127,6 +176,52 @@ class PreferenceActivity :
             }
 
             preferenceScreen?.addPreference(versionPreference)
+
+            // --- Synchronization Preferences ---
+            val syncCategory = androidx.preference.PreferenceCategory(requireContext()).apply {
+                title = "Device Synchronization"
+                isIconSpaceReserved = false
+            }
+            preferenceScreen?.addPreference(syncCategory)
+
+            val autoSyncWifi = androidx.preference.SwitchPreferenceCompat(requireContext()).apply {
+                key = Preferences.PREFERENCE_AUTO_SYNC_WIFI_ENABLED
+                title = "Auto-Sync on Local Wi-Fi"
+                summary = "Continuously sync updates with linked devices when on the same Wi-Fi network"
+                isChecked = Preferences.isAutoSyncWifiEnabled()
+                isIconSpaceReserved = false
+                setOnPreferenceChangeListener { _, newValue ->
+                    val enabled = newValue as Boolean
+                    Preferences.setAutoSyncWifiEnabled(enabled)
+                    true
+                }
+            }
+            syncCategory.addPreference(autoSyncWifi)
+
+            val devNamePref = EditTextPreference(requireContext()).apply {
+                key = Preferences.PREFERENCE_SYNC_DEVICE_CUSTOM_NAME
+                title = "Device Name"
+                dialogTitle = "Device Name"
+                dialogMessage = "Enter a custom name for this device (e.g. Work Laptop, Tablet):"
+                isIconSpaceReserved = false
+                isSingleLineTitle = false
+                setOnPreferenceChangeListener { _, newValue ->
+                    val name = (newValue as String).trim()
+                    Preferences.setSyncDeviceCustomName(name)
+                    updateDeviceNameSummary()
+                    true
+                }
+            }
+            deviceNamePref = devNamePref
+            updateDeviceNameSummary()
+            syncCategory.addPreference(devNamePref)
+
+            val pairedCat = androidx.preference.PreferenceCategory(requireContext()).apply {
+                isIconSpaceReserved = false
+            }
+            pairedCategory = pairedCat
+            preferenceScreen?.addPreference(pairedCat)
+            updatePairedDevicesCategory()
 
             findPreference<MultiSelectListPreference>(Preferences.PREFERENCE_EXPERIMENTAL_FEATURES).let { experimentalFeatures ->
                 experimentalFeatures?.apply {
@@ -280,6 +375,8 @@ class PreferenceActivity :
         override fun onResume() {
             super.onResume()
             Preferences.sharedPreferences.registerOnSharedPreferenceChangeListener(this)
+            updateDeviceNameSummary()
+            updatePairedDevicesCategory()
         }
 
         override fun onPause() {
@@ -292,6 +389,14 @@ class PreferenceActivity :
             key: String?
         ) {
             when (key) {
+                Preferences.PREFERENCE_SYNC_DEVICE_CUSTOM_NAME -> {
+                    updateDeviceNameSummary()
+                }
+
+                Preferences.PREFERENCE_PAIRED_SYNC_DEVICES -> {
+                    updatePairedDevicesCategory()
+                }
+
                 Preferences.PREFERENCE_EXPERIMENTAL_FEATURES -> {
                     val allPlugins = PluginName.entries.toSet()
                     val enabledPlugins = sharedPreferences?.getStringSet(

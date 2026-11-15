@@ -10,6 +10,7 @@ expect fun getPhotoDir(): Path
 expect fun beginTransaction(database: SafeDatabase)
 expect fun setTransactionSuccessful(database: SafeDatabase)
 expect fun endTransaction(database: SafeDatabase)
+expect fun <T> runInDbTransaction(database: SafeDatabase, block: suspend () -> T): T
 
 expect fun storeTpmKeys(privateKeyBase64: String, publicKeyBase64: String)
 expect fun fetchTpmKeys(): Pair<String, String>?

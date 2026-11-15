@@ -4,6 +4,7 @@ package fi.iki.ede.db
 
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.useWriterConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import okio.Path
 import okio.Path.Companion.toPath
@@ -46,6 +47,16 @@ actual fun getPhotoDir(): Path {
 actual fun beginTransaction(database: SafeDatabase) {}
 actual fun setTransactionSuccessful(database: SafeDatabase) {}
 actual fun endTransaction(database: SafeDatabase) {}
+
+actual fun <T> runInDbTransaction(database: SafeDatabase, block: suspend () -> T): T {
+    return kotlinx.coroutines.runBlocking {
+        database.useWriterConnection { transactor ->
+            transactor.withTransaction(androidx.room.Transactor.SQLiteTransactionType.IMMEDIATE) {
+                block()
+            }
+        }
+    }
+}
 
 actual fun storeTpmKeys(privateKeyBase64: String, publicKeyBase64: String) {}
 actual fun fetchTpmKeys(): Pair<String, String>? = null

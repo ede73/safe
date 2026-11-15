@@ -29,9 +29,10 @@ import kotlin.time.ExperimentalTime
         SiteEntryGPMJoin::class,
         CXFAccount::class,
         CXFImport::class,
-        CXFPasskey::class
+        CXFPasskey::class,
+        SyncTombstone::class
     ],
-    version = 11,
+    version = 12,
     exportSchema = false
 )
 @TypeConverters(RoomConverters::class)
@@ -45,6 +46,7 @@ abstract class SafeDatabase : RoomDatabase() {
     abstract fun cxfAccountDao(): CxfAccountDao
     abstract fun cxfImportDao(): CxfImportDao
     abstract fun cxfPasskeyDao(): CxfPasskeyDao
+    abstract fun syncTombstoneDao(): SyncTombstoneDao
 }
 
 expect object SafeDatabaseConstructor : RoomDatabaseConstructor<SafeDatabase>
@@ -83,5 +85,11 @@ val MIGRATION_10_11 = object : Migration(10, 11) {
     override fun migrate(connection: SQLiteConnection) {
         connection.execSQL("DROP TABLE IF EXISTS `cxf_accounts` ")
         connection.execSQL("CREATE TABLE IF NOT EXISTS `cxf_accounts` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `cxf_account_id` TEXT NOT NULL, `email` BLOB NOT NULL, `imported_at` INTEGER NOT NULL)")
+    }
+}
+
+val MIGRATION_11_12 = object : Migration(11, 12) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("CREATE TABLE IF NOT EXISTS `sync_tombstones` (`cxf_item_id` TEXT NOT NULL, `deleted_at` INTEGER NOT NULL, PRIMARY KEY(`cxf_item_id`))")
     }
 }

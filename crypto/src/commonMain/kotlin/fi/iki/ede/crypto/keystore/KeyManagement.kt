@@ -9,8 +9,13 @@ import korlibs.crypto.AES
 import korlibs.crypto.PBKDF2
 import korlibs.crypto.Padding
 import korlibs.crypto.SHA256
+import korlibs.crypto.encoding.Hex
 
 object KeyManagement {
+
+    /** Safe to persist for revocation: the input is a uniformly random 256-bit key. */
+    fun syncSecretFingerprint(secret: String): String =
+        Hex.encode(SHA256.digest(("Safe-sync-revoked-v1:" + secret.lowercase()).encodeToByteArray()).bytes)
 
     // --- Key generation (KMP) ---
     // Generate AES key (bits = 128/192/256)

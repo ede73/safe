@@ -35,6 +35,12 @@ import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.ui.TestTag
 import fi.iki.ede.safe.ui.dialogs.ShowTrashDialog
 import fi.iki.ede.safe.ui.testTag
+import fi.iki.ede.datamodel.DataModel
+import fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper
+import fi.iki.ede.safe.ui.composable.ConflictResolutionDialog
+import fi.iki.ede.safe.ui.composable.DeviceSyncDialog
+import fi.iki.ede.safe.ui.sync.SyncConflict
+import fi.iki.ede.safe.ui.sync.SyncConflictResolver
 import fi.iki.ede.theme.SafeTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -49,10 +55,14 @@ fun BottomActionBar(
     onAddRequested: () -> Unit = {},
     loginScreen: Boolean = false
 ) {
+    val coroutineScope = rememberCoroutineScope()
     val displayMenu = remember { mutableStateOf(false) }
     val exportImport = remember { mutableStateOf(false) }
     val showChangePasswordDialog = remember { mutableStateOf(false) }
     val showTrashDialog = remember { mutableStateOf(false) }
+    val displayDeviceSyncDialog = remember { mutableStateOf(false) }
+    val displayConflictDialog = remember { mutableStateOf(false) }
+    val activeConflicts = remember { mutableStateOf<List<SyncConflict>>(emptyList()) }
     val context = LocalContext.current
 
     SafeTheme {
@@ -91,7 +101,10 @@ fun BottomActionBar(
                         displayMenu,
                         exportImport,
                         showChangePasswordDialog,
-                        showTrashDialog
+                        showTrashDialog,
+                        displayDeviceSyncDialog,
+                        displayConflictDialog,
+                        activeConflicts
                     )
                 }
             },
@@ -103,6 +116,28 @@ fun BottomActionBar(
     }
     if (showTrashDialog.value) {
         ShowTrashDialog(onDismiss = { showTrashDialog.value = false })
+    }
+    if (displayDeviceSyncDialog.value) {
+        DeviceSyncDialog(
+            onDismissRequest = { displayDeviceSyncDialog.value = false },
+            onSyncCompleted = {
+                Logger.d(TAG, "Device sync completed successfully")
+                coroutineScope.launch {
+                    DataModel.loadFromDatabase {}
+                }
+            }
+        )
+    }
+    if (displayConflictDialog.value) {
+        ConflictResolutionDialog(
+            conflicts = activeConflicts.value,
+            onDismissRequest = { displayConflictDialog.value = false },
+            onResolveCompleted = { resolved ->
+                Logger.d(TAG, "Conflict resolution completed with ${resolved.size} items resolved.")
+                SyncConflictResolver.applyResolvedConflictsToLocalDatabase(resolved)
+                displayConflictDialog.value = false
+            }
+        )
     }
 }
 
@@ -149,6 +184,9 @@ private fun MakeDropdownMenu(
     exportImport: MutableState<Boolean>,
     showChangePasswordDialog: MutableState<Boolean>,
     showTrashDialog: MutableState<Boolean>,
+    displayDeviceSyncDialog: MutableState<Boolean>,
+    displayConflictDialog: MutableState<Boolean>,
+    activeConflicts: MutableState<List<SyncConflict>>,
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -161,33 +199,28 @@ private fun MakeDropdownMenu(
         }
     ) {
         if (!exportImport.value) {
-            DropdownMenuItem(
-                enabled = !loginScreen,
-                text = { Text(text = stringResource(id = R.string.action_bar_settings)) },
-                onClick = {
-                    displayMenu.value = false
+            SharedMenuItems(
+                isLoggedIn = !loginScreen,
+                onPeerSyncRequested = {
+                    displayDeviceSyncDialog.value = true
+                },
+                onSettingsRequested = {
                     IntentManager.startPreferencesActivity(context)
-                })
-            DropdownMenuItem(
-                text = { Text(text = stringResource(id = R.string.action_bar_help)) },
-                onClick = {
-                    displayMenu.value = false
+                },
+                onHelpRequested = {
                     IntentManager.startHelpScreen(context)
-                })
-            DropdownMenuItem(
-                enabled = !loginScreen,
-                text = { Text(text = stringResource(id = R.string.action_bar_change_master_password)) },
-                onClick = {
-                    displayMenu.value = false
+                },
+                onChangeMasterPasswordRequested = {
                     showChangePasswordDialog.value = true
-                })
-            DropdownMenuItem(
-                enabled = !loginScreen,
-                text = { Text(text = stringResource(id = R.string.action_bar_show_trash)) },
-                onClick = {
-                    displayMenu.value = false
+                },
+                onShowTrashRequested = {
                     showTrashDialog.value = true
-                })
+                },
+                onImportExportRequested = {
+                    exportImport.value = true
+                },
+                onDismiss = { displayMenu.value = false }
+            )
             IntentManager.getMenuItems(DropDownMenu.TopActionBarMenu).forEach {
                 DropdownMenuItem(text = { Text(text = stringResource(id = it.first)) }, onClick = {
                     displayMenu.value = false
@@ -198,12 +231,6 @@ private fun MakeDropdownMenu(
                     }
                 })
             }
-            DropdownMenuItem(
-                enabled = !loginScreen,
-                text = { Text(text = stringResource(id = R.string.action_bar_import_export)) },
-                onClick = {
-                    exportImport.value = true
-                })
         } else {
             DropdownMenuItem(
                 text = { Text(text = "◀ Back") },
@@ -245,7 +272,7 @@ private fun MakeDropdownMenu(
                 onClick = {
                     displayMenu.value = false
                     exportImport.value = false
-                    fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper.launchDirectGpmImport(
+                    AndroidCredentialTransferHelper.launchDirectGpmImport(
                         context = context,
                         scope = coroutineScope,
                         onMessage = { msg -> Logger.d(TAG, msg) },
@@ -254,23 +281,6 @@ private fun MakeDropdownMenu(
                         }
                     )
                 })
-            if (BuildConfig.DEBUG) {
-                DropdownMenuItem(
-                    text = { Text(text = "🧪 Test Direct Sync (Fake CXF Payload)") },
-                    onClick = {
-                        displayMenu.value = false
-                        exportImport.value = false
-                        val fakePayload = fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper.createSampleFakeCxfPayload()
-                        fi.iki.ede.safe.transfer.AndroidCredentialTransferHelper.processAndStoreCxfPayload(
-                            cxfJsonPayload = fakePayload,
-                            scope = coroutineScope,
-                            onMessage = { msg -> Logger.d(TAG, msg) },
-                            complete = { success, count ->
-                                Logger.d(TAG, "Test sync complete: success=$success, count=$count")
-                            }
-                        )
-                    })
-            }
             IntentManager.getMenuItems(DropDownMenu.TopActionBarImportExportMenu).forEach {
                 DropdownMenuItem(text = { Text(text = stringResource(id = it.first)) }, onClick = {
                     displayMenu.value = false

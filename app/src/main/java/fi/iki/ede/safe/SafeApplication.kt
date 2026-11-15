@@ -24,6 +24,7 @@ import fi.iki.ede.preferences.Preferences
 import fi.iki.ede.preferences.Preferences.PREFERENCE_EXPERIMENTAL_FEATURES
 import fi.iki.ede.preferences.setPreferencesContext
 import fi.iki.ede.safe.model.LoginHandler
+import fi.iki.ede.safe.ui.sync.ContinuousAutoSyncCoordinator
 import fi.iki.ede.safe.notifications.prepareNotifications
 import fi.iki.ede.safe.splits.IntentManager
 import fi.iki.ede.safe.splits.PluginManager.reinitializePlugins
@@ -112,6 +113,7 @@ class SafeApplication : SplitCompatApplication(), CameraXConfig.Provider,
 
         @ExperimentalTime
         fun lockTheApplication(context: Context) {
+            ContinuousAutoSyncCoordinator.instance.stop()
             // Clear the clipboard, if it contains the last password used
             ClipboardUtils.clearClipboard(context)
             // Basically sign out

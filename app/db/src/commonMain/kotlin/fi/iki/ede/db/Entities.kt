@@ -2,6 +2,7 @@ package fi.iki.ede.db
 
 import androidx.room.Entity
 import androidx.room.ColumnInfo
+import androidx.room.PrimaryKey
 
 @Entity(tableName = "keys", primaryKeys = ["salt", "encryptedkey"])
 data class KeyEntry(
@@ -31,4 +32,14 @@ data class SiteEntryGPMJoin(
     val passwordId: Long,
     @ColumnInfo(name = "gpm_id")
     val gpmId: Long
+)
+
+/** Durable identity and deletion time only; never retain the deleted credential. */
+@Entity(tableName = "sync_tombstones")
+data class SyncTombstone(
+    @PrimaryKey
+    @ColumnInfo(name = "cxf_item_id")
+    val cxfItemId: String,
+    @ColumnInfo(name = "deleted_at")
+    val deletedAt: Long
 )

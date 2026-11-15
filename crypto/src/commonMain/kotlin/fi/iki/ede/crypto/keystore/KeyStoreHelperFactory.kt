@@ -3,6 +3,8 @@ package fi.iki.ede.crypto.keystore
 import fi.iki.ede.crypto.IVCipherText
 
 object KeyStoreHelperFactory {
+    val hasActiveKeyStoreHelper: Boolean
+        get() = ::provideKeyStoreHelper.isInitialized
     private val fallbackKeyStoreHelper by lazy {
         object : IKeyStoreHelper {
             override fun testingDeleteKeys_DO_NOT_USE() {}

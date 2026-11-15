@@ -3,6 +3,7 @@ import org.w3c.dom.Element
 
 plugins {
     kotlin("multiplatform")
+    kotlin("plugin.serialization")
     alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.compose.compiler)
@@ -139,6 +140,7 @@ kotlin {
             implementation(project(":gpm"))
             implementation(project(":dateutils"))
             implementation(libs.kotlinx.datetime)
+            implementation(libs.kotlinx.serialization.json)
             implementation(libs.okio)
         }
 

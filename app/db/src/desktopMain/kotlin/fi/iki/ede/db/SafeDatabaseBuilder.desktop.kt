@@ -2,6 +2,7 @@ package fi.iki.ede.db
 
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.useWriterConnection
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import okio.FileSystem
 import okio.Path
@@ -9,6 +10,7 @@ import okio.Path.Companion.toPath
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import fi.iki.ede.crypto.keystore.KeyStoreHelper
+import kotlinx.coroutines.runBlocking
 
 actual fun getDatabaseBuilder(databaseName: String): RoomDatabase.Builder<SafeDatabase> {
     val dbPath = FileSystem.SYSTEM.canonicalize(".".toPath()) / "$databaseName.db"
@@ -29,6 +31,16 @@ actual fun getPhotoDir(): Path {
 actual fun beginTransaction(database: SafeDatabase) {}
 actual fun setTransactionSuccessful(database: SafeDatabase) {}
 actual fun endTransaction(database: SafeDatabase) {}
+
+actual fun <T> runInDbTransaction(database: SafeDatabase, block: suspend () -> T): T {
+    return runBlocking {
+        database.useWriterConnection { transactor ->
+            transactor.withTransaction(androidx.room.Transactor.SQLiteTransactionType.IMMEDIATE) {
+                block()
+            }
+        }
+    }
+}
 
 actual fun storeTpmKeys(privateKeyBase64: String, publicKeyBase64: String) {
     // On Windows/Desktop, we do not store private keys on disk.
