@@ -86,3 +86,42 @@ subprojects {
         }
     }
 }
+
+tasks.register("storeSigningPasswords") {
+    group = "signing"
+    description = "Stores the Safe upload-key passwords in macOS Keychain for local Gradle release builds."
+    doLast {
+        check(System.getProperty("os.name").startsWith("Mac", ignoreCase = true)) {
+            "storeSigningPasswords is for macOS."
+        }
+        check(System.console() != null) {
+            "Gradle has no interactive console, so the security prompt could accept an empty password. " +
+                "Use scripts/update-github-signing-secrets.sh from an interactive Terminal to enter signing passwords."
+        }
+        val account = System.getProperty("user.name")
+        listOf(
+            "Safe Android upload keystore password",
+            "Safe Android upload key password"
+        ).forEach { service ->
+            val result = ProcessBuilder(
+                "/usr/bin/security", "add-generic-password", "-U",
+                "-a", account, "-s", service, "-w"
+            ).inheritIO().start().waitFor()
+            check(result == 0) { "Keychain could not store '$service'." }
+        }
+        logger.lifecycle("Safe signing passwords stored in the macOS login Keychain.")
+    }
+}
+
+tasks.register("generateSignedBundle") {
+    group = "build"
+    description = "Builds and verifies a signed Safe release Android App Bundle; it does not publish it."
+    notCompatibleWithConfigurationCache("This task reads local signing credentials and verifies the produced bundle signature.")
+    dependsOn(":app:verifyReleaseBundleSignature")
+    doLast {
+        val bundle = project(":app").layout.buildDirectory
+            .file("outputs/bundle/release/app-release.aab").get().asFile
+        check(bundle.isFile) { "Signed Safe Android App Bundle was not generated." }
+        logger.lifecycle("Signed Safe Android App Bundle ready: ${bundle.absolutePath}")
+    }
+}
