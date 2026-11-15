@@ -748,11 +748,11 @@ class BackupDatabaseAndRestoreDatabaseTest {
         assertEquals("hash", gpms.first().hash)
         assertEquals(1L, gpms.first().id)
         assertEquals(false, gpms.first().flaggedIgnored)
-        assertEquals("web", gpms.first().decryptedUrl)
-        assertEquals("user", gpms.first().decryptedUsername)
+        assertEquals("web", gpms.first().cachedDecryptedUrl)
+        assertEquals("user", gpms.first().cachedDecryptedUsername)
         assertEquals("name", gpms.first().cachedDecryptedName)
-        assertEquals("note", gpms.first().decryptedNote)
-        assertEquals("password", gpms.first().decryptedPassword)
+        assertEquals("note", gpms.first().cachedDecryptedNote)
+        assertEquals("password", gpms.first().cachedDecryptedPassword)
         assertEquals(2L, GPMDataModel.getLinkedGPMs(202L).first().id)
 
         val passwords = DataModel.siteEntriesStateFlow.value
