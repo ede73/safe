@@ -116,7 +116,12 @@ val safeKeystorePasswordService = "Safe Android upload keystore password"
 val safePrivateKeyPasswordService = "Safe Android upload key password"
 val localKeychainAccount = System.getProperty("user.name")
 val releaseStorePassword = releaseSecret("SAFE_KEYSTORE_PASSWORD", localKeychainAccount, safeKeystorePasswordService)
-val releasePrivateKeyPassword = releaseSecret("SAFE_KEY_PASSWORD", localKeychainAccount, safePrivateKeyPasswordService)
+val releasePrivateKeyPassword = System.getenv("SAFE_KEY_PASSWORD")?.takeIf(String::isNotBlank)
+    ?: if (releaseKeystoreType.equals("PKCS12", ignoreCase = true)) {
+        releaseStorePassword
+    } else {
+        releaseSecret("SAFE_KEY_PASSWORD", localKeychainAccount, safePrivateKeyPasswordService)
+    }
 
 android {
     compileSdk = 37
@@ -445,7 +450,10 @@ val verifyReleaseSigning = tasks.register("verifyReleaseSigning") {
 }
 
 tasks.configureEach {
-    if (name == "bundleRelease") dependsOn(verifyReleaseSigning)
+    if (name == "bundleRelease") {
+        dependsOn(verifyReleaseSigning)
+        notCompatibleWithConfigurationCache("This task uses local or Actions signing credentials.")
+    }
 }
 
 val verifyReleaseBundleSignature = tasks.register("verifyReleaseBundleSignature") {

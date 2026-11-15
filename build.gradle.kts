@@ -89,27 +89,27 @@ subprojects {
 
 tasks.register("storeSigningPasswords") {
     group = "signing"
-    description = "Stores the Safe upload-key passwords in macOS Keychain for local Gradle release builds."
+    description = "Stores Safe signing passwords in the macOS login Keychain."
+    notCompatibleWithConfigurationCache("This task reads local signing credentials without storing them in the configuration cache.")
     doLast {
-        check(System.getProperty("os.name").startsWith("Mac", ignoreCase = true)) {
-            "storeSigningPasswords is for macOS."
-        }
-        check(System.console() != null) {
-            "Gradle has no interactive console, so the security prompt could accept an empty password. " +
-                "Use scripts/update-github-signing-secrets.sh from an interactive Terminal to enter signing passwords."
+        check(System.getProperty("os.name").contains("Mac", ignoreCase = true)) {
+            "Safe signing passwords can only be stored in macOS Keychain by this task."
         }
         val account = System.getProperty("user.name")
-        listOf(
-            "Safe Android upload keystore password",
-            "Safe Android upload key password"
-        ).forEach { service ->
+        val keystoreType = System.getenv("SAFE_KEYSTORE_TYPE")?.takeIf(String::isNotBlank) ?: "PKCS12"
+        val services = mutableListOf("Safe Android upload keystore password")
+        if (!keystoreType.equals("PKCS12", ignoreCase = true)) {
+            services += "Safe Android upload key password"
+        }
+        services.forEach { service ->
+            logger.lifecycle("Enter the password for '$service' in the hidden terminal prompt.")
             val result = ProcessBuilder(
                 "/usr/bin/security", "add-generic-password", "-U",
                 "-a", account, "-s", service, "-w"
             ).inheritIO().start().waitFor()
-            check(result == 0) { "Keychain could not store '$service'." }
+            check(result == 0) { "macOS Keychain did not store the '$service' password." }
         }
-        logger.lifecycle("Safe signing passwords stored in the macOS login Keychain.")
+        logger.lifecycle("Safe signing password(s) stored in the macOS login Keychain.")
     }
 }
 

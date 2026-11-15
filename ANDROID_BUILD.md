@@ -4,27 +4,29 @@ This workflow is separate from CXF synchronization. It only builds and signs an 
 
 ## Build locally with Gradle
 
-After the Keychain prompt task has been corrected and verified, store the existing upload-keystore and private-key passwords in macOS Keychain once:
+Run the local Gradle build from the checkout whose changes you want in the AAB. First, store the upload-keystore password in the login Keychain from an interactive Terminal:
 
 ```sh
 ./gradlew storeSigningPasswords
 ```
 
-The current implementation has not yet been verified to collect non-empty password values. Do not use the current task until the replacement is verified. The intended account is your macOS username; the Safe-specific services are `Safe Android upload keystore password` and `Safe Android upload key password`. It does not use a Swift `Security.framework` helper.
-
-Build and verify the signed AAB:
+The macOS `security` CLI prompts for the password without putting it in command arguments. Safe's source keystore is PKCS12, so only one password is needed for both the store and private key. Later local builds reuse the Keychain item. Then build and verify the signed bundle:
 
 ```sh
-./gradlew generateSignedBundle
+./gradlew --no-configuration-cache generateSignedBundle
 ```
 
-Gradle prints the resulting path. By default it is:
+The build validates the alias and private key before bundling, then verifies the generated AAB's signer. The Keychain write runs inside the `storeSigningPasswords` task action, following the IndexPaint Gradle pattern; signing credentials are read for the subsequent build. Local signed tasks disable Gradle's configuration cache so signing passwords are not persisted there. This does not use a Swift `Security.framework` helper.
+
+The AAB is built from the current local checkout, including uncommitted source changes. It is not uploaded anywhere. Gradle keeps Safe's existing Git-derived version-code/version-name behavior; local edits do not change the version count until they are committed. The resulting AAB is at:
 
 ```text
 app/build/outputs/bundle/release/app-release.aab
 ```
 
-The task verifies that the AAB signature matches the configured upload certificate. It leaves the selected Safe source's existing Gradle version-code/version-name configuration untouched and does not query Play for a code.
+Gradle prints the absolute output path when the build finishes.
+
+The task does not query Play, publish to a testing track, or publish to Production.
 
 ## Prepare GitHub Actions signing secrets
 
