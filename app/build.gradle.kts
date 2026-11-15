@@ -2,6 +2,11 @@
 
 import java.io.ByteArrayOutputStream
 import java.nio.charset.Charset
+import java.io.FileInputStream
+import java.io.OutputStream
+import java.security.KeyStore
+import java.security.MessageDigest
+import java.util.jar.JarFile
 import java.util.Properties
 
 //gradle.addListener(object : TaskExecutionListener {
@@ -76,6 +81,43 @@ abstract class GitRevListCountValueSource : ValueSource<String, ValueSourceParam
 
 val gitRevListProvider = providers.of(GitRevListCountValueSource::class) {}
 
+val requestedTaskNames = gradle.startParameter.taskNames.map { it.substringAfterLast(':') }.toSet()
+val releaseSigningRequested = requestedTaskNames.any {
+    it in setOf("verifyReleaseSigning", "verifyReleaseBundleSignature", "generateSignedBundle", "bundleRelease")
+}
+val releaseKeystorePath = System.getenv("SAFE_UPLOAD_KEYSTORE_PATH")
+    ?.takeIf(String::isNotBlank)
+    ?: rootProject.file("settings/ede_release.keystore.gpg").absolutePath
+val releaseKeystoreFile = rootProject.file(releaseKeystorePath)
+val releaseKeyAlias = System.getenv("SAFE_KEY_ALIAS")?.takeIf(String::isNotBlank) ?: "ede_release"
+val releaseKeystoreType = System.getenv("SAFE_KEYSTORE_TYPE")?.takeIf(String::isNotBlank) ?: "PKCS12"
+
+fun readKeychainPassword(account: String, service: String): String? {
+    if (!System.getProperty("os.name").contains("Mac", ignoreCase = true)) return null
+    return try {
+        val process = ProcessBuilder(
+            "/usr/bin/security", "find-generic-password", "-w", "-s", service, "-a", account
+        ).redirectError(ProcessBuilder.Redirect.DISCARD).start()
+        val value = process.inputStream.bufferedReader().use { it.readText() }.trimEnd('\r', '\n')
+        if (process.waitFor() == 0) value.takeIf(String::isNotEmpty) else null
+    } catch (_: Exception) {
+        null
+    }
+}
+
+fun releaseSecret(environmentName: String, account: String, service: String): String? {
+    if (!releaseSigningRequested) return null
+    return System.getenv(environmentName)?.takeIf(String::isNotBlank)
+        ?: readKeychainPassword(account, service)
+        ?: error("Signing input $environmentName is missing. Run ./gradlew storeSigningPasswords once, or configure it in the macOS Keychain.")
+}
+
+val safeKeystorePasswordService = "Safe Android upload keystore password"
+val safePrivateKeyPasswordService = "Safe Android upload key password"
+val localKeychainAccount = System.getProperty("user.name")
+val releaseStorePassword = releaseSecret("SAFE_KEYSTORE_PASSWORD", localKeychainAccount, safeKeystorePasswordService)
+val releasePrivateKeyPassword = releaseSecret("SAFE_KEY_PASSWORD", localKeychainAccount, safePrivateKeyPasswordService)
+
 android {
     compileSdk = 37
 //    lint {
@@ -133,6 +175,16 @@ android {
     sourceSets["debug"].manifest.srcFile("src/debug/AndroidManifest.xml")
     sourceSets["test"].kotlin.directories += "../crypto/src/testFixtures/kotlin"
 
+    signingConfigs {
+        create("safeUpload") {
+            storeFile = releaseKeystoreFile
+            storePassword = releaseStorePassword
+            keyAlias = releaseKeyAlias
+            keyPassword = releasePrivateKeyPassword
+            storeType = releaseKeystoreType
+        }
+    }
+
     // See https://developer.android.com/build/build-variants
     buildTypes {
         val gitCommitHashProvider = providers.of(GitCommitHashValueSource::class) {}
@@ -144,6 +196,7 @@ android {
         dynamicFeatures += dynamicFeatureList
 
         release {
+            signingConfig = signingConfigs.getByName("safeUpload")
             isMinifyEnabled = true
             isShrinkResources = true
             packaging {
@@ -368,6 +421,68 @@ tasks.configureEach {
 tasks.withType<Test> {
     systemProperty("test", "true")
     jvmArgs("--add-opens", "java.base/java.time=ALL-UNNAMED")
+}
+
+val verifyReleaseSigning = tasks.register("verifyReleaseSigning") {
+    group = "verification"
+    description = "Validates the Safe upload keystore, alias, and private-key password without printing secrets."
+    notCompatibleWithConfigurationCache("This task validates local signing credentials without storing them in the Gradle configuration cache.")
+    doLast {
+        check(releaseKeystoreFile.isFile) { "Safe upload keystore was not found: ${releaseKeystoreFile.absolutePath}" }
+        val storePassword = checkNotNull(releaseStorePassword)
+        val keyPassword = checkNotNull(releasePrivateKeyPassword)
+        val keyStore = KeyStore.getInstance(releaseKeystoreType)
+        FileInputStream(releaseKeystoreFile).use { keyStore.load(it, storePassword.toCharArray()) }
+        check(keyStore.containsAlias(releaseKeyAlias)) { "Alias '$releaseKeyAlias' is not in the Safe upload keystore." }
+        check(keyStore.getKey(releaseKeyAlias, keyPassword.toCharArray()) is java.security.PrivateKey) {
+            "The Safe upload-key password does not unlock alias '$releaseKeyAlias'."
+        }
+        val certificate = checkNotNull(keyStore.getCertificate(releaseKeyAlias))
+        val fingerprint = MessageDigest.getInstance("SHA-1").digest(certificate.encoded)
+            .joinToString(":") { "%02X".format(it) }
+        logger.lifecycle("Safe upload certificate SHA-1: $fingerprint")
+    }
+}
+
+tasks.configureEach {
+    if (name == "bundleRelease") dependsOn(verifyReleaseSigning)
+}
+
+val verifyReleaseBundleSignature = tasks.register("verifyReleaseBundleSignature") {
+    group = "verification"
+    description = "Builds the release AAB and verifies it was signed by the configured Safe upload key."
+    notCompatibleWithConfigurationCache("This task reads local signing credentials and verifies the produced bundle signature.")
+    dependsOn("bundleRelease")
+    doLast {
+        val bundle = layout.buildDirectory.file("outputs/bundle/release/app-release.aab").get().asFile
+        check(bundle.isFile) { "Release AAB was not generated: ${bundle.absolutePath}" }
+        val keyStore = KeyStore.getInstance(releaseKeystoreType)
+        FileInputStream(releaseKeystoreFile).use {
+            keyStore.load(it, checkNotNull(releaseStorePassword).toCharArray())
+        }
+        val expectedCertificate = checkNotNull(keyStore.getCertificate(releaseKeyAlias))
+        val expectedFingerprint = MessageDigest.getInstance("SHA-1").digest(expectedCertificate.encoded)
+            .joinToString(":") { "%02X".format(it) }
+        val signerFingerprints = linkedSetOf<String>()
+        JarFile(bundle, true).use { jar ->
+            val entries = jar.entries()
+            while (entries.hasMoreElements()) {
+                val entry = entries.nextElement()
+                if (entry.isDirectory) continue
+                jar.getInputStream(entry).use { it.copyTo(OutputStream.nullOutputStream()) }
+                entry.certificates?.forEach { certificate ->
+                    signerFingerprints += MessageDigest.getInstance("SHA-1").digest(certificate.encoded)
+                        .joinToString(":") { "%02X".format(it) }
+                }
+            }
+        }
+        check(signerFingerprints.isNotEmpty()) { "The release AAB has no verifiable signature." }
+        check(signerFingerprints.all { it == expectedFingerprint }) {
+            "The release AAB signer does not match the configured Safe upload key."
+        }
+        logger.lifecycle("Verified signed Safe AAB: ${bundle.absolutePath}")
+        logger.lifecycle("Safe upload certificate SHA-1: $expectedFingerprint")
+    }
 }
 
 abstract class UnlockEmulator2ValueSource : ValueSource<String, ValueSourceParameters.None> {

@@ -1,0 +1,124 @@
+name: Android signed AAB build
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: Branch, tag, commit SHA, or PR head to build
+        required: true
+        default: main
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: safe-android-signed-build
+  cancel-in-progress: false
+
+jobs:
+  build_signed_aab:
+    if: github.actor == 'ede73' && github.triggering_actor == 'ede73'
+    runs-on: [self-hosted, macOS, safe-release]
+    timeout-minutes: 90
+    env:
+      ANDROID_HOME: /Users/ede/Library/Android/sdk
+      ANDROID_SDK_ROOT: /Users/ede/Library/Android/sdk
+    steps:
+      - name: Check out selected Safe source
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.source_ref }}
+          path: source
+          persist-credentials: false
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Check required signing secret inputs
+        env:
+          SAFE_UPLOAD_KEYSTORE_BASE64: ${{ secrets.SAFE_UPLOAD_KEYSTORE_BASE64 }}
+          SAFE_KEYSTORE_PASSWORD: ${{ secrets.SAFE_KEYSTORE_PASSWORD }}
+          SAFE_KEY_PASSWORD: ${{ secrets.SAFE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$SAFE_UPLOAD_KEYSTORE_BASE64" || { echo "Missing SAFE_UPLOAD_KEYSTORE_BASE64" >&2; exit 1; }
+          test -n "$SAFE_KEYSTORE_PASSWORD" || { echo "Missing SAFE_KEYSTORE_PASSWORD" >&2; exit 1; }
+          test -n "$SAFE_KEY_PASSWORD" || { echo "Missing SAFE_KEY_PASSWORD" >&2; exit 1; }
+
+      - name: Record selected source commit
+        id: source
+        working-directory: source
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Configure Android SDK and Firebase build config
+        working-directory: source
+        env:
+          FIREBASE_CONFIG: ${{ secrets.FIREBASE_CONFIG }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          Path("local.properties").write_text(f"sdk.dir={os.environ['ANDROID_HOME']}\n")
+          Path("app/google-services.json").write_text(os.environ["FIREBASE_CONFIG"])
+          PY
+
+      - name: Materialize temporary upload keystore
+        env:
+          SAFE_UPLOAD_KEYSTORE_BASE64: ${{ secrets.SAFE_UPLOAD_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64
+          import os
+          from pathlib import Path
+
+          target = Path(os.environ["RUNNER_TEMP"]) / "safe-upload-key.p12"
+          target.write_bytes(base64.b64decode(os.environ["SAFE_UPLOAD_KEYSTORE_BASE64"], validate=True))
+          target.chmod(0o600)
+          print(f"Temporary upload keystore ready at {target}")
+          PY
+
+      - name: Build and verify signed AAB
+        working-directory: source
+        env:
+          SAFE_UPLOAD_KEYSTORE_PATH: ${{ runner.temp }}/safe-upload-key.p12
+          SAFE_KEYSTORE_PASSWORD: ${{ secrets.SAFE_KEYSTORE_PASSWORD }}
+          SAFE_KEY_PASSWORD: ${{ secrets.SAFE_KEY_PASSWORD }}
+          SAFE_KEY_ALIAS: ${{ vars.SAFE_KEY_ALIAS }}
+          SAFE_KEYSTORE_TYPE: ${{ vars.SAFE_KEYSTORE_TYPE }}
+        run: ./gradlew --no-daemon --no-configuration-cache generateSignedBundle
+
+      - name: Record source and bundle checksum
+        working-directory: source
+        env:
+          SOURCE_REF: ${{ inputs.source_ref }}
+        run: |
+          set -euo pipefail
+          bundle=app/build/outputs/bundle/release/app-release.aab
+          shasum -a 256 "$bundle" > "$bundle.sha256"
+          {
+            printf 'source_ref=%s\n' "$SOURCE_REF"
+            printf 'source_sha=%s\n' "${{ steps.source.outputs.sha }}"
+            printf 'aab_sha256=%s\n' "$(cut -d ' ' -f1 "$bundle.sha256")"
+          } > app/build/outputs/bundle/release/provenance.txt
+
+      - name: Upload signed AAB
+        uses: actions/upload-artifact@v7
+        with:
+          name: safe-signed-aab
+          path: |
+            source/app/build/outputs/bundle/release/app-release.aab
+            source/app/build/outputs/bundle/release/app-release.aab.sha256
+            source/app/build/outputs/bundle/release/provenance.txt
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Remove temporary signing materials
+        if: always()
+        run: rm -f "${RUNNER_TEMP}/safe-upload-key.p12" source/app/google-services.json
