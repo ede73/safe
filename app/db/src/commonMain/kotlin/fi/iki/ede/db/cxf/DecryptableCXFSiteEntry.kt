@@ -17,6 +17,11 @@ open class DecryptableCXFSiteEntry(
 
     val isPasskey: Boolean get() = cxfPasskey != null
 
+    /**
+     * Explicit strong-type flag identifying synthetic in-memory CXF wrappers.
+     */
+    val isSynthetic: Boolean get() = true
+
     init {
         id = if (cxfPasskey != null) {
             PASSKEY_SITE_ENTRY_ID_OFFSET - (cxfPasskey.id ?: 0L)
@@ -57,7 +62,17 @@ open class DecryptableCXFSiteEntry(
     }
 
     companion object {
+        /**
+         * Negative offset range (-100,000 to -199,999) reserved for synthetic CXF import site entries.
+         * Real database primary keys are strictly positive integers (>= 1). Using negative synthetic IDs
+         * guarantees virtual in-memory UI items will never conflict with persistent Room database entries
+         * and preserves complete backward compatibility with existing backup archives and database schemas.
+         */
         const val IMPORT_SITE_ENTRY_ID_OFFSET = -100000L
+
+        /**
+         * Negative offset range (-200,000+) reserved for synthetic CXF passkey site entries.
+         */
         const val PASSKEY_SITE_ENTRY_ID_OFFSET = -200000L
 
         fun isCxfSiteEntryId(id: Long?): Boolean =
