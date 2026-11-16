@@ -11,8 +11,9 @@ This checklist covers the build-only setup, separate from CXF synchronization.
 - [x] Verify Safe signing secrets and variables are set in GitHub.
 - [x] Register `erkkas-mac-mini-safe` online on the same Mac mini as IndexPaint, using its own repo-scoped runner directory and `safe-release` label.
 - [x] Make local signed builds use the current checkout; reuse existing Keychain credentials, and make `storeSigningPasswords` one-time, non-overwriting, with a non-empty readback check.
+- [x] Add build-logic unit tests for the PKCS12/JKS password mapping and non-empty Keychain readback.
 - [ ] Run a real local signed AAB build after the owner enters the keystore password; verify its signature and output path.
-- [x] Review workflow security/configuration and run Android unit-test plus signed-task dry-run validation.
+- [x] Review workflow security/configuration and run build-logic unit tests, Android unit tests, and signed-task dry-run validation.
 - [x] Push this Android-only branch and open PR #56; do not modify remote `main` or touch the CXF PRs.
 - [ ] After the workflow is merged to the default branch, dispatch it against the intended source ref and verify/download the AAB artifact.
 - [x] Update the personal Android build/publish skill with the build-only flow, keystore-type facts, and Safe versioning constraint; notify PublishWorkflow.

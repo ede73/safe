@@ -97,10 +97,7 @@ tasks.register("storeSigningPasswords") {
         }
         val account = System.getProperty("user.name")
         val keystoreType = System.getenv("SAFE_KEYSTORE_TYPE")?.takeIf(String::isNotBlank) ?: "PKCS12"
-        val services = mutableListOf("Safe Android upload keystore password")
-        if (!keystoreType.equals("PKCS12", ignoreCase = true)) {
-            services += "Safe Android upload key password"
-        }
+        val services = SafeLocalSigning.passwordServices(keystoreType)
         services.forEach { service ->
             fun readStoredPassword(): String? {
                 val process = ProcessBuilder(
@@ -109,7 +106,11 @@ tasks.register("storeSigningPasswords") {
                 ).redirectError(ProcessBuilder.Redirect.DISCARD).start()
                 val value = process.inputStream.bufferedReader().use { it.readText() }
                     .trimEnd('\r', '\n')
-                return if (process.waitFor() == 0) value.takeIf(String::isNotEmpty) else null
+                return if (SafeLocalSigning.hasNonEmptyPassword(process.waitFor(), value)) {
+                    value.trimEnd('\r', '\n')
+                } else {
+                    null
+                }
             }
             if (readStoredPassword() != null) {
                 logger.lifecycle("Keeping the existing macOS Keychain item for '$service'.")

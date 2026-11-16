@@ -18,6 +18,8 @@ The `storeSigningPasswords` task preserves any existing non-empty item, prompts 
 
 The build validates the alias and private key before bundling, then verifies the generated AAB's signer. The Keychain write runs inside the `storeSigningPasswords` task action, following the IndexPaint Gradle pattern; signing credentials are read for the subsequent build. Local signed tasks disable Gradle's configuration cache so signing passwords are not persisted there. This does not use a Swift `Security.framework` helper.
 
+Build-logic unit tests cover the one-password PKCS12 mapping, separate JKS passwords, and rejection of empty or failed Keychain reads. They run with `./gradlew -p buildSrc test`.
+
 The AAB is built from the current local checkout, including uncommitted source changes. It is not uploaded anywhere. Gradle keeps Safe's existing Git-derived version-code/version-name behavior; local edits do not change the version count until they are committed. The resulting AAB is at:
 
 ```text

@@ -112,15 +112,13 @@ fun releaseSecret(environmentName: String, account: String, service: String): St
         ?: error("Signing input $environmentName is missing. Run ./gradlew storeSigningPasswords once, or configure it in the macOS Keychain.")
 }
 
-val safeKeystorePasswordService = "Safe Android upload keystore password"
-val safePrivateKeyPasswordService = "Safe Android upload key password"
 val localKeychainAccount = System.getProperty("user.name")
-val releaseStorePassword = releaseSecret("SAFE_KEYSTORE_PASSWORD", localKeychainAccount, safeKeystorePasswordService)
+val releaseStorePassword = releaseSecret("SAFE_KEYSTORE_PASSWORD", localKeychainAccount, SafeLocalSigning.KEYSTORE_PASSWORD_SERVICE)
 val releasePrivateKeyPassword = System.getenv("SAFE_KEY_PASSWORD")?.takeIf(String::isNotBlank)
     ?: if (releaseKeystoreType.equals("PKCS12", ignoreCase = true)) {
         releaseStorePassword
     } else {
-        releaseSecret("SAFE_KEY_PASSWORD", localKeychainAccount, safePrivateKeyPasswordService)
+        releaseSecret("SAFE_KEY_PASSWORD", localKeychainAccount, SafeLocalSigning.PRIVATE_KEY_PASSWORD_SERVICE)
     }
 
 android {
