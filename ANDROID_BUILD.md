@@ -10,7 +10,7 @@ Run the local Gradle build from the checkout whose changes you want in the AAB. 
 ./gradlew storeSigningPasswords
 ```
 
-The `storeSigningPasswords` task preserves any existing item; it prompts only when the expected item is absent. The macOS `security` CLI does not put the password in command arguments. Safe's source keystore is PKCS12, so only one password is needed for both the store and private key. Then build and verify the signed bundle:
+The `storeSigningPasswords` task preserves any existing non-empty item, prompts only when the expected item is absent, and reads back the result to reject an empty Keychain value. The macOS `security` CLI does not put the password in command arguments. Safe's source keystore is PKCS12, so only one password is needed for both the store and private key. Then build and verify the signed bundle:
 
 ```sh
 ./gradlew --no-configuration-cache generateSignedBundle

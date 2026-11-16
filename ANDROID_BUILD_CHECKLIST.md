@@ -10,7 +10,7 @@ This checklist covers the build-only setup, separate from CXF synchronization.
 - [x] Validate both keystore types with fake GitHub CLI writes; source file hashes stayed unchanged.
 - [x] Verify Safe signing secrets and variables are set in GitHub.
 - [x] Register `erkkas-mac-mini-safe` online on the same Mac mini as IndexPaint, using its own repo-scoped runner directory and `safe-release` label.
-- [x] Make local signed builds use the current checkout; reuse the existing Keychain item and make `storeSigningPasswords` a one-time, non-overwriting setup task.
+- [x] Make local signed builds use the current checkout; reuse existing Keychain credentials, and make `storeSigningPasswords` one-time, non-overwriting, with a non-empty readback check.
 - [ ] Run a real local signed AAB build after the owner enters the keystore password; verify its signature and output path.
 - [x] Review workflow security/configuration and run Android unit-test plus signed-task dry-run validation.
 - [x] Push this Android-only branch and open PR #56; do not modify remote `main` or touch the CXF PRs.

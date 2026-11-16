@@ -102,13 +102,16 @@ tasks.register("storeSigningPasswords") {
             services += "Safe Android upload key password"
         }
         services.forEach { service ->
-            val exists = ProcessBuilder(
-                "/usr/bin/security", "find-generic-password",
-                "-a", account, "-s", service
-            ).redirectOutput(ProcessBuilder.Redirect.DISCARD)
-                .redirectError(ProcessBuilder.Redirect.DISCARD)
-                .start().waitFor() == 0
-            if (exists) {
+            fun readStoredPassword(): String? {
+                val process = ProcessBuilder(
+                    "/usr/bin/security", "find-generic-password", "-w",
+                    "-a", account, "-s", service
+                ).redirectError(ProcessBuilder.Redirect.DISCARD).start()
+                val value = process.inputStream.bufferedReader().use { it.readText() }
+                    .trimEnd('\r', '\n')
+                return if (process.waitFor() == 0) value.takeIf(String::isNotEmpty) else null
+            }
+            if (readStoredPassword() != null) {
                 logger.lifecycle("Keeping the existing macOS Keychain item for '$service'.")
                 return@forEach
             }
@@ -118,6 +121,9 @@ tasks.register("storeSigningPasswords") {
                 "-a", account, "-s", service, "-w"
             ).inheritIO().start().waitFor()
             check(result == 0) { "macOS Keychain did not store the '$service' password." }
+            check(readStoredPassword() != null) {
+                "macOS Keychain returned success but no non-empty password was stored for '$service'."
+            }
         }
         logger.lifecycle("Safe signing password(s) stored in the macOS login Keychain.")
     }
