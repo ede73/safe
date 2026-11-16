@@ -10,11 +10,11 @@ This checklist covers the build-only setup, separate from CXF synchronization.
 - [x] Validate both keystore types with fake GitHub CLI writes; source file hashes stayed unchanged.
 - [x] Verify Safe signing secrets and variables are set in GitHub.
 - [x] Register `erkkas-mac-mini-safe` online on the same Mac mini as IndexPaint, using its own repo-scoped runner directory and `safe-release` label.
-- [x] Make local signed builds use the current checkout; store PKCS12 credentials with an explicit interactive `storeSigningPasswords` task, following IndexPaint's Keychain pattern.
+- [x] Make local signed builds use the current checkout; reuse the existing Keychain item and make `storeSigningPasswords` a one-time, non-overwriting setup task.
 - [ ] Run a real local signed AAB build after the owner enters the keystore password; verify its signature and output path.
 - [x] Review workflow security/configuration and run Android unit-test plus signed-task dry-run validation.
 - [x] Push this Android-only branch and open PR #56; do not modify remote `main` or touch the CXF PRs.
 - [ ] After the workflow is merged to the default branch, dispatch it against the intended source ref and verify/download the AAB artifact.
 - [x] Update the personal Android build/publish skill with the build-only flow, keystore-type facts, and Safe versioning constraint; notify PublishWorkflow.
 
-The GitHub secret uploader used hidden terminal input and the owner confirmed successful validation and upload of the Safe secrets. For local signing, run `./gradlew storeSigningPasswords` in an interactive Terminal once, then run `./gradlew --no-configuration-cache generateSignedBundle`. A real signed build still needs to be run with the owner entering the PKCS12 password at the terminal prompt. Never request passwords in chat. The Android build must stay separate from CXF sync, preserve Gradle's existing version calculation, and remain build-only (no Play publishing).
+The GitHub secret uploader used hidden terminal input and the owner confirmed successful validation and upload of the Safe secrets. Local builds use the existing Keychain item; `storeSigningPasswords` is needed only if that item is absent. A real signed build still needs to be run. Never request passwords in chat. The Android build must stay separate from CXF sync, preserve Gradle's existing version calculation, and remain build-only (no Play publishing).

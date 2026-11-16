@@ -4,13 +4,13 @@ This workflow is separate from CXF synchronization. It only builds and signs an 
 
 ## Build locally with Gradle
 
-Run the local Gradle build from the checkout whose changes you want in the AAB. First, store the upload-keystore password in the login Keychain from an interactive Terminal:
+Run the local Gradle build from the checkout whose changes you want in the AAB. The build reads the password from the macOS login Keychain and does not prompt for or change it. If the Keychain item has not been set up on this Mac, run this one-time setup from an interactive Terminal:
 
 ```sh
 ./gradlew storeSigningPasswords
 ```
 
-The macOS `security` CLI prompts for the password without putting it in command arguments. Safe's source keystore is PKCS12, so only one password is needed for both the store and private key. Later local builds reuse the Keychain item. Then build and verify the signed bundle:
+The `storeSigningPasswords` task preserves any existing item; it prompts only when the expected item is absent. The macOS `security` CLI does not put the password in command arguments. Safe's source keystore is PKCS12, so only one password is needed for both the store and private key. Then build and verify the signed bundle:
 
 ```sh
 ./gradlew --no-configuration-cache generateSignedBundle

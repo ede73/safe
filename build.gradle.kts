@@ -102,6 +102,16 @@ tasks.register("storeSigningPasswords") {
             services += "Safe Android upload key password"
         }
         services.forEach { service ->
+            val exists = ProcessBuilder(
+                "/usr/bin/security", "find-generic-password",
+                "-a", account, "-s", service
+            ).redirectOutput(ProcessBuilder.Redirect.DISCARD)
+                .redirectError(ProcessBuilder.Redirect.DISCARD)
+                .start().waitFor() == 0
+            if (exists) {
+                logger.lifecycle("Keeping the existing macOS Keychain item for '$service'.")
+                return@forEach
+            }
             logger.lifecycle("Enter the password for '$service' in the hidden terminal prompt.")
             val result = ProcessBuilder(
                 "/usr/bin/security", "add-generic-password", "-U",
