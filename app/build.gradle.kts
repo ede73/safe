@@ -109,7 +109,7 @@ fun releaseSecret(environmentName: String, account: String, service: String): St
     if (!releaseSigningRequested) return null
     return System.getenv(environmentName)?.takeIf(String::isNotBlank)
         ?: readKeychainPassword(account, service)
-        ?: error("Signing input $environmentName is missing. Run ./gradlew storeSigningPasswords once, or configure it in the macOS Keychain.")
+        ?: error("Signing input $environmentName is missing. Run scripts/store-local-signing-passwords.sh from an interactive Terminal, or configure it in the macOS Keychain.")
 }
 
 val localKeychainAccount = System.getProperty("user.name")

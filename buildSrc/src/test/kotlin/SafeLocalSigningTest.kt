@@ -29,4 +29,5 @@ class SafeLocalSigningTest {
         assertFalse(SafeLocalSigning.hasNonEmptyPassword(0, "\n"))
         assertFalse(SafeLocalSigning.hasNonEmptyPassword(1, "password\n"))
     }
+
 }

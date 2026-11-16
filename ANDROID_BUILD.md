@@ -7,16 +7,17 @@ This workflow is separate from CXF synchronization. It only builds and signs an 
 Run the local Gradle build from the checkout whose changes you want in the AAB. The build reads the password from the macOS login Keychain and does not prompt for or change it. If the Keychain item has not been set up on this Mac, run this one-time setup from an interactive Terminal:
 
 ```sh
-./gradlew storeSigningPasswords
+./scripts/store-local-signing-passwords.sh
 ```
 
-The `storeSigningPasswords` task preserves any existing non-empty item, prompts only when the expected item is absent, and reads back the result to reject an empty Keychain value. The macOS `security` CLI does not put the password in command arguments. Safe's source keystore is PKCS12, so only one password is needed for both the store and private key. Then build and verify the signed bundle:
+This script preserves any existing non-empty item, prompts through macOS `security` in the interactive terminal, and reads the item back to reject an empty value. Gradle cannot securely own this prompt: Gradle runs the task in a daemon without a usable terminal. The Gradle task `storeSigningPasswords` is therefore verification-only; it never prompts or writes to Keychain. After the one-time setup, verify the saved item if desired and build the signed bundle:
 
 ```sh
+./gradlew storeSigningPasswords
 ./gradlew --no-configuration-cache generateSignedBundle
 ```
 
-The build validates the alias and private key before bundling, then verifies the generated AAB's signer. The Keychain write runs inside the `storeSigningPasswords` task action, following the IndexPaint Gradle pattern; signing credentials are read for the subsequent build. Local signed tasks disable Gradle's configuration cache so signing passwords are not persisted there. This does not use a Swift `Security.framework` helper.
+The build validates the alias and private key before bundling, then verifies the generated AAB's signer. Local signed tasks disable Gradle's configuration cache so signing passwords are not persisted there. Safe's source keystore is PKCS12, so only one password is needed for both the store and private key; JKS uses separate entries.
 
 Build-logic unit tests cover the one-password PKCS12 mapping, separate JKS passwords, and rejection of empty or failed Keychain reads. They run with `./gradlew -p buildSrc test`.
 

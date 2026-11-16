@@ -89,44 +89,34 @@ subprojects {
 
 tasks.register("storeSigningPasswords") {
     group = "signing"
-    description = "Stores Safe signing passwords in the macOS login Keychain."
+    description = "Verifies Safe signing passwords are available in the macOS login Keychain."
     notCompatibleWithConfigurationCache("This task reads local signing credentials without storing them in the configuration cache.")
     doLast {
         check(System.getProperty("os.name").contains("Mac", ignoreCase = true)) {
-            "Safe signing passwords can only be stored in macOS Keychain by this task."
+            "Safe signing passwords can only be verified by this task on macOS."
         }
         val account = System.getProperty("user.name")
         val keystoreType = System.getenv("SAFE_KEYSTORE_TYPE")?.takeIf(String::isNotBlank) ?: "PKCS12"
         val services = SafeLocalSigning.passwordServices(keystoreType)
+        val missing = mutableListOf<String>()
         services.forEach { service ->
-            fun readStoredPassword(): String? {
-                val process = ProcessBuilder(
-                    "/usr/bin/security", "find-generic-password", "-w",
-                    "-a", account, "-s", service
-                ).redirectError(ProcessBuilder.Redirect.DISCARD).start()
-                val value = process.inputStream.bufferedReader().use { it.readText() }
-                    .trimEnd('\r', '\n')
-                return if (SafeLocalSigning.hasNonEmptyPassword(process.waitFor(), value)) {
-                    value.trimEnd('\r', '\n')
-                } else {
-                    null
-                }
-            }
-            if (readStoredPassword() != null) {
-                logger.lifecycle("Keeping the existing macOS Keychain item for '$service'.")
-                return@forEach
-            }
-            logger.lifecycle("Enter the password for '$service' in the hidden terminal prompt.")
-            val result = ProcessBuilder(
-                "/usr/bin/security", "add-generic-password", "-U",
-                "-a", account, "-s", service, "-w"
-            ).inheritIO().start().waitFor()
-            check(result == 0) { "macOS Keychain did not store the '$service' password." }
-            check(readStoredPassword() != null) {
-                "macOS Keychain returned success but no non-empty password was stored for '$service'."
+            val process = ProcessBuilder(
+                "/usr/bin/security", "find-generic-password", "-w",
+                "-a", account, "-s", service
+            ).redirectError(ProcessBuilder.Redirect.DISCARD).start()
+            val value = process.inputStream.bufferedReader().use { it.readText() }
+                .trimEnd('\r', '\n')
+            if (SafeLocalSigning.hasNonEmptyPassword(process.waitFor(), value)) {
+                logger.lifecycle("Found the existing macOS Keychain item for '$service'.")
+            } else {
+                missing += service
             }
         }
-        logger.lifecycle("Safe signing password(s) stored in the macOS login Keychain.")
+        check(missing.isEmpty()) {
+            "Missing local signing credential(s): ${missing.joinToString()}. " +
+                "Run scripts/store-local-signing-passwords.sh once from an interactive Terminal."
+        }
+        logger.lifecycle("Safe signing password(s) are available in the macOS login Keychain.")
     }
 }
 

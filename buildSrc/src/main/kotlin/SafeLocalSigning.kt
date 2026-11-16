@@ -11,4 +11,5 @@ object SafeLocalSigning {
 
     fun hasNonEmptyPassword(exitCode: Int, output: String): Boolean =
         exitCode == 0 && output.trimEnd('\r', '\n').isNotEmpty()
+
 }
