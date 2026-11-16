@@ -15,7 +15,7 @@ This checklist covers the build-only setup, separate from CXF synchronization.
 - [x] Verify the interactive Keychain setup script prompts and reads back a harmless temporary value; remove the temporary item afterward. `storeSigningPasswords` verifies existing entries only.
 - [ ] Run a real local signed AAB build after the owner enters the keystore password; verify its signature and output path.
 - [x] Review workflow security/configuration and run build-logic unit tests, Android unit tests, and signed-task dry-run validation.
-- [x] Push this Android-only branch and open PR #56; do not modify remote `main` or touch the CXF PRs.
+- [x] Push this Android-only branch and open PR #58; do not modify remote `main` or touch the CXF PRs.
 - [ ] After the workflow is merged to the default branch, dispatch it against the intended source ref and verify/download the AAB artifact.
 - [x] Update the personal Android build/publish skill with the build-only flow, keystore-type facts, and Safe versioning constraint; notify PublishWorkflow.
 
