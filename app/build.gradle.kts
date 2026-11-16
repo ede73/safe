@@ -109,14 +109,17 @@ fun releaseSecret(environmentName: String, account: String, service: String): St
     if (!releaseSigningRequested) return null
     return System.getenv(environmentName)?.takeIf(String::isNotBlank)
         ?: readKeychainPassword(account, service)
-        ?: error("Signing input $environmentName is missing. Run ./gradlew storeSigningPasswords once, or configure it in the macOS Keychain.")
+        ?: error("Signing input $environmentName is missing. Run scripts/store-local-signing-passwords.sh from an interactive Terminal, or configure it in the macOS Keychain.")
 }
 
-val safeKeystorePasswordService = "Safe Android upload keystore password"
-val safePrivateKeyPasswordService = "Safe Android upload key password"
 val localKeychainAccount = System.getProperty("user.name")
-val releaseStorePassword = releaseSecret("SAFE_KEYSTORE_PASSWORD", localKeychainAccount, safeKeystorePasswordService)
-val releasePrivateKeyPassword = releaseSecret("SAFE_KEY_PASSWORD", localKeychainAccount, safePrivateKeyPasswordService)
+val releaseStorePassword = releaseSecret("SAFE_KEYSTORE_PASSWORD", localKeychainAccount, SafeLocalSigning.KEYSTORE_PASSWORD_SERVICE)
+val releasePrivateKeyPassword = System.getenv("SAFE_KEY_PASSWORD")?.takeIf(String::isNotBlank)
+    ?: if (releaseKeystoreType.equals("PKCS12", ignoreCase = true)) {
+        releaseStorePassword
+    } else {
+        releaseSecret("SAFE_KEY_PASSWORD", localKeychainAccount, SafeLocalSigning.PRIVATE_KEY_PASSWORD_SERVICE)
+    }
 
 android {
     compileSdk = 37
@@ -445,7 +448,10 @@ val verifyReleaseSigning = tasks.register("verifyReleaseSigning") {
 }
 
 tasks.configureEach {
-    if (name == "bundleRelease") dependsOn(verifyReleaseSigning)
+    if (name == "bundleRelease") {
+        dependsOn(verifyReleaseSigning)
+        notCompatibleWithConfigurationCache("This task uses local or Actions signing credentials.")
+    }
 }
 
 val verifyReleaseBundleSignature = tasks.register("verifyReleaseBundleSignature") {

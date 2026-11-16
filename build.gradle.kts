@@ -89,27 +89,34 @@ subprojects {
 
 tasks.register("storeSigningPasswords") {
     group = "signing"
-    description = "Stores the Safe upload-key passwords in macOS Keychain for local Gradle release builds."
+    description = "Verifies Safe signing passwords are available in the macOS login Keychain."
+    notCompatibleWithConfigurationCache("This task reads local signing credentials without storing them in the configuration cache.")
     doLast {
-        check(System.getProperty("os.name").startsWith("Mac", ignoreCase = true)) {
-            "storeSigningPasswords is for macOS."
-        }
-        check(System.console() != null) {
-            "Gradle has no interactive console, so the security prompt could accept an empty password. " +
-                "Use scripts/update-github-signing-secrets.sh from an interactive Terminal to enter signing passwords."
+        check(System.getProperty("os.name").contains("Mac", ignoreCase = true)) {
+            "Safe signing passwords can only be verified by this task on macOS."
         }
         val account = System.getProperty("user.name")
-        listOf(
-            "Safe Android upload keystore password",
-            "Safe Android upload key password"
-        ).forEach { service ->
-            val result = ProcessBuilder(
-                "/usr/bin/security", "add-generic-password", "-U",
-                "-a", account, "-s", service, "-w"
-            ).inheritIO().start().waitFor()
-            check(result == 0) { "Keychain could not store '$service'." }
+        val keystoreType = System.getenv("SAFE_KEYSTORE_TYPE")?.takeIf(String::isNotBlank) ?: "PKCS12"
+        val services = SafeLocalSigning.passwordServices(keystoreType)
+        val missing = mutableListOf<String>()
+        services.forEach { service ->
+            val process = ProcessBuilder(
+                "/usr/bin/security", "find-generic-password", "-w",
+                "-a", account, "-s", service
+            ).redirectError(ProcessBuilder.Redirect.DISCARD).start()
+            val value = process.inputStream.bufferedReader().use { it.readText() }
+                .trimEnd('\r', '\n')
+            if (SafeLocalSigning.hasNonEmptyPassword(process.waitFor(), value)) {
+                logger.lifecycle("Found the existing macOS Keychain item for '$service'.")
+            } else {
+                missing += service
+            }
         }
-        logger.lifecycle("Safe signing passwords stored in the macOS login Keychain.")
+        check(missing.isEmpty()) {
+            "Missing local signing credential(s): ${missing.joinToString()}. " +
+                "Run scripts/store-local-signing-passwords.sh once from an interactive Terminal."
+        }
+        logger.lifecycle("Safe signing password(s) are available in the macOS login Keychain.")
     }
 }
 

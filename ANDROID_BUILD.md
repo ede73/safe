@@ -4,27 +4,32 @@ This workflow is separate from CXF synchronization. It only builds and signs an 
 
 ## Build locally with Gradle
 
-After the Keychain prompt task has been corrected and verified, store the existing upload-keystore and private-key passwords in macOS Keychain once:
+Run the local Gradle build from the checkout whose changes you want in the AAB. The build reads the password from the macOS login Keychain and does not prompt for or change it. If the Keychain item has not been set up on this Mac, run this one-time setup from an interactive Terminal:
+
+```sh
+./scripts/store-local-signing-passwords.sh
+```
+
+This script preserves any existing non-empty item, prompts through macOS `security` in the interactive terminal, and reads the item back to reject an empty value. Gradle cannot securely own this prompt: Gradle runs the task in a daemon without a usable terminal. The Gradle task `storeSigningPasswords` is therefore verification-only; it never prompts or writes to Keychain. After the one-time setup, verify the saved item if desired and build the signed bundle:
 
 ```sh
 ./gradlew storeSigningPasswords
+./gradlew --no-configuration-cache generateSignedBundle
 ```
 
-The current implementation has not yet been verified to collect non-empty password values. Do not use the current task until the replacement is verified. The intended account is your macOS username; the Safe-specific services are `Safe Android upload keystore password` and `Safe Android upload key password`. It does not use a Swift `Security.framework` helper.
+The build validates the alias and private key before bundling, then verifies the generated AAB's signer. Local signed tasks disable Gradle's configuration cache so signing passwords are not persisted there. Safe's source keystore is PKCS12, so only one password is needed for both the store and private key; JKS uses separate entries.
 
-Build and verify the signed AAB:
+Build-logic unit tests cover the one-password PKCS12 mapping, separate JKS passwords, and rejection of empty or failed Keychain reads. They run with `./gradlew -p buildSrc test`.
 
-```sh
-./gradlew generateSignedBundle
-```
-
-Gradle prints the resulting path. By default it is:
+The AAB is built from the current local checkout, including uncommitted source changes. It is not uploaded anywhere. Gradle keeps Safe's existing Git-derived version-code/version-name behavior; local edits do not change the version count until they are committed. The resulting AAB is at:
 
 ```text
 app/build/outputs/bundle/release/app-release.aab
 ```
 
-The task verifies that the AAB signature matches the configured upload certificate. It leaves the selected Safe source's existing Gradle version-code/version-name configuration untouched and does not query Play for a code.
+Gradle prints the absolute output path when the build finishes.
+
+The task does not query Play, publish to a testing track, or publish to Production.
 
 ## Prepare GitHub Actions signing secrets
 
